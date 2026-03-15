@@ -71,11 +71,12 @@ To discover and update skills shipped by npm dependencies, run:
 npx @tanstack/intent install
 ```
 
-| Skill       | Path                                  | Use when                                                          |
-| ----------- | ------------------------------------- | ----------------------------------------------------------------- |
-| Hono        | `.agents/skills/hono/SKILL.md`        | Building or modifying server routes, middleware, or API endpoints |
-| Drizzle ORM | `.agents/skills/drizzle-orm/SKILL.md` | Working with database schema, queries, relations, or migrations   |
-| PostgreSQL  | `.agents/skills/postgres/SKILL.md`    | Query optimization, connection troubleshooting, performance       |
+| Skill                  | Path                                             | Use when                                                          |
+| ---------------------- | ------------------------------------------------ | ----------------------------------------------------------------- |
+| Hono                   | `.agents/skills/hono/SKILL.md`                   | Building or modifying server routes, middleware, or API endpoints |
+| Drizzle ORM            | `.agents/skills/drizzle-orm/SKILL.md`            | Working with database schema, queries, relations, or migrations   |
+| PostgreSQL             | `.agents/skills/postgres/SKILL.md`               | Query optimization, connection troubleshooting, performance       |
+| Tailwind Design System | `.agents/skills/tailwind-design-system/SKILL.md` | Design tokens, component variants, theming, responsive patterns   |
 
 <!-- intent-skills:start -->
 

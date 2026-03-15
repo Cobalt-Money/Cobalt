@@ -26,6 +26,12 @@ Every Shadcn component is available. Import any component directly — no need t
 - To add new Shadcn components, use the Shadcn CLI or manually add to `src/components/`
 - Uses `@base-ui/react` as the headless primitive layer
 
+## Skills
+
+When building or modifying components, read the relevant skill:
+
+- **Tailwind Design System:** `.agents/skills/tailwind-design-system/SKILL.md` — design tokens, component variants, theming, responsive patterns, Tailwind v4
+
 ## Package References
 
 When building new components, read the source code of these packages for API reference:
