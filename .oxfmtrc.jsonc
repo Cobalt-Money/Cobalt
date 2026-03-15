@@ -20,5 +20,5 @@
   "tabWidth": 2,
   "trailingComma": "es5",
   "useTabs": false,
-  "ignore": ["packages/ui/src/components/**", "**/routeTree.gen.ts"],
+  "ignore": ["packages/ui/src/components/**", "**/routeTree.gen.ts", "apps/fumadocs/**"],
 }
