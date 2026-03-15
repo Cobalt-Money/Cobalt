@@ -1,126 +1,97 @@
-# Ultracite Code Standards
+# Cobalt Web
 
-This project uses **Ultracite**, a zero-config preset that enforces strict code quality standards through automated formatting and linting.
+Cobalt is a full-stack web application built as a Turborepo monorepo with Bun as the package manager.
 
-## Quick Reference
+## Tech Stack
 
-- **Format code**: `bun x ultracite fix`
-- **Check for issues**: `bun x ultracite check`
-- **Diagnose setup**: `bun x ultracite doctor`
+- **Runtime:** Bun
+- **Monorepo:** Turborepo
+- **Frontend:** Vite + React 19 + TanStack Router/Query/Start + Tailwind CSS v4
+- **Backend:** Hono (on Bun)
+- **Database:** PostgreSQL + Drizzle ORM
+- **Real-time sync:** Rocicorp Zero
+- **Auth:** Better Auth
+- **UI components:** Shadcn (via @cobalt-web/ui)
+- **Docs:** Fumadocs + MDX
+- **Linting/Formatting:** Ultracite (Oxlint + Oxfmt)
+- **Language:** TypeScript (ESM throughout)
 
-Oxlint + Oxfmt (the underlying engine) provides robust linting and formatting. Most issues are automatically fixable.
+## Monorepo Structure
 
----
+```
+apps/
+  web/        — Main frontend app (Vite + TanStack Start)
+  server/     — API server (Hono on Bun)
+  fumadocs/   — Documentation site (Fumadocs + TanStack Start)
+packages/
+  auth/       — Better Auth configuration
+  config/     — Shared base tsconfig
+  db/         — Drizzle ORM schema, migrations, and client
+  env/        — Zod-validated environment variables (server + web)
+  ui/         — Shared React components (Shadcn) and styles
+  zero/       — Rocicorp Zero schema, queries, and mutators
+```
 
-## Core Principles
+## Workflow
 
-Write code that is **accessible, performant, type-safe, and maintainable**. Focus on clarity and explicit intent over brevity.
+After finishing a feature or making changes, always run:
 
-### Type Safety & Explicitness
+```sh
+bun check
+```
 
-- Use explicit types for function parameters and return values when they enhance clarity
-- Prefer `unknown` over `any` when the type is genuinely unknown
-- Use const assertions (`as const`) for immutable values and literal types
-- Leverage TypeScript's type narrowing instead of type assertions
-- Use meaningful variable names instead of magic numbers - extract constants with descriptive names
+This runs `ultracite check` across the repo to verify linting and formatting. To auto-fix issues:
 
-### Modern JavaScript/TypeScript
+```sh
+bun fix
+```
 
-- Use arrow functions for callbacks and short functions
-- Prefer `for...of` loops over `.forEach()` and indexed `for` loops
-- Use optional chaining (`?.`) and nullish coalescing (`??`) for safer property access
-- Prefer template literals over string concatenation
-- Use destructuring for object and array assignments
-- Use `const` by default, `let` only when reassignment is needed, never `var`
+## Key Commands
 
-### Async & Promises
+| Command           | Description                       |
+| ----------------- | --------------------------------- |
+| `bun dev`         | Start all apps in dev mode        |
+| `bun dev:web`     | Start only the web app            |
+| `bun dev:server`  | Start only the server             |
+| `bun build`       | Build all apps                    |
+| `bun check`       | Lint and format check (Ultracite) |
+| `bun fix`         | Auto-fix lint and format issues   |
+| `bun db:push`     | Push schema changes to database   |
+| `bun db:generate` | Generate Drizzle migrations       |
+| `bun db:migrate`  | Run database migrations           |
+| `bun db:studio`   | Open Drizzle Studio               |
 
-- Always `await` promises in async functions - don't forget to use the return value
-- Use `async/await` syntax instead of promise chains for better readability
-- Handle errors appropriately in async code with try-catch blocks
-- Don't use async functions as Promise executors
+## Package Documentation
 
-### React & JSX
+When building a new feature or need API reference, read the package source code directly rather than guessing. Look at `.d.ts` type definitions for API surface and exported functions. Read the actual source for implementation details and usage patterns.
 
-- Use function components over class components
-- Call hooks at the top level only, never conditionally
-- Specify all dependencies in hook dependency arrays correctly
-- Use the `key` prop for elements in iterables (prefer unique IDs over array indices)
-- Nest children between opening and closing tags instead of passing as props
-- Don't define components inside other components
-- Use semantic HTML and ARIA attributes for accessibility:
-  - Provide meaningful alt text for images
-  - Use proper heading hierarchy
-  - Add labels for form inputs
-  - Include keyboard event handlers alongside mouse events
-  - Use semantic elements (`<button>`, `<nav>`, etc.) instead of divs with roles
+| Package         | Source path                                     |
+| --------------- | ----------------------------------------------- |
+| Hono            | `node_modules/hono/dist/types/`                 |
+| TanStack Router | `node_modules/@tanstack/react-router/dist/esm/` |
+| TanStack Query  | `node_modules/@tanstack/react-query/dist/esm/`  |
+| TanStack Start  | `node_modules/@tanstack/react-start/dist/esm/`  |
+| Drizzle ORM     | `node_modules/drizzle-orm/`                     |
+| Drizzle Kit     | `node_modules/drizzle-kit/`                     |
+| Better Auth     | `node_modules/better-auth/dist/`                |
+| Rocicorp Zero   | `node_modules/@rocicorp/zero/dist/`             |
+| Fumadocs Core   | `node_modules/fumadocs-core/dist/`              |
+| Fumadocs UI     | `node_modules/fumadocs-ui/dist/`                |
+| Tailwind CSS    | `node_modules/tailwindcss/`                     |
+| Zod             | `node_modules/zod/lib/`                         |
 
-### Error Handling & Debugging
+## Code Standards
 
-- Remove `console.log`, `debugger`, and `alert` statements from production code
-- Throw `Error` objects with descriptive messages, not strings or other values
-- Use `try-catch` blocks meaningfully - don't catch errors just to rethrow them
-- Prefer early returns over nested conditionals for error cases
+This project uses **Ultracite** for automated linting and formatting via Oxlint + Oxfmt. Run `bun fix` before committing.
 
-### Code Organization
+Core principles: write code that is **accessible, performant, type-safe, and maintainable**.
 
-- Keep functions focused and under reasonable cognitive complexity limits
-- Extract complex conditions into well-named boolean variables
-- Use early returns to reduce nesting
-- Prefer simple conditionals over nested ternary operators
-- Group related code together and separate concerns
-
-### Security
-
-- Add `rel="noopener"` when using `target="_blank"` on links
-- Avoid `dangerouslySetInnerHTML` unless absolutely necessary
-- Don't use `eval()` or assign directly to `document.cookie`
-- Validate and sanitize user input
-
-### Performance
-
-- Avoid spread syntax in accumulators within loops
-- Use top-level regex literals instead of creating them in loops
-- Prefer specific imports over namespace imports
-- Avoid barrel files (index files that re-export everything)
-- Use proper image components (e.g., Next.js `<Image>`) over `<img>` tags
-
-### Framework-Specific Guidance
-
-**Next.js:**
-
-- Use Next.js `<Image>` component for images
-- Use `next/head` or App Router metadata API for head elements
-- Use Server Components for async data fetching instead of async Client Components
-
-**React 19+:**
-
-- Use ref as a prop instead of `React.forwardRef`
-
-**Solid/Svelte/Vue/Qwik:**
-
-- Use `class` and `for` attributes (not `className` or `htmlFor`)
-
----
-
-## Testing
-
-- Write assertions inside `it()` or `test()` blocks
-- Avoid done callbacks in async tests - use async/await instead
-- Don't use `.only` or `.skip` in committed code
-- Keep test suites reasonably flat - avoid excessive `describe` nesting
-
-## When Oxlint + Oxfmt Can't Help
-
-Oxlint + Oxfmt's linter will catch most issues automatically. Focus your attention on:
-
-1. **Business logic correctness** - Oxlint + Oxfmt can't validate your algorithms
-2. **Meaningful naming** - Use descriptive names for functions, variables, and types
-3. **Architecture decisions** - Component structure, data flow, and API design
-4. **Edge cases** - Handle boundary conditions and error states
-5. **User experience** - Accessibility, performance, and usability considerations
-6. **Documentation** - Add comments for complex logic, but prefer self-documenting code
-
----
-
-Most formatting and common issues are automatically fixed by Oxlint + Oxfmt. Run `bun x ultracite fix` before committing to ensure compliance.
+- Use `const` by default, arrow functions for callbacks, `for...of` over `.forEach()`
+- Use `async/await` over promise chains
+- Use function components, hooks at top level only, proper `key` props
+- Use semantic HTML and ARIA attributes for accessibility
+- No `console.log`, `debugger`, or `alert` in production code
+- Throw `Error` objects, not strings
+- Prefer early returns over nested conditionals
+- Use `unknown` over `any`, const assertions for immutable values
+- Use optional chaining (`?.`) and nullish coalescing (`??`)
