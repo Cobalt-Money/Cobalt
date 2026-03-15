@@ -45,6 +45,7 @@ const getContext = async (req: Request): Promise<Context> => {
 app.post("/api/zero/query", async (c) => {
   const ctx = await getContext(c.req.raw);
   const result = await handleQueryRequest(
+    // @ts-expect-error — resolves once queries are added to packages/zero
     (name, args) => mustGetQuery(queries, name).fn({ args, ctx }),
     schema,
     c.req.raw
@@ -66,6 +67,7 @@ app.post("/api/zero/mutate", async (c) => {
     dbProvider,
     (transact) =>
       transact((tx, name, args) =>
+        // @ts-expect-error — resolves once mutators are added to packages/zero
         mustGetMutator(mutators, name).fn({ args, ctx, tx })
       ),
     c.req.raw
