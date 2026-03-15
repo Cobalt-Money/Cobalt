@@ -14,6 +14,8 @@
     "no-use-before-define": "off",
     "no-empty-interface": "off",
     "@typescript-eslint/no-empty-object-type": "off",
-    "react-perf/jsx-no-new-function-as-prop": "off"
+    "react-perf/jsx-no-new-function-as-prop": "off",
+    "no-inline-comments": "off",
+    "no-barrel-file": "warn"
   }
 }
