@@ -6,22 +6,16 @@ Shared React component library built with Shadcn, Tailwind CSS v4, and class-var
 
 ```
 src/
-  components/       — Shadcn UI components
-    button.tsx
-    card.tsx
-    checkbox.tsx
-    dropdown-menu.tsx
-    input.tsx
-    label.tsx
-    skeleton.tsx
-    sonner.tsx        — Toast notifications
-  hooks/            — Shared React hooks
+  components/       — All Shadcn UI components (every component is installed)
+  hooks/            — Shared React hooks (use-mobile, etc.)
   lib/              — Utilities (cn/clsx helper, etc.)
   styles/
     globals.css     — Global Tailwind styles and theme
-components.json     — Shadcn UI generation config
+components.json     — Shadcn UI generation config (base-lyra style)
 postcss.config.mjs  — PostCSS config
 ```
+
+Every Shadcn component is available. Import any component directly — no need to install individually. Check `src/components/` for the full list or run `ls packages/ui/src/components/`.
 
 ## Conventions
 

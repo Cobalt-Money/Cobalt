@@ -35,7 +35,12 @@ src/
 
 ## Package References
 
-When building new features, read the source code of these packages for API reference:
+These packages ship their own agent skills. Load them when working in these areas:
+
+- **nitro:** `node_modules/nitro/skills/nitro/SKILL.md` — server config, deployment, SSR
+- **h3:** `node_modules/h3/skills/h3/SKILL.md` — HTTP utilities, request/response handling, middleware
+
+Also read the source code of these packages for API reference:
 
 - **fumadocs-core:** `node_modules/fumadocs-core/dist/` — source API, search, breadcrumbs, TOC
 - **fumadocs-ui:** `node_modules/fumadocs-ui/dist/` — layout components, docs page, nav

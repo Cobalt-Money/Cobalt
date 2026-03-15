@@ -21,6 +21,13 @@ drizzle.config.ts — Drizzle Kit config (PostgreSQL, loads DATABASE_URL from ap
 - `drizzle.config.ts` loads the DATABASE_URL from `apps/server/.env`
 - Exported via `@cobalt-web/db` — consumed by `@cobalt-web/auth` and `apps/server`
 
+## Skills
+
+Before modifying schema, queries, or migrations, read the relevant skill:
+
+- **Drizzle ORM:** `.agents/skills/drizzle-orm/SKILL.md` — schema definition, relations, queries, transactions, migration workflows. Additional references in `.agents/skills/drizzle-orm/references/` for advanced schemas, query patterns, and performance.
+- **PostgreSQL:** `.agents/skills/postgres/SKILL.md` — query optimization, connection troubleshooting, performance best practices
+
 ## Package References
 
 When modifying schema or queries, read the source code of these packages for API reference:

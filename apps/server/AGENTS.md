@@ -24,6 +24,13 @@ dist/         — Compiled output (tsdown)
 - Zero push endpoint for Rocicorp Zero real-time sync
 - Build produces a compiled binary via `bun build --compile`
 
+## Skills
+
+Before building or modifying server features, read the relevant skill:
+
+- **Hono:** `.agents/skills/hono/SKILL.md` — documentation search, request testing, optimization
+- **Drizzle ORM:** `.agents/skills/drizzle-orm/SKILL.md` — schema, queries, relations, migrations
+
 ## Package References
 
 When building new features, read the source code of these packages for API reference:

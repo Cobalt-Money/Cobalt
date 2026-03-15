@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "drizzle-orm": {
+      "source": "bobmatnyc/claude-mpm-skills",
+      "sourceType": "github",
+      "computedHash": "9aea7469d696c9b5fa54a84b7a92ea692872fb624fb028f866ab0f3deac84867"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "computedHash": "d31e234f0c90694a670222cdd1dafa853e051d7066beda389f1097c22dadd461"
+    },
+    "hono": {
+      "source": "yusukebe/hono-skill",
+      "sourceType": "github",
+      "computedHash": "c7a4ae9efeb7ef47c6473ee4d636fced825a0c26b25372a49417075f6d566af6"
+    },
+    "postgres": {
+      "source": "planetscale/database-skills",
+      "sourceType": "github",
+      "computedHash": "2acf9fae4fcdb6c392923708b67234828f8a9f10b10dfa5d228eaab6e9108245"
+    }
+  }
+}
