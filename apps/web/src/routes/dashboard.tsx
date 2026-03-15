@@ -8,7 +8,7 @@ export const Route = createFileRoute("/dashboard")({
     return { session };
   },
   component: RouteComponent,
-  loader: async ({ context }) => {
+  loader: ({ context }) => {
     if (!context.session) {
       throw redirect({
         to: "/login",

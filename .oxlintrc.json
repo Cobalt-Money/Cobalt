@@ -4,11 +4,16 @@
     "./node_modules/ultracite/config/oxlint/core/.oxlintrc.json",
     "./node_modules/ultracite/config/oxlint/react/.oxlintrc.json"
   ],
-  "ignorePatterns": ["packages/ui/src/components/**", "**/routeTree.gen.ts", "apps/fumadocs/**"],
+  "ignorePatterns": [
+    "packages/ui/src/components/**",
+    "**/routeTree.gen.ts",
+    "apps/fumadocs/**"
+  ],
   "rules": {
     "func-style": "off",
     "no-use-before-define": "off",
     "no-empty-interface": "off",
-    "@typescript-eslint/no-empty-object-type": "off"
+    "@typescript-eslint/no-empty-object-type": "off",
+    "react-perf/jsx-no-new-function-as-prop": "off"
   }
 }
