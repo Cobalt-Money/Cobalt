@@ -1,11 +1,11 @@
 {
-  "extends": "@my-better-t-app/config/tsconfig.base.json",
+  "extends": "@cobalt-web/config/tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "jsx": "react-jsx",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "paths": {
-      "@my-better-t-app/ui/*": ["./src/*"]
+      "@cobalt-web/ui/*": ["./src/*"]
     },
     "strictNullChecks": true
   },

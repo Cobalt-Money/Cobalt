@@ -1,0 +1,26 @@
+{
+  "name": "@cobalt-web/zero",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./schema": {
+      "default": "./src/schema.ts"
+    },
+    "./queries": {
+      "default": "./src/queries.ts"
+    },
+    "./mutators": {
+      "default": "./src/mutators.ts"
+    }
+  },
+  "dependencies": {
+    "@rocicorp/zero": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cobalt-web/config": "workspace:*",
+    "typescript": "^5"
+  }
+}

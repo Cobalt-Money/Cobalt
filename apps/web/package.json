@@ -8,9 +8,11 @@
     "dev": "vite dev"
   },
   "dependencies": {
-    "@my-better-t-app/auth": "workspace:*",
-    "@my-better-t-app/env": "workspace:*",
-    "@my-better-t-app/ui": "workspace:*",
+    "@cobalt-web/auth": "workspace:*",
+    "@cobalt-web/env": "workspace:*",
+    "@cobalt-web/ui": "workspace:*",
+    "@cobalt-web/zero": "workspace:*",
+    "@rocicorp/zero": "catalog:",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-form": "^1.28.0",
     "@tanstack/react-query": "^5.80.6",
@@ -30,7 +32,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@my-better-t-app/config": "workspace:*",
+    "@cobalt-web/config": "workspace:*",
     "@tanstack/react-router-devtools": "^1.141.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",

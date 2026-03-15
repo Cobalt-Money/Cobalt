@@ -7,5 +7,6 @@
     "outDir": "dist",
     "composite": true,
     "strictNullChecks": true
-  }
+  },
+  "include": ["src"]
 }

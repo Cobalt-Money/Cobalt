@@ -1,4 +1,4 @@
-import { env } from "@my-better-t-app/env/web";
+import { env } from "@cobalt-web/env/web";
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({

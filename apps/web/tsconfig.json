@@ -23,7 +23,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@my-better-t-app/ui/*": ["../../packages/ui/src/*"]
+      "@cobalt-web/ui/*": ["../../packages/ui/src/*"]
     }
   }
 }

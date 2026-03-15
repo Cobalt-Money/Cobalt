@@ -10,17 +10,21 @@
     "start": "bun run dist/index.mjs"
   },
   "dependencies": {
-    "@my-better-t-app/auth": "workspace:*",
-    "@my-better-t-app/db": "workspace:*",
-    "@my-better-t-app/env": "workspace:*",
+    "@cobalt-web/auth": "workspace:*",
+    "@cobalt-web/db": "workspace:*",
+    "@cobalt-web/env": "workspace:*",
+    "@cobalt-web/zero": "workspace:*",
+    "@rocicorp/zero": "catalog:",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "hono": "^4.8.2",
+    "pg": "^8.16.3",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@my-better-t-app/config": "workspace:*",
+    "@cobalt-web/config": "workspace:*",
     "@types/bun": "catalog:",
+    "@types/pg": "^8.16.0",
     "tsdown": "^0.16.5",
     "typescript": "^5"
   }

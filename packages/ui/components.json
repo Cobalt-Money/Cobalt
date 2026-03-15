@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@my-better-t-app/ui/components",
-    "utils": "@my-better-t-app/ui/lib/utils",
-    "hooks": "@my-better-t-app/ui/hooks",
-    "lib": "@my-better-t-app/ui/lib",
-    "ui": "@my-better-t-app/ui/components"
+    "components": "@cobalt-web/ui/components",
+    "utils": "@cobalt-web/ui/lib/utils",
+    "hooks": "@cobalt-web/ui/hooks",
+    "lib": "@cobalt-web/ui/lib",
+    "ui": "@cobalt-web/ui/components"
   },
   "menuColor": "default",
   "menuAccent": "subtle",

@@ -33,12 +33,14 @@ const serverLoader = createServerFn({
   .inputValidator((slugs: string[]) => slugs)
   .handler(async ({ data: slugs }) => {
     const page = source.getPage(slugs);
-    if (!page) throw notFound();
+    if (!page) {
+      throw notFound();
+    }
 
     return {
-      slugs: page.slugs,
-      path: page.path,
       pageTree: await source.serializePageTree(source.getPageTree()),
+      path: page.path,
+      slugs: page.slugs,
     };
   });
 
@@ -52,7 +54,7 @@ const clientLoader = browserCollections.docs.createClientLoader({
     }: {
       markdownUrl: string;
       path: string;
-    },
+    }
   ) {
     return (
       <DocsPage toc={toc}>
@@ -79,7 +81,9 @@ function Page() {
 
   return (
     <DocsLayout {...baseOptions()} tree={pageTree}>
-      <Suspense>{clientLoader.useContent(path, { markdownUrl, path })}</Suspense>
+      <Suspense>
+        {clientLoader.useContent(path, { markdownUrl, path })}
+      </Suspense>
     </DocsLayout>
   );
 }

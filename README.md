@@ -1,4 +1,4 @@
-# my-better-t-app
+# cobalt-web
 
 This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Start, Hono, and more.
 
@@ -64,7 +64,7 @@ npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
 Import shared components like this:
 
 ```tsx
-import { Button } from "@my-better-t-app/ui/components/button";
+import { Button } from "@cobalt-web/ui/components/button";
 ```
 
 ### Add app-specific blocks
@@ -74,7 +74,7 @@ If you want to add app-specific blocks instead of shared primitives, run the sha
 ## Project Structure
 
 ```
-my-better-t-app/
+cobalt-web/
 ├── apps/
 │   ├── web/         # Frontend application (React + TanStack Start)
 │   └── server/      # Backend API (Hono)

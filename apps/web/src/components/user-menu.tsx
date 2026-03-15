@@ -1,4 +1,4 @@
-import { Button } from "@my-better-t-app/ui/components/button";
+import { Button } from "@cobalt-web/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,8 +7,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@my-better-t-app/ui/components/dropdown-menu";
-import { Skeleton } from "@my-better-t-app/ui/components/skeleton";
+} from "@cobalt-web/ui/components/dropdown-menu";
+import { Skeleton } from "@cobalt-web/ui/components/skeleton";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import { authClient } from "@/lib/auth-client";
