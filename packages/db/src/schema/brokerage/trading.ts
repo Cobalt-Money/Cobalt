@@ -11,7 +11,7 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth";
+import { user } from "../auth/auth";
 import { brokerageAccounts } from "./accounts";
 
 export const brokerageOrders = pgTable(

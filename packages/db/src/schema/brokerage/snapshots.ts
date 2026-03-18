@@ -12,7 +12,7 @@ import {
   integer,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth";
+import { user } from "../auth/auth";
 
 // Portfolio Snapshots - stores daily account balance snapshots for historical charting
 export const portfolioSnapshots = pgTable(

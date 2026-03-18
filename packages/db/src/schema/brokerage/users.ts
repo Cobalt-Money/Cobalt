@@ -1,6 +1,6 @@
 import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
-import { user } from "../auth";
+import { user } from "../auth/auth";
 
 // Brokerage user credentials - one per app user
 export const brokerageUser = pgTable(

@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { messages } from "../ai/chat";
-import { user } from "../auth";
+import { user } from "../auth/auth";
 
 export const messageVotes = pgTable(
   "message_votes",

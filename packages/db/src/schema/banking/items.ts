@@ -8,7 +8,7 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth";
+import { user } from "../auth/auth";
 
 // Institutions (store institution details and logos)
 export const institution = pgTable(

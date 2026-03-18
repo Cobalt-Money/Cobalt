@@ -8,7 +8,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth";
+import { user } from "../auth/auth";
 import { brokerageAuthorizations } from "./auth";
 
 export const brokerageAccounts = pgTable(

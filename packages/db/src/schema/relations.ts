@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 
 import { chats, messages, parts } from "./ai/chat";
-import { user, session, account } from "./auth";
+import { user, session, account } from "./auth/auth";
 import {
   bankConnection,
   bankAccount,

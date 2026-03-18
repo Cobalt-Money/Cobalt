@@ -9,7 +9,7 @@ import {
   integer,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth";
+import { user } from "../auth/auth";
 
 // Brokerage authorization - tracks connected brokerage accounts
 export const brokerageAuthorizations = pgTable(
