@@ -8,8 +8,8 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+import { messages } from "../ai/chat";
 import { user } from "../auth";
-import { messages } from "../core/chat";
 
 export const messageVotes = pgTable(
   "message_votes",

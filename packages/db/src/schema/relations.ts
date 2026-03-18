@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 
+import { chats, messages, parts } from "./ai/chat";
 import { user, session, account } from "./auth";
 import {
   bankConnection,
@@ -28,7 +29,6 @@ import {
   brokerageActivities,
   portfolioSnapshots,
 } from "./brokerage";
-import { chats, messages, parts } from "./core/chat";
 import { feedback } from "./features/feedback";
 import { financialEvents, eventArticles } from "./features/financial-events";
 import { financialGoals } from "./features/financial-goals";
