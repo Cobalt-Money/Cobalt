@@ -15,17 +15,12 @@
       "default": "./src/mutators.ts"
     }
   },
-  "scripts": {
-    "generate:zero": "drizzle-zero generate --config drizzle-zero.config.ts --output src/zero-schema.gen.ts --suppress-defaults-warning --force && sed -i '' '1s/^/\\/* eslint-disable sort-keys *\\/\\n/' src/zero-schema.gen.ts && ultracite fix src/zero-schema.gen.ts"
-  },
   "dependencies": {
     "@rocicorp/zero": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
-    "@cobalt-web/db": "workspace:*",
-    "drizzle-zero": "^0.17.4",
     "typescript": "^5"
   }
 }
