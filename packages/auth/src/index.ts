@@ -21,6 +21,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+
   plugins: [],
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [env.CORS_ORIGIN],
