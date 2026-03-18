@@ -5,6 +5,9 @@
     ".": {
       "default": "./src/index.ts"
     },
+    "./schema/auth": {
+      "default": "./src/schema/auth/auth.ts"
+    },
     "./*": {
       "default": "./src/*.ts"
     }
