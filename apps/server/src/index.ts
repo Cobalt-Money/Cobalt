@@ -1,4 +1,5 @@
 import { env } from "@cobalt-web/env/server";
+import { Hono } from "hono";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { apiReference } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
@@ -21,11 +22,12 @@ import { userRouter } from "./routes/user.js";
 import { zeroRouter } from "./routes/zero.js";
 
 const base = new OpenAPIHono();
+const app = new Hono();
 
 // ── Global Middleware ───────────────────────────────────────────────
 
-base.use(logger());
-base.use(
+app.use(logger());
+app.use(
   "/*",
   cors({
     allowHeaders: ["Content-Type", "Authorization"],
@@ -37,7 +39,7 @@ base.use(
 
 // ── Routes ──────────────────────────────────────────────────────────
 
-const app = base
+base
   .route("/api/auth", authRouter)
   .route("/api/zero", zeroRouter)
   .route("/api/accounts", accountsRouter)
@@ -56,7 +58,7 @@ const app = base
 
 // ── Health ──────────────────────────────────────────────────────────
 
-base.get("/", (c) => c.text("OK"));
+app.get("/", (c) => c.text("OK"));
 
 // ── OpenAPI Docs ────────────────────────────────────────────────────
 
@@ -69,7 +71,19 @@ base.doc("/openapi.json", {
   openapi: "3.1.0",
 });
 
-base.get("/docs", apiReference({ spec: { url: "/openapi.json" } }));
+app.get(
+  "/docs",
+  apiReference({
+    spec: {
+      url: "/openapi.json",
+    },
+    hideModels: true,
+  })
+);
+
+// ── Mount OpenAPI app ───────────────────────────────────────────────
+
+app.route("/", base);
 
 export type AppType = typeof app;
 
