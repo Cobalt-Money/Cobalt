@@ -35,7 +35,8 @@
     "db:migrate": "turbo -F @cobalt-web/db db:migrate",
     "dev:zero": "zero-cache-dev",
     "check": "ultracite check",
-    "fix": "ultracite fix"
+    "fix": "ultracite fix",
+    "sync-env": "bash sync-env.sh"
   },
   "dependencies": {
     "@cobalt-web/env": "workspace:*",
@@ -47,7 +48,7 @@
     "@types/bun": "catalog:",
     "oxfmt": "latest",
     "oxlint": "latest",
-    "turbo": "^2.8.12",
+    "turbo": "^2.8.20",
     "typescript": "^5",
     "ultracite": "7.3.1"
   },

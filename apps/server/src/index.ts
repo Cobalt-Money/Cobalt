@@ -1,6 +1,7 @@
 import { env } from "@cobalt-web/env/server";
-import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { Scalar } from "@scalar/hono-api-reference";
+import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
@@ -21,11 +22,12 @@ import { userRouter } from "./routes/user.js";
 import { zeroRouter } from "./routes/zero.js";
 
 const base = new OpenAPIHono();
+const app = new Hono();
 
 // ── Global Middleware ───────────────────────────────────────────────
 
-base.use(logger());
-base.use(
+app.use(logger());
+app.use(
   "/*",
   cors({
     allowHeaders: ["Content-Type", "Authorization"],
@@ -37,7 +39,7 @@ base.use(
 
 // ── Routes ──────────────────────────────────────────────────────────
 
-const app = base
+base
   .route("/api/auth", authRouter)
   .route("/api/zero", zeroRouter)
   .route("/api/accounts", accountsRouter)
@@ -56,7 +58,7 @@ const app = base
 
 // ── Health ──────────────────────────────────────────────────────────
 
-base.get("/", (c) => c.text("OK"));
+app.get("/", (c) => c.text("OK"));
 
 // ── OpenAPI Docs ────────────────────────────────────────────────────
 
@@ -69,7 +71,17 @@ base.doc("/openapi.json", {
   openapi: "3.1.0",
 });
 
-base.get("/docs", swaggerUI({ url: "/openapi.json" }));
+app.get(
+  "/docs",
+  Scalar({
+    hideModels: true,
+    url: "/openapi.json",
+  })
+);
+
+// ── Mount OpenAPI app ───────────────────────────────────────────────
+
+app.route("/", base);
 
 export type AppType = typeof app;
 
