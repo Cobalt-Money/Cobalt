@@ -6,7 +6,7 @@ Main frontend application built with Vite, React 19, and the TanStack ecosystem 
 
 ```
 src/
-  components/     — React components (header, user-menu, sign-in-form, sign-up-form, loader)
+  components/     — React components (header, user-menu, social-auth, loader)
   functions/      — Server functions (get-user.ts)
   lib/            — Client setup (auth-client.ts, zero-client.tsx)
   middleware/     — Route middleware (auth.ts for route protection)
@@ -23,7 +23,7 @@ public/           — Static assets
 
 ## Key Config Files
 
-- `vite.config.ts` — Vite config with TanStack Start, Tailwind CSS v4, and React plugins
+- `vite.config.ts` — Vite config with TanStack Start (**SPA mode** via `tanstackStart({ spa: { enabled: true } })`), Tailwind CSS v4, and React plugins. The app shell is not server-rendered; this matches Rocicorp’s guidance for Zero ([ztunes](https://github.com/rocicorp/ztunes#tanstack-start)). API routes and server functions still run on the server.
 - `components.json` — Shadcn UI config (base-lyra style), references `@cobalt-web/ui` globals
 - `tsconfig.json` — Path aliases: `@/*` maps to `./src/*`, `@cobalt-web/ui/*` maps to UI package
 
@@ -32,7 +32,7 @@ public/           — Static assets
 - Routes are file-based via TanStack Router — add new routes as files in `src/routes/`
 - `routeTree.gen.ts` is auto-generated; never edit it manually
 - UI components come from `@cobalt-web/ui/components/*` (Shadcn)
-- Auth client is in `src/lib/auth-client.ts`, Zero client in `src/lib/zero-client.tsx`
+- Auth client is in `src/lib/auth-client.ts`; Zero is in `src/lib/zero-client.tsx` — wrap **only routes that call `useQuery`/`useZero`**, not the root router (Rocicorp’s `ZeroProvider` renders nothing until the client is ready).
 - Route protection is handled via middleware in `src/middleware/auth.ts`
 - Dev server runs on port 3001
 

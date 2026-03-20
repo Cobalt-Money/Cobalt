@@ -5,7 +5,18 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  plugins: [tsconfigPaths(), tailwindcss(), tanstackStart(), viteReact()],
+  plugins: [
+    tsconfigPaths(),
+    tailwindcss(),
+    // SPA mode: no SSR for the app shell. Zero does not support SSR; see ztunes README:
+    // https://github.com/rocicorp/ztunes#tanstack-start
+    tanstackStart({
+      spa: {
+        enabled: true,
+      },
+    }),
+    viteReact(),
+  ],
   server: {
     port: 3001,
   },

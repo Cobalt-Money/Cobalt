@@ -15,6 +15,7 @@
     "@cobalt-web/env": "workspace:*",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "jose": "^6.1.0",
     "zod": "catalog:"
   },
   "devDependencies": {

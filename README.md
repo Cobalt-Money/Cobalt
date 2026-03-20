@@ -28,7 +28,14 @@ bun install
 This project uses PostgreSQL with Drizzle ORM.
 
 1. Make sure you have a PostgreSQL database set up.
-2. Update your `apps/server/.env` file with your PostgreSQL connection details.
+2. Update your `apps/server/.env` file with your PostgreSQL connection details and **Better Auth** settings:
+
+   - `BETTER_AUTH_SECRET` (≥32 chars), `BETTER_AUTH_URL` (e.g. `http://localhost:3000`), `CORS_ORIGIN` (e.g. `http://localhost:3001`)
+   - **Google:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_IOS_CLIENT_ID` (native iOS client id for the extra `google_ios` provider)
+   - **Apple:** `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_SERVICE_ID`, `APPLE_APP_BUNDLE_IDENTIFIER`, `APPLE_PRIVATE_KEY` (PEM for Sign in with Apple)
+   - Optional: `TRUSTED_ORIGINS_EXTRA` — comma-separated origins to add to Better Auth’s `trustedOrigins` (staging URLs, etc.)
+
+   Email/password is **disabled**; sign-in is **Google and Apple only** (same idea as `horizon-test`).
 
 3. Apply the schema to your database:
 
@@ -41,6 +48,10 @@ Then, run the development server:
 ```bash
 bun run dev
 ```
+
+This starts **web**, **API**, **Fumadocs**, and the **Zero dev cache** (`zero-cache-dev`, default `http://localhost:4848`) in parallel via Turborepo.
+
+**Zero cache env:** copy `apps/zero-cache/.env.example` to `apps/zero-cache/.env` and set at least `ZERO_UPSTREAM_DB` (same Postgres URL as `DATABASE_URL` is fine), plus `ZERO_QUERY_URL` / `ZERO_MUTATE_URL` pointing at this repo’s API. The `zero-cache` app loads **only** `apps/zero-cache/.env` via `dotenv-cli` — production sets the same variables on the host instead of a file.
 
 Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
 The API is running at [http://localhost:3000](http://localhost:3000).

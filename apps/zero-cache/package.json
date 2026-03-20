@@ -1,0 +1,12 @@
+{
+  "name": "zero-cache",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "dotenv -e .env -- zero-cache-dev"
+  },
+  "devDependencies": {
+    "@rocicorp/zero": "catalog:",
+    "dotenv-cli": "^8.0.0"
+  }
+}

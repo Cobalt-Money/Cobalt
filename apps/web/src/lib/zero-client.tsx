@@ -8,6 +8,11 @@ import { authClient } from "./auth-client";
 
 const cacheURL = env.VITE_ZERO_CACHE_URL ?? "http://localhost:4848";
 
+/**
+ * Wrap only route subtrees that use `useQuery` / `useZero`.
+ * Do not wrap the root router: Rocicorp's `ZeroProvider` renders nothing until `Zero`
+ * is created in an effect (`zero && <Provider>`), which blanks the whole app until then.
+ */
 export function ZeroProvider({ children }: { children: ReactNode }) {
   const session = authClient.useSession();
   const context: Context = session.data
