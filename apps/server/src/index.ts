@@ -1,6 +1,6 @@
 import { env } from "@cobalt-web/env/server";
-import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { apiReference } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
@@ -69,7 +69,13 @@ base.doc("/openapi.json", {
   openapi: "3.1.0",
 });
 
-base.get("/docs", swaggerUI({ url: "/openapi.json" }));
+base.get(
+  "/docs",
+  apiReference({
+    spec: { url: "/openapi.json" },
+    theme: "none",
+  })
+);
 
 export type AppType = typeof app;
 
