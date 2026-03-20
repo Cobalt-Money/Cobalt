@@ -1,7 +1,7 @@
 import { env } from "@cobalt-web/env/server";
-import { Hono } from "hono";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { apiReference } from "@scalar/hono-api-reference";
+import { Scalar } from "@scalar/hono-api-reference";
+import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
@@ -73,11 +73,9 @@ base.doc("/openapi.json", {
 
 app.get(
   "/docs",
-  apiReference({
-    spec: {
-      url: "/openapi.json",
-    },
+  Scalar({
     hideModels: true,
+    url: "/openapi.json",
   })
 );
 
