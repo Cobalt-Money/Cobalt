@@ -69,13 +69,7 @@ base.doc("/openapi.json", {
   openapi: "3.1.0",
 });
 
-base.get(
-  "/docs",
-  apiReference({
-    spec: { url: "/openapi.json" },
-    theme: "none",
-  })
-);
+base.get("/docs", apiReference({ spec: { url: "/openapi.json" } }));
 
 export type AppType = typeof app;
 
