@@ -23,7 +23,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@cobalt-web/ui/*": ["../../packages/ui/src/*"]
+      "@cobalt-web/ui/*": ["../../packages/ui/src/*"],
+      "server/*": ["../server/src/*"]
     }
   }
 }

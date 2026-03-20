@@ -22,6 +22,7 @@
     "@tanstack/router-plugin": "^1.141.1",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "hono": "^4.12.8",
     "lucide-react": "catalog:",
     "next-themes": "catalog:",
     "react": "catalog:",

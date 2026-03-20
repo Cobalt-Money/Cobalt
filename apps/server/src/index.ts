@@ -1,82 +1,76 @@
-import { auth } from "@cobalt-web/auth";
 import { env } from "@cobalt-web/env/server";
-import { schema, queries, mutators } from "@cobalt-web/zero";
-import type { Context } from "@cobalt-web/zero";
-import { mustGetMutator, mustGetQuery } from "@rocicorp/zero";
-import { handleMutateRequest, handleQueryRequest } from "@rocicorp/zero/server";
-import { zeroNodePg } from "@rocicorp/zero/server/adapters/pg";
-import { Hono } from "hono";
+import { swaggerUI } from "@hono/swagger-ui";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { Pool } from "pg";
 
-const app = new Hono();
+import { accountsRouter } from "./routes/accounts.js";
+import { appstoreRouter } from "./routes/appstore.js";
+import { authRouter } from "./routes/auth.js";
+import { brokerageRouter } from "./routes/brokerage.js";
+import { chatRouter } from "./routes/chat.js";
+import { institutionsRouter } from "./routes/institutions.js";
+import { newsRouter } from "./routes/news.js";
+import { plaidRouter } from "./routes/plaid.js";
+import { researchRouter } from "./routes/research.js";
+import { snaptradeRouter } from "./routes/snaptrade.js";
+import { subscriptionsRouter } from "./routes/subscriptions.js";
+import { tickersRouter } from "./routes/tickers.js";
+import { transactionsRouter } from "./routes/transactions/index.js";
+import { userRouter } from "./routes/user.js";
+import { zeroRouter } from "./routes/zero.js";
 
-app.use(logger());
-app.use(
+const base = new OpenAPIHono();
+
+// ── Global Middleware ───────────────────────────────────────────────
+
+base.use(logger());
+base.use(
   "/*",
   cors({
     allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
     origin: env.CORS_ORIGIN,
   })
 );
 
-// ── Auth ────────────────────────────────────────────────────────────
+// ── Routes ──────────────────────────────────────────────────────────
 
-app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
-
-// ── Zero ────────────────────────────────────────────────────────────
-// Note: query/mutate endpoints will type-check once you add queries and mutators
-// to packages/zero/src/queries.ts and packages/zero/src/mutators.ts
-
-const pool = env.ZERO_UPSTREAM_DB
-  ? new Pool({ connectionString: env.ZERO_UPSTREAM_DB })
-  : undefined;
-
-const dbProvider = pool ? zeroNodePg(schema, pool) : undefined;
-
-const getContext = async (req: Request): Promise<Context> => {
-  const session = await auth.api.getSession(req);
-  return session ? { userId: session.user.id } : undefined;
-};
-
-app.post("/api/zero/query", async (c) => {
-  const ctx = await getContext(c.req.raw);
-  const result = await handleQueryRequest(
-    // @ts-expect-error — resolves once queries are added to packages/zero
-    (name, args) => mustGetQuery(queries, name).fn({ args, ctx }),
-    schema,
-    c.req.raw
-  );
-  return c.json(result);
-});
-
-app.post("/api/zero/mutate", async (c) => {
-  if (!dbProvider) {
-    return c.json({ error: "Zero not configured" }, 500);
-  }
-
-  const ctx = await getContext(c.req.raw);
-  if (!ctx) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const result = await handleMutateRequest(
-    dbProvider,
-    (transact) =>
-      transact((tx, name, args) =>
-        // @ts-expect-error — resolves once mutators are added to packages/zero
-        mustGetMutator(mutators, name).fn({ args, ctx, tx })
-      ),
-    c.req.raw
-  );
-  return c.json(result);
-});
+const app = base
+  .route("/api/auth", authRouter)
+  .route("/api/zero", zeroRouter)
+  .route("/api/accounts", accountsRouter)
+  .route("/api/transactions", transactionsRouter)
+  .route("/api/brokerage", brokerageRouter)
+  .route("/api/chat", chatRouter)
+  .route("/api/news", newsRouter)
+  .route("/api/research", researchRouter)
+  .route("/api/tickers", tickersRouter)
+  .route("/api/plaid", plaidRouter)
+  .route("/api/snaptrade", snaptradeRouter)
+  .route("/api/subscriptions", subscriptionsRouter)
+  .route("/api/user", userRouter)
+  .route("/api/institutions", institutionsRouter)
+  .route("/api/appstore", appstoreRouter);
 
 // ── Health ──────────────────────────────────────────────────────────
 
-app.get("/", (c) => c.text("OK"));
+base.get("/", (c) => c.text("OK"));
+
+// ── OpenAPI Docs ────────────────────────────────────────────────────
+
+base.doc("/openapi.json", {
+  info: {
+    description: "Cobalt financial platform API",
+    title: "Cobalt API",
+    version: "0.1.0",
+  },
+  openapi: "3.1.0",
+});
+
+base.get("/docs", swaggerUI({ url: "/openapi.json" }));
+
+export type AppType = typeof app;
 
 export default app;

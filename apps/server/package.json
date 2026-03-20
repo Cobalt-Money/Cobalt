@@ -14,9 +14,12 @@
     "@cobalt-web/db": "workspace:*",
     "@cobalt-web/env": "workspace:*",
     "@cobalt-web/zero": "workspace:*",
+    "@hono/swagger-ui": "^0.6.1",
+    "@hono/zod-openapi": "^1.2.2",
     "@rocicorp/zero": "catalog:",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "drizzle-orm": "^0.45.1",
     "hono": "^4.8.2",
     "pg": "^8.16.3",
     "zod": "catalog:"
