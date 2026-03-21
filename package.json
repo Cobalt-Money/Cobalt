@@ -46,6 +46,7 @@
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
     "@types/bun": "catalog:",
+    "drizzle-kit": "^0.31.10",
     "oxfmt": "latest",
     "oxlint": "latest",
     "turbo": "^2.8.20",

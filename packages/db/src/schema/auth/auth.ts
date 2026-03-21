@@ -51,7 +51,7 @@ export const account = pgTable(
     createdAt: timestamp("created_at").notNull(),
     id: text("id").primaryKey(),
     idToken: text("id_token"),
-    password: text("password"),
+    // No `password` column — social-only auth (matches horizon-test auth-schema)
     providerId: text("provider_id").notNull(),
     refreshToken: text("refresh_token"),
     refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
