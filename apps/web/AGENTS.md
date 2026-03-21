@@ -24,6 +24,7 @@ public/           — Static assets
 ## Key Config Files
 
 - `vite.config.ts` — Vite config with TanStack Start (**SPA mode** via `tanstackStart({ spa: { enabled: true } })`), Tailwind CSS v4, and React plugins. The app shell is not server-rendered; this matches Rocicorp’s guidance for Zero ([ztunes](https://github.com/rocicorp/ztunes#tanstack-start)). API routes and server functions still run on the server.
+- `drizzle.config.ts` — Re-exports `packages/db/drizzle.config.ts` so you can run Drizzle Kit from this app (`bun run db:push`, etc.). Schema and migrations live in **`packages/db`**; `DATABASE_URL` is read from **`apps/server/.env`**.
 - `components.json` — Shadcn UI config (base-lyra style), references `@cobalt-web/ui` globals
 - `tsconfig.json` — Path aliases: `@/*` maps to `./src/*`, `@cobalt-web/ui/*` maps to UI package
 
@@ -35,6 +36,7 @@ public/           — Static assets
 - Auth client is in `src/lib/auth-client.ts`; Zero is in `src/lib/zero-client.tsx` — wrap **only routes that call `useQuery`/`useZero`**, not the root router (Rocicorp’s `ZeroProvider` renders nothing until the client is ready).
 - Route protection is handled via middleware in `src/middleware/auth.ts`
 - Dev server runs on port 3001
+- Database schema is **not** defined in `apps/web` — use `bun run db:push` / `db:generate` here (or `bun db:push` from repo root) against `packages/db`
 
 ## Package References
 

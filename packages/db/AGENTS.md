@@ -10,7 +10,7 @@ src/
   schema/
     auth.ts       — Database schema definitions (auth tables)
   migrations/     — Drizzle-generated migration files
-drizzle.config.ts — Drizzle Kit config (PostgreSQL, loads DATABASE_URL from apps/server/.env)
+drizzle.config.ts — Drizzle Kit config (PostgreSQL; paths resolved from this file so `out` / `schema` work from any cwd; loads `DATABASE_URL` from `apps/server/.env`). `apps/web/drizzle.config.ts` re-exports this package for convenience.
 ```
 
 ## Conventions
