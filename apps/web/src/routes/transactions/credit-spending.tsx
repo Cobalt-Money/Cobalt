@@ -8,6 +8,16 @@ import type { CreditSpendingPeriod } from "./credit-periods";
 
 export const Route = createFileRoute("/transactions/credit-spending")({
   component: CreditSpendingPage,
+  loader: async ({ context }) => {
+    if (!context.zero) {
+      return;
+    }
+    // Default period matches initial `useState`; URL-driven `loaderDeps` could extend this.
+    await context.zero.run(
+      queries.transactions.creditSpending({ period: "1m" })
+    );
+  },
+  ssr: false,
 });
 
 function formatDay(ms: number): string {
@@ -52,7 +62,10 @@ function aggregateCreditSpending(
   const spending = [...buckets.entries()]
     .map(([date, amount]) => ({ amount, date }))
     .toSorted((a, b) => a.date.localeCompare(b.date));
-  const totalSpending = spending.reduce((sum, s) => sum + s.amount, 0);
+  const totalSpending = spending.reduce(
+    (sum: number, row: { amount: number; date: string }) => sum + row.amount,
+    0
+  );
   return { spending, totalSpending };
 }
 
@@ -86,9 +99,9 @@ function CreditSpendingPage() {
         </span>
       </div>
       <ul className="font-mono text-xs">
-        {spending.map((s) => (
-          <li className="border-b py-1" key={s.date}>
-            {s.date} · {s.amount.toFixed(2)}
+        {spending.map((row) => (
+          <li className="border-b py-1" key={row.date}>
+            {row.date} · {row.amount.toFixed(2)}
           </li>
         ))}
       </ul>

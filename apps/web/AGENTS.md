@@ -33,7 +33,7 @@ public/           — Static assets
 - Routes are file-based via TanStack Router — add new routes as files in `src/routes/`
 - `routeTree.gen.ts` is auto-generated; never edit it manually
 - UI components come from `@cobalt-web/ui/components/*` (Shadcn)
-- Auth client is in `src/lib/auth-client.ts`; Zero is in `src/lib/zero-client.tsx` — wrap **only routes that call `useQuery`/`useZero`**, not the root router (Rocicorp’s `ZeroProvider` renders nothing until the client is ready).
+- Auth client is in `src/lib/auth-client.ts`; Zero is in `src/lib/zero-client.tsx` — **`ZeroProvider` wraps the app shell in `routes/__root.tsx`** (ztunes-style). Rocicorp’s `ZeroProvider` renders nothing until the client is ready, so the shell is blank until then.
 - Route protection is handled via middleware in `src/middleware/auth.ts`
 - Dev server runs on port 3001
 - Database schema is **not** defined in `apps/web` — use `bun run db:push` / `db:generate` here (or `bun db:push` from repo root) against `packages/db`

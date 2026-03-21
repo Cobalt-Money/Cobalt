@@ -4,6 +4,13 @@ import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/transactions/")({
   component: TransactionsListPage,
+  loader: async ({ context }) => {
+    if (!context.zero) {
+      return;
+    }
+    await context.zero.run(queries.transactions.list());
+  },
+  ssr: false,
 });
 
 function formatDate(ms: number): string {
@@ -26,7 +33,11 @@ function TransactionsListPage() {
       <ul className="font-mono text-xs">
         {rows.map((row) => (
           <li className="border-b py-1" key={row.id}>
-            {formatDate(row.date)} · {row.name} · {row.amount}
+            {formatDate(row.date)} · {row.name} ·{" "}
+            {row.userOverrideName ?? (
+              <span className="text-muted-foreground">—</span>
+            )}{" "}
+            · {row.amount}
           </li>
         ))}
       </ul>

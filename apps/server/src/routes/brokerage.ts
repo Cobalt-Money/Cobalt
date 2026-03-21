@@ -6,7 +6,6 @@ const brokerageRouter = new OpenAPIHono();
 
 brokerageRouter.use("/*", requireAuth);
 
-// TODO: Port from horizon-test
 // GET /                    → full brokerage data (accounts, balances, positions, activities, snapshots)
 // GET /balances            → account balances
 // GET /positions           → positions (optionally by account)

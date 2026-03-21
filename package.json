@@ -35,7 +35,7 @@
     "db:generate": "drizzle-kit generate --config packages/db/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config packages/db/drizzle.config.ts",
     "dev:zero": "zero-cache-dev",
-    "check": "ultracite check",
+    "check": "ultracite check && turbo check-types",
     "fix": "ultracite fix",
     "sync-env": "bash sync-env.sh"
   },

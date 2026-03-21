@@ -6,7 +6,6 @@ const chatRouter = new OpenAPIHono();
 
 chatRouter.use("/*", requireAuth);
 
-// TODO: Port from horizon-test
 // POST   /         → stream AI chat response
 // DELETE /         → delete a chat
 // GET    /list     → list user's chats

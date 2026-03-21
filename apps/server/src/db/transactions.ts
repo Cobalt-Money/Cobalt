@@ -284,7 +284,10 @@ export async function getCreditSpending(
   const spending = [...buckets.entries()]
     .map(([date, amount]) => ({ amount, date }))
     .toSorted((a, b) => a.date.localeCompare(b.date));
-  const totalSpending = spending.reduce((sum, s) => sum + s.amount, 0);
+  const totalSpending = spending.reduce(
+    (sum: number, row: { amount: number; date: string }) => sum + row.amount,
+    0
+  );
   const averageSpending =
     spending.length > 0 ? totalSpending / spending.length : 0;
 

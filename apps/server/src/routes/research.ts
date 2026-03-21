@@ -6,7 +6,6 @@ const researchRouter = new OpenAPIHono();
 
 researchRouter.use("/*", requireAuth);
 
-// TODO: Port from horizon-test
 // GET /quote         → current price + change
 // GET /overview      → company overview (Alpha Vantage)
 // GET /chart         → price history (1D/1W/1M/3M/6M/YTD/1Y/All)

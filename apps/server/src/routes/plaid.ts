@@ -7,7 +7,6 @@ const plaidRouter = new OpenAPIHono();
 // Most routes require auth
 plaidRouter.use("/*", requireAuth);
 
-// TODO: Port from horizon-test
 // POST /create-link-token     → create Plaid Link token
 // POST /exchange-token        → exchange public token for access token
 // POST /items/persist         → persist Plaid item + trigger syncs

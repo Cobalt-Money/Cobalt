@@ -6,7 +6,6 @@ const accountsRouter = new OpenAPIHono();
 
 accountsRouter.use("/*", requireAuth);
 
-// TODO: Port from horizon-test
 // GET  /              → list all bank accounts
 // GET  /bank/:id      → get bank account details
 // DELETE /bank/:id    → disconnect bank account

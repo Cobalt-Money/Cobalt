@@ -4,6 +4,13 @@ import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/transactions/recurring")({
   component: RecurringPage,
+  loader: async ({ context }) => {
+    if (!context.zero) {
+      return;
+    }
+    await context.zero.run(queries.transactions.recurring());
+  },
+  ssr: false,
 });
 
 function RecurringPage() {

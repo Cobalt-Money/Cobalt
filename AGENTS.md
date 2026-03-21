@@ -42,7 +42,7 @@ After finishing a feature or making changes, always run:
 bun check
 ```
 
-This runs `ultracite check` across the repo to verify linting and formatting. To auto-fix issues:
+This runs Ultracite (lint/format) and then `turbo check-types` (TypeScript) across the repo. To auto-fix issues:
 
 ```sh
 bun fix
@@ -50,18 +50,18 @@ bun fix
 
 ## Key Commands
 
-| Command           | Description                       |
-| ----------------- | --------------------------------- |
-| `bun dev`         | Start all apps in dev mode        |
-| `bun dev:web`     | Start only the web app            |
-| `bun dev:server`  | Start only the server             |
-| `bun build`       | Build all apps                    |
-| `bun check`       | Lint and format check (Ultracite) |
-| `bun fix`         | Auto-fix lint and format issues   |
-| `bun db:push`     | Push schema changes to database   |
-| `bun db:generate` | Generate Drizzle migrations       |
-| `bun db:migrate`  | Run database migrations           |
-| `bun db:studio`   | Open Drizzle Studio               |
+| Command           | Description                                                   |
+| ----------------- | ------------------------------------------------------------- |
+| `bun dev`         | Start all apps in dev mode                                    |
+| `bun dev:web`     | Start only the web app                                        |
+| `bun dev:server`  | Start only the server                                         |
+| `bun build`       | Build all apps                                                |
+| `bun check`       | Ultracite (lint/format) then `turbo check-types` (TypeScript) |
+| `bun fix`         | Auto-fix lint and format issues                               |
+| `bun db:push`     | Push schema changes to database                               |
+| `bun db:generate` | Generate Drizzle migrations                                   |
+| `bun db:migrate`  | Run database migrations                                       |
+| `bun db:studio`   | Open Drizzle Studio                                           |
 
 ## Skills
 

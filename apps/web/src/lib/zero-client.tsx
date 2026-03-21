@@ -3,8 +3,11 @@ import { mutators, schema } from "@cobalt-web/zero";
 import type { Context } from "@cobalt-web/zero";
 import type { Zero } from "@rocicorp/zero";
 import { ZeroProvider as BaseZeroProvider } from "@rocicorp/zero/react";
+import { useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useCallback } from "react";
+
+import { preloadTransactionsQueries } from "@/routes/transactions/preload-queries";
 
 import { authClient } from "./auth-client";
 import { registerActiveZeroForLogout } from "./zero-logout";
@@ -12,22 +15,13 @@ import { registerActiveZeroForLogout } from "./zero-logout";
 const cacheURL = env.VITE_ZERO_CACHE_URL ?? "http://localhost:4848";
 
 /**
- * Wrap only route subtrees that use `useQuery` / `useZero`.
- * Do not wrap the root router: Rocicorp's `ZeroProvider` renders nothing until `Zero`
- * is created in an effect (`zero && <Provider>`), which blanks the whole app until then.
+ * App shell wrapper (see `routes/__root.tsx`), matching ztunes `ZeroInit`.
+ * Rocicorp's `ZeroProvider` renders nothing until `Zero` exists, so the shell is
+ * blank until then — same tradeoff as ztunes.
  */
 
-export function ZeroProvider({
-  children,
-  init,
-}: {
-  children: ReactNode;
-  /**
-   * Runs once when the `Zero` client is constructed — same pattern as ztunes
-   * (`ZeroProvider` `init`). Prefer this over `useEffect` + `preload` in a child.
-   */
-  init?: (z: Zero) => void;
-}) {
+export function ZeroProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const session = authClient.useSession();
   const context: Context = session.data
     ? { userId: session.data.user.id }
@@ -36,10 +30,17 @@ export function ZeroProvider({
 
   const mergedInit = useCallback(
     (z: Zero) => {
+      router.update({
+        context: {
+          ...router.options.context,
+          zero: z,
+        },
+      });
+      router.invalidate();
       registerActiveZeroForLogout(z);
-      init?.(z);
+      preloadTransactionsQueries(z);
     },
-    [init]
+    [router]
   );
 
   return (

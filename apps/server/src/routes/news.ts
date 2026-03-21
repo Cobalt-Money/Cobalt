@@ -6,7 +6,6 @@ const newsRouter = new OpenAPIHono();
 
 newsRouter.use("/*", requireAuth);
 
-// TODO: Port from horizon-test
 // GET /events          → paginated financial events
 // GET /events/for-you  → personalized events based on holdings
 // GET /events/:eventId → single event detail

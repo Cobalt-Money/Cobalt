@@ -1,4 +1,5 @@
 import { Toaster } from "@cobalt-web/ui/components/sonner";
+import type { Zero } from "@rocicorp/zero";
 import {
   HeadContent,
   Outlet,
@@ -8,10 +9,14 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import Header from "../components/header";
+import { ZeroProvider } from "../lib/zero-client";
 
 import appCss from "../index.css?url";
 
-export interface RouterAppContext {}
+/** Set by root {@link ZeroProvider} when the Zero client is ready. See ztunes `ZeroInit`. */
+export interface RouterAppContext {
+  zero?: Zero;
+}
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   component: RootDocument,
@@ -45,10 +50,12 @@ function RootDocument() {
         <HeadContent />
       </head>
       <body>
-        <div className="grid h-svh grid-rows-[auto_1fr]">
-          <Header />
-          <Outlet />
-        </div>
+        <ZeroProvider>
+          <div className="grid h-svh grid-rows-[auto_1fr]">
+            <Header />
+            <Outlet />
+          </div>
+        </ZeroProvider>
         <Toaster richColors />
         <TanStackRouterDevtools position="bottom-left" />
         <Scripts />
