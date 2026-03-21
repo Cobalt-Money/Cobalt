@@ -26,11 +26,9 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
     CORS_ORIGIN: z.url(),
-    DATABASE_URL: z.string().min(1),
     /** Cap @cobalt-web/db pool size — default 10 per `pg` is too high for small Postgres (Neon free, etc.). */
     DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(5),
-    /** Pool for Zero mutate adapter when `ZERO_UPSTREAM_DB` is set (keep small if same DB as `DATABASE_URL`). */
-    ZERO_DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(2),
+    DATABASE_URL: z.string().min(1),
     GOOGLE_CLIENT_ID: z.string().min(1),
     GOOGLE_CLIENT_SECRET: z.string().min(1),
     GOOGLE_IOS_CLIENT_ID: z.string().min(1),
@@ -38,6 +36,8 @@ export const env = createEnv({
       .enum(["development", "production", "test"])
       .default("development"),
     TRUSTED_ORIGINS_EXTRA: commaList,
+    /** Pool for Zero mutate adapter when `ZERO_UPSTREAM_DB` is set (keep small if same DB as `DATABASE_URL`). */
+    ZERO_DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(2),
     ZERO_UPSTREAM_DB: z.string().min(1).optional(),
   },
 });

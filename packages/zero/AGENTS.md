@@ -22,9 +22,8 @@ src/
 - After any Drizzle schema change, regenerate: `cd packages/zero && bun run generate:zero`. Stale `zero-schema.gen.ts` causes `SchemaVersionNotSupported` in zero-cache (e.g. client expects columns that Postgres replication does not publish).
 - Zero client is initialized in `apps/web/src/lib/zero-client.tsx`
 - Zero push endpoint is in `apps/server/src/index.ts`
+- For **additional Zero patterns** outside this package, see the **ztunes** sample at [`.sandbox/ztunes`](../../.sandbox/ztunes) (sandbox app, not a workspace package by default).
 
-## Package References
+## Package references
 
-When modifying Zero schema or queries, read the source code of `@rocicorp/zero` for API reference:
-
-- **@rocicorp/zero:** `node_modules/@rocicorp/zero/dist/` — schema definition, query types, mutator API, permissions
+For exact APIs, open **`@rocicorp/zero`** under `node_modules` (Bun often nests under `.bun/@rocicorp+zero@…`). Types ship under **`out/zero-client/`**, **`out/zql/`**, **`out/zero-server/`**, etc. Each **`.agents/skills/rocicorp-zero/`** chapter includes a **Package reference** pointing at the right **`out/<subpackage>/src/`** files for that topic.

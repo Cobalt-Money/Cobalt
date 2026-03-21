@@ -30,9 +30,12 @@ export const auth = betterAuth({
     },
   },
   advanced: {
+    // `lax` aligns with Zero cookie guidance (avoid `SameSite=None` for WS sync).
+    // If you need cookies across different sites, use subdomain deployment + Better Auth
+    // cross-subdomain cookies instead of `none` here.
     defaultCookieAttributes: {
       httpOnly: true,
-      sameSite: "none",
+      sameSite: "lax",
       secure: true,
     },
   },

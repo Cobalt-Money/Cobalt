@@ -3,10 +3,8 @@ import { useQuery } from "@rocicorp/zero/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
-import {
-  type CreditSpendingPeriod,
-  CREDIT_SPENDING_PERIODS,
-} from "./credit-periods";
+import { CREDIT_SPENDING_PERIODS } from "./credit-periods";
+import type { CreditSpendingPeriod } from "./credit-periods";
 
 export const Route = createFileRoute("/transactions/credit-spending")({
   component: CreditSpendingPage,
@@ -74,9 +72,7 @@ function CreditSpendingPage() {
         <span className="text-muted-foreground text-sm">Period</span>
         <select
           className="bg-background border rounded px-2 py-1 text-sm"
-          onChange={(e) =>
-            setPeriod(e.target.value as CreditSpendingPeriod)
-          }
+          onChange={(e) => setPeriod(e.target.value as CreditSpendingPeriod)}
           value={period}
         >
           {CREDIT_SPENDING_PERIODS.map((p) => (

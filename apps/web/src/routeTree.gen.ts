@@ -8,199 +8,200 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as TransactionsRouteRouteImport } from './routes/transactions/route'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as TransactionsIndexRouteImport } from './routes/transactions/index'
-import { Route as TransactionsRecurringRouteImport } from './routes/transactions/recurring'
-import { Route as TransactionsCreditSpendingRouteImport } from './routes/transactions/credit-spending'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as DashboardRouteImport } from "./routes/dashboard";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as LoginRouteImport } from "./routes/login";
+import { Route as TransactionsCreditSpendingRouteImport } from "./routes/transactions/credit-spending";
+import { Route as TransactionsIndexRouteImport } from "./routes/transactions/index";
+import { Route as TransactionsRecurringRouteImport } from "./routes/transactions/recurring";
+import { Route as TransactionsRouteRouteImport } from "./routes/transactions/route";
 
 const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+  id: "/login",
+  path: "/login",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+  id: "/dashboard",
+  path: "/dashboard",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const TransactionsRouteRoute = TransactionsRouteRouteImport.update({
-  id: '/transactions',
-  path: '/transactions',
+  id: "/transactions",
+  path: "/transactions",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const TransactionsIndexRoute = TransactionsIndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => TransactionsRouteRoute,
-} as any)
+} as any);
 const TransactionsRecurringRoute = TransactionsRecurringRouteImport.update({
-  id: '/recurring',
-  path: '/recurring',
+  id: "/recurring",
+  path: "/recurring",
   getParentRoute: () => TransactionsRouteRoute,
-} as any)
+} as any);
 const TransactionsCreditSpendingRoute =
   TransactionsCreditSpendingRouteImport.update({
-    id: '/credit-spending',
-    path: '/credit-spending',
+    id: "/credit-spending",
+    path: "/credit-spending",
     getParentRoute: () => TransactionsRouteRoute,
-  } as any)
+  } as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/transactions': typeof TransactionsRouteRouteWithChildren
-  '/dashboard': typeof DashboardRoute
-  '/login': typeof LoginRoute
-  '/transactions/credit-spending': typeof TransactionsCreditSpendingRoute
-  '/transactions/recurring': typeof TransactionsRecurringRoute
-  '/transactions/': typeof TransactionsIndexRoute
+  "/": typeof IndexRoute;
+  "/transactions": typeof TransactionsRouteRouteWithChildren;
+  "/dashboard": typeof DashboardRoute;
+  "/login": typeof LoginRoute;
+  "/transactions/credit-spending": typeof TransactionsCreditSpendingRoute;
+  "/transactions/recurring": typeof TransactionsRecurringRoute;
+  "/transactions/": typeof TransactionsIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/login': typeof LoginRoute
-  '/transactions/credit-spending': typeof TransactionsCreditSpendingRoute
-  '/transactions/recurring': typeof TransactionsRecurringRoute
-  '/transactions': typeof TransactionsIndexRoute
+  "/": typeof IndexRoute;
+  "/dashboard": typeof DashboardRoute;
+  "/login": typeof LoginRoute;
+  "/transactions/credit-spending": typeof TransactionsCreditSpendingRoute;
+  "/transactions/recurring": typeof TransactionsRecurringRoute;
+  "/transactions": typeof TransactionsIndexRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/transactions': typeof TransactionsRouteRouteWithChildren
-  '/dashboard': typeof DashboardRoute
-  '/login': typeof LoginRoute
-  '/transactions/credit-spending': typeof TransactionsCreditSpendingRoute
-  '/transactions/recurring': typeof TransactionsRecurringRoute
-  '/transactions/': typeof TransactionsIndexRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/transactions": typeof TransactionsRouteRouteWithChildren;
+  "/dashboard": typeof DashboardRoute;
+  "/login": typeof LoginRoute;
+  "/transactions/credit-spending": typeof TransactionsCreditSpendingRoute;
+  "/transactions/recurring": typeof TransactionsRecurringRoute;
+  "/transactions/": typeof TransactionsIndexRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | '/'
-    | '/transactions'
-    | '/dashboard'
-    | '/login'
-    | '/transactions/credit-spending'
-    | '/transactions/recurring'
-    | '/transactions/'
-  fileRoutesByTo: FileRoutesByTo
+    | "/"
+    | "/transactions"
+    | "/dashboard"
+    | "/login"
+    | "/transactions/credit-spending"
+    | "/transactions/recurring"
+    | "/transactions/";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
-    | '/dashboard'
-    | '/login'
-    | '/transactions/credit-spending'
-    | '/transactions/recurring'
-    | '/transactions'
+    | "/"
+    | "/dashboard"
+    | "/login"
+    | "/transactions/credit-spending"
+    | "/transactions/recurring"
+    | "/transactions";
   id:
-    | '__root__'
-    | '/'
-    | '/transactions'
-    | '/dashboard'
-    | '/login'
-    | '/transactions/credit-spending'
-    | '/transactions/recurring'
-    | '/transactions/'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/"
+    | "/transactions"
+    | "/dashboard"
+    | "/login"
+    | "/transactions/credit-spending"
+    | "/transactions/recurring"
+    | "/transactions/";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  TransactionsRouteRoute: typeof TransactionsRouteRouteWithChildren
-  DashboardRoute: typeof DashboardRoute
-  LoginRoute: typeof LoginRoute
+  IndexRoute: typeof IndexRoute;
+  TransactionsRouteRoute: typeof TransactionsRouteRouteWithChildren;
+  DashboardRoute: typeof DashboardRoute;
+  LoginRoute: typeof LoginRoute;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/transactions': {
-      id: '/transactions'
-      path: '/transactions'
-      fullPath: '/transactions'
-      preLoaderRoute: typeof TransactionsRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/transactions/': {
-      id: '/transactions/'
-      path: '/'
-      fullPath: '/transactions/'
-      preLoaderRoute: typeof TransactionsIndexRouteImport
-      parentRoute: typeof TransactionsRouteRoute
-    }
-    '/transactions/recurring': {
-      id: '/transactions/recurring'
-      path: '/recurring'
-      fullPath: '/transactions/recurring'
-      preLoaderRoute: typeof TransactionsRecurringRouteImport
-      parentRoute: typeof TransactionsRouteRoute
-    }
-    '/transactions/credit-spending': {
-      id: '/transactions/credit-spending'
-      path: '/credit-spending'
-      fullPath: '/transactions/credit-spending'
-      preLoaderRoute: typeof TransactionsCreditSpendingRouteImport
-      parentRoute: typeof TransactionsRouteRoute
-    }
+    "/login": {
+      id: "/login";
+      path: "/login";
+      fullPath: "/login";
+      preLoaderRoute: typeof LoginRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/dashboard": {
+      id: "/dashboard";
+      path: "/dashboard";
+      fullPath: "/dashboard";
+      preLoaderRoute: typeof DashboardRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/transactions": {
+      id: "/transactions";
+      path: "/transactions";
+      fullPath: "/transactions";
+      preLoaderRoute: typeof TransactionsRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/transactions/": {
+      id: "/transactions/";
+      path: "/";
+      fullPath: "/transactions/";
+      preLoaderRoute: typeof TransactionsIndexRouteImport;
+      parentRoute: typeof TransactionsRouteRoute;
+    };
+    "/transactions/recurring": {
+      id: "/transactions/recurring";
+      path: "/recurring";
+      fullPath: "/transactions/recurring";
+      preLoaderRoute: typeof TransactionsRecurringRouteImport;
+      parentRoute: typeof TransactionsRouteRoute;
+    };
+    "/transactions/credit-spending": {
+      id: "/transactions/credit-spending";
+      path: "/credit-spending";
+      fullPath: "/transactions/credit-spending";
+      preLoaderRoute: typeof TransactionsCreditSpendingRouteImport;
+      parentRoute: typeof TransactionsRouteRoute;
+    };
   }
 }
 
 interface TransactionsRouteRouteChildren {
-  TransactionsCreditSpendingRoute: typeof TransactionsCreditSpendingRoute
-  TransactionsRecurringRoute: typeof TransactionsRecurringRoute
-  TransactionsIndexRoute: typeof TransactionsIndexRoute
+  TransactionsCreditSpendingRoute: typeof TransactionsCreditSpendingRoute;
+  TransactionsRecurringRoute: typeof TransactionsRecurringRoute;
+  TransactionsIndexRoute: typeof TransactionsIndexRoute;
 }
 
 const TransactionsRouteRouteChildren: TransactionsRouteRouteChildren = {
   TransactionsCreditSpendingRoute: TransactionsCreditSpendingRoute,
   TransactionsRecurringRoute: TransactionsRecurringRoute,
   TransactionsIndexRoute: TransactionsIndexRoute,
-}
+};
 
 const TransactionsRouteRouteWithChildren =
-  TransactionsRouteRoute._addFileChildren(TransactionsRouteRouteChildren)
+  TransactionsRouteRoute._addFileChildren(TransactionsRouteRouteChildren);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TransactionsRouteRoute: TransactionsRouteRouteWithChildren,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
+import type { createStart } from "@tanstack/react-start";
+
+import type { getRouter } from "./router.tsx";
+declare module "@tanstack/react-start" {
   interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
+    ssr: true;
+    router: Awaited<ReturnType<typeof getRouter>>;
   }
 }

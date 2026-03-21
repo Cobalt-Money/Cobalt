@@ -49,6 +49,7 @@ coverage
 .cache
 tmp
 temp
+.sandbox
 
 # Zero dev cache (SQLite + WAL/SHM; created by `zero-cache-dev`, never commit)
 apps/zero-cache/zero.db*

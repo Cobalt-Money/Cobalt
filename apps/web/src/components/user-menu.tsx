@@ -12,6 +12,7 @@ import { Skeleton } from "@cobalt-web/ui/components/skeleton";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import { authClient } from "@/lib/auth-client";
+import { deleteActiveZeroReplicaOnLogout } from "@/lib/zero-logout";
 
 export default function UserMenu() {
   const navigate = useNavigate();
@@ -41,7 +42,12 @@ export default function UserMenu() {
           <DropdownMenuItem>{session.user.email}</DropdownMenuItem>
           <DropdownMenuItem
             variant="destructive"
-            onClick={() => {
+            onClick={async () => {
+              try {
+                await deleteActiveZeroReplicaOnLogout();
+              } catch {
+                // Best-effort local replica wipe; sign-out still proceeds.
+              }
               authClient.signOut({
                 fetchOptions: {
                   onSuccess: () => {

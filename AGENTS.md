@@ -30,6 +30,8 @@ packages/
   env/        — Zod-validated environment variables (server + web)
   ui/         — Shared React components (Shadcn) and styles
   zero/       — Rocicorp Zero schema, queries, and mutators
+.sandbox/
+  ztunes/     — Zero sample app (reference patterns; optional, not in the default Turborepo pipeline)
 ```
 
 ## Workflow
@@ -71,12 +73,13 @@ To discover and update skills shipped by npm dependencies, run:
 npx @tanstack/intent install
 ```
 
-| Skill                  | Path                                             | Use when                                                          |
-| ---------------------- | ------------------------------------------------ | ----------------------------------------------------------------- |
-| Hono                   | `.agents/skills/hono/SKILL.md`                   | Building or modifying server routes, middleware, or API endpoints |
-| Drizzle ORM            | `.agents/skills/drizzle-orm/SKILL.md`            | Working with database schema, queries, relations, or migrations   |
-| PostgreSQL             | `.agents/skills/postgres/SKILL.md`               | Query optimization, connection troubleshooting, performance       |
-| Tailwind Design System | `.agents/skills/tailwind-design-system/SKILL.md` | Design tokens, component variants, theming, responsive patterns   |
+| Skill                  | Path                                             | Use when                                                            |
+| ---------------------- | ------------------------------------------------ | ------------------------------------------------------------------- |
+| Hono                   | `.agents/skills/hono/SKILL.md`                   | Building or modifying server routes, middleware, or API endpoints   |
+| Drizzle ORM            | `.agents/skills/drizzle-orm/SKILL.md`            | Working with database schema, queries, relations, or migrations     |
+| PostgreSQL             | `.agents/skills/postgres/SKILL.md`               | Query optimization, connection troubleshooting, performance         |
+| Tailwind Design System | `.agents/skills/tailwind-design-system/SKILL.md` | Design tokens, component variants, theming, responsive patterns     |
+| Rocicorp Zero          | `.agents/skills/rocicorp-zero/SKILL.md`          | Zero, ZQL, zero-cache, sync queries, mutators, providers, debugging |
 
 <!-- intent-skills:start -->
 
@@ -93,27 +96,29 @@ skills:
 - task: "Setting up bidirectional devtools communication (app-to-devtools, devtools-to-app)"
   load: "node_modules/.bun/@tanstack+devtools-event-client@0.4.3/node_modules/@tanstack/devtools-event-client/skills/devtools-bidirectional/SKILL.md"
 - task: "Instrumenting a library or codebase for devtools observability"
-load: "node_modules/.bun/@tanstack+devtools-event-client@0.4.3/node_modules/@tanstack/devtools-event-client/skills/devtools-instrumentation/SKILL.md"
+  load: "node_modules/.bun/@tanstack+devtools-event-client@0.4.3/node_modules/@tanstack/devtools-event-client/skills/devtools-instrumentation/SKILL.md"
+- task: "Working with Rocicorp Zero, ZQL, zero-cache, sync queries, mutators, or Postgres providers for Zero"
+load: ".agents/skills/rocicorp-zero/SKILL.md"
 <!-- intent-skills:end -->
 
 ## Package Documentation
 
 When building a new feature or need API reference, read the package source code directly rather than guessing. Look at `.d.ts` type definitions for API surface and exported functions. Read the actual source for implementation details and usage patterns.
 
-| Package         | Source path                                     |
-| --------------- | ----------------------------------------------- |
-| Hono            | `node_modules/hono/dist/types/`                 |
-| TanStack Router | `node_modules/@tanstack/react-router/dist/esm/` |
-| TanStack Query  | `node_modules/@tanstack/react-query/dist/esm/`  |
-| TanStack Start  | `node_modules/@tanstack/react-start/dist/esm/`  |
-| Drizzle ORM     | `node_modules/drizzle-orm/`                     |
-| Drizzle Kit     | `node_modules/drizzle-kit/`                     |
-| Better Auth     | `node_modules/better-auth/dist/`                |
-| Rocicorp Zero   | `node_modules/@rocicorp/zero/dist/`             |
-| Fumadocs Core   | `node_modules/fumadocs-core/dist/`              |
-| Fumadocs UI     | `node_modules/fumadocs-ui/dist/`                |
-| Tailwind CSS    | `node_modules/tailwindcss/`                     |
-| Zod             | `node_modules/zod/lib/`                         |
+| Package         | Source path                                                                                              |
+| --------------- | -------------------------------------------------------------------------------------------------------- |
+| Hono            | `node_modules/hono/dist/types/`                                                                          |
+| TanStack Router | `node_modules/@tanstack/react-router/dist/esm/`                                                          |
+| TanStack Query  | `node_modules/@tanstack/react-query/dist/esm/`                                                           |
+| TanStack Start  | `node_modules/@tanstack/react-start/dist/esm/`                                                           |
+| Drizzle ORM     | `node_modules/drizzle-orm/`                                                                              |
+| Drizzle Kit     | `node_modules/drizzle-kit/`                                                                              |
+| Better Auth     | `node_modules/better-auth/dist/`                                                                         |
+| Rocicorp Zero   | `node_modules/**/@rocicorp/zero/out/` (see **Package reference** in `.agents/skills/rocicorp-zero/*.md`) |
+| Fumadocs Core   | `node_modules/fumadocs-core/dist/`                                                                       |
+| Fumadocs UI     | `node_modules/fumadocs-ui/dist/`                                                                         |
+| Tailwind CSS    | `node_modules/tailwindcss/`                                                                              |
+| Zod             | `node_modules/zod/lib/`                                                                                  |
 
 ## Code Standards
 

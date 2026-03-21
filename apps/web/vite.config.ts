@@ -17,11 +17,11 @@ export default defineConfig({
     }),
     viteReact(),
   ],
-  server: {
-    port: 3001,
-  },
   /** Match dev port so auth / CORS lines up with `CORS_ORIGIN` (API stays on 3000). */
   preview: {
     port: 3001,
-  }
+  },
+  server: {
+    port: 3001,
+  },
 });

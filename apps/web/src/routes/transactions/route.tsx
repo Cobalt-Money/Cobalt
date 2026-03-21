@@ -1,10 +1,10 @@
 import { queries } from "@cobalt-web/zero";
+import type { Zero } from "@rocicorp/zero";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
-import { useEffect } from "react";
 
+import { ZeroNeedsAuthBanner } from "@/components/zero-needs-auth-banner";
 import { getUser } from "@/functions/get-user";
 import { ZeroProvider } from "@/lib/zero-client";
-import { useZero } from "@rocicorp/zero/react";
 
 import { CREDIT_SPENDING_PERIODS } from "./credit-periods";
 
@@ -20,40 +20,31 @@ export const Route = createFileRoute("/transactions")({
 });
 
 /**
- * Registers sync for all three transaction query shapes as soon as you enter
- * `/transactions/*`, so switching tabs can hit data that&apos;s already in the replica.
+ * Preloads transaction query shapes when the `Zero` client is created — same
+ * pattern as ztunes (`ZeroProvider` `init`), not `useEffect` in a child.
+ *
+ * @see https://github.com/rocicorp/ztunes/blob/main/app/components/zero-init.tsx
  */
-function TransactionsZeroPreload() {
-  const zero = useZero();
-  useEffect(() => {
-    const list = zero.preload(queries.transactions.list());
-    const recurring = zero.preload(queries.transactions.recurring());
-    const credits = CREDIT_SPENDING_PERIODS.map((period) =>
-      zero.preload(queries.transactions.creditSpending({ period }))
-    );
-    return () => {
-      list.cleanup();
-      recurring.cleanup();
-      for (const c of credits) {
-        c.cleanup();
-      }
-    };
-  }, [zero]);
-  return null;
+function preloadTransactionsQueries(z: Zero) {
+  z.preload(queries.transactions.list());
+  z.preload(queries.transactions.recurring());
+  for (const period of CREDIT_SPENDING_PERIODS) {
+    z.preload(queries.transactions.creditSpending({ period }));
+  }
 }
 
 function TransactionsShell() {
   return (
-    <ZeroProvider>
-      <TransactionsZeroPreload />
+    <ZeroProvider init={preloadTransactionsQueries}>
       <div className="container mx-auto max-w-4xl px-4 py-4">
+        <ZeroNeedsAuthBanner />
         <p className="text-muted-foreground mb-3 text-sm">
           Each view uses Zero&apos;s{" "}
           <code className="text-foreground">useQuery</code> — reactive reads
           from the local replica. This layout also{" "}
-          <code className="text-foreground">preload</code>s list, recurring,
-          and every credit period (1w–all) so tab switches and the period
-          dropdown stay snappy.
+          <code className="text-foreground">preload</code>s list, recurring, and
+          every credit period (1w–all) so tab switches and the period dropdown
+          stay snappy.
         </p>
         <Outlet />
       </div>
