@@ -50,7 +50,11 @@ bun run dev
 
 This starts **web**, **API**, **Fumadocs**, and the **Zero dev cache** (`zero-cache-dev`, default `http://localhost:4848`) in parallel via Turborepo.
 
-**Zero cache env:** copy `apps/zero-cache/.env.example` to `apps/zero-cache/.env` and set at least `ZERO_UPSTREAM_DB` (same Postgres URL as `DATABASE_URL` is fine), plus `ZERO_QUERY_URL` / `ZERO_MUTATE_URL` pointing at this repo’s API. The `zero-cache` app loads **only** `apps/zero-cache/.env` via `dotenv-cli` — production sets the same variables on the host instead of a file.
+**Zero cache env:** copy `apps/zero-cache/.env.example` to `apps/zero-cache/.env` and set `ZERO_UPSTREAM_DB`, plus `ZERO_QUERY_URL` / `ZERO_MUTATE_URL` pointing at this repo’s API. Enable **`ZERO_QUERY_FORWARD_COOKIES=true`** and **`ZERO_MUTATE_FORWARD_COOKIES=true`** so session cookies reach `/api/zero/query` — otherwise `getSession` sees no user and Zero queries return empty rows. The `zero-cache` app loads **only** `apps/zero-cache/.env` via `dotenv-cli` — production sets the same variables on the host instead of a file.
+
+**Roles (this project):** `DATABASE_URL` in `apps/server/.env` uses the **application** Postgres user (regular privileges). `ZERO_UPSTREAM_DB` uses the host’s **default / Zero upstream** role (per provider setup). They can point at the same cluster and database with **different users** — do not assume one URL is interchangeable with the other.
+
+**Postgres connection limits:** SQLSTATE `53300` (*remaining connection slots are reserved for roles with the SUPERUSER attribute*) usually means **non-superuser** slots are exhausted; the app role behind `DATABASE_URL` hits that limit before elevated roles. `bun dev` runs the API (Drizzle pool + optional Zero mutate pool on `ZERO_UPSTREAM_DB`), **zero-cache**, and replication. Mitigations: use a **pooled** URL for the **application** role (e.g. Neon “Pooled”, Supabase `:6543`), lower `DATABASE_POOL_MAX` / `ZERO_DB_POOL_MAX`, stop duplicate dev processes, or raise `max_connections` / plan limits.
 
 Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
 The API is running at [http://localhost:3000](http://localhost:3000).

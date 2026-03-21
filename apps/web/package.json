@@ -37,7 +37,6 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.10",
     "@cobalt-web/config": "workspace:*",
     "@tanstack/react-router-devtools": "^1.141.1",
     "@testing-library/dom": "^10.4.0",
@@ -45,6 +44,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "^5.0.4",
+    "drizzle-kit": "^0.31.10",
     "jsdom": "^26.0.0",
     "typescript": "^5",
     "vite": "^7.0.2",

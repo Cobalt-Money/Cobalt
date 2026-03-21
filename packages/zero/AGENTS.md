@@ -19,6 +19,7 @@ src/
 - Import queries via `@cobalt-web/zero/queries`
 - Import mutators via `@cobalt-web/zero/mutators`
 - The Zero schema mirrors the Drizzle schema in `@cobalt-web/db` — keep them in sync
+- After any Drizzle schema change, regenerate: `cd packages/zero && bun run generate:zero`. Stale `zero-schema.gen.ts` causes `SchemaVersionNotSupported` in zero-cache (e.g. client expects columns that Postgres replication does not publish).
 - Zero client is initialized in `apps/web/src/lib/zero-client.tsx`
 - Zero push endpoint is in `apps/server/src/index.ts`
 

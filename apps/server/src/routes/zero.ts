@@ -11,7 +11,10 @@ import { Pool } from "pg";
 const zeroRouter = new OpenAPIHono();
 
 const pool = env.ZERO_UPSTREAM_DB
-  ? new Pool({ connectionString: env.ZERO_UPSTREAM_DB })
+  ? new Pool({
+      connectionString: env.ZERO_UPSTREAM_DB,
+      max: env.ZERO_DB_POOL_MAX,
+    })
   : undefined;
 
 const dbProvider = pool ? zeroNodePg(schema, pool) : undefined;
@@ -24,7 +27,6 @@ const getContext = async (req: Request): Promise<Context> => {
 zeroRouter.post("/query", async (c) => {
   const ctx = await getContext(c.req.raw);
   const result = await handleQueryRequest(
-    // @ts-expect-error — resolves once queries are added to packages/zero
     (name, args) => mustGetQuery(queries, name).fn({ args, ctx }),
     schema,
     c.req.raw
@@ -46,7 +48,8 @@ zeroRouter.post("/mutate", async (c) => {
     dbProvider,
     (transact) =>
       transact((tx, name, args) =>
-        // @ts-expect-error — resolves once mutators are added to packages/zero
+        // Empty mutators registry — add @rocicorp/zero mutators when needed
+        // @ts-expect-error TS2339 — mustGetMutator is never until mutators are defined
         mustGetMutator(mutators, name).fn({ args, ctx, tx })
       ),
     c.req.raw
