@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite dev --port=4000",
     "build": "vite build",
-    "start": "node .output/server/index.mjs",
-    "preview": "vite preview",
+    "start": "vite preview --port 4000",
+    "preview": "vite preview --port 4000",
     "types:check": "fumadocs-mdx && tsc --noEmit",
     "postinstall": "fumadocs-mdx"
   },

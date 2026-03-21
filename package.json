@@ -26,6 +26,7 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
+    "start": "turbo run start --filter=web --filter=server --filter=zero-cache --filter=fumadocs",
     "check-types": "turbo check-types",
     "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F server dev",

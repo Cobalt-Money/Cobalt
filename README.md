@@ -48,7 +48,18 @@ Then, run the development server:
 bun run dev
 ```
 
-This starts **web**, **API**, **Fumadocs**, and the **Zero dev cache** (`zero-cache-dev`, default `http://localhost:4848`) in parallel via Turborepo.
+### Production-like local preview (like `next build` + `next start`)
+
+This repo splits the **SPA** (Vite), **API** (Hono), and **zero-cache**, so one command can’t mirror Next.js exactly — but from the repo root:
+
+```bash
+bun run build   # compile web + server + fumadocs
+bun run start   # API + web preview + zero-cache + fumadocs (after build)
+```
+
+The main web **`vite preview`** uses port **3001** (same as `vite dev`). **Fumadocs** uses **`vite preview`** on port **4000**. Ensure **`CORS_ORIGIN`** / Better Auth allow **`http://localhost:3001`** for the web app.
+
+`bun run start` runs **web**, **server**, **zero-cache**, and **fumadocs** via **`turbo run start`** — same **Turbo TUI** as `build` / `dev` (arrow keys to switch task logs). Run **`bun run build`** first.
 
 **Zero cache env:** copy `apps/zero-cache/.env.example` to `apps/zero-cache/.env` and set `ZERO_UPSTREAM_DB`, plus `ZERO_QUERY_URL` / `ZERO_MUTATE_URL` pointing at this repo’s API. Enable **`ZERO_QUERY_FORWARD_COOKIES=true`** and **`ZERO_MUTATE_FORWARD_COOKIES=true`** so session cookies reach `/api/zero/query` — otherwise `getSession` sees no user and Zero queries return empty rows. The `zero-cache` app loads **only** `apps/zero-cache/.env` via `dotenv-cli` — production sets the same variables on the host instead of a file.
 

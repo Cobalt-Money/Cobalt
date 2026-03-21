@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "dotenv -e .env -- zero-cache-dev"
+    "dev": "dotenv -e .env -- zero-cache-dev",
+    "start": "dotenv -e .env -- zero-cache-dev"
   },
   "devDependencies": {
     "@rocicorp/zero": "catalog:",

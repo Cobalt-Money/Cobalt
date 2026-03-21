@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
+    "start": "vite preview",
     "serve": "vite preview",
     "dev": "vite dev",
     "db:push": "drizzle-kit push --config drizzle.config.ts",
