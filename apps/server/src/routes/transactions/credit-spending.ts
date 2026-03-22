@@ -1,8 +1,10 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-
-import { getCreditSpending } from "../../db/transactions.js";
-import type { AppEnv } from "../../lib/types.js";
-import { creditSpendingSchema } from "./schemas.js";
+import { getCreditSpending } from "@cobalt-web/server-data/transactions/queries";
+import {
+  creditSpendingQuerySchema,
+  creditSpendingSchema,
+} from "@cobalt-web/server-data/transactions/schemas";
+import type { AppEnv } from "@cobalt-web/server-data/types";
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
 const route = createRoute({
   description:
@@ -10,10 +12,7 @@ const route = createRoute({
   method: "get",
   path: "/credit-spending",
   request: {
-    query: z.object({
-      accountId: z.string().optional(),
-      period: z.enum(["1w", "1m", "3m", "6m", "1y", "all"]),
-    }),
+    query: creditSpendingQuerySchema,
   },
   responses: {
     200: {

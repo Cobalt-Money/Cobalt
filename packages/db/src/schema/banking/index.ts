@@ -21,15 +21,43 @@ export {
   type BankBalanceSnapshotSelect,
 } from "./accounts";
 
-// transactions
+// transactions — `zod.ts` (jsonb) + `tables.ts` (Drizzle); barrel is this file only
 export {
-  transaction,
-  recurringStream,
-  type Transaction,
-  type TransactionSelect,
-  type RecurringStream,
-  type RecurringStreamSelect,
-} from "./transactions";
+  counterpartiesArrayJsonSchema,
+  legacyCategoryArrayJsonSchema,
+  locationJsonSchema,
+  numbersIbanNullableJsonSchema,
+  paymentMetaJsonSchema,
+  personalFinanceCategoryJsonSchema,
+  recurringStreamJsonbSelectRefinements,
+  recurringTransactionIdsJsonSchema,
+  transactionCounterpartyJsonSchema,
+  transactionCounterpartyTypeSchema,
+  transactionJsonbSelectRefinements,
+  userOverrideCategoryJsonSchema,
+} from "./transactions/zod";
+export { recurringStream, transaction } from "./transactions/tables";
+export type {
+  CounterpartiesArrayJson,
+  CounterpartyNumbersBacsJson,
+  CounterpartyNumbersInternationalJson,
+  CounterpartyNumbersJson,
+  LegacyCategoryArrayJson,
+  LocationJson,
+  NumbersIbanNullableJson,
+  PaymentMetaJson,
+  PersonalFinanceCategoryJson,
+  RecurringTransactionIdsJson,
+  TransactionCounterpartyJson,
+  TransactionCounterpartyType,
+  UserOverrideCategoryJson,
+} from "./transactions/zod";
+export type {
+  RecurringStream,
+  RecurringStreamSelect,
+  Transaction,
+  TransactionSelect,
+} from "./transactions/tables";
 
 // liabilities
 export {

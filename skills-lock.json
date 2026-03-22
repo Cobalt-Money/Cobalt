@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "Functional Programming Fundamentals": {
+      "source": "whatiskadudoing/fp-ts-skills",
+      "sourceType": "github",
+      "computedHash": "0da195e3bce1fe6b115b5b114eea8c564e1b652d5d32f2c1175a32ad97d9a2ee"
+    },
     "drizzle-orm": {
       "source": "bobmatnyc/claude-mpm-skills",
       "sourceType": "github",

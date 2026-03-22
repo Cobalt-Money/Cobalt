@@ -1,7 +1,6 @@
 import { auth } from "@cobalt-web/auth";
+import type { AppEnv } from "@cobalt-web/server-data/types";
 import { createMiddleware } from "hono/factory";
-
-import type { AppEnv } from "../lib/types.js";
 
 export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
   const session = await auth.api.getSession(c.req.raw);

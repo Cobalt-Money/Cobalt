@@ -1,8 +1,7 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-
-import { getRecurringStreams } from "../../db/transactions.js";
-import type { AppEnv } from "../../lib/types.js";
-import { recurringStreamSchema } from "./schemas.js";
+import { getRecurringStreams } from "@cobalt-web/server-data/transactions/queries";
+import { recurringStreamsResponseSchema } from "@cobalt-web/server-data/transactions/schemas";
+import type { AppEnv } from "@cobalt-web/server-data/types";
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
 const route = createRoute({
   description:
@@ -13,7 +12,7 @@ const route = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.object({ streams: z.array(recurringStreamSchema) }),
+          schema: recurringStreamsResponseSchema,
         },
       },
       description: "Recurring streams",

@@ -81,26 +81,6 @@ npx @tanstack/intent install
 | Tailwind Design System | `.agents/skills/tailwind-design-system/SKILL.md` | Design tokens, component variants, theming, responsive patterns     |
 | Rocicorp Zero          | `.agents/skills/rocicorp-zero/SKILL.md`          | Zero, ZQL, zero-cache, sync queries, mutators, providers, debugging |
 
-<!-- intent-skills:start -->
-
-# Skill mappings - when working in these areas, load the linked skill file into context.
-
-skills:
-
-- task: "Building or configuring the Fumadocs site, server-side rendering, or deployment"
-  load: "apps/fumadocs/node_modules/nitro/skills/nitro/SKILL.md"
-- task: "Working with HTTP utilities, request/response handling, or server middleware"
-  load: "node_modules/.bun/h3@2.0.1-rc.16+14047587bf013dd6/node_modules/h3/skills/h3/SKILL.md"
-- task: "Adding TanStack devtools instrumentation or debugging event flows"
-  load: "node_modules/.bun/@tanstack+devtools-event-client@0.4.3/node_modules/@tanstack/devtools-event-client/skills/devtools-event-client/SKILL.md"
-- task: "Setting up bidirectional devtools communication (app-to-devtools, devtools-to-app)"
-  load: "node_modules/.bun/@tanstack+devtools-event-client@0.4.3/node_modules/@tanstack/devtools-event-client/skills/devtools-bidirectional/SKILL.md"
-- task: "Instrumenting a library or codebase for devtools observability"
-  load: "node_modules/.bun/@tanstack+devtools-event-client@0.4.3/node_modules/@tanstack/devtools-event-client/skills/devtools-instrumentation/SKILL.md"
-- task: "Working with Rocicorp Zero, ZQL, zero-cache, sync queries, mutators, or Postgres providers for Zero"
-load: ".agents/skills/rocicorp-zero/SKILL.md"
-<!-- intent-skills:end -->
-
 ## Package Documentation
 
 When building a new feature or need API reference, read the package source code directly rather than guessing. Look at `.d.ts` type definitions for API surface and exported functions. Read the actual source for implementation details and usage patterns.

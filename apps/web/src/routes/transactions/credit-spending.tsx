@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { CREDIT_SPENDING_PERIODS } from "./credit-periods";
 import type { CreditSpendingPeriod } from "./credit-periods";
+import type { CreditSpendingRow } from "./zero-query-rows";
 
 export const Route = createFileRoute("/transactions/credit-spending")({
   component: CreditSpendingPage,
@@ -71,7 +72,8 @@ function aggregateCreditSpending(
 
 function CreditSpendingPage() {
   const [period, setPeriod] = useState<CreditSpendingPeriod>("1m");
-  const [rows] = useQuery(queries.transactions.creditSpending({ period }));
+  const [rowsRaw] = useQuery(queries.transactions.creditSpending({ period }));
+  const rows = rowsRaw as readonly CreditSpendingRow[];
 
   const { spending, totalSpending } = useMemo(
     () => aggregateCreditSpending(rows, period),

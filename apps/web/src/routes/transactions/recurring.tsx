@@ -2,6 +2,8 @@ import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { createFileRoute } from "@tanstack/react-router";
 
+import type { RecurringStreamListRow } from "./zero-query-rows";
+
 export const Route = createFileRoute("/transactions/recurring")({
   component: RecurringPage,
   loader: async ({ context }) => {
@@ -14,7 +16,8 @@ export const Route = createFileRoute("/transactions/recurring")({
 });
 
 function RecurringPage() {
-  const [rows] = useQuery(queries.transactions.recurring());
+  const [rowsRaw] = useQuery(queries.transactions.recurring());
+  const rows = rowsRaw as readonly RecurringStreamListRow[];
 
   return (
     <div className="space-y-2">

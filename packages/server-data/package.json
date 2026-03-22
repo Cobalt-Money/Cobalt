@@ -1,0 +1,22 @@
+{
+  "name": "@cobalt-web/server-data",
+  "type": "module",
+  "exports": {
+    "./transactions/*": "./src/transactions/*.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cobalt-web/auth": "workspace:*",
+    "@cobalt-web/db": "workspace:*",
+    "@hono/zod-openapi": "^1.2.2",
+    "drizzle-orm": "1.0.0-beta.18-7eb39f0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cobalt-web/config": "workspace:*",
+    "typescript": "^5"
+  }
+}

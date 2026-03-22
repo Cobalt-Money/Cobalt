@@ -1,16 +1,13 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-
-import { updateTransactionOverride } from "../../db/transactions.js";
-import { successResponse } from "../../lib/schemas.js";
-import type { AppEnv } from "../../lib/types.js";
-
-// ── Shared path param ───────────────────────────────────────────────
-
-const transactionIdParam = z.object({
-  transactionId: z.string().uuid(),
-});
-
-// ── Category ────────────────────────────────────────────────────────
+import { updateTransactionOverride } from "@cobalt-web/server-data/transactions/mutations";
+import {
+  personalFinanceCategorySchema,
+  successResponse,
+  transactionIdParamSchema,
+  transactionOverrideDateBodySchema,
+  transactionOverrideNameBodySchema,
+} from "@cobalt-web/server-data/transactions/schemas";
+import type { AppEnv } from "@cobalt-web/server-data/types";
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
 const patchCategory = createRoute({
   method: "patch",
@@ -19,15 +16,11 @@ const patchCategory = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: z.object({
-            confidence_level: z.string().optional(),
-            detailed: z.string(),
-            primary: z.string(),
-          }),
+          schema: personalFinanceCategorySchema,
         },
       },
     },
-    params: transactionIdParam,
+    params: transactionIdParamSchema,
   },
   responses: {
     200: {
@@ -43,7 +36,7 @@ const deleteCategory = createRoute({
   description: "Resets to Plaid's original category",
   method: "delete",
   path: "/{transactionId}/category",
-  request: { params: transactionIdParam },
+  request: { params: transactionIdParamSchema },
   responses: {
     200: {
       content: { "application/json": { schema: successResponse } },
@@ -54,8 +47,6 @@ const deleteCategory = createRoute({
   tags: ["Transactions"],
 });
 
-// ── Date ────────────────────────────────────────────────────────────
-
 const patchDate = createRoute({
   method: "patch",
   path: "/{transactionId}/date",
@@ -63,13 +54,11 @@ const patchDate = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: z.object({
-            date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-          }),
+          schema: transactionOverrideDateBodySchema,
         },
       },
     },
-    params: transactionIdParam,
+    params: transactionIdParamSchema,
   },
   responses: {
     200: {
@@ -85,7 +74,7 @@ const deleteDate = createRoute({
   description: "Resets to Plaid's original date",
   method: "delete",
   path: "/{transactionId}/date",
-  request: { params: transactionIdParam },
+  request: { params: transactionIdParamSchema },
   responses: {
     200: {
       content: { "application/json": { schema: successResponse } },
@@ -96,8 +85,6 @@ const deleteDate = createRoute({
   tags: ["Transactions"],
 });
 
-// ── Name ────────────────────────────────────────────────────────────
-
 const patchName = createRoute({
   method: "patch",
   path: "/{transactionId}/name",
@@ -105,13 +92,11 @@ const patchName = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: z.object({
-            name: z.string().min(1),
-          }),
+          schema: transactionOverrideNameBodySchema,
         },
       },
     },
-    params: transactionIdParam,
+    params: transactionIdParamSchema,
   },
   responses: {
     200: {
@@ -127,7 +112,7 @@ const deleteName = createRoute({
   description: "Resets to Plaid's original name",
   method: "delete",
   path: "/{transactionId}/name",
-  request: { params: transactionIdParam },
+  request: { params: transactionIdParamSchema },
   responses: {
     200: {
       content: { "application/json": { schema: successResponse } },
@@ -137,8 +122,6 @@ const deleteName = createRoute({
   summary: "Reset transaction name",
   tags: ["Transactions"],
 });
-
-// ── Router ──────────────────────────────────────────────────────────
 
 export const overridesRouter = new OpenAPIHono<AppEnv>()
   .openapi(patchCategory, async (c) => {

@@ -2,6 +2,8 @@ import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { createFileRoute } from "@tanstack/react-router";
 
+import type { TransactionListRow } from "./zero-query-rows";
+
 export const Route = createFileRoute("/transactions/")({
   component: TransactionsListPage,
   loader: async ({ context }) => {
@@ -22,7 +24,8 @@ function formatDate(ms: number): string {
 }
 
 function TransactionsListPage() {
-  const [rows] = useQuery(queries.transactions.list());
+  const [rowsRaw] = useQuery(queries.transactions.list());
+  const rows = rowsRaw as readonly TransactionListRow[];
 
   return (
     <div className="space-y-2">

@@ -14,7 +14,7 @@ import * as messageVotesSchema from "./schema/features/message-votes";
 import * as rssSchema from "./schema/features/rss";
 import * as userAlertsSchema from "./schema/features/user-alerts";
 import * as mobileSchema from "./schema/mobile/subscriptions";
-import * as relations from "./schema/relations";
+import { relations } from "./schema/relations";
 
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
@@ -23,6 +23,7 @@ const pool = new Pool({
 
 export const db = drizzle({
   client: pool,
+  relations,
   schema: {
     ...authSchema,
     ...chatSchema,
@@ -36,6 +37,5 @@ export const db = drizzle({
     ...rssSchema,
     ...userAlertsSchema,
     ...mobileSchema,
-    ...relations,
   },
 });

@@ -1,34 +1,23 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
-
-import { getUserTransactions } from "../../db/transactions.js";
-import type { AppEnv } from "../../lib/types.js";
-import { transactionListItemSchema } from "./schemas.js";
+import { getUserTransactions } from "@cobalt-web/server-data/transactions/queries";
+import {
+  transactionListQuerySchema,
+  transactionListResponseSchema,
+} from "@cobalt-web/server-data/transactions/schemas";
+import type { AppEnv } from "@cobalt-web/server-data/types";
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
 const route = createRoute({
   description: "Paginated, filterable list of user transactions",
   method: "get",
   path: "/",
   request: {
-    query: z.object({
-      accountType: z.string().optional(),
-      endDate: z.string().optional(),
-      maxAmount: z.coerce.number().optional(),
-      minAmount: z.coerce.number().optional(),
-      page: z.coerce.number().default(0),
-      pageSize: z.coerce.number().default(50),
-      pendingFilter: z.enum(["true", "false"]).optional(),
-      primaryCategory: z.string().optional(),
-      searchQuery: z.string().optional(),
-      startDate: z.string().optional(),
-    }),
+    query: transactionListQuerySchema,
   },
   responses: {
     200: {
       content: {
         "application/json": {
-          schema: z.object({
-            transactions: z.array(transactionListItemSchema),
-          }),
+          schema: transactionListResponseSchema,
         },
       },
       description: "List of transactions",

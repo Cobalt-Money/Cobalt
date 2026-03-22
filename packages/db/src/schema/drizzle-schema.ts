@@ -16,7 +16,7 @@ export {
   bankBalance,
   bankBalanceSnapshot,
 } from "./banking/accounts";
-export { transaction, recurringStream } from "./banking/transactions";
+export { transaction, recurringStream } from "./banking/transactions/tables";
 export {
   creditLiability,
   mortgageLiability,
@@ -45,7 +45,8 @@ export { rssArticles, rssFeeds } from "./features/rss";
 export { userAlerts } from "./features/user-alerts";
 export { mobileSubscription } from "./mobile/subscriptions";
 
-// Relations
+// Legacy v1 `relations()` exports for drizzle-zero code generation only.
+// Runtime DB uses Relational Queries v2 from `./relations`.
 export {
   userRelations,
   accountRelations,
@@ -82,4 +83,4 @@ export {
   kalshiUserRelations,
   feedbackRelations,
   messageVotesRelations,
-} from "./relations";
+} from "./relations-drizzle-zero";
