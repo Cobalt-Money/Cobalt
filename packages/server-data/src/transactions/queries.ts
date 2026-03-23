@@ -93,12 +93,6 @@ export async function getUserTransactions(
     },
   });
 
-  type CategoryData = {
-    primary: string;
-    detailed: string;
-    confidence_level?: string;
-  } | null;
-
   return rows.map((row) => {
     const { account } = row;
     const { connection } = account;
@@ -122,10 +116,9 @@ export async function getUserTransactions(
       name: row.name,
       pending: row.pending,
       personalFinanceCategory:
-        (row.userOverrideCategory as CategoryData) ??
-        (row.personalFinanceCategory as CategoryData),
+        row.userOverrideCategory ?? row.personalFinanceCategory,
       plaidAccountId: account.plaidAccountId,
-      userOverrideCategory: row.userOverrideCategory as CategoryData,
+      userOverrideCategory: row.userOverrideCategory,
       userOverrideDate: normalizedOverrideDate,
       userOverrideName: row.userOverrideName,
     };
