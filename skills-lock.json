@@ -35,6 +35,11 @@
       "source": "wshobson/agents",
       "sourceType": "github",
       "computedHash": "7ff2f4650597e98ca4cd8f01231fb432ab4d187d6b12e641485aa871a04448cc"
+    },
+    "vitest": {
+      "source": "pproenca/dot-skills",
+      "sourceType": "github",
+      "computedHash": "84d2d291054736df0cdee47d1a9a8d3ceb5b9e5a06afb879edff51f55ef30816"
     }
   }
 }

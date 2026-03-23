@@ -35,9 +35,12 @@
     "db:migrate": "drizzle-kit migrate --config packages/db/drizzle.config.ts",
     "dev:zero": "zero-cache-dev",
     "check": "ultracite check && turbo check-types",
+    "precommit": "bun check && bun run test",
+    "test": "turbo test",
     "fix": "ultracite fix",
     "sync-env": "bash sync-env.sh",
-    "sync-sandbox": "bash sync-sandbox.sh"
+    "sync-sandbox": "bash sync-sandbox.sh",
+    "prepare": "husky"
   },
   "dependencies": {
     "@cobalt-web/env": "workspace:*",
@@ -49,11 +52,13 @@
     "@cobalt-web/config": "workspace:*",
     "@types/bun": "catalog:",
     "drizzle-kit": "1.0.0-beta.18-7eb39f0",
+    "husky": "^9.1.7",
     "oxfmt": "latest",
     "oxlint": "latest",
     "turbo": "^2.8.20",
     "typescript": "^5",
-    "ultracite": "7.3.1"
+    "ultracite": "7.3.1",
+    "vitest": "^3.2.0"
   },
   "packageManager": "bun@1.3.5",
   "trustedDependencies": [
