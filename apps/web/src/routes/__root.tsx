@@ -69,7 +69,13 @@ function RootDocument() {
         </ZeroProvider>
         <Toaster richColors />
         {import.meta.env.DEV ? <Agentation /> : null}
-        <TanStackRouterDevtools position="bottom-left" />
+        {import.meta.env.DEV ? (
+          <script
+            crossOrigin="anonymous"
+            src="https://tweakcn.com/live-preview.min.js"
+          />
+        ) : null}
+        <TanStackRouterDevtools position="bottom-right" />
         <Scripts />
       </body>
     </html>
