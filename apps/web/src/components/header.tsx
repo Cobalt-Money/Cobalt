@@ -8,7 +8,7 @@ const activeClass = "font-semibold underline";
 export default function Header() {
   const mainLinks = [
     { label: "Home", to: "/" as const },
-    { label: "Dashboard", to: "/dashboard" as const },
+    { label: "Board", to: "/dashboard" as const },
   ] as const;
 
   const zeroTxLinks = [

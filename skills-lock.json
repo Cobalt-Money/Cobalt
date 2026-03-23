@@ -6,6 +6,11 @@
       "sourceType": "github",
       "computedHash": "0da195e3bce1fe6b115b5b114eea8c564e1b652d5d32f2c1175a32ad97d9a2ee"
     },
+    "agentation": {
+      "source": "benjitaylor/agentation",
+      "sourceType": "github",
+      "computedHash": "6ba2c955bee6ab3e9c7781b2553e3574b4c9ec35e539437d0831bfe368de8550"
+    },
     "drizzle-orm": {
       "source": "bobmatnyc/claude-mpm-skills",
       "sourceType": "github",

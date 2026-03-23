@@ -7,6 +7,7 @@ import {
   createRootRouteWithContext,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { Agentation } from "agentation";
 
 import Header from "../components/header";
 import { ZeroProvider } from "../lib/zero-client";
@@ -57,6 +58,7 @@ function RootDocument() {
           </div>
         </ZeroProvider>
         <Toaster richColors />
+        {import.meta.env.DEV ? <Agentation /> : null}
         <TanStackRouterDevtools position="bottom-left" />
         <Scripts />
       </body>
