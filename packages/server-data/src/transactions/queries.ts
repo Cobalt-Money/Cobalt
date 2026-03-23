@@ -1,6 +1,11 @@
 import { db } from "@cobalt-web/db";
+import type { z } from "zod";
 
 import { toDateString } from "./lib.js";
+import type { transactionListQuerySchema } from "./schemas.js";
+
+/** Same shape as validated `GET /transactions` query — keep in sync with `transactionListQuerySchema`. */
+export type TransactionListQuery = z.infer<typeof transactionListQuerySchema>;
 
 type TransactionRelationalWhere = NonNullable<
   Parameters<typeof db.query.transaction.findMany>[0]
@@ -10,18 +15,7 @@ type TransactionRelationalWhere = NonNullable<
 
 export async function getUserTransactions(
   userId: string,
-  params: {
-    page?: number;
-    pageSize?: number;
-    accountType?: string;
-    pendingFilter?: string;
-    startDate?: string;
-    endDate?: string;
-    minAmount?: number;
-    maxAmount?: number;
-    searchQuery?: string;
-    primaryCategory?: string;
-  } = {}
+  params: TransactionListQuery
 ) {
   const {
     page = 0,

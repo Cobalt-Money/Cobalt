@@ -56,6 +56,17 @@ Postgres
 - **`…/transactions/zod.ts` (in db):** persistence shapes + refinements for **DB columns**.
 - **`server-data/.../schemas.ts`:** **API** contracts (query params, bodies, response DTOs) built from Drizzle **`createSelectSchema`** + picks/extends.
 
+## Hono route ↔ `queries.ts` (list / filters)
+
+- **`createRoute({ request: { query: myListQuerySchema } })`** registers **`zValidator("query", …)`** under the hood (`@hono/zod-openapi` uses `@hono/zod-validator`). **`c.req.valid("query")`** returns the parsed object (or the handler is not reached).
+- **Single source of truth:** export **`export const myListQuerySchema = z.object({…})`** in **`schemas.ts`**. In **`queries.ts`**, **`export type MyListQuery = z.infer<typeof myListQuerySchema>`** and type the second argument as **`MyListQuery`**.
+- **Call pattern:** **`getThings(c.var.user.id, c.req.valid("query"))`** — first arg is **auth identity** (who is asking), second is **validated query string** (pagination/filters). Do not confuse with path params named `:id` on other routes.
+- **Imports:** use **`import { myListQuerySchema } from "./schemas.js"`** (value import) for **`z.infer<typeof myListQuerySchema>`** so **`typeof`** resolves to the real Zod export; avoid **`import type { myListQuerySchema }`** for that pattern unless the toolchain proves it works.
+
+## TypeScript: file → folder rename
+
+- If **`./feature`** becomes **`./feature/`** with **`index.ts`**, some setups resolve **`./feature`** to a stale **`feature.ts`**. Prefer **`./feature/index`** in barrel imports when needed. **`packages/db/tsconfig.json`** should **`include`** `src/**/*.ts` for composite projects.
+
 ## Zero
 
 - If the new/changed table is **replicated**: update **`drizzle-schema.ts`** if needed, run **`packages/zero`** `generate:zero`, restart **zero-cache**. **No** migration for Zod-only changes.
