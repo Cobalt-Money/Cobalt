@@ -36,7 +36,8 @@
     "dev:zero": "zero-cache-dev",
     "check": "ultracite check && turbo check-types",
     "fix": "ultracite fix",
-    "sync-env": "bash sync-env.sh"
+    "sync-env": "bash sync-env.sh",
+    "sync-sandbox": "bash sync-sandbox.sh"
   },
   "dependencies": {
     "@cobalt-web/env": "workspace:*",
