@@ -1,7 +1,7 @@
 import { defineRelations } from "drizzle-orm";
 
 import { chats, messages, parts } from "./ai/chat";
-import { user, session, account } from "./auth/auth";
+import { user, session, account, subscription } from "./auth/auth";
 import {
   bankConnection,
   bankAccount,
@@ -73,6 +73,7 @@ const schema = {
   recurringStream,
   session,
   studentLoanLiability,
+  subscription,
   transaction,
   user,
   userAlerts,
@@ -434,6 +435,13 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
+  subscription: {
+    user: r.one.user({
+      from: r.subscription.referenceId,
+      to: r.user.id,
+    }),
+  },
+
   transaction: {
     account: r.one.bankAccount({
       from: r.transaction.plaidAccountId,
@@ -514,6 +522,10 @@ export const relations = defineRelations(schema, (r) => ({
     sessions: r.many.session({
       from: r.user.id,
       to: r.session.userId,
+    }),
+    subscriptions: r.many.subscription({
+      from: r.user.id,
+      to: r.subscription.referenceId,
     }),
     userAlerts: r.many.userAlerts({
       from: r.user.id,

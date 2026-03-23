@@ -1,7 +1,14 @@
 import type { Subscription } from "@cobalt-web/db/schema/auth";
 import type { MobileSubscription } from "@cobalt-web/db/schema/mobile/subscriptions";
 
-/** Stripe/Better Auth subscription statuses that grant access to paid features. */
+/**
+ * Stripe/Better Auth subscription statuses that grant access to paid features.
+ *
+ * - `active` / `trialing`: standard Stripe “provision access” states.
+ * - `past_due`: intentional grace while Stripe retries failed payment (see Stripe
+ *   subscription lifecycle). Stricter apps often omit this and only allow
+ *   `active` / `trialing` (closer to Better Auth client examples).
+ */
 const STRIPE_ENTITLED_STATUSES = new Set(["active", "past_due", "trialing"]);
 
 /**

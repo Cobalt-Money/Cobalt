@@ -1,7 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { subscription } from "@cobalt-web/db/schema/auth";
-import { mobileSubscription } from "@cobalt-web/db/schema/mobile/subscriptions";
-import { eq } from "drizzle-orm";
 
 import {
   mobileSubscriptionGrantsAccess,
@@ -17,21 +14,17 @@ export async function userHasActiveSubscription(
 ): Promise<boolean> {
   const now = new Date();
 
-  const stripeRows = await db
-    .select()
-    .from(subscription)
-    .where(eq(subscription.referenceId, userId));
+  const stripeRows = await db.query.subscription.findMany({
+    where: { referenceId: { eq: userId } },
+  });
 
-  for (const row of stripeRows) {
-    if (stripeSubscriptionGrantsAccess(row, now)) {
-      return true;
-    }
+  if (stripeRows.some((row) => stripeSubscriptionGrantsAccess(row, now))) {
+    return true;
   }
 
-  const mobileRows = await db
-    .select()
-    .from(mobileSubscription)
-    .where(eq(mobileSubscription.userId, userId));
+  const mobileRows = await db.query.mobileSubscription.findMany({
+    where: { userId: { eq: userId } },
+  });
 
   return mobileRows.some((row) => mobileSubscriptionGrantsAccess(row, now));
 }

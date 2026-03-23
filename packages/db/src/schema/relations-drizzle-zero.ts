@@ -2,7 +2,7 @@
 import { relations } from "drizzle-orm/_relations";
 
 import { chats, messages, parts } from "./ai/chat";
-import { user, session, account } from "./auth/auth";
+import { user, session, account, subscription } from "./auth/auth";
 import {
   bankConnection,
   bankAccount,
@@ -59,6 +59,7 @@ export const userRelations = relations(user, ({ one, many }) => ({
   mobileSubscriptions: many(mobileSubscription),
   portfolioSnapshots: many(portfolioSnapshots),
   sessions: many(session),
+  subscriptions: many(subscription),
   userAlerts: many(userAlerts),
 }));
 
@@ -72,6 +73,13 @@ export const accountRelations = relations(account, ({ one }) => ({
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
     fields: [session.userId],
+    references: [user.id],
+  }),
+}));
+
+export const subscriptionRelations = relations(subscription, ({ one }) => ({
+  user: one(user, {
+    fields: [subscription.referenceId],
     references: [user.id],
   }),
 }));

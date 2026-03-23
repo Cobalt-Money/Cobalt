@@ -80,6 +80,7 @@ export {
   userAlertsRelations,
   financialGoalsRelations,
   mobileSubscriptionRelations,
+  subscriptionRelations,
   kalshiUserRelations,
   feedbackRelations,
   messageVotesRelations,
