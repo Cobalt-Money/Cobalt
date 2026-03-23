@@ -3,6 +3,7 @@
   "type": "module",
   "exports": {
     "./transactions/*": "./src/transactions/*.ts",
+    "./subscriptions/*": "./src/subscriptions/*.ts",
     "./types": "./src/types.ts"
   },
   "scripts": {

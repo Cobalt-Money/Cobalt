@@ -1,6 +1,6 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { ItemGroup } from "@cobalt-web/ui/components/item";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -84,7 +84,7 @@ export default function SocialAuth() {
           >
             <div className="flex w-12 justify-center">
               {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Spinner className="h-5 w-5" />
               ) : (
                 <svg
                   className="h-5 w-5"
@@ -127,7 +127,7 @@ export default function SocialAuth() {
           >
             <div className="flex w-12 justify-center">
               {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin text-white" />
+                <Spinner className="h-5 w-5 text-white" />
               ) : (
                 <svg
                   className="h-5 w-5"

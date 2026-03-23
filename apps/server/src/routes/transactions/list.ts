@@ -34,6 +34,10 @@ export const listRouter = new OpenAPIHono<AppEnv>().openapi(
       c.var.user.id,
       c.req.valid("query")
     );
-    return c.json({ transactions }, 200);
+    return c.json({ transactions }, 200, {
+      headers: {
+        "Cache-Control": "private, max-age=60",
+      },
+    });
   }
 );

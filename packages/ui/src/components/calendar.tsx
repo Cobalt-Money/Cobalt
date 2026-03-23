@@ -3,10 +3,11 @@
 import { Button, buttonVariants } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronDownIcon,
-} from "lucide-react";
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowDownIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import * as React from "react";
 import {
   DayPicker,
@@ -150,13 +151,20 @@ function Calendar({
         Chevron: ({ className, orientation, ...props }) => {
           if (orientation === "left") {
             return (
-              <ChevronLeftIcon className={cn("size-4", className)} {...props} />
+              <HugeiconsIcon
+                icon={ArrowLeftIcon}
+                strokeWidth={2}
+                className={cn("size-4", className)}
+                {...props}
+              />
             );
           }
 
           if (orientation === "right") {
             return (
-              <ChevronRightIcon
+              <HugeiconsIcon
+                icon={ArrowRightIcon}
+                strokeWidth={2}
                 className={cn("size-4", className)}
                 {...props}
               />
@@ -164,7 +172,12 @@ function Calendar({
           }
 
           return (
-            <ChevronDownIcon className={cn("size-4", className)} {...props} />
+            <HugeiconsIcon
+              icon={ArrowDownIcon}
+              strokeWidth={2}
+              className={cn("size-4", className)}
+              {...props}
+            />
           );
         },
         DayButton: ({ ...props }) => (

@@ -1,9 +1,15 @@
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { Loader2Icon } from "lucide-react";
+import { Loading03Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { ComponentProps } from "react";
 
-function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+type SpinnerProps = Omit<ComponentProps<typeof HugeiconsIcon>, "icon">;
+
+function Spinner({ className, ...props }: SpinnerProps) {
   return (
-    <Loader2Icon
+    <HugeiconsIcon
+      icon={Loading03Icon}
+      strokeWidth={2}
       role="status"
       aria-label="Loading"
       className={cn("size-4 animate-spin", className)}
