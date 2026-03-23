@@ -1,4 +1,5 @@
 import { Toaster } from "@cobalt-web/ui/components/sonner";
+import { ThemeProvider } from "@cobalt-web/ui/components/theme-provider";
 import { TooltipProvider } from "@cobalt-web/ui/components/tooltip";
 import type { Zero } from "@rocicorp/zero";
 import {
@@ -55,19 +56,26 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootDocument() {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
-        <ZeroProvider>
-          <TooltipProvider>
-            <div className="min-h-svh">
-              <Outlet />
-            </div>
-          </TooltipProvider>
-        </ZeroProvider>
-        <Toaster richColors />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          disableTransitionOnChange
+          enableSystem
+        >
+          <ZeroProvider>
+            <TooltipProvider>
+              <div className="min-h-svh">
+                <Outlet />
+              </div>
+            </TooltipProvider>
+          </ZeroProvider>
+          <Toaster richColors />
+        </ThemeProvider>
         {import.meta.env.DEV ? <Agentation /> : null}
         {import.meta.env.DEV ? (
           <script
