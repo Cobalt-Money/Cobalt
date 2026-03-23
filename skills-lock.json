@@ -16,6 +16,16 @@
       "sourceType": "github",
       "computedHash": "9aea7469d696c9b5fa54a84b7a92ea692872fb624fb028f866ab0f3deac84867"
     },
+    "emil-design-eng": {
+      "source": "emilkowalski/skill",
+      "sourceType": "github",
+      "computedHash": "32f63a1e56fc41f53497f7b19d6391b7c3e55bedd884c5a4d10bc4eacd2310e4"
+    },
+    "extract-errors": {
+      "source": "facebook/react",
+      "sourceType": "github",
+      "computedHash": "b088123d854e6e3c57ab74746bce30c9231daec33dc73782ac57d7b3121519bc"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
@@ -31,10 +41,30 @@
       "sourceType": "github",
       "computedHash": "2acf9fae4fcdb6c392923708b67234828f8a9f10b10dfa5d228eaab6e9108245"
     },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "computedHash": "507f011a70e8b3ae242bdc0bb5b39fd91a1d4049a0f3c281991ccf84973d591c"
+    },
     "tailwind-design-system": {
       "source": "wshobson/agents",
       "sourceType": "github",
       "computedHash": "7ff2f4650597e98ca4cd8f01231fb432ab4d187d6b12e641485aa871a04448cc"
+    },
+    "test": {
+      "source": "facebook/react",
+      "sourceType": "github",
+      "computedHash": "14fabeabacc8be3ea52f7dc209f45d132b2a81d4bdf2a67a73687865594a4d76"
+    },
+    "verify": {
+      "source": "facebook/react",
+      "sourceType": "github",
+      "computedHash": "f8b0daa5cb09d875140d1b9fa0440d969506dfba4365a5b40ef1c4d5f4b59112"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "a6a44d5498f7e8f68289902f3dedfc6f38ae0cee1e96527c80724cf27f727c2a"
     }
   }
 }
