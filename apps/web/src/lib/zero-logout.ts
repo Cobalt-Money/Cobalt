@@ -12,7 +12,7 @@ export function registerActiveZeroForLogout(z: Zero): void {
 
 /**
  * Deletes IndexedDB data for the active Zero instance when present (e.g. user
- * signs out while `/transactions` is mounted). Safe to call when no Zero exists.
+ * signs out while Zero-backed routes are mounted). Safe to call when no Zero exists.
  */
 export async function deleteActiveZeroReplicaOnLogout(): Promise<void> {
   const z = activeZero;

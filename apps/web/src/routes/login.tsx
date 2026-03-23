@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import SocialAuth from "@/components/social-auth";
+import SocialAuth from "@/components/auth/social-auth";
 
 export const Route = createFileRoute("/login")({
   component: RouteComponent,

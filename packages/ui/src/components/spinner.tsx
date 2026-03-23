@@ -3,9 +3,10 @@ import { Loading03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps } from "react";
 
-type SpinnerProps = Omit<ComponentProps<typeof HugeiconsIcon>, "icon">;
-
-function Spinner({ className, ...props }: SpinnerProps) {
+function Spinner({
+  className,
+  ...props
+}: Omit<ComponentProps<typeof HugeiconsIcon>, "icon">) {
   return (
     <HugeiconsIcon
       icon={Loading03Icon}

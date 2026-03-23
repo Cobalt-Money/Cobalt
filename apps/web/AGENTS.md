@@ -6,7 +6,10 @@ Main frontend application built with Vite, React 19, and the TanStack ecosystem 
 
 ```
 src/
-  components/     — React components (header, user-menu, social-auth, loader)
+  components/     — App-only UI (not @cobalt-web/ui)
+    shell/          — Sidebar + header chrome (dashboard layout)
+    auth/           — Sign-in and auth-related UI
+    feedback/       — Loaders, banners, empty states
   functions/      — Server functions (get-user.ts)
   lib/            — Client setup (auth-client.ts, zero-client.tsx)
   middleware/     — Route middleware (auth.ts for route protection)

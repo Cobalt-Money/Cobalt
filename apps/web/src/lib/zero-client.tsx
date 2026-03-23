@@ -7,8 +7,6 @@ import { useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useCallback } from "react";
 
-import { preloadTransactionsQueries } from "@/routes/transactions/preload-queries";
-
 import { authClient } from "./auth-client";
 import { registerActiveZeroForLogout } from "./zero-logout";
 
@@ -38,7 +36,6 @@ export function ZeroProvider({ children }: { children: ReactNode }) {
       });
       router.invalidate();
       registerActiveZeroForLogout(z);
-      preloadTransactionsQueries(z);
     },
     [router]
   );
