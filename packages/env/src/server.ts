@@ -35,6 +35,8 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    STRIPE_SECRET_KEY: z.string().min(1),
+    STRIPE_WEBHOOK_SECRET: z.string().min(1),
     TRUSTED_ORIGINS_EXTRA: commaList,
     /** Pool for Zero mutate adapter when `ZERO_UPSTREAM_DB` is set (keep small if same DB as `DATABASE_URL`). */
     ZERO_DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(2),

@@ -15,10 +15,10 @@ import { newsRouter } from "./routes/news.js";
 import { plaidRouter } from "./routes/plaid.js";
 import { researchRouter } from "./routes/research.js";
 import { snaptradeRouter } from "./routes/snaptrade.js";
-import { subscriptionsRouter } from "./routes/subscriptions.js";
+import { subscriptionsRouter } from "./routes/subscriptions/index.js";
 import { tickersRouter } from "./routes/tickers.js";
 import { transactionsRouter } from "./routes/transactions/index.js";
-import { userRouter } from "./routes/user.js";
+import { userRouter } from "./routes/user/index.js";
 import { zeroRouter } from "./routes/zero.js";
 
 const base = new OpenAPIHono();
