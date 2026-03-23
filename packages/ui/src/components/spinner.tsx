@@ -6,7 +6,7 @@ import type { ComponentProps } from "react";
 function Spinner({
   className,
   ...props
-}: Omit<ComponentProps<typeof HugeiconsIcon>, "icon">) {
+}: Omit<ComponentProps<typeof HugeiconsIcon>, "strokeWidth" | "icon">) {
   return (
     <HugeiconsIcon
       icon={Loading03Icon}

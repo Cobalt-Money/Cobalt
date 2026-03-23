@@ -1,3 +1,4 @@
+import { ModeToggle } from "@cobalt-web/ui/components/mode-toggle";
 import { Separator } from "@cobalt-web/ui/components/separator";
 import { SidebarTrigger } from "@cobalt-web/ui/components/sidebar";
 
@@ -11,6 +12,9 @@ export function SiteHeader() {
           className="mx-2 h-4 data-vertical:self-auto"
         />
         <h1 className="text-base font-medium">Documents</h1>
+        <div className="ml-auto">
+          <ModeToggle />
+        </div>
       </div>
     </header>
   );
