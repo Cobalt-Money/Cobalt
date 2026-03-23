@@ -1,6 +1,6 @@
 import { auth } from "@cobalt-web/auth";
 import { env } from "@cobalt-web/env/server";
-import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions/queries";
+import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions";
 import { mutators, queries, schema } from "@cobalt-web/zero";
 import type { Context } from "@cobalt-web/zero";
 import { OpenAPIHono } from "@hono/zod-openapi";

@@ -1,3 +1,4 @@
+import { stripe } from "@better-auth/stripe";
 import { db } from "@cobalt-web/db";
 import * as schema from "@cobalt-web/db/schema/auth";
 import { env } from "@cobalt-web/env/server";
@@ -6,8 +7,13 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware } from "better-auth/api";
 import { lastLoginMethod, openAPI } from "better-auth/plugins";
 import { google } from "better-auth/social-providers";
+import { Stripe } from "stripe";
 
 import { getAppleClientSecret } from "./apple-secret.js";
+
+export const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
+  apiVersion: "2026-02-25.clover",
+});
 
 const appleClientSecret = await getAppleClientSecret();
 
@@ -67,6 +73,31 @@ export const auth = betterAuth({
       storeInDatabase: false,
     }),
     openAPI(),
+    stripe({
+      createCustomerOnSignUp: false,
+      stripeClient,
+      stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
+      subscription: {
+        authorizeReference: async ({ user, referenceId }) => {
+          await Promise.resolve();
+          return referenceId === user.id;
+        },
+        enabled: true,
+        plans: [
+          {
+            lookupKey: "cobalt_monthly",
+            name: "cobalt-monthly",
+          },
+          {
+            freeTrial: {
+              days: 30,
+            },
+            lookupKey: "cobalt_annual",
+            name: "cobalt-annual",
+          },
+        ],
+      },
+    }),
   ],
   secret: env.BETTER_AUTH_SECRET,
   session: {

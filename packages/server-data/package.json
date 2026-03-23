@@ -2,9 +2,10 @@
   "name": "@cobalt-web/server-data",
   "type": "module",
   "exports": {
+    "./subscriptions": "./src/subscriptions/index.ts",
     "./transactions/*": "./src/transactions/*.ts",
-    "./subscriptions/*": "./src/subscriptions/*.ts",
-    "./types": "./src/types.ts"
+    "./types": "./src/types.ts",
+    "./user": "./src/user/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"

@@ -1,5 +1,5 @@
 import { auth } from "@cobalt-web/auth";
-import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions/queries";
+import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { createMiddleware } from "hono/factory";
 
