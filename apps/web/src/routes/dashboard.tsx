@@ -1,29 +1,26 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@cobalt-web/ui/components/sidebar";
+import { createFileRoute } from "@tanstack/react-router";
 
-import { getUser } from "@/functions/get-user";
+import { AppSidebar } from "@/components/shell/app-sidebar";
+import { SiteHeader } from "@/components/shell/site-header";
 
 export const Route = createFileRoute("/dashboard")({
-  beforeLoad: async () => {
-    const session = await getUser();
-    return { session };
-  },
-  component: RouteComponent,
-  loader: ({ context }) => {
-    if (!context.session) {
-      throw redirect({
-        to: "/login",
-      });
-    }
-  },
+  component: DashboardPage,
 });
 
-function RouteComponent() {
-  const { session } = Route.useRouteContext();
-
+function DashboardPage() {
   return (
-    <div>
-      <h1>Board</h1>
-      <p>Welcome {session?.user.name}</p>
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <SiteHeader />
+        <div className="flex flex-1 flex-col gap-4 overflow-auto p-4 text-muted-foreground text-sm lg:p-6">
+          <p>Main content area — add your layout here.</p>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

@@ -1,5 +1,3 @@
-"use client";
-
 import { Slider as SliderPrimitive } from "@base-ui/react/slider";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import * as React from "react";

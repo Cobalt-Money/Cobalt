@@ -1,5 +1,3 @@
-"use client";
-
 import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { Tick02Icon } from "@hugeicons/core-free-icons";

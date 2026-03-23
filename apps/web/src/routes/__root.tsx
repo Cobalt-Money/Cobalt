@@ -1,4 +1,5 @@
 import { Toaster } from "@cobalt-web/ui/components/sonner";
+import { TooltipProvider } from "@cobalt-web/ui/components/tooltip";
 import type { Zero } from "@rocicorp/zero";
 import {
   HeadContent,
@@ -9,7 +10,6 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { Agentation } from "agentation";
 
-import Header from "../components/header";
 import { ZeroProvider } from "../lib/zero-client";
 
 import appCss from "../index.css?url";
@@ -24,6 +24,15 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
   head: () => ({
     links: [
+      {
+        href: "https://fonts.googleapis.com",
+        rel: "preconnect",
+      },
+      {
+        crossOrigin: "anonymous",
+        href: "https://fonts.gstatic.com",
+        rel: "preconnect",
+      },
       {
         href: appCss,
         rel: "stylesheet",
@@ -52,10 +61,11 @@ function RootDocument() {
       </head>
       <body>
         <ZeroProvider>
-          <div className="grid h-svh grid-rows-[auto_1fr]">
-            <Header />
-            <Outlet />
-          </div>
+          <TooltipProvider>
+            <div className="min-h-svh">
+              <Outlet />
+            </div>
+          </TooltipProvider>
         </ZeroProvider>
         <Toaster richColors />
         {import.meta.env.DEV ? <Agentation /> : null}

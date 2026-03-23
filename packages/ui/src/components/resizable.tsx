@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@cobalt-web/ui/lib/utils";
 import * as ResizablePrimitive from "react-resizable-panels";
 

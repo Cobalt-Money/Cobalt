@@ -1,6 +1,6 @@
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 
-import Loader from "./components/loader";
+import Loader from "./components/feedback/loader";
 
 import "./index.css";
 import type { RouterAppContext } from "./routes/__root";
