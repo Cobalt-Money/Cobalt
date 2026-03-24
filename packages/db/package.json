@@ -16,6 +16,9 @@
     },
     "./schema/brokerage": {
       "default": "./src/schema/brokerage/index.ts"
+    },
+    "./schema/features": {
+      "default": "./src/schema/features/index.ts"
     }
   },
   "scripts": {

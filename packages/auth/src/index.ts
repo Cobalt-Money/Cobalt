@@ -6,6 +6,8 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware } from "better-auth/api";
 import { lastLoginMethod, openAPI } from "better-auth/plugins";
+import { bearer } from "better-auth/plugins/bearer";
+import { oidcProvider } from "better-auth/plugins/oidc-provider";
 import { google } from "better-auth/social-providers";
 import { Stripe } from "stripe";
 
@@ -73,6 +75,11 @@ export const auth = betterAuth({
       storeInDatabase: false,
     }),
     openAPI(),
+    bearer(),
+    oidcProvider({
+      consentPage: "/oauth/consent",
+      loginPage: "/login",
+    }),
     stripe({
       createCustomerOnSignUp: false,
       stripeClient,

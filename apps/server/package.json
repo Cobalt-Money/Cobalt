@@ -7,6 +7,7 @@
     "check-types": "tsc -b",
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
     "dev": "bun run --hot src/index.ts",
+    "extract-openapi": "bun run scripts/extract-openapi.ts",
     "start": "bun run dist/index.mjs"
   },
   "dependencies": {
