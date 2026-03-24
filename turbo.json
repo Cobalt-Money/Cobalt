@@ -7,6 +7,7 @@
     },
     "build": {
       "dependsOn": ["^build", "server#extract-openapi"],
+      "env": ["VITE_SERVER_URL", "VITE_ZERO_CACHE_URL"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".next/**"]
     },
