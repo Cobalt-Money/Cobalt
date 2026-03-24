@@ -1,12 +1,18 @@
-// items
+// items — `zod.ts` (jsonb) + per-table files (Drizzle); barrel is this file only
 export {
-  institution,
-  bankConnection,
-  type Institution,
-  type InstitutionSelect,
-  type BankConnection,
-  type BankConnectionSelect,
-} from "./items";
+  bankConnectionJsonbSelectRefinements,
+  institutionJsonbSelectRefinements,
+  plaidItemErrorJsonSchema,
+  stringArrayJsonSchema,
+} from "./items/zod";
+export { institution } from "./items/institution";
+export { bankConnection } from "./items/bank-connection";
+export type { PlaidItemErrorJson, StringArrayJson } from "./items/zod";
+export type { Institution, InstitutionSelect } from "./items/institution";
+export type {
+  BankConnection,
+  BankConnectionSelect,
+} from "./items/bank-connection";
 
 // accounts
 export {

@@ -2,6 +2,7 @@
   "name": "@cobalt-web/server-data",
   "type": "module",
   "exports": {
+    "./accounts/*": "./src/accounts/*.ts",
     "./subscriptions": "./src/subscriptions/index.ts",
     "./transactions/*": "./src/transactions/*.ts",
     "./types": "./src/types.ts",
