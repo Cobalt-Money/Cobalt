@@ -1,34 +1,32 @@
 ---
-title: Hello World
-description: Your favourite docs framework.
+title: Getting Started
+description: Welcome to the Cobalt API documentation.
 icon: Rocket
 ---
 
-Hey there! Fumadocs is the docs framework that also works on Tanstack Start!
+## Introduction
 
-## Heading
+Cobalt is a financial platform that provides APIs for managing accounts, transactions, brokerage data, and more.
 
-Hello World!
+## API Reference
 
-<Cards>
-  <Card
-    title="Learn more about Tanstack Start"
-    href="https://tanstack.com/start"
-  />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
-</Cards>
+Browse the full [API Reference](/docs/api-reference) to see all available endpoints, request/response schemas, and try out requests interactively.
 
-### CodeBlock
+## Authentication
 
-```ts
-console.log("Hello World");
+All API endpoints require authentication via session tokens managed through Better Auth. Protected endpoints return `401 Unauthorized` for unauthenticated requests, and premium endpoints return `403 Forbidden` without an active subscription.
+
+## Base URL
+
+```
+https://api.cobalt.finance/v1
 ```
 
-#### Table
+## Available Resources
 
-| Head                            | Description                         |
-| ------------------------------- | ----------------------------------- |
-| `hello`                         | Hello World                         |
-| very **important**              | Hey                                 |
-| _Surprisingly_                  | Fumadocs                            |
-| very long text that looks weird | hello world hello world hello world |
+- **Accounts** — Bank, brokerage, and credit card account management
+- **Transactions** — Transaction history with filtering and pagination
+- **Brokerage** — Portfolio positions, activities, and snapshots
+- **Research** — Company quotes, financials, and market data
+- **Tickers** — Ticker search and price data
+- **News** — Financial news and events

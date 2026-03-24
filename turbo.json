@@ -8,7 +8,7 @@
     "build": {
       "dependsOn": ["^build", "server#extract-openapi"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", ".next/**"]
     },
     "lint": {
       "dependsOn": ["^lint"]

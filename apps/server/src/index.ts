@@ -12,7 +12,6 @@ import { brokerageRouter } from "./routes/brokerage.js";
 import { chatRouter } from "./routes/chat.js";
 import { institutionsRouter } from "./routes/institutions.js";
 import { newsRouter } from "./routes/news.js";
-import { plaidRouter } from "./routes/plaid.js";
 import { researchRouter } from "./routes/research.js";
 import { snaptradeRouter } from "./routes/snaptrade.js";
 import { subscriptionsRouter } from "./routes/subscriptions/index.js";
@@ -51,7 +50,6 @@ base
   .route("/api/news", newsRouter)
   .route("/api/research", researchRouter)
   .route("/api/tickers", tickersRouter)
-  .route("/api/plaid", plaidRouter)
   .route("/api/snaptrade", snaptradeRouter)
   .route("/api/subscriptions", subscriptionsRouter)
   .route("/api/user", userRouter)

@@ -8,6 +8,7 @@
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
     "dev": "bun run --hot src/index.ts",
     "start": "bun run dist/index.mjs",
+    "extract-openapi": "bun ./scripts/extract-openapi.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
