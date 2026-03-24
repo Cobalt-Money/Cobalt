@@ -19,9 +19,11 @@ import { subscriptionsRouter } from "./routes/subscriptions/index.js";
 import { tickersRouter } from "./routes/tickers.js";
 import { transactionsRouter } from "./routes/transactions/index.js";
 import { userRouter } from "./routes/user/index.js";
+import { v1Router } from "./routes/v1/index.js";
 import { zeroRouter } from "./routes/zero.js";
 
 const base = new OpenAPIHono();
+const publicApi = new OpenAPIHono();
 const app = new Hono();
 
 // ── Global Middleware ───────────────────────────────────────────────
@@ -56,6 +58,29 @@ base
   .route("/api/institutions", institutionsRouter)
   .route("/api/appstore", appstoreRouter);
 
+// ── Public API ──────────────────────────────────────────────────────
+
+publicApi.route("/v1", v1Router);
+
+publicApi.doc("/v1/openapi.json", {
+  info: {
+    description:
+      "The Cobalt public API provides programmatic access to market data, portfolio analytics, and financial insights.",
+    title: "Cobalt Public API",
+    version: "1.0.0",
+  },
+  openapi: "3.1.0",
+  security: [{ bearerAuth: [] }],
+});
+
+publicApi.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
+  bearerFormat: "OAuth 2.0 Access Token",
+  description:
+    "OAuth 2.0 access token obtained via the authorization code flow",
+  scheme: "bearer",
+  type: "http",
+});
+
 // ── Health ──────────────────────────────────────────────────────────
 
 app.get("/", (c) => c.text("OK"));
@@ -86,9 +111,10 @@ app.get(
   })
 );
 
-// ── Mount OpenAPI app ───────────────────────────────────────────────
+// ── Mount OpenAPI apps ──────────────────────────────────────────────
 
 app.route("/", base);
+app.route("/", publicApi);
 
 export type AppType = typeof app;
 

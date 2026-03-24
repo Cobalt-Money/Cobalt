@@ -5,8 +5,15 @@ import mdx from "fumadocs-mdx/vite";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 
+import { fumadocsOpenAPI } from "./plugins/vite-openapi-docs";
+
 export default defineConfig({
   plugins: [
+    fumadocsOpenAPI({
+      input: "../server/openapi.json",
+      output: "./content/docs/api-reference",
+      per: "operation",
+    }),
     mdx(await import("./source.config")),
     tailwindcss(),
     tanstackStart({
@@ -27,6 +34,6 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   server: {
-    port: 3000,
+    port: 4000,
   },
 });

@@ -1,0 +1,60 @@
+---
+title: API Reference
+description: Explore the Cobalt Public API — authenticate with OAuth, query market data, and build integrations.
+icon: Code
+---
+
+## Overview
+
+The Cobalt Public API lets you programmatically access market data, portfolio analytics, and financial insights. All endpoints are versioned under `/v1/` and require OAuth 2.0 authentication.
+
+## Base URL
+
+```
+https://api.cobalt.finance/v1
+```
+
+## Authentication
+
+Cobalt uses OAuth 2.0 for API authentication. Authorize via the standard OAuth flow, then include the access token in your requests:
+
+```bash
+curl -H "Authorization: Bearer <access_token>" \
+  https://api.cobalt.finance/v1/tickers/AAPL/quote
+```
+
+## Versioning
+
+The API is versioned via the URL path (`/v1/`). Breaking changes will be introduced under a new version. Non-breaking additions (new fields, new endpoints) may be added to the current version.
+
+## OpenAPI Specification
+
+The full OpenAPI 3.1 spec is available at:
+
+```
+https://api.cobalt.finance/v1/openapi.json
+```
+
+Use it to generate client SDKs, import into Postman, or integrate with any OpenAPI-compatible tooling.
+
+## Error Format
+
+All errors follow a consistent structure:
+
+```json
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Ticker not found"
+  }
+}
+```
+
+| Status | Meaning                             |
+| ------ | ----------------------------------- |
+| `400`  | Bad request — check your parameters |
+| `401`  | Invalid or expired access token     |
+| `403`  | Forbidden — insufficient scope      |
+| `404`  | Resource not found                  |
+| `422`  | Validation error                    |
+| `500`  | Internal server error               |
