@@ -1,48 +1,23 @@
 import {
+  boolean,
+  index,
+  jsonb,
   pgTable,
   text,
-  uuid,
   timestamp,
-  jsonb,
-  index,
-  boolean,
+  uuid,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
+import { user } from "../../auth/auth";
+import type { PlaidItemErrorJson, StringArrayJson } from "./zod";
 
-// Institutions (store institution details and logos)
-export const institution = pgTable(
-  "institution",
-  {
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    id: uuid("id").defaultRandom().primaryKey(),
-    logo: text("logo"),
-    name: text("name").notNull(),
-    oauth: boolean("oauth").default(false).notNull(),
-    plaidInstitutionId: text("plaid_institution_id").notNull().unique(),
-    primaryColor: text("primary_color"),
-    routingNumbers: jsonb("routing_numbers").$type<string[]>(),
-    status: text("status"),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .notNull()
-      .$onUpdate(() => new Date()),
-    url: text("url"),
-  },
-  (table) => [
-    index("institution_provider_id_idx").on(table.plaidInstitutionId),
-    index("institution_name_idx").on(table.name),
-  ]
-);
-
-// Bank Connections (one row per bank connection)
 export const bankConnection = pgTable(
   "bank_connection",
   {
-    availableProducts: jsonb("available_products").$type<string[]>(),
-    billedProducts: jsonb("billed_products").$type<string[]>(),
+    availableProducts: jsonb("available_products").$type<StringArrayJson>(),
+    billedProducts: jsonb("billed_products").$type<StringArrayJson>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    error: jsonb("error"),
+    error: jsonb("error").$type<PlaidItemErrorJson>(),
     id: uuid("id").defaultRandom().primaryKey(),
     institutionId: text("institution_id"),
     institutionLogo: text("institution_logo"),
@@ -73,8 +48,5 @@ export const bankConnection = pgTable(
   ]
 );
 
-// Type exports
-export type Institution = typeof institution.$inferInsert;
-export type InstitutionSelect = typeof institution.$inferSelect;
 export type BankConnection = typeof bankConnection.$inferInsert;
 export type BankConnectionSelect = typeof bankConnection.$inferSelect;

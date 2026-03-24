@@ -10,7 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { bankConnection } from "./items";
+import { bankConnection } from "./items/bank-connection";
 
 // Bank Accounts (individual accounts within a connection)
 export const bankAccount = pgTable(
