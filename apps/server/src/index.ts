@@ -5,7 +5,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
-import { accountsRouter } from "./routes/accounts.js";
+import { accountsRouter } from "./routes/accounts/index.js";
 import { appstoreRouter } from "./routes/appstore.js";
 import { authRouter } from "./routes/auth.js";
 import { brokerageRouter } from "./routes/brokerage.js";
@@ -85,9 +85,9 @@ publicApi.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
 
 app.get("/", (c) => c.text("OK"));
 
-// ── OpenAPI Docs (Internal — Scalar) ────────────────────────────────
+// ── OpenAPI Docs (Cobalt spec + Better Auth via Scalar `sources`) ───
 
-base.doc("/openapi.json", {
+base.doc31("/openapi.json", {
   info: {
     description: "Cobalt financial platform API",
     title: "Cobalt API",
@@ -100,7 +100,14 @@ app.get(
   "/docs",
   Scalar({
     hideModels: true,
-    url: "/openapi.json",
+    pageTitle: "Cobalt API",
+    sources: [
+      { title: "Cobalt API", url: "/openapi.json" },
+      {
+        title: "Better Auth",
+        url: "/api/auth/open-api/generate-schema",
+      },
+    ],
   })
 );
 

@@ -10,7 +10,8 @@ export {
   subscription,
 } from "./auth/auth";
 export { chats, messages, parts } from "./ai/chat";
-export { institution, bankConnection } from "./banking/items";
+export { institution } from "./banking/items/institution";
+export { bankConnection } from "./banking/items/bank-connection";
 export {
   bankAccount,
   bankBalance,
