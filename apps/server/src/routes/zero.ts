@@ -18,7 +18,7 @@ const pool = new Pool({
 
 const dbProvider = pool ? zeroNodePg(schema, pool) : undefined;
 
-/** Same policy as `requirePaidUser`: session + active subscription. */
+/** Same policy as `requirePaidUser`: session + ative subscription. */
 async function resolvePaidUserContext(
   req: Request
 ): Promise<{ ok: true; ctx: Context } | { ok: false; status: 401 | 403 }> {
