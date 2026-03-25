@@ -11,7 +11,7 @@ The Cobalt Public API lets you programmatically access market data, portfolio an
 ## Base URL
 
 ```
-https://api.cobalt.finance/v1
+https://cobalt-server.vercel.app/v1
 ```
 
 ## Authentication
@@ -20,7 +20,7 @@ Cobalt uses OAuth 2.0 for API authentication. Authorize via the standard OAuth f
 
 ```bash
 curl -H "Authorization: Bearer <access_token>" \
-  https://api.cobalt.finance/v1/tickers/AAPL/quote
+  https://cobalt-server.vercel.app/v1/tickers/AAPL/quote
 ```
 
 ## Versioning
@@ -32,7 +32,7 @@ The API is versioned via the URL path (`/v1/`). Breaking changes will be introdu
 The full OpenAPI 3.1 spec is available at:
 
 ```
-https://api.cobalt.finance/v1/openapi.json
+https://cobalt-server.vercel.app/v1/openapi.json
 ```
 
 Use it to generate client SDKs, import into Postman, or integrate with any OpenAPI-compatible tooling.

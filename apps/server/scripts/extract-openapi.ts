@@ -37,6 +37,11 @@ spec.components.securitySchemes = {
   },
 };
 
+// So Fumadocs / Scalar use the public API host, not the docs deployment origin.
+spec.servers = [
+  { description: "Production", url: "https://cobalt-server.vercel.app" },
+];
+
 const outputPath = new URL("../openapi.json", import.meta.url);
 await Bun.write(outputPath, JSON.stringify(spec, null, 2));
 console.log("OpenAPI spec written to openapi.json");

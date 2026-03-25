@@ -69,6 +69,9 @@ publicApi.doc("/v1/openapi.json", {
   },
   openapi: "3.1.0",
   security: [{ bearerAuth: [] }],
+  servers: [
+    { description: "Production", url: "https://cobalt-server.vercel.app" },
+  ],
 });
 
 publicApi.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {

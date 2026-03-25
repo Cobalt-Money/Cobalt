@@ -217,5 +217,11 @@
       }
     }
   },
-  "webhooks": {}
+  "webhooks": {},
+  "servers": [
+    {
+      "description": "Production",
+      "url": "https://cobalt-server.vercel.app"
+    }
+  ]
 }
