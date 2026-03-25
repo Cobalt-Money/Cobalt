@@ -1,0 +1,35 @@
+# zero-cache production-style run (Rocicorp image).
+# Pin matches @rocicorp/zero in repo root package.json catalog (^1.0.0 → 1.0.0).
+# See https://zero.rocicorp.dev/docs/deployment
+#
+# Usage:
+#   cp .env.example .env   # fill secrets and URLs
+#   docker compose up -d
+#
+# From inside the container, localhost for your API is wrong — set ZERO_QUERY_URL /
+# ZERO_MUTATE_URL to a URL reachable from the container (e.g. https://api.example.com/...
+# or http://host.docker.internal:3000/... when the API runs on the host).
+
+services:
+  zero-cache:
+    image: rocicorp/zero:1.0.0
+    ports:
+      - "4848:4848"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      ZERO_REPLICA_FILE: /data/zero.db
+    volumes:
+      - zero-cache-data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://127.0.0.1:4848/keepalive >/dev/null || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  zero-cache-data:

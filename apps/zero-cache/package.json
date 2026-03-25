@@ -4,7 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "dotenv -e .env -- zero-cache-dev",
-    "start": "dotenv -e .env -- zero-cache-dev"
+    "start": "dotenv -e .env -- zero-cache-dev",
+    "compose:up": "docker compose up -d",
+    "compose:down": "docker compose down",
+    "compose:logs": "docker compose logs -f",
+    "verify:keepalive": "curl -fsS http://127.0.0.1:4848/keepalive"
   },
   "devDependencies": {
     "@rocicorp/zero": "catalog:",

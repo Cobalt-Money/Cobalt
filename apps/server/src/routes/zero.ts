@@ -11,12 +11,10 @@ import { Pool } from "pg";
 
 const zeroRouter = new OpenAPIHono();
 
-const pool = env.ZERO_UPSTREAM_DB
-  ? new Pool({
-      connectionString: env.ZERO_UPSTREAM_DB,
-      max: env.ZERO_DB_POOL_MAX,
-    })
-  : undefined;
+const pool = new Pool({
+  connectionString: env.DATABASE_URL,
+  max: env.ZERO_DB_POOL_MAX,
+});
 
 const dbProvider = pool ? zeroNodePg(schema, pool) : undefined;
 

@@ -26,6 +26,7 @@ public/           — Static assets
 
 ## Key Config Files
 
+- `.env.example` — Client env template (`VITE_SERVER_URL`, optional `VITE_ZERO_CACHE_URL` for Rocicorp zero-cache); validated via `@cobalt-web/env/web`.
 - `vite.config.ts` — Vite config with TanStack Start (**SPA mode** via `tanstackStart({ spa: { enabled: true } })`), Tailwind CSS v4, and React plugins. The app shell is not server-rendered; this matches Rocicorp’s guidance for Zero ([ztunes](https://github.com/rocicorp/ztunes#tanstack-start)). API routes and server functions still run on the server.
 - `drizzle.config.ts` — Re-exports `packages/db/drizzle.config.ts` so you can run Drizzle Kit from this app (`bun run db:push`, etc.). Schema and migrations live in **`packages/db`**; `DATABASE_URL` is read from **`apps/server/.env`**.
 - `components.json` — Shadcn UI config (base-lyra style), references `@cobalt-web/ui` globals
