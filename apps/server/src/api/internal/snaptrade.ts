@@ -1,6 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth } from "./middleware.js";
 
 const snaptradeRouter = new OpenAPIHono();
 
