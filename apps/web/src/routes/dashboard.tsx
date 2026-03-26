@@ -134,6 +134,30 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
 });
 
+function PaletteSwatch({
+  name,
+  className,
+}: {
+  name: string;
+  className: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div
+        className={cn(
+          "flex h-16 items-center justify-center rounded-lg px-1 text-center font-mono text-[10px] font-medium tracking-tight break-words",
+          className
+        )}
+      >
+        {name}
+      </div>
+      <p className="truncate font-mono text-[10px] text-muted-foreground">
+        {name}
+      </p>
+    </div>
+  );
+}
+
 function ShowcaseSection({
   title,
   children,
@@ -179,6 +203,127 @@ function DashboardPage() {
               the redesign.
             </p>
           </div>
+
+          <ShowcaseSection title="Color palette">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Semantic
+                </p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                  <PaletteSwatch
+                    className="border border-border bg-background text-foreground"
+                    name="background"
+                  />
+                  <PaletteSwatch
+                    className="bg-foreground text-background"
+                    name="foreground"
+                  />
+                  <PaletteSwatch
+                    className="border border-border/50 bg-card text-card-foreground"
+                    name="card"
+                  />
+                  <PaletteSwatch
+                    className="border border-border/50 bg-popover text-popover-foreground"
+                    name="popover"
+                  />
+                  <PaletteSwatch
+                    className="bg-primary text-primary-foreground"
+                    name="primary"
+                  />
+                  <PaletteSwatch
+                    className="bg-secondary text-secondary-foreground"
+                    name="secondary"
+                  />
+                  <PaletteSwatch
+                    className="bg-muted text-muted-foreground"
+                    name="muted"
+                  />
+                  <PaletteSwatch
+                    className="bg-accent text-accent-foreground"
+                    name="accent"
+                  />
+                  <PaletteSwatch
+                    className="bg-destructive text-white"
+                    name="destructive"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Chrome
+                </p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                  <PaletteSwatch
+                    className="border-2 border-border bg-background text-muted-foreground"
+                    name="border"
+                  />
+                  <PaletteSwatch
+                    className="border border-border bg-input text-foreground"
+                    name="input"
+                  />
+                  <div className="space-y-1.5">
+                    <div className="flex h-16 items-center justify-center rounded-lg bg-background font-mono text-[10px] font-medium tracking-tight text-muted-foreground ring-2 ring-ring ring-offset-2 ring-offset-background">
+                      ring
+                    </div>
+                    <p className="truncate font-mono text-[10px] text-muted-foreground">
+                      ring
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Charts
+                </p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5">
+                  <PaletteSwatch
+                    className="bg-chart-1 text-foreground"
+                    name="chart-1"
+                  />
+                  <PaletteSwatch
+                    className="bg-chart-2 text-white"
+                    name="chart-2"
+                  />
+                  <PaletteSwatch
+                    className="bg-chart-3 text-white"
+                    name="chart-3"
+                  />
+                  <PaletteSwatch
+                    className="bg-chart-4 text-white"
+                    name="chart-4"
+                  />
+                  <PaletteSwatch
+                    className="bg-chart-5 text-white"
+                    name="chart-5"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Sidebar
+                </p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                  <PaletteSwatch
+                    className="bg-sidebar text-sidebar-foreground"
+                    name="sidebar"
+                  />
+                  <PaletteSwatch
+                    className="bg-sidebar-primary text-sidebar-primary-foreground"
+                    name="sidebar-primary"
+                  />
+                  <PaletteSwatch
+                    className="bg-sidebar-accent text-sidebar-accent-foreground"
+                    name="sidebar-accent"
+                  />
+                  <PaletteSwatch
+                    className="border border-sidebar-border bg-sidebar-inset text-foreground"
+                    name="sidebar-inset"
+                  />
+                </div>
+              </div>
+            </div>
+          </ShowcaseSection>
 
           <ShowcaseSection title="Button · Badge · Kbd">
             <div className="space-y-6">

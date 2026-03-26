@@ -16,7 +16,7 @@ import type { ComponentProps } from "react";
  * `bg-background` / sidebar-inset (vs the stock ring-only edge).
  */
 const cobaltCardChrome =
-  "ring-0 border border-border/70 bg-card/85 shadow-md backdrop-blur-md";
+  "ring-0 border border-border/70 bg-card/85 shadow-xs backdrop-blur-md";
 
 export type CobaltCardProps = ComponentProps<typeof Card>;
 
