@@ -10,6 +10,7 @@ import {
   CommandList,
 } from "@cobalt-web/ui/components/command";
 import { useNavigate } from "@tanstack/react-router";
+import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 /**
@@ -18,6 +19,12 @@ import { useEffect, useState } from "react";
 export function CommandMenu() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [themeReady, setThemeReady] = useState(false);
+
+  useEffect(() => {
+    setThemeReady(true);
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -33,6 +40,11 @@ export function CommandMenu() {
   const go = (to: string) => {
     setOpen(false);
     navigate({ to });
+  };
+
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+    setOpen(false);
   };
 
   return (
@@ -54,6 +66,25 @@ export function CommandMenu() {
             </CommandItem>
             <CommandItem onSelect={() => go("/login")}>Login</CommandItem>
           </CommandGroup>
+          {themeReady ? (
+            <CommandGroup heading="Settings">
+              <CommandItem
+                keywords={[
+                  "appearance",
+                  "color",
+                  "dark",
+                  "light",
+                  "mode",
+                  "theme",
+                  "toggle",
+                ]}
+                onSelect={toggleTheme}
+                value="theme-toggle"
+              >
+                Toggle theme
+              </CommandItem>
+            </CommandGroup>
+          ) : null}
         </CommandList>
       </CobaltCommandPaletteRoot>
     </CobaltCommandDialog>

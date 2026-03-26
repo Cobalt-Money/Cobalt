@@ -18,14 +18,14 @@ import type { ComponentProps } from "react";
 /** Same merge as `DialogContent` + stock `CommandDialog` `className` (no `bg-background`; glass below). */
 function cobaltCommandDialogPopupClassNames() {
   return cn(
-    "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-4xl text-sm ring-1 ring-foreground/5 duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-    "top-1/3 translate-y-0 overflow-hidden rounded-4xl! p-0"
+    "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-2xl text-sm ring-1 ring-foreground/5 duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+    "top-1/3 translate-y-0 overflow-hidden rounded-2xl! p-0"
   );
 }
 
 /** Glass panel (product-only). */
 const cobaltCommandDialogContentClassName =
-  "border border-border/50 bg-popover/50 shadow-2xl supports-backdrop-filter:backdrop-blur-xs dark:bg-popover/45";
+  "border border-border/50 bg-popover/80 shadow-2xl supports-backdrop-filter:backdrop-blur-xs dark:bg-popover/99";
 
 /** Lighter scrim than default `DialogOverlay` (`bg-black/80`). */
 const cobaltCommandDialogOverlayClassName =
@@ -108,6 +108,10 @@ function CobaltCommandPaletteRoot({
         "[&_[data-slot=command-list]]:pb-2",
         "[&_[cmdk-group]]:!p-0 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0",
         "[&_[cmdk-group-heading]]:!px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
+        /* Light: `bg-muted` is ~white — use a visible tint; dark keeps token `muted`. */
+        "[&_[cmdk-item][aria-selected='true']]:!bg-black/[0.09] dark:[&_[cmdk-item][aria-selected='true']]:!bg-muted",
+        /* Base `CommandItem` uses `rounded-2xl` in dialog — minimal corner radius. */
+        "[&_[cmdk-item]]:!rounded-lg",
         "[&_[cmdk-item]]:!px-4 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5",
         "[&_[cmdk-empty]]:!px-4",
         className
