@@ -130,6 +130,7 @@ import { SiteHeader } from "@/components/shell/site-header";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
+  staticData: { title: "Dashboard" },
 });
 
 function PaletteSwatch({

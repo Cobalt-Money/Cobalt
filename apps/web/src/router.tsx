@@ -24,4 +24,9 @@ declare module "@tanstack/react-router" {
   interface Register {
     router: ReturnType<typeof getRouter>;
   }
+
+  interface StaticDataRouteOption {
+    /** App shell header title for this route. */
+    title?: string;
+  }
 }

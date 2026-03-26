@@ -1,16 +1,37 @@
-import { ModeToggle } from "@cobalt-web/ui/components/mode-toggle";
+import { Button } from "@cobalt-web/ui/components/button";
 import { SidebarTrigger } from "@cobalt-web/ui/components/sidebar";
+import { BellDotIcon, EyeIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+
+import { useShellRouteTitle } from "./use-shell-route-title";
 
 export function SiteHeader() {
+  const title = useShellRouteTitle();
+
   return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+    <header className="flex h-(--header-height) shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1 text-muted-foreground" />
-        <h1 className="text-base font-medium text-muted-foreground">
-          Documents
-        </h1>
-        <div className="ml-auto">
-          <ModeToggle />
+        <SidebarTrigger className="-ml-1" />
+        <h1 className="text-base font-medium">{title}</h1>
+        <div className="ml-auto flex items-center gap-0.5">
+          <Button
+            aria-label="Visibility"
+            className="text-muted-foreground"
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <HugeiconsIcon icon={EyeIcon} strokeWidth={2} />
+          </Button>
+          <Button
+            aria-label="Notifications"
+            className="text-muted-foreground"
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <HugeiconsIcon icon={BellDotIcon} strokeWidth={2} />
+          </Button>
         </div>
       </div>
     </header>

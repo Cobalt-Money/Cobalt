@@ -4,13 +4,9 @@ import { SidebarShellLayout } from "@/components/shell/sidebar-shell-layout";
 
 export const Route = createFileRoute("/research")({
   component: ResearchPage,
+  staticData: { title: "Research" },
 });
 
 function ResearchPage() {
-  return (
-    <SidebarShellLayout
-      description="Placeholder — wire up research when ready."
-      title="Research"
-    />
-  );
+  return <SidebarShellLayout />;
 }

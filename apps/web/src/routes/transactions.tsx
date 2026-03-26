@@ -4,13 +4,9 @@ import { SidebarShellLayout } from "@/components/shell/sidebar-shell-layout";
 
 export const Route = createFileRoute("/transactions")({
   component: TransactionsPage,
+  staticData: { title: "Transactions" },
 });
 
 function TransactionsPage() {
-  return (
-    <SidebarShellLayout
-      description="Placeholder — wire up transactions when ready."
-      title="Transactions"
-    />
-  );
+  return <SidebarShellLayout />;
 }
