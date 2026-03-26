@@ -1,5 +1,3 @@
-"use client";
-
 import { CobaltButton } from "@cobalt-web/ui/cobalt/button";
 import { CobaltCard, cobaltCardChrome } from "@cobalt-web/ui/cobalt/card";
 import {

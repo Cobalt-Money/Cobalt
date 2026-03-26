@@ -1,4 +1,3 @@
-import { Button } from "@cobalt-web/ui/components/button";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -6,9 +5,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cobalt-web/ui/components/sidebar";
-import { PlusSignCircleIcon, Mail01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+
+import { sidebarNavItemClassName } from "./sidebar-nav-item-class";
 
 export function NavMain({
   items,
@@ -19,32 +19,20 @@ export function NavMain({
     icon?: ReactNode;
   }[];
 }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
   return (
-    <SidebarGroup>
-      <SidebarGroupContent className="flex flex-col gap-2">
-        <SidebarMenu>
-          <SidebarMenuItem className="flex items-center gap-2">
-            <SidebarMenuButton
-              tooltip="Quick Create"
-              className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
-            >
-              <HugeiconsIcon icon={PlusSignCircleIcon} strokeWidth={2} />
-              <span>Quick Create</span>
-            </SidebarMenuButton>
-            <Button
-              size="icon"
-              className="size-8 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
-            >
-              <HugeiconsIcon icon={Mail01Icon} strokeWidth={2} />
-              <span className="sr-only">Inbox</span>
-            </Button>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <SidebarMenu>
+    <SidebarGroup className="p-1.5">
+      <SidebarGroupContent className="flex flex-col gap-1.5">
+        <SidebarMenu className="gap-0.5">
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
+              <SidebarMenuButton
+                className={sidebarNavItemClassName}
+                isActive={pathname === item.url}
+                render={<Link aria-label={item.title} to={item.url} />}
+                tooltip={item.title}
+              >
                 {item.icon}
                 <span>{item.title}</span>
               </SidebarMenuButton>

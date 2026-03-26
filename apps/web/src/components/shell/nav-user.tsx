@@ -43,7 +43,10 @@ export function NavUser({
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />
+              <SidebarMenuButton
+                size="lg"
+                className="text-muted-foreground aria-expanded:bg-muted"
+              />
             }
           >
             <Avatar className="size-8 rounded-lg grayscale">
@@ -51,8 +54,10 @@ export function NavUser({
               <AvatarFallback className="rounded-lg">CN</AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{user.name}</span>
-              <span className="truncate text-xs text-foreground/70">
+              <span className="truncate font-medium text-muted-foreground">
+                {user.name}
+              </span>
+              <span className="truncate text-xs text-muted-foreground">
                 {user.email}
               </span>
             </div>
@@ -76,7 +81,9 @@ export function NavUser({
                     <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user.name}</span>
+                    <span className="truncate font-medium text-muted-foreground">
+                      {user.name}
+                    </span>
                     <span className="truncate text-xs text-muted-foreground">
                       {user.email}
                     </span>
