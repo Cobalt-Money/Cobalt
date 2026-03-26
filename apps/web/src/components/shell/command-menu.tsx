@@ -13,6 +13,28 @@ import { useNavigate } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
+/** All top-level app routes (see `routeTree.gen.ts` / sidebar). */
+const COMMAND_NAV_ROUTES: readonly {
+  keywords?: string[];
+  label: string;
+  path:
+    | "/"
+    | "/accounts"
+    | "/brokerage"
+    | "/dashboard"
+    | "/login"
+    | "/research"
+    | "/transactions";
+}[] = [
+  { keywords: ["index", "root"], label: "Home", path: "/" },
+  { label: "Dashboard", path: "/dashboard" },
+  { keywords: ["tx", "history"], label: "Transactions", path: "/transactions" },
+  { keywords: ["invest", "trading"], label: "Brokerage", path: "/brokerage" },
+  { keywords: ["bank"], label: "Accounts", path: "/accounts" },
+  { keywords: ["books", "notes"], label: "Research", path: "/research" },
+  { keywords: ["auth", "sign in"], label: "Login", path: "/login" },
+];
+
 /**
  * Global command palette — `CobaltCommandDialog` + `CobaltCommandPaletteRoot` + `CobaltCommandInput`.
  */
@@ -37,7 +59,7 @@ export function CommandMenu() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const go = (to: string) => {
+  const go = (to: (typeof COMMAND_NAV_ROUTES)[number]["path"]) => {
     setOpen(false);
     navigate({ to });
   };
@@ -60,11 +82,16 @@ export function CommandMenu() {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Navigation">
-            <CommandItem onSelect={() => go("/")}>Home</CommandItem>
-            <CommandItem onSelect={() => go("/dashboard")}>
-              Dashboard
-            </CommandItem>
-            <CommandItem onSelect={() => go("/login")}>Login</CommandItem>
+            {COMMAND_NAV_ROUTES.map(({ keywords, label, path }) => (
+              <CommandItem
+                key={String(path)}
+                keywords={keywords}
+                onSelect={() => go(path)}
+                value={`${label} ${path}`}
+              >
+                {label}
+              </CommandItem>
+            ))}
           </CommandGroup>
           {themeReady ? (
             <CommandGroup heading="Settings">

@@ -3,6 +3,8 @@ import { z } from "zod";
 
 export const env = createEnv({
   client: {
+    /** Logo.dev publishable key for merchant logos (`img.logo.dev`). Optional — logos fall back when unset. */
+    VITE_LOGO_DEV_PUBLISHABLE_KEY: z.string().optional(),
     VITE_SERVER_URL: z.url(),
     VITE_ZERO_CACHE_URL: z.string().optional(),
   },

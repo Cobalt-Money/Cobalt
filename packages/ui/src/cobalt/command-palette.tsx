@@ -18,14 +18,15 @@ import type { ComponentProps } from "react";
 /** Same merge as `DialogContent` + stock `CommandDialog` `className` (no `bg-background`; glass below). */
 function cobaltCommandDialogPopupClassNames() {
   return cn(
-    "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-2xl text-sm ring-1 ring-foreground/5 duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-    "top-1/3 translate-y-0 overflow-hidden rounded-2xl! p-0"
+    "fixed top-1/3 left-1/2 z-50 flex w-full max-w-[calc(100%-2rem)] -translate-x-1/2 translate-y-0 flex-col overflow-hidden rounded-2xl! p-0 text-sm ring-1 ring-foreground/5 duration-100 outline-none",
+    "max-h-[min(72vh,30rem)] sm:max-w-lg",
+    "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
   );
 }
 
 /** Glass panel (product-only). */
 const cobaltCommandDialogContentClassName =
-  "border border-border/50 bg-popover/80 shadow-2xl supports-backdrop-filter:backdrop-blur-xs dark:bg-popover/99";
+  "border border-border/50   bg-popover/80 shadow-2xl supports-backdrop-filter:backdrop-blur-xs dark:bg-popover/99";
 
 /** Lighter scrim than default `DialogOverlay` (`bg-black/80`). */
 const cobaltCommandDialogOverlayClassName =
@@ -104,8 +105,8 @@ function CobaltCommandPaletteRoot({
     <Command
       className={cn(
         "gap-0 border-0 bg-transparent p-0 px-2 shadow-none rounded-none",
-        /* Bottom padding on list only; horizontal inset comes from root px-2 so input + rows align */
-        "[&_[data-slot=command-list]]:pb-2",
+        /* Slightly roomier than stock `max-h-72`, not full-viewport tall */
+        "[&_[data-slot=command-list]]:!max-h-[min(48vh,20rem)] [&_[data-slot=command-list]]:pb-2",
         "[&_[cmdk-group]]:!p-0 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0",
         "[&_[cmdk-group-heading]]:!px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
         /* Light: `bg-muted` is ~white — use a visible tint; dark keeps token `muted`. */

@@ -1,297 +1,251 @@
+import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
 import { Badge } from "@cobalt-web/ui/components/badge";
 import { Button } from "@cobalt-web/ui/components/button";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@cobalt-web/ui/components/table";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@cobalt-web/ui/components/toggle-group";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { BankIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import type { ColumnDef, SortingState } from "@tanstack/react-table";
-import { useEffect, useMemo, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 
+import { CategoryIcon } from "./category-icon";
+import {
+  getCategoryDisplayConfig,
+  getDetailedCategoryDisplayName,
+} from "./horizon-categories";
+import { resolveMerchantLogoUrl } from "./merchant-logo";
+import {
+  formatTransactionAccountDisplayName,
+  formatTransactionDateDisplay,
+  transactionDateSortKey,
+} from "./transaction-list-helpers";
 import { MOCK_TRANSACTIONS } from "./transactions-mock-data";
-import type { TransactionRow } from "./transactions-mock-data";
 
 const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
   style: "currency",
 });
 
-const dateFmt = new Intl.DateTimeFormat("en-US", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
-
-function sortArrow(sorted: false | "asc" | "desc"): string | null {
-  if (sorted === "asc") {
-    return " ↑";
+function truncateName(name: string, max = 40): string {
+  if (name.length <= max) {
+    return name;
   }
-  if (sorted === "desc") {
-    return " ↓";
-  }
-  return null;
+  return `${name.slice(0, max)}…`;
 }
 
-const columns: ColumnDef<TransactionRow>[] = [
+const columns: ColumnDef<TransactionListItem>[] = [
   {
-    accessorFn: (row) => row.date.getTime(),
-    cell: ({ row }) => (
-      <span className="text-muted-foreground tabular-nums">
-        {dateFmt.format(row.original.date)}
-      </span>
-    ),
-    header: "Date",
-    id: "date",
-  },
-  {
-    accessorKey: "merchant",
-    cell: ({ row }) => (
-      <span className="font-medium">{row.original.merchant}</span>
-    ),
-    header: "Merchant",
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-  },
-  {
-    accessorKey: "account",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.account}</span>
-    ),
-    header: "Account",
-  },
-  {
-    accessorFn: (row) => row.amountCents,
+    accessorKey: "name",
     cell: ({ row }) => {
-      const cents = row.original.amountCents;
-      const outflow = cents < 0;
+      const transactionName = row.original.name;
+      const logoURL = resolveMerchantLogoUrl(row.original);
+      const displayName = truncateName(transactionName);
+
       return (
-        <span
-          className={cn(
-            "block w-full text-right tabular-nums",
-            outflow
-              ? "text-foreground"
-              : "text-emerald-600 dark:text-emerald-400"
-          )}
-        >
-          {currency.format(cents / 100)}
-        </span>
+        <div className="truncate" title={transactionName}>
+          <div className="flex items-end gap-2">
+            {logoURL ? (
+              <img
+                alt=""
+                className="size-6 shrink-0 rounded-sm object-contain"
+                height={24}
+                src={logoURL}
+                width={24}
+              />
+            ) : (
+              <div className="flex size-6 shrink-0 items-center justify-center">
+                <HugeiconsIcon
+                  className="text-muted-foreground size-4"
+                  icon={BankIcon}
+                  strokeWidth={2}
+                />
+              </div>
+            )}
+            <span>{displayName || "—"}</span>
+          </div>
+        </div>
+      );
+    },
+    header: "Name",
+  },
+  {
+    accessorKey: "personalFinanceCategory",
+    cell: ({ row }) => {
+      const category = row.original.personalFinanceCategory;
+      if (!category) {
+        return <div>—</div>;
+      }
+      const config = getCategoryDisplayConfig(category);
+      return (
+        <div className="flex items-center gap-2">
+          <CategoryIcon categoryPrimary={category.primary} icon={config.icon} />
+          <span className="leading-none">{config.label}</span>
+        </div>
+      );
+    },
+    header: "Category",
+    id: "category",
+  },
+  {
+    accessorKey: "personalFinanceCategory",
+    cell: ({ row }) => {
+      const category = row.original.personalFinanceCategory;
+      if (!category?.detailed) {
+        return <div>—</div>;
+      }
+      const detailed = getDetailedCategoryDisplayName(category.detailed);
+      return (
+        <div className="truncate text-sm" title={detailed}>
+          {detailed}
+        </div>
+      );
+    },
+    header: "Subcategory",
+    id: "detailedCategory",
+  },
+  {
+    accessorKey: "amount",
+    cell: ({ row }) => {
+      const { amount } = row.original;
+      const formattedAmount = currency.format(Math.abs(amount));
+      const amountColor =
+        amount >= 0
+          ? "text-red-600 dark:text-red-500"
+          : "text-green-600 dark:text-green-500";
+      return (
+        <div className={cn("whitespace-nowrap tabular-nums", amountColor)}>
+          {formattedAmount}
+        </div>
       );
     },
     header: () => <span className="block w-full text-right">Amount</span>,
-    id: "amount",
   },
   {
-    accessorKey: "status",
+    accessorKey: "accountName",
     cell: ({ row }) => {
-      const s = row.original.status;
+      const { accountName } = row.original;
+      const { institutionLogo } = row.original;
+      const { institutionName } = row.original;
+      const displayAccountName =
+        formatTransactionAccountDisplayName(accountName);
+
       return (
-        <Badge variant={s === "pending" ? "outline" : "secondary"}>
-          {s === "pending" ? "Pending" : "Posted"}
-        </Badge>
+        <div className="truncate" title={accountName}>
+          <div className="flex items-end gap-2">
+            {institutionLogo ? (
+              <img
+                alt={institutionName ? `${institutionName} logo` : "Bank logo"}
+                className="size-6 shrink-0 rounded-sm object-cover"
+                height={24}
+                src={`data:image/png;base64,${institutionLogo}`}
+                width={24}
+              />
+            ) : (
+              <div className="flex size-6 shrink-0 items-center justify-center">
+                <HugeiconsIcon
+                  className="text-muted-foreground size-4"
+                  icon={BankIcon}
+                  strokeWidth={2}
+                />
+              </div>
+            )}
+            <span>{displayAccountName || "—"}</span>
+          </div>
+        </div>
+      );
+    },
+    header: "Account",
+    id: "account",
+  },
+  {
+    accessorKey: "pending",
+    cell: ({ row }) => {
+      const { pending } = row.original;
+      return (
+        <div className="whitespace-nowrap">
+          <Badge
+            className={cn(
+              "font-normal",
+              pending
+                ? "border-orange-700/40 text-orange-700 dark:text-orange-400"
+                : "border-green-700/40 text-green-700 dark:text-green-400"
+            )}
+            variant="outline"
+          >
+            {pending ? "Pending" : "Posted"}
+          </Badge>
+        </div>
       );
     },
     header: "Status",
   },
+  {
+    accessorFn: (row) => transactionDateSortKey(row),
+    cell: ({ row }) => (
+      <div className="whitespace-nowrap">
+        {formatTransactionDateDisplay(row.original)}
+      </div>
+    ),
+    header: "Date",
+    id: "date",
+  },
 ];
 
-type FlowFilter = "all" | "inflow" | "outflow";
-type StatusFilter = "all" | "pending" | "posted";
-type AccountFilter = "all" | "checking" | "credit" | "savings";
-
-function applyTransactionFilters(
-  rows: TransactionRow[],
-  flow: FlowFilter,
-  status: StatusFilter,
-  account: AccountFilter
-): TransactionRow[] {
-  return rows.filter((row) => {
-    if (flow === "inflow" && row.amountCents <= 0) {
-      return false;
-    }
-    if (flow === "outflow" && row.amountCents >= 0) {
-      return false;
-    }
-    if (status === "pending" && row.status !== "pending") {
-      return false;
-    }
-    if (status === "posted" && row.status !== "posted") {
-      return false;
-    }
-    if (account === "checking" && !row.account.includes("Checking")) {
-      return false;
-    }
-    if (account === "credit" && !row.account.includes("Credit")) {
-      return false;
-    }
-    if (account === "savings" && !row.account.includes("Savings")) {
-      return false;
-    }
-    return true;
-  });
-}
-
 export function TransactionsTable() {
-  const [sorting, setSorting] = useState<SortingState>([
-    { desc: true, id: "date" },
-  ]);
-  const [flow, setFlow] = useState<FlowFilter>("all");
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [account, setAccount] = useState<AccountFilter>("all");
-
-  const filteredRows = useMemo(
-    () => applyTransactionFilters(MOCK_TRANSACTIONS, flow, status, account),
-    [flow, status, account]
-  );
-
   const table = useReactTable({
     columns,
-    data: filteredRows,
+    data: MOCK_TRANSACTIONS,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     initialState: {
-      pagination: { pageSize: 8 },
+      sorting: [{ desc: true, id: "date" }],
     },
-    onSortingChange: setSorting,
-    state: { sorting },
   });
 
-  useEffect(() => {
-    table.setPageIndex(0);
-  }, [flow, status, account, table]);
-
   return (
-    <div className="w-full min-w-0 space-y-4">
-      <div className="flex w-full min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex min-w-0 flex-1 flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground text-xs font-medium">
-              Amount
-            </span>
-            <ToggleGroup
-              onValueChange={(v) => {
-                const next = v.at(-1);
-                if (next === "all" || next === "inflow" || next === "outflow") {
-                  setFlow(next);
-                }
-              }}
-              size="sm"
-              spacing={0}
-              value={[flow]}
-              variant="outline"
-            >
-              <ToggleGroupItem value="all">All</ToggleGroupItem>
-              <ToggleGroupItem value="inflow">Inflows</ToggleGroupItem>
-              <ToggleGroupItem value="outflow">Outflows</ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground text-xs font-medium">
-              Status
-            </span>
-            <ToggleGroup
-              onValueChange={(v) => {
-                const next = v.at(-1);
-                if (next === "all" || next === "pending" || next === "posted") {
-                  setStatus(next);
-                }
-              }}
-              size="sm"
-              spacing={0}
-              value={[status]}
-              variant="outline"
-            >
-              <ToggleGroupItem value="all">All</ToggleGroupItem>
-              <ToggleGroupItem value="pending">Pending</ToggleGroupItem>
-              <ToggleGroupItem value="posted">Posted</ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground text-xs font-medium">
-              Account
-            </span>
-            <ToggleGroup
-              onValueChange={(v) => {
-                const next = v.at(-1);
-                if (
-                  next === "all" ||
-                  next === "checking" ||
-                  next === "credit" ||
-                  next === "savings"
-                ) {
-                  setAccount(next);
-                }
-              }}
-              size="sm"
-              spacing={0}
-              value={[account]}
-              variant="outline"
-            >
-              <ToggleGroupItem value="all">All</ToggleGroupItem>
-              <ToggleGroupItem value="checking">Checking</ToggleGroupItem>
-              <ToggleGroupItem value="credit">Credit</ToggleGroupItem>
-              <ToggleGroupItem value="savings">Savings</ToggleGroupItem>
-            </ToggleGroup>
-          </div>
+    <div className="flex w-full min-w-0 min-h-0 flex-1 flex-col space-y-4">
+      <div className="flex w-full min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <CobaltToggle size="sm" type="button" variant="outline">
+            Amount
+          </CobaltToggle>
+          <CobaltToggle size="sm" type="button" variant="outline">
+            Status
+          </CobaltToggle>
+          <CobaltToggle size="sm" type="button" variant="outline">
+            Account
+          </CobaltToggle>
         </div>
         <Button className="shrink-0" size="sm" type="button" variant="outline">
           Export
         </Button>
       </div>
 
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead
-                  key={header.id}
-                  className={cn(
-                    header.column.id === "amount" && "text-right",
-                    header.column.getCanSort() &&
-                      "cursor-pointer select-none hover:bg-muted/60"
-                  )}
-                  onClick={header.column.getToggleSortingHandler()}
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  {sortArrow(header.column.getIsSorted())}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
+      <Table className="min-w-full">
         <TableBody>
           {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow className="border-0 font-normal" key={row.id}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
-                    className={cn(cell.column.id === "amount" && "text-right")}
+                    className={cn(
+                      "align-bottom",
+                      cell.column.id === "amount" && "text-right"
+                    )}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
@@ -299,7 +253,7 @@ export function TransactionsTable() {
               </TableRow>
             ))
           ) : (
-            <TableRow>
+            <TableRow className="border-0">
               <TableCell
                 className="h-24 text-center text-muted-foreground"
                 colSpan={columns.length}
@@ -310,40 +264,6 @@ export function TransactionsTable() {
           )}
         </TableBody>
       </Table>
-
-      <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          {table.getFilteredRowModel().rows.length === 0
-            ? "0 rows"
-            : `Showing ${table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}–${Math.min(
-                (table.getState().pagination.pageIndex + 1) *
-                  table.getState().pagination.pageSize,
-                table.getFilteredRowModel().rows.length
-              )} of ${table.getFilteredRowModel().rows.length}`}
-        </p>
-        <div className="flex items-center gap-2">
-          <Button
-            aria-label="Previous page"
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => table.previousPage()}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
-          </Button>
-          <Button
-            aria-label="Next page"
-            disabled={!table.getCanNextPage()}
-            onClick={() => table.nextPage()}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

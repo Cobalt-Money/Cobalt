@@ -69,6 +69,8 @@ export const transactionListItemSchema = transactionListItemRowSchema
     institutionUrl: institutionListSlice.shape.url,
   });
 
+export type TransactionListItem = z.infer<typeof transactionListItemSchema>;
+
 const recurringStreamListRowSchema = createSelectSchema(recurringStream, {
   ...recurringStreamJsonbSelectRefinements,
 });

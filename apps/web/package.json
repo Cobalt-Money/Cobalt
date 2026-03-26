@@ -17,7 +17,9 @@
   },
   "dependencies": {
     "@cobalt-web/auth": "workspace:*",
+    "@cobalt-web/clients": "workspace:*",
     "@cobalt-web/env": "workspace:*",
+    "@cobalt-web/server-data": "workspace:*",
     "@cobalt-web/ui": "workspace:*",
     "@cobalt-web/zero": "workspace:*",
     "@hugeicons/core-free-icons": "^4.0.0",
