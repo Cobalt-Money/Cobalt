@@ -16,7 +16,9 @@ https://cobalt-server.vercel.app/v1
 
 ## Authentication
 
-Cobalt uses OAuth 2.0 for API authentication. Authorize via the standard OAuth flow, then include the access token in your requests:
+Cobalt uses Google OAuth for API authentication. See the [Authentication guide](/docs/authentication) for the full setup flow.
+
+Once authenticated, include the access token in your requests:
 
 ```bash
 curl -H "Authorization: Bearer <access_token>" \
