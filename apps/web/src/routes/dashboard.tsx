@@ -1,6 +1,7 @@
 "use client";
 
 import { CobaltButton } from "@cobalt-web/ui/cobalt/button";
+import { CobaltCard, cobaltCardChrome } from "@cobalt-web/ui/cobalt/card";
 import {
   Accordion,
   AccordionContent,
@@ -123,6 +124,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@cobalt-web/ui/components/tooltip";
+import { cn } from "@cobalt-web/ui/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { AppSidebar } from "@/components/shell/app-sidebar";
@@ -135,16 +137,25 @@ export const Route = createFileRoute("/dashboard")({
 function ShowcaseSection({
   title,
   children,
+  scratchpadSurface = "cobalt",
 }: {
   title: string;
   children: React.ReactNode;
+  scratchpadSurface?: "cobalt" | "legacy";
 }) {
   return (
     <section className="space-y-3">
       <h2 className="font-mono text-xs tracking-wide text-muted-foreground uppercase">
         {title}
       </h2>
-      <div className="rounded-xl border border-border/80 bg-card/30 p-4 ring-1 ring-foreground/5">
+      <div
+        className={cn(
+          "rounded-xl p-4",
+          scratchpadSurface === "cobalt"
+            ? cobaltCardChrome
+            : "border border-border/80 bg-card/30 ring-1 ring-foreground/5"
+        )}
+      >
         {children}
       </div>
     </section>
@@ -553,27 +564,62 @@ function DashboardPage() {
             </div>
           </ShowcaseSection>
 
-          <ShowcaseSection title="Card · Separator">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Card</CardTitle>
-                  <CardDescription>
-                    `card.tsx` — header, description, content, footer.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Body text using theme tokens.
+          <ShowcaseSection scratchpadSurface="legacy" title="Card · Separator">
+            <div className="space-y-6">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="space-y-2">
+                  <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+                    Base
                   </p>
-                </CardContent>
-                <CardFooter className="border-t">
-                  <span className="text-xs text-muted-foreground">Footer</span>
-                  <Badge variant="outline" className="text-[10px]">
-                    Tag
-                  </Badge>
-                </CardFooter>
-              </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Card</CardTitle>
+                      <CardDescription>
+                        `card.tsx` — header, description, content, footer.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Body text using theme tokens.
+                      </p>
+                    </CardContent>
+                    <CardFooter className="border-t">
+                      <span className="text-xs text-muted-foreground">
+                        Footer
+                      </span>
+                      <Badge variant="outline" className="text-[10px]">
+                        Tag
+                      </Badge>
+                    </CardFooter>
+                  </Card>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+                    Cobalt
+                  </p>
+                  <CobaltCard>
+                    <CardHeader>
+                      <CardTitle>Card</CardTitle>
+                      <CardDescription>
+                        `cobalt/card` — same structure, glass + border chrome.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Body text using theme tokens.
+                      </p>
+                    </CardContent>
+                    <CardFooter className="border-t">
+                      <span className="text-xs text-muted-foreground">
+                        Footer
+                      </span>
+                      <Badge variant="outline" className="text-[10px]">
+                        Tag
+                      </Badge>
+                    </CardFooter>
+                  </CobaltCard>
+                </div>
+              </div>
               <div className="flex flex-col justify-center gap-3">
                 <span className="text-sm text-muted-foreground">Separator</span>
                 <Separator />
