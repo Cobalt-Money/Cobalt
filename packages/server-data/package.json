@@ -3,6 +3,7 @@
   "type": "module",
   "exports": {
     "./accounts/*": "./src/accounts/*.ts",
+    "./brokerage/*": "./src/brokerage/*.ts",
     "./institutions/*": "./src/institutions/*.ts",
     "./plaid/*": "./src/plaid/*.ts",
     "./subscriptions": "./src/subscriptions/index.ts",
