@@ -1,0 +1,79 @@
+---
+title: Authentication
+description: How to authenticate with the Cobalt API using Google OAuth.
+icon: Lock
+---
+
+## Overview
+
+The Cobalt API uses session-based authentication powered by [Better Auth](https://www.better-auth.com/). You sign in with Google OAuth, and the resulting session authenticates all `/v1/` API requests.
+
+For **browser-based** clients (web apps, SPAs), authentication is automatic via session cookies. For **non-browser** clients (terminals, scripts, MCP servers), Bearer token support is coming soon.
+
+## Browser Authentication Flow
+
+### 1. Initiate Google Sign-In
+
+Redirect the user or make a request to the sign-in endpoint:
+
+```bash
+POST https://cobalt-server.vercel.app/api/auth/sign-in/social
+Content-Type: application/json
+
+{
+  "provider": "google",
+  "callbackURL": "https://your-app.com/callback"
+}
+```
+
+This returns a redirect URL to Google's OAuth consent screen.
+
+### 2. User Completes Google OAuth
+
+The user signs in with their Google account and is redirected back to your `callbackURL`.
+
+### 3. Session Cookie Is Set
+
+After successful authentication, Better Auth sets an `httpOnly` session cookie. This cookie is automatically included in all subsequent requests from the browser.
+
+### 4. Call v1 Endpoints
+
+Once authenticated, all `/v1/` endpoints work automatically:
+
+```bash
+GET https://cobalt-server.vercel.app/v1/tickers/AAPL/quote
+```
+
+No `Authorization` header needed — the session cookie handles it.
+
+## Using Bearer Tokens
+
+If you have a Bearer token (e.g., from a session), you can pass it directly:
+
+```bash
+curl -H "Authorization: Bearer <access_token>" \
+  https://cobalt-server.vercel.app/v1/tickers/AAPL/quote
+```
+
+## Session Lifetime
+
+- Sessions last **30 days**
+- Sessions auto-refresh when active (refreshed every 24 hours)
+- Expired sessions return `401 Unauthorized`
+
+## Error Responses
+
+Unauthenticated requests return:
+
+```json
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or expired access token"
+  }
+}
+```
+
+## Non-Browser Authentication
+
+Support for API keys and CLI-based authentication is planned for a future release. This will allow usage from terminals, MCP servers, and AI chat applications without a browser.
