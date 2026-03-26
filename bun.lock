@@ -66,6 +66,7 @@
       "name": "server",
       "dependencies": {
         "@cobalt-web/auth": "workspace:*",
+        "@cobalt-web/clients": "workspace:*",
         "@cobalt-web/db": "workspace:*",
         "@cobalt-web/env": "workspace:*",
         "@cobalt-web/server-data": "workspace:*",
@@ -159,6 +160,18 @@
         "typescript": "^5",
       },
     },
+    "packages/clients": {
+      "name": "@cobalt-web/clients",
+      "version": "0.0.0",
+      "dependencies": {
+        "@cobalt-web/env": "workspace:*",
+        "plaid": "^41.4.0",
+      },
+      "devDependencies": {
+        "@cobalt-web/config": "workspace:*",
+        "typescript": "^5",
+      },
+    },
     "packages/config": {
       "name": "@cobalt-web/config",
       "version": "0.0.0",
@@ -197,9 +210,12 @@
       "name": "@cobalt-web/server-data",
       "dependencies": {
         "@cobalt-web/auth": "workspace:*",
+        "@cobalt-web/clients": "workspace:*",
         "@cobalt-web/db": "workspace:*",
+        "@cobalt-web/env": "workspace:*",
         "@hono/zod-openapi": "^1.2.2",
         "drizzle-orm": "1.0.0-beta.18-7eb39f0",
+        "plaid": "^41.4.0",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -424,6 +440,8 @@
     "@clack/prompts": ["@clack/prompts@1.1.0", "", { "dependencies": { "@clack/core": "1.1.0", "sisteransi": "^1.0.5" } }, "sha512-pkqbPGtohJAvm4Dphs2M8xE29ggupihHdy1x84HNojZuMtFsHiUlRvqD24tM2+XmI+61LlfNceM3Wr7U5QES5g=="],
 
     "@cobalt-web/auth": ["@cobalt-web/auth@workspace:packages/auth"],
+
+    "@cobalt-web/clients": ["@cobalt-web/clients@workspace:packages/clients"],
 
     "@cobalt-web/config": ["@cobalt-web/config@workspace:packages/config"],
 

@@ -1,0 +1,20 @@
+{
+  "name": "@cobalt-web/clients",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./plaid": "./plaid.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cobalt-web/env": "workspace:*",
+    "plaid": "^41.4.0"
+  },
+  "devDependencies": {
+    "@cobalt-web/config": "workspace:*",
+    "typescript": "^5"
+  }
+}

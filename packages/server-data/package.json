@@ -3,6 +3,8 @@
   "type": "module",
   "exports": {
     "./accounts/*": "./src/accounts/*.ts",
+    "./institutions/*": "./src/institutions/*.ts",
+    "./plaid/*": "./src/plaid/*.ts",
     "./subscriptions": "./src/subscriptions/index.ts",
     "./transactions/*": "./src/transactions/*.ts",
     "./types": "./src/types.ts",
@@ -13,9 +15,12 @@
   },
   "dependencies": {
     "@cobalt-web/auth": "workspace:*",
+    "@cobalt-web/clients": "workspace:*",
     "@cobalt-web/db": "workspace:*",
+    "@cobalt-web/env": "workspace:*",
     "@hono/zod-openapi": "^1.2.2",
     "drizzle-orm": "1.0.0-beta.18-7eb39f0",
+    "plaid": "^41.4.0",
     "zod": "catalog:"
   },
   "devDependencies": {
