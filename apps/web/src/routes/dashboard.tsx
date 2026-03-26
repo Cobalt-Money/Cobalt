@@ -1,5 +1,6 @@
 "use client";
 
+import { CobaltButton } from "@cobalt-web/ui/cobalt/button";
 import {
   Accordion,
   AccordionContent,
@@ -169,68 +170,161 @@ function DashboardPage() {
           </div>
 
           <ShowcaseSection title="Button · Badge · Kbd">
-            <div className="flex flex-wrap items-center gap-3">
-              <Button type="button">Default</Button>
-              <Button type="button" variant="secondary">
-                Secondary
-              </Button>
-              <Button type="button" variant="outline">
-                Outline
-              </Button>
-              <Button type="button" variant="ghost">
-                Ghost
-              </Button>
-              <Button type="button" variant="destructive">
-                Destructive
-              </Button>
-              <Button disabled type="button">
-                Disabled
-              </Button>
-              <Button size="sm" type="button">
-                Small
-              </Button>
-              <Button size="lg" type="button">
-                Large
-              </Button>
-              <Badge>Badge</Badge>
-              <Badge variant="secondary">Secondary</Badge>
-              <Badge variant="outline">Outline</Badge>
-              <Badge variant="destructive">Destructive</Badge>
-              <KbdGroup>
-                <Kbd>⌘</Kbd>
-                <Kbd>K</Kbd>
-              </KbdGroup>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <ButtonGroup>
-                <Button size="sm" type="button" variant="outline">
-                  Left
-                </Button>
-                <Button size="sm" type="button" variant="outline">
-                  Middle
-                </Button>
-                <Button size="sm" type="button" variant="outline">
-                  Right
-                </Button>
-              </ButtonGroup>
-              <Toggle aria-label="Bold" size="sm" variant="outline">
-                B
-              </Toggle>
-              <ToggleGroup
-                defaultValue={["left"]}
-                spacing={0}
-                variant="outline"
-              >
-                <ToggleGroupItem aria-label="Left" size="sm" value="left">
-                  L
-                </ToggleGroupItem>
-                <ToggleGroupItem aria-label="Center" size="sm" value="center">
-                  C
-                </ToggleGroupItem>
-                <ToggleGroupItem aria-label="Right" size="sm" value="right">
-                  R
-                </ToggleGroupItem>
-              </ToggleGroup>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Base
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button type="button">Default</Button>
+                  <Button type="button" variant="secondary">
+                    Secondary
+                  </Button>
+                  <Button type="button" variant="outline">
+                    Outline
+                  </Button>
+                  <Button type="button" variant="ghost">
+                    Ghost
+                  </Button>
+                  <Button type="button" variant="destructive">
+                    Destructive
+                  </Button>
+                  <Button disabled type="button">
+                    Disabled
+                  </Button>
+                  <Button size="sm" type="button">
+                    Small
+                  </Button>
+                  <Button size="lg" type="button">
+                    Large
+                  </Button>
+                  <Badge>Badge</Badge>
+                  <Badge variant="secondary">Secondary</Badge>
+                  <Badge variant="outline">Outline</Badge>
+                  <Badge variant="destructive">Destructive</Badge>
+                  <KbdGroup>
+                    <Kbd>⌘</Kbd>
+                    <Kbd>K</Kbd>
+                  </KbdGroup>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Cobalt
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <CobaltButton type="button">Default</CobaltButton>
+                  <CobaltButton type="button" variant="secondary">
+                    Secondary
+                  </CobaltButton>
+                  <CobaltButton type="button" variant="outline">
+                    Outline
+                  </CobaltButton>
+                  <CobaltButton type="button" variant="ghost">
+                    Ghost
+                  </CobaltButton>
+                  <CobaltButton type="button" variant="destructive">
+                    Destructive
+                  </CobaltButton>
+                  <CobaltButton disabled type="button">
+                    Disabled
+                  </CobaltButton>
+                  <CobaltButton size="sm" type="button">
+                    Small
+                  </CobaltButton>
+                  <CobaltButton size="lg" type="button">
+                    Large
+                  </CobaltButton>
+                  <Badge>Badge</Badge>
+                  <Badge variant="secondary">Secondary</Badge>
+                  <Badge variant="outline">Outline</Badge>
+                  <Badge variant="destructive">Destructive</Badge>
+                  <KbdGroup>
+                    <Kbd>⌘</Kbd>
+                    <Kbd>K</Kbd>
+                  </KbdGroup>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Base
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <ButtonGroup>
+                    <Button size="sm" type="button" variant="outline">
+                      Left
+                    </Button>
+                    <Button size="sm" type="button" variant="outline">
+                      Middle
+                    </Button>
+                    <Button size="sm" type="button" variant="outline">
+                      Right
+                    </Button>
+                  </ButtonGroup>
+                  <Toggle aria-label="Bold" size="sm" variant="outline">
+                    B
+                  </Toggle>
+                  <ToggleGroup
+                    defaultValue={["left"]}
+                    spacing={0}
+                    variant="outline"
+                  >
+                    <ToggleGroupItem aria-label="Left" size="sm" value="left">
+                      L
+                    </ToggleGroupItem>
+                    <ToggleGroupItem
+                      aria-label="Center"
+                      size="sm"
+                      value="center"
+                    >
+                      C
+                    </ToggleGroupItem>
+                    <ToggleGroupItem aria-label="Right" size="sm" value="right">
+                      R
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+                  Cobalt
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <ButtonGroup>
+                    <CobaltButton size="sm" type="button" variant="outline">
+                      Left
+                    </CobaltButton>
+                    <CobaltButton size="sm" type="button" variant="outline">
+                      Middle
+                    </CobaltButton>
+                    <CobaltButton size="sm" type="button" variant="outline">
+                      Right
+                    </CobaltButton>
+                  </ButtonGroup>
+                  <Toggle aria-label="Bold" size="sm" variant="outline">
+                    B
+                  </Toggle>
+                  <ToggleGroup
+                    defaultValue={["left"]}
+                    spacing={0}
+                    variant="outline"
+                  >
+                    <ToggleGroupItem aria-label="Left" size="sm" value="left">
+                      L
+                    </ToggleGroupItem>
+                    <ToggleGroupItem
+                      aria-label="Center"
+                      size="sm"
+                      value="center"
+                    >
+                      C
+                    </ToggleGroupItem>
+                    <ToggleGroupItem aria-label="Right" size="sm" value="right">
+                      R
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              </div>
             </div>
           </ShowcaseSection>
 
