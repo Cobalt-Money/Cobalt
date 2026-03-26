@@ -7,6 +7,12 @@
     "./institutions/*": "./src/institutions/*.ts",
     "./plaid/*": "./src/plaid/*.ts",
     "./subscriptions": "./src/subscriptions/index.ts",
+    "./news/lib": "./src/news/lib.ts",
+    "./news/events/*": "./src/news/events/*.ts",
+    "./news/detail/*": "./src/news/detail/*.ts",
+    "./news/for-you/*": "./src/news/for-you/*.ts",
+    "./news/trending/*": "./src/news/trending/*.ts",
+    "./news/rss/*": "./src/news/rss/*.ts",
     "./transactions/*": "./src/transactions/*.ts",
     "./types": "./src/types.ts",
     "./user": "./src/user/index.ts"
