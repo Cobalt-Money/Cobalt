@@ -9,7 +9,10 @@ import {
   createRootRouteWithContext,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { Agentation } from "agentation";
+import { useEffect } from "react";
+// import { Agentation } from "agentation";
+
+import { CommandMenu } from "@/components/shell/command-menu";
 
 import { ZeroProvider } from "../lib/zero-client";
 
@@ -55,6 +58,15 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootDocument() {
+  useEffect(() => {
+    if (!import.meta.env.DEV) {
+      return;
+    }
+    (async () => {
+      await import("react-grab");
+    })();
+  }, []);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -72,11 +84,12 @@ function RootDocument() {
               <div className="min-h-svh">
                 <Outlet />
               </div>
+              <CommandMenu />
             </TooltipProvider>
           </ZeroProvider>
           <Toaster richColors />
         </ThemeProvider>
-        {import.meta.env.DEV ? <Agentation /> : null}
+        {/* {import.meta.env.DEV ? <Agentation /> : null} */}
         {import.meta.env.DEV ? (
           <script
             crossOrigin="anonymous"
