@@ -35,6 +35,10 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    PLAID_CLIENT_ID: z.string().min(1),
+    PLAID_CLIENT_SECRET: z.string().min(1),
+    PLAID_ENV: z.string().min(1).default("sandbox"),
+    PLAID_WEBHOOK_URL: z.string().url().optional(),
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     TRUSTED_ORIGINS_EXTRA: commaList,
