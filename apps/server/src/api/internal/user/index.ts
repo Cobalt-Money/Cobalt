@@ -1,6 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requireAuth } from "../../middleware/auth.js";
+import { requireAuth } from "../middleware.js";
 import { deleteAccountRouter } from "./delete-account.js";
 import { lastSeenRouter } from "./last-seen.js";
 

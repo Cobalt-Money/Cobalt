@@ -1,6 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requirePaidUser } from "../../middleware/auth.js";
+import { requirePaidUser } from "../middleware.js";
 import { creditSpendingRouter } from "./credit-spending.js";
 import { listRouter } from "./list.js";
 import { overridesRouter } from "./overrides.js";

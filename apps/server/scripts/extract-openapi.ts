@@ -10,7 +10,7 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { tickersRouter } from "../src/routes/v1/tickers.js";
+import { tickersRouter } from "../src/api/public/v1/tickers.js";
 
 const app = new OpenAPIHono().route("/v1/tickers", tickersRouter);
 

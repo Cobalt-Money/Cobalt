@@ -17,7 +17,7 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth } from "./middleware.js";
 
 // ── Route definitions ───────────────────────────────────────────────
 
