@@ -14,18 +14,6 @@ const commaList = z
       : []
   );
 
-/** One or more origins, comma-separated (e.g. prod web + preview URLs). */
-const commaSeparatedUrls = z
-  .string()
-  .min(1)
-  .transform((s) =>
-    s
-      .split(",")
-      .map((x) => x.trim())
-      .filter(Boolean)
-  )
-  .pipe(z.array(z.url()).min(1));
-
 export const env = createEnv({
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,
@@ -37,7 +25,7 @@ export const env = createEnv({
     APPLE_TEAM_ID: z.string().min(1),
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
-    CORS_ORIGIN: commaSeparatedUrls,
+    CORS_ORIGIN: z.url(),
     /** Cap @cobalt-web/db pool size — default 10 per `pg` is too high for small Postgres (Neon free, etc.). */
     DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(5),
     DATABASE_URL: z.string().min(1),
