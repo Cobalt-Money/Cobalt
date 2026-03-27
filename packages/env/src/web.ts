@@ -3,6 +3,8 @@ import { z } from "zod";
 
 export const env = createEnv({
   client: {
+    /** Brandfetch Logo API client id (`cdn.brandfetch.io?c=`). Optional — prefer for SVG institution logos when set. */
+    VITE_BRANDFETCH_CLIENT_ID: z.string().optional(),
     /** Logo.dev publishable key for merchant logos (`img.logo.dev`). Optional — logos fall back when unset. */
     VITE_LOGO_DEV_PUBLISHABLE_KEY: z.string().optional(),
     VITE_SERVER_URL: z.url(),

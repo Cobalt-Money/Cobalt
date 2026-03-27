@@ -28,6 +28,43 @@ export function formatTransactionDateDisplay(
   return dateDisplay.format(new Date(`${day}T12:00:00.000Z`));
 }
 
+const monthGroupHeading = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  year: "numeric",
+});
+
+/**
+ * Stable month bucket for grouping (calendar month of display date), e.g. `2025-03`.
+ * Uses the same display date as {@link transactionDateSortKey}.
+ */
+export function transactionMonthGroupKey(
+  row: Pick<TransactionListItem, "authorizedDate" | "date">
+): string {
+  const raw = getTransactionDisplayDateString(row);
+  const day = String(raw).split("T")[0] ?? String(raw);
+  const parts = day.split("-");
+  if (parts.length < 2) {
+    return "unknown";
+  }
+  const [y, mo] = parts;
+  const m = (mo ?? "01").padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+/** e.g. `2025-03` → "March 2025" */
+export function formatMonthGroupLabel(yearMonth: string): string {
+  if (yearMonth === "unknown") {
+    return "Unknown date";
+  }
+  const [ys, ms] = yearMonth.split("-");
+  const y = Number(ys);
+  const m = Number(ms);
+  if (!y || !m) {
+    return yearMonth;
+  }
+  return monthGroupHeading.format(new Date(Date.UTC(y, m - 1, 1)));
+}
+
 /** Horizon truncates account name at last letter before trailing digits; simplified cap at 20 chars. */
 export function formatTransactionAccountDisplayName(
   accountName: string

@@ -121,6 +121,7 @@ export async function getUserTransactions(
       userOverrideCategory: row.userOverrideCategory,
       userOverrideDate: normalizedOverrideDate,
       userOverrideName: row.userOverrideName,
+      website: row.website,
     };
   });
 }

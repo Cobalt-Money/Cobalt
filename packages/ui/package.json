@@ -7,6 +7,7 @@
     "./globals.css": "./src/styles/globals.css",
     "./lib/*": "./src/lib/*.ts",
     "./components/*": "./src/components/*.tsx",
+    "./components/kibo-ui/status": "./src/components/kibo-ui/status/index.tsx",
     "./cobalt/*": "./src/cobalt/*.tsx",
     "./hooks/*": "./src/hooks/*.ts",
     "./postcss.config": "./postcss.config.mjs"

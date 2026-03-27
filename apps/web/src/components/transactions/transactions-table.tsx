@@ -1,7 +1,12 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
-import { Badge } from "@cobalt-web/ui/components/badge";
 import { Button } from "@cobalt-web/ui/components/button";
+import { Checkbox } from "@cobalt-web/ui/components/checkbox";
+import {
+  Status,
+  StatusIndicator,
+  StatusLabel,
+} from "@cobalt-web/ui/components/kibo-ui/status";
 import {
   Table,
   TableBody,
@@ -9,7 +14,7 @@ import {
   TableRow,
 } from "@cobalt-web/ui/components/table";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { BankIcon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   flexRender,
@@ -17,18 +22,21 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
+import { Fragment, useState } from "react";
 
 import { CategoryIcon } from "./category-icon";
 import {
   getCategoryDisplayConfig,
   getDetailedCategoryDisplayName,
 } from "./horizon-categories";
-import { resolveMerchantLogoUrl } from "./merchant-logo";
+import { InstitutionLogo } from "./institution-logo";
+import { MerchantLogo } from "./merchant-logo";
 import {
-  formatTransactionAccountDisplayName,
+  formatMonthGroupLabel,
   formatTransactionDateDisplay,
   transactionDateSortKey,
+  transactionMonthGroupKey,
 } from "./transaction-list-helpers";
 import { MOCK_TRANSACTIONS } from "./transactions-mock-data";
 
@@ -46,34 +54,101 @@ function truncateName(name: string, max = 40): string {
   return `${name.slice(0, max)}…`;
 }
 
+/** Keeps every column vertically centered on a shared line height. */
+const cellRow = "flex items-center leading-5";
+
+/**
+ * Insert sticky month sections (Linear-style) while preserving TanStack row order & selection.
+ * Group key uses the same calendar month as the Date column.
+ */
+function groupRowsByMonth(
+  rows: Row<TransactionListItem>[]
+): { label: string; monthKey: string; rows: Row<TransactionListItem>[] }[] {
+  const groups: {
+    label: string;
+    monthKey: string;
+    rows: Row<TransactionListItem>[];
+  }[] = [];
+
+  for (const row of rows) {
+    const monthKey = transactionMonthGroupKey(row.original);
+    const last = groups.at(-1);
+    if (!last || last.monthKey !== monthKey) {
+      groups.push({
+        label: formatMonthGroupLabel(monthKey),
+        monthKey,
+        rows: [row],
+      });
+    } else {
+      last.rows.push(row);
+    }
+  }
+  return groups;
+}
+
+function getColumnStableId(col: ColumnDef<TransactionListItem>): string {
+  if (typeof col.id === "string" && col.id.length > 0) {
+    return col.id;
+  }
+  if ("accessorKey" in col && typeof col.accessorKey === "string") {
+    return col.accessorKey;
+  }
+  return "";
+}
+
+const monthDividerCell =
+  "border-border/60 border-b bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80";
+
 const columns: ColumnDef<TransactionListItem>[] = [
+  {
+    cell: ({ row }) => (
+      <div
+        className={cn(
+          cellRow,
+          "opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100",
+          row.getIsSelected() && "opacity-100"
+        )}
+      >
+        <Checkbox
+          aria-label={`Select transaction ${row.original.name}`}
+          checked={row.getIsSelected()}
+          onCheckedChange={(checked) => {
+            row.toggleSelected(checked === true);
+          }}
+        />
+      </div>
+    ),
+    enableHiding: false,
+    enableSorting: false,
+    header: () => null,
+    id: "select",
+    size: 40,
+  },
+  {
+    accessorFn: (row) => transactionDateSortKey(row),
+    cell: ({ row }) => (
+      <div className={cn(cellRow, "whitespace-nowrap")}>
+        {formatTransactionDateDisplay(row.original)}
+      </div>
+    ),
+    header: "Date",
+    id: "date",
+  },
   {
     accessorKey: "name",
     cell: ({ row }) => {
       const transactionName = row.original.name;
-      const logoURL = resolveMerchantLogoUrl(row.original);
       const displayName = truncateName(transactionName);
+      const { logoUrl, merchantName, website } = row.original;
 
       return (
-        <div className="truncate" title={transactionName}>
-          <div className="flex items-end gap-2">
-            {logoURL ? (
-              <img
-                alt=""
-                className="size-6 shrink-0 rounded-sm object-contain"
-                height={24}
-                src={logoURL}
-                width={24}
-              />
-            ) : (
-              <div className="flex size-6 shrink-0 items-center justify-center">
-                <HugeiconsIcon
-                  className="text-muted-foreground size-4"
-                  icon={BankIcon}
-                  strokeWidth={2}
-                />
-              </div>
-            )}
+        <div className="min-w-0 truncate" title={transactionName}>
+          <div className={cn(cellRow, "gap-2")}>
+            <MerchantLogo
+              logoUrl={logoUrl}
+              merchantName={merchantName}
+              website={website}
+            />
             <span>{displayName || "—"}</span>
           </div>
         </div>
@@ -82,17 +157,49 @@ const columns: ColumnDef<TransactionListItem>[] = [
     header: "Name",
   },
   {
-    accessorKey: "personalFinanceCategory",
+    accessorFn: (row) => {
+      const c = row.personalFinanceCategory;
+      if (!c) {
+        return "";
+      }
+      const primary = getCategoryDisplayConfig(c).label;
+      const detailed = c.detailed
+        ? getDetailedCategoryDisplayName(c.detailed)
+        : "";
+      return detailed ? `${primary} ${detailed}` : primary;
+    },
     cell: ({ row }) => {
       const category = row.original.personalFinanceCategory;
       if (!category) {
-        return <div>—</div>;
+        return <div className={cellRow}>—</div>;
       }
       const config = getCategoryDisplayConfig(category);
+      const detailed = category.detailed
+        ? getDetailedCategoryDisplayName(category.detailed)
+        : null;
+      const title = detailed ? `${config.label} › ${detailed}` : config.label;
+
       return (
-        <div className="flex items-center gap-2">
-          <CategoryIcon categoryPrimary={category.primary} icon={config.icon} />
-          <span className="leading-none">{config.label}</span>
+        <div className="min-w-0" title={title}>
+          <div className={cn(cellRow, "min-w-0 gap-2")}>
+            <CategoryIcon icon={config.icon} />
+            <div className={cn(cellRow, "min-w-0 gap-1.5 text-sm")}>
+              <span className="shrink-0 text-foreground">{config.label}</span>
+              {detailed ? (
+                <>
+                  <HugeiconsIcon
+                    aria-hidden
+                    className="size-3 shrink-0 text-muted-foreground"
+                    icon={ArrowRight01Icon}
+                    strokeWidth={2}
+                  />
+                  <span className="min-w-0 truncate text-muted-foreground">
+                    {detailed}
+                  </span>
+                </>
+              ) : null}
+            </div>
+          </div>
         </div>
       );
     },
@@ -100,21 +207,23 @@ const columns: ColumnDef<TransactionListItem>[] = [
     id: "category",
   },
   {
-    accessorKey: "personalFinanceCategory",
+    accessorFn: (row) => row.institutionName ?? row.accountName ?? "",
     cell: ({ row }) => {
-      const category = row.original.personalFinanceCategory;
-      if (!category?.detailed) {
-        return <div>—</div>;
-      }
-      const detailed = getDetailedCategoryDisplayName(category.detailed);
+      const { accountName, institutionLogo, institutionName, institutionUrl } =
+        row.original;
+
       return (
-        <div className="truncate text-sm" title={detailed}>
-          {detailed}
+        <div className={cellRow} title={institutionName?.trim() || accountName}>
+          <InstitutionLogo
+            institutionLogo={institutionLogo}
+            institutionName={institutionName}
+            institutionUrl={institutionUrl}
+          />
         </div>
       );
     },
-    header: "Subcategory",
-    id: "detailedCategory",
+    header: "Bank",
+    id: "account",
   },
   {
     accessorKey: "amount",
@@ -126,94 +235,51 @@ const columns: ColumnDef<TransactionListItem>[] = [
           ? "text-red-600 dark:text-red-500"
           : "text-green-600 dark:text-green-500";
       return (
-        <div className={cn("whitespace-nowrap tabular-nums", amountColor)}>
+        <div
+          className={cn(cellRow, "whitespace-nowrap tabular-nums", amountColor)}
+        >
           {formattedAmount}
         </div>
       );
     },
-    header: () => <span className="block w-full text-right">Amount</span>,
-  },
-  {
-    accessorKey: "accountName",
-    cell: ({ row }) => {
-      const { accountName } = row.original;
-      const { institutionLogo } = row.original;
-      const { institutionName } = row.original;
-      const displayAccountName =
-        formatTransactionAccountDisplayName(accountName);
-
-      return (
-        <div className="truncate" title={accountName}>
-          <div className="flex items-end gap-2">
-            {institutionLogo ? (
-              <img
-                alt={institutionName ? `${institutionName} logo` : "Bank logo"}
-                className="size-6 shrink-0 rounded-sm object-cover"
-                height={24}
-                src={`data:image/png;base64,${institutionLogo}`}
-                width={24}
-              />
-            ) : (
-              <div className="flex size-6 shrink-0 items-center justify-center">
-                <HugeiconsIcon
-                  className="text-muted-foreground size-4"
-                  icon={BankIcon}
-                  strokeWidth={2}
-                />
-              </div>
-            )}
-            <span>{displayAccountName || "—"}</span>
-          </div>
-        </div>
-      );
-    },
-    header: "Account",
-    id: "account",
+    header: "Amount",
   },
   {
     accessorKey: "pending",
     cell: ({ row }) => {
       const { pending } = row.original;
+      const status = pending ? "degraded" : "online";
       return (
-        <div className="whitespace-nowrap">
-          <Badge
-            className={cn(
-              "font-normal",
-              pending
-                ? "border-orange-700/40 text-orange-700 dark:text-orange-400"
-                : "border-green-700/40 text-green-700 dark:text-green-400"
-            )}
-            variant="outline"
-          >
-            {pending ? "Pending" : "Posted"}
-          </Badge>
+        <div className={cn(cellRow, "whitespace-nowrap")}>
+          <Status className="h-auto min-h-5 py-1 font-normal" status={status}>
+            <StatusIndicator />
+            <StatusLabel>{pending ? "Pending" : "Posted"}</StatusLabel>
+          </Status>
         </div>
       );
     },
     header: "Status",
   },
-  {
-    accessorFn: (row) => transactionDateSortKey(row),
-    cell: ({ row }) => (
-      <div className="whitespace-nowrap">
-        {formatTransactionDateDisplay(row.original)}
-      </div>
-    ),
-    header: "Date",
-    id: "date",
-  },
 ];
 
 export function TransactionsTable() {
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
   const table = useReactTable({
     columns,
     data: MOCK_TRANSACTIONS,
+    enableRowSelection: true,
     getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.id,
     getSortedRowModel: getSortedRowModel(),
     initialState: {
       sorting: [{ desc: true, id: "date" }],
     },
+    onRowSelectionChange: setRowSelection,
+    state: { rowSelection },
   });
+
+  const monthSections = groupRowsByMonth(table.getRowModel().rows);
 
   return (
     <div className="flex w-full min-w-0 min-h-0 flex-1 flex-col space-y-4">
@@ -226,7 +292,7 @@ export function TransactionsTable() {
             Status
           </CobaltToggle>
           <CobaltToggle size="sm" type="button" variant="outline">
-            Account
+            Bank
           </CobaltToggle>
         </div>
         <Button className="shrink-0" size="sm" type="button" variant="outline">
@@ -237,20 +303,53 @@ export function TransactionsTable() {
       <Table className="min-w-full">
         <TableBody>
           {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow className="border-0 font-normal" key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className={cn(
-                      "align-bottom",
-                      cell.column.id === "amount" && "text-right"
-                    )}
+            monthSections.map((section) => (
+              <Fragment key={section.monthKey}>
+                <TableRow className="sticky top-0 z-10 border-0 hover:bg-transparent">
+                  {columns.map((col) => {
+                    const colId = getColumnStableId(col);
+                    if (colId === "date") {
+                      return (
+                        <TableCell
+                          className={cn(monthDividerCell, "px-3 py-2.5")}
+                          key={`${section.monthKey}-date`}
+                        >
+                          <div className="flex min-w-0 items-center justify-between gap-2">
+                            <span className="truncate font-medium text-foreground text-sm">
+                              {section.label}
+                            </span>
+                            <span className="shrink-0 font-normal tabular-nums text-muted-foreground text-sm">
+                              {section.rows.length}
+                            </span>
+                          </div>
+                        </TableCell>
+                      );
+                    }
+                    return (
+                      <TableCell
+                        className={cn(monthDividerCell, "p-3")}
+                        key={`${section.monthKey}-${colId}`}
+                      />
+                    );
+                  })}
+                </TableRow>
+                {section.rows.map((row) => (
+                  <TableRow
+                    className="group border-0 font-normal"
+                    data-state={row.getIsSelected() ? "selected" : undefined}
+                    key={row.id}
                   >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
+              </Fragment>
             ))
           ) : (
             <TableRow className="border-0">

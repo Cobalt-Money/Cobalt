@@ -11,14 +11,16 @@
     "prefix": ""
   },
   "iconLibrary": "hugeicons",
+  "menuColor": "default",
+  "menuAccent": "subtle",
   "aliases": {
     "components": "@cobalt-web/ui/components",
     "utils": "@cobalt-web/ui/lib/utils",
-    "hooks": "@cobalt-web/ui/hooks",
+    "ui": "@cobalt-web/ui/components",
     "lib": "@cobalt-web/ui/lib",
-    "ui": "@cobalt-web/ui/components"
+    "hooks": "@cobalt-web/ui/hooks"
   },
-  "menuColor": "default",
-  "menuAccent": "subtle",
-  "registries": {}
+  "registries": {
+    "@kibo-ui": "https://www.kibo-ui.com/r/{name}.json"
+  }
 }
