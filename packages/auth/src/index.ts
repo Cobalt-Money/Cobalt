@@ -42,6 +42,23 @@ export const auth = betterAuth({
     storeStateStrategy: "cookie",
   },
   advanced: {
+    // Session cookies stay Lax. OAuth *state* cookies must allow cross-site POST callbacks
+    // (Apple `form_post`, etc.); Lax is not sent on those requests → state_mismatch.
+    // See https://github.com/better-auth/better-auth/issues/5243 and PR #5748.
+    cookies: {
+      oauth_state: {
+        attributes: {
+          sameSite: "none",
+          secure: true,
+        },
+      },
+      state: {
+        attributes: {
+          sameSite: "none",
+          secure: true,
+        },
+      },
+    },
     // `lax` aligns with Zero cookie guidance (avoid `SameSite=None` for WS sync).
     // If you need cookies across different sites, use subdomain deployment + Better Auth
     // cross-subdomain cookies instead of `none` here.
