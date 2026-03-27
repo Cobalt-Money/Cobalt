@@ -26,6 +26,7 @@ const trustedOrigins = [
   "https://try-cobalt.com",
   "https://www.try-cobalt.com",
   "https://demo.try-cobalt.com",
+  "https://cobalt-server.vercel.app",
   "Cobalt-mobile://",
   "https://appleid.apple.com",
   ...env.TRUSTED_ORIGINS_EXTRA,
