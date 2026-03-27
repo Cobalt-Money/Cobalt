@@ -9,48 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from "./routes/__root";
-import { Route as AccountsRouteImport } from "./routes/accounts";
-import { Route as BrokerageRouteImport } from "./routes/brokerage";
-import { Route as DashboardRouteImport } from "./routes/dashboard";
+import { Route as AuthRouteImport } from "./routes/_auth";
+import { Route as AuthAccountsRouteImport } from "./routes/_auth.accounts";
+import { Route as AuthBrokerageRouteImport } from "./routes/_auth.brokerage";
+import { Route as AuthDashboardRouteImport } from "./routes/_auth.dashboard";
+import { Route as AuthResearchRouteImport } from "./routes/_auth.research";
+import { Route as AuthTransactionsRouteImport } from "./routes/_auth.transactions";
 import { Route as IndexRouteImport } from "./routes/index";
 import { Route as LoginRouteImport } from "./routes/login";
-import { Route as LogosRouteImport } from "./routes/logos";
-import { Route as ResearchRouteImport } from "./routes/research";
-import { Route as TransactionsRouteImport } from "./routes/transactions";
 
-const TransactionsRoute = TransactionsRouteImport.update({
-  id: "/transactions",
-  path: "/transactions",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const ResearchRoute = ResearchRouteImport.update({
-  id: "/research",
-  path: "/research",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const LogosRoute = LogosRouteImport.update({
-  id: "/logos",
-  path: "/logos",
-  getParentRoute: () => rootRouteImport,
-} as any);
 const LoginRoute = LoginRouteImport.update({
   id: "/login",
   path: "/login",
   getParentRoute: () => rootRouteImport,
 } as any);
-const DashboardRoute = DashboardRouteImport.update({
-  id: "/dashboard",
-  path: "/dashboard",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const BrokerageRoute = BrokerageRouteImport.update({
-  id: "/brokerage",
-  path: "/brokerage",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const AccountsRoute = AccountsRouteImport.update({
-  id: "/accounts",
-  path: "/accounts",
+const AuthRoute = AuthRouteImport.update({
+  id: "/_auth",
   getParentRoute: () => rootRouteImport,
 } as any);
 const IndexRoute = IndexRouteImport.update({
@@ -58,105 +32,100 @@ const IndexRoute = IndexRouteImport.update({
   path: "/",
   getParentRoute: () => rootRouteImport,
 } as any);
+const AuthTransactionsRoute = AuthTransactionsRouteImport.update({
+  id: "/transactions",
+  path: "/transactions",
+  getParentRoute: () => AuthRoute,
+} as any);
+const AuthResearchRoute = AuthResearchRouteImport.update({
+  id: "/research",
+  path: "/research",
+  getParentRoute: () => AuthRoute,
+} as any);
+const AuthDashboardRoute = AuthDashboardRouteImport.update({
+  id: "/dashboard",
+  path: "/dashboard",
+  getParentRoute: () => AuthRoute,
+} as any);
+const AuthBrokerageRoute = AuthBrokerageRouteImport.update({
+  id: "/brokerage",
+  path: "/brokerage",
+  getParentRoute: () => AuthRoute,
+} as any);
+const AuthAccountsRoute = AuthAccountsRouteImport.update({
+  id: "/accounts",
+  path: "/accounts",
+  getParentRoute: () => AuthRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
-  "/accounts": typeof AccountsRoute;
-  "/brokerage": typeof BrokerageRoute;
-  "/dashboard": typeof DashboardRoute;
   "/login": typeof LoginRoute;
-  "/logos": typeof LogosRoute;
-  "/research": typeof ResearchRoute;
-  "/transactions": typeof TransactionsRoute;
+  "/accounts": typeof AuthAccountsRoute;
+  "/brokerage": typeof AuthBrokerageRoute;
+  "/dashboard": typeof AuthDashboardRoute;
+  "/research": typeof AuthResearchRoute;
+  "/transactions": typeof AuthTransactionsRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
-  "/accounts": typeof AccountsRoute;
-  "/brokerage": typeof BrokerageRoute;
-  "/dashboard": typeof DashboardRoute;
   "/login": typeof LoginRoute;
-  "/logos": typeof LogosRoute;
-  "/research": typeof ResearchRoute;
-  "/transactions": typeof TransactionsRoute;
+  "/accounts": typeof AuthAccountsRoute;
+  "/brokerage": typeof AuthBrokerageRoute;
+  "/dashboard": typeof AuthDashboardRoute;
+  "/research": typeof AuthResearchRoute;
+  "/transactions": typeof AuthTransactionsRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
-  "/accounts": typeof AccountsRoute;
-  "/brokerage": typeof BrokerageRoute;
-  "/dashboard": typeof DashboardRoute;
+  "/_auth": typeof AuthRouteWithChildren;
   "/login": typeof LoginRoute;
-  "/logos": typeof LogosRoute;
-  "/research": typeof ResearchRoute;
-  "/transactions": typeof TransactionsRoute;
+  "/_auth/accounts": typeof AuthAccountsRoute;
+  "/_auth/brokerage": typeof AuthBrokerageRoute;
+  "/_auth/dashboard": typeof AuthDashboardRoute;
+  "/_auth/research": typeof AuthResearchRoute;
+  "/_auth/transactions": typeof AuthTransactionsRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | "/"
+    | "/login"
     | "/accounts"
     | "/brokerage"
     | "/dashboard"
-    | "/login"
-    | "/logos"
     | "/research"
     | "/transactions";
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/"
+    | "/login"
     | "/accounts"
     | "/brokerage"
     | "/dashboard"
-    | "/login"
-    | "/logos"
     | "/research"
     | "/transactions";
   id:
     | "__root__"
     | "/"
-    | "/accounts"
-    | "/brokerage"
-    | "/dashboard"
+    | "/_auth"
     | "/login"
-    | "/logos"
-    | "/research"
-    | "/transactions";
+    | "/_auth/accounts"
+    | "/_auth/brokerage"
+    | "/_auth/dashboard"
+    | "/_auth/research"
+    | "/_auth/transactions";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
-  AccountsRoute: typeof AccountsRoute;
-  BrokerageRoute: typeof BrokerageRoute;
-  DashboardRoute: typeof DashboardRoute;
+  AuthRoute: typeof AuthRouteWithChildren;
   LoginRoute: typeof LoginRoute;
-  LogosRoute: typeof LogosRoute;
-  ResearchRoute: typeof ResearchRoute;
-  TransactionsRoute: typeof TransactionsRoute;
 }
 
 declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    "/transactions": {
-      id: "/transactions";
-      path: "/transactions";
-      fullPath: "/transactions";
-      preLoaderRoute: typeof TransactionsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/research": {
-      id: "/research";
-      path: "/research";
-      fullPath: "/research";
-      preLoaderRoute: typeof ResearchRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/logos": {
-      id: "/logos";
-      path: "/logos";
-      fullPath: "/logos";
-      preLoaderRoute: typeof LogosRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
     "/login": {
       id: "/login";
       path: "/login";
@@ -164,25 +133,11 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof LoginRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    "/dashboard": {
-      id: "/dashboard";
-      path: "/dashboard";
-      fullPath: "/dashboard";
-      preLoaderRoute: typeof DashboardRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/brokerage": {
-      id: "/brokerage";
-      path: "/brokerage";
-      fullPath: "/brokerage";
-      preLoaderRoute: typeof BrokerageRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/accounts": {
-      id: "/accounts";
-      path: "/accounts";
-      fullPath: "/accounts";
-      preLoaderRoute: typeof AccountsRouteImport;
+    "/_auth": {
+      id: "/_auth";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof AuthRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/": {
@@ -192,18 +147,66 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/_auth/transactions": {
+      id: "/_auth/transactions";
+      path: "/transactions";
+      fullPath: "/transactions";
+      preLoaderRoute: typeof AuthTransactionsRouteImport;
+      parentRoute: typeof AuthRoute;
+    };
+    "/_auth/research": {
+      id: "/_auth/research";
+      path: "/research";
+      fullPath: "/research";
+      preLoaderRoute: typeof AuthResearchRouteImport;
+      parentRoute: typeof AuthRoute;
+    };
+    "/_auth/dashboard": {
+      id: "/_auth/dashboard";
+      path: "/dashboard";
+      fullPath: "/dashboard";
+      preLoaderRoute: typeof AuthDashboardRouteImport;
+      parentRoute: typeof AuthRoute;
+    };
+    "/_auth/brokerage": {
+      id: "/_auth/brokerage";
+      path: "/brokerage";
+      fullPath: "/brokerage";
+      preLoaderRoute: typeof AuthBrokerageRouteImport;
+      parentRoute: typeof AuthRoute;
+    };
+    "/_auth/accounts": {
+      id: "/_auth/accounts";
+      path: "/accounts";
+      fullPath: "/accounts";
+      preLoaderRoute: typeof AuthAccountsRouteImport;
+      parentRoute: typeof AuthRoute;
+    };
   }
 }
 
+interface AuthRouteChildren {
+  AuthAccountsRoute: typeof AuthAccountsRoute;
+  AuthBrokerageRoute: typeof AuthBrokerageRoute;
+  AuthDashboardRoute: typeof AuthDashboardRoute;
+  AuthResearchRoute: typeof AuthResearchRoute;
+  AuthTransactionsRoute: typeof AuthTransactionsRoute;
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthAccountsRoute: AuthAccountsRoute,
+  AuthBrokerageRoute: AuthBrokerageRoute,
+  AuthDashboardRoute: AuthDashboardRoute,
+  AuthResearchRoute: AuthResearchRoute,
+  AuthTransactionsRoute: AuthTransactionsRoute,
+};
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren);
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AccountsRoute: AccountsRoute,
-  BrokerageRoute: BrokerageRoute,
-  DashboardRoute: DashboardRoute,
+  AuthRoute: AuthRouteWithChildren,
   LoginRoute: LoginRoute,
-  LogosRoute: LogosRoute,
-  ResearchRoute: ResearchRoute,
-  TransactionsRoute: TransactionsRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

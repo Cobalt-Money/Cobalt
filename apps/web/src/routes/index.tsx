@@ -1,12 +1,23 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { SidebarShellLayout } from "@/components/shell/sidebar-shell-layout";
+import SocialAuth from "@/components/auth/social-auth";
+import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/")({
-  component: HomeComponent,
-  staticData: { title: "Home" },
+  beforeLoad: async () => {
+    const { data: session } = await authClient.getSession();
+    if (session) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
+  component: SignInPage,
+  staticData: { title: "Sign In" },
 });
 
-function HomeComponent() {
-  return <SidebarShellLayout />;
+function SignInPage() {
+  return (
+    <div className="flex min-h-svh items-center justify-center">
+      <SocialAuth />
+    </div>
+  );
 }

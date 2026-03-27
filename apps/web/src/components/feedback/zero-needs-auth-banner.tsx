@@ -44,7 +44,7 @@ export function ZeroNeedsAuthBanner() {
         </Button>
         <Link
           className={cn(buttonVariants({ size: "sm", variant: "outline" }))}
-          to="/login"
+          to="/"
         >
           Sign in
         </Link>

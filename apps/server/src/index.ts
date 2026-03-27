@@ -14,7 +14,7 @@ import { institutionsRouter } from "./api/internal/institutions.js";
 import { newsRouter } from "./api/internal/news.js";
 import { plaidRouter } from "./api/internal/plaid/index.js";
 import { researchRouter } from "./api/internal/research.js";
-import { snaptradeRouter } from "./api/internal/snaptrade.js";
+import { snaptradeRouter } from "./api/internal/snaptrade/index.js";
 import { subscriptionsRouter } from "./api/internal/subscriptions/index.js";
 import { tickersRouter } from "./api/internal/tickers.js";
 import { transactionsRouter } from "./api/internal/transactions/index.js";

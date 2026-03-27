@@ -6,6 +6,7 @@
     "./brokerage/*": "./src/brokerage/*.ts",
     "./institutions/*": "./src/institutions/*.ts",
     "./plaid/*": "./src/plaid/*.ts",
+    "./snaptrade/*": "./src/snaptrade/*.ts",
     "./subscriptions": "./src/subscriptions/index.ts",
     "./news/lib": "./src/news/lib.ts",
     "./news/events/*": "./src/news/events/*.ts",
@@ -28,6 +29,7 @@
     "@hono/zod-openapi": "^1.2.2",
     "drizzle-orm": "1.0.0-beta.18-7eb39f0",
     "plaid": "^41.4.0",
+    "snaptrade-typescript-sdk": "^9.0.160",
     "zod": "catalog:"
   },
   "devDependencies": {

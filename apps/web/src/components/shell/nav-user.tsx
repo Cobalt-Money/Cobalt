@@ -26,6 +26,10 @@ import {
   Logout01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useRouter } from "@tanstack/react-router";
+
+import { authClient } from "@/lib/auth-client";
+import { deleteActiveZeroReplicaOnLogout } from "@/lib/zero-logout";
 
 export function NavUser({
   user,
@@ -37,6 +41,14 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    await deleteActiveZeroReplicaOnLogout();
+    await router.navigate({ to: "/" });
+  };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -107,7 +119,11 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={async () => {
+                await handleLogout();
+              }}
+            >
               <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} />
               Log out
             </DropdownMenuItem>
