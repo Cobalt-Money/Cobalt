@@ -18,6 +18,7 @@ export const env = createEnv({
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,
   server: {
+    ALPHA_VANTAGE_API_KEY: z.string().min(1),
     APPLE_APP_BUNDLE_IDENTIFIER: z.string().min(1),
     APPLE_KEY_ID: z.string().min(1),
     APPLE_PRIVATE_KEY: z.string().min(1),
@@ -41,6 +42,7 @@ export const env = createEnv({
     PLAID_WEBHOOK_URL: z.url().optional(),
     SNAPTRADE_CLIENT_ID: z.string().min(1),
     SNAPTRADE_CONSUMER_KEY: z.string().min(1),
+    STOCK_NEWS_API_KEY: z.string().min(1),
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     TRUSTED_ORIGINS_EXTRA: commaList,
