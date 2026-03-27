@@ -5,14 +5,16 @@
   "type": "module",
   "exports": {
     "./logo-dev": "./logo-dev.ts",
-    "./plaid": "./plaid.ts"
+    "./plaid": "./plaid.ts",
+    "./snaptrade": "./snaptrade.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@cobalt-web/env": "workspace:*",
-    "plaid": "^41.4.0"
+    "plaid": "^41.4.0",
+    "snaptrade-typescript-sdk": "^9.0.160"
   },
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
