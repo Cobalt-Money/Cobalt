@@ -23,7 +23,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 
 import { CategoryIcon } from "./category-icon";
 import {
@@ -96,8 +96,8 @@ function getColumnStableId(col: ColumnDef<TransactionListItem>): string {
   return "";
 }
 
-const monthDividerCell =
-  "border-border/60 border-b bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80";
+/** Solid fill only — avoid `backdrop-blur` on sticky rows (very expensive while scrolling). */
+const monthDividerCell = "border-border/60 border-b bg-sidebar-inset";
 
 const columns: ColumnDef<TransactionListItem>[] = [
   {
@@ -279,7 +279,8 @@ export function TransactionsTable() {
     state: { rowSelection },
   });
 
-  const monthSections = groupRowsByMonth(table.getRowModel().rows);
+  const { rows } = table.getRowModel();
+  const monthSections = useMemo(() => groupRowsByMonth(rows), [rows]);
 
   return (
     <div className="flex w-full min-w-0 min-h-0 flex-1 flex-col space-y-4">
