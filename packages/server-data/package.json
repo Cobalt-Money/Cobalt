@@ -17,7 +17,8 @@
     "./research/*": "./src/research/*.ts",
     "./transactions/*": "./src/transactions/*.ts",
     "./types": "./src/types.ts",
-    "./user": "./src/user/index.ts"
+    "./user": "./src/user/index.ts",
+    "./chat/*": "./src/chat/*.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"
