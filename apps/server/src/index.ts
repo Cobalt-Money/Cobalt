@@ -9,7 +9,7 @@ import { accountsRouter } from "./api/internal/accounts/index.js";
 import { appstoreRouter } from "./api/internal/appstore.js";
 import { authRouter } from "./api/internal/auth.js";
 import { brokerageRouter } from "./api/internal/brokerage/index.js";
-import { chatRouter } from "./api/internal/chat.js";
+import { chatRouter } from "./api/internal/chat/index.js";
 import { institutionsRouter } from "./api/internal/institutions.js";
 import { newsRouter } from "./api/internal/news.js";
 import { plaidRouter } from "./api/internal/plaid/index.js";
