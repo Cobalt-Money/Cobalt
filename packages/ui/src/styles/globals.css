@@ -133,3 +133,18 @@
     @apply font-sans;
   }
 }
+
+/**
+ * Hide native scrollbar chrome (track + thumb) while keeping overflow scroll.
+ * Use on scrollports where layout should stay edge-to-edge; users still scroll
+ * with wheel, trackpad, touch, and keyboard.
+ */
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

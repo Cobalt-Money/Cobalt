@@ -9,9 +9,9 @@ export const Route = createFileRoute("/login")({
 
 function RouteComponent() {
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <SiteHeader />
-      <main className="flex-1" />
+      <main className="no-scrollbar min-h-0 flex-1 overflow-auto" />
     </div>
   );
 }

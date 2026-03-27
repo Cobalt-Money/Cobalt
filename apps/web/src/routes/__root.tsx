@@ -68,11 +68,11 @@ function RootDocument() {
   }, []);
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html className="h-svh overflow-hidden" lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="h-svh overflow-hidden">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -81,7 +81,7 @@ function RootDocument() {
         >
           <ZeroProvider>
             <TooltipProvider>
-              <div className="min-h-svh">
+              <div className="flex h-svh min-h-0 flex-col overflow-hidden">
                 <Outlet />
               </div>
               <CommandMenu />
