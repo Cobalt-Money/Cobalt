@@ -191,7 +191,7 @@ function DashboardPage() {
       <AppSidebar />
       <SidebarInset className="min-h-0 overflow-hidden">
         <SiteHeader />
-        <div className="no-scrollbar relative flex min-h-0 flex-1 flex-col gap-10 overflow-auto p-4 lg:p-6">
+        <div className="relative flex min-h-0 flex-1 flex-col gap-10 overflow-auto px-4 pb-4 lg:px-6 lg:pb-6 no-scrollbar">
           <div className="space-y-1">
             <h1 className="text-lg font-semibold tracking-tight">
               Component scratchpad

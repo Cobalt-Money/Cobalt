@@ -5,7 +5,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
-      className="no-scrollbar relative w-full overflow-x-auto"
+      className="relative w-full overflow-x-auto no-scrollbar"
     >
       <table
         data-slot="table"

@@ -11,7 +11,7 @@ function RouteComponent() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <SiteHeader />
-      <main className="no-scrollbar min-h-0 flex-1 overflow-auto" />
+      <main className="min-h-0 flex-1 overflow-auto no-scrollbar" />
     </div>
   );
 }

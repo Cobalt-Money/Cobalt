@@ -1,6 +1,4 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
-import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
-import { Button } from "@cobalt-web/ui/components/button";
 import { Checkbox } from "@cobalt-web/ui/components/checkbox";
 import {
   Status,
@@ -96,8 +94,8 @@ function getColumnStableId(col: ColumnDef<TransactionListItem>): string {
   return "";
 }
 
-/** Solid fill only — avoid `backdrop-blur` on sticky rows (very expensive while scrolling). */
-const monthDividerCell = "border-border/60 border-b bg-sidebar-inset";
+/** Linear-style month divider — solid muted background for clear section separation. */
+const monthDividerCell = " bg-muted font-medium text-foreground";
 
 const columns: ColumnDef<TransactionListItem>[] = [
   {
@@ -105,7 +103,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
       <div
         className={cn(
           cellRow,
-          "opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100",
+          "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
           row.getIsSelected() && "opacity-100"
         )}
       >
@@ -283,87 +281,87 @@ export function TransactionsTable() {
   const monthSections = useMemo(() => groupRowsByMonth(rows), [rows]);
 
   return (
-    <div className="flex w-full min-w-0  flex-1 flex-col space-y-4">
-      <div className="flex w-full min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <CobaltToggle size="sm" type="button" variant="outline">
-            Amount
-          </CobaltToggle>
-          <CobaltToggle size="sm" type="button" variant="outline">
-            Status
-          </CobaltToggle>
-          <CobaltToggle size="sm" type="button" variant="outline">
-            Bank
-          </CobaltToggle>
-        </div>
-        <Button className="shrink-0" size="sm" type="button" variant="outline">
-          Export
-        </Button>
-      </div>
-
-      <Table className="min-w-full">
-        <TableBody>
-          {table.getRowModel().rows.length ? (
-            monthSections.map((section) => (
-              <Fragment key={section.monthKey}>
-                <TableRow className="sticky top-0 z-10 border-0 hover:bg-transparent">
-                  {columns.map((col) => {
-                    const colId = getColumnStableId(col);
-                    if (colId === "date") {
-                      return (
-                        <TableCell
-                          className={cn(monthDividerCell, "px-3 py-2.5")}
-                          key={`${section.monthKey}-date`}
-                        >
-                          <div className="flex min-w-0 items-center justify-between gap-2">
-                            <span className="truncate font-medium text-foreground text-sm">
-                              {section.label}
-                            </span>
-                            <span className="shrink-0 font-normal tabular-nums text-muted-foreground text-sm">
-                              {section.rows.length}
-                            </span>
-                          </div>
-                        </TableCell>
-                      );
-                    }
+    <Table className="min-w-full">
+      <TableBody>
+        {table.getRowModel().rows.length ? (
+          monthSections.map((section) => (
+            <Fragment key={section.monthKey}>
+              <TableRow className="sticky top-0 z-10 border-0 hover:bg-transparent">
+                {columns.map((col, index) => {
+                  const colId = getColumnStableId(col);
+                  const isFirst = index === 0;
+                  const isLast = index === columns.length - 1;
+                  const roundedClass = cn(
+                    isFirst && "rounded-l-lg",
+                    isLast && "rounded-r-lg"
+                  );
+                  if (colId === "date") {
                     return (
                       <TableCell
-                        className={cn(monthDividerCell, "p-3")}
-                        key={`${section.monthKey}-${colId}`}
-                      />
-                    );
-                  })}
-                </TableRow>
-                {section.rows.map((row) => (
-                  <TableRow
-                    className="group border-0 font-normal"
-                    data-state={row.getIsSelected() ? "selected" : undefined}
-                    key={row.id}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
+                        className={cn(
+                          monthDividerCell,
+                          "px-3 py-2.5",
+                          roundedClass
                         )}
+                        key={`${section.monthKey}-date`}
+                      >
+                        <div className="flex min-w-0 items-center justify-between gap-2">
+                          <span className="truncate font-medium text-foreground text-sm">
+                            {section.label}
+                          </span>
+                          <span className="shrink-0 font-normal tabular-nums text-muted-foreground text-sm">
+                            {section.rows.length}
+                          </span>
+                        </div>
                       </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </Fragment>
-            ))
-          ) : (
-            <TableRow className="border-0">
-              <TableCell
-                className="h-24 text-center text-muted-foreground"
-                colSpan={columns.length}
-              >
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+                    );
+                  }
+                  return (
+                    <TableCell
+                      className={cn(monthDividerCell, "p-3", roundedClass)}
+                      key={`${section.monthKey}-${colId}`}
+                    />
+                  );
+                })}
+              </TableRow>
+              {section.rows.map((row) => (
+                <TableRow
+                  className="group border-0 font-normal hover:bg-transparent data-[state=selected]:bg-transparent"
+                  data-state={row.getIsSelected() ? "selected" : undefined}
+                  key={row.id}
+                >
+                  {row.getVisibleCells().map((cell, index, cells) => (
+                    <TableCell
+                      className={cn(
+                        "group-hover:bg-muted group-data-[state=selected]:bg-muted",
+                        index === 0 &&
+                          "group-hover:rounded-l-lg group-data-[state=selected]:rounded-l-lg",
+                        index === cells.length - 1 &&
+                          "group-hover:rounded-r-lg group-data-[state=selected]:rounded-r-lg"
+                      )}
+                      key={cell.id}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </Fragment>
+          ))
+        ) : (
+          <TableRow className="border-0">
+            <TableCell
+              className="h-24 text-center text-muted-foreground"
+              colSpan={columns.length}
+            >
+              No results.
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
   );
 }
