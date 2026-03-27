@@ -283,7 +283,7 @@ export function TransactionsTable() {
   const monthSections = useMemo(() => groupRowsByMonth(rows), [rows]);
 
   return (
-    <div className="flex w-full min-w-0 min-h-0 flex-1 flex-col space-y-4">
+    <div className="flex w-full min-w-0 flex-1 flex-col space-y-4">
       <div className="flex w-full min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <CobaltToggle size="sm" type="button" variant="outline">
