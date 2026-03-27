@@ -14,6 +14,7 @@ import { Route as BrokerageRouteImport } from "./routes/brokerage";
 import { Route as DashboardRouteImport } from "./routes/dashboard";
 import { Route as IndexRouteImport } from "./routes/index";
 import { Route as LoginRouteImport } from "./routes/login";
+import { Route as LogosRouteImport } from "./routes/logos";
 import { Route as ResearchRouteImport } from "./routes/research";
 import { Route as TransactionsRouteImport } from "./routes/transactions";
 
@@ -25,6 +26,11 @@ const TransactionsRoute = TransactionsRouteImport.update({
 const ResearchRoute = ResearchRouteImport.update({
   id: "/research",
   path: "/research",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const LogosRoute = LogosRouteImport.update({
+  id: "/logos",
+  path: "/logos",
   getParentRoute: () => rootRouteImport,
 } as any);
 const LoginRoute = LoginRouteImport.update({
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   "/brokerage": typeof BrokerageRoute;
   "/dashboard": typeof DashboardRoute;
   "/login": typeof LoginRoute;
+  "/logos": typeof LogosRoute;
   "/research": typeof ResearchRoute;
   "/transactions": typeof TransactionsRoute;
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   "/brokerage": typeof BrokerageRoute;
   "/dashboard": typeof DashboardRoute;
   "/login": typeof LoginRoute;
+  "/logos": typeof LogosRoute;
   "/research": typeof ResearchRoute;
   "/transactions": typeof TransactionsRoute;
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   "/brokerage": typeof BrokerageRoute;
   "/dashboard": typeof DashboardRoute;
   "/login": typeof LoginRoute;
+  "/logos": typeof LogosRoute;
   "/research": typeof ResearchRoute;
   "/transactions": typeof TransactionsRoute;
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | "/brokerage"
     | "/dashboard"
     | "/login"
+    | "/logos"
     | "/research"
     | "/transactions";
   fileRoutesByTo: FileRoutesByTo;
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | "/brokerage"
     | "/dashboard"
     | "/login"
+    | "/logos"
     | "/research"
     | "/transactions";
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | "/brokerage"
     | "/dashboard"
     | "/login"
+    | "/logos"
     | "/research"
     | "/transactions";
   fileRoutesById: FileRoutesById;
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   BrokerageRoute: typeof BrokerageRoute;
   DashboardRoute: typeof DashboardRoute;
   LoginRoute: typeof LoginRoute;
+  LogosRoute: typeof LogosRoute;
   ResearchRoute: typeof ResearchRoute;
   TransactionsRoute: typeof TransactionsRoute;
 }
@@ -135,6 +148,13 @@ declare module "@tanstack/react-router" {
       path: "/research";
       fullPath: "/research";
       preLoaderRoute: typeof ResearchRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/logos": {
+      id: "/logos";
+      path: "/logos";
+      fullPath: "/logos";
+      preLoaderRoute: typeof LogosRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/login": {
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   BrokerageRoute: BrokerageRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  LogosRoute: LogosRoute,
   ResearchRoute: ResearchRoute,
   TransactionsRoute: TransactionsRoute,
 };

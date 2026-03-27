@@ -60,6 +60,7 @@ export const transactionListItemSchema = transactionListItemRowSchema
     userOverrideCategory: true,
     userOverrideDate: true,
     userOverrideName: true,
+    website: true,
   })
   .extend({
     accountName: bankAccountListSlice.shape.name,

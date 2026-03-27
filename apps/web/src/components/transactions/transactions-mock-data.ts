@@ -25,6 +25,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: "https://www.wholefoodsmarket.com",
   },
   {
     accountName: "Checking ···4821",
@@ -49,6 +50,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: null,
   },
   {
     accountName: "Credit ···9012",
@@ -73,6 +75,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: "https://www.shell.com",
   },
   {
     accountName: "Credit ···9012",
@@ -97,6 +100,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: "https://www.netflix.com",
   },
   {
     accountName: "Credit ···9012",
@@ -121,6 +125,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: "https://www.amazon.com",
   },
   {
     accountName: "Credit ···9012",
@@ -145,6 +150,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: "https://www.bluebottlecoffee.com",
   },
   {
     accountName: "Credit ···9012",
@@ -169,6 +175,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: "https://www.uber.com",
   },
   {
     accountName: "Checking ···4821",
@@ -193,6 +200,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: null,
   },
   {
     accountName: "Checking ···4821",
@@ -217,6 +225,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: "https://www.pge.com",
   },
   {
     accountName: "Credit ···9012",
@@ -241,6 +250,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: "https://www.target.com",
   },
   {
     accountName: "Savings ···7730",
@@ -265,6 +275,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: null,
   },
   {
     accountName: "Credit ···9012",
@@ -289,6 +300,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: "https://www.spotify.com",
   },
   {
     accountName: "Credit ···9012",
@@ -313,6 +325,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: "https://www.traderjoes.com",
   },
   {
     accountName: "Checking ···4821",
@@ -337,6 +350,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: null,
   },
   {
     accountName: "Credit ···9012",
@@ -361,6 +375,7 @@ const MOCK_TRANSACTION_SEED: TransactionListItem[] = [
     userOverrideCategory: null,
     userOverrideDate: null,
     userOverrideName: null,
+    website: "https://www.delta.com",
   },
 ];
 

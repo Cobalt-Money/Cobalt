@@ -10,6 +10,7 @@ import {
 import {
   BankIcon,
   Book01Icon,
+  CubeIcon,
   DashboardSquare01Icon,
   HelpCircleIcon,
   SearchIcon,
@@ -50,6 +51,11 @@ const data = {
       icon: <HugeiconsIcon icon={Book01Icon} strokeWidth={2} />,
       title: "Research",
       url: "/research",
+    },
+    {
+      icon: <HugeiconsIcon icon={CubeIcon} strokeWidth={2} />,
+      title: "Logos",
+      url: "/logos",
     },
   ],
   navSecondary: [
