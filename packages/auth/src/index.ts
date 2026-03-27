@@ -37,6 +37,9 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
     },
+    // OAuth state in encrypted cookie avoids verification-table lookup issues (e.g. serverless,
+    // hashed identifiers). See better-auth/better-auth#8727 and state_security_mismatch errors.
+    storeStateStrategy: "cookie",
   },
   advanced: {
     // `lax` aligns with Zero cookie guidance (avoid `SameSite=None` for WS sync).
