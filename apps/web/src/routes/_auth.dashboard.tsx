@@ -128,7 +128,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/shell/app-sidebar";
 import { SiteHeader } from "@/components/shell/site-header";
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/_auth/dashboard")({
   component: DashboardPage,
   staticData: { title: "Dashboard" },
 });
