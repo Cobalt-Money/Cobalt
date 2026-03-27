@@ -2,11 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { SidebarShellLayout } from "@/components/shell/sidebar-shell-layout";
 
-export const Route = createFileRoute("/accounts")({
-  component: AccountsPage,
-  staticData: { title: "Accounts" },
+export const Route = createFileRoute("/_auth/research")({
+  component: ResearchPage,
+  staticData: { title: "Research" },
 });
 
-function AccountsPage() {
+function ResearchPage() {
   return <SidebarShellLayout />;
 }

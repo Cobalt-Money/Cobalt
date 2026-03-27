@@ -22,7 +22,6 @@ const COMMAND_NAV_ROUTES: readonly {
     | "/accounts"
     | "/brokerage"
     | "/dashboard"
-    | "/login"
     | "/research"
     | "/transactions";
 }[] = [
@@ -32,7 +31,6 @@ const COMMAND_NAV_ROUTES: readonly {
   { keywords: ["invest", "trading"], label: "Brokerage", path: "/brokerage" },
   { keywords: ["bank"], label: "Accounts", path: "/accounts" },
   { keywords: ["books", "notes"], label: "Research", path: "/research" },
-  { keywords: ["auth", "sign in"], label: "Login", path: "/login" },
 ];
 
 /**
