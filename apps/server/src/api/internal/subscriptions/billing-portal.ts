@@ -1,4 +1,3 @@
-import { env } from "@cobalt-web/env/server";
 import {
   billingPortalResponseSchema,
   createBillingPortalSession,
@@ -26,10 +25,10 @@ const route = createRoute({
 export const billingPortalRouter = new OpenAPIHono<AppEnv>().openapi(
   route,
   async (c) => {
-    const appUrl = env.PUBLIC_APP_URL ?? "";
+    const appUrl = process.env.APP_URL ?? "https://www.try-cobalt.com";
     const url = await createBillingPortalSession(
       c.var.user.id,
-      `${appUrl.replace(/\/$/, "")}/settings`,
+      `${appUrl}/settings`,
       c.req.raw.headers
     );
     return c.json({ url }, 200);

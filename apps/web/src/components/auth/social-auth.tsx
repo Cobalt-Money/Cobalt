@@ -9,9 +9,12 @@ import { authClient } from "@/lib/auth-client";
 export default function SocialAuth() {
   const [loading, setLoading] = useState(false);
 
+  const callbackURL =
+    typeof window === "undefined"
+      ? "/dashboard"
+      : `${window.location.origin}/dashboard`;
+
   const handleGoogleAuth = async () => {
-    /** Must be absolute: Better Auth defaults missing/relative callback to the API `baseURL`. */
-    const callbackURL = `${window.location.origin}/dashboard`;
     setLoading(true);
     try {
       await authClient.signIn.social(
@@ -35,7 +38,6 @@ export default function SocialAuth() {
   };
 
   const handleAppleAuth = async () => {
-    const callbackURL = `${window.location.origin}/dashboard`;
     setLoading(true);
     try {
       await authClient.signIn.social(

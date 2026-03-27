@@ -51,11 +51,6 @@ export const env = createEnv({
     PLAID_CLIENT_SECRET: z.string().min(1),
     PLAID_ENV: z.string().min(1).default("sandbox"),
     PLAID_WEBHOOK_URL: z.url().optional(),
-    /**
-     * SPA origin (where the browser loads the web app). Used for OIDC `loginPage`,
-     * Stripe billing return URL, etc. If unset, the first `CORS_ORIGIN` entry is used.
-     */
-    PUBLIC_APP_URL: z.url().optional(),
     SNAPTRADE_CLIENT_ID: z.string().min(1),
     SNAPTRADE_CONSUMER_KEY: z.string().min(1),
     STRIPE_SECRET_KEY: z.string().min(1),

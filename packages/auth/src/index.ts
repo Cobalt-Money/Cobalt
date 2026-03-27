@@ -19,13 +19,8 @@ export const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
 
 const appleClientSecret = await getAppleClientSecret();
 
-/** Browser app origin (split deploy: web on Vercel, API on another host). */
-const publicAppUrl = env.PUBLIC_APP_URL ?? "";
-const webBase = publicAppUrl.replace(/\/$/, "");
-
 const trustedOrigins = [
   ...env.CORS_ORIGIN,
-  publicAppUrl,
   "http://localhost:3000",
   "http://localhost:3001",
   "https://try-cobalt.com",
@@ -83,10 +78,8 @@ export const auth = betterAuth({
     openAPI(),
     bearer(),
     oidcProvider({
-      /** Custom consent UI on the SPA (GET); `/oauth2/consent` on the API is POST-only. */
-      consentPage: `${webBase}/oauth/consent`,
-      /** SPA home (sign-in); relative `/login` would send users to the API host. */
-      loginPage: `${webBase}/`,
+      consentPage: "/oauth/consent",
+      loginPage: "/login",
     }),
     stripe({
       createCustomerOnSignUp: false,
