@@ -29,7 +29,7 @@ This project uses PostgreSQL with Drizzle ORM.
 
 1. Make sure you have a PostgreSQL database set up.
 2. Update your `apps/server/.env` file with your PostgreSQL connection details and **Better Auth** settings:
-   - `BETTER_AUTH_SECRET` (≥32 chars), `BETTER_AUTH_URL` (e.g. `http://localhost:3000`), `CORS_ORIGIN` (e.g. `http://localhost:3001`)
+   - `BETTER_AUTH_SECRET` (≥32 chars), `BETTER_AUTH_URL` (e.g. `http://localhost:3000`), `CORS_ORIGIN` — one or more comma-separated web origins (e.g. `http://localhost:3001` or `https://your-web.vercel.app,https://preview-abc.vercel.app`). This must include every browser origin that calls the API; otherwise `/api/auth/*` requests fail with a CORS error.
    - **Google:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_IOS_CLIENT_ID` (native iOS client id for the extra `google_ios` provider)
    - **Apple:** `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_SERVICE_ID`, `APPLE_APP_BUNDLE_IDENTIFIER`, `APPLE_PRIVATE_KEY` (PEM for Sign in with Apple)
    - Optional: `TRUSTED_ORIGINS_EXTRA` — comma-separated origins to add to Better Auth’s `trustedOrigins` (staging URLs, etc.)

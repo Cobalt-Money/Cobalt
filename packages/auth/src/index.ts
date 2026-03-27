@@ -20,7 +20,7 @@ export const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
 const appleClientSecret = await getAppleClientSecret();
 
 const trustedOrigins = [
-  env.CORS_ORIGIN,
+  ...env.CORS_ORIGIN,
   "http://localhost:3000",
   "http://localhost:3001",
   "https://try-cobalt.com",
@@ -28,6 +28,7 @@ const trustedOrigins = [
   "https://demo.try-cobalt.com",
   "Cobalt-mobile://",
   "https://appleid.apple.com",
+  "https://cobalt-v2-web.vercel.app",
   ...env.TRUSTED_ORIGINS_EXTRA,
 ];
 
