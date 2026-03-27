@@ -7,7 +7,9 @@
     "./brandfetch": "./brandfetch.ts",
     "./logo-dev": "./logo-dev.ts",
     "./plaid": "./plaid.ts",
-    "./snaptrade": "./snaptrade.ts"
+    "./alpha-vantage": "./alpha-vantage.ts",
+    "./snaptrade": "./snaptrade.ts",
+    "./stock-news": "./stock-news.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"
