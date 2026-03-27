@@ -172,6 +172,7 @@
       "dependencies": {
         "@cobalt-web/env": "workspace:*",
         "plaid": "^41.4.0",
+        "snaptrade-typescript-sdk": "^9.0.160",
       },
       "devDependencies": {
         "@cobalt-web/config": "workspace:*",
@@ -222,6 +223,7 @@
         "@hono/zod-openapi": "^1.2.2",
         "drizzle-orm": "1.0.0-beta.18-7eb39f0",
         "plaid": "^41.4.0",
+        "snaptrade-typescript-sdk": "^9.0.160",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -2955,6 +2957,8 @@
 
     "smol-toml": ["smol-toml@1.6.1", "", {}, "sha512-dWUG8F5sIIARXih1DTaQAX4SsiTXhInKf1buxdY9DIg4ZYPZK5nGM1VRIYmEbDbsHt7USo99xSLFu5Q1IqTmsg=="],
 
+    "snaptrade-typescript-sdk": ["snaptrade-typescript-sdk@9.0.173", "", { "dependencies": { "axios": "1.10.0" } }, "sha512-3qWpE6fAqTPrfg72cmDm30oXbhquq1FVogUMnHQug0WBw2cLT7OJYfNNF8UpE4bXc4LQMgqaOgAT49dp7ibIsQ=="],
+
     "solid-js": ["solid-js@1.9.12", "", { "dependencies": { "csstype": "^3.1.0", "seroval": "~1.5.0", "seroval-plugins": "~1.5.0" } }, "sha512-QzKaSJq2/iDrWR1As6MHZQ8fQkdOBf8GReYb7L5iKwMGceg7HxDcaOHk0at66tNgn9U2U7dXo8ZZpLIAmGMzgw=="],
 
     "sonic-boom": ["sonic-boom@4.2.1", "", { "dependencies": { "atomic-sleep": "^1.0.0" } }, "sha512-w6AxtubXa2wTXAUsZMMWERrsIRAdrK0Sc+FUytWvYAhBJLyuI4llrMIC1DtlNSdI99EI86KZum2MMq3EAZlF9Q=="],
@@ -3574,6 +3578,8 @@
     "send/mime-types": ["mime-types@3.0.2", "", { "dependencies": { "mime-db": "^1.54.0" } }, "sha512-Lbgzdk0h4juoQ9fCKXW4by0UJqj+nOOrI9MJ1sSj4nI8aI2eo1qmvQEie4VD1glsS250n15LsWsYtCugiStS5A=="],
 
     "shadcn/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
+
+    "snaptrade-typescript-sdk/axios": ["axios@1.10.0", "", { "dependencies": { "follow-redirects": "^1.15.6", "form-data": "^4.0.0", "proxy-from-env": "^1.1.0" } }, "sha512-/1xYAC4MP/HEG+3duIhFr4ZQXR4sQXOIe+o6sdqzeykGLx6Upp/1p8MHqhINOvGeP7xyNHe7tsiJByc4SSVUxw=="],
 
     "string_decoder/safe-buffer": ["safe-buffer@5.2.1", "", {}, "sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ=="],
 
