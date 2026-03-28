@@ -21,7 +21,10 @@ src/
   router.tsx      — TanStack Router configuration
   routeTree.gen.ts — Auto-generated route tree (do not edit)
   index.css       — Global styles
-public/           — Static assets
+  assets/         — Optional: imported images/SVG (bundled + hashed by Vite)
+public/
+  assets/         — Static files by URL: icons/, vectors/, illustrations/ (see public/assets/README.md)
+  robots.txt
 ```
 
 ## Key Config Files

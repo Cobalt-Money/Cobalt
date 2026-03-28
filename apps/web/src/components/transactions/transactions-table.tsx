@@ -1,11 +1,6 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { Checkbox } from "@cobalt-web/ui/components/checkbox";
 import {
-  Status,
-  StatusIndicator,
-  StatusLabel,
-} from "@cobalt-web/ui/components/kibo-ui/status";
-import {
   Table,
   TableBody,
   TableCell,
@@ -44,6 +39,9 @@ const currency = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
   style: "currency",
 });
+
+const STATUS_PENDING_ICON = "/assets/vectors/pending.svg";
+const STATUS_POSTED_ICON = "/assets/vectors/posted.svg";
 
 function truncateName(name: string, max = 40): string {
   if (name.length <= max) {
@@ -146,6 +144,26 @@ const columns: ColumnDef<TransactionListItem>[] = [
     header: () => null,
     id: "select",
     size: 40,
+  },
+  {
+    accessorKey: "pending",
+    cell: ({ row }) => {
+      const { pending } = row.original;
+      const label = pending ? "Pending" : "Posted";
+      return (
+        <div className={cn(cellRow, "whitespace-nowrap")}>
+          <img
+            alt={label}
+            className="size-4 shrink-0 object-contain"
+            decoding="async"
+            height={16}
+            src={pending ? STATUS_PENDING_ICON : STATUS_POSTED_ICON}
+            width={16}
+          />
+        </div>
+      );
+    },
+    header: "Status",
   },
   {
     accessorFn: (row) => transactionDateSortKey(row),
@@ -266,22 +284,6 @@ const columns: ColumnDef<TransactionListItem>[] = [
       );
     },
     header: "Amount",
-  },
-  {
-    accessorKey: "pending",
-    cell: ({ row }) => {
-      const { pending } = row.original;
-      const status = pending ? "degraded" : "online";
-      return (
-        <div className={cn(cellRow, "whitespace-nowrap")}>
-          <Status className="h-auto min-h-5 py-1 font-normal" status={status}>
-            <StatusIndicator />
-            <StatusLabel>{pending ? "Pending" : "Posted"}</StatusLabel>
-          </Status>
-        </div>
-      );
-    },
-    header: "Status",
   },
 ];
 
