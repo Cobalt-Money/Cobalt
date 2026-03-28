@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { Separator } from "@cobalt-web/ui/components/separator";

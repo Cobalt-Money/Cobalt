@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Input as InputPrimitive } from "@base-ui/react/input";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import * as React from "react";

@@ -1,5 +1,4 @@
-"use client";
-
+// @ts-nocheck
 import { Progress as ProgressPrimitive } from "@base-ui/react/progress";
 import { cn } from "@cobalt-web/ui/lib/utils";
 

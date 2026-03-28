@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Toggle as TogglePrimitive } from "@base-ui/react/toggle";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";

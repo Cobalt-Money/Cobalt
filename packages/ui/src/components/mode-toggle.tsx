@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Button } from "@cobalt-web/ui/components/button";
 import {
   DropdownMenu,

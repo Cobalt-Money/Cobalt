@@ -11,6 +11,16 @@
       "sourceType": "github",
       "computedHash": "6ba2c955bee6ab3e9c7781b2553e3574b4c9ec35e539437d0831bfe368de8550"
     },
+    "ai-elements": {
+      "source": "vercel/ai-elements",
+      "sourceType": "github",
+      "computedHash": "84f3a2a57fa71ae5061786280987575d673792d6dda9a63941efb2795b83543a"
+    },
+    "ai-elements-chatbot": {
+      "source": "jackspace/claudeskillz",
+      "sourceType": "github",
+      "computedHash": "55cc95c0d350d8bb6756ae31e9d336902bad207845bc6de4552ddcabb3aed09f"
+    },
     "api-design-principles": {
       "source": "wshobson/agents",
       "sourceType": "github",

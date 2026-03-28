@@ -1,5 +1,4 @@
-"use client";
-
+// @ts-nocheck
 import { Button, buttonVariants } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {

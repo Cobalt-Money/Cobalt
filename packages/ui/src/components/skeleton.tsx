@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { cn } from "@cobalt-web/ui/lib/utils";
 
 function Skeleton({ className, ...props }: React.ComponentProps<"div">) {

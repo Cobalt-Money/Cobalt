@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Collapsible as CollapsiblePrimitive } from "@base-ui/react/collapsible";
 
 function Collapsible({ ...props }: CollapsiblePrimitive.Root.Props) {

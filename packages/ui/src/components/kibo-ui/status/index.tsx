@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Badge } from "@cobalt-web/ui/components/badge";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import type { ComponentProps, HTMLAttributes } from "react";

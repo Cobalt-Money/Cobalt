@@ -21,6 +21,7 @@
     "hooks": "@cobalt-web/ui/hooks"
   },
   "registries": {
-    "@kibo-ui": "https://www.kibo-ui.com/r/{name}.json"
+    "@kibo-ui": "https://www.kibo-ui.com/r/{name}.json",
+    "@ai-elements": "https://elements.ai-sdk.dev/api/registry/{name}.json"
   }
 }

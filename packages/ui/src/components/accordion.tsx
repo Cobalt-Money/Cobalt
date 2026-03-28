@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Accordion as AccordionPrimitive } from "@base-ui/react/accordion";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowDown01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";

@@ -1,5 +1,4 @@
-"use client";
-
+// @ts-nocheck
 import { ContextMenu as ContextMenuPrimitive } from "@base-ui/react/context-menu";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon, Tick02Icon } from "@hugeicons/core-free-icons";

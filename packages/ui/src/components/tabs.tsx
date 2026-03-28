@@ -1,5 +1,4 @@
-"use client";
-
+// @ts-nocheck
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";

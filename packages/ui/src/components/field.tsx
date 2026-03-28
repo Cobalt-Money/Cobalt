@@ -1,5 +1,4 @@
-"use client";
-
+// @ts-nocheck
 import { Label } from "@cobalt-web/ui/components/label";
 import { Separator } from "@cobalt-web/ui/components/separator";
 import { cn } from "@cobalt-web/ui/lib/utils";

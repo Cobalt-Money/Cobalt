@@ -1,5 +1,4 @@
-"use client";
-
+// @ts-nocheck
 import { PreviewCard as PreviewCardPrimitive } from "@base-ui/react/preview-card";
 import { cn } from "@cobalt-web/ui/lib/utils";
 

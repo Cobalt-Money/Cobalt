@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { MinusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";

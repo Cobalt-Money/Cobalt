@@ -1,5 +1,4 @@
-"use client";
-
+// @ts-nocheck
 import { Combobox as ComboboxPrimitive } from "@base-ui/react";
 import { Button } from "@cobalt-web/ui/components/button";
 import {

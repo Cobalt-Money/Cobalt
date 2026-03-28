@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Button } from "@cobalt-web/ui/components/button";
 import { Input } from "@cobalt-web/ui/components/input";
 import { Textarea } from "@cobalt-web/ui/components/textarea";

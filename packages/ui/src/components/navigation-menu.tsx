@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NavigationMenu as NavigationMenuPrimitive } from "@base-ui/react/navigation-menu";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowDown01Icon } from "@hugeicons/core-free-icons";

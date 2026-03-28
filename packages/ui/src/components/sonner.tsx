@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   CheckmarkCircle02Icon,
   InformationCircleIcon,

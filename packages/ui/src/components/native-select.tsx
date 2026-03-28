@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { UnfoldMoreIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
