@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_auth/transactions")({
 function TransactionsPage() {
   return (
     <SidebarShellLayout toolbar={<TransactionsToolbar />}>
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="-mb-4 flex min-h-0 h-full min-w-0 flex-1 flex-col lg:-mb-6">
         <TransactionsTable />
       </div>
     </SidebarShellLayout>

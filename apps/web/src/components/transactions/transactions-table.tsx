@@ -281,7 +281,7 @@ export function TransactionsTable() {
   const monthSections = useMemo(() => groupRowsByMonth(rows), [rows]);
 
   return (
-    <Table className="min-w-full">
+    <Table className="h-full min-w-full">
       <TableBody>
         {table.getRowModel().rows.length ? (
           monthSections.map((section) => (
