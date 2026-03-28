@@ -94,8 +94,33 @@ function getColumnStableId(col: ColumnDef<TransactionListItem>): string {
   return "";
 }
 
-/** Linear-style month divider — solid muted background for clear section separation. */
-const monthDividerCell = " bg-muted font-medium text-foreground";
+/**
+ * Month strip tints follow common **birthstone color associations** (US jewelers’ list:
+ * garnet, amethyst, aquamarine, diamond, emerald, pearl, ruby, peridot, sapphire,
+ * opal/tourmaline, citrine/topaz, turquoise/tanzanite). Hues are muted opaque oklch.
+ * @see https://www.almanac.com/content/birthstones-and-their-meanings
+ */
+const monthAccents = [
+  "bg-[oklch(0.235_0.013_28)]", // Jan — garnet (deep red)
+  "bg-[oklch(0.235_0.013_295)]", // Feb — amethyst (violet)
+  "bg-[oklch(0.235_0.013_205)]", // Mar — aquamarine (sea blue-green)
+  "bg-[oklch(0.235_0.01_265)]", // Apr — diamond (cool icy neutral)
+  "bg-[oklch(0.235_0.013_152)]", // May — emerald (green)
+  "bg-[oklch(0.235_0.011_305)]", // Jun — pearl (soft lavender-gray)
+  "bg-[oklch(0.235_0.013_18)]", // Jul — ruby (red)
+  "bg-[oklch(0.235_0.013_128)]", // Aug — peridot (olive yellow-green)
+  "bg-[oklch(0.235_0.013_262)]", // Sep — sapphire (royal blue)
+  "bg-[oklch(0.235_0.012_335)]", // Oct — tourmaline / opal (often pink)
+  "bg-[oklch(0.235_0.014_88)]", // Nov — citrine / topaz (golden amber)
+  "bg-[oklch(0.235_0.013_198)]", // Dec — turquoise / tanzanite (teal–blue)
+] as const;
+
+function getMonthAccent(monthKey: string): string {
+  const month = Number.parseInt(monthKey.split("-")[1] ?? "0", 10);
+  return monthAccents[(month - 1) % monthAccents.length] ?? monthAccents[0];
+}
+
+const monthDividerBase = "font-medium text-foreground";
 
 const columns: ColumnDef<TransactionListItem>[] = [
   {
@@ -284,73 +309,96 @@ export function TransactionsTable() {
     <Table className="h-full min-w-full">
       <TableBody>
         {table.getRowModel().rows.length ? (
-          monthSections.map((section) => (
-            <Fragment key={section.monthKey}>
-              <TableRow className="sticky top-0 z-10 border-0 hover:bg-transparent">
-                {columns.map((col, index) => {
-                  const colId = getColumnStableId(col);
-                  const isFirst = index === 0;
-                  const isLast = index === columns.length - 1;
-                  const roundedClass = cn(
-                    isFirst && "rounded-l-lg",
-                    isLast && "rounded-r-lg"
-                  );
-                  if (colId === "date") {
-                    return (
-                      <TableCell
-                        className={cn(
-                          monthDividerCell,
-                          "px-3 py-2.5",
-                          roundedClass
-                        )}
-                        key={`${section.monthKey}-date`}
-                      >
-                        <div className="flex min-w-0 items-center justify-between gap-2">
+          monthSections.map((section) => {
+            const accent = getMonthAccent(section.monthKey);
+            return (
+              <Fragment key={section.monthKey}>
+                <TableRow className="sticky top-0 z-10 border-0 hover:bg-transparent">
+                  {columns.map((col, index) => {
+                    const colId = getColumnStableId(col);
+                    const isFirst = index === 0;
+                    const isLast = index === columns.length - 1;
+                    const roundedClass = cn(
+                      isFirst && "rounded-l-lg",
+                      isLast && "rounded-r-lg"
+                    );
+                    if (colId === "date") {
+                      return (
+                        <TableCell
+                          className={cn(
+                            monthDividerBase,
+                            accent,
+                            "px-3 py-2.5",
+                            roundedClass
+                          )}
+                          key={`${section.monthKey}-date`}
+                        >
                           <span className="truncate font-medium text-foreground text-sm">
                             {section.label}
                           </span>
-                          <span className="shrink-0 font-normal tabular-nums text-muted-foreground text-sm">
-                            {section.rows.length}
-                          </span>
-                        </div>
-                      </TableCell>
+                        </TableCell>
+                      );
+                    }
+                    if (colId === "pending") {
+                      return (
+                        <TableCell
+                          className={cn(
+                            monthDividerBase,
+                            accent,
+                            "p-3",
+                            roundedClass
+                          )}
+                          key={`${section.monthKey}-pending`}
+                        >
+                          <div className={cn(cellRow, "whitespace-nowrap")}>
+                            <span className="font-normal tabular-nums text-muted-foreground text-sm">
+                              {section.rows.length}
+                            </span>
+                          </div>
+                        </TableCell>
+                      );
+                    }
+                    return (
+                      <TableCell
+                        className={cn(
+                          monthDividerBase,
+                          accent,
+                          "p-3",
+                          roundedClass
+                        )}
+                        key={`${section.monthKey}-${colId}`}
+                      />
                     );
-                  }
-                  return (
-                    <TableCell
-                      className={cn(monthDividerCell, "p-3", roundedClass)}
-                      key={`${section.monthKey}-${colId}`}
-                    />
-                  );
-                })}
-              </TableRow>
-              {section.rows.map((row) => (
-                <TableRow
-                  className="group border-0 font-normal hover:bg-transparent data-[state=selected]:bg-transparent"
-                  data-state={row.getIsSelected() ? "selected" : undefined}
-                  key={row.id}
-                >
-                  {row.getVisibleCells().map((cell, index, cells) => (
-                    <TableCell
-                      className={cn(
-                        "group-hover:bg-muted group-data-[state=selected]:bg-muted",
-                        index === 0 &&
-                          "group-hover:rounded-l-lg group-data-[state=selected]:rounded-l-lg",
-                        index === cells.length - 1 &&
-                          "group-hover:rounded-r-lg group-data-[state=selected]:rounded-r-lg"
-                      )}
-                      key={cell.id}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+                  })}
                 </TableRow>
-              ))}
-            </Fragment>
-          ))
+                {section.rows.map((row) => (
+                  <TableRow
+                    className="group border-0 font-normal hover:bg-transparent data-[state=selected]:bg-transparent"
+                    data-state={row.getIsSelected() ? "selected" : undefined}
+                    key={row.id}
+                  >
+                    {row.getVisibleCells().map((cell, index, cells) => (
+                      <TableCell
+                        className={cn(
+                          "group-hover:bg-muted group-data-[state=selected]:bg-muted",
+                          index === 0 &&
+                            "group-hover:rounded-l-lg group-data-[state=selected]:rounded-l-lg",
+                          index === cells.length - 1 &&
+                            "group-hover:rounded-r-lg group-data-[state=selected]:rounded-r-lg"
+                        )}
+                        key={cell.id}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </Fragment>
+            );
+          })
         ) : (
           <TableRow className="border-0">
             <TableCell
