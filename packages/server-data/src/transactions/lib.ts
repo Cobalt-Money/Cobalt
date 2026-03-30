@@ -12,3 +12,16 @@ export const toDateString = (
   }
   return val;
 };
+
+/** Drizzle `date` strings, JS `Date`, or Zero-replicated epoch ms → `YYYY-MM-DD`. */
+export const normalizeDateForTransactionList = (
+  val: string | Date | number | null | undefined
+): string | null => {
+  if (val === undefined || val === null) {
+    return null;
+  }
+  if (typeof val === "number") {
+    return new Date(val).toISOString().split("T")[0] ?? null;
+  }
+  return toDateString(val);
+};

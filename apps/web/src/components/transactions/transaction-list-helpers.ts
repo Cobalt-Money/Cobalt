@@ -28,8 +28,10 @@ export function formatTransactionDateDisplay(
   return dateDisplay.format(new Date(`${day}T12:00:00.000Z`));
 }
 
+/** `yearMonth` keys are calendar YYYY-MM from date strings; format in UTC so the label matches that month (avoids midnight UTC shifting to the prior local month). */
 const monthGroupHeading = new Intl.DateTimeFormat("en-US", {
   month: "long",
+  timeZone: "UTC",
   year: "numeric",
 });
 
@@ -62,7 +64,7 @@ export function formatMonthGroupLabel(yearMonth: string): string {
   if (!y || !m) {
     return yearMonth;
   }
-  return monthGroupHeading.format(new Date(Date.UTC(y, m - 1, 1)));
+  return monthGroupHeading.format(new Date(Date.UTC(y, m - 1, 1, 12, 0, 0)));
 }
 
 /** Horizon truncates account name at last letter before trailing digits; simplified cap at 20 chars. */

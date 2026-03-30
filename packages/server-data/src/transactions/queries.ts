@@ -3,6 +3,7 @@ import type { z } from "zod";
 
 import { toDateString } from "./lib.js";
 import type { transactionListQuerySchema } from "./schemas.js";
+import { toTransactionListItem } from "./to-transaction-list-item.js";
 
 /** Same shape as validated `GET /transactions` query — keep in sync with `transactionListQuerySchema`. */
 export type TransactionListQuery = z.infer<typeof transactionListQuerySchema>;
@@ -98,32 +99,37 @@ export async function getUserTransactions(
     const { connection } = account;
     const inst = connection.institution;
 
-    const normalizedDate = toDateString(row.date) ?? "";
-    const normalizedOverrideDate = toDateString(row.userOverrideDate);
-    return {
-      accountName: account.name,
-      accountType: account.type,
-      amount: row.amount,
-      authorizedDate: toDateString(row.authorizedDate),
-      counterparties: row.counterparties,
-      date: normalizedOverrideDate ?? normalizedDate,
-      id: row.id,
-      institutionLogo: inst?.logo ?? null,
-      institutionName: inst?.name ?? null,
-      institutionUrl: inst?.url ?? null,
-      location: row.location,
-      logoUrl: row.logoUrl,
-      merchantName: row.merchantName,
-      name: row.name,
-      pending: row.pending,
-      personalFinanceCategory:
-        row.userOverrideCategory ?? row.personalFinanceCategory,
-      plaidAccountId: account.plaidAccountId,
-      userOverrideCategory: row.userOverrideCategory,
-      userOverrideDate: normalizedOverrideDate,
-      userOverrideName: row.userOverrideName,
-      website: row.website,
-    };
+    return toTransactionListItem({
+      account: {
+        name: account.name,
+        plaidAccountId: account.plaidAccountId,
+        type: account.type,
+      },
+      institution: inst
+        ? {
+            logo: inst.logo ?? null,
+            name: inst.name ?? null,
+            url: inst.url ?? null,
+          }
+        : null,
+      transaction: {
+        amount: row.amount,
+        authorizedDate: row.authorizedDate,
+        counterparties: row.counterparties,
+        date: row.date,
+        id: row.id,
+        location: row.location,
+        logoUrl: row.logoUrl,
+        merchantName: row.merchantName,
+        name: row.name,
+        pending: row.pending,
+        personalFinanceCategory: row.personalFinanceCategory,
+        userOverrideCategory: row.userOverrideCategory,
+        userOverrideDate: row.userOverrideDate,
+        userOverrideName: row.userOverrideName,
+        website: row.website,
+      },
+    });
   });
 }
 

@@ -8,16 +8,21 @@ Rocicorp Zero client configuration — schema, queries, and mutators for real-ti
 src/
   index.ts       — Main export (Zero client setup)
   schema.ts      — Zero schema definition (tables and relationships)
-  queries.ts     — Zero data queries
+  queries.ts     — Root `defineQueries` registry (composes domain modules)
   mutators.ts    — Zero CRUD mutations
   auth.ts        — Auth-related Zero operations
+  transactions/  — Domain mirrors `@cobalt-web/server-data` layout
+    lib.ts       — ZQL helpers (filters, dates, shared constants)
+    queries.ts   — `transactionsQueries` named queries for `queries.transactions.*`
 ```
 
 ## Conventions
 
 - Import the schema via `@cobalt-web/zero/schema`
-- Import queries via `@cobalt-web/zero/queries`
+- Import the merged registry via `@cobalt-web/zero` or `@cobalt-web/zero/queries`
 - Import mutators via `@cobalt-web/zero/mutators`
+- Add new domains as `src/<domain>/lib.ts` + `src/<domain>/queries.ts`, then register them in `queries.ts`
+- Optional deep imports: `@cobalt-web/zero/transactions/queries` (same pattern as `@cobalt-web/server-data/transactions/*`)
 - The Zero schema mirrors the Drizzle schema in `@cobalt-web/db` — keep them in sync
 - After any Drizzle schema change, regenerate: `cd packages/zero && bun run generate:zero`. Stale `zero-schema.gen.ts` causes `SchemaVersionNotSupported` in zero-cache (e.g. client expects columns that Postgres replication does not publish).
 - Zero client is initialized in `apps/web/src/lib/zero-client.tsx`

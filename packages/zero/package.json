@@ -13,7 +13,8 @@
     },
     "./mutators": {
       "default": "./src/mutators.ts"
-    }
+    },
+    "./transactions/*": "./src/transactions/*.ts"
   },
   "scripts": {
     "generate:zero": "drizzle-zero generate --schema ../db/src/schema/drizzle-schema.ts --output ./src/zero-schema.gen.ts --format --force"
