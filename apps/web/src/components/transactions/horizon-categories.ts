@@ -4,13 +4,14 @@
  * `category-primary-icons.ts`.
  */
 
-import type { IconSvgElement } from "@hugeicons/react";
-
 import {
   PRIMARY_CATEGORY_ICON,
   UNKNOWN_CATEGORY_ICON,
 } from "./category-primary-icons";
-import type { PrimaryCategoryKey } from "./category-primary-icons";
+import type {
+  CategoryPrimaryGlyph,
+  PrimaryCategoryKey,
+} from "./category-primary-icons";
 
 export interface CategoryData {
   primary: string;
@@ -24,7 +25,7 @@ export const formatCategoryName = (categoryName: string): string =>
 
 export const getCategoryDisplayConfig = (
   category: CategoryData | null
-): { icon: IconSvgElement; label: string } => {
+): { icon: CategoryPrimaryGlyph; label: string } => {
   if (!category?.primary) {
     return { icon: UNKNOWN_CATEGORY_ICON, label: "Unknown" };
   }

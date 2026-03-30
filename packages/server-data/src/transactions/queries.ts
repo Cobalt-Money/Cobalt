@@ -105,6 +105,7 @@ export async function getUserTransactions(
       accountType: account.type,
       amount: row.amount,
       authorizedDate: toDateString(row.authorizedDate),
+      counterparties: row.counterparties,
       date: normalizedOverrideDate ?? normalizedDate,
       id: row.id,
       institutionLogo: inst?.logo ?? null,

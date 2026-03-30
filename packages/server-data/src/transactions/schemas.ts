@@ -48,6 +48,7 @@ export const transactionListItemSchema = transactionListItemRowSchema
   .pick({
     amount: true,
     authorizedDate: true,
+    counterparties: true,
     date: true,
     id: true,
     location: true,

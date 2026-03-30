@@ -121,3 +121,88 @@ export function brandfetchLogoAssetUrl(
   url.searchParams.set("c", clientId);
   return url.toString();
 }
+
+/**
+ * `type=icon` with `fallback=lettermark`.
+ *
+ * Per Logo API, **`fallback`** (`brandfetch` | `transparent` | `lettermark` | `404`) is only
+ * meaningful for **`type=icon`**. For `logo` and `symbol`, defaults differ (e.g. `transparent`),
+ * and **`lettermark` applies only to `type=icon`**. Here we request `icon` so missing icons resolve
+ * to a brand lettermark instead of the default **`brandfetch`** placeholder logo.
+ *
+ * @see https://docs.brandfetch.com/logo-api/parameters — `fallback`, `type`
+ * @example …/domain/x.com/w/128/h/128/fallback/lettermark/type/icon?c=…
+ */
+export function brandfetchIconLettermarkFallbackUrl(
+  domain: string,
+  clientId: string,
+  options?: { h?: number; theme?: BrandfetchTheme; w?: number }
+): string {
+  const host = normalizeDomainInput(domain);
+  const w = options?.w ?? 128;
+  const h = options?.h ?? 128;
+  const themePart = options?.theme ? `theme/${options.theme}/` : "";
+  const path = `${BRANDFETCH_CDN_ORIGIN}/domain/${host}/w/${w}/h/${h}/${themePart}fallback/lettermark/type/icon`;
+  const url = new URL(path);
+  url.searchParams.set("c", clientId);
+  return url.toString();
+}
+
+/**
+ * **Icon-only** chain for small circular avatars — Brandfetch `type=icon` (social/app-style,
+ * squarish) then lettermark fallback. Prefer this over {@link brandfetchDomainFallbackUrls} when
+ * the UI is a round tile (wide wordmarks look wrong in a circle).
+ *
+ * @param options.size — Square edge length for CDN `w`/`h` (default **128**).
+ * @see https://docs.brandfetch.com/logo-api/parameters — `type`: icon
+ */
+export function brandfetchIconDomainUrls(
+  domain: string,
+  clientId: string,
+  options?: { size?: number }
+): string[] {
+  const size = options?.size ?? 128;
+  return [
+    brandfetchLogoAssetUrl(domain, clientId, {
+      asset: "icon",
+      h: size,
+      w: size,
+    }),
+    brandfetchIconLettermarkFallbackUrl(domain, clientId, { h: size, w: size }),
+  ];
+}
+
+/**
+ * Ordered Brandfetch Logo API attempts for a **domain** identifier (symbol → logo → icon fallback → dimensions).
+ * @see https://docs.brandfetch.com/logo-api/parameters — `type`, `fallback`
+ *
+ * 1. **symbol** (SVG) — universal mark
+ * 2. **logo** (SVG) — horizontal **wordmark** (company name as artwork on large surfaces)
+ * 3. **icon + lettermark** — only `type=icon` can use `fallback=lettermark` (see `fallback` enum in
+ *    docs); avoids the default `fallback=brandfetch` when the icon asset is missing
+ * 4. **Dimensions only** — `…/domain/{host}/w/{w}/h/{h}/` (CDN default asset)
+ */
+export function brandfetchDomainFallbackUrls(
+  domain: string,
+  clientId: string,
+  options?: { h?: number; w?: number }
+): string[] {
+  const w = options?.w ?? 128;
+  const h = options?.h ?? 128;
+  return [
+    brandfetchLogoAssetUrl(domain, clientId, {
+      asset: "symbol",
+      h,
+      svg: true,
+      w,
+    }),
+    brandfetchLogoAssetUrl(domain, clientId, {
+      asset: "logo",
+      h,
+      svg: true,
+      w,
+    }),
+    brandfetchIconLettermarkFallbackUrl(domain, clientId, { h, w }),
+    brandfetchDimensionsOnlyUrl(domain, clientId, { h, w }),
+  ];
+}

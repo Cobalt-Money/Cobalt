@@ -180,12 +180,13 @@ const columns: ColumnDef<TransactionListItem>[] = [
     cell: ({ row }) => {
       const transactionName = row.original.name;
       const displayName = truncateName(transactionName);
-      const { logoUrl, merchantName, website } = row.original;
+      const { counterparties, logoUrl, merchantName, website } = row.original;
 
       return (
         <div className="min-w-0 truncate" title={transactionName}>
           <div className={cn(cellRow, "gap-2")}>
             <MerchantLogo
+              counterparties={counterparties}
               logoUrl={logoUrl}
               merchantName={merchantName}
               website={website}

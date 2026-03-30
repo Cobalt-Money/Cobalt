@@ -1,7 +1,27 @@
-import { brandfetchLogoAssetUrl } from "@cobalt-web/clients/brandfetch";
+import { brandfetchIconDomainUrls } from "@cobalt-web/clients/brandfetch";
 import { env } from "@cobalt-web/env/web";
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { useMemo } from "react";
+
+import { LogoImageWithFallback } from "./logo-image-fallback";
+
+function pushUnique(out: string[], url: string | null | undefined): void {
+  if (!url?.trim()) {
+    return;
+  }
+  if (!out.includes(url)) {
+    out.push(url);
+  }
+}
+
+function isHttpUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
 
 function hostnameFromWebsite(url: string | null | undefined): string | null {
   if (!url?.trim()) {
@@ -16,69 +36,110 @@ function hostnameFromWebsite(url: string | null | undefined): string | null {
   }
 }
 
+/** Prefer merchant counterparty, else first counterparty with a website. */
+function websiteFromCounterparties(
+  counterparties: TransactionListItem["counterparties"]
+): string | null {
+  if (!counterparties?.length) {
+    return null;
+  }
+  const merchant = counterparties.find(
+    (c) => c.type === "merchant" && c.website?.trim()
+  );
+  if (merchant?.website) {
+    return merchant.website;
+  }
+  const withSite = counterparties.find((c) => c.website?.trim());
+  return withSite?.website ?? null;
+}
+
+/** Plaid counterparty logos (merchant first, then others, deduped). */
+function plaidLogoUrlsFromCounterparties(
+  counterparties: TransactionListItem["counterparties"]
+): string[] {
+  if (!counterparties?.length) {
+    return [];
+  }
+  const out: string[] = [];
+  const preferred = counterparties.find(
+    (c) => c.type === "merchant" && c.logo_url && isHttpUrl(c.logo_url)
+  );
+  if (preferred?.logo_url) {
+    out.push(preferred.logo_url);
+  }
+  for (const c of counterparties) {
+    if (c.logo_url && isHttpUrl(c.logo_url)) {
+      pushUnique(out, c.logo_url);
+    }
+  }
+  return out;
+}
+
 /**
- * Brandfetch (`website` domain) → Plaid `logo_url` → Logo.dev (`merchantName`).
+ * Merchant logo sources (first loadable wins):
+ * 1. Brandfetch **icon** only (`type=icon`, then lettermark) from `transaction.website` — fits round cells
+ * 2. Same from counterparty `website` when hostname differs from step 1
+ * 3. Plaid `logo_url` on the transaction, then counterparty `logo_url`s
  */
 function buildMerchantLogoCandidates(
-  row: Pick<TransactionListItem, "logoUrl" | "merchantName" | "website">
+  row: Pick<TransactionListItem, "counterparties" | "logoUrl" | "website">
 ): string[] {
   const out: string[] = [];
-  const { website } = row;
   const clientId = env.VITE_BRANDFETCH_CLIENT_ID;
-  const host = hostnameFromWebsite(website);
-  if (clientId && host) {
-    out.push(
-      brandfetchLogoAssetUrl(host, clientId, {
-        asset: "symbol",
-        h: 128,
-        w: 128,
-      })
-    );
+  const primaryHost = hostnameFromWebsite(row.website);
+  const cpWebsite = websiteFromCounterparties(row.counterparties);
+  const cpHost = hostnameFromWebsite(cpWebsite);
+
+  const appendBrandfetchForHost = (host: string | null) => {
+    if (!(clientId && host)) {
+      return;
+    }
+    for (const u of brandfetchIconDomainUrls(host, clientId)) {
+      pushUnique(out, u);
+    }
+  };
+
+  appendBrandfetchForHost(primaryHost);
+  if (cpHost && cpHost !== primaryHost) {
+    appendBrandfetchForHost(cpHost);
   }
-  // DEBUG: re-enable Plaid + Logo.dev after Brandfetch debugging
-  // if (logoUrl && isAllowedLogoUrl(logoUrl) && !out.includes(logoUrl)) {
-  //   out.push(logoUrl);
-  // }
-  // const token = env.VITE_LOGO_DEV_PUBLISHABLE_KEY;
-  // const name = merchantName?.trim();
-  // if (token && name) {
-  //   const logoDevUrl = logoDevUrlByBrandName(name, { size: 64, token });
-  //   if (!out.includes(logoDevUrl)) {
-  //     out.push(logoDevUrl);
-  //   }
-  // }
+
+  if (row.logoUrl && isHttpUrl(row.logoUrl)) {
+    pushUnique(out, row.logoUrl);
+  }
+  for (const u of plaidLogoUrlsFromCounterparties(row.counterparties)) {
+    pushUnique(out, u);
+  }
+
   return out;
 }
 
 export function MerchantLogo(
-  props: Pick<TransactionListItem, "logoUrl" | "merchantName" | "website">
+  props: Pick<
+    TransactionListItem,
+    "counterparties" | "logoUrl" | "merchantName" | "website"
+  >
 ) {
-  const { logoUrl, merchantName, website } = props;
+  const { counterparties, logoUrl, merchantName, website } = props;
   const candidates = useMemo(
-    () => buildMerchantLogoCandidates({ logoUrl, merchantName, website }),
-    [logoUrl, merchantName, website]
+    () => buildMerchantLogoCandidates({ counterparties, logoUrl, website }),
+    [counterparties, logoUrl, website]
   );
-  const index = 0;
-
-  // DEBUG: no icon fallback — empty cell if no Brandfetch URL
-  if (candidates.length === 0 || index >= candidates.length) {
-    return <div className="size-6 shrink-0" />;
-  }
-
-  const src = candidates[index];
   const alt = merchantName?.trim() ? `${merchantName} logo` : "";
+  const fallbackText = (() => {
+    const t = merchantName?.trim();
+    if (!t) {
+      return "?";
+    }
+    return t.slice(0, 1).toUpperCase();
+  })();
 
   return (
-    <img
+    <LogoImageWithFallback
       alt={alt}
-      className="size-6 shrink-0 rounded-sm object-contain"
-      height={24}
-      src={src}
-      width={24}
-      onError={() => {
-        // DEBUG: re-enable to fall through candidates
-        // setIndex((i) => i + 1);
-      }}
+      candidates={candidates}
+      fallbackText={fallbackText}
+      imgClassName="object-cover"
     />
   );
 }
