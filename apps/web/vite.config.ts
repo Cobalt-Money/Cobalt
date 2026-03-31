@@ -5,10 +5,8 @@ import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-/** Skip `.sandbox` so tsconfig-paths does not parse sample apps (e.g. Expo) that extend missing packages. */
-const tsconfigPathsPlugin = tsconfigPaths({
-  skip: (dir) => dir === ".sandbox",
-});
+/** Only scan this app’s tsconfig(s); do not walk the monorepo root (avoids `.sandbox`, etc.). */
+const tsconfigPathsPlugin = tsconfigPaths({ root: "." });
 
 export default defineConfig({
   plugins: [

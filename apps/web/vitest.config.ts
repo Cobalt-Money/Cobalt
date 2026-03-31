@@ -3,10 +3,8 @@ import viteReact from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
-/** Skip `.sandbox` so tsconfig-paths does not parse sample apps (e.g. Expo) that extend missing packages. */
-const tsconfigPathsPlugin = tsconfigPaths({
-  skip: (dir) => dir === ".sandbox",
-});
+/** Only scan this app’s tsconfig(s); do not walk the monorepo root (avoids `.sandbox`, etc.). */
+const tsconfigPathsPlugin = tsconfigPaths({ root: "." });
 
 /** Test config uses the same transforms as the app but omits TanStack Start (not needed for unit tests). */
 export default defineConfig({
