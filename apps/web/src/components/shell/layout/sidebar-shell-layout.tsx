@@ -4,8 +4,8 @@ import {
 } from "@cobalt-web/ui/components/sidebar";
 import type { ReactNode } from "react";
 
-import { AppSidebar } from "./app-sidebar";
-import { SiteHeader } from "./site-header";
+import { SiteHeader } from "../header/site-header";
+import { AppSidebar } from "../sidebar/app-sidebar";
 
 interface SidebarShellLayoutProps {
   children?: ReactNode;

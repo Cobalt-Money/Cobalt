@@ -21,11 +21,13 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps } from "react";
 
-import { NavMain } from "./nav-main";
-import { NavSecondary } from "./nav-secondary";
-import { NavUser } from "./nav-user";
+import { useAppSession } from "@/lib/providers/app-session";
 
-const data = {
+import { NavMain, NavSecondary } from "./nav/nav-main";
+import { NavUser } from "./nav/nav-user";
+import { NavUserSkeleton } from "./nav/skeleton/nav-user-skeleton";
+
+const sidebarNav = {
   navMain: [
     {
       icon: <HugeiconsIcon icon={DashboardSquare01Icon} strokeWidth={2} />,
@@ -75,14 +77,20 @@ const data = {
       url: "#",
     },
   ],
-  user: {
-    avatar: "/avatars/shadcn.jpg",
-    email: "m@example.com",
-    name: "shadcn",
-  },
 };
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
+  const session = useAppSession();
+  const authedUser = session.data?.user;
+  const navUser =
+    authedUser === undefined
+      ? null
+      : {
+          avatar: authedUser.image ?? "",
+          email: authedUser.email ?? "",
+          name: authedUser.name,
+        };
+
   return (
     <Sidebar collapsible="offcanvas" variant="inset" {...props}>
       <SidebarHeader>
@@ -100,11 +108,11 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={sidebarNav.navMain} />
+        <NavSecondary items={sidebarNav.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {navUser ? <NavUser user={navUser} /> : <NavUserSkeleton />}
       </SidebarFooter>
     </Sidebar>
   );

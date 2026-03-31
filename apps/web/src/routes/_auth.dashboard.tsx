@@ -128,8 +128,8 @@ import { useZero } from "@rocicorp/zero/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { AppSidebar } from "@/components/shell/app-sidebar";
-import { SiteHeader } from "@/components/shell/site-header";
+import { SiteHeader } from "@/components/shell/header/site-header";
+import { AppSidebar } from "@/components/shell/sidebar/app-sidebar";
 import { useOnReady } from "@/lib/providers/zero-client";
 
 export const Route = createFileRoute("/_auth/dashboard")({
