@@ -35,6 +35,26 @@ const dateLong = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
+const dateShort = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+  year: "numeric",
+});
+
+/** Short form for activity entries (e.g. "Mar 28, 2025"). */
+export function formatDateStringShort(isoOrDay: string | null): string {
+  if (!isoOrDay) {
+    return "—";
+  }
+  const day = String(isoOrDay).split("T")[0] ?? String(isoOrDay);
+  const t = new Date(`${day}T12:00:00.000Z`).getTime();
+  if (Number.isNaN(t)) {
+    return isoOrDay;
+  }
+  return dateShort.format(new Date(t));
+}
+
 /** Long form for detail views (e.g. "January 15, 2025"). */
 export function formatDateStringLong(isoOrDay: string | null): string {
   if (!isoOrDay) {

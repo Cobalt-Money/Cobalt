@@ -90,6 +90,33 @@ function LocationCaption({
   return null;
 }
 
+/** Map card + caption without a section header — used by the summary view. */
+export function TransactionDetailLocationCard({
+  location,
+}: {
+  location: TransactionListItem["location"];
+}) {
+  const coords = getLocationCoordinates(location);
+
+  return (
+    <div className="flex flex-col gap-2">
+      {coords ? (
+        <Card className="overflow-hidden p-0">
+          <div className="relative h-48 w-full sm:h-56">
+            <Map center={[coords.lng, coords.lat]} zoom={14}>
+              <MapControls position="bottom-right" />
+              <MapMarker latitude={coords.lat} longitude={coords.lng}>
+                <MarkerContent />
+              </MapMarker>
+            </Map>
+          </div>
+        </Card>
+      ) : null}
+      <LocationCaption coords={coords} location={location} />
+    </div>
+  );
+}
+
 export function TransactionDetailLocationSection({
   location,
 }: {
