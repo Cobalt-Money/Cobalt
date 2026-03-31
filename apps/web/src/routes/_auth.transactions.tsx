@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { SidebarShellLayout } from "@/components/shell/sidebar-shell-layout";
+import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 import { TransactionsTable } from "@/components/transactions/transactions-table";
 import { TransactionsToolbar } from "@/components/transactions/transactions-toolbar";
 
