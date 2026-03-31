@@ -5,7 +5,7 @@ import { useMemo } from "react";
 
 import { useTransactions } from "@/components/transactions/use-transactions";
 
-import { useShellRouteTitle } from "./use-shell-route-title";
+import { useShellRouteTitle } from "./header/use-shell-route-title";
 
 function TransactionDetailBreadcrumb({
   transactionId,

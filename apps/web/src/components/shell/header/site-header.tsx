@@ -3,7 +3,7 @@ import { SidebarTrigger } from "@cobalt-web/ui/components/sidebar";
 import { BellDotIcon, EyeIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-import { SiteHeaderPrimaryTitle } from "./site-header-primary-title";
+import { SiteHeaderPrimaryTitle } from "../site-header-primary-title";
 
 export function SiteHeader() {
   return (

@@ -31,6 +31,8 @@ import { useRouter } from "@tanstack/react-router";
 import { authClient } from "@/lib/clients/auth-client";
 import { deleteActiveZeroReplicaOnLogout } from "@/lib/zero-logout";
 
+import { navUserInitials } from "./lib";
+
 export function NavUser({
   user,
 }: {
@@ -42,6 +44,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
+  const initials = navUserInitials(user.name, user.email);
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -61,9 +64,9 @@ export function NavUser({
               />
             }
           >
-            <Avatar className="size-8 rounded-lg grayscale">
+            <Avatar className="size-8 rounded-lg">
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+              <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium text-muted-foreground">
@@ -88,9 +91,11 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                  <Avatar className="size-8">
+                  <Avatar className="size-8 rounded-lg">
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                    <AvatarFallback className="rounded-lg">
+                      {initials}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium text-muted-foreground">

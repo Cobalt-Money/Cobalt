@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { SidebarShellLayout } from "@/components/shell/sidebar-shell-layout";
+import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 import { useOnReady } from "@/lib/providers/zero-client";
 
 export const Route = createFileRoute("/_auth/accounts")({
