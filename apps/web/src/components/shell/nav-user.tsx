@@ -28,7 +28,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "@tanstack/react-router";
 
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/clients/auth-client";
 import { deleteActiveZeroReplicaOnLogout } from "@/lib/zero-logout";
 
 export function NavUser({

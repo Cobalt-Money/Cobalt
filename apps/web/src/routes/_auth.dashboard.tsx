@@ -123,10 +123,14 @@ import {
   TooltipTrigger,
 } from "@cobalt-web/ui/components/tooltip";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { queries } from "@cobalt-web/zero";
+import { useZero } from "@rocicorp/zero/react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import { AppSidebar } from "@/components/shell/app-sidebar";
 import { SiteHeader } from "@/components/shell/site-header";
+import { useOnReady } from "@/lib/providers/zero-client";
 
 export const Route = createFileRoute("/_auth/dashboard")({
   component: DashboardPage,
@@ -186,6 +190,16 @@ function ShowcaseSection({
 }
 
 function DashboardPage() {
+  const onReady = useOnReady();
+  const zero = useZero();
+
+  useEffect(() => {
+    onReady();
+    zero.preload(queries.transactions.list());
+    zero.preload(queries.transactions.recurring());
+    zero.preload(queries.transactions.creditSpending({ period: "1m" }));
+  }, [onReady, zero]);
+
   return (
     <SidebarProvider className="min-h-0 flex-1">
       <AppSidebar />

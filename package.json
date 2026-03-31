@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@cobalt-web/env": "workspace:*",
+    "@tanstack/react-virtual": "^3.13.23",
     "dotenv": "catalog:",
     "plaid": "^41.4.0",
     "zod": "catalog:"

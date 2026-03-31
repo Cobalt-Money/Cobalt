@@ -1,17 +1,7 @@
 /**
- * Plaid primary / detailed category display — aligned with horizon-test
- * `lib/utils/categories.ts` for labels; primary icons from Hugeicons in
- * `category-primary-icons.ts`.
+ * Plaid personal finance primary / detailed category → display labels.
+ * (Icons live in the web app — `@hugeicons` / `public/assets/vectors`.)
  */
-
-import {
-  PRIMARY_CATEGORY_ICON,
-  UNKNOWN_CATEGORY_ICON,
-} from "./category-primary-icons";
-import type {
-  CategoryPrimaryGlyph,
-  PrimaryCategoryKey,
-} from "./category-primary-icons";
 
 export interface CategoryData {
   primary: string;
@@ -22,28 +12,6 @@ export interface CategoryData {
 
 export const formatCategoryName = (categoryName: string): string =>
   categoryName.replaceAll("_", " ");
-
-export const getCategoryDisplayConfig = (
-  category: CategoryData | null
-): { icon: CategoryPrimaryGlyph; label: string } => {
-  if (!category?.primary) {
-    return { icon: UNKNOWN_CATEGORY_ICON, label: "Unknown" };
-  }
-
-  const key = category.primary as PrimaryCategoryKey;
-  const mapped = CATEGORY_MAPPING[key];
-  if (mapped) {
-    return {
-      icon: PRIMARY_CATEGORY_ICON[key],
-      label: mapped.label,
-    };
-  }
-
-  return {
-    icon: UNKNOWN_CATEGORY_ICON,
-    label: formatCategoryName(category.primary),
-  };
-};
 
 export const CATEGORY_MAPPING = {
   BANK_FEES: { label: "Bank Fees" },
@@ -187,4 +155,20 @@ export const getDetailedCategoryDisplayName = (
       detailedCategory as keyof typeof DETAILED_CATEGORY_MAPPING
     ];
   return customLabel || detailedCategory.replaceAll("_", " ");
+};
+
+export const getPrimaryCategoryLabel = (
+  category: CategoryData | null
+): string => {
+  if (!category?.primary) {
+    return "Unknown";
+  }
+
+  const key = category.primary as keyof typeof CATEGORY_MAPPING;
+  const mapped = CATEGORY_MAPPING[key];
+  if (mapped) {
+    return mapped.label;
+  }
+
+  return formatCategoryName(category.primary);
 };

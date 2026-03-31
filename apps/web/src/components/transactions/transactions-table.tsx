@@ -1,7 +1,5 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
-import { Button } from "@cobalt-web/ui/components/button";
 import { Checkbox } from "@cobalt-web/ui/components/checkbox";
-import { Skeleton } from "@cobalt-web/ui/components/skeleton";
 import {
   Table,
   TableBody,
@@ -18,23 +16,22 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import type { ReactNode } from "react";
 import { Fragment, useMemo, useState } from "react";
 
-import { CategoryIcon } from "./category-icon";
 import {
+  CategoryIcon,
   getCategoryDisplayConfig,
   getDetailedCategoryDisplayName,
-} from "./horizon-categories";
-import { InstitutionLogo } from "./institution-logo";
-import { MerchantLogo } from "./merchant-logo";
+} from "./categories";
 import {
   formatMonthGroupLabel,
   formatTransactionDateDisplay,
   transactionDateSortKey,
   transactionMonthGroupKey,
-} from "./transaction-list-helpers";
-import { useTransactionsList } from "./use-transactions-list";
+} from "./lib/helpers";
+import { InstitutionLogo } from "./logos/institution-logo";
+import { MerchantLogo } from "./logos/merchant-logo";
+import { useTransactions } from "./use-transactions";
 
 const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -97,28 +94,6 @@ function getColumnStableId(col: ColumnDef<TransactionListItem>): string {
 
 const monthDividerBase = "bg-muted font-medium text-foreground";
 
-const SKELETON_ROW_COUNT = 8;
-
-function TransactionsTableBodySkeleton({
-  columnCount,
-}: {
-  columnCount: number;
-}) {
-  return (
-    <>
-      {Array.from({ length: SKELETON_ROW_COUNT }, (_x, rowIndex) => (
-        <TableRow className="border-0" key={`sk-${rowIndex}`}>
-          {Array.from({ length: columnCount }, (_y, colIndex) => (
-            <TableCell className="p-3" key={`sk-${rowIndex}-${colIndex}`}>
-              <Skeleton className="h-5 w-full max-w-[12rem]" />
-            </TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </>
-  );
-}
-
 const columns: ColumnDef<TransactionListItem>[] = [
   {
     cell: ({ row }) => (
@@ -153,16 +128,35 @@ const columns: ColumnDef<TransactionListItem>[] = [
         <div className={cn(cellRow, "whitespace-nowrap")}>
           <img
             alt={label}
-            className="size-4 shrink-0 object-contain"
+            className="size-5 shrink-0 object-contain"
             decoding="async"
-            height={16}
+            height={20}
             src={pending ? STATUS_PENDING_ICON : STATUS_POSTED_ICON}
-            width={16}
+            width={20}
           />
         </div>
       );
     },
     header: "Status",
+  },
+  {
+    accessorFn: (row) => row.institutionName ?? row.accountName ?? "",
+    cell: ({ row }) => {
+      const { accountName, institutionLogo, institutionName, institutionUrl } =
+        row.original;
+
+      return (
+        <div className={cellRow} title={institutionName?.trim() || accountName}>
+          <InstitutionLogo
+            institutionLogo={institutionLogo}
+            institutionName={institutionName}
+            institutionUrl={institutionUrl}
+          />
+        </div>
+      );
+    },
+    header: "Bank",
+    id: "account",
   },
   {
     accessorFn: (row) => transactionDateSortKey(row),
@@ -248,25 +242,6 @@ const columns: ColumnDef<TransactionListItem>[] = [
     id: "category",
   },
   {
-    accessorFn: (row) => row.institutionName ?? row.accountName ?? "",
-    cell: ({ row }) => {
-      const { accountName, institutionLogo, institutionName, institutionUrl } =
-        row.original;
-
-      return (
-        <div className={cellRow} title={institutionName?.trim() || accountName}>
-          <InstitutionLogo
-            institutionLogo={institutionLogo}
-            institutionName={institutionName}
-            institutionUrl={institutionUrl}
-          />
-        </div>
-      );
-    },
-    header: "Bank",
-    id: "account",
-  },
-  {
     accessorKey: "amount",
     cell: ({ row }) => {
       const { amount } = row.original;
@@ -288,7 +263,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
 ];
 
 export function TransactionsTable() {
-  const { items, queryDetails } = useTransactionsList();
+  const { isComplete, items } = useTransactions();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const table = useReactTable({
@@ -308,133 +283,98 @@ export function TransactionsTable() {
   const { rows } = table.getRowModel();
   const monthSections = useMemo(() => groupRowsByMonth(rows), [rows]);
 
-  if (queryDetails.type === "error") {
-    return (
-      <Table className="h-full min-w-full">
-        <TableBody>
-          <TableRow className="border-0">
-            <TableCell
-              className="h-24 text-center text-muted-foreground"
-              colSpan={columns.length}
-            >
-              <p className="text-destructive text-sm">
-                {queryDetails.error.message}
-              </p>
-              <Button
-                className="mt-3"
-                onClick={() => queryDetails.retry()}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                Retry
-              </Button>
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    );
-  }
-
-  const isLoadingUnknown =
-    queryDetails.type === "unknown" && items.length === 0;
-  const hasRows = table.getRowModel().rows.length > 0;
-
-  let tableBodyContent: ReactNode;
-  if (isLoadingUnknown) {
-    tableBodyContent = (
-      <TransactionsTableBodySkeleton columnCount={columns.length} />
-    );
-  } else if (hasRows) {
-    tableBodyContent = monthSections.map((section) => (
-      <Fragment key={section.monthKey}>
-        <TableRow className="sticky top-0 z-10 border-0 hover:bg-transparent">
-          {columns.map((col, index) => {
-            const colId = getColumnStableId(col);
-            const isFirst = index === 0;
-            const isLast = index === columns.length - 1;
-            const roundedClass = cn(
-              isFirst && "rounded-l-lg",
-              isLast && "rounded-r-lg"
-            );
-            if (colId === "date") {
-              return (
-                <TableCell
-                  className={cn(monthDividerBase, "px-3 py-2.5", roundedClass)}
-                  key={`${section.monthKey}-date`}
-                >
-                  <span className="truncate font-medium text-foreground text-sm">
-                    {section.label}
-                  </span>
-                </TableCell>
-              );
-            }
-            if (colId === "pending") {
-              return (
-                <TableCell
-                  className={cn(monthDividerBase, "p-3", roundedClass)}
-                  key={`${section.monthKey}-pending`}
-                >
-                  <div className={cn(cellRow, "whitespace-nowrap")}>
-                    <span className="font-normal tabular-nums text-muted-foreground text-sm">
-                      {section.rows.length}
-                    </span>
-                  </div>
-                </TableCell>
-              );
-            }
-            return (
-              <TableCell
-                className={cn(monthDividerBase, "p-3", roundedClass)}
-                key={`${section.monthKey}-${colId}`}
-              />
-            );
-          })}
-        </TableRow>
-        {section.rows.map((row) => (
-          <TableRow
-            className="group border-0 font-normal hover:bg-transparent data-[state=selected]:bg-transparent"
-            data-state={row.getIsSelected() ? "selected" : undefined}
-            key={row.id}
-          >
-            {row.getVisibleCells().map((cell, index, cells) => (
-              <TableCell
-                className={cn(
-                  "group-hover:bg-muted group-data-[state=selected]:bg-muted",
-                  index === 0 &&
-                    "group-hover:rounded-l-lg group-data-[state=selected]:rounded-l-lg",
-                  index === cells.length - 1 &&
-                    "group-hover:rounded-r-lg group-data-[state=selected]:rounded-r-lg"
-                )}
-                key={cell.id}
-              >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </TableCell>
-            ))}
-          </TableRow>
-        ))}
-      </Fragment>
-    ));
-  } else if (queryDetails.type === "complete") {
-    tableBodyContent = (
-      <TableRow className="border-0">
-        <TableCell
-          className="h-24 text-center text-muted-foreground"
-          colSpan={columns.length}
-        >
-          No results.
-        </TableCell>
-      </TableRow>
-    );
-  } else {
-    tableBodyContent = (
-      <TransactionsTableBodySkeleton columnCount={columns.length} />
-    );
-  }
+  const hasRows = rows.length > 0;
 
   return (
     <Table className="h-full min-w-full">
-      <TableBody>{tableBodyContent}</TableBody>
+      <TableBody>
+        {hasRows &&
+          monthSections.map((section) => (
+            <Fragment key={section.monthKey}>
+              <TableRow className="sticky top-0 z-10 border-0 hover:bg-transparent">
+                {columns.map((col, index) => {
+                  const colId = getColumnStableId(col);
+                  const isFirst = index === 0;
+                  const isLast = index === columns.length - 1;
+                  const roundedClass = cn(
+                    isFirst && "rounded-l-lg",
+                    isLast && "rounded-r-lg"
+                  );
+                  if (colId === "date") {
+                    return (
+                      <TableCell
+                        className={cn(
+                          monthDividerBase,
+                          "px-3 py-2.5",
+                          roundedClass
+                        )}
+                        key={`${section.monthKey}-date`}
+                      >
+                        <span className="truncate font-medium text-foreground text-sm">
+                          {section.label}
+                        </span>
+                      </TableCell>
+                    );
+                  }
+                  if (colId === "pending") {
+                    return (
+                      <TableCell
+                        className={cn(monthDividerBase, "p-3", roundedClass)}
+                        key={`${section.monthKey}-pending`}
+                      >
+                        <div className={cn(cellRow, "whitespace-nowrap")}>
+                          <span className="font-normal tabular-nums text-muted-foreground text-sm">
+                            {section.rows.length}
+                          </span>
+                        </div>
+                      </TableCell>
+                    );
+                  }
+                  return (
+                    <TableCell
+                      className={cn(monthDividerBase, "p-3", roundedClass)}
+                      key={`${section.monthKey}-${colId}`}
+                    />
+                  );
+                })}
+              </TableRow>
+              {section.rows.map((row) => (
+                <TableRow
+                  className="group border-0 font-normal hover:bg-transparent data-[state=selected]:bg-transparent"
+                  data-state={row.getIsSelected() ? "selected" : undefined}
+                  key={row.id}
+                >
+                  {row.getVisibleCells().map((cell, index, cells) => (
+                    <TableCell
+                      className={cn(
+                        "group-hover:bg-muted group-data-[state=selected]:bg-muted",
+                        index === 0 &&
+                          "group-hover:rounded-l-lg group-data-[state=selected]:rounded-l-lg",
+                        index === cells.length - 1 &&
+                          "group-hover:rounded-r-lg group-data-[state=selected]:rounded-r-lg"
+                      )}
+                      key={cell.id}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </Fragment>
+          ))}
+        {!hasRows && isComplete && (
+          <TableRow className="border-0">
+            <TableCell className="p-6" colSpan={columns.length}>
+              <div className="text-muted-foreground text-sm">
+                No transactions yet.
+              </div>
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
     </Table>
   );
 }

@@ -1,18 +1,26 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { Navigate, Outlet, createFileRoute } from "@tanstack/react-router";
 
-import { authClient } from "@/lib/auth-client";
+import { useAppSession } from "@/lib/providers/app-session";
 
+/**
+ * zbugs-style auth: resolve session in the layout (no async `beforeLoad` redirect).
+ * Pending UI is handled by {@link ZeroProvider} so Zero bootstrap + session share
+ * one shell (no stacked loaders).
+ */
 export const Route = createFileRoute("/_auth")({
-  beforeLoad: async () => {
-    const { data: session } = await authClient.getSession();
-    if (!session) {
-      throw redirect({ to: "/" });
-    }
-    return { session };
-  },
   component: AuthLayout,
 });
 
 function AuthLayout() {
+  const session = useAppSession();
+
+  if (session.isPending) {
+    return null;
+  }
+
+  if (!session.data) {
+    return <Navigate replace to="/" />;
+  }
+
   return <Outlet />;
 }

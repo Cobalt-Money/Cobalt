@@ -4,7 +4,7 @@ import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/clients/auth-client";
 
 export default function SocialAuth() {
   const [loading, setLoading] = useState(false);

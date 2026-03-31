@@ -1,15 +1,15 @@
-import { auth } from "@cobalt-web/auth";
 import { env } from "@cobalt-web/env/server";
-import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions";
+import type { AppEnv } from "@cobalt-web/server-data/types";
 import { mutators, queries, schema } from "@cobalt-web/zero";
-import type { Context } from "@cobalt-web/zero";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { mustGetMutator, mustGetQuery } from "@rocicorp/zero";
 import { handleMutateRequest, handleQueryRequest } from "@rocicorp/zero/server";
 import { zeroNodePg } from "@rocicorp/zero/server/adapters/pg";
 import { Pool } from "pg";
 
-const zeroRouter = new OpenAPIHono();
+import { requirePaidUser } from "./middleware.js";
+
+const zeroRouter = new OpenAPIHono<AppEnv>();
 
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
@@ -18,33 +18,12 @@ const pool = new Pool({
 
 const dbProvider = pool ? zeroNodePg(schema, pool) : undefined;
 
-/** Same policy as `requirePaidUser`: session + ative subscription. */
-async function resolvePaidUserContext(
-  req: Request
-): Promise<{ ok: true; ctx: Context } | { ok: false; status: 401 | 403 }> {
-  const session = await auth.api.getSession({ headers: req.headers });
-  if (!session) {
-    return { ok: false, status: 401 };
-  }
-  const entitled = await userHasActiveSubscription(session.user.id);
-  if (!entitled) {
-    return { ok: false, status: 403 };
-  }
-  return { ctx: { userId: session.user.id }, ok: true };
-}
+zeroRouter.use("*", requirePaidUser);
 
 zeroRouter.post("/query", async (c) => {
-  const paid = await resolvePaidUserContext(c.req.raw);
-  if (!paid.ok) {
-    return c.json(
-      {
-        error: paid.status === 401 ? "Unauthorized" : "Subscription required",
-      },
-      paid.status
-    );
-  }
+  const zeroContext = c.get("zeroContext");
   const result = await handleQueryRequest(
-    (name, args) => mustGetQuery(queries, name).fn({ args, ctx: paid.ctx }),
+    (name, args) => mustGetQuery(queries, name).fn({ args, ctx: zeroContext }),
     schema,
     c.req.raw
   );
@@ -55,16 +34,7 @@ zeroRouter.post("/mutate", async (c) => {
   if (!dbProvider) {
     return c.json({ error: "Zero not configured" }, 500);
   }
-
-  const paid = await resolvePaidUserContext(c.req.raw);
-  if (!paid.ok) {
-    return c.json(
-      {
-        error: paid.status === 401 ? "Unauthorized" : "Subscription required",
-      },
-      paid.status
-    );
-  }
+  const zeroContext = c.get("zeroContext");
 
   const result = await handleMutateRequest(
     dbProvider,
@@ -72,7 +42,7 @@ zeroRouter.post("/mutate", async (c) => {
       transact((tx, name, args) =>
         // Empty mutators registry — add @rocicorp/zero mutators when needed
         // @ts-expect-error TS2339 — mustGetMutator is never until mutators are defined
-        mustGetMutator(mutators, name).fn({ args, ctx: paid.ctx, tx })
+        mustGetMutator(mutators, name).fn({ args, ctx: zeroContext, tx })
       ),
     c.req.raw
   );

@@ -1,7 +1,6 @@
 import { Toaster } from "@cobalt-web/ui/components/sonner";
 import { ThemeProvider } from "@cobalt-web/ui/components/theme-provider";
 import { TooltipProvider } from "@cobalt-web/ui/components/tooltip";
-import type { Zero } from "@rocicorp/zero";
 import {
   HeadContent,
   Outlet,
@@ -14,16 +13,12 @@ import { useEffect } from "react";
 
 import { CommandMenu } from "@/components/shell/command-menu";
 
-import { ZeroProvider } from "../lib/zero-client";
+import { AppSessionProvider } from "../lib/providers/app-session";
+import { ZeroProvider } from "../lib/providers/zero-client";
 
 import appCss from "../index.css?url";
 
-/** Set by root {@link ZeroProvider} when the Zero client is ready. See ztunes `ZeroInit`. */
-export interface RouterAppContext {
-  zero?: Zero;
-}
-
-export const Route = createRootRouteWithContext<RouterAppContext>()({
+export const Route = createRootRouteWithContext<Record<string, never>>()({
   component: RootDocument,
 
   head: () => ({
@@ -70,6 +65,11 @@ function RootDocument() {
   return (
     <html className="h-svh overflow-hidden" lang="en" suppressHydrationWarning>
       <head>
+        {/*
+          next-themes applies class after hydration on Vite SPAs; public/theme-init.js
+          aligns html.dark with localStorage before first paint (see ThemeProvider props).
+        */}
+        <script src="/theme-init.js" />
         <HeadContent />
       </head>
       <body className="h-svh overflow-hidden">
@@ -79,14 +79,16 @@ function RootDocument() {
           disableTransitionOnChange
           enableSystem
         >
-          <ZeroProvider>
-            <TooltipProvider>
-              <div className="flex h-svh min-h-0 flex-col overflow-hidden">
-                <Outlet />
-              </div>
-              <CommandMenu />
-            </TooltipProvider>
-          </ZeroProvider>
+          <AppSessionProvider>
+            <ZeroProvider>
+              <TooltipProvider>
+                <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+                  <Outlet />
+                </div>
+                <CommandMenu />
+              </TooltipProvider>
+            </ZeroProvider>
+          </AppSessionProvider>
           <Toaster richColors />
         </ThemeProvider>
         {/* {import.meta.env.DEV ? <Agentation /> : null} */}

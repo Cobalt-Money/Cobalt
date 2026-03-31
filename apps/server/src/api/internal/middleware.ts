@@ -3,6 +3,8 @@ import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { createMiddleware } from "hono/factory";
 
+const toZeroContext = (userId: string) => ({ userId });
+
 /** Session only (Better Auth). Use on routes that do not require a paid plan. */
 export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
   const session = await auth.api.getSession({
@@ -13,6 +15,7 @@ export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
   }
   c.set("user", session.user);
   c.set("session", session.session);
+  c.set("zeroContext", toZeroContext(session.user.id));
   await next();
 });
 
@@ -31,6 +34,7 @@ export const requirePaidUser = createMiddleware<AppEnv>(async (c, next) => {
   }
   c.set("user", session.user);
   c.set("session", session.session);
+  c.set("zeroContext", toZeroContext(session.user.id));
 
   const entitled = await userHasActiveSubscription(session.user.id);
   if (!entitled) {

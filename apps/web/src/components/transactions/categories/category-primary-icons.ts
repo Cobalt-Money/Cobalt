@@ -1,5 +1,16 @@
+import {
+  CATEGORY_MAPPING,
+  formatCategoryName,
+} from "@cobalt-web/server-data/transactions/categories";
+import type { CategoryData } from "@cobalt-web/server-data/transactions/categories";
 import { QuestionIcon } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
+
+export type { CategoryData } from "@cobalt-web/server-data/transactions/categories";
+export {
+  getDetailedCategoryDisplayName,
+  getPrimaryCategoryLabel,
+} from "@cobalt-web/server-data/transactions/categories";
 
 const BANK_FEES_ICON_SRC = "/assets/vectors/card.svg";
 const FOOD_AND_DRINK_ICON_SRC = "/assets/vectors/cheese.svg";
@@ -54,3 +65,26 @@ export const PRIMARY_CATEGORY_ICON = {
 export type PrimaryCategoryKey = keyof typeof PRIMARY_CATEGORY_ICON;
 
 export const UNKNOWN_CATEGORY_ICON = QuestionIcon;
+
+export function getCategoryDisplayConfig(category: CategoryData | null): {
+  icon: CategoryPrimaryGlyph;
+  label: string;
+} {
+  if (!category?.primary) {
+    return { icon: UNKNOWN_CATEGORY_ICON, label: "Unknown" };
+  }
+
+  const key = category.primary as PrimaryCategoryKey;
+  const mapped = CATEGORY_MAPPING[key as keyof typeof CATEGORY_MAPPING];
+  if (mapped) {
+    return {
+      icon: PRIMARY_CATEGORY_ICON[key],
+      label: mapped.label,
+    };
+  }
+
+  return {
+    icon: UNKNOWN_CATEGORY_ICON,
+    label: formatCategoryName(category.primary),
+  };
+}
