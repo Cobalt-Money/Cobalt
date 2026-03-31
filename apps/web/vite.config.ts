@@ -5,9 +5,14 @@ import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
+/** Skip `.sandbox` so tsconfig-paths does not parse sample apps (e.g. Expo) that extend missing packages. */
+const tsconfigPathsPlugin = tsconfigPaths({
+  skip: (dir) => dir === ".sandbox",
+});
+
 export default defineConfig({
   plugins: [
-    tsconfigPaths(),
+    tsconfigPathsPlugin,
     tailwindcss(),
     // SPA mode: no SSR for the app shell. Zero does not support SSR; see ztunes README:
     // https://github.com/rocicorp/ztunes#tanstack-start
