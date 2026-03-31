@@ -9,6 +9,9 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
+const navItemClassName =
+  "rounded-md py-1.5 text-[13px] text-muted-foreground data-active:text-foreground/85 [&_svg]:size-[13px]";
+
 export function NavMain({
   items,
 }: {
@@ -27,7 +30,7 @@ export function NavMain({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
-                className="rounded-md py-1.5 text-[13px] text-muted-foreground data-active:text-foreground/85 [&_svg]:size-[13px]"
+                className={navItemClassName}
                 isActive={pathname === item.url}
                 render={<Link aria-label={item.title} to={item.url} />}
                 tooltip={item.title}
@@ -61,7 +64,7 @@ export function NavSecondary({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
-                className="rounded-md py-1.5 text-[13px] text-muted-foreground data-active:text-foreground/85 [&_svg]:size-[13px]"
+                className={navItemClassName}
                 render={
                   <a
                     aria-label={item.title}
