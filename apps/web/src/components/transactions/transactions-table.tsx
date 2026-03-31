@@ -9,6 +9,7 @@ import {
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useNavigate } from "@tanstack/react-router";
 import {
   flexRender,
   getCoreRowModel,
@@ -16,7 +17,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import { Fragment, useMemo, useState } from "react";
+import type { MouseEvent, KeyboardEvent } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 
 import {
   CategoryIcon,
@@ -103,6 +105,13 @@ const columns: ColumnDef<TransactionListItem>[] = [
           "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
           row.getIsSelected() && "opacity-100"
         )}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+        }}
+        role="presentation"
       >
         <Checkbox
           aria-label={`Select transaction ${row.original.name}`}
@@ -262,9 +271,46 @@ const columns: ColumnDef<TransactionListItem>[] = [
   },
 ];
 
+function isInteractiveCellTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  return Boolean(
+    target.closest(
+      "button, a, input, [role='checkbox'], [data-slot='checkbox'], [data-slot='checkbox-indicator']"
+    )
+  );
+}
+
 export function TransactionsTable() {
+  const navigate = useNavigate();
   const { isComplete, items } = useTransactions();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  const openTransaction = useCallback(
+    (row: Row<TransactionListItem>) => {
+      navigate({
+        params: { transactionId: row.original.id },
+        to: "/transactions/$transactionId",
+      });
+    },
+    [navigate]
+  );
+
+  const onRowActivate = useCallback(
+    (row: Row<TransactionListItem>, e: MouseEvent | KeyboardEvent) => {
+      if ("key" in e) {
+        if (e.key !== "Enter" && e.key !== " ") {
+          return;
+        }
+        e.preventDefault();
+      } else if (isInteractiveCellTarget(e.target)) {
+        return;
+      }
+      openTransaction(row);
+    },
+    [openTransaction]
+  );
 
   const table = useReactTable({
     columns,
@@ -340,9 +386,17 @@ export function TransactionsTable() {
               </TableRow>
               {section.rows.map((row) => (
                 <TableRow
-                  className="group border-0 font-normal hover:bg-transparent data-[state=selected]:bg-transparent"
+                  aria-label={`View details for ${row.original.name}`}
+                  className="group cursor-pointer border-0 font-normal hover:bg-transparent data-[state=selected]:bg-transparent"
                   data-state={row.getIsSelected() ? "selected" : undefined}
                   key={row.id}
+                  tabIndex={0}
+                  onClick={(e) => {
+                    onRowActivate(row, e);
+                  }}
+                  onKeyDown={(e) => {
+                    onRowActivate(row, e);
+                  }}
                 >
                   {row.getVisibleCells().map((cell, index, cells) => (
                     <TableCell

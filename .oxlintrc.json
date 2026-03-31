@@ -5,11 +5,12 @@
     "./node_modules/ultracite/config/oxlint/react/.oxlintrc.json"
   ],
   "ignorePatterns": [
+    "apps/fumadocs/**",
+    "apps/web/src/routes/**/$*.tsx",
     "packages/ui/src/components/**",
-    "**/routeTree.gen.ts",
     "**/drizzle-zero.config.ts",
-    "**/zero-schema.gen.ts",
-    "apps/fumadocs/**"
+    "**/routeTree.gen.ts",
+    "**/zero-schema.gen.ts"
   ],
   "rules": {
     "func-style": "off",

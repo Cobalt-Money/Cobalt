@@ -8,216 +8,269 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as AuthRouteImport } from "./routes/_auth";
-import { Route as AuthAccountsRouteImport } from "./routes/_auth.accounts";
-import { Route as AuthBrokerageRouteImport } from "./routes/_auth.brokerage";
-import { Route as AuthDashboardRouteImport } from "./routes/_auth.dashboard";
-import { Route as AuthResearchRouteImport } from "./routes/_auth.research";
-import { Route as AuthTransactionsRouteImport } from "./routes/_auth.transactions";
-import { Route as IndexRouteImport } from "./routes/index";
-import { Route as LoginRouteImport } from "./routes/login";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthRouteRouteImport } from './routes/_auth/route'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthResearchRouteImport } from './routes/_auth/research'
+import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
+import { Route as AuthBrokerageRouteImport } from './routes/_auth/brokerage'
+import { Route as AuthAccountsRouteImport } from './routes/_auth/accounts'
+import { Route as AuthTransactionsRouteRouteImport } from './routes/_auth/transactions/route'
+import { Route as AuthTransactionsIndexRouteImport } from './routes/_auth/transactions/index'
+import { Route as AuthTransactionsTransactionIdRouteImport } from './routes/_auth/transactions/$transactionId'
 
 const LoginRoute = LoginRouteImport.update({
-  id: "/login",
-  path: "/login",
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
-} as any);
-const AuthRoute = AuthRouteImport.update({
-  id: "/_auth",
+} as any)
+const AuthRouteRoute = AuthRouteRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
-const AuthTransactionsRoute = AuthTransactionsRouteImport.update({
-  id: "/transactions",
-  path: "/transactions",
-  getParentRoute: () => AuthRoute,
-} as any);
+} as any)
 const AuthResearchRoute = AuthResearchRouteImport.update({
-  id: "/research",
-  path: "/research",
-  getParentRoute: () => AuthRoute,
-} as any);
+  id: '/research',
+  path: '/research',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
-  id: "/dashboard",
-  path: "/dashboard",
-  getParentRoute: () => AuthRoute,
-} as any);
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthBrokerageRoute = AuthBrokerageRouteImport.update({
-  id: "/brokerage",
-  path: "/brokerage",
-  getParentRoute: () => AuthRoute,
-} as any);
+  id: '/brokerage',
+  path: '/brokerage',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthAccountsRoute = AuthAccountsRouteImport.update({
-  id: "/accounts",
-  path: "/accounts",
-  getParentRoute: () => AuthRoute,
-} as any);
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthTransactionsRouteRoute = AuthTransactionsRouteRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthTransactionsIndexRoute = AuthTransactionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthTransactionsRouteRoute,
+} as any)
+const AuthTransactionsTransactionIdRoute =
+  AuthTransactionsTransactionIdRouteImport.update({
+    id: '/$transactionId',
+    path: '/$transactionId',
+    getParentRoute: () => AuthTransactionsRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/login": typeof LoginRoute;
-  "/accounts": typeof AuthAccountsRoute;
-  "/brokerage": typeof AuthBrokerageRoute;
-  "/dashboard": typeof AuthDashboardRoute;
-  "/research": typeof AuthResearchRoute;
-  "/transactions": typeof AuthTransactionsRoute;
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/transactions': typeof AuthTransactionsRouteRouteWithChildren
+  '/accounts': typeof AuthAccountsRoute
+  '/brokerage': typeof AuthBrokerageRoute
+  '/dashboard': typeof AuthDashboardRoute
+  '/research': typeof AuthResearchRoute
+  '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/transactions/': typeof AuthTransactionsIndexRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/login": typeof LoginRoute;
-  "/accounts": typeof AuthAccountsRoute;
-  "/brokerage": typeof AuthBrokerageRoute;
-  "/dashboard": typeof AuthDashboardRoute;
-  "/research": typeof AuthResearchRoute;
-  "/transactions": typeof AuthTransactionsRoute;
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/accounts': typeof AuthAccountsRoute
+  '/brokerage': typeof AuthBrokerageRoute
+  '/dashboard': typeof AuthDashboardRoute
+  '/research': typeof AuthResearchRoute
+  '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/transactions': typeof AuthTransactionsIndexRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/_auth": typeof AuthRouteWithChildren;
-  "/login": typeof LoginRoute;
-  "/_auth/accounts": typeof AuthAccountsRoute;
-  "/_auth/brokerage": typeof AuthBrokerageRoute;
-  "/_auth/dashboard": typeof AuthDashboardRoute;
-  "/_auth/research": typeof AuthResearchRoute;
-  "/_auth/transactions": typeof AuthTransactionsRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/_auth': typeof AuthRouteRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_auth/transactions': typeof AuthTransactionsRouteRouteWithChildren
+  '/_auth/accounts': typeof AuthAccountsRoute
+  '/_auth/brokerage': typeof AuthBrokerageRoute
+  '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/research': typeof AuthResearchRoute
+  '/_auth/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/_auth/transactions/': typeof AuthTransactionsIndexRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/login"
-    | "/accounts"
-    | "/brokerage"
-    | "/dashboard"
-    | "/research"
-    | "/transactions";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/'
+    | '/login'
+    | '/transactions'
+    | '/accounts'
+    | '/brokerage'
+    | '/dashboard'
+    | '/research'
+    | '/transactions/$transactionId'
+    | '/transactions/'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/login"
-    | "/accounts"
-    | "/brokerage"
-    | "/dashboard"
-    | "/research"
-    | "/transactions";
+    | '/'
+    | '/login'
+    | '/accounts'
+    | '/brokerage'
+    | '/dashboard'
+    | '/research'
+    | '/transactions/$transactionId'
+    | '/transactions'
   id:
-    | "__root__"
-    | "/"
-    | "/_auth"
-    | "/login"
-    | "/_auth/accounts"
-    | "/_auth/brokerage"
-    | "/_auth/dashboard"
-    | "/_auth/research"
-    | "/_auth/transactions";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/'
+    | '/_auth'
+    | '/login'
+    | '/_auth/transactions'
+    | '/_auth/accounts'
+    | '/_auth/brokerage'
+    | '/_auth/dashboard'
+    | '/_auth/research'
+    | '/_auth/transactions/$transactionId'
+    | '/_auth/transactions/'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AuthRoute: typeof AuthRouteWithChildren;
-  LoginRoute: typeof LoginRoute;
+  IndexRoute: typeof IndexRoute
+  AuthRouteRoute: typeof AuthRouteRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/login": {
-      id: "/login";
-      path: "/login";
-      fullPath: "/login";
-      preLoaderRoute: typeof LoginRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_auth": {
-      id: "/_auth";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_auth/transactions": {
-      id: "/_auth/transactions";
-      path: "/transactions";
-      fullPath: "/transactions";
-      preLoaderRoute: typeof AuthTransactionsRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/research": {
-      id: "/_auth/research";
-      path: "/research";
-      fullPath: "/research";
-      preLoaderRoute: typeof AuthResearchRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/dashboard": {
-      id: "/_auth/dashboard";
-      path: "/dashboard";
-      fullPath: "/dashboard";
-      preLoaderRoute: typeof AuthDashboardRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/brokerage": {
-      id: "/_auth/brokerage";
-      path: "/brokerage";
-      fullPath: "/brokerage";
-      preLoaderRoute: typeof AuthBrokerageRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
-    "/_auth/accounts": {
-      id: "/_auth/accounts";
-      path: "/accounts";
-      fullPath: "/accounts";
-      preLoaderRoute: typeof AuthAccountsRouteImport;
-      parentRoute: typeof AuthRoute;
-    };
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth/research': {
+      id: '/_auth/research'
+      path: '/research'
+      fullPath: '/research'
+      preLoaderRoute: typeof AuthResearchRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/dashboard': {
+      id: '/_auth/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthDashboardRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/brokerage': {
+      id: '/_auth/brokerage'
+      path: '/brokerage'
+      fullPath: '/brokerage'
+      preLoaderRoute: typeof AuthBrokerageRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/accounts': {
+      id: '/_auth/accounts'
+      path: '/accounts'
+      fullPath: '/accounts'
+      preLoaderRoute: typeof AuthAccountsRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/transactions': {
+      id: '/_auth/transactions'
+      path: '/transactions'
+      fullPath: '/transactions'
+      preLoaderRoute: typeof AuthTransactionsRouteRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/transactions/': {
+      id: '/_auth/transactions/'
+      path: '/'
+      fullPath: '/transactions/'
+      preLoaderRoute: typeof AuthTransactionsIndexRouteImport
+      parentRoute: typeof AuthTransactionsRouteRoute
+    }
+    '/_auth/transactions/$transactionId': {
+      id: '/_auth/transactions/$transactionId'
+      path: '/$transactionId'
+      fullPath: '/transactions/$transactionId'
+      preLoaderRoute: typeof AuthTransactionsTransactionIdRouteImport
+      parentRoute: typeof AuthTransactionsRouteRoute
+    }
   }
 }
 
-interface AuthRouteChildren {
-  AuthAccountsRoute: typeof AuthAccountsRoute;
-  AuthBrokerageRoute: typeof AuthBrokerageRoute;
-  AuthDashboardRoute: typeof AuthDashboardRoute;
-  AuthResearchRoute: typeof AuthResearchRoute;
-  AuthTransactionsRoute: typeof AuthTransactionsRoute;
+interface AuthTransactionsRouteRouteChildren {
+  AuthTransactionsTransactionIdRoute: typeof AuthTransactionsTransactionIdRoute
+  AuthTransactionsIndexRoute: typeof AuthTransactionsIndexRoute
 }
 
-const AuthRouteChildren: AuthRouteChildren = {
+const AuthTransactionsRouteRouteChildren: AuthTransactionsRouteRouteChildren = {
+  AuthTransactionsTransactionIdRoute: AuthTransactionsTransactionIdRoute,
+  AuthTransactionsIndexRoute: AuthTransactionsIndexRoute,
+}
+
+const AuthTransactionsRouteRouteWithChildren =
+  AuthTransactionsRouteRoute._addFileChildren(
+    AuthTransactionsRouteRouteChildren,
+  )
+
+interface AuthRouteRouteChildren {
+  AuthTransactionsRouteRoute: typeof AuthTransactionsRouteRouteWithChildren
+  AuthAccountsRoute: typeof AuthAccountsRoute
+  AuthBrokerageRoute: typeof AuthBrokerageRoute
+  AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthResearchRoute: typeof AuthResearchRoute
+}
+
+const AuthRouteRouteChildren: AuthRouteRouteChildren = {
+  AuthTransactionsRouteRoute: AuthTransactionsRouteRouteWithChildren,
   AuthAccountsRoute: AuthAccountsRoute,
   AuthBrokerageRoute: AuthBrokerageRoute,
   AuthDashboardRoute: AuthDashboardRoute,
   AuthResearchRoute: AuthResearchRoute,
-  AuthTransactionsRoute: AuthTransactionsRoute,
-};
+}
 
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren);
+const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
+  AuthRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthRoute: AuthRouteWithChildren,
+  AuthRouteRoute: AuthRouteRouteWithChildren,
   LoginRoute: LoginRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
-import type { createStart } from "@tanstack/react-start";
-
-import type { getRouter } from "./router.tsx";
-declare module "@tanstack/react-start" {
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
   interface Register {
-    ssr: true;
-    router: Awaited<ReturnType<typeof getRouter>>;
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
   }
 }

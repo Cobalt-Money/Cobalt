@@ -99,6 +99,7 @@ When building a new feature or need API reference, read the package source code 
 | Fumadocs UI     | `node_modules/fumadocs-ui/dist/`                                                                         |
 | Tailwind CSS    | `node_modules/tailwindcss/`                                                                              |
 | Zod             | `node_modules/zod/lib/`                                                                                  |
+| maplibre-gl     | `node_modules/maplibre-gl/` — MapLibre GL JS (mapcn map components in `@cobalt-web/ui`)                  |
 
 ## Code Standards
 

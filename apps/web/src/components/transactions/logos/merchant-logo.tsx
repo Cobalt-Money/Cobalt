@@ -118,9 +118,20 @@ export function MerchantLogo(
   props: Pick<
     TransactionListItem,
     "counterparties" | "logoUrl" | "merchantName" | "website"
-  >
+  > & {
+    /** Wrapper size (default `size-5` for table rows). */
+    className?: string;
+    deferUntilVisible?: boolean;
+  }
 ) {
-  const { counterparties, logoUrl, merchantName, website } = props;
+  const {
+    className,
+    counterparties,
+    deferUntilVisible,
+    logoUrl,
+    merchantName,
+    website,
+  } = props;
   const candidates = useMemo(
     () => buildMerchantLogoCandidates({ counterparties, logoUrl, website }),
     [counterparties, logoUrl, website]
@@ -138,6 +149,8 @@ export function MerchantLogo(
     <LogoImageWithFallback
       alt={alt}
       candidates={candidates}
+      className={className}
+      deferUntilVisible={deferUntilVisible}
       fallbackText={fallbackText}
       imgClassName="object-cover"
     />

@@ -1,12 +1,22 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type * as TanStackRouter from "@tanstack/react-router";
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { TransactionsTable } from "./transactions-table";
 
-const { mockUseTransactions } = vi.hoisted(() => ({
+const { mockNavigate, mockUseTransactions } = vi.hoisted(() => ({
+  mockNavigate: vi.fn(),
   mockUseTransactions: vi.fn(),
 }));
+
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const mod = await importOriginal<typeof TanStackRouter>();
+  return {
+    ...mod,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 vi.mock("./use-transactions", () => ({
   useTransactions: () => mockUseTransactions(),

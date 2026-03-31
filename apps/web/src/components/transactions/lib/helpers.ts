@@ -28,6 +28,26 @@ export function formatTransactionDateDisplay(
   return dateDisplay.format(new Date(`${day}T12:00:00.000Z`));
 }
 
+const dateLong = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "long",
+  timeZone: "UTC",
+  year: "numeric",
+});
+
+/** Long form for detail views (e.g. "January 15, 2025"). */
+export function formatDateStringLong(isoOrDay: string | null): string {
+  if (!isoOrDay) {
+    return "—";
+  }
+  const day = String(isoOrDay).split("T")[0] ?? String(isoOrDay);
+  const t = new Date(`${day}T12:00:00.000Z`).getTime();
+  if (Number.isNaN(t)) {
+    return isoOrDay;
+  }
+  return dateLong.format(new Date(t));
+}
+
 /** `yearMonth` keys are calendar YYYY-MM from date strings; format in UTC so the label matches that month (avoids midnight UTC shifting to the prior local month). */
 const monthGroupHeading = new Intl.DateTimeFormat("en-US", {
   month: "long",
