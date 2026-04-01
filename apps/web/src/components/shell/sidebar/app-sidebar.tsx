@@ -29,6 +29,7 @@ import { useAppSession } from "@/lib/providers/app-session";
 import { NavMain } from "./nav/nav-main";
 import { NavUser } from "./nav/nav-user";
 import { NavUserSkeleton } from "./nav/skeleton/nav-user-skeleton";
+import { useChats } from "./use-chats";
 
 const sidebarNav = {
   navMain: [
@@ -80,6 +81,36 @@ const sidebarNav = {
   ],
 };
 
+function truncateTitle(title: string, maxLength = 25): string {
+  return title.length > maxLength ? `${title.slice(0, maxLength)}...` : title;
+}
+
+function ChatsGroup() {
+  const chats = useChats();
+
+  return (
+    <SidebarMenu className="gap-0.5">
+      {chats.map((chat) => (
+        <SidebarMenuItem key={chat.chatId}>
+          <SidebarMenuButton
+            className="px-2"
+            render={
+              <a
+                aria-label={chat.title ?? "Chat"}
+                href={`/ai-chat/${chat.chatId}`}
+              />
+            }
+          >
+            <span className="truncate">
+              {truncateTitle(chat.title ?? chat.chatId)}
+            </span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  );
+}
+
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const session = useAppSession();
   const authedUser = session.data?.user;
@@ -113,7 +144,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         <SidebarGroup className="p-1.5">
           <SidebarGroupLabel className="px-2">Chats</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-0.5" />
+            <ChatsGroup />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
