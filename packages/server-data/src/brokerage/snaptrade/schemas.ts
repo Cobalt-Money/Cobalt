@@ -1,4 +1,6 @@
 import {
+  brokerageAccountDetails,
+  brokerageAccounts,
   brokerageActivities,
   brokerageBalances,
   brokeragePositions,
@@ -7,13 +9,15 @@ import {
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 
+import { successResponseSchema } from "../../accounts/schemas.js";
+
 // ── Error ───────────────────────────────────────────────────────────
 
 export const errorResponseSchema = z.object({
   error: z.string(),
 });
 
-// ── Balances ────────────────────────────────────────────────────────
+// ── Balances / positions / activities (flat list DTOs) ─────────────
 
 const balanceRowSchema = createSelectSchema(brokerageBalances);
 
@@ -38,8 +42,6 @@ export const balancesResponseSchema = z.object({
   balances: z.array(balanceItemSchema),
   balancesByAccount: z.record(z.string(), z.array(balanceItemSchema)),
 });
-
-// ── Positions ───────────────────────────────────────────────────────
 
 const positionRowSchema = createSelectSchema(brokeragePositions);
 
@@ -73,8 +75,10 @@ export const positionItemSchema = positionRowSchema
     userId: true,
   })
   .extend({
+    accountId: z.string(),
     createdAt: z.string().nullable(),
     lastSync: z.string().nullable(),
+    snapTradeAccountId: z.string().nullable(),
     updatedAt: z.string().nullable(),
   });
 
@@ -88,8 +92,6 @@ export const positionsResponseSchema = z.object({
   positions: z.array(positionItemSchema),
   positionsByAccount: z.record(z.string(), z.array(positionItemSchema)),
 });
-
-// ── Activities ──────────────────────────────────────────────────────
 
 const activityRowSchema = createSelectSchema(brokerageActivities);
 
@@ -130,9 +132,15 @@ export const activityItemSchema = activityRowSchema
     userId: true,
   })
   .extend({
+    accountId: z.string(),
+    activityId: z.string().nullable(),
     createdAt: z.string().nullable(),
     lastSync: z.string().nullable(),
+    optionSymbol: z.unknown().nullable(),
+    pagination: z.unknown().nullable(),
     settlementDate: z.string().nullable(),
+    snapTradeAccountId: z.string().nullable(),
+    symbol: z.unknown().nullable(),
     tradeDate: z.string().nullable(),
     updatedAt: z.string().nullable(),
   });
@@ -148,11 +156,12 @@ export const activitiesResponseSchema = z.object({
   activitiesByAccount: z.record(z.string(), z.array(activityItemSchema)),
 });
 
-// ── Portfolio Snapshots ─────────────────────────────────────────────
-
 const snapshotRowSchema = createSelectSchema(portfolioSnapshots);
 
-/** Snapshot DTO: picked DB columns + renamed value fields (see `getPortfolioSnapshotsByUserId`). */
+/**
+ * Snapshot DTO: `accountId` + `snapshotDate` from `portfolio_snapshot`;
+ * `cash` / `positions` / `value` match coerced `cash_value` / `positions_value` / `total_value` in `getPortfolioSnapshotsByUserId`.
+ */
 export const portfolioSnapshotItemSchema = snapshotRowSchema
   .pick({
     accountId: true,
@@ -161,6 +170,7 @@ export const portfolioSnapshotItemSchema = snapshotRowSchema
   .extend({
     cash: z.number(),
     positions: z.number(),
+    snapshotDate: z.string(),
     value: z.number(),
   });
 
@@ -174,14 +184,98 @@ export const portfolioSnapshotsResponseSchema = z.object({
   snapshots: z.array(portfolioSnapshotItemSchema),
 });
 
-// ── User Brokerages ─────────────────────────────────────────────────
-
 export const userBrokeragesResponseSchema = z.object({
   data: z.array(z.string()),
 });
 
-// ── User Tickers ────────────────────────────────────────────────────
-
 export const userTickersResponseSchema = z.object({
   tickers: z.array(z.string()),
+});
+
+// ── Enhanced brokerage account (SnapTrade grouped + Plaid-adapted) ──
+
+const brokerageAccountRowSchema = createSelectSchema(brokerageAccounts);
+const accountDetailRowSchema = createSelectSchema(brokerageAccountDetails);
+
+/**
+ * Nested balance line on merged / list account payloads.
+ * Picked from `brokerage_balance`; wire uses string ISO dates + string|number decimals.
+ */
+export const enhancedAccountBalanceLineSchema = balanceRowSchema
+  .pick({
+    buyingPower: true,
+    cash: true,
+    currencyCode: true,
+    currencyName: true,
+    id: true,
+    lastSync: true,
+  })
+  .extend({
+    buyingPower: z.union([z.number(), z.string()]).nullable(),
+    cash: z.union([z.number(), z.string()]).nullable(),
+    lastSync: z.string().nullable(),
+  });
+
+/** Picked from `brokerage_account_detail` balance + id + lastSync; `balance` is jsonb on DB. */
+export const enhancedAccountDetailSchema = accountDetailRowSchema
+  .pick({
+    balance: true,
+    id: true,
+    lastSync: true,
+  })
+  .extend({
+    balance: z.union([z.number(), z.string()]).nullable(),
+    lastSync: z.string().nullable(),
+  });
+
+/**
+ * UI account shape: picked `brokerage_account` columns + synthetic `id` for Plaid (`plaid-inv-*`).
+ */
+export const enhancedBrokerageAccountSchema = brokerageAccountRowSchema
+  .pick({
+    accountStatus: true,
+    accountType: true,
+    balanceData: true,
+    cashRestrictions: true,
+    institutionName: true,
+    name: true,
+    portfolioGroup: true,
+    userId: true,
+  })
+  .extend({
+    accountDetails: enhancedAccountDetailSchema.nullable(),
+    balances: z.array(enhancedAccountBalanceLineSchema),
+    createdDate: z.string(),
+    id: z.string(),
+  });
+
+// ── SnapTrade brokerage accounts (list / disconnect) ───────────────
+
+export const snaptradeBrokerageAccountListItemSchema =
+  enhancedBrokerageAccountSchema
+    .pick({
+      accountDetails: true,
+      accountStatus: true,
+      accountType: true,
+      balances: true,
+      id: true,
+      institutionName: true,
+      name: true,
+    })
+    .extend({
+      plaidAccountId: z.string().optional(),
+      source: z.enum(["plaid", "snaptrade"]).optional(),
+    });
+
+export const snaptradeBrokerageAccountsListResponseSchema = z.object({
+  accounts: z.array(snaptradeBrokerageAccountListItemSchema),
+});
+
+export const disconnectBrokerageAccountResponseSchema =
+  successResponseSchema.extend({
+    message: z.string(),
+  });
+
+export const brokerageAccountIdParamSchema = z.object({
+  accountId: z.string().uuid(),
 });

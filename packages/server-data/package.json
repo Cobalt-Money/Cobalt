@@ -4,9 +4,12 @@
   "exports": {
     "./accounts/*": "./src/accounts/*.ts",
     "./brokerage/*": "./src/brokerage/*.ts",
+    "./brokerage/plaid/*": "./src/brokerage/plaid/*.ts",
+    "./brokerage/snaptrade/*": "./src/brokerage/snaptrade/*.ts",
     "./institutions/*": "./src/institutions/*.ts",
     "./plaid/*": "./src/plaid/*.ts",
     "./snaptrade/*": "./src/snaptrade/*.ts",
+    "./snaptrade/disconnect": "./src/snaptrade/disconnect.ts",
     "./subscriptions": "./src/subscriptions/index.ts",
     "./news/lib": "./src/news/lib.ts",
     "./news/events/*": "./src/news/events/*.ts",

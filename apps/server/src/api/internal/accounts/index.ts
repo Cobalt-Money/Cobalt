@@ -2,6 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { requireAuth } from "../middleware.js";
 import { bankAccountsRouter } from "./bank-accounts.js";
+import { brokerageSnaptradeRouter } from "./brokerage-snaptrade.js";
 import { creditCardsRouter } from "./credit-cards.js";
 import { plaidItemsRouter } from "./plaid-items.js";
 
@@ -9,4 +10,5 @@ export const accountsRouter = new OpenAPIHono()
   .use("/*", requireAuth)
   .route("/", bankAccountsRouter)
   .route("/", creditCardsRouter)
-  .route("/", plaidItemsRouter);
+  .route("/", plaidItemsRouter)
+  .route("/", brokerageSnaptradeRouter);
