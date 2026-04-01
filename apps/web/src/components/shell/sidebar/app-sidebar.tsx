@@ -2,79 +2,80 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cobalt-web/ui/components/sidebar";
 import {
-  BankIcon,
-  Book01Icon,
-  CubeIcon,
-  DashboardSquare01Icon,
-  HelpCircleIcon,
-  SearchIcon,
-  Settings05Icon,
-  TransactionHistoryIcon,
-  UserAccountIcon,
+  AppleStocksIcon,
+  ArrowReloadHorizontalIcon,
+  AiChat02Icon,
+  ChartBarLineIcon,
+  Folder01Icon,
+  Home04Icon,
+  NewsIcon,
+  SearchDollarIcon,
+  CreditCardIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps } from "react";
 
 import { useAppSession } from "@/lib/providers/app-session";
 
-import { NavMain, NavSecondary } from "./nav/nav-main";
+import { NavMain } from "./nav/nav-main";
 import { NavUser } from "./nav/nav-user";
 import { NavUserSkeleton } from "./nav/skeleton/nav-user-skeleton";
 
 const sidebarNav = {
   navMain: [
     {
-      icon: <HugeiconsIcon icon={DashboardSquare01Icon} strokeWidth={2} />,
+      icon: <HugeiconsIcon icon={Home04Icon} strokeWidth={2} />,
       title: "Dashboard",
       url: "/dashboard",
     },
     {
-      icon: <HugeiconsIcon icon={TransactionHistoryIcon} strokeWidth={2} />,
-      title: "Transactions",
-      url: "/transactions",
-    },
-    {
-      icon: <HugeiconsIcon icon={BankIcon} strokeWidth={2} />,
-      title: "Brokerage",
-      url: "/brokerage",
-    },
-    {
-      icon: <HugeiconsIcon icon={UserAccountIcon} strokeWidth={2} />,
+      icon: <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />,
       title: "Accounts",
       url: "/accounts",
     },
     {
-      icon: <HugeiconsIcon icon={Book01Icon} strokeWidth={2} />,
+      icon: <HugeiconsIcon icon={AppleStocksIcon} strokeWidth={2} />,
+      title: "Brokerage",
+      url: "/brokerage",
+    },
+    {
+      icon: <HugeiconsIcon icon={SearchDollarIcon} strokeWidth={2} />,
       title: "Research",
       url: "/research",
     },
     {
-      icon: <HugeiconsIcon icon={CubeIcon} strokeWidth={2} />,
-      title: "Logos",
-      url: "/logos",
-    },
-  ],
-  navSecondary: [
-    {
-      icon: <HugeiconsIcon icon={Settings05Icon} strokeWidth={2} />,
-      title: "Settings",
-      url: "#",
+      icon: <HugeiconsIcon icon={Folder01Icon} strokeWidth={2} />,
+      title: "Document Hub",
+      url: "/documents",
     },
     {
-      icon: <HugeiconsIcon icon={HelpCircleIcon} strokeWidth={2} />,
-      title: "Get Help",
-      url: "#",
+      icon: <HugeiconsIcon icon={ArrowReloadHorizontalIcon} strokeWidth={2} />,
+      title: "Transactions",
+      url: "/transactions",
     },
     {
-      icon: <HugeiconsIcon icon={SearchIcon} strokeWidth={2} />,
-      title: "Search",
-      url: "#",
+      icon: <HugeiconsIcon icon={NewsIcon} strokeWidth={2} />,
+      title: "News",
+      url: "/news",
+    },
+    {
+      icon: <HugeiconsIcon icon={ChartBarLineIcon} strokeWidth={2} />,
+      title: "Prediction Markets",
+      url: "/prediction-markets",
+    },
+    {
+      icon: <HugeiconsIcon icon={AiChat02Icon} strokeWidth={2} />,
+      title: "AI Chat",
+      url: "/ai-chat",
     },
   ],
 };
@@ -93,11 +94,11 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="offcanvas" variant="inset" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="p-1.5">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              className="px-2"
               render={<a aria-label="Cobalt" href="/" />}
             >
               <span className="text-base font-semibold text-muted-foreground">
@@ -109,9 +110,14 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={sidebarNav.navMain} />
-        <NavSecondary items={sidebarNav.navSecondary} className="mt-auto" />
+        <SidebarGroup className="p-1.5">
+          <SidebarGroupLabel className="px-2">Chats</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-0.5" />
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="p-1.5">
         {navUser ? <NavUser user={navUser} /> : <NavUserSkeleton />}
       </SidebarFooter>
     </Sidebar>

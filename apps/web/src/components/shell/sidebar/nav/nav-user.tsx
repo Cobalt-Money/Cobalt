@@ -60,7 +60,7 @@ export function NavUser({
             render={
               <SidebarMenuButton
                 size="lg"
-                className="text-muted-foreground aria-expanded:bg-muted"
+                className="px-2 text-muted-foreground aria-expanded:bg-muted"
               />
             }
           >
@@ -71,9 +71,6 @@ export function NavUser({
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium text-muted-foreground">
                 {user.name}
-              </span>
-              <span className="truncate text-xs text-muted-foreground">
-                {user.email}
               </span>
             </div>
             <HugeiconsIcon
@@ -100,9 +97,6 @@ export function NavUser({
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium text-muted-foreground">
                       {user.name}
-                    </span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {user.email}
                     </span>
                   </div>
                 </div>
