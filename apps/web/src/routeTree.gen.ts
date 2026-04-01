@@ -17,8 +17,11 @@ import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthBrokerageRouteImport } from './routes/_auth/brokerage'
 import { Route as AuthAccountsRouteImport } from './routes/_auth/accounts'
 import { Route as AuthTransactionsRouteRouteImport } from './routes/_auth/transactions/route'
+import { Route as AuthAiChatRouteRouteImport } from './routes/_auth/ai-chat/route'
 import { Route as AuthTransactionsIndexRouteImport } from './routes/_auth/transactions/index'
+import { Route as AuthAiChatIndexRouteImport } from './routes/_auth/ai-chat/index'
 import { Route as AuthTransactionsTransactionIdRouteImport } from './routes/_auth/transactions/$transactionId'
+import { Route as AuthAiChatChatIdRouteImport } from './routes/_auth/ai-chat/$chatId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -59,10 +62,20 @@ const AuthTransactionsRouteRoute = AuthTransactionsRouteRouteImport.update({
   path: '/transactions',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthAiChatRouteRoute = AuthAiChatRouteRouteImport.update({
+  id: '/ai-chat',
+  path: '/ai-chat',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthTransactionsIndexRoute = AuthTransactionsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthTransactionsRouteRoute,
+} as any)
+const AuthAiChatIndexRoute = AuthAiChatIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthAiChatRouteRoute,
 } as any)
 const AuthTransactionsTransactionIdRoute =
   AuthTransactionsTransactionIdRouteImport.update({
@@ -70,16 +83,24 @@ const AuthTransactionsTransactionIdRoute =
     path: '/$transactionId',
     getParentRoute: () => AuthTransactionsRouteRoute,
   } as any)
+const AuthAiChatChatIdRoute = AuthAiChatChatIdRouteImport.update({
+  id: '/$chatId',
+  path: '/$chatId',
+  getParentRoute: () => AuthAiChatRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/ai-chat': typeof AuthAiChatRouteRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteRouteWithChildren
   '/accounts': typeof AuthAccountsRoute
   '/brokerage': typeof AuthBrokerageRoute
   '/dashboard': typeof AuthDashboardRoute
   '/research': typeof AuthResearchRoute
+  '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/ai-chat/': typeof AuthAiChatIndexRoute
   '/transactions/': typeof AuthTransactionsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -89,7 +110,9 @@ export interface FileRoutesByTo {
   '/brokerage': typeof AuthBrokerageRoute
   '/dashboard': typeof AuthDashboardRoute
   '/research': typeof AuthResearchRoute
+  '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/ai-chat': typeof AuthAiChatIndexRoute
   '/transactions': typeof AuthTransactionsIndexRoute
 }
 export interface FileRoutesById {
@@ -97,12 +120,15 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
   '/login': typeof LoginRoute
+  '/_auth/ai-chat': typeof AuthAiChatRouteRouteWithChildren
   '/_auth/transactions': typeof AuthTransactionsRouteRouteWithChildren
   '/_auth/accounts': typeof AuthAccountsRoute
   '/_auth/brokerage': typeof AuthBrokerageRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/research': typeof AuthResearchRoute
+  '/_auth/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/_auth/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/_auth/ai-chat/': typeof AuthAiChatIndexRoute
   '/_auth/transactions/': typeof AuthTransactionsIndexRoute
 }
 export interface FileRouteTypes {
@@ -110,12 +136,15 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/ai-chat'
     | '/transactions'
     | '/accounts'
     | '/brokerage'
     | '/dashboard'
     | '/research'
+    | '/ai-chat/$chatId'
     | '/transactions/$transactionId'
+    | '/ai-chat/'
     | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -125,19 +154,24 @@ export interface FileRouteTypes {
     | '/brokerage'
     | '/dashboard'
     | '/research'
+    | '/ai-chat/$chatId'
     | '/transactions/$transactionId'
+    | '/ai-chat'
     | '/transactions'
   id:
     | '__root__'
     | '/'
     | '/_auth'
     | '/login'
+    | '/_auth/ai-chat'
     | '/_auth/transactions'
     | '/_auth/accounts'
     | '/_auth/brokerage'
     | '/_auth/dashboard'
     | '/_auth/research'
+    | '/_auth/ai-chat/$chatId'
     | '/_auth/transactions/$transactionId'
+    | '/_auth/ai-chat/'
     | '/_auth/transactions/'
   fileRoutesById: FileRoutesById
 }
@@ -205,12 +239,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthTransactionsRouteRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/ai-chat': {
+      id: '/_auth/ai-chat'
+      path: '/ai-chat'
+      fullPath: '/ai-chat'
+      preLoaderRoute: typeof AuthAiChatRouteRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/transactions/': {
       id: '/_auth/transactions/'
       path: '/'
       fullPath: '/transactions/'
       preLoaderRoute: typeof AuthTransactionsIndexRouteImport
       parentRoute: typeof AuthTransactionsRouteRoute
+    }
+    '/_auth/ai-chat/': {
+      id: '/_auth/ai-chat/'
+      path: '/'
+      fullPath: '/ai-chat/'
+      preLoaderRoute: typeof AuthAiChatIndexRouteImport
+      parentRoute: typeof AuthAiChatRouteRoute
     }
     '/_auth/transactions/$transactionId': {
       id: '/_auth/transactions/$transactionId'
@@ -219,8 +267,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthTransactionsTransactionIdRouteImport
       parentRoute: typeof AuthTransactionsRouteRoute
     }
+    '/_auth/ai-chat/$chatId': {
+      id: '/_auth/ai-chat/$chatId'
+      path: '/$chatId'
+      fullPath: '/ai-chat/$chatId'
+      preLoaderRoute: typeof AuthAiChatChatIdRouteImport
+      parentRoute: typeof AuthAiChatRouteRoute
+    }
   }
 }
+
+interface AuthAiChatRouteRouteChildren {
+  AuthAiChatChatIdRoute: typeof AuthAiChatChatIdRoute
+  AuthAiChatIndexRoute: typeof AuthAiChatIndexRoute
+}
+
+const AuthAiChatRouteRouteChildren: AuthAiChatRouteRouteChildren = {
+  AuthAiChatChatIdRoute: AuthAiChatChatIdRoute,
+  AuthAiChatIndexRoute: AuthAiChatIndexRoute,
+}
+
+const AuthAiChatRouteRouteWithChildren = AuthAiChatRouteRoute._addFileChildren(
+  AuthAiChatRouteRouteChildren,
+)
 
 interface AuthTransactionsRouteRouteChildren {
   AuthTransactionsTransactionIdRoute: typeof AuthTransactionsTransactionIdRoute
@@ -238,6 +307,7 @@ const AuthTransactionsRouteRouteWithChildren =
   )
 
 interface AuthRouteRouteChildren {
+  AuthAiChatRouteRoute: typeof AuthAiChatRouteRouteWithChildren
   AuthTransactionsRouteRoute: typeof AuthTransactionsRouteRouteWithChildren
   AuthAccountsRoute: typeof AuthAccountsRoute
   AuthBrokerageRoute: typeof AuthBrokerageRoute
@@ -246,6 +316,7 @@ interface AuthRouteRouteChildren {
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
+  AuthAiChatRouteRoute: AuthAiChatRouteRouteWithChildren,
   AuthTransactionsRouteRoute: AuthTransactionsRouteRouteWithChildren,
   AuthAccountsRoute: AuthAccountsRoute,
   AuthBrokerageRoute: AuthBrokerageRoute,

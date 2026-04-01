@@ -1,4 +1,5 @@
 import { defineQuery } from "@rocicorp/zero";
+import { z } from "zod";
 
 import type { Context } from "../auth.js";
 import { zql } from "../schema.js";
@@ -13,4 +14,11 @@ export const chatsQueries = {
     }
     return chatsForUser(userId);
   }),
+
+  messages: defineQuery(z.object({ chatId: z.string() }), ({ args }) =>
+    zql.messages
+      .where("chatId", args.chatId)
+      .related("parts", (q) => q.orderBy("order", "asc"))
+      .orderBy("createdAt", "asc")
+  ),
 };

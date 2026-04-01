@@ -22,6 +22,7 @@ import {
   CreditCardIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Link, useRouterState } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
 
 import { useAppSession } from "@/lib/providers/app-session";
@@ -87,26 +88,32 @@ function truncateTitle(title: string, maxLength = 25): string {
 
 function ChatsGroup() {
   const chats = useChats();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
     <SidebarMenu className="gap-0.5">
-      {chats.map((chat) => (
-        <SidebarMenuItem key={chat.chatId}>
-          <SidebarMenuButton
-            className="px-2"
-            render={
-              <a
-                aria-label={chat.title ?? "Chat"}
-                href={`/ai-chat/${chat.chatId}`}
-              />
-            }
-          >
-            <span className="truncate">
-              {truncateTitle(chat.title ?? chat.chatId)}
-            </span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
+      {chats.map((chat) => {
+        const chatPath = `/ai-chat/${chat.chatId}`;
+        return (
+          <SidebarMenuItem key={chat.chatId}>
+            <SidebarMenuButton
+              className="px-2"
+              isActive={pathname === chatPath}
+              render={
+                <Link
+                  aria-label={chat.title ?? "Chat"}
+                  to="/ai-chat/$chatId"
+                  params={{ chatId: chat.chatId }}
+                />
+              }
+            >
+              <span className="truncate">
+                {truncateTitle(chat.title ?? chat.chatId)}
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        );
+      })}
     </SidebarMenu>
   );
 }

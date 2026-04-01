@@ -8,7 +8,8 @@ const tsconfigPathsPlugin = tsconfigPaths({ root: "." });
 
 /** Test config uses the same transforms as the app but omits TanStack Start (not needed for unit tests). */
 export default defineConfig({
-  plugins: [tsconfigPathsPlugin, tailwindcss(), viteReact()],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- vite 8 / vitest 3 plugin type mismatch
+  plugins: [tsconfigPathsPlugin, tailwindcss(), viteReact()] as any,
   test: {
     environment: "jsdom",
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
