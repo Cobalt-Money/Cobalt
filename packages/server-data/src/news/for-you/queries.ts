@@ -1,4 +1,11 @@
 import { db } from "@cobalt-web/db";
+import {
+  bankAccount,
+  bankConnection,
+  investmentPosition,
+  investmentSecurity,
+} from "@cobalt-web/db/schema/banking";
+import { and, eq as eqCol, isNotNull } from "drizzle-orm";
 
 import {
   decodeCursorForYou,
@@ -9,6 +16,7 @@ import type { ForYouResult } from "./schemas.js";
 
 // ── Get user stock tickers ─────────────────────────────────────────
 
+/** Distinct tickers from SnapTrade positions and Plaid investment holdings. */
 export async function getUserStockTickers(userId: string): Promise<string[]> {
   const rows = await db.query.brokeragePositions.findMany({
     columns: { rawSymbol: true, symbol: true },
@@ -23,6 +31,34 @@ export async function getUserStockTickers(userId: string): Promise<string[]> {
     const ticker = row.symbol ?? row.rawSymbol;
     if (ticker) {
       tickers.add(ticker);
+    }
+  }
+
+  const plaidRows = await db
+    .selectDistinct({ ticker: investmentSecurity.tickerSymbol })
+    .from(investmentPosition)
+    .innerJoin(
+      investmentSecurity,
+      eqCol(investmentPosition.securityId, investmentSecurity.securityId)
+    )
+    .innerJoin(
+      bankAccount,
+      eqCol(investmentPosition.plaidAccountId, bankAccount.plaidAccountId)
+    )
+    .innerJoin(
+      bankConnection,
+      eqCol(bankAccount.plaidItemId, bankConnection.plaidItemId)
+    )
+    .where(
+      and(
+        eqCol(bankConnection.userId, userId),
+        isNotNull(investmentSecurity.tickerSymbol)
+      )
+    );
+
+  for (const row of plaidRows) {
+    if (row.ticker) {
+      tickers.add(row.ticker);
     }
   }
 

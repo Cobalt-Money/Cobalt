@@ -1,12 +1,13 @@
 import { db } from "@cobalt-web/db";
-import {
-  brokerageAccounts,
-  brokeragePositions,
-} from "@cobalt-web/db/schema/brokerage";
-import { and, eq, isNotNull } from "drizzle-orm";
 import type { z } from "zod";
 
-import { toDateString, toISOString } from "./lib.js";
+import { toDateString, toISOString } from "../lib.js";
+import type { EnhancedBrokerageAccount } from "../plaid/lib.js";
+import {
+  accountDetailsFromDetailRows,
+  balanceLineFromBalance,
+  toIso,
+} from "./lib.js";
 import type {
   activitiesQuerySchema,
   portfolioSnapshotsQuerySchema,
@@ -52,7 +53,7 @@ const groupBy = <T>(
   return map;
 };
 
-// ── Balances ────────────────────────────────────────────────────────
+// ── Balances (SnapTrade-synced `brokerage_*` tables) ─────────────────
 
 export async function getBalancesByUserId(userId: string) {
   const whereParts: BalanceWhere[] = [
@@ -184,7 +185,6 @@ export async function getPortfolioSnapshotsByUserId(
     whereParts.push({ accountId: { eq: accountId } });
   }
 
-  // Default to 6 months ago → today when dates omitted
   const now = new Date();
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(now.getMonth() - 6);
@@ -225,40 +225,81 @@ export async function getPortfolioSnapshotsByUserId(
     .filter((s): s is NonNullable<typeof s> => s !== null);
 }
 
-// ── User Brokerages (selectDistinct — not supported by relational API) ──
+// ── User Brokerages ─────────────────────────────────────────────────
 
 export async function getUserBrokeragesByUserId(userId: string) {
-  const rows = await db
-    .selectDistinct({
-      institutionName: brokerageAccounts.institutionName,
-    })
-    .from(brokerageAccounts)
-    .where(
-      and(
-        eq(brokerageAccounts.userId, userId),
-        isNotNull(brokerageAccounts.institutionName)
-      )
-    )
-    .orderBy(brokerageAccounts.institutionName);
+  const rows = await db.query.brokerageAccounts.findMany({
+    columns: { institutionName: true },
+    where: {
+      institutionName: { isNotNull: true },
+      userId: { eq: userId },
+    },
+  });
 
-  return rows.map((r) => r.institutionName as string);
+  const names = rows
+    .map((r) => r.institutionName)
+    .filter((n): n is string => typeof n === "string" && n !== "");
+  return [...new Set(names)].toSorted((a, b) => a.localeCompare(b));
 }
 
-// ── User Tickers (selectDistinct — not supported by relational API) ──
+// ── User Tickers ────────────────────────────────────────────────────
 
 export async function getUserTickersByUserId(userId: string) {
-  const rows = await db
-    .selectDistinct({
-      symbol: brokeragePositions.symbol,
-    })
-    .from(brokeragePositions)
-    .where(
-      and(
-        eq(brokeragePositions.userId, userId),
-        isNotNull(brokeragePositions.symbol)
-      )
-    )
-    .orderBy(brokeragePositions.symbol);
+  const rows = await db.query.brokeragePositions.findMany({
+    columns: { symbol: true },
+    where: {
+      symbol: { isNotNull: true },
+      userId: { eq: userId },
+    },
+  });
 
-  return rows.map((r) => r.symbol as string);
+  const symbols = rows
+    .map((r) => r.symbol)
+    .filter((s): s is string => typeof s === "string" && s !== "");
+  return [...new Set(symbols)].toSorted((a, b) => a.localeCompare(b));
+}
+
+// ── SnapTrade-connected accounts (grouped balances) ─────────────────
+
+/** SnapTrade-connected brokerage accounts (grouped balances), for API responses. */
+export async function getSnaptradeBrokerageAccountsByUserId(
+  userId: string
+): Promise<EnhancedBrokerageAccount[]> {
+  const row = await db.query.user.findFirst({
+    where: { id: { eq: userId } },
+    with: {
+      brokerageAccounts: {
+        orderBy: { createdAt: "asc" },
+        with: {
+          accountDetails: {
+            orderBy: { id: "asc" },
+          },
+          balances: {
+            orderBy: { currencyCode: "asc" },
+          },
+        },
+      },
+    },
+  });
+
+  const rows = row?.brokerageAccounts ?? [];
+
+  return rows.map(
+    (account): EnhancedBrokerageAccount => ({
+      accountDetails: accountDetailsFromDetailRows(account.accountDetails),
+      accountStatus: account.accountStatus ?? "",
+      accountType: account.accountType ?? "",
+      balanceData: account.balanceData,
+      balances: account.balances.map(balanceLineFromBalance),
+      cashRestrictions: account.cashRestrictions,
+      createdDate: account.createdDate
+        ? toIso(account.createdDate)
+        : toIso(new Date()),
+      id: account.id,
+      institutionName: account.institutionName ?? "",
+      name: account.name ?? "",
+      portfolioGroup: account.portfolioGroup ?? null,
+      userId: account.userId,
+    })
+  );
 }
