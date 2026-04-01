@@ -1,9 +1,9 @@
-import { getPositionsByUserId } from "@cobalt-web/server-data/brokerage/queries";
+import { getPositionsByUserId } from "@cobalt-web/server-data/brokerage/snaptrade/queries";
 import {
   errorResponseSchema,
   positionsQuerySchema,
   positionsResponseSchema,
-} from "@cobalt-web/server-data/brokerage/schemas";
+} from "@cobalt-web/server-data/brokerage/snaptrade/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
