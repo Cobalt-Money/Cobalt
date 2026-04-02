@@ -65,20 +65,26 @@ app.use(
 
 // ── MCP + OAuth discovery (Streamable HTTP + RFC 9728 / AS metadata) ─
 
+// RFC 9728 — Protected Resource Metadata. First endpoint clients hit to
+// discover which authorization server protects the MCP resource.
 app.get("/.well-known/oauth-protected-resource/api/mcp", (c) => {
   const origin = getPublicOriginFromRequest(c.req.raw);
   const mcpResourceUrl = new URL("/api/mcp", origin).href;
   return c.json(buildMcpProtectedResourceMetadata(mcpResourceUrl));
 });
 
-app.get("/.well-known/oauth-authorization-server", (c) =>
+// RFC 8414 — Authorization Server Metadata (path-suffixed for issuer /api/auth).
+// Exposes authorize, token, registration, JWKS, and revocation endpoints.
+app.get("/.well-known/oauth-authorization-server/api/auth", (c) =>
   oauthAuthServerMetadata(c.req.raw)
 );
 
+// OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
 app.get("/.well-known/openid-configuration", (c) =>
   oauthOpenIdConfigMetadata(c.req.raw)
 );
 
+// Streamable HTTP MCP transport — requires Bearer token from the OAuth flow above.
 app.all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw));
 
 // ── Routes ──────────────────────────────────────────────────────────
