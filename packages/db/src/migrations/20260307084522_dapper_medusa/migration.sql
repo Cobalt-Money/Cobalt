@@ -1,0 +1,1 @@
+CREATE INDEX "financial_events_tickers_idx" ON "financial_events" USING gin ("tickers");

@@ -1,0 +1,1 @@
+ALTER TABLE "plaid_transactions" ADD COLUMN "user_override_name" text;

@@ -1,0 +1,1 @@
+ALTER TABLE "financial_events" ADD COLUMN "topics" jsonb DEFAULT '["other"]'::jsonb;

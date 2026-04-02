@@ -1,0 +1,1 @@
+ALTER TABLE "plaid_transactions" ADD COLUMN "first_seen_at" timestamp;

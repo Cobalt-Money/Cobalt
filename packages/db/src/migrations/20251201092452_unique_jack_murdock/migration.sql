@@ -1,0 +1,1 @@
+ALTER TABLE "subscription" DROP CONSTRAINT "subscription_reference_id_unique";
