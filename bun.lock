@@ -118,6 +118,7 @@
         "better-auth": "catalog:",
         "dotenv": "catalog:",
         "hono": "^4.12.8",
+        "lucide-react": "^1.7.0",
         "next-themes": "catalog:",
         "nitro": "^3.0.260311-beta",
         "react": "catalog:",

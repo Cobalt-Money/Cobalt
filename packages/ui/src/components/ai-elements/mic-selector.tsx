@@ -14,8 +14,9 @@ import {
   PopoverTrigger,
 } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { ArrowUpDownIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
-import { ChevronsUpDownIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import {
   createContext,
@@ -237,9 +238,11 @@ export const MicSelectorTrigger = ({
   return (
     <PopoverTrigger render={<Button variant="outline" {...props} ref={ref} />}>
       {children}
-      <ChevronsUpDownIcon
+      <HugeiconsIcon
+        icon={ArrowUpDownIcon}
         className="shrink-0 text-muted-foreground"
         size={16}
+        strokeWidth={2}
       />
     </PopoverTrigger>
   );

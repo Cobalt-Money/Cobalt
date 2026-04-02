@@ -10,7 +10,8 @@ import {
   SelectValue,
 } from "@cobalt-web/ui/components/select";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { Copy01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps, CSSProperties, HTMLAttributes } from "react";
 import {
   createContext,
@@ -491,7 +492,7 @@ export const CodeBlockCopyButton = ({
     []
   );
 
-  const Icon = isCopied ? CheckIcon : CopyIcon;
+  const icon = isCopied ? Tick01Icon : Copy01Icon;
 
   return (
     <Button
@@ -501,7 +502,7 @@ export const CodeBlockCopyButton = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <Icon size={14} />}
+      {children ?? <HugeiconsIcon icon={icon} size={14} strokeWidth={2} />}
     </Button>
   );
 };

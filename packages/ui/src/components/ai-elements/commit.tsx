@@ -9,13 +9,14 @@ import {
 } from "@cobalt-web/ui/components/collapsible";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
-  CheckIcon,
-  CopyIcon,
-  FileIcon,
+  Copy01Icon,
+  File01Icon,
   GitCommitIcon,
-  MinusIcon,
-  PlusIcon,
-} from "lucide-react";
+  MinusSignIcon,
+  PlusSignIcon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps, HTMLAttributes } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -60,7 +61,11 @@ export const CommitHash = ({
   ...props
 }: CommitHashProps) => (
   <span className={cn("font-mono text-xs", className)} {...props}>
-    <GitCommitIcon className="mr-1 inline-block size-3" />
+    <HugeiconsIcon
+      icon={GitCommitIcon}
+      className="mr-1 inline-block size-3"
+      strokeWidth={2}
+    />
     {children}
   </span>
 );
@@ -255,7 +260,7 @@ export const CommitCopyButton = ({
     []
   );
 
-  const Icon = isCopied ? CheckIcon : CopyIcon;
+  const icon = isCopied ? Tick01Icon : Copy01Icon;
 
   return (
     <Button
@@ -265,7 +270,7 @@ export const CommitCopyButton = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <Icon size={14} />}
+      {children ?? <HugeiconsIcon icon={icon} size={14} strokeWidth={2} />}
     </Button>
   );
 };
@@ -360,14 +365,16 @@ export const CommitFileStatus = ({
   </span>
 );
 
-export type CommitFileIconProps = ComponentProps<typeof FileIcon>;
+export type CommitFileIconProps = ComponentProps<typeof HugeiconsIcon>;
 
 export const CommitFileIcon = ({
   className,
   ...props
 }: CommitFileIconProps) => (
-  <FileIcon
+  <HugeiconsIcon
+    icon={File01Icon}
     className={cn("size-3.5 shrink-0 text-muted-foreground", className)}
+    strokeWidth={2}
     {...props}
   />
 );
@@ -423,7 +430,11 @@ export const CommitFileAdditions = ({
     >
       {children ?? (
         <>
-          <PlusIcon className="inline-block size-3" />
+          <HugeiconsIcon
+            icon={PlusSignIcon}
+            className="inline-block size-3"
+            strokeWidth={2}
+          />
           {count}
         </>
       )}
@@ -452,7 +463,11 @@ export const CommitFileDeletions = ({
     >
       {children ?? (
         <>
-          <MinusIcon className="inline-block size-3" />
+          <HugeiconsIcon
+            icon={MinusSignIcon}
+            className="inline-block size-3"
+            strokeWidth={2}
+          />
           {count}
         </>
       )}

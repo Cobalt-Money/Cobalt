@@ -14,7 +14,8 @@ import {
   TooltipTrigger,
 } from "@cobalt-web/ui/components/tooltip";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { ChevronDownIcon } from "lucide-react";
+import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps, ReactNode } from "react";
 import {
   createContext,
@@ -243,11 +244,13 @@ export const WebPreviewConsole = ({
         }
       >
         Console
-        <ChevronDownIcon
+        <HugeiconsIcon
+          icon={ArrowDown01Icon}
           className={cn(
             "h-4 w-4 transition-transform duration-200",
             consoleOpen && "rotate-180"
           )}
+          strokeWidth={2}
         />
       </CollapsibleTrigger>
       <CollapsibleContent

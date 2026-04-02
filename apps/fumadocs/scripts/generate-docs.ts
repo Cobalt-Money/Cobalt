@@ -1,12 +1,6 @@
 import { generateFiles } from "fumadocs-openapi";
-import { createOpenAPI } from "fumadocs-openapi/server";
 
-const OPENAPI_URL =
-  process.env.OPENAPI_URL ?? "http://localhost:3000/openapi.json";
-
-const openapi = createOpenAPI({
-  input: [OPENAPI_URL],
-});
+import { openapi, openapiInput } from "../src/lib/openapi";
 
 await generateFiles({
   input: openapi,
@@ -15,4 +9,4 @@ await generateFiles({
   groupBy: "tag",
 });
 
-console.log("Generated API reference docs from:", OPENAPI_URL);
+console.log("Generated API reference docs from:", openapiInput[0]);

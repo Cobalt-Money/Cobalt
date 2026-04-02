@@ -8,8 +8,9 @@ import {
 } from "@cobalt-web/ui/components/accordion";
 import { Badge } from "@cobalt-web/ui/components/badge";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { BotIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { Tool } from "ai";
-import { BotIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { memo } from "react";
 
@@ -39,7 +40,11 @@ export const AgentHeader = memo(
       {...props}
     >
       <div className="flex items-center gap-2">
-        <BotIcon className="size-4 text-muted-foreground" />
+        <HugeiconsIcon
+          icon={BotIcon}
+          className="size-4 text-muted-foreground"
+          strokeWidth={2}
+        />
         <span className="font-medium text-sm">{name}</span>
         {model && (
           <Badge className="font-mono text-xs" variant="secondary">

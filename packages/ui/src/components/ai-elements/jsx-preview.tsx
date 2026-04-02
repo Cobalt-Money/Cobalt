@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { AlertCircle } from "lucide-react";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps, ReactNode } from "react";
 import {
   createContext,
@@ -298,7 +299,11 @@ export const JSXPreviewError = memo(
           renderChildren(children, error)
         ) : (
           <>
-            <AlertCircle className="size-4 shrink-0" />
+            <HugeiconsIcon
+              icon={AlertCircleIcon}
+              className="size-4 shrink-0"
+              strokeWidth={2}
+            />
             <span>{error.message}</span>
           </>
         )}

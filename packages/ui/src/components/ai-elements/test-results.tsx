@@ -8,12 +8,13 @@ import {
 } from "@cobalt-web/ui/components/collapsible";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
-  CheckCircle2Icon,
-  ChevronRightIcon,
-  CircleDotIcon,
+  ArrowRight01Icon,
+  CancelCircleIcon,
+  CheckmarkCircle02Icon,
   CircleIcon,
-  XCircleIcon,
-} from "lucide-react";
+  RecordIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps, HTMLAttributes } from "react";
 import { createContext, useContext, useMemo } from "react";
 
@@ -99,7 +100,11 @@ export const TestResultsSummary = ({
             className="gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
             variant="secondary"
           >
-            <CheckCircle2Icon className="size-3" />
+            <HugeiconsIcon
+              icon={CheckmarkCircle02Icon}
+              className="size-3"
+              strokeWidth={2}
+            />
             {summary.passed} passed
           </Badge>
           {summary.failed > 0 && (
@@ -107,7 +112,11 @@ export const TestResultsSummary = ({
               className="gap-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
               variant="secondary"
             >
-              <XCircleIcon className="size-3" />
+              <HugeiconsIcon
+                icon={CancelCircleIcon}
+                className="size-3"
+                strokeWidth={2}
+              />
               {summary.failed} failed
             </Badge>
           )}
@@ -116,7 +125,11 @@ export const TestResultsSummary = ({
               className="gap-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
               variant="secondary"
             >
-              <CircleIcon className="size-3" />
+              <HugeiconsIcon
+                icon={CircleIcon}
+                className="size-3"
+                strokeWidth={2}
+              />
               {summary.skipped} skipped
             </Badge>
           )}
@@ -228,10 +241,26 @@ const statusStyles: Record<TestStatus, string> = {
 };
 
 const statusIcons: Record<TestStatus, React.ReactNode> = {
-  failed: <XCircleIcon className="size-4" />,
-  passed: <CheckCircle2Icon className="size-4" />,
-  running: <CircleDotIcon className="size-4 animate-pulse" />,
-  skipped: <CircleIcon className="size-4" />,
+  failed: (
+    <HugeiconsIcon icon={CancelCircleIcon} className="size-4" strokeWidth={2} />
+  ),
+  passed: (
+    <HugeiconsIcon
+      icon={CheckmarkCircle02Icon}
+      className="size-4"
+      strokeWidth={2}
+    />
+  ),
+  running: (
+    <HugeiconsIcon
+      icon={RecordIcon}
+      className="size-4 animate-pulse"
+      strokeWidth={2}
+    />
+  ),
+  skipped: (
+    <HugeiconsIcon icon={CircleIcon} className="size-4" strokeWidth={2} />
+  ),
 };
 
 const TestStatusIcon = ({ status }: { status: TestStatus }) => (
@@ -280,7 +309,11 @@ export const TestSuiteName = ({
       )}
       {...props}
     >
-      <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+      <HugeiconsIcon
+        icon={ArrowRight01Icon}
+        className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90"
+        strokeWidth={2}
+      />
       <TestStatusIcon status={status} />
       <span className="font-medium text-sm">{children ?? name}</span>
     </CollapsibleTrigger>

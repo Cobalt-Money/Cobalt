@@ -12,8 +12,9 @@ import {
   TabsTrigger,
 } from "@cobalt-web/ui/components/tabs";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { ArrowDown01Icon, CodeIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ToolUIPart } from "ai";
-import { ChevronDownIcon, Code } from "lucide-react";
 import type { ComponentProps } from "react";
 
 import { getStatusBadge } from "./tool";
@@ -51,11 +52,19 @@ export const SandboxHeader = ({
     {...props}
   >
     <div className="flex items-center gap-2">
-      <Code className="size-4 text-muted-foreground" />
+      <HugeiconsIcon
+        icon={CodeIcon}
+        className="size-4 text-muted-foreground"
+        strokeWidth={2}
+      />
       <span className="font-medium text-sm">{title}</span>
       {getStatusBadge(state)}
     </div>
-    <ChevronDownIcon className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+    <HugeiconsIcon
+      icon={ArrowDown01Icon}
+      className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
+      strokeWidth={2}
+    />
   </CollapsibleTrigger>
 );
 

@@ -7,16 +7,17 @@ import {
   HoverCardTrigger,
 } from "@cobalt-web/ui/components/hover-card";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import type { FileUIPart, SourceDocumentUIPart } from "ai";
 import {
-  FileTextIcon,
+  Attachment01Icon,
+  Cancel01Icon,
+  File01Icon,
   GlobeIcon,
-  ImageIcon,
-  Music2Icon,
-  PaperclipIcon,
-  VideoIcon,
-  XIcon,
-} from "lucide-react";
+  Image01Icon,
+  MusicNote02Icon,
+  Video01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import type { FileUIPart, SourceDocumentUIPart } from "ai";
 import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
 import { createContext, useCallback, useContext, useMemo } from "react";
 
@@ -38,13 +39,13 @@ export type AttachmentMediaCategory =
 
 export type AttachmentVariant = "grid" | "inline" | "list";
 
-const mediaCategoryIcons: Record<AttachmentMediaCategory, typeof ImageIcon> = {
-  audio: Music2Icon,
-  document: FileTextIcon,
-  image: ImageIcon,
+const mediaCategoryIcons: Record<AttachmentMediaCategory, IconSvgElement> = {
+  audio: MusicNote02Icon,
+  document: File01Icon,
+  image: Image01Icon,
   source: GlobeIcon,
-  unknown: PaperclipIcon,
-  video: VideoIcon,
+  unknown: Attachment01Icon,
+  video: Video01Icon,
 };
 
 // ============================================================================
@@ -242,8 +243,12 @@ export const AttachmentPreview = ({
 
   const iconSize = variant === "inline" ? "size-3" : "size-4";
 
-  const renderIcon = (Icon: typeof ImageIcon) => (
-    <Icon className={cn(iconSize, "text-muted-foreground")} />
+  const renderIcon = (icon: IconSvgElement) => (
+    <HugeiconsIcon
+      icon={icon}
+      className={cn(iconSize, "text-muted-foreground")}
+      strokeWidth={2}
+    />
   );
 
   const renderContent = () => {
@@ -359,7 +364,7 @@ export const AttachmentRemove = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <XIcon />}
+      {children ?? <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />}
       <span className="sr-only">{label}</span>
     </Button>
   );

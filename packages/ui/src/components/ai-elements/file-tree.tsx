@@ -7,11 +7,12 @@ import {
 } from "@cobalt-web/ui/components/collapsible";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
-  ChevronRightIcon,
-  FileIcon,
-  FolderIcon,
+  ArrowRight01Icon,
+  File01Icon,
+  Folder01Icon,
   FolderOpenIcon,
-} from "lucide-react";
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { HTMLAttributes, ReactNode } from "react";
 import {
   createContext,
@@ -183,11 +184,13 @@ export const FileTreeFolder = ({
                 />
               }
             >
-              <ChevronRightIcon
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
                 className={cn(
                   "size-4 shrink-0 text-muted-foreground transition-transform",
                   isExpanded && "rotate-90"
                 )}
+                strokeWidth={2}
               />
             </CollapsibleTrigger>
             <button
@@ -197,9 +200,17 @@ export const FileTreeFolder = ({
             >
               <FileTreeIcon>
                 {isExpanded ? (
-                  <FolderOpenIcon className="size-4 text-blue-500" />
+                  <HugeiconsIcon
+                    icon={FolderOpenIcon}
+                    className="size-4 text-blue-500"
+                    strokeWidth={2}
+                  />
                 ) : (
-                  <FolderIcon className="size-4 text-blue-500" />
+                  <HugeiconsIcon
+                    icon={Folder01Icon}
+                    className="size-4 text-blue-500"
+                    strokeWidth={2}
+                  />
                 )}
               </FileTreeIcon>
               <FileTreeName>{name}</FileTreeName>
@@ -275,7 +286,13 @@ export const FileTreeFile = ({
             {/* Spacer for alignment */}
             <span className="size-4 shrink-0" />
             <FileTreeIcon>
-              {icon ?? <FileIcon className="size-4 text-muted-foreground" />}
+              {icon ?? (
+                <HugeiconsIcon
+                  icon={File01Icon}
+                  className="size-4 text-muted-foreground"
+                  strokeWidth={2}
+                />
+              )}
             </FileTreeIcon>
             <FileTreeName>{name}</FileTreeName>
           </>
