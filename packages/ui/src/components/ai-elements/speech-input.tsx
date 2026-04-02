@@ -3,7 +3,8 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { MicIcon, SquareIcon } from "lucide-react";
+import { Mic01Icon, StopIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -315,8 +316,12 @@ export const SpeechInput = ({
         {...props}
       >
         {isProcessing && <Spinner />}
-        {!isProcessing && isListening && <SquareIcon className="size-4" />}
-        {!(isProcessing || isListening) && <MicIcon className="size-4" />}
+        {!isProcessing && isListening && (
+          <HugeiconsIcon icon={StopIcon} className="size-4" strokeWidth={2} />
+        )}
+        {!(isProcessing || isListening) && (
+          <HugeiconsIcon icon={Mic01Icon} className="size-4" strokeWidth={2} />
+        )}
       </Button>
     </div>
   );

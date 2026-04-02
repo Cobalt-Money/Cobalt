@@ -4,7 +4,13 @@ import { Badge } from "@cobalt-web/ui/components/badge";
 import { Button } from "@cobalt-web/ui/components/button";
 import { Switch } from "@cobalt-web/ui/components/switch";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { CheckIcon, CopyIcon, EyeIcon, EyeOffIcon } from "lucide-react";
+import {
+  Copy01Icon,
+  EyeIcon,
+  Tick01Icon,
+  ViewOffIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps, HTMLAttributes } from "react";
 import {
   createContext,
@@ -115,7 +121,11 @@ export const EnvironmentVariablesToggle = ({
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <span className="text-muted-foreground text-xs">
-        {showValues ? <EyeIcon size={14} /> : <EyeOffIcon size={14} />}
+        {showValues ? (
+          <HugeiconsIcon icon={EyeIcon} size={14} strokeWidth={2} />
+        ) : (
+          <HugeiconsIcon icon={ViewOffIcon} size={14} strokeWidth={2} />
+        )}
       </span>
       <Switch
         aria-label="Toggle value visibility"
@@ -296,7 +306,7 @@ export const EnvironmentVariableCopyButton = ({
     []
   );
 
-  const Icon = isCopied ? CheckIcon : CopyIcon;
+  const icon = isCopied ? Tick01Icon : Copy01Icon;
 
   return (
     <Button
@@ -306,7 +316,7 @@ export const EnvironmentVariableCopyButton = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <Icon size={12} />}
+      {children ?? <HugeiconsIcon icon={icon} size={12} strokeWidth={2} />}
     </Button>
   );
 };

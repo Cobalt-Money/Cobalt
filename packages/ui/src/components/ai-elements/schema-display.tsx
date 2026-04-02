@@ -7,7 +7,8 @@ import {
   CollapsibleTrigger,
 } from "@cobalt-web/ui/components/collapsible";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { ChevronRightIcon } from "lucide-react";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps, HTMLAttributes } from "react";
 import { createContext, useContext, useMemo } from "react";
 
@@ -198,7 +199,11 @@ export const SchemaDisplayParameters = ({
   return (
     <Collapsible className={cn(className)} defaultOpen {...props}>
       <CollapsibleTrigger className="group flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/50">
-        <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
+          className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90"
+          strokeWidth={2}
+        />
         <span className="font-medium text-sm">Parameters</span>
         <Badge className="ml-auto text-xs" variant="secondary">
           {parameters?.length}
@@ -245,7 +250,11 @@ export const SchemaDisplayProperty = ({
           )}
           style={{ paddingLeft }}
         >
-          <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90"
+            strokeWidth={2}
+          />
           <span className="font-mono text-sm">{name}</span>
           <Badge className="text-xs" variant="outline">
             {type}
@@ -330,7 +339,11 @@ export const SchemaDisplayRequest = ({
   return (
     <Collapsible className={cn(className)} defaultOpen {...props}>
       <CollapsibleTrigger className="group flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/50">
-        <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
+          className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90"
+          strokeWidth={2}
+        />
         <span className="font-medium text-sm">Request Body</span>
       </CollapsibleTrigger>
       <CollapsibleContent>
@@ -357,7 +370,11 @@ export const SchemaDisplayResponse = ({
   return (
     <Collapsible className={cn(className)} defaultOpen {...props}>
       <CollapsibleTrigger className="group flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/50">
-        <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
+          className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90"
+          strokeWidth={2}
+        />
         <span className="font-medium text-sm">Response</span>
       </CollapsibleTrigger>
       <CollapsibleContent>

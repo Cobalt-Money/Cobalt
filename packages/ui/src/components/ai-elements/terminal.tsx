@@ -2,8 +2,14 @@
 
 import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import {
+  CommandLineIcon,
+  Copy01Icon,
+  Delete01Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import Ansi from "ansi-to-react";
-import { CheckIcon, CopyIcon, TerminalIcon, Trash2Icon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes } from "react";
 import {
   createContext,
@@ -57,7 +63,7 @@ export const TerminalTitle = ({
     className={cn("flex items-center gap-2 text-sm text-zinc-400", className)}
     {...props}
   >
-    <TerminalIcon className="size-4" />
+    <HugeiconsIcon className="size-4" icon={CommandLineIcon} strokeWidth={2} />
     {children ?? "Terminal"}
   </div>
 );
@@ -138,7 +144,7 @@ export const TerminalCopyButton = ({
     []
   );
 
-  const Icon = isCopied ? CheckIcon : CopyIcon;
+  const icon = isCopied ? Tick01Icon : Copy01Icon;
 
   return (
     <Button
@@ -151,7 +157,7 @@ export const TerminalCopyButton = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <Icon size={14} />}
+      {children ?? <HugeiconsIcon icon={icon} size={14} strokeWidth={2} />}
     </Button>
   );
 };
@@ -180,7 +186,9 @@ export const TerminalClearButton = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <Trash2Icon size={14} />}
+      {children ?? (
+        <HugeiconsIcon icon={Delete01Icon} size={14} strokeWidth={2} />
+      )}
     </Button>
   );
 };

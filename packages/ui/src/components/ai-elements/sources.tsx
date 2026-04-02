@@ -6,7 +6,8 @@ import {
   CollapsibleTrigger,
 } from "@cobalt-web/ui/components/collapsible";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { BookIcon, ChevronDownIcon } from "lucide-react";
+import { ArrowDown01Icon, Book01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps } from "react";
 
 export type SourcesProps = ComponentProps<"div">;
@@ -35,7 +36,11 @@ export const SourcesTrigger = ({
     {children ?? (
       <>
         <p className="font-medium">Used {count} sources</p>
-        <ChevronDownIcon className="h-4 w-4" />
+        <HugeiconsIcon
+          icon={ArrowDown01Icon}
+          className="h-4 w-4"
+          strokeWidth={2}
+        />
       </>
     )}
   </CollapsibleTrigger>
@@ -69,7 +74,7 @@ export const Source = ({ href, title, children, ...props }: SourceProps) => (
   >
     {children ?? (
       <>
-        <BookIcon className="h-4 w-4" />
+        <HugeiconsIcon icon={Book01Icon} className="h-4 w-4" strokeWidth={2} />
         <span className="block font-medium">{title}</span>
       </>
     )}

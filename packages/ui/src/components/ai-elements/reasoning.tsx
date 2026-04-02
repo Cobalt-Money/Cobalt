@@ -6,12 +6,13 @@ import {
   CollapsibleTrigger,
 } from "@cobalt-web/ui/components/collapsible";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { ArrowDown01Icon, BrainIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { cjk } from "@streamdown/cjk";
 import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
-import { BrainIcon, ChevronDownIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import {
   createContext,
@@ -183,13 +184,19 @@ export const ReasoningTrigger = memo(
       >
         {children ?? (
           <>
-            <BrainIcon className="size-4" />
+            <HugeiconsIcon
+              icon={BrainIcon}
+              className="size-4"
+              strokeWidth={2}
+            />
             {getThinkingMessage(isStreaming, duration)}
-            <ChevronDownIcon
+            <HugeiconsIcon
+              icon={ArrowDown01Icon}
               className={cn(
                 "size-4 transition-transform",
                 isOpen ? "rotate-180" : "rotate-0"
               )}
+              strokeWidth={2}
             />
           </>
         )}

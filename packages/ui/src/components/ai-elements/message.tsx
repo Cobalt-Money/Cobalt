@@ -12,12 +12,13 @@ import {
   TooltipTrigger,
 } from "@cobalt-web/ui/components/tooltip";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { cjk } from "@streamdown/cjk";
 import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 import type { UIMessage } from "ai";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import {
   createContext,
@@ -270,7 +271,13 @@ export const MessageBranchPrevious = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <ChevronLeftIcon size={14} />}
+      {children ?? (
+        <HugeiconsIcon
+          className="size-3.5"
+          icon={ArrowLeft01Icon}
+          strokeWidth={2}
+        />
+      )}
     </Button>
   );
 };
@@ -293,7 +300,13 @@ export const MessageBranchNext = ({
       variant="ghost"
       {...props}
     >
-      {children ?? <ChevronRightIcon size={14} />}
+      {children ?? (
+        <HugeiconsIcon
+          className="size-3.5"
+          icon={ArrowRight01Icon}
+          strokeWidth={2}
+        />
+      )}
     </Button>
   );
 };

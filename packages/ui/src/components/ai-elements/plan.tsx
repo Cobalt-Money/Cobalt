@@ -16,7 +16,8 @@ import {
   CollapsibleTrigger,
 } from "@cobalt-web/ui/components/collapsible";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { ChevronsUpDownIcon } from "lucide-react";
+import { ArrowUpDownIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps } from "react";
 import { createContext, useContext, useMemo } from "react";
 
@@ -147,7 +148,7 @@ export const PlanTrigger = ({ className, ...props }: PlanTriggerProps) => (
       />
     }
   >
-    <ChevronsUpDownIcon className="size-4" />
+    <HugeiconsIcon icon={ArrowUpDownIcon} className="size-4" strokeWidth={2} />
     <span className="sr-only">Toggle plan</span>
   </CollapsibleTrigger>
 );

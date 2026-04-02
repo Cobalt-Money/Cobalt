@@ -8,7 +8,8 @@ import {
   InputGroupText,
 } from "@cobalt-web/ui/components/input-group";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { Copy01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ComponentProps } from "react";
 import {
   createContext,
@@ -128,7 +129,7 @@ export const SnippetCopyButton = ({
     []
   );
 
-  const Icon = isCopied ? CheckIcon : CopyIcon;
+  const icon = isCopied ? Tick01Icon : Copy01Icon;
 
   return (
     <InputGroupButton
@@ -139,7 +140,9 @@ export const SnippetCopyButton = ({
       title="Copy"
       {...props}
     >
-      {children ?? <Icon className="size-3.5" size={14} />}
+      {children ?? (
+        <HugeiconsIcon className="size-3.5" icon={icon} strokeWidth={2} />
+      )}
     </InputGroupButton>
   );
 };

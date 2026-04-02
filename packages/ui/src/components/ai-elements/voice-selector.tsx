@@ -20,18 +20,17 @@ import {
 } from "@cobalt-web/ui/components/dialog";
 import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import {
   CircleSmallIcon,
-  MarsIcon,
-  MarsStrokeIcon,
-  NonBinaryIcon,
+  Female02Icon,
+  FemaleSymbolIcon,
+  Male02Icon,
+  MaleSymbolIcon,
   PauseIcon,
   PlayIcon,
-  TransgenderIcon,
-  VenusAndMarsIcon,
-  VenusIcon,
-} from "lucide-react";
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import type { ComponentProps, ReactNode } from "react";
 import { createContext, useCallback, useContext, useMemo } from "react";
 
@@ -202,31 +201,57 @@ export const VoiceSelectorGender = ({
 
   switch (value) {
     case "male": {
-      icon = <MarsIcon className="size-4" />;
+      icon = (
+        <HugeiconsIcon
+          icon={MaleSymbolIcon}
+          className="size-4"
+          strokeWidth={2}
+        />
+      );
       break;
     }
     case "female": {
-      icon = <VenusIcon className="size-4" />;
+      icon = (
+        <HugeiconsIcon
+          icon={FemaleSymbolIcon}
+          className="size-4"
+          strokeWidth={2}
+        />
+      );
       break;
     }
     case "transgender": {
-      icon = <TransgenderIcon className="size-4" />;
+      icon = (
+        <HugeiconsIcon icon={Male02Icon} className="size-4" strokeWidth={2} />
+      );
       break;
     }
     case "androgyne": {
-      icon = <MarsStrokeIcon className="size-4" />;
+      icon = (
+        <HugeiconsIcon icon={Male02Icon} className="size-4" strokeWidth={2} />
+      );
       break;
     }
     case "non-binary": {
-      icon = <NonBinaryIcon className="size-4" />;
+      icon = (
+        <HugeiconsIcon icon={Female02Icon} className="size-4" strokeWidth={2} />
+      );
       break;
     }
     case "intersex": {
-      icon = <VenusAndMarsIcon className="size-4" />;
+      icon = (
+        <HugeiconsIcon icon={Female02Icon} className="size-4" strokeWidth={2} />
+      );
       break;
     }
     default: {
-      icon = <CircleSmallIcon className="size-4" />;
+      icon = (
+        <HugeiconsIcon
+          icon={CircleSmallIcon}
+          className="size-4"
+          strokeWidth={2}
+        />
+      );
     }
   }
 
@@ -499,12 +524,16 @@ export const VoiceSelectorPreview = ({
     [onClick, onPlay]
   );
 
-  let icon = <PlayIcon className="size-3" />;
+  let icon = (
+    <HugeiconsIcon icon={PlayIcon} className="size-3" strokeWidth={2} />
+  );
 
   if (loading) {
     icon = <Spinner className="size-3" />;
   } else if (playing) {
-    icon = <PauseIcon className="size-3" />;
+    icon = (
+      <HugeiconsIcon icon={PauseIcon} className="size-3" strokeWidth={2} />
+    );
   }
 
   return (

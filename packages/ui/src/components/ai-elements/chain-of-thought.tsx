@@ -7,9 +7,14 @@ import {
   CollapsibleTrigger,
 } from "@cobalt-web/ui/components/collapsible";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import {
+  ArrowDown01Icon,
+  BrainIcon,
+  RecordIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { IconSvgElement } from "@hugeicons/react";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
-import type { LucideIcon } from "lucide-react";
-import { BrainIcon, ChevronDownIcon, DotIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { createContext, memo, useContext, useMemo } from "react";
 
@@ -85,15 +90,17 @@ export const ChainOfThoughtHeader = memo(
           )}
           {...props}
         >
-          <BrainIcon className="size-4" />
+          <HugeiconsIcon icon={BrainIcon} className="size-4" strokeWidth={2} />
           <span className="flex-1 text-left">
             {children ?? "Chain of Thought"}
           </span>
-          <ChevronDownIcon
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
             className={cn(
               "size-4 transition-transform",
               isOpen ? "rotate-180" : "rotate-0"
             )}
+            strokeWidth={2}
           />
         </CollapsibleTrigger>
       </Collapsible>
@@ -102,7 +109,7 @@ export const ChainOfThoughtHeader = memo(
 );
 
 export type ChainOfThoughtStepProps = ComponentProps<"div"> & {
-  icon?: LucideIcon;
+  icon?: IconSvgElement;
   label: ReactNode;
   description?: ReactNode;
   status?: "complete" | "active" | "pending";
@@ -117,7 +124,7 @@ const stepStatusStyles = {
 export const ChainOfThoughtStep = memo(
   ({
     className,
-    icon: Icon = DotIcon,
+    icon: iconProp = RecordIcon,
     label,
     description,
     status = "complete",
@@ -134,7 +141,7 @@ export const ChainOfThoughtStep = memo(
       {...props}
     >
       <div className="relative mt-0.5">
-        <Icon className="size-4" />
+        <HugeiconsIcon icon={iconProp} className="size-4" strokeWidth={2} />
         <div className="absolute top-7 bottom-0 left-1/2 -mx-px w-px bg-border" />
       </div>
       <div className="flex-1 space-y-2 overflow-hidden">

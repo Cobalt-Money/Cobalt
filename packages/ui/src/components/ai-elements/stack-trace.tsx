@@ -7,13 +7,14 @@ import {
   CollapsibleTrigger,
 } from "@cobalt-web/ui/components/collapsible";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import {
-  AlertTriangleIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  CopyIcon,
-} from "lucide-react";
+  Alert01Icon,
+  ArrowDown01Icon,
+  Copy01Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import type { ComponentProps } from "react";
 import {
   createContext,
@@ -245,7 +246,11 @@ export const StackTraceError = memo(
       )}
       {...props}
     >
-      <AlertTriangleIcon className="size-4 shrink-0 text-destructive" />
+      <HugeiconsIcon
+        icon={Alert01Icon}
+        className="size-4 shrink-0 text-destructive"
+        strokeWidth={2}
+      />
       {children}
     </div>
   )
@@ -350,7 +355,7 @@ export const StackTraceCopyButton = memo(
       []
     );
 
-    const Icon = isCopied ? CheckIcon : CopyIcon;
+    const icon = isCopied ? Tick01Icon : Copy01Icon;
 
     return (
       <Button
@@ -360,7 +365,7 @@ export const StackTraceCopyButton = memo(
         variant="ghost"
         {...props}
       >
-        {children ?? <Icon size={14} />}
+        {children ?? <HugeiconsIcon icon={icon} size={14} strokeWidth={2} />}
       </Button>
     );
   }
@@ -377,11 +382,13 @@ export const StackTraceExpandButton = memo(
         className={cn("flex size-7 items-center justify-center", className)}
         {...props}
       >
-        <ChevronDownIcon
+        <HugeiconsIcon
+          icon={ArrowDown01Icon}
           className={cn(
             "size-4 text-muted-foreground transition-transform",
             isOpen ? "rotate-180" : "rotate-0"
           )}
+          strokeWidth={2}
         />
       </div>
     );
