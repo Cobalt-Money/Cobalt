@@ -17,7 +17,7 @@ import * as mobileSchema from "./schema/mobile/subscriptions";
 import { relations } from "./schema/relations";
 
 const pool = new Pool({
-  connectionString: env.DATABASE_URL,
+  connectionString: env.LOCAL_DATABASE_URL ?? env.DATABASE_URL,
   max: env.DATABASE_POOL_MAX,
 });
 

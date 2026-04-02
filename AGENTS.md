@@ -28,6 +28,8 @@ packages/
   config/     — Shared base tsconfig
   db/         — Drizzle ORM schema, migrations, and client
   env/        — Zod-validated environment variables (server + web)
+docs/
+  local-sync/ — Local Postgres via Docker, env wiring, troubleshooting
   ui/         — Shared React components (Shadcn) and styles
   zero/       — Rocicorp Zero schema, queries, and mutators
 .sandbox/
@@ -50,18 +52,26 @@ bun fix
 
 ## Key Commands
 
-| Command           | Description                                                   |
-| ----------------- | ------------------------------------------------------------- |
-| `bun dev`         | Start all apps in dev mode                                    |
-| `bun dev:web`     | Start only the web app                                        |
-| `bun dev:server`  | Start only the server                                         |
-| `bun build`       | Build all apps                                                |
-| `bun check`       | Ultracite (lint/format) then `turbo check-types` (TypeScript) |
-| `bun fix`         | Auto-fix lint and format issues                               |
-| `bun db:push`     | Push schema changes to database                               |
-| `bun db:generate` | Generate Drizzle migrations                                   |
-| `bun db:migrate`  | Run database migrations                                       |
-| `bun db:studio`   | Open Drizzle Studio                                           |
+| Command               | Description                                                        |
+| --------------------- | ------------------------------------------------------------------ |
+| `bun dev`             | Start all apps in dev mode                                         |
+| `bun dev:web`         | Start only the web app                                             |
+| `bun dev:server`      | Start only the server                                              |
+| `bun build`           | Build all apps                                                     |
+| `bun check`           | Ultracite (lint/format) then `turbo check-types` (TypeScript)      |
+| `bun fix`             | Auto-fix lint and format issues                                    |
+| `bun db:push`         | Push schema changes to database                                    |
+| `bun db:generate`     | Generate Drizzle migrations                                        |
+| `bun db:migrate`      | Run database migrations                                            |
+| `bun db:studio`       | Open Drizzle Studio                                                |
+| `bun zero:generate`   | Regenerate `packages/zero` schema from Drizzle (`drizzle-zero`)    |
+| `bun db:local:up`     | Start local Postgres (see `docs/local-sync/`)                      |
+| `bun db:local:down`   | Stop local Postgres                                                |
+| `bun db:local:reset`  | Recreate local Postgres (wipes volume)                             |
+| `bun db:local:init`   | Postgres group roles before migrations (`packages/db/planetscale`) |
+| `bun db:local:grants` | Table grants + local login users after migrations                  |
+| `bun sync-env`        | Copy `.env*` from main Git worktree into this worktree             |
+| `bun sync-sandbox`    | Copy `.sandbox/` from main worktree (gitignored reference apps)    |
 
 ## Skills
 

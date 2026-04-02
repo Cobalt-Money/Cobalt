@@ -1,3 +1,8 @@
+import {
+  oauthProviderAuthServerMetadata,
+  oauthProviderOpenIdConfigMetadata,
+} from "@better-auth/oauth-provider";
+import { auth } from "@cobalt-web/auth";
 import { env } from "@cobalt-web/env/server";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
@@ -21,10 +26,19 @@ import { transactionsRouter } from "./api/internal/transactions/index.js";
 import { userRouter } from "./api/internal/user/index.js";
 import { zeroRouter } from "./api/internal/zero.js";
 import { v1Router } from "./api/public/v1/index.js";
+import {
+  getPublicOriginFromRequest,
+  handleMcpHttpRequest,
+} from "./lib/mcp/handle-mcp-request.js";
+import { buildMcpProtectedResourceMetadata } from "./lib/mcp/oauth-discovery.js";
 
 const base = new OpenAPIHono();
 const publicApi = new OpenAPIHono();
 const app = new Hono();
+const oauthAuthServerMetadata = oauthProviderAuthServerMetadata(auth as never);
+const oauthOpenIdConfigMetadata = oauthProviderOpenIdConfigMetadata(
+  auth as never
+);
 
 // ── Global Middleware ───────────────────────────────────────────────
 
@@ -32,12 +46,40 @@ app.use(logger());
 app.use(
   "/*",
   cors({
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: [
+      "Accept",
+      "Authorization",
+      "Content-Type",
+      "Last-Event-ID",
+      "Mcp-Protocol-Version",
+      "Mcp-Session-Id",
+      "mcp-protocol-version",
+      "mcp-session-id",
+    ],
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
+    exposeHeaders: ["Mcp-Session-Id", "mcp-session-id"],
     origin: env.CORS_ORIGIN,
   })
 );
+
+// ── MCP + OAuth discovery (Streamable HTTP + RFC 9728 / AS metadata) ─
+
+app.get("/.well-known/oauth-protected-resource/api/mcp", (c) => {
+  const origin = getPublicOriginFromRequest(c.req.raw);
+  const mcpResourceUrl = new URL("/api/mcp", origin).href;
+  return c.json(buildMcpProtectedResourceMetadata(mcpResourceUrl));
+});
+
+app.get("/.well-known/oauth-authorization-server", (c) =>
+  oauthAuthServerMetadata(c.req.raw)
+);
+
+app.get("/.well-known/openid-configuration", (c) =>
+  oauthOpenIdConfigMetadata(c.req.raw)
+);
+
+app.all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw));
 
 // ── Routes ──────────────────────────────────────────────────────────
 

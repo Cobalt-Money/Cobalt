@@ -10,9 +10,10 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
+import { appFullAccess, agentSelectOwn } from "../rls";
 
 // Brokerage authorization - tracks connected brokerage accounts
-export const brokerageAuthorizations = pgTable(
+export const brokerageAuthorizations = pgTable.withRLS(
   "brokerage_authorization",
   {
     authorizationId: varchar("authorization_id").notNull().unique(),
@@ -41,6 +42,8 @@ export const brokerageAuthorizations = pgTable(
     index("brokerage_auth_brokerage_slug_idx").on(table.brokerageSlug),
     index("brokerage_auth_authorization_id_idx").on(table.authorizationId),
     index("brokerage_auth_is_disabled_idx").on(table.isDisabled),
+    appFullAccess(),
+    agentSelectOwn("user_id"),
   ]
 );
 

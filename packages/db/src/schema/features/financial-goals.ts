@@ -9,8 +9,9 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
+import { appFullAccess, agentSelectOwn } from "../rls";
 
-export const financialGoals = pgTable(
+export const financialGoals = pgTable.withRLS(
   "financial_goals",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -33,6 +34,8 @@ export const financialGoals = pgTable(
   (table) => [
     index("financial_goals_user_id_idx").on(table.userId),
     index("financial_goals_created_at_idx").on(table.createdAt),
+    appFullAccess(),
+    agentSelectOwn("user_id"),
   ]
 );
 

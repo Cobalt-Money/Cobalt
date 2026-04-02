@@ -24,6 +24,8 @@ export const env = createEnv({
     APPLE_PRIVATE_KEY: z.string().min(1),
     APPLE_SERVICE_ID: z.string().min(1),
     APPLE_TEAM_ID: z.string().min(1),
+    /** Public web app origin for Stripe return URLs (billing portal, etc.). */
+    APP_URL: z.url().default("https://www.try-cobalt.com"),
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
     CORS_ORIGIN: z.url(),
@@ -33,6 +35,9 @@ export const env = createEnv({
     GOOGLE_CLIENT_ID: z.string().min(1),
     GOOGLE_CLIENT_SECRET: z.string().min(1),
     GOOGLE_IOS_CLIENT_ID: z.string().min(1),
+    LOCAL_DATABASE_URL: z.string().min(1).optional(),
+    /** Drizzle Kit DDL: use postgres/superuser URL locally (not `app_local`). See `db:migrate:local`. */
+    MIGRATION_URI: z.string().min(1),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),

@@ -1,3 +1,4 @@
+import { oauthProvider } from "@better-auth/oauth-provider";
 import { stripe } from "@better-auth/stripe";
 import { db } from "@cobalt-web/db";
 import * as schema from "@cobalt-web/db/schema/auth";
@@ -5,9 +6,8 @@ import { env } from "@cobalt-web/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware } from "better-auth/api";
-import { lastLoginMethod, openAPI } from "better-auth/plugins";
+import { jwt, lastLoginMethod, openAPI } from "better-auth/plugins";
 import { bearer } from "better-auth/plugins/bearer";
-import { oidcProvider } from "better-auth/plugins/oidc-provider";
 import { google } from "better-auth/social-providers";
 import { Stripe } from "stripe";
 
@@ -18,6 +18,13 @@ export const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
 });
 
 const appleClientSecret = await getAppleClientSecret();
+
+/** Where `/login` and `/oauth/consent` routes live (Vite app). Relative paths would resolve on the API host and 404. */
+const spaOrigin = env.CORS_ORIGIN.replace(/\/$/, "");
+
+/** MCP OAuth token exchange sends `resource` = this URL; must be listed in `validAudiences` or exchange fails with "requested resource invalid". */
+const oauthIssuerOrigin = new URL(env.BETTER_AUTH_URL).origin;
+const mcpResourceAudience = `${oauthIssuerOrigin}/api/mcp`;
 
 const trustedOrigins = [
   env.CORS_ORIGIN,
@@ -52,6 +59,7 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+  disabledPaths: ["/token"],
   emailAndPassword: {
     enabled: false,
   },
@@ -76,9 +84,19 @@ export const auth = betterAuth({
     }),
     openAPI(),
     bearer(),
-    oidcProvider({
-      consentPage: "/oauth/consent",
-      loginPage: "/login",
+    jwt({
+      disableSettingJwtHeader: true,
+    }),
+    // this basically allows us to not have to configure all of the clients ourselvers(cursor, claude code, etc.)
+    oauthProvider({
+      allowDynamicClientRegistration: true,
+      // MCP clients (Cursor, etc.) register without a session; see "Dynamic Registration" / MCP in
+      // https://better-auth.com/docs/plugins/oauth-provider
+      allowUnauthenticatedClientRegistration: true,
+      consentPage: `${spaOrigin}/oauth/consent`,
+      loginPage: `${spaOrigin}/login`,
+      // Required for MCP: clients send `resource` = MCP HTTPS URL at token exchange; must be allowed.
+      validAudiences: [mcpResourceAudience, oauthIssuerOrigin],
     }),
     stripe({
       createCustomerOnSignUp: false,
@@ -108,11 +126,13 @@ export const auth = betterAuth({
   ],
   secret: env.BETTER_AUTH_SECRET,
   session: {
+    // Required by @better-auth/oauth-provider when JWT / secondary session storage is enabled.
     cookieCache: {
       enabled: true,
       maxAge: 5 * 60,
     },
     expiresIn: 60 * 60 * 24 * 30,
+    storeSessionInDatabase: true,
     updateAge: 60 * 60 * 24,
   },
   socialProviders: {

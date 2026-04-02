@@ -1,3 +1,5 @@
+import { env } from "@cobalt-web/env/server";
+
 // ── Types ─────────────────────────────────────────────────────────
 
 export interface StockNewsAlert {
@@ -29,7 +31,7 @@ class StockNewsAPI {
   private readonly baseUrl = "https://stocknewsapi.com/api/v1";
 
   constructor() {
-    this.apiKey = process.env.STOCK_NEWS_API_KEY ?? "";
+    this.apiKey = env.STOCK_NEWS_API_KEY;
   }
 
   async getAlerts(params: GetAlertsParams): Promise<StockNewsAlertsResponse> {

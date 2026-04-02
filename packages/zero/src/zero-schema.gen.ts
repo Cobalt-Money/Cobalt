@@ -9,6942 +9,6942 @@ import type { CustomType } from "drizzle-zero";
 import type * as drizzleSchema from "../../db/src/schema/drizzle-schema";
 
 const accountTable = {
+  name: "account",
   columns: {
     accessToken: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "accessToken"
       >,
-      optional: true,
       serverName: "access_token",
-      type: "string",
     },
     accessTokenExpiresAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "accessTokenExpiresAt"
       >,
-      optional: true,
       serverName: "access_token_expires_at",
-      type: "number",
     },
     accountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "accountId"
       >,
-      optional: false,
       serverName: "account_id",
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "createdAt"
       >,
-      optional: false,
       serverName: "created_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     idToken: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "idToken"
       >,
-      optional: true,
       serverName: "id_token",
-      type: "string",
     },
     providerId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "providerId"
       >,
-      optional: false,
       serverName: "provider_id",
-      type: "string",
     },
     refreshToken: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "refreshToken"
       >,
-      optional: true,
       serverName: "refresh_token",
-      type: "string",
     },
     refreshTokenExpiresAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "refreshTokenExpiresAt"
       >,
-      optional: true,
       serverName: "refresh_token_expires_at",
-      type: "number",
     },
     scope: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "scope"
       >,
-      optional: true,
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "updatedAt"
       >,
-      optional: false,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "account",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "account",
   primaryKey: ["id"],
 } as const;
 const bankAccountTable = {
+  name: "bankAccount",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankAccount",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankAccount",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     mask: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankAccount",
         "mask"
       >,
-      optional: true,
-      type: "string",
     },
     name: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankAccount",
         "name"
       >,
-      optional: false,
-      type: "string",
     },
     officialName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankAccount",
         "officialName"
       >,
-      optional: true,
       serverName: "official_name",
-      type: "string",
     },
     plaidAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankAccount",
         "plaidAccountId"
       >,
-      optional: false,
       serverName: "plaid_account_id",
-      type: "string",
     },
     plaidItemId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankAccount",
         "plaidItemId"
       >,
-      optional: false,
       serverName: "plaid_item_id",
-      type: "string",
     },
     subtype: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankAccount",
         "subtype"
       >,
-      optional: true,
-      type: "string",
     },
     type: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankAccount",
         "type"
       >,
-      optional: false,
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankAccount",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     verificationStatus: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankAccount",
         "verificationStatus"
       >,
-      optional: true,
       serverName: "verification_status",
-      type: "string",
     },
   },
-  name: "bankAccount",
   primaryKey: ["id"],
   serverName: "bank_account",
 } as const;
 const bankBalanceTable = {
+  name: "bankBalance",
   columns: {
     available: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalance",
         "available"
       >,
-      optional: true,
-      type: "number",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalance",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     current: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalance",
         "current"
       >,
-      optional: false,
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalance",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     isoCurrencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalance",
         "isoCurrencyCode"
       >,
-      optional: true,
       serverName: "iso_currency_code",
-      type: "string",
     },
     limit: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalance",
         "limit"
       >,
-      optional: true,
-      type: "number",
     },
     plaidAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalance",
         "plaidAccountId"
       >,
-      optional: false,
       serverName: "plaid_account_id",
-      type: "string",
     },
     unofficialCurrencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalance",
         "unofficialCurrencyCode"
       >,
-      optional: true,
       serverName: "unofficial_currency_code",
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalance",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userOverrideCreditLimit: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalance",
         "userOverrideCreditLimit"
       >,
-      optional: true,
       serverName: "user_override_credit_limit",
-      type: "number",
     },
   },
-  name: "bankBalance",
   primaryKey: ["id"],
   serverName: "bank_balance",
 } as const;
 const bankBalanceSnapshotTable = {
+  name: "bankBalanceSnapshot",
   columns: {
     availableBalance: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalanceSnapshot",
         "availableBalance"
       >,
-      optional: true,
       serverName: "available_balance",
-      type: "number",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalanceSnapshot",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     creditLimit: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalanceSnapshot",
         "creditLimit"
       >,
-      optional: true,
       serverName: "credit_limit",
-      type: "number",
     },
     currentBalance: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalanceSnapshot",
         "currentBalance"
       >,
-      optional: false,
       serverName: "current_balance",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalanceSnapshot",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     plaidAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalanceSnapshot",
         "plaidAccountId"
       >,
-      optional: false,
       serverName: "plaid_account_id",
-      type: "string",
     },
     snapshotDate: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalanceSnapshot",
         "snapshotDate"
       >,
-      optional: false,
       serverName: "snapshot_date",
-      type: "number",
     },
     snapshotSource: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankBalanceSnapshot",
         "snapshotSource"
       >,
-      optional: false,
       serverName: "snapshot_source",
-      type: "string",
     },
   },
-  name: "bankBalanceSnapshot",
   primaryKey: ["id"],
   serverName: "bank_balance_snapshot",
 } as const;
 const bankConnectionTable = {
+  name: "bankConnection",
   columns: {
     availableProducts: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "availableProducts"
       >,
-      optional: true,
       serverName: "available_products",
-      type: "json",
     },
     billedProducts: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "billedProducts"
       >,
-      optional: true,
       serverName: "billed_products",
-      type: "json",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     error: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "error"
       >,
-      optional: true,
-      type: "json",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     institutionId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "institutionId"
       >,
-      optional: true,
       serverName: "institution_id",
-      type: "string",
     },
     institutionLogo: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "institutionLogo"
       >,
-      optional: true,
       serverName: "institution_logo",
-      type: "string",
     },
     institutionName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "institutionName"
       >,
-      optional: true,
       serverName: "institution_name",
-      type: "string",
     },
     newAccountsAvailable: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "newAccountsAvailable"
       >,
-      optional: true,
       serverName: "new_accounts_available",
-      type: "boolean",
     },
     pendingDisconnectAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "pendingDisconnectAt"
       >,
-      optional: true,
       serverName: "pending_disconnect_at",
-      type: "number",
     },
     plaidAccessToken: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "plaidAccessToken"
       >,
-      optional: false,
       serverName: "plaid_access_token",
-      type: "string",
     },
     plaidItemId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "plaidItemId"
       >,
-      optional: false,
       serverName: "plaid_item_id",
-      type: "string",
     },
     recurringUpdatedDatetime: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "recurringUpdatedDatetime"
       >,
-      optional: true,
       serverName: "recurring_updated_datetime",
-      type: "string",
     },
     transactionsCursor: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "transactionsCursor"
       >,
-      optional: true,
       serverName: "transactions_cursor",
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
     webhookUrl: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "bankConnection",
         "webhookUrl"
       >,
-      optional: true,
       serverName: "webhook_url",
-      type: "string",
     },
   },
-  name: "bankConnection",
   primaryKey: ["id"],
   serverName: "bank_connection",
 } as const;
 const brokerageAccountDetailsTable = {
+  name: "brokerageAccountDetails",
   columns: {
     accountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "accountId"
       >,
-      optional: false,
       serverName: "account_id",
-      type: "string",
     },
     balance: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "balance"
       >,
-      optional: true,
-      type: "json",
     },
     brokerageAuthorizationId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "brokerageAuthorizationId"
       >,
-      optional: false,
       serverName: "brokerage_authorization_id",
-      type: "string",
     },
     cashRestrictions: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "cashRestrictions"
       >,
-      optional: true,
       serverName: "cash_restrictions",
-      type: "json",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     createdDate: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "createdDate"
       >,
-      optional: true,
       serverName: "created_date",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     institutionName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "institutionName"
       >,
-      optional: true,
       serverName: "institution_name",
-      type: "string",
     },
     lastSync: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "lastSync"
       >,
-      optional: true,
       serverName: "last_sync",
-      type: "number",
     },
     meta: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "meta"
       >,
-      optional: true,
-      type: "json",
     },
     name: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "name"
       >,
-      optional: true,
-      type: "string",
     },
     number: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "number"
       >,
-      optional: true,
-      type: "string",
     },
     portfolioGroup: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "portfolioGroup"
       >,
-      optional: true,
       serverName: "portfolio_group",
-      type: "string",
     },
     rawType: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "rawType"
       >,
-      optional: true,
       serverName: "raw_type",
-      type: "string",
     },
     snapTradeAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "snapTradeAccountId"
       >,
-      optional: false,
       serverName: "snaptrade_account_id",
-      type: "string",
     },
     status: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "status"
       >,
-      optional: true,
-      type: "string",
     },
     syncStatus: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "syncStatus"
       >,
-      optional: true,
       serverName: "sync_status",
-      type: "json",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccountDetails",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "brokerageAccountDetails",
   primaryKey: ["id"],
   serverName: "brokerage_account_detail",
 } as const;
 const brokerageAccountsTable = {
+  name: "brokerageAccounts",
   columns: {
     accountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "accountId"
       >,
-      optional: false,
       serverName: "account_id",
-      type: "string",
     },
     accountNumber: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "accountNumber"
       >,
-      optional: true,
       serverName: "account_number",
-      type: "string",
     },
     accountStatus: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "accountStatus"
       >,
-      optional: true,
       serverName: "account_status",
-      type: "string",
     },
     accountType: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "accountType"
       >,
-      optional: true,
       serverName: "account_type",
-      type: "string",
     },
     balanceData: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "balanceData"
       >,
-      optional: true,
       serverName: "balance_data",
-      type: "json",
     },
     brokerageAuthId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "brokerageAuthId"
       >,
-      optional: false,
       serverName: "brokerage_auth_id",
-      type: "string",
     },
     cashRestrictions: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "cashRestrictions"
       >,
-      optional: true,
       serverName: "cash_restrictions",
-      type: "json",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     createdDate: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "createdDate"
       >,
-      optional: true,
       serverName: "created_date",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     institutionName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "institutionName"
       >,
-      optional: true,
       serverName: "institution_name",
-      type: "string",
     },
     lastSync: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "lastSync"
       >,
-      optional: true,
       serverName: "last_sync",
-      type: "number",
     },
     metaData: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "metaData"
       >,
-      optional: true,
       serverName: "meta_data",
-      type: "json",
     },
     name: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "name"
       >,
-      optional: true,
-      type: "string",
     },
     portfolioGroup: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "portfolioGroup"
       >,
-      optional: true,
       serverName: "portfolio_group",
-      type: "string",
     },
     syncStatus: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "syncStatus"
       >,
-      optional: true,
       serverName: "sync_status",
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAccounts",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "brokerageAccounts",
   primaryKey: ["id"],
   serverName: "brokerage_account",
 } as const;
 const brokerageActivitiesTable = {
+  name: "brokerageActivities",
   columns: {
     accountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "accountId"
       >,
-      optional: false,
       serverName: "account_id",
-      type: "string",
     },
     activityId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "activityId"
       >,
-      optional: false,
       serverName: "activity_id",
-      type: "string",
     },
     amount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "amount"
       >,
-      optional: true,
-      type: "number",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     currencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "currencyCode"
       >,
-      optional: true,
       serverName: "currency_code",
-      type: "string",
     },
     currencyId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "currencyId"
       >,
-      optional: true,
       serverName: "currency_id",
-      type: "string",
     },
     currencyName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "currencyName"
       >,
-      optional: true,
       serverName: "currency_name",
-      type: "string",
     },
     description: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "description"
       >,
-      optional: true,
-      type: "string",
     },
     exchangeCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "exchangeCode"
       >,
-      optional: true,
       serverName: "exchange_code",
-      type: "string",
     },
     exchangeId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "exchangeId"
       >,
-      optional: true,
       serverName: "exchange_id",
-      type: "string",
     },
     exchangeMicCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "exchangeMicCode"
       >,
-      optional: true,
       serverName: "exchange_mic_code",
-      type: "string",
     },
     exchangeName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "exchangeName"
       >,
-      optional: true,
       serverName: "exchange_name",
-      type: "string",
     },
     externalReferenceId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "externalReferenceId"
       >,
-      optional: true,
       serverName: "external_reference_id",
-      type: "string",
     },
     fee: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "fee"
       >,
-      optional: true,
-      type: "number",
     },
     figiCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "figiCode"
       >,
-      optional: true,
       serverName: "figi_code",
-      type: "string",
     },
     fxRate: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "fxRate"
       >,
-      optional: true,
       serverName: "fx_rate",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     institution: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "institution"
       >,
-      optional: true,
-      type: "string",
     },
     lastSync: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "lastSync"
       >,
-      optional: true,
       serverName: "last_sync",
-      type: "number",
     },
     optionSymbol: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "optionSymbol"
       >,
-      optional: true,
       serverName: "option_symbol",
-      type: "json",
     },
     optionType: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "optionType"
       >,
-      optional: true,
       serverName: "option_type",
-      type: "string",
     },
     pagination: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "pagination"
       >,
-      optional: true,
-      type: "json",
     },
     price: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "price"
       >,
-      optional: true,
-      type: "number",
     },
     rawSymbol: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "rawSymbol"
       >,
-      optional: true,
       serverName: "raw_symbol",
-      type: "string",
     },
     securityTypeCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "securityTypeCode"
       >,
-      optional: true,
       serverName: "security_type_code",
-      type: "string",
     },
     securityTypeDescription: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "securityTypeDescription"
       >,
-      optional: true,
       serverName: "security_type_description",
-      type: "string",
     },
     securityTypeId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "securityTypeId"
       >,
-      optional: true,
       serverName: "security_type_id",
-      type: "string",
     },
     settlementDate: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "settlementDate"
       >,
-      optional: true,
       serverName: "settlement_date",
-      type: "number",
     },
     snapTradeAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "snapTradeAccountId"
       >,
-      optional: false,
       serverName: "snap_trade_account_id",
-      type: "string",
     },
     symbol: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "symbol"
       >,
-      optional: true,
-      type: "json",
     },
     symbolDescription: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "symbolDescription"
       >,
-      optional: true,
       serverName: "symbol_description",
-      type: "string",
     },
     symbolId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "symbolId"
       >,
-      optional: true,
       serverName: "symbol_id",
-      type: "string",
     },
     symbolTicker: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "symbolTicker"
       >,
-      optional: true,
       serverName: "symbol_ticker",
-      type: "string",
     },
     tradeDate: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "tradeDate"
       >,
-      optional: true,
       serverName: "trade_date",
-      type: "number",
     },
     type: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "type"
       >,
-      optional: true,
-      type: "string",
     },
     units: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "units"
       >,
-      optional: true,
-      type: "number",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageActivities",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "brokerageActivities",
   primaryKey: ["id"],
   serverName: "brokerage_activity",
 } as const;
 const brokerageAuthorizationsTable = {
+  name: "brokerageAuthorizations",
   columns: {
     authorizationId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "authorizationId"
       >,
-      optional: false,
       serverName: "authorization_id",
-      type: "string",
     },
     brokerage: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "brokerage"
       >,
-      optional: false,
-      type: "string",
     },
     brokerageSlug: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "brokerageSlug"
       >,
-      optional: false,
       serverName: "brokerage_slug",
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     disabledAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "disabledAt"
       >,
-      optional: true,
       serverName: "disabled_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     isDisabled: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "isDisabled"
       >,
-      optional: true,
       serverName: "is_disabled",
-      type: "number",
     },
     isEligibleForPayout: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "isEligibleForPayout"
       >,
-      optional: true,
       serverName: "is_eligible_for_payout",
-      type: "number",
     },
     meta: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "meta"
       >,
-      optional: true,
-      type: "json",
     },
     name: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "name"
       >,
-      optional: false,
-      type: "string",
     },
     type: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "type"
       >,
-      optional: true,
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageAuthorizations",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "brokerageAuthorizations",
   primaryKey: ["id"],
   serverName: "brokerage_authorization",
 } as const;
 const brokerageBalancesTable = {
+  name: "brokerageBalances",
   columns: {
     accountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "accountId"
       >,
-      optional: false,
       serverName: "account_id",
-      type: "string",
     },
     buyingPower: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "buyingPower"
       >,
-      optional: true,
       serverName: "buying_power",
-      type: "number",
     },
     cash: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "cash"
       >,
-      optional: true,
-      type: "number",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     currencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "currencyCode"
       >,
-      optional: true,
       serverName: "currency_code",
-      type: "string",
     },
     currencyId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "currencyId"
       >,
-      optional: true,
       serverName: "currency_id",
-      type: "string",
     },
     currencyName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "currencyName"
       >,
-      optional: true,
       serverName: "currency_name",
-      type: "string",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     lastSync: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "lastSync"
       >,
-      optional: true,
       serverName: "last_sync",
-      type: "number",
     },
     snapTradeAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "snapTradeAccountId"
       >,
-      optional: false,
       serverName: "snaptrade_account_id",
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageBalances",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "brokerageBalances",
   primaryKey: ["id"],
   serverName: "brokerage_balance",
 } as const;
 const brokerageOrdersTable = {
+  name: "brokerageOrders",
   columns: {
     accountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "accountId"
       >,
-      optional: false,
       serverName: "account_id",
-      type: "string",
     },
     action: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "action"
       >,
-      optional: true,
-      type: "string",
     },
     brokerageOrderId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "brokerageOrderId"
       >,
-      optional: false,
       serverName: "brokerage_order_id",
-      type: "string",
     },
     canceledQuantity: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "canceledQuantity"
       >,
-      optional: true,
       serverName: "canceled_quantity",
-      type: "number",
     },
     childBrokerageOrderIds: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "childBrokerageOrderIds"
       >,
-      optional: true,
       serverName: "child_brokerage_order_ids",
-      type: "json",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     currencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "currencyCode"
       >,
-      optional: true,
       serverName: "currency_code",
-      type: "string",
     },
     currencyId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "currencyId"
       >,
-      optional: true,
       serverName: "currency_id",
-      type: "string",
     },
     currencyName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "currencyName"
       >,
-      optional: true,
       serverName: "currency_name",
-      type: "string",
     },
     exchangeCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "exchangeCode"
       >,
-      optional: true,
       serverName: "exchange_code",
-      type: "string",
     },
     exchangeId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "exchangeId"
       >,
-      optional: true,
       serverName: "exchange_id",
-      type: "string",
     },
     exchangeMicCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "exchangeMicCode"
       >,
-      optional: true,
       serverName: "exchange_mic_code",
-      type: "string",
     },
     exchangeName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "exchangeName"
       >,
-      optional: true,
       serverName: "exchange_name",
-      type: "string",
     },
     executionPrice: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "executionPrice"
       >,
-      optional: true,
       serverName: "execution_price",
-      type: "number",
     },
     expirationDate: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "expirationDate"
       >,
-      optional: true,
       serverName: "expiration_date",
-      type: "number",
     },
     expiryDate: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "expiryDate"
       >,
-      optional: true,
       serverName: "expiry_date",
-      type: "number",
     },
     figiCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "figiCode"
       >,
-      optional: true,
       serverName: "figi_code",
-      type: "string",
     },
     filledQuantity: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "filledQuantity"
       >,
-      optional: true,
       serverName: "filled_quantity",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     isMiniOption: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "isMiniOption"
       >,
-      optional: true,
       serverName: "is_mini_option",
-      type: "boolean",
     },
     lastSync: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "lastSync"
       >,
-      optional: true,
       serverName: "last_sync",
-      type: "number",
     },
     limitPrice: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "limitPrice"
       >,
-      optional: true,
       serverName: "limit_price",
-      type: "number",
     },
     openQuantity: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "openQuantity"
       >,
-      optional: true,
       serverName: "open_quantity",
-      type: "number",
     },
     optionSymbol: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "optionSymbol"
       >,
-      optional: true,
       serverName: "option_symbol",
-      type: "json",
     },
     optionType: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "optionType"
       >,
-      optional: true,
       serverName: "option_type",
-      type: "string",
     },
     orderType: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "orderType"
       >,
-      optional: true,
       serverName: "order_type",
-      type: "string",
     },
     quoteCurrency: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "quoteCurrency"
       >,
-      optional: true,
       serverName: "quote_currency",
-      type: "json",
     },
     quoteUniversalSymbol: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "quoteUniversalSymbol"
       >,
-      optional: true,
       serverName: "quote_universal_symbol",
-      type: "json",
     },
     rawSymbol: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "rawSymbol"
       >,
-      optional: true,
       serverName: "raw_symbol",
-      type: "string",
     },
     securityTypeCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "securityTypeCode"
       >,
-      optional: true,
       serverName: "security_type_code",
-      type: "string",
     },
     securityTypeDescription: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "securityTypeDescription"
       >,
-      optional: true,
       serverName: "security_type_description",
-      type: "string",
     },
     securityTypeId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "securityTypeId"
       >,
-      optional: true,
       serverName: "security_type_id",
-      type: "string",
     },
     snapTradeAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "snapTradeAccountId"
       >,
-      optional: false,
       serverName: "snap_trade_account_id",
-      type: "string",
     },
     status: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "status"
       >,
-      optional: true,
-      type: "string",
     },
     stopPrice: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "stopPrice"
       >,
-      optional: true,
       serverName: "stop_price",
-      type: "number",
     },
     strikePrice: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "strikePrice"
       >,
-      optional: true,
       serverName: "strike_price",
-      type: "number",
     },
     symbol: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "symbol"
       >,
-      optional: true,
-      type: "string",
     },
     symbolDescription: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "symbolDescription"
       >,
-      optional: true,
       serverName: "symbol_description",
-      type: "string",
     },
     symbolId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "symbolId"
       >,
-      optional: true,
       serverName: "symbol_id",
-      type: "string",
     },
     timeExecuted: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "timeExecuted"
       >,
-      optional: true,
       serverName: "time_executed",
-      type: "number",
     },
     timeInForce: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "timeInForce"
       >,
-      optional: true,
       serverName: "time_in_force",
-      type: "string",
     },
     timePlaced: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "timePlaced"
       >,
-      optional: true,
       serverName: "time_placed",
-      type: "number",
     },
     timeUpdated: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "timeUpdated"
       >,
-      optional: true,
       serverName: "time_updated",
-      type: "number",
     },
     totalQuantity: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "totalQuantity"
       >,
-      optional: true,
       serverName: "total_quantity",
-      type: "number",
     },
     universalSymbol: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "universalSymbol"
       >,
-      optional: true,
       serverName: "universal_symbol",
-      type: "json",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageOrders",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "brokerageOrders",
   primaryKey: ["id"],
   serverName: "brokerage_order",
 } as const;
 const brokeragePositionsTable = {
+  name: "brokeragePositions",
   columns: {
     accountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "accountId"
       >,
-      optional: false,
       serverName: "account_id",
-      type: "string",
     },
     averagePurchasePrice: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "averagePurchasePrice"
       >,
-      optional: true,
       serverName: "average_purchase_price",
-      type: "number",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     currencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "currencyCode"
       >,
-      optional: true,
       serverName: "currency_code",
-      type: "string",
     },
     currencyId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "currencyId"
       >,
-      optional: true,
       serverName: "currency_id",
-      type: "string",
     },
     currencyName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "currencyName"
       >,
-      optional: true,
       serverName: "currency_name",
-      type: "string",
     },
     exchangeCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "exchangeCode"
       >,
-      optional: true,
       serverName: "exchange_code",
-      type: "string",
     },
     exchangeId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "exchangeId"
       >,
-      optional: true,
       serverName: "exchange_id",
-      type: "string",
     },
     exchangeMicCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "exchangeMicCode"
       >,
-      optional: true,
       serverName: "exchange_mic_code",
-      type: "string",
     },
     exchangeName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "exchangeName"
       >,
-      optional: true,
       serverName: "exchange_name",
-      type: "string",
     },
     figiCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "figiCode"
       >,
-      optional: true,
       serverName: "figi_code",
-      type: "string",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     isQuotable: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "isQuotable"
       >,
-      optional: true,
       serverName: "is_quotable",
-      type: "boolean",
     },
     isTradable: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "isTradable"
       >,
-      optional: true,
       serverName: "is_tradable",
-      type: "boolean",
     },
     lastSync: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "lastSync"
       >,
-      optional: true,
       serverName: "last_sync",
-      type: "number",
     },
     localId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "localId"
       >,
-      optional: true,
       serverName: "local_id",
-      type: "string",
     },
     openPnl: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "openPnl"
       >,
-      optional: true,
       serverName: "open_pnl",
-      type: "number",
     },
     price: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "price"
       >,
-      optional: true,
-      type: "number",
     },
     rawSymbol: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "rawSymbol"
       >,
-      optional: true,
       serverName: "raw_symbol",
-      type: "string",
     },
     securityTypeCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "securityTypeCode"
       >,
-      optional: true,
       serverName: "security_type_code",
-      type: "string",
     },
     securityTypeDescription: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "securityTypeDescription"
       >,
-      optional: true,
       serverName: "security_type_description",
-      type: "string",
     },
     securityTypeId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "securityTypeId"
       >,
-      optional: true,
       serverName: "security_type_id",
-      type: "string",
     },
     snapTradeAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "snapTradeAccountId"
       >,
-      optional: false,
       serverName: "snap_trade_account_id",
-      type: "string",
     },
     symbol: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "symbol"
       >,
-      optional: true,
-      type: "string",
     },
     symbolDescription: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "symbolDescription"
       >,
-      optional: true,
       serverName: "symbol_description",
-      type: "string",
     },
     symbolId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "symbolId"
       >,
-      optional: true,
       serverName: "symbol_id",
-      type: "string",
     },
     units: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "units"
       >,
-      optional: true,
-      type: "number",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokeragePositions",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "brokeragePositions",
   primaryKey: ["id"],
   serverName: "brokerage_position",
 } as const;
 const brokerageUserTable = {
+  name: "brokerageUser",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageUser",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     lastVerifiedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageUser",
         "lastVerifiedAt"
       >,
-      optional: true,
       serverName: "last_verified_at",
-      type: "number",
     },
     providerUserId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageUser",
         "providerUserId"
       >,
-      optional: false,
       serverName: "snaptrade_user_id",
-      type: "string",
     },
     providerUserSecret: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageUser",
         "providerUserSecret"
       >,
-      optional: false,
       serverName: "snaptrade_user_secret",
-      type: "string",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "brokerageUser",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "brokerageUser",
   primaryKey: ["userId"],
   serverName: "brokerage_user",
 } as const;
 const chatsTable = {
+  name: "chats",
   columns: {
     chatId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "chats",
         "chatId"
       >,
-      optional: false,
       serverName: "chat_id",
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "chats",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     title: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "chats",
         "title"
       >,
-      optional: true,
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "chats",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "chats",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "chats",
   primaryKey: ["chatId"],
 } as const;
 const creditLiabilityTable = {
+  name: "creditLiability",
   columns: {
     aprs: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "aprs"
       >,
-      optional: true,
-      type: "json",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     isOverdue: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "isOverdue"
       >,
-      optional: true,
       serverName: "is_overdue",
-      type: "boolean",
     },
     lastPaymentAmount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "lastPaymentAmount"
       >,
-      optional: true,
       serverName: "last_payment_amount",
-      type: "number",
     },
     lastPaymentDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "lastPaymentDate"
       >,
-      optional: true,
       serverName: "last_payment_date",
-      type: "string",
     },
     lastStatementBalance: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "lastStatementBalance"
       >,
-      optional: true,
       serverName: "last_statement_balance",
-      type: "number",
     },
     lastStatementIssueDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "lastStatementIssueDate"
       >,
-      optional: true,
       serverName: "last_statement_issue_date",
-      type: "string",
     },
     minimumPaymentAmount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "minimumPaymentAmount"
       >,
-      optional: true,
       serverName: "minimum_payment_amount",
-      type: "number",
     },
     nextPaymentDueDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "nextPaymentDueDate"
       >,
-      optional: true,
       serverName: "next_payment_due_date",
-      type: "string",
     },
     plaidAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "plaidAccountId"
       >,
-      optional: false,
       serverName: "plaid_account_id",
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "creditLiability",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
   },
-  name: "creditLiability",
   primaryKey: ["id"],
   serverName: "credit_liability",
 } as const;
 const eventArticlesTable = {
+  name: "eventArticles",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     date: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "date"
       >,
-      optional: true,
-      type: "number",
     },
     financialEventId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "financialEventId"
       >,
-      optional: false,
       serverName: "financial_event_id",
-      type: "string",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     imageUrl: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "imageUrl"
       >,
-      optional: true,
       serverName: "image_url",
-      type: "string",
     },
     newsUrl: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "newsUrl"
       >,
-      optional: false,
       serverName: "news_url",
-      type: "string",
     },
     sentiment: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "sentiment"
       >,
-      optional: true,
-      type: "string",
     },
     sourceName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "sourceName"
       >,
-      optional: true,
       serverName: "source_name",
-      type: "string",
     },
     text: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "text"
       >,
-      optional: true,
-      type: "string",
     },
     tickers: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "tickers"
       >,
-      optional: true,
-      type: "json",
     },
     title: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "title"
       >,
-      optional: false,
-      type: "string",
     },
     topics: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "topics"
       >,
-      optional: true,
-      type: "json",
     },
     type: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "type"
       >,
-      optional: true,
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "eventArticles",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
   },
-  name: "eventArticles",
   primaryKey: ["id"],
   serverName: "event_articles",
 } as const;
 const feedbackTable = {
+  name: "feedback",
   columns: {
     contactEmail: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "feedback",
         "contactEmail"
       >,
-      optional: true,
       serverName: "contact_email",
-      type: "string",
     },
     contactName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "feedback",
         "contactName"
       >,
-      optional: true,
       serverName: "contact_name",
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "feedback",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "feedback",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     message: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "feedback",
         "message"
       >,
-      optional: false,
-      type: "string",
     },
     subject: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "feedback",
         "subject"
       >,
-      optional: false,
-      type: "string",
     },
     type: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "feedback",
         "type"
       >,
-      optional: false,
-      type: "string",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "feedback",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "feedback",
   primaryKey: ["id"],
 } as const;
 const financialEventsTable = {
+  name: "financialEvents",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     date: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "date"
       >,
-      optional: true,
-      type: "number",
     },
     eventId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "eventId"
       >,
-      optional: false,
       serverName: "event_id",
-      type: "string",
     },
     eventName: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "eventName"
       >,
-      optional: false,
       serverName: "event_name",
-      type: "string",
     },
     eventText: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "eventText"
       >,
-      optional: true,
       serverName: "event_text",
-      type: "string",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     keyPoints: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "keyPoints"
       >,
-      optional: true,
       serverName: "key_points",
-      type: "json",
     },
     newsItems: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "newsItems"
       >,
-      optional: true,
       serverName: "news_items",
-      type: "number",
     },
     scrapedArticlesCount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "scrapedArticlesCount"
       >,
-      optional: true,
       serverName: "scraped_articles_count",
-      type: "number",
     },
     sentiment: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "sentiment"
       >,
-      optional: true,
-      type: "string",
     },
     summary: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "summary"
       >,
-      optional: true,
-      type: "string",
     },
     tickers: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "tickers"
       >,
-      optional: true,
-      type: "json",
     },
     topics: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "topics"
       >,
-      optional: true,
-      type: "json",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialEvents",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
   },
-  name: "financialEvents",
   primaryKey: ["id"],
   serverName: "financial_events",
 } as const;
 const financialGoalsTable = {
+  name: "financialGoals",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialGoals",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     icon: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialGoals",
         "icon"
       >,
-      optional: true,
-      type: "string",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialGoals",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     name: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialGoals",
         "name"
       >,
-      optional: false,
-      type: "string",
     },
     targetAmount: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialGoals",
         "targetAmount"
       >,
-      optional: false,
       serverName: "target_amount",
-      type: "number",
     },
     targetDate: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialGoals",
         "targetDate"
       >,
-      optional: true,
       serverName: "target_date",
-      type: "number",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialGoals",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "financialGoals",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "financialGoals",
   primaryKey: ["id"],
   serverName: "financial_goals",
 } as const;
 const institutionTable = {
+  name: "institution",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "institution",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "institution",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     logo: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "institution",
         "logo"
       >,
-      optional: true,
-      type: "string",
     },
     name: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "institution",
         "name"
       >,
-      optional: false,
-      type: "string",
     },
     oauth: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "institution",
         "oauth"
       >,
-      optional: true,
-      type: "boolean",
     },
     plaidInstitutionId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "institution",
         "plaidInstitutionId"
       >,
-      optional: false,
       serverName: "plaid_institution_id",
-      type: "string",
     },
     primaryColor: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "institution",
         "primaryColor"
       >,
-      optional: true,
       serverName: "primary_color",
-      type: "string",
     },
     routingNumbers: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "institution",
         "routingNumbers"
       >,
-      optional: true,
       serverName: "routing_numbers",
-      type: "json",
     },
     status: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "institution",
         "status"
       >,
-      optional: true,
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "institution",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     url: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "institution",
         "url"
       >,
-      optional: true,
-      type: "string",
     },
   },
-  name: "institution",
   primaryKey: ["id"],
 } as const;
 const investmentActivityTable = {
+  name: "investmentActivity",
   columns: {
     amount: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "amount"
       >,
-      optional: false,
-      type: "number",
     },
     cancelTransactionId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "cancelTransactionId"
       >,
-      optional: true,
       serverName: "cancel_transaction_id",
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     date: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "date"
       >,
-      optional: false,
-      type: "string",
     },
     fees: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "fees"
       >,
-      optional: true,
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     investmentTransactionId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "investmentTransactionId"
       >,
-      optional: false,
       serverName: "investment_transaction_id",
-      type: "string",
     },
     isoCurrencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "isoCurrencyCode"
       >,
-      optional: true,
       serverName: "iso_currency_code",
-      type: "string",
     },
     name: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "name"
       >,
-      optional: false,
-      type: "string",
     },
     plaidAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "plaidAccountId"
       >,
-      optional: false,
       serverName: "plaid_account_id",
-      type: "string",
     },
     price: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "price"
       >,
-      optional: false,
-      type: "number",
     },
     quantity: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "quantity"
       >,
-      optional: false,
-      type: "number",
     },
     securityId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "securityId"
       >,
-      optional: true,
       serverName: "security_id",
-      type: "string",
     },
     subtype: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "subtype"
       >,
-      optional: false,
-      type: "string",
     },
     type: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "type"
       >,
-      optional: false,
-      type: "string",
     },
     unofficialCurrencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentActivity",
         "unofficialCurrencyCode"
       >,
-      optional: true,
       serverName: "unofficial_currency_code",
-      type: "string",
     },
   },
-  name: "investmentActivity",
   primaryKey: ["id"],
   serverName: "investment_activity",
 } as const;
 const investmentPositionTable = {
+  name: "investmentPosition",
   columns: {
     costBasis: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "costBasis"
       >,
-      optional: true,
       serverName: "cost_basis",
-      type: "number",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     institutionPrice: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "institutionPrice"
       >,
-      optional: false,
       serverName: "institution_price",
-      type: "number",
     },
     institutionPriceAsOf: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "institutionPriceAsOf"
       >,
-      optional: true,
       serverName: "institution_price_as_of",
-      type: "string",
     },
     institutionPriceDatetime: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "institutionPriceDatetime"
       >,
-      optional: true,
       serverName: "institution_price_datetime",
-      type: "string",
     },
     institutionValue: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "institutionValue"
       >,
-      optional: false,
       serverName: "institution_value",
-      type: "number",
     },
     isoCurrencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "isoCurrencyCode"
       >,
-      optional: true,
       serverName: "iso_currency_code",
-      type: "string",
     },
     plaidAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "plaidAccountId"
       >,
-      optional: false,
       serverName: "plaid_account_id",
-      type: "string",
     },
     quantity: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "quantity"
       >,
-      optional: false,
-      type: "number",
     },
     securityId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "securityId"
       >,
-      optional: false,
       serverName: "security_id",
-      type: "string",
     },
     unofficialCurrencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "unofficialCurrencyCode"
       >,
-      optional: true,
       serverName: "unofficial_currency_code",
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     vestedQuantity: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "vestedQuantity"
       >,
-      optional: true,
       serverName: "vested_quantity",
-      type: "number",
     },
     vestedValue: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentPosition",
         "vestedValue"
       >,
-      optional: true,
       serverName: "vested_value",
-      type: "number",
     },
   },
-  name: "investmentPosition",
   primaryKey: ["id"],
   serverName: "investment_position",
 } as const;
 const investmentSecurityTable = {
+  name: "investmentSecurity",
   columns: {
     closePrice: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "closePrice"
       >,
-      optional: true,
       serverName: "close_price",
-      type: "number",
     },
     closePriceAsOf: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "closePriceAsOf"
       >,
-      optional: true,
       serverName: "close_price_as_of",
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     cusip: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "cusip"
       >,
-      optional: true,
-      type: "string",
     },
     fixedIncome: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "fixedIncome"
       >,
-      optional: true,
       serverName: "fixed_income",
-      type: "json",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     industry: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "industry"
       >,
-      optional: true,
-      type: "string",
     },
     institutionId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "institutionId"
       >,
-      optional: true,
       serverName: "institution_id",
-      type: "string",
     },
     institutionSecurityId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "institutionSecurityId"
       >,
-      optional: true,
       serverName: "institution_security_id",
-      type: "string",
     },
     isCashEquivalent: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "isCashEquivalent"
       >,
-      optional: true,
       serverName: "is_cash_equivalent",
-      type: "boolean",
     },
     isin: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "isin"
       >,
-      optional: true,
-      type: "string",
     },
     isoCurrencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "isoCurrencyCode"
       >,
-      optional: true,
       serverName: "iso_currency_code",
-      type: "string",
     },
     marketIdentifierCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "marketIdentifierCode"
       >,
-      optional: true,
       serverName: "market_identifier_code",
-      type: "string",
     },
     name: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "name"
       >,
-      optional: true,
-      type: "string",
     },
     optionContract: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "optionContract"
       >,
-      optional: true,
       serverName: "option_contract",
-      type: "json",
     },
     proxySecurityId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "proxySecurityId"
       >,
-      optional: true,
       serverName: "proxy_security_id",
-      type: "string",
     },
     sector: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "sector"
       >,
-      optional: true,
-      type: "string",
     },
     securityId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "securityId"
       >,
-      optional: false,
       serverName: "security_id",
-      type: "string",
     },
     sedol: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "sedol"
       >,
-      optional: true,
-      type: "string",
     },
     subtype: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "subtype"
       >,
-      optional: true,
-      type: "string",
     },
     tickerSymbol: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "tickerSymbol"
       >,
-      optional: true,
       serverName: "ticker_symbol",
-      type: "string",
     },
     type: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "type"
       >,
-      optional: true,
-      type: "string",
     },
     unofficialCurrencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "unofficialCurrencyCode"
       >,
-      optional: true,
       serverName: "unofficial_currency_code",
-      type: "string",
     },
     updateDatetime: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "updateDatetime"
       >,
-      optional: true,
       serverName: "update_datetime",
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "investmentSecurity",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
   },
-  name: "investmentSecurity",
   primaryKey: ["id"],
   serverName: "investment_security",
 } as const;
 const kalshiUsersTable = {
+  name: "kalshiUsers",
   columns: {
     apiKeyId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "kalshiUsers",
         "apiKeyId"
       >,
-      optional: false,
       serverName: "api_key_id",
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "kalshiUsers",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     lastVerifiedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "kalshiUsers",
         "lastVerifiedAt"
       >,
-      optional: true,
       serverName: "last_verified_at",
-      type: "number",
     },
     privateKeyPem: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "kalshiUsers",
         "privateKeyPem"
       >,
-      optional: false,
       serverName: "private_key_pem",
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "kalshiUsers",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "kalshiUsers",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "kalshiUsers",
   primaryKey: ["userId"],
   serverName: "kalshi_users",
 } as const;
 const messageVotesTable = {
+  name: "messageVotes",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "messageVotes",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "messageVotes",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     messageId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "messageVotes",
         "messageId"
       >,
-      optional: false,
       serverName: "message_id",
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "messageVotes",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "messageVotes",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
     vote: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "messageVotes",
         "vote"
       >,
-      optional: false,
-      type: "string",
     },
   },
-  name: "messageVotes",
   primaryKey: ["id"],
   serverName: "message_votes",
 } as const;
 const messagesTable = {
+  name: "messages",
   columns: {
     chatId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "messages",
         "chatId"
       >,
-      optional: false,
       serverName: "chat_id",
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "messages",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     messageId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "messages",
         "messageId"
       >,
-      optional: false,
       serverName: "message_id",
-      type: "string",
     },
     role: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "messages",
         "role"
       >,
-      optional: false,
-      type: "string",
     },
   },
-  name: "messages",
   primaryKey: ["messageId"],
 } as const;
 const mobileSubscriptionTable = {
+  name: "mobileSubscription",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mobileSubscription",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     environment: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mobileSubscription",
         "environment"
       >,
-      optional: true,
-      type: "string",
     },
     expiresAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mobileSubscription",
         "expiresAt"
       >,
-      optional: true,
       serverName: "expires_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mobileSubscription",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     latestTransactionId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mobileSubscription",
         "latestTransactionId"
       >,
-      optional: true,
       serverName: "latest_transaction_id",
-      type: "string",
     },
     originalTransactionId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mobileSubscription",
         "originalTransactionId"
       >,
-      optional: false,
       serverName: "original_transaction_id",
-      type: "string",
     },
     productId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mobileSubscription",
         "productId"
       >,
-      optional: false,
       serverName: "product_id",
-      type: "string",
     },
     status: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mobileSubscription",
         "status"
       >,
-      optional: true,
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mobileSubscription",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mobileSubscription",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "mobileSubscription",
   primaryKey: ["id"],
   serverName: "mobile_subscription",
 } as const;
 const mortgageLiabilityTable = {
+  name: "mortgageLiability",
   columns: {
     accountNumber: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "accountNumber"
       >,
-      optional: true,
       serverName: "account_number",
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     currentLateFee: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "currentLateFee"
       >,
-      optional: true,
       serverName: "current_late_fee",
-      type: "number",
     },
     escrowBalance: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "escrowBalance"
       >,
-      optional: true,
       serverName: "escrow_balance",
-      type: "number",
     },
     hasPmi: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "hasPmi"
       >,
-      optional: true,
       serverName: "has_pmi",
-      type: "boolean",
     },
     hasPrepaymentPenalty: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "hasPrepaymentPenalty"
       >,
-      optional: true,
       serverName: "has_prepayment_penalty",
-      type: "boolean",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     interestRate: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "interestRate"
       >,
-      optional: true,
       serverName: "interest_rate",
-      type: "json",
     },
     lastPaymentAmount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "lastPaymentAmount"
       >,
-      optional: true,
       serverName: "last_payment_amount",
-      type: "number",
     },
     lastPaymentDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "lastPaymentDate"
       >,
-      optional: true,
       serverName: "last_payment_date",
-      type: "string",
     },
     loanTerm: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "loanTerm"
       >,
-      optional: true,
       serverName: "loan_term",
-      type: "string",
     },
     loanTypeDescription: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "loanTypeDescription"
       >,
-      optional: true,
       serverName: "loan_type_description",
-      type: "string",
     },
     maturityDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "maturityDate"
       >,
-      optional: true,
       serverName: "maturity_date",
-      type: "string",
     },
     nextMonthlyPayment: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "nextMonthlyPayment"
       >,
-      optional: true,
       serverName: "next_monthly_payment",
-      type: "number",
     },
     nextPaymentDueDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "nextPaymentDueDate"
       >,
-      optional: true,
       serverName: "next_payment_due_date",
-      type: "string",
     },
     originationDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "originationDate"
       >,
-      optional: true,
       serverName: "origination_date",
-      type: "string",
     },
     originationPrincipalAmount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "originationPrincipalAmount"
       >,
-      optional: true,
       serverName: "origination_principal_amount",
-      type: "number",
     },
     pastDueAmount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "pastDueAmount"
       >,
-      optional: true,
       serverName: "past_due_amount",
-      type: "number",
     },
     plaidAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "plaidAccountId"
       >,
-      optional: false,
       serverName: "plaid_account_id",
-      type: "string",
     },
     propertyAddress: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "propertyAddress"
       >,
-      optional: true,
       serverName: "property_address",
-      type: "json",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     ytdInterestPaid: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "ytdInterestPaid"
       >,
-      optional: true,
       serverName: "ytd_interest_paid",
-      type: "number",
     },
     ytdPrincipalPaid: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "mortgageLiability",
         "ytdPrincipalPaid"
       >,
-      optional: true,
       serverName: "ytd_principal_paid",
-      type: "number",
     },
   },
-  name: "mortgageLiability",
   primaryKey: ["id"],
   serverName: "mortgage_liability",
 } as const;
 const partsTable = {
+  name: "parts",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     data: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "data"
       >,
-      optional: true,
-      type: "json",
     },
     file_filename: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "file_filename"
       >,
-      optional: true,
-      type: "string",
     },
     file_mediaType: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "file_mediaType"
       >,
-      optional: true,
       serverName: "file_media_type",
-      type: "string",
     },
     file_url: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "file_url"
       >,
-      optional: true,
-      type: "string",
     },
     messageId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "messageId"
       >,
-      optional: false,
       serverName: "message_id",
-      type: "string",
     },
     order: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "order"
       >,
-      optional: true,
-      type: "number",
     },
     partId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "partId"
       >,
-      optional: false,
       serverName: "part_id",
-      type: "string",
     },
     providerMetadata: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "providerMetadata"
       >,
-      optional: true,
       serverName: "provider_metadata",
-      type: "json",
     },
     reasoning_text: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "reasoning_text"
       >,
-      optional: true,
-      type: "string",
     },
     source_document_filename: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "source_document_filename"
       >,
-      optional: true,
-      type: "string",
     },
     source_document_mediaType: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "source_document_mediaType"
       >,
-      optional: true,
       serverName: "source_document_media_type",
-      type: "string",
     },
     source_document_sourceId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "source_document_sourceId"
       >,
-      optional: true,
       serverName: "source_document_source_id",
-      type: "string",
     },
     source_document_title: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "source_document_title"
       >,
-      optional: true,
-      type: "string",
     },
     source_url_sourceId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "source_url_sourceId"
       >,
-      optional: true,
       serverName: "source_url_source_id",
-      type: "string",
     },
     source_url_title: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "source_url_title"
       >,
-      optional: true,
-      type: "string",
     },
     source_url_url: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "source_url_url"
       >,
-      optional: true,
-      type: "string",
     },
     text_text: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "text_text"
       >,
-      optional: true,
-      type: "string",
     },
     tool_errorText: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "tool_errorText"
       >,
-      optional: true,
       serverName: "tool_error_text",
-      type: "string",
     },
     tool_input: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "tool_input"
       >,
-      optional: true,
-      type: "json",
     },
     tool_output: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "tool_output"
       >,
-      optional: true,
-      type: "json",
     },
     tool_state: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "tool_state"
       >,
-      optional: true,
-      type: "string",
     },
     tool_toolCallId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "tool_toolCallId"
       >,
-      optional: true,
       serverName: "tool_call_id",
-      type: "string",
     },
     type: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "parts",
         "type"
       >,
-      optional: false,
-      type: "string",
     },
   },
-  name: "parts",
   primaryKey: ["partId"],
 } as const;
 const portfolioSnapshotsTable = {
+  name: "portfolioSnapshots",
   columns: {
     accountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "accountId"
       >,
-      optional: false,
       serverName: "account_id",
-      type: "string",
     },
     accountName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "accountName"
       >,
-      optional: true,
       serverName: "account_name",
-      type: "string",
     },
     accountType: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "accountType"
       >,
-      optional: false,
       serverName: "account_type",
-      type: "string",
     },
     buyingPower: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "buyingPower"
       >,
-      optional: true,
       serverName: "buying_power",
-      type: "number",
     },
     cashValue: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "cashValue"
       >,
-      optional: true,
       serverName: "cash_value",
-      type: "number",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     currencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "currencyCode"
       >,
-      optional: true,
       serverName: "currency_code",
-      type: "string",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     institutionName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "institutionName"
       >,
-      optional: true,
       serverName: "institution_name",
-      type: "string",
     },
     positionsCount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "positionsCount"
       >,
-      optional: true,
       serverName: "positions_count",
-      type: "number",
     },
     positionsValue: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "positionsValue"
       >,
-      optional: true,
       serverName: "positions_value",
-      type: "number",
     },
     rawBalanceData: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "rawBalanceData"
       >,
-      optional: true,
       serverName: "raw_balance_data",
-      type: "json",
     },
     snapTradeAccountId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "snapTradeAccountId"
       >,
-      optional: true,
       serverName: "snaptrade_account_id",
-      type: "string",
     },
     snapshotDate: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "snapshotDate"
       >,
-      optional: false,
       serverName: "snapshot_date",
-      type: "number",
     },
     totalValue: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "totalValue"
       >,
-      optional: true,
       serverName: "total_value",
-      type: "number",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "portfolioSnapshots",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "portfolioSnapshots",
   primaryKey: ["id"],
   serverName: "portfolio_snapshot",
 } as const;
 const recurringStreamTable = {
+  name: "recurringStream",
   columns: {
     averageAmount: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "averageAmount"
       >,
-      optional: false,
       serverName: "average_amount",
-      type: "number",
     },
     category: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "category"
       >,
-      optional: true,
-      type: "json",
     },
     categoryId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "categoryId"
       >,
-      optional: true,
       serverName: "category_id",
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     description: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "description"
       >,
-      optional: false,
-      type: "string",
     },
     firstDate: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "firstDate"
       >,
-      optional: false,
       serverName: "first_date",
-      type: "string",
     },
     frequency: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "frequency"
       >,
-      optional: false,
-      type: "string",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     isActive: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "isActive"
       >,
-      optional: true,
       serverName: "is_active",
-      type: "boolean",
     },
     isUserModified: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "isUserModified"
       >,
-      optional: true,
       serverName: "is_user_modified",
-      type: "boolean",
     },
     lastAmount: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "lastAmount"
       >,
-      optional: false,
       serverName: "last_amount",
-      type: "number",
     },
     lastDate: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "lastDate"
       >,
-      optional: false,
       serverName: "last_date",
-      type: "string",
     },
     lastUserModifiedDatetime: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "lastUserModifiedDatetime"
       >,
-      optional: true,
       serverName: "last_user_modified_datetime",
-      type: "string",
     },
     merchantName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "merchantName"
       >,
-      optional: true,
       serverName: "merchant_name",
-      type: "string",
     },
     personalFinanceCategory: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "personalFinanceCategory"
       >,
-      optional: true,
       serverName: "personal_finance_category",
-      type: "json",
     },
     plaidAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "plaidAccountId"
       >,
-      optional: false,
       serverName: "plaid_account_id",
-      type: "string",
     },
     predictedNextDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "predictedNextDate"
       >,
-      optional: true,
       serverName: "predicted_next_date",
-      type: "string",
     },
     status: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "status"
       >,
-      optional: false,
-      type: "string",
     },
     streamId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "streamId"
       >,
-      optional: false,
       serverName: "stream_id",
-      type: "string",
     },
     streamType: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "streamType"
       >,
-      optional: false,
       serverName: "stream_type",
-      type: "string",
     },
     transactionIds: {
+      type: "json",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "transactionIds"
       >,
-      optional: false,
       serverName: "transaction_ids",
-      type: "json",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "recurringStream",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
   },
-  name: "recurringStream",
   primaryKey: ["id"],
   serverName: "recurring_stream",
 } as const;
 const rssArticlesTable = {
+  name: "rssArticles",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssArticles",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     description: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssArticles",
         "description"
       >,
-      optional: true,
-      type: "string",
     },
     feedIds: {
+      type: "json",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssArticles",
         "feedIds"
       >,
-      optional: false,
       serverName: "feed_ids",
-      type: "json",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssArticles",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     link: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssArticles",
         "link"
       >,
-      optional: false,
-      type: "string",
     },
     metadata: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssArticles",
         "metadata"
       >,
-      optional: true,
-      type: "json",
     },
     publishedDate: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssArticles",
         "publishedDate"
       >,
-      optional: true,
       serverName: "published_date",
-      type: "number",
     },
     title: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssArticles",
         "title"
       >,
-      optional: false,
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssArticles",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
   },
-  name: "rssArticles",
   primaryKey: ["id"],
   serverName: "rss_articles",
 } as const;
 const rssFeedsTable = {
+  name: "rssFeeds",
   columns: {
     category: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssFeeds",
         "category"
       >,
-      optional: false,
-      type: "string",
     },
     company: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssFeeds",
         "company"
       >,
-      optional: false,
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssFeeds",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     description: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssFeeds",
         "description"
       >,
-      optional: true,
-      type: "string",
     },
     fetchIntervalMinutes: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssFeeds",
         "fetchIntervalMinutes"
       >,
-      optional: true,
       serverName: "fetch_interval_minutes",
-      type: "string",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssFeeds",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     isActive: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssFeeds",
         "isActive"
       >,
-      optional: true,
       serverName: "is_active",
-      type: "boolean",
     },
     lastFetched: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssFeeds",
         "lastFetched"
       >,
-      optional: true,
       serverName: "last_fetched",
-      type: "number",
     },
     name: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssFeeds",
         "name"
       >,
-      optional: false,
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssFeeds",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     url: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "rssFeeds",
         "url"
       >,
-      optional: false,
-      type: "string",
     },
   },
-  name: "rssFeeds",
   primaryKey: ["id"],
   serverName: "rss_feeds",
 } as const;
 const sessionTable = {
+  name: "session",
   columns: {
     createdAt: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "session",
         "createdAt"
       >,
-      optional: false,
       serverName: "created_at",
-      type: "number",
     },
     expiresAt: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "session",
         "expiresAt"
       >,
-      optional: false,
       serverName: "expires_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "session",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     ipAddress: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "session",
         "ipAddress"
       >,
-      optional: true,
       serverName: "ip_address",
-      type: "string",
     },
     token: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "session",
         "token"
       >,
-      optional: false,
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "session",
         "updatedAt"
       >,
-      optional: false,
       serverName: "updated_at",
-      type: "number",
     },
     userAgent: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "session",
         "userAgent"
       >,
-      optional: true,
       serverName: "user_agent",
-      type: "string",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "session",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "session",
   primaryKey: ["id"],
 } as const;
 const studentLoanLiabilityTable = {
+  name: "studentLoanLiability",
   columns: {
     accountNumber: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "accountNumber"
       >,
-      optional: true,
       serverName: "account_number",
-      type: "string",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     disbursementDates: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "disbursementDates"
       >,
-      optional: true,
       serverName: "disbursement_dates",
-      type: "json",
     },
     expectedPayoffDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "expectedPayoffDate"
       >,
-      optional: true,
       serverName: "expected_payoff_date",
-      type: "string",
     },
     guarantor: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "guarantor"
       >,
-      optional: true,
-      type: "string",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     interestRatePercentage: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "interestRatePercentage"
       >,
-      optional: true,
       serverName: "interest_rate_percentage",
-      type: "number",
     },
     isOverdue: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "isOverdue"
       >,
-      optional: true,
       serverName: "is_overdue",
-      type: "boolean",
     },
     lastPaymentAmount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "lastPaymentAmount"
       >,
-      optional: true,
       serverName: "last_payment_amount",
-      type: "number",
     },
     lastPaymentDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "lastPaymentDate"
       >,
-      optional: true,
       serverName: "last_payment_date",
-      type: "string",
     },
     lastStatementBalance: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "lastStatementBalance"
       >,
-      optional: true,
       serverName: "last_statement_balance",
-      type: "number",
     },
     lastStatementIssueDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "lastStatementIssueDate"
       >,
-      optional: true,
       serverName: "last_statement_issue_date",
-      type: "string",
     },
     loanName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "loanName"
       >,
-      optional: true,
       serverName: "loan_name",
-      type: "string",
     },
     loanStatus: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "loanStatus"
       >,
-      optional: true,
       serverName: "loan_status",
-      type: "json",
     },
     minimumPaymentAmount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "minimumPaymentAmount"
       >,
-      optional: true,
       serverName: "minimum_payment_amount",
-      type: "number",
     },
     nextPaymentDueDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "nextPaymentDueDate"
       >,
-      optional: true,
       serverName: "next_payment_due_date",
-      type: "string",
     },
     originationDate: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "originationDate"
       >,
-      optional: true,
       serverName: "origination_date",
-      type: "string",
     },
     originationPrincipalAmount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "originationPrincipalAmount"
       >,
-      optional: true,
       serverName: "origination_principal_amount",
-      type: "number",
     },
     outstandingInterestAmount: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "outstandingInterestAmount"
       >,
-      optional: true,
       serverName: "outstanding_interest_amount",
-      type: "number",
     },
     paymentReferenceNumber: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "paymentReferenceNumber"
       >,
-      optional: true,
       serverName: "payment_reference_number",
-      type: "string",
     },
     plaidAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "plaidAccountId"
       >,
-      optional: false,
       serverName: "plaid_account_id",
-      type: "string",
     },
     pslfStatus: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "pslfStatus"
       >,
-      optional: true,
       serverName: "pslf_status",
-      type: "json",
     },
     repaymentPlan: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "repaymentPlan"
       >,
-      optional: true,
       serverName: "repayment_plan",
-      type: "json",
     },
     sequenceNumber: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "sequenceNumber"
       >,
-      optional: true,
       serverName: "sequence_number",
-      type: "string",
     },
     servicerAddress: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "servicerAddress"
       >,
-      optional: true,
       serverName: "servicer_address",
-      type: "json",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     ytdInterestPaid: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "ytdInterestPaid"
       >,
-      optional: true,
       serverName: "ytd_interest_paid",
-      type: "number",
     },
     ytdPrincipalPaid: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "studentLoanLiability",
         "ytdPrincipalPaid"
       >,
-      optional: true,
       serverName: "ytd_principal_paid",
-      type: "number",
     },
   },
-  name: "studentLoanLiability",
   primaryKey: ["id"],
   serverName: "student_loan_liability",
 } as const;
 const subscriptionTable = {
+  name: "subscription",
   columns: {
     cancelAtPeriodEnd: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "cancelAtPeriodEnd"
       >,
-      optional: true,
       serverName: "cancel_at_period_end",
-      type: "boolean",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     periodEnd: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "periodEnd"
       >,
-      optional: true,
       serverName: "period_end",
-      type: "number",
     },
     periodStart: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "periodStart"
       >,
-      optional: true,
       serverName: "period_start",
-      type: "number",
     },
     plan: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "plan"
       >,
-      optional: false,
-      type: "string",
     },
     referenceId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "referenceId"
       >,
-      optional: false,
       serverName: "reference_id",
-      type: "string",
     },
     seats: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "seats"
       >,
-      optional: true,
-      type: "number",
     },
     status: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "status"
       >,
-      optional: true,
-      type: "string",
     },
     stripeCustomerId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "stripeCustomerId"
       >,
-      optional: true,
       serverName: "stripe_customer_id",
-      type: "string",
     },
     stripeSubscriptionId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "stripeSubscriptionId"
       >,
-      optional: true,
       serverName: "stripe_subscription_id",
-      type: "string",
     },
     trialEnd: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "trialEnd"
       >,
-      optional: true,
       serverName: "trial_end",
-      type: "number",
     },
     trialStart: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "subscription",
         "trialStart"
       >,
-      optional: true,
       serverName: "trial_start",
-      type: "number",
     },
   },
-  name: "subscription",
   primaryKey: ["id"],
 } as const;
 const transactionTable = {
+  name: "transaction",
   columns: {
     accountOwner: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "accountOwner"
       >,
-      optional: true,
       serverName: "account_owner",
-      type: "string",
     },
     amount: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "amount"
       >,
-      optional: false,
-      type: "number",
     },
     authorizedDate: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "authorizedDate"
       >,
-      optional: true,
       serverName: "authorized_date",
-      type: "number",
     },
     authorizedDatetime: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "authorizedDatetime"
       >,
-      optional: true,
       serverName: "authorized_datetime",
-      type: "string",
     },
     category: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "category"
       >,
-      optional: true,
-      type: "json",
     },
     categoryId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "categoryId"
       >,
-      optional: true,
       serverName: "category_id",
-      type: "string",
     },
     checkNumber: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "checkNumber"
       >,
-      optional: true,
       serverName: "check_number",
-      type: "string",
     },
     counterparties: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "counterparties"
       >,
-      optional: true,
-      type: "json",
     },
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     date: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "date"
       >,
-      optional: false,
-      type: "number",
     },
     datetime: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "datetime"
       >,
-      optional: true,
-      type: "string",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     isoCurrencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "isoCurrencyCode"
       >,
-      optional: true,
       serverName: "iso_currency_code",
-      type: "string",
     },
     location: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "location"
       >,
-      optional: true,
-      type: "json",
     },
     logoUrl: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "logoUrl"
       >,
-      optional: true,
       serverName: "logo_url",
-      type: "string",
     },
     merchantEntityId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "merchantEntityId"
       >,
-      optional: true,
       serverName: "merchant_entity_id",
-      type: "string",
     },
     merchantName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "merchantName"
       >,
-      optional: true,
       serverName: "merchant_name",
-      type: "string",
     },
     name: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "name"
       >,
-      optional: false,
-      type: "string",
     },
     originalDescription: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "originalDescription"
       >,
-      optional: true,
       serverName: "original_description",
-      type: "string",
     },
     paymentChannel: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "paymentChannel"
       >,
-      optional: true,
       serverName: "payment_channel",
-      type: "string",
     },
     paymentMeta: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "paymentMeta"
       >,
-      optional: true,
       serverName: "payment_meta",
-      type: "json",
     },
     pending: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "pending"
       >,
-      optional: true,
-      type: "boolean",
     },
     pendingTransactionId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "pendingTransactionId"
       >,
-      optional: true,
       serverName: "pending_transaction_id",
-      type: "string",
     },
     personalFinanceCategory: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "personalFinanceCategory"
       >,
-      optional: true,
       serverName: "personal_finance_category",
-      type: "json",
     },
     personalFinanceCategoryIconUrl: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "personalFinanceCategoryIconUrl"
       >,
-      optional: true,
       serverName: "personal_finance_category_icon_url",
-      type: "string",
     },
     plaidAccountId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "plaidAccountId"
       >,
-      optional: false,
       serverName: "plaid_account_id",
-      type: "string",
     },
     plaidTransactionId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "plaidTransactionId"
       >,
-      optional: false,
       serverName: "plaid_transaction_id",
-      type: "string",
     },
     transactionCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "transactionCode"
       >,
-      optional: true,
       serverName: "transaction_code",
-      type: "string",
     },
     transactionType: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "transactionType"
       >,
-      optional: true,
       serverName: "transaction_type",
-      type: "string",
     },
     unofficialCurrencyCode: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "unofficialCurrencyCode"
       >,
-      optional: true,
       serverName: "unofficial_currency_code",
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     userOverrideCategory: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "userOverrideCategory"
       >,
-      optional: true,
       serverName: "user_override_category",
-      type: "json",
     },
     userOverrideDate: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "userOverrideDate"
       >,
-      optional: true,
       serverName: "user_override_date",
-      type: "number",
     },
     userOverrideName: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "userOverrideName"
       >,
-      optional: true,
       serverName: "user_override_name",
-      type: "string",
     },
     website: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "transaction",
         "website"
       >,
-      optional: true,
-      type: "string",
     },
   },
-  name: "transaction",
   primaryKey: ["id"],
 } as const;
 const userTable = {
+  name: "user",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "user",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     email: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "user",
         "email"
       >,
-      optional: true,
-      type: "string",
     },
     emailVerified: {
+      type: "boolean",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "user",
         "emailVerified"
       >,
-      optional: true,
       serverName: "email_verified",
-      type: "boolean",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "user",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     image: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "user",
         "image"
       >,
-      optional: true,
-      type: "string",
     },
     lastSeenAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "user",
         "lastSeenAt"
       >,
-      optional: true,
       serverName: "last_seen_at",
-      type: "number",
     },
     name: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "user",
         "name"
       >,
-      optional: false,
-      type: "string",
     },
     stripeCustomerId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "user",
         "stripeCustomerId"
       >,
-      optional: true,
       serverName: "stripe_customer_id",
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "user",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
   },
-  name: "user",
   primaryKey: ["id"],
 } as const;
 const userAlertsTable = {
+  name: "userAlerts",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "userAlerts",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "userAlerts",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     message: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "userAlerts",
         "message"
       >,
-      optional: true,
-      type: "string",
     },
     metadata: {
+      type: "json",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "userAlerts",
         "metadata"
       >,
-      optional: true,
-      type: "json",
     },
     resolvedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "userAlerts",
         "resolvedAt"
       >,
-      optional: true,
       serverName: "resolved_at",
-      type: "number",
     },
     source: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "userAlerts",
         "source"
       >,
-      optional: false,
-      type: "string",
     },
     sourceId: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "userAlerts",
         "sourceId"
       >,
-      optional: true,
       serverName: "source_id",
-      type: "string",
     },
     status: {
+      type: "string",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "userAlerts",
         "status"
       >,
-      optional: true,
-      type: "string",
     },
     title: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "userAlerts",
         "title"
       >,
-      optional: false,
-      type: "string",
     },
     type: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "userAlerts",
         "type"
       >,
-      optional: false,
-      type: "string",
     },
     userId: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "userAlerts",
         "userId"
       >,
-      optional: false,
       serverName: "user_id",
-      type: "string",
     },
   },
-  name: "userAlerts",
   primaryKey: ["id"],
   serverName: "user_alerts",
 } as const;
 const verificationTable = {
+  name: "verification",
   columns: {
     createdAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "verification",
         "createdAt"
       >,
-      optional: true,
       serverName: "created_at",
-      type: "number",
     },
     expiresAt: {
+      type: "number",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "verification",
         "expiresAt"
       >,
-      optional: false,
       serverName: "expires_at",
-      type: "number",
     },
     id: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "verification",
         "id"
       >,
-      optional: false,
-      type: "string",
     },
     identifier: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "verification",
         "identifier"
       >,
-      optional: false,
-      type: "string",
     },
     updatedAt: {
+      type: "number",
+      optional: true,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "verification",
         "updatedAt"
       >,
-      optional: true,
       serverName: "updated_at",
-      type: "number",
     },
     value: {
+      type: "string",
+      optional: false,
       customType: null as unknown as CustomType<
         typeof drizzleSchema,
         "verification",
         "value"
       >,
-      optional: false,
-      type: "string",
     },
   },
-  name: "verification",
   primaryKey: ["id"],
 } as const;
 const accountRelationships = {
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const bankAccountRelationships = {
   balanceSnapshots: [
     {
-      cardinality: "many",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "bankBalanceSnapshot",
-      sourceField: ["plaidAccountId"],
+      cardinality: "many",
     },
   ],
   balances: [
     {
-      cardinality: "many",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "bankBalance",
-      sourceField: ["plaidAccountId"],
+      cardinality: "many",
     },
   ],
   connection: [
     {
-      cardinality: "one",
+      sourceField: ["plaidItemId"],
       destField: ["plaidItemId"],
       destSchema: "bankConnection",
-      sourceField: ["plaidItemId"],
+      cardinality: "one",
     },
   ],
   creditLiability: [
     {
-      cardinality: "many",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "creditLiability",
-      sourceField: ["plaidAccountId"],
+      cardinality: "many",
     },
   ],
   investmentActivities: [
     {
-      cardinality: "many",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "investmentActivity",
-      sourceField: ["plaidAccountId"],
+      cardinality: "many",
     },
   ],
   investmentPositions: [
     {
-      cardinality: "many",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "investmentPosition",
-      sourceField: ["plaidAccountId"],
+      cardinality: "many",
     },
   ],
   mortgageLiability: [
     {
-      cardinality: "many",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "mortgageLiability",
-      sourceField: ["plaidAccountId"],
+      cardinality: "many",
     },
   ],
   recurringStreams: [
     {
-      cardinality: "many",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "recurringStream",
-      sourceField: ["plaidAccountId"],
+      cardinality: "many",
     },
   ],
   studentLoanLiability: [
     {
-      cardinality: "many",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "studentLoanLiability",
-      sourceField: ["plaidAccountId"],
+      cardinality: "many",
     },
   ],
   transactions: [
     {
-      cardinality: "many",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "transaction",
-      sourceField: ["plaidAccountId"],
+      cardinality: "many",
     },
   ],
 } as const;
 const bankBalanceRelationships = {
   account: [
     {
-      cardinality: "one",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "bankAccount",
-      sourceField: ["plaidAccountId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const bankBalanceSnapshotRelationships = {
   account: [
     {
-      cardinality: "one",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "bankAccount",
-      sourceField: ["plaidAccountId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const bankConnectionRelationships = {
   accounts: [
     {
-      cardinality: "many",
+      sourceField: ["plaidItemId"],
       destField: ["plaidItemId"],
       destSchema: "bankAccount",
-      sourceField: ["plaidItemId"],
+      cardinality: "many",
     },
   ],
   institution: [
     {
-      cardinality: "one",
+      sourceField: ["institutionId"],
       destField: ["plaidInstitutionId"],
       destSchema: "institution",
-      sourceField: ["institutionId"],
+      cardinality: "one",
     },
   ],
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const brokerageAccountDetailsRelationships = {
   brokerageAccount: [
     {
-      cardinality: "one",
+      sourceField: ["accountId"],
       destField: ["id"],
       destSchema: "brokerageAccounts",
-      sourceField: ["accountId"],
+      cardinality: "one",
     },
   ],
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const brokerageAccountsRelationships = {
   accountDetails: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["accountId"],
       destSchema: "brokerageAccountDetails",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   activities: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["accountId"],
       destSchema: "brokerageActivities",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   balances: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["accountId"],
       destSchema: "brokerageBalances",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   brokerageAuthorization: [
     {
-      cardinality: "one",
+      sourceField: ["brokerageAuthId"],
       destField: ["id"],
       destSchema: "brokerageAuthorizations",
-      sourceField: ["brokerageAuthId"],
+      cardinality: "one",
     },
   ],
   orders: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["accountId"],
       destSchema: "brokerageOrders",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   positions: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["accountId"],
       destSchema: "brokeragePositions",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const brokerageActivitiesRelationships = {
   brokerageAccount: [
     {
-      cardinality: "one",
+      sourceField: ["accountId"],
       destField: ["id"],
       destSchema: "brokerageAccounts",
-      sourceField: ["accountId"],
+      cardinality: "one",
     },
   ],
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const brokerageAuthorizationsRelationships = {
   brokerageAccounts: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["brokerageAuthId"],
       destSchema: "brokerageAccounts",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   brokerageUser: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["userId"],
       destSchema: "brokerageUser",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const brokerageBalancesRelationships = {
   brokerageAccount: [
     {
-      cardinality: "one",
+      sourceField: ["accountId"],
       destField: ["id"],
       destSchema: "brokerageAccounts",
-      sourceField: ["accountId"],
+      cardinality: "one",
     },
   ],
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const brokerageOrdersRelationships = {
   brokerageAccount: [
     {
-      cardinality: "one",
+      sourceField: ["accountId"],
       destField: ["id"],
       destSchema: "brokerageAccounts",
-      sourceField: ["accountId"],
+      cardinality: "one",
     },
   ],
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const brokeragePositionsRelationships = {
   brokerageAccount: [
     {
-      cardinality: "one",
+      sourceField: ["accountId"],
       destField: ["id"],
       destSchema: "brokerageAccounts",
-      sourceField: ["accountId"],
+      cardinality: "one",
     },
   ],
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const brokerageUserRelationships = {
   brokerageAuthorizations: [
     {
-      cardinality: "many",
+      sourceField: ["userId"],
       destField: ["userId"],
       destSchema: "brokerageAuthorizations",
-      sourceField: ["userId"],
+      cardinality: "many",
     },
   ],
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const chatsRelationships = {
   messages: [
     {
-      cardinality: "many",
+      sourceField: ["chatId"],
       destField: ["chatId"],
       destSchema: "messages",
-      sourceField: ["chatId"],
+      cardinality: "many",
     },
   ],
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const creditLiabilityRelationships = {
   account: [
     {
-      cardinality: "one",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "bankAccount",
-      sourceField: ["plaidAccountId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const eventArticlesRelationships = {
   financialEvent: [
     {
-      cardinality: "one",
+      sourceField: ["financialEventId"],
       destField: ["id"],
       destSchema: "financialEvents",
-      sourceField: ["financialEventId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const feedbackRelationships = {
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const financialEventsRelationships = {
   articles: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["financialEventId"],
       destSchema: "eventArticles",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
 } as const;
 const financialGoalsRelationships = {
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const investmentActivityRelationships = {
   account: [
     {
-      cardinality: "one",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "bankAccount",
-      sourceField: ["plaidAccountId"],
+      cardinality: "one",
     },
   ],
   security: [
     {
-      cardinality: "one",
+      sourceField: ["securityId"],
       destField: ["securityId"],
       destSchema: "investmentSecurity",
-      sourceField: ["securityId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const investmentPositionRelationships = {
   account: [
     {
-      cardinality: "one",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "bankAccount",
-      sourceField: ["plaidAccountId"],
+      cardinality: "one",
     },
   ],
   security: [
     {
-      cardinality: "one",
+      sourceField: ["securityId"],
       destField: ["securityId"],
       destSchema: "investmentSecurity",
-      sourceField: ["securityId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const investmentSecurityRelationships = {
   activities: [
     {
-      cardinality: "many",
+      sourceField: ["securityId"],
       destField: ["securityId"],
       destSchema: "investmentActivity",
-      sourceField: ["securityId"],
+      cardinality: "many",
     },
   ],
   positions: [
     {
-      cardinality: "many",
+      sourceField: ["securityId"],
       destField: ["securityId"],
       destSchema: "investmentPosition",
-      sourceField: ["securityId"],
+      cardinality: "many",
     },
   ],
 } as const;
 const kalshiUsersRelationships = {
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const messageVotesRelationships = {
   message: [
     {
-      cardinality: "one",
+      sourceField: ["messageId"],
       destField: ["messageId"],
       destSchema: "messages",
-      sourceField: ["messageId"],
+      cardinality: "one",
     },
   ],
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const messagesRelationships = {
   chat: [
     {
-      cardinality: "one",
+      sourceField: ["chatId"],
       destField: ["chatId"],
       destSchema: "chats",
-      sourceField: ["chatId"],
+      cardinality: "one",
     },
   ],
   parts: [
     {
-      cardinality: "many",
+      sourceField: ["messageId"],
       destField: ["messageId"],
       destSchema: "parts",
-      sourceField: ["messageId"],
+      cardinality: "many",
     },
   ],
   votes: [
     {
-      cardinality: "many",
+      sourceField: ["messageId"],
       destField: ["messageId"],
       destSchema: "messageVotes",
-      sourceField: ["messageId"],
+      cardinality: "many",
     },
   ],
 } as const;
 const mobileSubscriptionRelationships = {
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const mortgageLiabilityRelationships = {
   account: [
     {
-      cardinality: "one",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "bankAccount",
-      sourceField: ["plaidAccountId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const partsRelationships = {
   message: [
     {
-      cardinality: "one",
+      sourceField: ["messageId"],
       destField: ["messageId"],
       destSchema: "messages",
-      sourceField: ["messageId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const portfolioSnapshotsRelationships = {
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const recurringStreamRelationships = {
   account: [
     {
-      cardinality: "one",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "bankAccount",
-      sourceField: ["plaidAccountId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const sessionRelationships = {
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const studentLoanLiabilityRelationships = {
   account: [
     {
-      cardinality: "one",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "bankAccount",
-      sourceField: ["plaidAccountId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const subscriptionRelationships = {
   user: [
     {
-      cardinality: "one",
+      sourceField: ["referenceId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["referenceId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const transactionRelationships = {
   account: [
     {
-      cardinality: "one",
+      sourceField: ["plaidAccountId"],
       destField: ["plaidAccountId"],
       destSchema: "bankAccount",
-      sourceField: ["plaidAccountId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const userAlertsRelationships = {
   user: [
     {
-      cardinality: "one",
+      sourceField: ["userId"],
       destField: ["id"],
       destSchema: "user",
-      sourceField: ["userId"],
+      cardinality: "one",
     },
   ],
 } as const;
 const userRelationships = {
   accounts: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "account",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   bankConnections: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "bankConnection",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   brokerageAccountDetails: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "brokerageAccountDetails",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   brokerageAccounts: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "brokerageAccounts",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   brokerageActivities: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "brokerageActivities",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   brokerageAuthorizations: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "brokerageAuthorizations",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   brokerageBalances: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "brokerageBalances",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   brokerageOrders: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "brokerageOrders",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   brokeragePositions: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "brokeragePositions",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   brokerageUser: [
     {
-      cardinality: "one",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "brokerageUser",
-      sourceField: ["id"],
+      cardinality: "one",
     },
   ],
   chats: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "chats",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   feedback: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "feedback",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   financialGoals: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "financialGoals",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   kalshiUser: [
     {
-      cardinality: "one",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "kalshiUsers",
-      sourceField: ["id"],
+      cardinality: "one",
     },
   ],
   messageVotes: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "messageVotes",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   mobileSubscriptions: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "mobileSubscription",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   portfolioSnapshots: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "portfolioSnapshots",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   sessions: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "session",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   subscriptions: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["referenceId"],
       destSchema: "subscription",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
   userAlerts: [
     {
-      cardinality: "many",
+      sourceField: ["id"],
       destField: ["userId"],
       destSchema: "userAlerts",
-      sourceField: ["id"],
+      cardinality: "many",
     },
   ],
 } as const;
@@ -6953,46 +6953,6 @@ const userRelationships = {
  * This type is auto-generated from your Drizzle schema definition.
  */
 export const schema = {
-  enableLegacyMutators: false,
-  enableLegacyQueries: false,
-  relationships: {
-    account: accountRelationships,
-    bankAccount: bankAccountRelationships,
-    bankBalance: bankBalanceRelationships,
-    bankBalanceSnapshot: bankBalanceSnapshotRelationships,
-    bankConnection: bankConnectionRelationships,
-    brokerageAccountDetails: brokerageAccountDetailsRelationships,
-    brokerageAccounts: brokerageAccountsRelationships,
-    brokerageActivities: brokerageActivitiesRelationships,
-    brokerageAuthorizations: brokerageAuthorizationsRelationships,
-    brokerageBalances: brokerageBalancesRelationships,
-    brokerageOrders: brokerageOrdersRelationships,
-    brokeragePositions: brokeragePositionsRelationships,
-    brokerageUser: brokerageUserRelationships,
-    chats: chatsRelationships,
-    creditLiability: creditLiabilityRelationships,
-    eventArticles: eventArticlesRelationships,
-    feedback: feedbackRelationships,
-    financialEvents: financialEventsRelationships,
-    financialGoals: financialGoalsRelationships,
-    investmentActivity: investmentActivityRelationships,
-    investmentPosition: investmentPositionRelationships,
-    investmentSecurity: investmentSecurityRelationships,
-    kalshiUsers: kalshiUsersRelationships,
-    messageVotes: messageVotesRelationships,
-    messages: messagesRelationships,
-    mobileSubscription: mobileSubscriptionRelationships,
-    mortgageLiability: mortgageLiabilityRelationships,
-    parts: partsRelationships,
-    portfolioSnapshots: portfolioSnapshotsRelationships,
-    recurringStream: recurringStreamRelationships,
-    session: sessionRelationships,
-    studentLoanLiability: studentLoanLiabilityRelationships,
-    subscription: subscriptionRelationships,
-    transaction: transactionRelationships,
-    user: userRelationships,
-    userAlerts: userAlertsRelationships,
-  },
   tables: {
     account: accountTable,
     bankAccount: bankAccountTable,
@@ -7035,6 +6995,46 @@ export const schema = {
     userAlerts: userAlertsTable,
     verification: verificationTable,
   },
+  relationships: {
+    account: accountRelationships,
+    bankAccount: bankAccountRelationships,
+    bankBalance: bankBalanceRelationships,
+    bankBalanceSnapshot: bankBalanceSnapshotRelationships,
+    bankConnection: bankConnectionRelationships,
+    brokerageAccountDetails: brokerageAccountDetailsRelationships,
+    brokerageAccounts: brokerageAccountsRelationships,
+    brokerageActivities: brokerageActivitiesRelationships,
+    brokerageAuthorizations: brokerageAuthorizationsRelationships,
+    brokerageBalances: brokerageBalancesRelationships,
+    brokerageOrders: brokerageOrdersRelationships,
+    brokeragePositions: brokeragePositionsRelationships,
+    brokerageUser: brokerageUserRelationships,
+    chats: chatsRelationships,
+    creditLiability: creditLiabilityRelationships,
+    eventArticles: eventArticlesRelationships,
+    feedback: feedbackRelationships,
+    financialEvents: financialEventsRelationships,
+    financialGoals: financialGoalsRelationships,
+    investmentActivity: investmentActivityRelationships,
+    investmentPosition: investmentPositionRelationships,
+    investmentSecurity: investmentSecurityRelationships,
+    kalshiUsers: kalshiUsersRelationships,
+    messageVotes: messageVotesRelationships,
+    messages: messagesRelationships,
+    mobileSubscription: mobileSubscriptionRelationships,
+    mortgageLiability: mortgageLiabilityRelationships,
+    parts: partsRelationships,
+    portfolioSnapshots: portfolioSnapshotsRelationships,
+    recurringStream: recurringStreamRelationships,
+    session: sessionRelationships,
+    studentLoanLiability: studentLoanLiabilityRelationships,
+    subscription: subscriptionRelationships,
+    transaction: transactionRelationships,
+    userAlerts: userAlertsRelationships,
+    user: userRelationships,
+  },
+  enableLegacyQueries: false,
+  enableLegacyMutators: false,
 } as const;
 
 /**

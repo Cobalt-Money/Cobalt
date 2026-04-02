@@ -8,9 +8,10 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { appFullAccess, agentSelectPublic } from "../../rls";
 import type { StringArrayJson } from "./zod";
 
-export const institution = pgTable(
+export const institution = pgTable.withRLS(
   "institution",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -31,6 +32,8 @@ export const institution = pgTable(
   (table) => [
     index("institution_provider_id_idx").on(table.plaidInstitutionId),
     index("institution_name_idx").on(table.name),
+    appFullAccess(),
+    agentSelectPublic(),
   ]
 );
 

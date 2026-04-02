@@ -1,9 +1,10 @@
 import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
+import { appFullAccess, agentSelectOwn } from "../rls";
 
 // Brokerage user credentials - one per app user
-export const brokerageUser = pgTable(
+export const brokerageUser = pgTable.withRLS(
   "brokerage_user",
   {
     createdAt: timestamp("created_at")
@@ -18,6 +19,8 @@ export const brokerageUser = pgTable(
   },
   (table) => [
     index("brokerage_user_snaptrade_user_id_idx").on(table.providerUserId),
+    appFullAccess(),
+    agentSelectOwn("user_id"),
   ]
 );
 

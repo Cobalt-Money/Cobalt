@@ -1,8 +1,9 @@
 import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
+import { appFullAccess } from "../rls";
 
-export const kalshiUsers = pgTable(
+export const kalshiUsers = pgTable.withRLS(
   "kalshi_users",
   {
     apiKeyId: varchar("api_key_id").notNull(),
@@ -19,7 +20,10 @@ export const kalshiUsers = pgTable(
       .primaryKey()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => [index("kalshi_users_api_key_id_idx").on(table.apiKeyId)]
+  (table) => [
+    index("kalshi_users_api_key_id_idx").on(table.apiKeyId),
+    appFullAccess(),
+  ]
 );
 
 // Type exports
