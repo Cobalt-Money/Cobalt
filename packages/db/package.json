@@ -25,7 +25,8 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "migrate:debug": "bun run ./scripts/migrate-debug.ts"
   },
   "dependencies": {
     "@cobalt-web/env": "workspace:*",

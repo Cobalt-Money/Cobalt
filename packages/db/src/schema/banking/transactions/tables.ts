@@ -11,6 +11,7 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
+import { appFullAccess, agentSelectViaBankAccount } from "../../rls";
 import { bankAccount } from "../accounts";
 import type {
   CounterpartiesArrayJson,
@@ -23,7 +24,7 @@ import type {
 } from "./zod";
 
 // Transactions (posted and pending)
-export const transaction = pgTable(
+export const transaction = pgTable.withRLS(
   "transaction",
   {
     accountOwner: text("account_owner"),
@@ -78,11 +79,13 @@ export const transaction = pgTable(
     index("transaction_account_date_idx").on(table.plaidAccountId, table.date),
     index("transaction_pending_idx").on(table.pending),
     index("transaction_date_pending_idx").on(table.date, table.pending),
+    appFullAccess(),
+    agentSelectViaBankAccount(table.plaidAccountId),
   ]
 );
 
 // Recurring Transactions
-export const recurringStream = pgTable(
+export const recurringStream = pgTable.withRLS(
   "recurring_stream",
   {
     averageAmount: real("average_amount").notNull(),
@@ -131,6 +134,8 @@ export const recurringStream = pgTable(
       table.lastDate,
       table.streamType
     ),
+    appFullAccess(),
+    agentSelectViaBankAccount(table.plaidAccountId),
   ]
 );
 

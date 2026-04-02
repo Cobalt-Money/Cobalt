@@ -9,9 +9,10 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
+import { appFullAccess, agentSelectOwn } from "../rls";
 import { brokerageAuthorizations } from "./auth";
 
-export const brokerageAccounts = pgTable(
+export const brokerageAccounts = pgTable.withRLS(
   "brokerage_account",
   {
     accountId: varchar("account_id").notNull().unique(),
@@ -48,10 +49,12 @@ export const brokerageAccounts = pgTable(
     index("brokerage_account_account_id_idx").on(table.accountId),
     index("brokerage_account_sync_status_idx").on(table.syncStatus),
     index("brokerage_account_account_status_idx").on(table.accountStatus),
+    appFullAccess(),
+    agentSelectOwn("user_id"),
   ]
 );
 
-export const brokerageAccountDetails = pgTable(
+export const brokerageAccountDetails = pgTable.withRLS(
   "brokerage_account_detail",
   {
     accountId: uuid("account_id")
@@ -92,6 +95,8 @@ export const brokerageAccountDetails = pgTable(
     index("brokerage_account_detail_brokerage_authorization_id_idx").on(
       table.brokerageAuthorizationId
     ),
+    appFullAccess(),
+    agentSelectOwn("user_id"),
   ]
 );
 

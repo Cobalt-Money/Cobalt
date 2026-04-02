@@ -24,7 +24,8 @@ src/
 - Add new domains as `src/<domain>/lib.ts` + `src/<domain>/queries.ts`, then register them in `queries.ts`
 - Optional deep imports: `@cobalt-web/zero/transactions/queries` (same pattern as `@cobalt-web/server-data/transactions/*`)
 - The Zero schema mirrors the Drizzle schema in `@cobalt-web/db` — keep them in sync
-- After any Drizzle schema change, regenerate: `cd packages/zero && bun run generate:zero`. Stale `zero-schema.gen.ts` causes `SchemaVersionNotSupported` in zero-cache (e.g. client expects columns that Postgres replication does not publish).
+- After any Drizzle schema change, regenerate from the repo root: `bun zero:generate`. Stale `zero-schema.gen.ts` causes `SchemaVersionNotSupported` in zero-cache (e.g. client expects columns that Postgres replication does not publish).
+- End-to-end order (local or prod): apply Drizzle migrations → run `bun zero:generate` → deploy code → restart zero-cache as needed — see **[`docs/local-sync/workflow.md`](../../docs/local-sync/workflow.md#drizzle-zero-schema-generation)**.
 - Zero client is initialized in `apps/web/src/lib/zero-client.tsx`
 - Zero push endpoint is in `apps/server/src/index.ts`
 - For **additional Zero patterns** outside this package, see the **ztunes** sample at [`.sandbox/ztunes`](../../.sandbox/ztunes) (sandbox app, not a workspace package by default).

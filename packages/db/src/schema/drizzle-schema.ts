@@ -1,7 +1,7 @@
 // Barrel file for drizzle-zero — named exports of all tables and relations.
 // drizzle-zero requires a single TS file (not a folder) for type resolution.
 
-// Tables
+// Tables (omit oauth* + jwks from auth/auth — server-only; not in Postgres replication publication)
 export {
   user,
   session,

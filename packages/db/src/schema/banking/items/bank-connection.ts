@@ -9,9 +9,10 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../../auth/auth";
+import { appFullAccess, agentSelectOwn } from "../../rls";
 import type { PlaidItemErrorJson, StringArrayJson } from "./zod";
 
-export const bankConnection = pgTable(
+export const bankConnection = pgTable.withRLS(
   "bank_connection",
   {
     availableProducts: jsonb("available_products").$type<StringArrayJson>(),
@@ -45,6 +46,8 @@ export const bankConnection = pgTable(
       table.userId,
       table.institutionId
     ),
+    appFullAccess(),
+    agentSelectOwn("user_id"),
   ]
 );
 

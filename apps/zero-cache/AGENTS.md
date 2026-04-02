@@ -30,3 +30,4 @@ After `compose:up` (or local `bun run dev` for zero-cache-dev):
 
 - [Deploying Zero](https://zero.rocicorp.dev/docs/deployment)
 - [zero-cache configuration](https://zero.rocicorp.dev/docs/zero-cache-config)
+- After **Drizzle** schema changes, regenerate **`packages/zero/src/zero-schema.gen.ts`** with `bun zero:generate` (repo root) — see [`docs/local-sync/workflow.md`](../../docs/local-sync/workflow.md#drizzle-zero-schema-generation).

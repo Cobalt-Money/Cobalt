@@ -12,9 +12,10 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
+import { appFullAccess, agentSelectOwn } from "../rls";
 import { brokerageAccounts } from "./accounts";
 
-export const brokerageOrders = pgTable(
+export const brokerageOrders = pgTable.withRLS(
   "brokerage_order",
   {
     accountId: uuid("account_id")
@@ -99,10 +100,12 @@ export const brokerageOrders = pgTable(
     index("brokerage_order_status_idx").on(table.status),
     index("brokerage_order_symbol_idx").on(table.symbol),
     index("brokerage_order_time_placed_idx").on(table.timePlaced),
+    appFullAccess(),
+    agentSelectOwn("user_id"),
   ]
 );
 
-export const brokerageActivities = pgTable(
+export const brokerageActivities = pgTable.withRLS(
   "brokerage_activity",
   {
     accountId: uuid("account_id")
@@ -180,6 +183,8 @@ export const brokerageActivities = pgTable(
       table.userId,
       table.tradeDate
     ),
+    appFullAccess(),
+    agentSelectOwn("user_id"),
   ]
 );
 

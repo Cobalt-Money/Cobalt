@@ -12,11 +12,13 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.136",
+    "@cobalt-web/env": "workspace:*",
     "@openrouter/ai-sdk-provider": "^2.3.3",
     "@radix-ui/react-presence": "^1.1.5",
     "@takumi-rs/image-response": "^0.73.1",
     "ai": "^6.0.134",
     "class-variance-authority": "^0.7.1",
+    "dotenv": "catalog:",
     "flexsearch": "^0.8.212",
     "fumadocs-core": "16.7.5",
     "fumadocs-mdx": "14.2.11",

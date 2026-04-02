@@ -10,7 +10,12 @@ src/
   schema/
     auth.ts       — Database schema definitions (auth tables)
   migrations/     — Drizzle-generated migration files
-drizzle.config.ts — Drizzle Kit config (PostgreSQL; paths resolved from this file so `out` / `schema` work from any cwd; loads `DATABASE_URL` from `apps/server/.env`). `apps/web/drizzle.config.ts` re-exports this package for convenience.
+planetscale/
+  local-bootstrap.sql — Create pg_read_all_data / pg_write_all_data before RLS migrations
+  local-grants.sql    — Table grants + app_local / agent_local after migrations
+drizzle.config.ts — Drizzle Kit config (PostgreSQL; paths resolved from this file so `out` / `schema` work from any cwd; loads `apps/server/.env` then `@cobalt-web/env/server`). `apps/web/drizzle.config.ts` re-exports this package for convenience.
+
+Local Postgres (Docker): repo root `docker-compose.local-db.yml`, **`docs/local-sync/`**, and **`planetscale/README.md`** (role bootstrap order: `bun db:local:init` → migrate → `bun db:local:grants`).
 ```
 
 ## Conventions

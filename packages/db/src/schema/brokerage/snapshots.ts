@@ -13,9 +13,10 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
+import { appFullAccess, agentSelectOwn } from "../rls";
 
 // Portfolio Snapshots - stores daily account balance snapshots for historical charting
-export const portfolioSnapshots = pgTable(
+export const portfolioSnapshots = pgTable.withRLS(
   "portfolio_snapshot",
   {
     accountId: varchar("account_id").notNull(),
@@ -58,6 +59,8 @@ export const portfolioSnapshots = pgTable(
       table.accountId,
       table.snapshotDate
     ),
+    appFullAccess(),
+    agentSelectOwn("user_id"),
   ]
 );
 

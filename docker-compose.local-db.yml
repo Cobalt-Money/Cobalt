@@ -1,0 +1,20 @@
+# Local PostgreSQL for development. See docs/local-sync/README.md
+# Fixed project name so all Git worktrees share the same volume + port (not the folder name).
+name: cobalt-local-db
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cobalt
+    # PG 18+ images: mount parent dir (data lives in a versioned subdir). See docker-library/postgres#1259.
+    volumes:
+      - cobalt_pgdata:/var/lib/postgresql
+
+volumes:
+  cobalt_pgdata:

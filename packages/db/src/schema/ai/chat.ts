@@ -11,9 +11,10 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
+import { appFullAccess } from "../rls";
 
 // Chat tables
-export const chats = pgTable(
+export const chats = pgTable.withRLS(
   "chats",
   {
     chatId: varchar("chat_id").primaryKey(),
@@ -31,10 +32,11 @@ export const chats = pgTable(
     index("chats_user_id_idx").on(table.userId),
     index("chats_updated_at_idx").on(table.updatedAt),
     index("chats_chat_id_updated_at_idx").on(table.chatId, table.updatedAt),
+    appFullAccess(),
   ]
 );
 
-export const messages = pgTable(
+export const messages = pgTable.withRLS(
   "messages",
   {
     chatId: varchar("chat_id")
@@ -47,10 +49,11 @@ export const messages = pgTable(
   (table) => [
     index("messages_chat_id_idx").on(table.chatId),
     index("messages_chat_id_created_at_idx").on(table.chatId, table.createdAt),
+    appFullAccess(),
   ]
 );
 
-export const parts = pgTable(
+export const parts = pgTable.withRLS(
   "parts",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -104,6 +107,7 @@ export const parts = pgTable(
       "source_document_fields_required_if_type_is_source_document",
       sql`CASE WHEN ${t.type} = 'source_document' THEN ${t.source_document_sourceId} IS NOT NULL AND ${t.source_document_mediaType} IS NOT NULL AND ${t.source_document_title} IS NOT NULL ELSE TRUE END`
     ),
+    appFullAccess(),
   ]
 );
 

@@ -18,13 +18,7 @@ function AiChatIndex() {
       <ConversationContent>
         <ConversationEmptyState
           description="Select a chat from the sidebar or start a new conversation"
-          icon={
-            <HugeiconsIcon
-              className="size-8"
-              icon={AiChat02Icon}
-              strokeWidth={2}
-            />
-          }
+          icon={<HugeiconsIcon className="size-8" icon={AiChat02Icon} />}
           title="Welcome to AI Chat"
         />
       </ConversationContent>

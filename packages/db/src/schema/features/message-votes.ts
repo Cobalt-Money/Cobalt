@@ -10,8 +10,9 @@ import {
 
 import { messages } from "../ai/chat";
 import { user } from "../auth/auth";
+import { appFullAccess } from "../rls";
 
-export const messageVotes = pgTable(
+export const messageVotes = pgTable.withRLS(
   "message_votes",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -35,6 +36,7 @@ export const messageVotes = pgTable(
     ),
     index("message_votes_user_id_idx").on(table.userId),
     index("message_votes_message_id_idx").on(table.messageId),
+    appFullAccess(),
   ]
 );
 

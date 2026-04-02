@@ -11,10 +11,15 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 
+import {
+  appFullAccess,
+  agentSelectPublic,
+  agentSelectViaBankAccount,
+} from "../rls";
 import { bankAccount } from "./accounts";
 
 // Investment Securities
-export const investmentSecurity = pgTable(
+export const investmentSecurity = pgTable.withRLS(
   "investment_security",
   {
     closePrice: real("close_price"),
@@ -61,11 +66,13 @@ export const investmentSecurity = pgTable(
     index("investment_security_ticker_idx").on(table.tickerSymbol),
     index("investment_security_type_idx").on(table.type),
     index("investment_security_sector_idx").on(table.sector),
+    appFullAccess(),
+    agentSelectPublic(),
   ]
 );
 
 // Investment Holdings
-export const investmentPosition = pgTable(
+export const investmentPosition = pgTable.withRLS(
   "investment_position",
   {
     costBasis: real("cost_basis"),
@@ -106,11 +113,13 @@ export const investmentPosition = pgTable(
       table.plaidAccountId,
       table.securityId
     ),
+    appFullAccess(),
+    agentSelectViaBankAccount(table.plaidAccountId),
   ]
 );
 
 // Investment Transactions
-export const investmentActivity = pgTable(
+export const investmentActivity = pgTable.withRLS(
   "investment_activity",
   {
     amount: real("amount").notNull(),
@@ -153,6 +162,8 @@ export const investmentActivity = pgTable(
     ),
     index("investment_activity_security_idx").on(table.securityId),
     index("investment_activity_type_idx").on(table.type),
+    appFullAccess(),
+    agentSelectViaBankAccount(table.plaidAccountId),
   ]
 );
 

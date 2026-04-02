@@ -36,6 +36,11 @@
       "sourceType": "github",
       "computedHash": "c7a4ae9efeb7ef47c6473ee4d636fced825a0c26b25372a49417075f6d566af6"
     },
+    "mcp-builder": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "fc68038c900eb801f73ff96130c9f9dba533cc94212ed8435833242f196dedcf"
+    },
     "postgres": {
       "source": "planetscale/database-skills",
       "sourceType": "github",

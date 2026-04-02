@@ -11,11 +11,18 @@ dotenv.config({
   path: path.resolve(monorepoRoot, "apps/server/.env"),
 });
 
+const { env } = await import("@cobalt-web/env/server");
+
 export default defineConfig({
   dbCredentials: {
-    url: process.env.DATABASE_URL || "",
+    url: env.LOCAL_DATABASE_URL ?? env.MIGRATION_URI,
   },
   dialect: "postgresql",
+  entities: {
+    roles: true,
+  },
   out: path.resolve(__dirname, "src/migrations"),
   schema: path.resolve(__dirname, "src/schema"),
+  strict: true,
+  verbose: true,
 });

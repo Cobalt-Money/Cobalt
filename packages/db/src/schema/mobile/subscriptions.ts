@@ -1,8 +1,9 @@
 import { pgTable, text, timestamp, index } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
+import { appFullAccess, agentSelectOwn } from "../rls";
 
-export const mobileSubscription = pgTable(
+export const mobileSubscription = pgTable.withRLS(
   "mobile_subscription",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -31,6 +32,8 @@ export const mobileSubscription = pgTable(
       table.originalTransactionId
     ),
     index("mobile_subscription_status_idx").on(table.status),
+    appFullAccess(),
+    agentSelectOwn("user_id"),
   ]
 );
 
