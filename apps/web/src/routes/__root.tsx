@@ -11,6 +11,7 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 // import { Agentation } from "agentation";
 
+import { ClientOnly } from "@/components/client-only";
 import { CommandMenu } from "@/components/shell/command-menu";
 
 import { AppSessionProvider } from "../lib/providers/app-session";
@@ -79,17 +80,19 @@ function RootDocument() {
           disableTransitionOnChange
           enableSystem
         >
-          <AppSessionProvider>
-            <ZeroProvider>
-              <TooltipProvider>
-                <div className="flex h-svh min-h-0 flex-col overflow-hidden">
-                  <Outlet />
-                </div>
-                <CommandMenu />
-              </TooltipProvider>
-            </ZeroProvider>
-          </AppSessionProvider>
-          <Toaster richColors />
+          <ClientOnly>
+            <AppSessionProvider>
+              <ZeroProvider>
+                <TooltipProvider>
+                  <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+                    <Outlet />
+                  </div>
+                  <CommandMenu />
+                </TooltipProvider>
+              </ZeroProvider>
+            </AppSessionProvider>
+            <Toaster richColors />
+          </ClientOnly>
         </ThemeProvider>
         {/* {import.meta.env.DEV ? <Agentation /> : null} */}
         {import.meta.env.DEV ? (
