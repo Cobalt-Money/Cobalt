@@ -45,12 +45,12 @@ export const auth = betterAuth({
     },
   },
   advanced: {
-    // `lax` aligns with Zero cookie guidance (avoid `SameSite=None` for WS sync).
-    // If you need cookies across different sites, use subdomain deployment + Better Auth
-    // cross-subdomain cookies instead of `none` here.
+    // `none` required: web app and API server are on different domains, so
+    // cross-origin fetch needs cookies sent. `secure: true` is mandatory with `none`.
+    // See SRI-191 for security audit follow-up.
     defaultCookieAttributes: {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "none",
       secure: true,
     },
   },
