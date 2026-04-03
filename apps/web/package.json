@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "check-types": "tsc --noEmit",
-    "build": "vite build",
+    "build": "vite build && bun run scripts/patch-server-require.ts",
     "start": "vite preview",
     "serve": "vite preview",
     "dev": "vite dev",

@@ -62,14 +62,7 @@ export default defineConfig({
         enabled: true,
       },
     }),
-    nitro({
-      noExternals: [
-        "react",
-        "react-dom",
-        "react/jsx-runtime",
-        "react/jsx-dev-runtime",
-      ],
-    }),
+    nitro({}),
     viteReact(),
   ],
   preview: {
