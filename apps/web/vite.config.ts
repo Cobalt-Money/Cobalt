@@ -53,6 +53,41 @@ function ssrStubPlugin(): Plugin {
   };
 }
 
+/**
+ * Patches CJS `__require("react")` calls in server output bundles.
+ *
+ * CJS packages like `use-sync-external-store` call `require("react")` at
+ * runtime. Rolldown wraps this as `__require("react")` using createRequire,
+ * which fails on Vercel serverless where react isn't in node_modules.
+ *
+ * Each chunk already has a bundled React function (e.g. `require_react` or
+ * `require_react$1`). This plugin finds the correct name and rewrites the
+ * CJS require to use the bundled version.
+ */
+function patchServerRequirePlugin(): Plugin {
+  return {
+    generateBundle(_options, bundle) {
+      for (const chunk of Object.values(bundle)) {
+        if (
+          chunk.type !== "chunk" ||
+          !chunk.code.includes('__require("react")')
+        ) {
+          continue;
+        }
+        // Find the bundled React function name (require_react, require_react$1, etc.)
+        const match = chunk.code.match(/\brequire_react(?:\$\d+)?\b/);
+        if (match) {
+          chunk.code = chunk.code.replaceAll(
+            '__require("react")',
+            `${match[0]}()`
+          );
+        }
+      }
+    },
+    name: "patch-server-require",
+  };
+}
+
 export default defineConfig({
   plugins: [
     tailwindcss(),
@@ -63,6 +98,7 @@ export default defineConfig({
       },
     }),
     nitro({}),
+    patchServerRequirePlugin(),
     viteReact(),
   ],
   preview: {
