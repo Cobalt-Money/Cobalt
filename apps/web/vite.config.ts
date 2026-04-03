@@ -27,8 +27,6 @@ export default defineConfig({
           "@streamdown/mermaid",
           "streamdown",
           "tslib",
-          "react",
-          "react-dom",
         ],
       },
     }),
@@ -56,8 +54,6 @@ export default defineConfig({
       "@streamdown/mermaid",
       "streamdown",
       "tslib",
-      "react",
-      "react-dom",
     ],
   },
 });
