@@ -13,9 +13,14 @@ dotenv.config({
 
 const { env } = await import("@cobalt-web/env/server");
 
+const url = env.LOCAL_DATABASE_URL ?? env.MIGRATION_URI;
+if (!url) {
+  throw new Error("Either LOCAL_DATABASE_URL or MIGRATION_URI must be set");
+}
+
 export default defineConfig({
   dbCredentials: {
-    url: env.LOCAL_DATABASE_URL ?? env.MIGRATION_URI,
+    url,
   },
   dialect: "postgresql",
   entities: {
