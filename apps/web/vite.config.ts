@@ -62,7 +62,14 @@ export default defineConfig({
         enabled: true,
       },
     }),
-    nitro({}),
+    nitro({
+      noExternals: [
+        "react",
+        "react-dom",
+        "react/jsx-runtime",
+        "react/jsx-dev-runtime",
+      ],
+    }),
     viteReact(),
   ],
   preview: {
@@ -73,8 +80,5 @@ export default defineConfig({
   },
   server: {
     port: 3001,
-  },
-  ssr: {
-    external: ["tslib"],
   },
 });
