@@ -45,12 +45,9 @@ export const auth = betterAuth({
     },
   },
   advanced: {
-    // `none` required: web app and API server are on different domains, so
-    // cross-origin fetch needs cookies sent. `secure: true` is mandatory with `none`.
-    // See SRI-191 for security audit follow-up.
     defaultCookieAttributes: {
       httpOnly: true,
-      sameSite: "none",
+      sameSite: "lax",
       secure: true,
     },
   },
