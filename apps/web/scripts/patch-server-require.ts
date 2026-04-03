@@ -7,32 +7,61 @@
  *
  * The bundled React is already available as `require_react()` in the same file,
  * so we just replace the CJS require call with the bundled version.
+ *
+ * Searches both `.output/` (local/default preset) and `.vercel/output/`
+ * (Vercel preset) recursively for .mjs files to patch.
  */
 import fs from "node:fs";
 import path from "node:path";
 
 const scriptDir = path.dirname(new URL(import.meta.url).pathname);
-const ssrDir = path.resolve(scriptDir, "../.output/server/_ssr");
+const appDir = path.resolve(scriptDir, "..");
 
-if (!fs.existsSync(ssrDir)) {
-  console.log("[patch-server-require] No _ssr directory found, skipping.");
-  process.exit(0);
+const searchDirs = [
+  path.join(appDir, ".output"),
+  path.join(appDir, ".vercel", "output"),
+];
+
+function findMjsFiles(dir: string): string[] {
+  const results: string[] = [];
+  if (!fs.existsSync(dir)) {
+    return results;
+  }
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...findMjsFiles(fullPath));
+    } else if (entry.name.endsWith(".mjs")) {
+      results.push(fullPath);
+    }
+  }
+  return results;
 }
 
 let patched = 0;
-for (const file of fs.readdirSync(ssrDir)) {
-  if (!file.endsWith(".mjs")) {
+let searched = 0;
+
+for (const dir of searchDirs) {
+  if (!fs.existsSync(dir)) {
+    console.log(`[patch-server-require] ${dir} not found, skipping.`);
     continue;
   }
-  const filePath = path.join(ssrDir, file);
-  const content = fs.readFileSync(filePath, "utf8");
-  if (!content.includes('__require("react")')) {
-    continue;
+  console.log(`[patch-server-require] Searching ${dir}...`);
+  const files = findMjsFiles(dir);
+  searched += files.length;
+  for (const filePath of files) {
+    const content = fs.readFileSync(filePath, "utf8");
+    if (!content.includes('__require("react")')) {
+      continue;
+    }
+    const updated = content.replaceAll('__require("react")', "require_react()");
+    fs.writeFileSync(filePath, updated);
+    patched += 1;
+    const rel = path.relative(appDir, filePath);
+    console.log(`[patch-server-require] Patched ${rel}`);
   }
-  const updated = content.replaceAll('__require("react")', "require_react()");
-  fs.writeFileSync(filePath, updated);
-  patched += 1;
-  console.log(`[patch-server-require] Patched ${file}`);
 }
 
-console.log(`[patch-server-require] Done. Patched ${patched} file(s).`);
+console.log(
+  `[patch-server-require] Done. Searched ${searched} .mjs files, patched ${patched}.`
+);
