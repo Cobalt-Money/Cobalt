@@ -1,7 +1,6 @@
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
-import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
@@ -12,22 +11,6 @@ export default defineConfig({
     tanstackStart({
       spa: {
         enabled: true,
-      },
-    }),
-    nitro({
-      rollupConfig: {
-        external: [
-          "shiki",
-          "@shikijs/core",
-          "@shikijs/engine-oniguruma",
-          "@shikijs/engine-javascript",
-          "@streamdown/code",
-          "@streamdown/cjk",
-          "@streamdown/math",
-          "@streamdown/mermaid",
-          "streamdown",
-          "tslib",
-        ],
       },
     }),
     viteReact(),
@@ -41,19 +24,5 @@ export default defineConfig({
   },
   server: {
     port: 3001,
-  },
-  ssr: {
-    external: [
-      "shiki",
-      "@shikijs/core",
-      "@shikijs/engine-oniguruma",
-      "@shikijs/engine-javascript",
-      "@streamdown/code",
-      "@streamdown/cjk",
-      "@streamdown/math",
-      "@streamdown/mermaid",
-      "streamdown",
-      "tslib",
-    ],
   },
 });
