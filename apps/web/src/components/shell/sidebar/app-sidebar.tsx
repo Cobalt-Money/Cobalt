@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cobalt-web/ui/components/sidebar";
+import { queries } from "@cobalt-web/zero";
 import {
   AppleStocksIcon,
   ArrowReloadHorizontalIcon,
@@ -22,8 +23,10 @@ import {
   CreditCardIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useZero } from "@rocicorp/zero/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
+import { useCallback } from "react";
 
 import { useAppSession } from "@/lib/providers/app-session";
 
@@ -88,7 +91,15 @@ function truncateTitle(title: string, maxLength = 25): string {
 
 function ChatsGroup() {
   const chats = useChats();
+  const zero = useZero();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const prefetchMessages = useCallback(
+    (chatId: string) => {
+      zero.preload(queries.chats.messages({ chatId }));
+    },
+    [zero]
+  );
 
   return (
     <SidebarMenu className="gap-0.5">
@@ -99,6 +110,7 @@ function ChatsGroup() {
             <SidebarMenuButton
               className="px-2"
               isActive={pathname === chatPath}
+              onPointerEnter={() => prefetchMessages(chat.chatId)}
               render={
                 <Link
                   aria-label={chat.title ?? "Chat"}
