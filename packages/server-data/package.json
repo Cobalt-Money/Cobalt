@@ -18,6 +18,7 @@
     "./news/trending/*": "./src/news/trending/*.ts",
     "./news/rss/*": "./src/news/rss/*.ts",
     "./research/*": "./src/research/*.ts",
+    "./tickers/*": "./src/tickers/*.ts",
     "./transactions/*": "./src/transactions/*.ts",
     "./types": "./src/types.ts",
     "./user": "./src/user/index.ts",

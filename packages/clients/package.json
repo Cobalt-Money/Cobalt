@@ -9,7 +9,8 @@
     "./plaid": "./plaid.ts",
     "./alpha-vantage": "./alpha-vantage.ts",
     "./snaptrade": "./snaptrade.ts",
-    "./stock-news": "./stock-news.ts"
+    "./stock-news": "./stock-news.ts",
+    "./twelve-data": "./twelve-data.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"
