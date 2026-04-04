@@ -21,7 +21,6 @@ import { plaidRouter } from "./api/internal/plaid/index.js";
 import { researchRouter } from "./api/internal/research/index.js";
 import { snaptradeRouter } from "./api/internal/snaptrade/index.js";
 import { subscriptionsRouter } from "./api/internal/subscriptions/index.js";
-import { tickersRouter } from "./api/internal/tickers.js";
 import { transactionsRouter } from "./api/internal/transactions/index.js";
 import { userRouter } from "./api/internal/user/index.js";
 import { zeroRouter } from "./api/internal/zero.js";
@@ -98,7 +97,6 @@ base
   .route("/api/chat", chatRouter)
   .route("/api/news", newsRouter)
   .route("/api/research", researchRouter)
-  .route("/api/tickers", tickersRouter)
   .route("/api/snaptrade", snaptradeRouter)
   .route("/api/subscriptions", subscriptionsRouter)
   .route("/api/user", userRouter)

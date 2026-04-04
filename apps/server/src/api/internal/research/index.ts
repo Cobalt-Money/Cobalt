@@ -8,6 +8,8 @@ import { incomeRouter } from "./income.js";
 import { newsRouter } from "./news.js";
 import { overviewRouter } from "./overview.js";
 import { quoteRouter } from "./quote.js";
+import { tickerPriceRouter } from "./ticker-price.js";
+import { tickerSearchRouter } from "./ticker-search.js";
 
 export const researchRouter = new OpenAPIHono()
   .use("/*", requireAuth)
@@ -17,4 +19,6 @@ export const researchRouter = new OpenAPIHono()
   .route("/", earningsRouter)
   .route("/", incomeRouter)
   .route("/", balanceSheetRouter)
-  .route("/", newsRouter);
+  .route("/", newsRouter)
+  .route("/", tickerSearchRouter)
+  .route("/", tickerPriceRouter);
