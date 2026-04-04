@@ -130,7 +130,6 @@ import { useEffect } from "react";
 
 import { SiteHeader } from "@/components/shell/header/site-header";
 import { AppSidebar } from "@/components/shell/sidebar/app-sidebar";
-import { useOnReady } from "@/lib/providers/zero-client";
 
 export const Route = createFileRoute("/_auth/dashboard")({
   component: DashboardPage,
@@ -190,15 +189,13 @@ function ShowcaseSection({
 }
 
 function DashboardPage() {
-  const onReady = useOnReady();
   const zero = useZero();
 
   useEffect(() => {
-    onReady();
     zero.preload(queries.transactions.list());
     zero.preload(queries.transactions.recurring());
     zero.preload(queries.transactions.creditSpending({ period: "1m" }));
-  }, [onReady, zero]);
+  }, [zero]);
 
   return (
     <SidebarProvider className="min-h-0 flex-1">

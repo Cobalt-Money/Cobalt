@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
 
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
-import { useOnReady } from "@/lib/providers/zero-client";
 
 export const Route = createFileRoute("/_auth/brokerage")({
   component: BrokeragePage,
@@ -10,11 +8,5 @@ export const Route = createFileRoute("/_auth/brokerage")({
 });
 
 function BrokeragePage() {
-  const onReady = useOnReady();
-
-  useEffect(() => {
-    onReady();
-  }, [onReady]);
-
   return <SidebarShellLayout />;
 }

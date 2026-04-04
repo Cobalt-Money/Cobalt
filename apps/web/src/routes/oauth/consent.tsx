@@ -3,10 +3,8 @@ import { Button, buttonVariants } from "@cobalt-web/ui/components/button";
 import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-
-import { useOnReady } from "@/lib/providers/zero-client";
 
 export const Route = createFileRoute("/oauth/consent")({
   component: RouteComponent,
@@ -48,7 +46,6 @@ function tryNavigateToClient(url: string): void {
 }
 
 function RouteComponent() {
-  const onReady = useOnReady();
   const [status, setStatus] = useState<
     "idle" | "submitting" | "redirect" | "error"
   >("idle");
@@ -59,10 +56,6 @@ function RouteComponent() {
   /** Set when consent API succeeded; used for reliable `cursor://` handoff. */
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    onReady();
-  }, [onReady]);
 
   const oauthQuery = useMemo(
     () => window.location.search.replace(/^\?/, ""),

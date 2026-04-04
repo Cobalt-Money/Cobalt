@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
 
 import { SiteHeader } from "@/components/shell/header/site-header";
-import { useOnReady } from "@/lib/providers/zero-client";
 
 export const Route = createFileRoute("/login")({
   component: RouteComponent,
@@ -10,12 +8,6 @@ export const Route = createFileRoute("/login")({
 });
 
 function RouteComponent() {
-  const onReady = useOnReady();
-
-  useEffect(() => {
-    onReady();
-  }, [onReady]);
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <SiteHeader />
