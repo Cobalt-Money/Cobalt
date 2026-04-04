@@ -28,6 +28,8 @@ export const env = createEnv({
     APP_URL: z.url().default("https://www.try-cobalt.com"),
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
+    /** Cookie domain for cross-subdomain auth (e.g. `.cobaltpf.com`). Omit in dev. */
+    COOKIE_DOMAIN: z.string().min(1).optional(),
     CORS_ORIGIN: z.url(),
     /** Cap @cobalt-web/db pool size — default 10 per `pg` is too high for small Postgres (Neon free, etc.). */
     DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(5),

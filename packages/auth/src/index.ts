@@ -46,6 +46,7 @@ export const auth = betterAuth({
   },
   advanced: {
     defaultCookieAttributes: {
+      domain: env.COOKIE_DOMAIN,
       httpOnly: true,
       sameSite: "lax",
       secure: true,
