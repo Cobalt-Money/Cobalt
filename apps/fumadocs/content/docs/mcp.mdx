@@ -10,6 +10,7 @@ import { Steps, Step } from "fumadocs-ui/components/steps";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 import {
   AmpIcon,
+  ChatGPTIcon,
   ClaudeIcon,
   CodexIcon,
   CursorIcon,
@@ -60,6 +61,41 @@ The MCP server uses **OAuth** via Better Auth. When you connect for the first ti
 </Callout>
 
 ## Installation instructions
+
+### <McpSectionHeader icon={<ClaudeIcon />}>Claude</McpSectionHeader>
+
+Works the same on both Claude.ai (Pro/Max) and Claude Desktop.
+
+<Steps>
+  <Step>Go to **Settings → Connectors → Add Custom Connector**</Step>
+  <Step>
+    Fill in:
+
+    - **Name:** `Cobalt`
+    - **Remote MCP Server URL:** `https://api.cobaltpf.com/api/mcp`
+
+  </Step>
+  <Step>
+    Click **Add**, then follow the connection steps to sign in with your Cobalt
+    account
+  </Step>
+</Steps>
+
+### <McpSectionHeader icon={<ChatGPTIcon />}>ChatGPT</McpSectionHeader>
+
+<Steps>
+  <Step>Go to **Settings → Apps → Create app**</Step>
+  <Step>
+    Fill in:
+
+    - **Name:** `Cobalt`
+    - **Description:** `Tools for Financial Data`
+    - **MCP Server URL:** `https://api.cobaltpf.com/api/mcp`
+
+  </Step>
+  <Step>Make sure **OAuth** is selected as the authentication method</Step>
+  <Step>Click **Create**, then follow the connection steps to sign in with your Cobalt account</Step>
+</Steps>
 
 ### <McpSectionHeader icon={<CursorIcon />}>Cursor</McpSectionHeader>
 
