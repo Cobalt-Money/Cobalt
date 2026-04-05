@@ -74,8 +74,17 @@ app.get("/.well-known/oauth-protected-resource/api/mcp", (c) => {
 
 // RFC 8414 — Authorization Server Metadata (path-suffixed for issuer /api/auth).
 // Exposes authorize, token, registration, JWKS, and revocation endpoints.
-app.get("/.well-known/oauth-authorization-server/api/auth", (c) =>
-  oauthAuthServerMetadata(c.req.raw)
+const oauthAuthServerMetadataHandler = (c: { req: { raw: Request } }) =>
+  oauthAuthServerMetadata(c.req.raw);
+
+app.get(
+  "/.well-known/oauth-authorization-server/api/auth",
+  oauthAuthServerMetadataHandler
+);
+// Some clients probe the root well-known path; serve the same document to avoid 404 noise.
+app.get(
+  "/.well-known/oauth-authorization-server",
+  oauthAuthServerMetadataHandler
 );
 
 // OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
