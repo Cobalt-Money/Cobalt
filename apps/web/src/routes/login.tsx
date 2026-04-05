@@ -1,4 +1,6 @@
+import { env } from "@cobalt-web/env/web";
 import { Navigate, createFileRoute } from "@tanstack/react-router";
+import { useMemo } from "react";
 
 import SocialAuth from "@/components/auth/social-auth";
 import { useAppSession } from "@/lib/providers/app-session";
@@ -11,6 +13,16 @@ export const Route = createFileRoute("/login")({
 function RouteComponent() {
   const session = useAppSession();
 
+  const callbackURL = useMemo(() => {
+    const { search } = window.location;
+    const params = new URLSearchParams(search);
+    if (params.get("response_type") && params.get("client_id")) {
+      return new URL(`/api/auth/oauth2/authorize${search}`, env.VITE_SERVER_URL)
+        .href;
+    }
+    return `${window.location.origin}/dashboard`;
+  }, []);
+
   if (session.isPending) {
     return null;
   }
@@ -21,7 +33,7 @@ function RouteComponent() {
 
   return (
     <div className="flex min-h-svh items-center justify-center">
-      <SocialAuth />
+      <SocialAuth callbackURL={callbackURL} />
     </div>
   );
 }
