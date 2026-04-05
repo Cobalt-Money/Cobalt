@@ -72,9 +72,17 @@ authRouter.post("/oauth2/register", async (c) => {
       );
     }
 
-    const modified = body.token_endpoint_auth_method
-      ? body
-      : { ...body, token_endpoint_auth_method: "none" };
+    // Always force public-client registration. All MCP clients use PKCE and
+    // never need a client secret. Some clients (e.g. Claude Desktop) send
+    // `token_endpoint_auth_method: "client_secret_post"` by default, which
+    // causes Better Auth to require a secret and reject the request → 401.
+    const modified = { ...body, token_endpoint_auth_method: "none" };
+
+    console.info("[dcr] registering client", {
+      client_name: body.client_name,
+      redirect_uris: body.redirect_uris,
+      token_endpoint_auth_method: body.token_endpoint_auth_method ?? "(unset)",
+    });
 
     const newBody = JSON.stringify(modified);
     const headers = new Headers(req.headers);
@@ -84,6 +92,8 @@ authRouter.post("/oauth2/register", async (c) => {
     );
   }
 
+  // Non-JSON DCR (unexpected). Log and let Better Auth handle it.
+  console.warn("[dcr] unexpected content-type:", contentType);
   return auth.handler(req);
 });
 
