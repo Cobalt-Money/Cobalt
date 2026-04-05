@@ -32,7 +32,7 @@ A hosted [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server 
 **Server URL:**
 
 ```
-https://cobalt-server.vercel.app/api/mcp
+https://api.cobaltpf.com/api/mcp
 ```
 
 ## Quick start
@@ -87,7 +87,7 @@ Manual installation:
     {
       "mcpServers": {
         "cobalt": {
-          "url": "https://cobalt-server.vercel.app/api/mcp"
+          "url": "https://api.cobaltpf.com/api/mcp"
         }
       }
     }
@@ -107,7 +107,7 @@ Manual installation:
 <Card
   icon={<VSCodeIcon />}
   title="VS Code — One-click install"
-  href="vscode:mcp/install?%7B%22url%22%3A%22https%3A%2F%2Fcobalt-server.vercel.app%2Fapi%2Fmcp%22%2C%22name%22%3A%22Cobalt%22%2C%22type%22%3A%22http%22%7D"
+  href="vscode:mcp/install?%7B%22url%22%3A%22https%3A%2F%2Fapi.cobaltpf.com%2Fapi%2Fmcp%22%2C%22name%22%3A%22Cobalt%22%2C%22type%22%3A%22http%22%7D"
 >
   Click to install the Cobalt MCP server in VS Code.
 </Card>
@@ -122,7 +122,7 @@ Manual installation:
     Type "MCP: Add Server" and select HTTP
   </Step>
   <Step>
-    Enter the URL `https://cobalt-server.vercel.app/api/mcp` and name it `Cobalt`
+    Enter the URL `https://api.cobaltpf.com/api/mcp` and name it `Cobalt`
   </Step>
   <Step>
     Start the server via "MCP: List Servers" > select Cobalt > "Start Server"
@@ -147,7 +147,7 @@ Manual installation:
     Add the Cobalt MCP server:
 
     ```bash
-    claude mcp add --transport http cobalt https://cobalt-server.vercel.app/api/mcp
+    claude mcp add --transport http cobalt https://api.cobaltpf.com/api/mcp
     ```
 
   </Step>
@@ -184,7 +184,7 @@ Manual installation:
       "mcp": {
         "cobalt": {
           "type": "remote",
-          "url": "https://cobalt-server.vercel.app/api/mcp"
+          "url": "https://api.cobaltpf.com/api/mcp"
         }
       }
     }
@@ -225,7 +225,7 @@ Manual installation:
     Add the Cobalt MCP server:
 
     ```bash
-    codex mcp add cobalt --url https://cobalt-server.vercel.app/api/mcp
+    codex mcp add cobalt --url https://api.cobaltpf.com/api/mcp
     ```
 
     You will be prompted to authenticate immediately.
@@ -257,7 +257,7 @@ Manual installation:
     Add the Cobalt MCP server:
 
     ```bash
-    gemini mcp add --transport http cobalt https://cobalt-server.vercel.app/api/mcp
+    gemini mcp add --transport http cobalt https://api.cobaltpf.com/api/mcp
     ```
 
   </Step>
@@ -295,7 +295,7 @@ Manual installation:
     Add the Cobalt MCP server:
 
     ```bash
-    amp mcp add cobalt https://cobalt-server.vercel.app/api/mcp
+    amp mcp add cobalt https://api.cobaltpf.com/api/mcp
     ```
 
   </Step>
@@ -322,7 +322,7 @@ Manual installation:
 Any MCP client that supports Streamable HTTP transport can connect to:
 
 ```
-https://cobalt-server.vercel.app/api/mcp
+https://api.cobaltpf.com/api/mcp
 ```
 
 The server uses OAuth — your client will need to handle the browser-based authentication flow.
@@ -492,7 +492,7 @@ If your MCP client cannot connect or tools fail to run:
 
 **Restart your client** — After installation, you may need to restart your client or CLI tool to load the new MCP configuration.
 
-**Check the server URL** — Make sure the URL is set to `https://cobalt-server.vercel.app/api/mcp`.
+**Check the server URL** — Make sure the URL is set to `https://api.cobaltpf.com/api/mcp`.
 
 **Re-authenticate** — If your token has expired, re-authenticate by restarting the MCP connection in your client.
 
