@@ -1,0 +1,503 @@
+---
+title: MCP Server
+description: Connect AI agents to your Cobalt financial data using the Model Context Protocol.
+icon: Bot
+---
+
+import { Card } from "fumadocs-ui/components/card";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps, Step } from "fumadocs-ui/components/steps";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import {
+  AmpIcon,
+  ClaudeIcon,
+  CodexIcon,
+  CursorIcon,
+  GeminiIcon,
+  McpClientCards,
+  McpSectionHeader,
+  OpenCodeIcon,
+  TerminalIcon,
+  VSCodeIcon,
+} from "@/components/mcp-client-cards";
+
+## What is the Cobalt MCP server?
+
+A hosted [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that gives AI agents read-only access to your Cobalt financial data — accounts, transactions, investments, brokerage positions, and more.
+
+- Authenticated via **OAuth** for secure, scoped access to your account.
+- All queries are scoped to the authenticated user via **Postgres row-level security**.
+- Accessible from any MCP client that supports HTTP-hosted servers.
+
+**Server URL:**
+
+```
+https://cobalt-server.vercel.app/api/mcp
+```
+
+## Quick start
+
+<McpClientCards />
+
+## Authentication
+
+The MCP server uses **OAuth** via Better Auth. When you connect for the first time, your client will redirect you to sign in with your Cobalt account.
+
+- Each client (Cursor, Claude Code, VS Code, etc.) registers as an OAuth application with Cobalt.
+- After sign-in, the OAuth token is cached by your client.
+- All queries are automatically scoped to your user via row-level security — you can only access your own financial data.
+
+## Security
+
+- The agent database role has **SELECT-only** permissions. Write operations are rejected at both the application and database level.
+- Row-level security (RLS) policies scope every query to the authenticated user.
+- Queries have a **10-second timeout** to prevent runaway operations.
+- Dangerous SQL patterns (write keywords, `SET ROLE`, unsafe functions) are rejected before execution.
+
+<Callout type="info">
+  The Cobalt MCP server is read-only. There are no write tools — your data
+  cannot be modified through MCP.
+</Callout>
+
+## Installation instructions
+
+### <McpSectionHeader icon={<CursorIcon />}>Cursor</McpSectionHeader>
+
+<Card
+  icon={<CursorIcon />}
+  title="Cursor — One-click install"
+  href="https://cursor.com/en-US/install-mcp?name=Cobalt&config=eyJ1cmwiOiJodHRwczovL2NvYmFsdC1zZXJ2ZXIudmVyY2VsLmFwcC9hcGkvbWNwIn0="
+>
+  Click to install the Cobalt MCP server in Cursor.
+</Card>
+
+Manual installation:
+
+<Steps>
+  <Step>
+    Open the command palette and type "Cursor Settings"
+  </Step>
+  <Step>
+    Under "Tools & MCP" click "New MCP Server"
+  </Step>
+  <Step>
+    Paste the following JSON into the configuration file:
+
+    ```json
+    {
+      "mcpServers": {
+        "cobalt": {
+          "url": "https://cobalt-server.vercel.app/api/mcp"
+        }
+      }
+    }
+    ```
+
+  </Step>
+  <Step>
+    Save the file. Cursor will prompt you to authenticate — follow the browser flow to sign in with your Cobalt account.
+  </Step>
+  <Step>
+    You may need to restart Cursor to load the new configuration.
+  </Step>
+</Steps>
+
+### <McpSectionHeader icon={<VSCodeIcon />}>VS Code</McpSectionHeader>
+
+<Card
+  icon={<VSCodeIcon />}
+  title="VS Code — One-click install"
+  href="vscode:mcp/install?%7B%22url%22%3A%22https%3A%2F%2Fcobalt-server.vercel.app%2Fapi%2Fmcp%22%2C%22name%22%3A%22Cobalt%22%2C%22type%22%3A%22http%22%7D"
+>
+  Click to install the Cobalt MCP server in VS Code.
+</Card>
+
+Manual installation:
+
+<Steps>
+  <Step>
+    Open the Command Palette (`Ctrl+Shift+P` on Windows/Linux, `Cmd+Shift+P` on macOS)
+  </Step>
+  <Step>
+    Type "MCP: Add Server" and select HTTP
+  </Step>
+  <Step>
+    Enter the URL `https://cobalt-server.vercel.app/api/mcp` and name it `Cobalt`
+  </Step>
+  <Step>
+    Start the server via "MCP: List Servers" > select Cobalt > "Start Server"
+  </Step>
+  <Step>
+    When prompted to authenticate, click "Allow" and complete the sign-in flow in your browser.
+  </Step>
+</Steps>
+
+### <McpSectionHeader icon={<ClaudeIcon />}>Claude Code</McpSectionHeader>
+
+<Steps>
+  <Step>
+    Ensure Claude Code is installed:
+
+    ```bash
+    claude --version
+    ```
+
+  </Step>
+  <Step>
+    Add the Cobalt MCP server:
+
+    ```bash
+    claude mcp add --transport http cobalt https://cobalt-server.vercel.app/api/mcp
+    ```
+
+  </Step>
+  <Step>
+    Start Claude Code and verify:
+
+    ```bash
+    claude
+    /mcp
+    ```
+
+    You should see `cobalt` listed. If it shows "needs authentication", select it and follow the browser flow.
+
+  </Step>
+</Steps>
+
+### <McpSectionHeader icon={<OpenCodeIcon />}>OpenCode</McpSectionHeader>
+
+<Steps>
+  <Step>
+    Ensure [OpenCode](https://opencode.ai/) is installed:
+
+    ```bash
+    opencode --version
+    ```
+
+  </Step>
+  <Step>
+    Add the server to your configuration file:
+
+    ```json
+    {
+      "$schema": "https://opencode.ai/config.json",
+      "mcp": {
+        "cobalt": {
+          "type": "remote",
+          "url": "https://cobalt-server.vercel.app/api/mcp"
+        }
+      }
+    }
+    ```
+
+  </Step>
+  <Step>
+    Authenticate:
+
+    ```bash
+    opencode mcp auth cobalt
+    ```
+
+  </Step>
+  <Step>
+    Verify connection:
+
+    ```bash
+    opencode
+    /mcp
+    ```
+
+  </Step>
+</Steps>
+
+### <McpSectionHeader icon={<CodexIcon />}>Codex CLI</McpSectionHeader>
+
+<Steps>
+  <Step>
+    Ensure [Codex CLI](https://developers.openai.com/codex/cli/) is installed:
+
+    ```bash
+    codex --version
+    ```
+
+  </Step>
+  <Step>
+    Add the Cobalt MCP server:
+
+    ```bash
+    codex mcp add cobalt --url https://cobalt-server.vercel.app/api/mcp
+    ```
+
+    You will be prompted to authenticate immediately.
+
+  </Step>
+  <Step>
+    Verify:
+
+    ```bash
+    codex
+    /mcp
+    ```
+
+  </Step>
+</Steps>
+
+### <McpSectionHeader icon={<GeminiIcon />}>Gemini CLI</McpSectionHeader>
+
+<Steps>
+  <Step>
+    Ensure [Gemini CLI](https://geminicli.com/) is installed:
+
+    ```bash
+    gemini --version
+    ```
+
+  </Step>
+  <Step>
+    Add the Cobalt MCP server:
+
+    ```bash
+    gemini mcp add --transport http cobalt https://cobalt-server.vercel.app/api/mcp
+    ```
+
+  </Step>
+  <Step>
+    Authenticate:
+
+    ```bash
+    gemini
+    /mcp auth cobalt
+    ```
+
+  </Step>
+  <Step>
+    Verify:
+
+    ```bash
+    /mcp list
+    ```
+
+  </Step>
+</Steps>
+
+### <McpSectionHeader icon={<AmpIcon />}>Amp CLI</McpSectionHeader>
+
+<Steps>
+  <Step>
+    Ensure [Amp CLI](https://ampcode.com/) is installed:
+
+    ```bash
+    amp --version
+    ```
+
+  </Step>
+  <Step>
+    Add the Cobalt MCP server:
+
+    ```bash
+    amp mcp add cobalt https://cobalt-server.vercel.app/api/mcp
+    ```
+
+  </Step>
+  <Step>
+    Start Amp and authenticate when prompted:
+
+    ```bash
+    amp
+    ```
+
+  </Step>
+  <Step>
+    Verify:
+
+    ```bash
+    /mcp list tools
+    ```
+
+  </Step>
+</Steps>
+
+### <McpSectionHeader icon={<TerminalIcon />}>Other clients</McpSectionHeader>
+
+Any MCP client that supports Streamable HTTP transport can connect to:
+
+```
+https://cobalt-server.vercel.app/api/mcp
+```
+
+The server uses OAuth — your client will need to handle the browser-based authentication flow.
+
+### Local development
+
+For local development, point to your dev server:
+
+<Tabs items={["Claude Code", "Cursor", "Other"]}>
+  <Tab value="Claude Code">
+    ```bash
+    claude mcp add --transport http cobalt http://localhost:3000/api/mcp
+    ```
+  </Tab>
+  <Tab value="Cursor">
+    ```json
+    {
+      "mcpServers": {
+        "cobalt": {
+          "url": "http://localhost:3000/api/mcp"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab value="Other">
+    Use `http://localhost:3000/api/mcp` as the server URL in your client's MCP configuration.
+  </Tab>
+</Tabs>
+
+## Available tools
+
+The Cobalt MCP server exposes 5 tools for schema discovery and data querying:
+
+### 1. `cobalt_list_tables`
+
+Returns all available database tables and their descriptions. **Call this first** to discover what data is available.
+
+**Input:** None
+
+**Example response:**
+
+```json
+{
+  "tables": [
+    {
+      "name": "transaction",
+      "description": "Bank transactions (posted and pending)"
+    },
+    {
+      "name": "bank_account",
+      "description": "Individual bank accounts within connections"
+    },
+    {
+      "name": "investment_position",
+      "description": "Current investment holdings per account"
+    }
+  ]
+}
+```
+
+### 2. `cobalt_describe_table`
+
+Get column names, data types, and nullability for a specific table. Use after `cobalt_list_tables` to understand table structure before writing queries.
+
+| Parameter | Type   | Description                          |
+| --------- | ------ | ------------------------------------ |
+| `table`   | string | Table name from `cobalt_list_tables` |
+
+### 3. `cobalt_get_relationships`
+
+Get foreign key relationships between tables. Useful for understanding how to JOIN tables in queries.
+
+**Input:** None
+
+### 4. `cobalt_query`
+
+Execute a read-only SQL query against your financial data. Results are automatically scoped to the authenticated user via row-level security.
+
+| Parameter | Type   | Description                               |
+| --------- | ------ | ----------------------------------------- |
+| `query`   | string | SQL query (SELECT or WITH only)           |
+| `limit`   | number | Max rows to return (default 100, max 500) |
+
+**Example:**
+
+```sql
+SELECT name, amount, date
+FROM transaction
+WHERE date >= '2026-01-01'
+ORDER BY date DESC
+LIMIT 10
+```
+
+**Query safeguards:**
+
+- Only `SELECT` and `WITH` (CTE) queries are allowed
+- Write operations (`INSERT`, `UPDATE`, `DELETE`, `DROP`, etc.) are rejected
+- Multi-statement queries are rejected
+- Dangerous functions (`pg_read_file`, `dblink`, `pg_sleep`, etc.) are blocked
+- `SET ROLE` escalation is blocked
+- A `LIMIT` is automatically appended if missing (default 500)
+- Queries have a 10-second timeout
+
+### 5. `cobalt_get_session_subject`
+
+Returns the Cobalt user ID for the current OAuth session. Useful for debugging authentication.
+
+**Input:** None
+
+## Available tables
+
+| Table                      | Description                                   |
+| -------------------------- | --------------------------------------------- |
+| `bank_connection`          | Linked bank connections (Plaid items)         |
+| `bank_account`             | Individual bank accounts within connections   |
+| `bank_balance`             | Latest balance for each bank account          |
+| `bank_balance_snapshot`    | Historical daily balance snapshots            |
+| `transaction`              | Bank transactions (posted and pending)        |
+| `recurring_stream`         | Detected recurring transactions/subscriptions |
+| `credit_liability`         | Credit card liability details                 |
+| `mortgage_liability`       | Mortgage loan details                         |
+| `student_loan_liability`   | Student loan details                          |
+| `investment_security`      | Investment securities reference data          |
+| `investment_position`      | Current investment holdings per account       |
+| `investment_activity`      | Investment transaction history                |
+| `brokerage_account`        | Brokerage accounts (SnapTrade)                |
+| `brokerage_account_detail` | Brokerage account details and metadata        |
+| `brokerage_activity`       | Brokerage transaction history                 |
+| `brokerage_authorization`  | Brokerage connection authorizations           |
+| `brokerage_balance`        | Brokerage account balances                    |
+| `brokerage_order`          | Brokerage orders                              |
+| `brokerage_position`       | Current brokerage holdings                    |
+| `brokerage_user`           | Brokerage user profiles (SnapTrade)           |
+| `institution`              | Bank/institution reference data               |
+| `financial_goals`          | User-defined financial goals                  |
+| `portfolio_snapshot`       | Historical portfolio value snapshots          |
+
+## Example workflows
+
+Once connected, try asking your AI agent:
+
+- "What are my top 10 largest transactions this month?"
+- "Show me my total balance across all bank accounts"
+- "What recurring subscriptions do I have and how much do they cost?"
+- "Break down my spending by category for the last 3 months"
+- "What's my current investment portfolio allocation?"
+- "Compare my spending this month vs last month"
+- "Which bank accounts have the highest fees?"
+- "Show me all pending transactions"
+
+## Help your agent target your data
+
+To reduce unnecessary tool calls, add context to your project's `CLAUDE.md` or `.cursorrules`:
+
+```markdown
+## Cobalt MCP
+
+- Always call `cobalt_list_tables` first to discover available tables
+- Use `cobalt_describe_table` to understand column types before writing queries
+- Use `cobalt_get_relationships` to find JOIN paths between tables
+```
+
+## Troubleshooting
+
+If your MCP client cannot connect or tools fail to run:
+
+**Restart your client** — After installation, you may need to restart your client or CLI tool to load the new MCP configuration.
+
+**Check the server URL** — Make sure the URL is set to `https://cobalt-server.vercel.app/api/mcp`.
+
+**Re-authenticate** — If your token has expired, re-authenticate by restarting the MCP connection in your client.
+
+**Query rejected** — Only `SELECT`/`WITH` queries are allowed. Check for accidental write keywords in your query.
+
+**Empty results** — Row-level security scopes data to your user. Verify you have financial accounts linked to your Cobalt account.
+
+**Timeout** — Queries have a 10-second limit. Add `WHERE` filters or reduce the result set with `LIMIT`.
