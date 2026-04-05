@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { z } from "zod";
 
+import { registerMcpTools } from "./tools/register-tools.js";
 import { verifyOAuthAccessTokenForMcp } from "./verify-oidc-access-token.js";
 import type { McpAccessTokenPayload } from "./verify-oidc-access-token.js";
 
@@ -132,24 +132,7 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
     { capabilities: { tools: { listChanged: true } } }
   );
 
-  server.registerTool(
-    "cobalt_get_session_subject",
-    {
-      annotations: { readOnlyHint: true },
-      description:
-        "Returns the Cobalt user id (`sub`) for the current OAuth access token.",
-      inputSchema: z.object({}),
-      title: "Session subject",
-    },
-    () => ({
-      content: [
-        {
-          text: JSON.stringify({ sub: userId }),
-          type: "text",
-        },
-      ],
-    })
-  );
+  registerMcpTools(server, userId);
 
   await server.connect(transport);
   return transport.handleRequest(req, { authInfo });

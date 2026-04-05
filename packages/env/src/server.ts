@@ -18,6 +18,9 @@ export const env = createEnv({
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,
   server: {
+    /** Dedicated connection URI for the agent_readonly Postgres role (SELECT-only + RLS). Falls back to DATABASE_URL in dev. */
+    AGENT_DATABASE_URL: z.string().min(1).optional(),
+    AGENT_DB_POOL_MAX: z.coerce.number().int().min(1).max(20).default(3),
     ALPHA_VANTAGE_API_KEY: z.string().min(1),
     APPLE_APP_BUNDLE_IDENTIFIER: z.string().min(1),
     APPLE_KEY_ID: z.string().min(1),

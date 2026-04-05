@@ -29,8 +29,8 @@ import { v1Router } from "./api/public/v1/index.js";
 import {
   getPublicOriginFromRequest,
   handleMcpHttpRequest,
-} from "./lib/mcp/handle-mcp-request.js";
-import { buildMcpProtectedResourceMetadata } from "./lib/mcp/oauth-discovery.js";
+} from "./mcp/handle-mcp-request.js";
+import { buildMcpProtectedResourceMetadata } from "./mcp/oauth-discovery.js";
 
 const base = new OpenAPIHono();
 const publicApi = new OpenAPIHono();
