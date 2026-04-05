@@ -52,18 +52,33 @@ authRouter.post("/oauth2/register", async (c) => {
   const req = c.req.raw;
   const contentType = req.headers.get("content-type") ?? "";
   const hasSession = req.headers.has("cookie");
+
   if (!hasSession && contentType.includes("application/json")) {
-    const body = (await req.json()) as Record<string, unknown>;
-    if (!body.token_endpoint_auth_method) {
+    const rawBody = await req.text();
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(rawBody) as Record<string, unknown>;
+    } catch {
+      // Invalid JSON — reconstruct and let auth reject it cleanly.
+      const headers = new Headers(req.headers);
+      headers.delete("content-length");
       return auth.handler(
-        new Request(req.url, {
-          body: JSON.stringify({ ...body, token_endpoint_auth_method: "none" }),
-          headers: req.headers,
-          method: req.method,
-        })
+        new Request(req.url, { body: rawBody, headers, method: req.method })
       );
     }
+
+    const modified = body.token_endpoint_auth_method
+      ? body
+      : { ...body, token_endpoint_auth_method: "none" };
+
+    const newBody = JSON.stringify(modified);
+    const headers = new Headers(req.headers);
+    headers.delete("content-length");
+    return auth.handler(
+      new Request(req.url, { body: newBody, headers, method: req.method })
+    );
   }
+
   return auth.handler(req);
 });
 
