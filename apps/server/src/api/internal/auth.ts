@@ -41,20 +41,24 @@ authRouter.post("/oauth2/token", async (c) => {
 });
 
 /**
- * Claude Desktop registers as a confidential client by default (no
- * `token_endpoint_auth_method` in its DCR body). Better Auth requires
- * either a session or `token_endpoint_auth_method: "none"` for
- * unauthenticated registration → 401.
+ * MCP clients (Claude Desktop, ChatGPT, Claude.ai web) register without
+ * `token_endpoint_auth_method` in the DCR body. Better Auth requires it to
+ * be "none" for unauthenticated registrations → 401.
  *
- * All MCP clients use PKCE so client secrets aren't needed. Force
- * unauthenticated DCR requests to register as public clients.
+ * We previously only injected for requests without a Cookie header, but some
+ * clients (e.g. browser-based Claude.ai) may carry cookies from a prior
+ * interaction even though the registration itself is unauthenticated from
+ * Better Auth's perspective. Drop the session check and always inject for
+ * any JSON DCR body that omits the field.
+ *
+ * All MCP clients use PKCE so client secrets aren't needed. Registering as a
+ * public client is always correct here.
  */
 authRouter.post("/oauth2/register", async (c) => {
   const req = c.req.raw;
   const contentType = req.headers.get("content-type") ?? "";
-  const hasSession = req.headers.has("cookie");
 
-  if (!hasSession && contentType.includes("application/json")) {
+  if (contentType.includes("application/json")) {
     const rawBody = await req.text();
     let body: Record<string, unknown>;
     try {
