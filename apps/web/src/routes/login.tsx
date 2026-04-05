@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Navigate, createFileRoute } from "@tanstack/react-router";
 
-import { SiteHeader } from "@/components/shell/header/site-header";
+import SocialAuth from "@/components/auth/social-auth";
+import { useAppSession } from "@/lib/providers/app-session";
 
 export const Route = createFileRoute("/login")({
   component: RouteComponent,
@@ -8,10 +9,19 @@ export const Route = createFileRoute("/login")({
 });
 
 function RouteComponent() {
+  const session = useAppSession();
+
+  if (session.isPending) {
+    return null;
+  }
+
+  if (session.data) {
+    return <Navigate replace to="/dashboard" />;
+  }
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <SiteHeader />
-      <main className="min-h-0 flex-1 overflow-auto no-scrollbar" />
+    <div className="flex min-h-svh items-center justify-center">
+      <SocialAuth />
     </div>
   );
 }
