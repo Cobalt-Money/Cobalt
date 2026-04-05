@@ -41,18 +41,12 @@ authRouter.post("/oauth2/token", async (c) => {
 });
 
 /**
- * MCP clients (Claude Desktop, ChatGPT, Claude.ai web) register without
- * `token_endpoint_auth_method` in the DCR body. Better Auth requires it to
- * be "none" for unauthenticated registrations → 401.
+ * MCP clients (Claude Desktop, Claude.ai, ChatGPT) default to
+ * `token_endpoint_auth_method: "client_secret_post"` per RFC 7591, but all
+ * MCP clients use PKCE and never need a client secret. Better Auth rejects
+ * unauthenticated DCR unless the client registers as public ("none") → 401.
  *
- * We previously only injected for requests without a Cookie header, but some
- * clients (e.g. browser-based Claude.ai) may carry cookies from a prior
- * interaction even though the registration itself is unauthenticated from
- * Better Auth's perspective. Drop the session check and always inject for
- * any JSON DCR body that omits the field.
- *
- * All MCP clients use PKCE so client secrets aren't needed. Registering as a
- * public client is always correct here.
+ * Fix: unconditionally override to "none" for all JSON DCR requests.
  */
 authRouter.post("/oauth2/register", async (c) => {
   const req = c.req.raw;
@@ -72,19 +66,10 @@ authRouter.post("/oauth2/register", async (c) => {
       );
     }
 
-    // Always force public-client registration. All MCP clients use PKCE and
-    // never need a client secret. Some clients (e.g. Claude Desktop) send
-    // `token_endpoint_auth_method: "client_secret_post"` by default, which
-    // causes Better Auth to require a secret and reject the request → 401.
-    const modified = { ...body, token_endpoint_auth_method: "none" };
-
-    console.info("[dcr] registering client", {
-      client_name: body.client_name,
-      redirect_uris: body.redirect_uris,
-      token_endpoint_auth_method: body.token_endpoint_auth_method ?? "(unset)",
+    const newBody = JSON.stringify({
+      ...body,
+      token_endpoint_auth_method: "none",
     });
-
-    const newBody = JSON.stringify(modified);
     const headers = new Headers(req.headers);
     headers.delete("content-length");
     return auth.handler(
@@ -92,8 +77,6 @@ authRouter.post("/oauth2/register", async (c) => {
     );
   }
 
-  // Non-JSON DCR (unexpected). Log and let Better Auth handle it.
-  console.warn("[dcr] unexpected content-type:", contentType);
   return auth.handler(req);
 });
 
