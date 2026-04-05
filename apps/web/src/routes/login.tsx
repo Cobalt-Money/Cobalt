@@ -1,4 +1,5 @@
 import { env } from "@cobalt-web/env/web";
+import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { Navigate, createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 
@@ -24,7 +25,11 @@ function RouteComponent() {
   }, []);
 
   if (session.isPending) {
-    return null;
+    return (
+      <div className="flex min-h-svh items-center justify-center">
+        <Spinner className="size-6" />
+      </div>
+    );
   }
 
   if (session.data) {
