@@ -1,5 +1,6 @@
 import { Navigate, Outlet, createFileRoute } from "@tanstack/react-router";
 
+import { CommandMenu } from "@/components/shell/command-menu";
 import { useAppSession } from "@/lib/providers/app-session";
 
 /**
@@ -22,5 +23,10 @@ function AuthLayout() {
     return <Navigate replace to="/" />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <CommandMenu />
+    </>
+  );
 }
