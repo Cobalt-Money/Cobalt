@@ -11,8 +11,6 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 // import { Agentation } from "agentation";
 
-import { CommandMenu } from "@/components/shell/command-menu";
-
 import { AppSessionProvider } from "../lib/providers/app-session";
 import { ZeroProvider } from "../lib/providers/zero-client";
 
@@ -85,7 +83,6 @@ function RootDocument() {
                 <div className="flex h-svh min-h-0 flex-col overflow-hidden">
                   <Outlet />
                 </div>
-                <CommandMenu />
               </TooltipProvider>
             </ZeroProvider>
           </AppSessionProvider>
