@@ -389,6 +389,102 @@ For local development, point to your dev server:
   </Tab>
 </Tabs>
 
+## Code execution with Executor
+
+[Executor](https://github.com/RhysSullivan/executor) is a local AI agent runtime that lets your AI write and run TypeScript code against Cobalt's MCP tools — rather than calling them one at a time. Instead of multiple round-trip tool calls, the AI writes a program that orchestrates all the logic in one shot.
+
+**Normal MCP flow:**
+
+```
+AI calls cobalt_list_tables → AI calls cobalt_query → AI calls cobalt_query again → synthesizes answer
+```
+
+**With Executor:**
+
+```ts
+const tables = await tools.cobalt_list_tables();
+const spending = await tools.cobalt_query({
+  query: "SELECT category, SUM(amount) FROM transaction GROUP BY category",
+});
+const income = await tools.cobalt_query({
+  query: "SELECT SUM(amount) FROM transaction WHERE amount > 0",
+});
+return { savingsRate: (income[0].sum - spending.total) / income[0].sum };
+```
+
+One turn. The logic runs in a sandboxed QuickJS environment on your machine.
+
+### Setup
+
+<Steps>
+  <Step>
+    Install Executor globally:
+
+    ```bash
+    bun add -g executor
+    ```
+
+    Or run it directly without installing:
+
+    ```bash
+    bunx executor web
+    ```
+
+  </Step>
+  <Step>
+    Create an `executor.jsonc` file in your project directory:
+
+    ```jsonc
+    {
+      "sources": [
+        {
+          "kind": "mcp",
+          "transport": "remote",
+          "name": "cobalt",
+          "endpoint": "https://api.cobaltpf.com/api/mcp"
+        }
+      ]
+    }
+    ```
+
+  </Step>
+  <Step>
+    Start the Executor web server from the executor directory:
+
+    ```bash
+    bunx executor web
+    ```
+
+    This starts Executor at `http://127.0.0.1:8788`. Keep this terminal running.
+
+  </Step>
+  <Step>
+    Add Executor as an MCP server in your AI tool:
+
+    **Claude Code:**
+    ```bash
+    claude mcp add executor --transport http http://127.0.0.1:8788/mcp
+    ```
+
+    **Cursor** — add to your MCP config:
+    ```json
+    {
+      "mcpServers": {
+        "executor": {
+          "url": "http://127.0.0.1:8788/mcp"
+        }
+      }
+    }
+    ```
+
+  </Step>
+  <Step>
+    Authenticate with Cobalt through the Executor web UI at `http://127.0.0.1:8788`. Add Cobalt as a source and complete the OAuth flow.
+  </Step>
+</Steps>
+
+Your AI tool now has an `execute` tool that can write and run code against all your Cobalt data in a single turn.
+
 ## Available tools
 
 The Cobalt MCP server exposes 5 tools for schema discovery and data querying:
