@@ -27,14 +27,15 @@ authRouter.post("/oauth2/token", async (c) => {
       !params.has("resource")
     ) {
       params.set("resource", mcpAudience);
-      return auth.handler(
-        new Request(req.url, {
-          body: params.toString(),
-          headers: req.headers,
-          method: req.method,
-        })
-      );
     }
+    // Always reconstruct — body stream was consumed by req.text().
+    return auth.handler(
+      new Request(req.url, {
+        body: params.toString(),
+        headers: req.headers,
+        method: req.method,
+      })
+    );
   }
   return auth.handler(req);
 });
