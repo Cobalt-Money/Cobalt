@@ -77,6 +77,8 @@ authRouter.post("/oauth2/register", async (c) => {
     );
   }
 
+  // Non-JSON DCR (unexpected). Log and let Better Auth handle it.
+  console.warn("[dcr] unexpected content-type:", contentType);
   return auth.handler(req);
 });
 
