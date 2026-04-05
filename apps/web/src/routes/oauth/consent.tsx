@@ -1,5 +1,5 @@
 import { env } from "@cobalt-web/env/web";
-import { Button, buttonVariants } from "@cobalt-web/ui/components/button";
+import { Button } from "@cobalt-web/ui/components/button";
 import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -54,7 +54,10 @@ function RouteComponent() {
     null
   );
   /** Set when consent API succeeded; used for reliable `cursor://` handoff. */
-  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [_redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [completedIntent, setCompletedIntent] = useState<
+    "allow" | "deny" | null
+  >(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const oauthQuery = useMemo(
@@ -123,6 +126,7 @@ function RouteComponent() {
         setPendingIntent(null);
         return;
       }
+      setCompletedIntent(accept ? "allow" : "deny");
       setRedirectUrl(next);
       setStatus("redirect");
       setPendingIntent(null);
@@ -131,97 +135,80 @@ function RouteComponent() {
     [oauthQuery]
   );
 
-  const consentPanel = (): ReactNode => {
-    if (status === "submitting") {
+  const isAllowDone = status === "redirect" && completedIntent === "allow";
+  const isSubmitting = status === "submitting";
+
+  const allowButtonLabel = (): ReactNode => {
+    if (isSubmitting && pendingIntent === "allow") {
       return (
-        <div
-          aria-live="polite"
-          className="flex flex-col items-center gap-4 py-4"
-        >
-          <Spinner className="size-8" />
-          <p className="text-foreground text-sm font-medium">
-            {pendingIntent === "allow"
-              ? "Redirecting to finish signing in…"
-              : "Returning to the application…"}
-          </p>
-          <p className="text-muted-foreground text-xs">
-            You can close this tab if nothing happens after a few seconds.
-          </p>
-        </div>
+        <>
+          <Spinner className="size-4" />
+          Allowing…
+        </>
       );
     }
-    if (status === "redirect" && redirectUrl) {
-      return (
-        <div
-          aria-live="polite"
-          className="flex flex-col items-center gap-4 py-4"
-        >
-          <p className="text-foreground text-lg font-semibold">
-            Authorization complete
-          </p>
-          <p className="text-muted-foreground text-sm">
-            Browsers often block automatic handoff to desktop apps (cursor://,
-            etc.). Click below to return to your client — a normal link is
-            always allowed.
-          </p>
-          <a
-            className={cn(
-              buttonVariants({ size: "lg", variant: "default" }),
-              "inline-flex w-full max-w-sm justify-center no-underline"
-            )}
-            href={redirectUrl}
-            rel="noopener noreferrer"
-          >
-            Continue to application
-          </a>
-        </div>
-      );
+    if (isAllowDone) {
+      return "You can go back to your application";
     }
-    return (
-      <>
-        <h1 className="text-xl font-semibold">Authorize access</h1>
+    return "Allow";
+  };
+
+  const consentPanel = (): ReactNode => (
+    <>
+      <h1 className="text-xl font-semibold">Authorize access</h1>
+      <p className="text-muted-foreground text-sm">
+        An application requested access to your Cobalt account. Allow only if
+        you started this request from a trusted AI tool.
+      </p>
+      {clientId ? (
+        <p className="text-muted-foreground text-sm">Client: {clientId}</p>
+      ) : null}
+      {requestedScope ? (
         <p className="text-muted-foreground text-sm">
-          An application requested access to your Cobalt account. Allow only if
-          you started this request from a trusted AI tool.
+          Requested scopes: {requestedScope}
         </p>
-        {clientId ? (
-          <p className="text-muted-foreground text-sm">Client: {clientId}</p>
-        ) : null}
-        {requestedScope ? (
-          <p className="text-muted-foreground text-sm">
-            Requested scopes: {requestedScope}
-          </p>
-        ) : null}
-        {oauthQuery ? null : (
-          <p className="text-destructive text-sm">Missing oauth query.</p>
-        )}
-        {errorMessage ? (
-          <p className="text-destructive text-sm">{errorMessage}</p>
-        ) : null}
-        <div className="flex flex-wrap justify-center gap-3">
+      ) : null}
+      {oauthQuery ? null : (
+        <p className="text-destructive text-sm">Missing oauth query.</p>
+      )}
+      {errorMessage ? (
+        <p className="text-destructive text-sm">{errorMessage}</p>
+      ) : null}
+      <div className="flex flex-wrap justify-center gap-3">
+        <Button
+          className={cn(
+            isAllowDone && "bg-green-600 hover:bg-green-600 pointer-events-none"
+          )}
+          disabled={!oauthQuery || isSubmitting}
+          onClick={async () => {
+            await postConsent(true);
+          }}
+          type="button"
+        >
+          {allowButtonLabel()}
+        </Button>
+        {isAllowDone ? null : (
           <Button
-            disabled={!oauthQuery}
-            onClick={async () => {
-              await postConsent(true);
-            }}
-            type="button"
-          >
-            Allow
-          </Button>
-          <Button
-            disabled={!oauthQuery}
+            disabled={!oauthQuery || isSubmitting}
             onClick={async () => {
               await postConsent(false);
             }}
             type="button"
             variant="outline"
           >
-            Deny
+            {isSubmitting && pendingIntent === "deny" ? (
+              <>
+                <Spinner className="size-4" />
+                Denying…
+              </>
+            ) : (
+              "Deny"
+            )}
           </Button>
-        </div>
-      </>
-    );
-  };
+        )}
+      </div>
+    </>
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
