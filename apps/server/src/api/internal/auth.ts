@@ -39,6 +39,34 @@ authRouter.post("/oauth2/token", async (c) => {
   return auth.handler(req);
 });
 
+/**
+ * Claude Desktop registers as a confidential client by default (no
+ * `token_endpoint_auth_method` in its DCR body). Better Auth requires
+ * either a session or `token_endpoint_auth_method: "none"` for
+ * unauthenticated registration → 401.
+ *
+ * All MCP clients use PKCE so client secrets aren't needed. Force
+ * unauthenticated DCR requests to register as public clients.
+ */
+authRouter.post("/oauth2/register", async (c) => {
+  const req = c.req.raw;
+  const contentType = req.headers.get("content-type") ?? "";
+  const hasSession = req.headers.has("cookie");
+  if (!hasSession && contentType.includes("application/json")) {
+    const body = (await req.json()) as Record<string, unknown>;
+    if (!body.token_endpoint_auth_method) {
+      return auth.handler(
+        new Request(req.url, {
+          body: JSON.stringify({ ...body, token_endpoint_auth_method: "none" }),
+          headers: req.headers,
+          method: req.method,
+        })
+      );
+    }
+  }
+  return auth.handler(req);
+});
+
 authRouter.on(["POST", "GET"], "/*", (c) => auth.handler(c.req.raw));
 
 export { authRouter };
