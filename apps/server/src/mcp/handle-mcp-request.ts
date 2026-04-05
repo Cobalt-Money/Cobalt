@@ -1,3 +1,4 @@
+import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 
@@ -111,6 +112,18 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
     return unauthorizedResponse(
       origin,
       "Access token is not associated with a Cobalt user."
+    );
+  }
+
+  const entitled = await userHasActiveSubscription(userId);
+  if (!entitled) {
+    return Response.json(
+      {
+        error: "subscription_required",
+        error_description:
+          "An active Cobalt subscription is required to use the MCP API.",
+      },
+      { headers: { "Cache-Control": "no-store" }, status: 403 }
     );
   }
 
