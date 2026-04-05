@@ -64,56 +64,22 @@ The MCP server uses **OAuth** via Better Auth. When you connect for the first ti
 
 ### <McpSectionHeader icon={<ClaudeIcon />}>Claude</McpSectionHeader>
 
-<Tabs items={["Claude.ai (web)", "Claude Desktop"]}>
-  <Tab value="Claude.ai (web)">
-    Requires a **Pro or Max** plan.
+Works the same on both Claude.ai (Pro/Max) and Claude Desktop.
 
-    <Steps>
-      <Step>
-        Go to **Customize → Connectors**
-      </Step>
-      <Step>
-        Click **+**, then **Add custom connector**
-      </Step>
-      <Step>
-        Enter the server URL:
+<Steps>
+  <Step>Go to **Settings → Connectors → Add Custom Connector**</Step>
+  <Step>
+    Fill in:
 
-        ```
-        https://api.cobaltpf.com/api/mcp
-        ```
+    - **Name:** `Cobalt`
+    - **Remote MCP Server URL:** `https://api.cobaltpf.com/api/mcp`
 
-      </Step>
-      <Step>
-        Click **Add**
-      </Step>
-      <Step>
-        Click **Connect** and sign in with your Cobalt account when prompted
-      </Step>
-      <Step>
-        To use Cobalt in a conversation, click **+** near the chat composer and toggle the Cobalt connector on
-      </Step>
-    </Steps>
-
-  </Tab>
-  <Tab value="Claude Desktop">
-    <Steps>
-      <Step>
-        Open Claude Desktop and go to **Settings → Integrations**
-      </Step>
-      <Step>
-        Click **Add integration**
-      </Step>
-      <Step>
-        Enter:
-        - **Name:** `Cobalt`
-        - **URL:** `https://api.cobaltpf.com/api/mcp`
-      </Step>
-      <Step>
-        Click **Add**, then **Connect** and sign in with your Cobalt account
-      </Step>
-    </Steps>
-  </Tab>
-</Tabs>
+  </Step>
+  <Step>
+    Click **Add**, then follow the connection steps to sign in with your Cobalt
+    account
+  </Step>
+</Steps>
 
 ### <McpSectionHeader icon={<ChatGPTIcon />}>ChatGPT</McpSectionHeader>
 
