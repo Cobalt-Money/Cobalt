@@ -83,28 +83,18 @@ Works the same on both Claude.ai (Pro/Max) and Claude Desktop.
 
 ### <McpSectionHeader icon={<ChatGPTIcon />}>ChatGPT</McpSectionHeader>
 
-Requires a **Pro** plan and Developer Mode enabled.
-
 <Steps>
+  <Step>Go to **Settings → Apps → Create app**</Step>
   <Step>
-    Enable Developer Mode: go to **Settings → Advanced settings** and toggle
-    **Developer Mode** on
+    Fill in:
+
+    - **Name:** `Cobalt`
+    - **Description:** `Tools for Financial Data`
+    - **MCP Server URL:** `https://api.cobaltpf.com/api/mcp`
+
   </Step>
-  <Step>Go to **Settings → Connectors** and click **Create**</Step>
-  <Step>
-    Fill in the details: - **Name:** `Cobalt` - **Description:** `Access my
-    Cobalt financial data — accounts, transactions, investments, and more` -
-    **Connector URL:** `https://api.cobaltpf.com/api/mcp` - **Authentication:**
-    `OAuth`
-  </Step>
-  <Step>
-    Click **Create** — ChatGPT will connect and display the available Cobalt
-    tools
-  </Step>
-  <Step>
-    In a conversation, click **+** near the composer → **More** → select
-    **Cobalt** to activate it
-  </Step>
+  <Step>Make sure **OAuth** is selected as the authentication method</Step>
+  <Step>Click **Create**, then follow the connection steps to sign in with your Cobalt account</Step>
 </Steps>
 
 ### <McpSectionHeader icon={<CursorIcon />}>Cursor</McpSectionHeader>
