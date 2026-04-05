@@ -10,6 +10,7 @@ import { Steps, Step } from "fumadocs-ui/components/steps";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 import {
   AmpIcon,
+  ChatGPTIcon,
   ClaudeIcon,
   CodexIcon,
   CursorIcon,
@@ -60,6 +61,85 @@ The MCP server uses **OAuth** via Better Auth. When you connect for the first ti
 </Callout>
 
 ## Installation instructions
+
+### <McpSectionHeader icon={<ClaudeIcon />}>Claude</McpSectionHeader>
+
+<Tabs items={["Claude.ai (web)", "Claude Desktop"]}>
+  <Tab value="Claude.ai (web)">
+    Requires a **Pro or Max** plan.
+
+    <Steps>
+      <Step>
+        Go to **Customize → Connectors**
+      </Step>
+      <Step>
+        Click **+**, then **Add custom connector**
+      </Step>
+      <Step>
+        Enter the server URL:
+
+        ```
+        https://api.cobaltpf.com/api/mcp
+        ```
+
+      </Step>
+      <Step>
+        Click **Add**
+      </Step>
+      <Step>
+        Click **Connect** and sign in with your Cobalt account when prompted
+      </Step>
+      <Step>
+        To use Cobalt in a conversation, click **+** near the chat composer and toggle the Cobalt connector on
+      </Step>
+    </Steps>
+
+  </Tab>
+  <Tab value="Claude Desktop">
+    <Steps>
+      <Step>
+        Open Claude Desktop and go to **Settings → Integrations**
+      </Step>
+      <Step>
+        Click **Add integration**
+      </Step>
+      <Step>
+        Enter:
+        - **Name:** `Cobalt`
+        - **URL:** `https://api.cobaltpf.com/api/mcp`
+      </Step>
+      <Step>
+        Click **Add**, then **Connect** and sign in with your Cobalt account
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+### <McpSectionHeader icon={<ChatGPTIcon />}>ChatGPT</McpSectionHeader>
+
+Requires a **Pro** plan and Developer Mode enabled.
+
+<Steps>
+  <Step>
+    Enable Developer Mode: go to **Settings → Advanced settings** and toggle
+    **Developer Mode** on
+  </Step>
+  <Step>Go to **Settings → Connectors** and click **Create**</Step>
+  <Step>
+    Fill in the details: - **Name:** `Cobalt` - **Description:** `Access my
+    Cobalt financial data — accounts, transactions, investments, and more` -
+    **Connector URL:** `https://api.cobaltpf.com/api/mcp` - **Authentication:**
+    `OAuth`
+  </Step>
+  <Step>
+    Click **Create** — ChatGPT will connect and display the available Cobalt
+    tools
+  </Step>
+  <Step>
+    In a conversation, click **+** near the composer → **More** → select
+    **Cobalt** to activate it
+  </Step>
+</Steps>
 
 ### <McpSectionHeader icon={<CursorIcon />}>Cursor</McpSectionHeader>
 
