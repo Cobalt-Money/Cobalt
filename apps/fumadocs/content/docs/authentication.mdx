@@ -17,7 +17,7 @@ For **browser-based** clients (web apps, SPAs), authentication is automatic via 
 Redirect the user or make a request to the sign-in endpoint:
 
 ```bash
-POST https://cobalt-server.vercel.app/api/auth/sign-in/social
+POST https://api.cobaltpf.com/api/auth/sign-in/social
 Content-Type: application/json
 
 {
@@ -41,7 +41,7 @@ After successful authentication, Better Auth sets an `httpOnly` session cookie. 
 Once authenticated, all `/v1/` endpoints work automatically:
 
 ```bash
-GET https://cobalt-server.vercel.app/v1/tickers/AAPL/quote
+GET https://api.cobaltpf.com/v1/tickers/AAPL/quote
 ```
 
 No `Authorization` header needed — the session cookie handles it.
@@ -52,7 +52,7 @@ If you have a Bearer token (e.g., from a session), you can pass it directly:
 
 ```bash
 curl -H "Authorization: Bearer <access_token>" \
-  https://cobalt-server.vercel.app/v1/tickers/AAPL/quote
+  https://api.cobaltpf.com/v1/tickers/AAPL/quote
 ```
 
 ## Session Lifetime

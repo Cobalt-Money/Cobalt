@@ -138,7 +138,7 @@ export function McpSectionHeader({
   );
 }
 
-const MCP_URL = "https://cobalt-server.vercel.app/api/mcp";
+const MCP_URL = "https://api.cobaltpf.com/api/mcp";
 const CURSOR_DEEPLINK = `https://cursor.com/en-US/install-mcp?name=Cobalt&config=${btoa(JSON.stringify({ url: MCP_URL }))}`;
 const VSCODE_DEEPLINK = `vscode:mcp/install?${encodeURIComponent(JSON.stringify({ url: MCP_URL, name: "Cobalt", type: "http" }))}`;
 
