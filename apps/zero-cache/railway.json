@@ -4,8 +4,6 @@
     "watchPatterns": ["apps/zero-cache/**"]
   },
   "deploy": {
-    "healthcheckPath": "/keepalive",
-    "healthcheckTimeout": 300,
     "overlapSeconds": 0
   }
 }
