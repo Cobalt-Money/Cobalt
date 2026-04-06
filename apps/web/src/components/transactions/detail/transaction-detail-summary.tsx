@@ -101,7 +101,6 @@ export function TransactionDetailSummary({
         <div className="flex items-center gap-2.5 text-sm">
           <span className="flex size-5 shrink-0 items-center justify-center">
             <InstitutionLogo
-              institutionLogo={transaction.institutionLogo}
               institutionName={transaction.institutionName}
               institutionUrl={transaction.institutionUrl}
             />
