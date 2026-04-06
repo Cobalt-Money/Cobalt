@@ -39,6 +39,12 @@ function buildInstitutionLogoCandidates(
   const out: string[] = [];
   const clientId = env.VITE_BRANDFETCH_CLIENT_ID;
   const host = hostnameFromInstitutionUrl(row.institutionUrl);
+  console.info("[institution-logo] building candidates", {
+    hasBrandfetchClientId: !!clientId,
+    hasLogoDevKey: !!env.VITE_LOGO_DEV_PUBLISHABLE_KEY,
+    host,
+    institutionUrl: row.institutionUrl,
+  });
   if (clientId && host) {
     out.push(...brandfetchIconDomainUrls(host, clientId));
   }
@@ -48,6 +54,7 @@ function buildInstitutionLogoCandidates(
   if (fromLogoDev && !out.includes(fromLogoDev)) {
     out.push(fromLogoDev);
   }
+  console.info("[institution-logo] candidates:", out);
   return out;
 }
 
