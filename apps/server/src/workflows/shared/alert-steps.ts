@@ -8,7 +8,7 @@ import {
  * Step: Insert an alert for a user.
  * Delegates to server-data mutation with idempotency via unique index.
  */
-export function insertAlertStep(params: {
+export async function insertAlertStep(params: {
   userId: string;
   type: AlertType;
   source: AlertSource;
@@ -19,18 +19,18 @@ export function insertAlertStep(params: {
 }): Promise<{ inserted: boolean }> {
   "use step";
 
-  return insertAlert(params);
+  return await insertAlert(params);
 }
 
 /**
  * Step: Resolve all active alerts for a given source + sourceId.
  * Delegates to server-data mutation.
  */
-export function resolveAlertsStep(params: {
+export async function resolveAlertsStep(params: {
   source: AlertSource;
   sourceId: string;
 }): Promise<{ resolvedCount: number }> {
   "use step";
 
-  return resolveAlerts(params);
+  return await resolveAlerts(params);
 }

@@ -418,7 +418,7 @@ export async function createBalanceSnapshotsStep(accounts: AccountBase[]) {
  * balance data without waiting for the daily cron.
  * Uses onConflictDoUpdate so fresh webhook data overwrites stale cron data.
  */
-export function upsertTodaySnapshotsStep(
+export async function upsertTodaySnapshotsStep(
   accounts: {
     plaidAccountId: string;
     currentBalance: number;
@@ -429,10 +429,10 @@ export function upsertTodaySnapshotsStep(
   "use step";
 
   if (accounts.length === 0) {
-    return Promise.resolve({ upserted: 0 });
+    return { upserted: 0 };
   }
 
-  return upsertTodayBankBalanceSnapshotsFromAccounts({
+  return await upsertTodayBankBalanceSnapshotsFromAccounts({
     accounts,
     snapshotDate: getTodayDateOnly(),
   });

@@ -123,7 +123,11 @@ fetchEventArticles.maxRetries = 3; // 4 total attempts
  * Step 3: Select best articles (filtering/prioritization)
  * Filters and prioritizes articles (up to 5 articles + 1 video)
  */
-export function selectBestArticles(articles: StockNewsArticle[], limit = 5) {
+// oxlint-disable-next-line require-await -- WDK requires "use step" functions to be async
+export async function selectBestArticles(
+  articles: StockNewsArticle[],
+  limit = 5
+) {
   "use step";
 
   const selectedArticles: StockNewsArticle[] = [];
