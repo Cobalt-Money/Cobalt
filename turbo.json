@@ -7,7 +7,12 @@
     },
     "build": {
       "dependsOn": ["^build", "server#extract-openapi"],
-      "env": ["VITE_SERVER_URL", "VITE_ZERO_CACHE_URL"],
+      "env": [
+        "VITE_SERVER_URL",
+        "VITE_ZERO_CACHE_URL",
+        "VITE_BRANDFETCH_CLIENT_ID",
+        "VITE_LOGO_DEV_PUBLISHABLE_KEY"
+      ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".next/**"]
     },
