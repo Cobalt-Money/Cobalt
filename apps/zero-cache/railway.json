@@ -5,6 +5,7 @@
   },
   "deploy": {
     "healthcheckPath": "/keepalive",
-    "healthcheckTimeout": 300
+    "healthcheckTimeout": 300,
+    "drainingSeconds": 30
   }
 }
