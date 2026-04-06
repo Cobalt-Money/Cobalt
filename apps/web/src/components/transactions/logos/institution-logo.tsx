@@ -55,19 +55,18 @@ function buildInstitutionLogoCandidates(
   if (clientId && host) {
     out.push(...brandfetchIconDomainUrls(host, clientId));
   }
-  // DEBUG: re-enable Plaid + Logo.dev after Brandfetch debugging
-  // if (row.institutionLogo?.trim()) {
-  //   const plaid = normalizeInstitutionLogoSrc(row.institutionLogo.trim());
-  //   if (!out.includes(plaid)) {
-  //     out.push(plaid);
-  //   }
-  // }
-  // const fromLogoDev = institutionLogoDevUrlFromInstitutionUrl(
-  //   row.institutionUrl
-  // );
-  // if (fromLogoDev && !out.includes(fromLogoDev)) {
-  //   out.push(fromLogoDev);
-  // }
+  if (row.institutionLogo?.trim()) {
+    const plaid = normalizeInstitutionLogoSrc(row.institutionLogo.trim());
+    if (!out.includes(plaid)) {
+      out.push(plaid);
+    }
+  }
+  const fromLogoDev = institutionLogoDevUrlFromInstitutionUrl(
+    row.institutionUrl
+  );
+  if (fromLogoDev && !out.includes(fromLogoDev)) {
+    out.push(fromLogoDev);
+  }
   return out;
 }
 
