@@ -2,5 +2,9 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "watchPatterns": ["apps/zero-cache/**"]
+  },
+  "deploy": {
+    "healthcheckPath": "/keepalive",
+    "healthcheckTimeout": 300
   }
 }
