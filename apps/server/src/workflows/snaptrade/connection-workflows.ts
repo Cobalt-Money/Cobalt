@@ -118,11 +118,14 @@ async function snaptradeConnectionRepairedWorkflow(
  * Workflow: Handle CONNECTION_UPDATED webhook
  * Re-enables authorization and refreshes account data
  */
-export function snaptradeConnectionUpdatedWorkflow(
+export async function snaptradeConnectionUpdatedWorkflow(
   params: ConnectionUpdatedParams
 ): Promise<SnapTradeWorkflowResult> {
   "use workflow";
-  return snaptradeConnectionRepairedWorkflow(params, "CONNECTION_UPDATED");
+  return await snaptradeConnectionRepairedWorkflow(
+    params,
+    "CONNECTION_UPDATED"
+  );
 }
 
 /**
@@ -174,11 +177,11 @@ export async function snaptradeConnectionBrokenWorkflow(
  * Workflow: Handle CONNECTION_FIXED webhook
  * Re-enables authorization and refreshes account data (same as CONNECTION_UPDATED)
  */
-export function snaptradeConnectionFixedWorkflow(
+export async function snaptradeConnectionFixedWorkflow(
   params: ConnectionUpdatedParams
 ): Promise<SnapTradeWorkflowResult> {
   "use workflow";
-  return snaptradeConnectionRepairedWorkflow(params, "CONNECTION_FIXED");
+  return await snaptradeConnectionRepairedWorkflow(params, "CONNECTION_FIXED");
 }
 
 /**
