@@ -6,13 +6,18 @@ import { toast } from "sonner";
 
 import { authClient } from "@/lib/clients/auth-client";
 
-export default function SocialAuth() {
+export default function SocialAuth({
+  callbackURL: callbackURLProp,
+}: {
+  callbackURL?: string;
+}) {
   const [loading, setLoading] = useState(false);
 
   const callbackURL =
-    typeof window === "undefined"
+    callbackURLProp ??
+    (typeof window === "undefined"
       ? "/dashboard"
-      : `${window.location.origin}/dashboard`;
+      : `${window.location.origin}/dashboard`);
 
   const handleGoogleAuth = async () => {
     setLoading(true);

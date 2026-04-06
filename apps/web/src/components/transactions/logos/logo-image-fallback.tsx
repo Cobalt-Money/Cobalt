@@ -149,6 +149,7 @@ export function LogoImageWithFallback({
           if (src) {
             logoUrlState.set(src, "fail");
             compactCacheIfNeeded();
+            console.warn("[logo] failed to load:", src);
           }
 
           if (!resolved) {
@@ -161,6 +162,13 @@ export function LogoImageWithFallback({
               }
               next += 1;
             }
+            if (next >= candidates.length) {
+              console.warn(
+                "[logo] all candidates exhausted for:",
+                alt,
+                candidates
+              );
+            }
             setIndex(next);
           }
         }}
@@ -168,6 +176,7 @@ export function LogoImageWithFallback({
           setLoaded(true);
           if (src) {
             logoUrlState.set(src, "success");
+            console.info("[logo] loaded:", src);
           }
           if (!resolved && src) {
             logoUrlResolved.set(key, src);

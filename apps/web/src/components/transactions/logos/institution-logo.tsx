@@ -6,19 +6,6 @@ import { useMemo } from "react";
 
 import { LogoImageWithFallback } from "./logo-image-fallback";
 
-/** Plaid often stores raw base64; sometimes a full data URL or https URL. */
-export function normalizeInstitutionLogoSrc(logo: string): string {
-  const t = logo.trim();
-  if (
-    t.startsWith("http://") ||
-    t.startsWith("https://") ||
-    t.startsWith("data:")
-  ) {
-    return t;
-  }
-  return `data:image/png;base64,${t}`;
-}
-
 function hostnameFromInstitutionUrl(
   url: string | null | undefined
 ): string | null {
@@ -34,7 +21,7 @@ function hostnameFromInstitutionUrl(
   }
 }
 
-/** Logo.dev domain logo when Plaid logo is missing or fails (matches horizon-test). */
+/** Logo.dev domain logo by institution URL. */
 export function institutionLogoDevUrlFromInstitutionUrl(
   institutionUrl: string | null | undefined
 ): string | null {
@@ -47,44 +34,41 @@ export function institutionLogoDevUrlFromInstitutionUrl(
 }
 
 function buildInstitutionLogoCandidates(
-  row: Pick<TransactionListItem, "institutionLogo" | "institutionUrl">
+  row: Pick<TransactionListItem, "institutionUrl">
 ): string[] {
   const out: string[] = [];
   const clientId = env.VITE_BRANDFETCH_CLIENT_ID;
   const host = hostnameFromInstitutionUrl(row.institutionUrl);
+  console.info("[institution-logo] building candidates", {
+    hasBrandfetchClientId: !!clientId,
+    hasLogoDevKey: !!env.VITE_LOGO_DEV_PUBLISHABLE_KEY,
+    host,
+    institutionUrl: row.institutionUrl,
+  });
   if (clientId && host) {
     out.push(...brandfetchIconDomainUrls(host, clientId));
   }
-  // DEBUG: re-enable Plaid + Logo.dev after Brandfetch debugging
-  // if (row.institutionLogo?.trim()) {
-  //   const plaid = normalizeInstitutionLogoSrc(row.institutionLogo.trim());
-  //   if (!out.includes(plaid)) {
-  //     out.push(plaid);
-  //   }
-  // }
-  // const fromLogoDev = institutionLogoDevUrlFromInstitutionUrl(
-  //   row.institutionUrl
-  // );
-  // if (fromLogoDev && !out.includes(fromLogoDev)) {
-  //   out.push(fromLogoDev);
-  // }
+  const fromLogoDev = institutionLogoDevUrlFromInstitutionUrl(
+    row.institutionUrl
+  );
+  if (fromLogoDev && !out.includes(fromLogoDev)) {
+    out.push(fromLogoDev);
+  }
+  console.info("[institution-logo] candidates:", out);
   return out;
 }
 
 /**
- * Bank column glyph: Brandfetch **icon** chain (`type=icon` → lettermark) for round tiles
- * when `VITE_BRANDFETCH_CLIENT_ID`, then Plaid/DB logo, then Logo.dev by host, then icon.
+ * Bank column glyph: Brandfetch icon chain (`type=icon` → lettermark) for round tiles,
+ * then Logo.dev by host, then letter initial.
  */
 export function InstitutionLogo(
-  props: Pick<
-    TransactionListItem,
-    "institutionLogo" | "institutionName" | "institutionUrl"
-  >
+  props: Pick<TransactionListItem, "institutionName" | "institutionUrl">
 ) {
-  const { institutionLogo, institutionName, institutionUrl } = props;
+  const { institutionName, institutionUrl } = props;
   const candidates = useMemo(
-    () => buildInstitutionLogoCandidates({ institutionLogo, institutionUrl }),
-    [institutionLogo, institutionUrl]
+    () => buildInstitutionLogoCandidates({ institutionUrl }),
+    [institutionUrl]
   );
   const alt = institutionName?.trim() ? `${institutionName} logo` : "Bank logo";
   const fallbackText = (() => {

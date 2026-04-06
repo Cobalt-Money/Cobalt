@@ -1,10 +1,10 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp";
-import { z } from "zod";
+import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions/queries";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 
-import { verifyOAuthAccessTokenForMcp } from "./verify-oidc-access-token";
-import type { McpAccessTokenPayload } from "./verify-oidc-access-token";
-
+import { registerMcpTools } from "./tools/register-tools.js";
+import { verifyOAuthAccessTokenForMcp } from "./verify-oidc-access-token.js";
+import type { McpAccessTokenPayload } from "./verify-oidc-access-token.js";
 function mcpResourceUrlFromOrigin(origin: string): string {
   return new URL("/api/mcp", origin).href;
 }
@@ -114,6 +114,18 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
     );
   }
 
+  const entitled = await userHasActiveSubscription(userId);
+  if (!entitled) {
+    return Response.json(
+      {
+        error: "subscription_required",
+        error_description:
+          "An active Cobalt subscription is required to use the MCP API.",
+      },
+      { headers: { "Cache-Control": "no-store" }, status: 403 }
+    );
+  }
+
   const authInfo = {
     clientId: clientIdFromClaims(verified),
     expiresAt: typeof verified.exp === "number" ? verified.exp : undefined,
@@ -132,24 +144,7 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
     { capabilities: { tools: { listChanged: true } } }
   );
 
-  server.registerTool(
-    "cobalt_get_session_subject",
-    {
-      annotations: { readOnlyHint: true },
-      description:
-        "Returns the Cobalt user id (`sub`) for the current OAuth access token.",
-      inputSchema: z.object({}),
-      title: "Session subject",
-    },
-    () => ({
-      content: [
-        {
-          text: JSON.stringify({ sub: userId }),
-          type: "text",
-        },
-      ],
-    })
-  );
+  registerMcpTools(server, userId);
 
   await server.connect(transport);
   return transport.handleRequest(req, { authInfo });

@@ -1,10 +1,11 @@
+import { env } from "@cobalt-web/env/server";
 import { verifyAccessToken } from "better-auth/oauth2";
 
-import {
-  betterAuthJwksUrl,
-  betterAuthPublicBaseUrl,
-} from "./better-auth-base-url";
-
+function betterAuthBaseUrl(): string {
+  const u = new URL(env.BETTER_AUTH_URL);
+  const pathname = u.pathname.replace(/\/+$/, "") || "/";
+  return pathname === "/" ? `${u.origin}/api/auth` : `${u.origin}${pathname}`;
+}
 /** JWT access-token claims we read after verification (Better Auth / OIDC). */
 export interface McpAccessTokenPayload {
   aud?: string | string[];
@@ -16,7 +17,7 @@ export interface McpAccessTokenPayload {
 
 /** `iss` in JWT must match verification; Better Auth uses `baseURL` + default path (see `betterAuthPublicBaseUrl`). */
 function issuerCandidates(): string[] {
-  const primary = betterAuthPublicBaseUrl();
+  const primary = betterAuthBaseUrl();
   const out = new Set<string>([primary]);
   if (primary.endsWith("/")) {
     out.add(primary.slice(0, -1));
@@ -50,7 +51,7 @@ function mcpUrlWithAlternateLoopback(primary: string): string | null {
 function mcpAudienceCandidates(primary: string): string[] {
   const out = new Set<string>([primary]);
   try {
-    const issuerOrigin = new URL(betterAuthPublicBaseUrl()).origin;
+    const issuerOrigin = new URL(betterAuthBaseUrl()).origin;
     out.add(`${issuerOrigin}/api/mcp`);
     const alternate = mcpUrlWithAlternateLoopback(primary);
     if (alternate !== null) {
@@ -69,7 +70,7 @@ export async function verifyOAuthAccessTokenForMcp(
   accessToken: string,
   audienceFromRequest: string
 ): Promise<McpAccessTokenPayload | null> {
-  const jwksUrl = betterAuthJwksUrl();
+  const jwksUrl = `${betterAuthBaseUrl()}/jwks`;
   const audiences = mcpAudienceCandidates(audienceFromRequest);
   const issuers = issuerCandidates();
   for (const issuer of issuers) {
