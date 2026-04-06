@@ -1,8 +1,8 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requirePaidUser } from "../middleware.js";
-import { chatDetailRouter } from "./detail.js";
-import { chatListRouter } from "./list.js";
+import { requirePaidUser } from "../middleware";
+import { chatDetailRouter } from "./detail";
+import { chatListRouter } from "./list";
 
 export const chatRouter = new OpenAPIHono()
   .use("/*", requirePaidUser)

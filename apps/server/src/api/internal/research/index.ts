@@ -1,15 +1,15 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requireAuth } from "../middleware.js";
-import { balanceSheetRouter } from "./balance-sheet.js";
-import { chartRouter } from "./chart.js";
-import { earningsRouter } from "./earnings.js";
-import { incomeRouter } from "./income.js";
-import { newsRouter } from "./news.js";
-import { overviewRouter } from "./overview.js";
-import { quoteRouter } from "./quote.js";
-import { tickerPriceRouter } from "./ticker-price.js";
-import { tickerSearchRouter } from "./ticker-search.js";
+import { requireAuth } from "../middleware";
+import { balanceSheetRouter } from "./balance-sheet";
+import { chartRouter } from "./chart";
+import { earningsRouter } from "./earnings";
+import { incomeRouter } from "./income";
+import { newsRouter } from "./news";
+import { overviewRouter } from "./overview";
+import { quoteRouter } from "./quote";
+import { tickerPriceRouter } from "./ticker-price";
+import { tickerSearchRouter } from "./ticker-search";
 
 export const researchRouter = new OpenAPIHono()
   .use("/*", requireAuth)

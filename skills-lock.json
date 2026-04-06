@@ -60,6 +60,11 @@
       "source": "pproenca/dot-skills",
       "sourceType": "github",
       "computedHash": "84d2d291054736df0cdee47d1a9a8d3ceb5b9e5a06afb879edff51f55ef30816"
+    },
+    "workflow": {
+      "source": "vercel/workflow",
+      "sourceType": "github",
+      "computedHash": "0d31efa78ad6a2e76d8e6089bf5e820a155976b76f8b82b64391344ad2ae310b"
     }
   }
 }

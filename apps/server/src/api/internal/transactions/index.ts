@@ -1,10 +1,10 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requirePaidUser } from "../middleware.js";
-import { creditSpendingRouter } from "./credit-spending.js";
-import { listRouter } from "./list.js";
-import { overridesRouter } from "./overrides.js";
-import { recurringRouter } from "./recurring.js";
+import { requirePaidUser } from "../middleware";
+import { creditSpendingRouter } from "./credit-spending";
+import { listRouter } from "./list";
+import { overridesRouter } from "./overrides";
+import { recurringRouter } from "./recurring";
 
 export const transactionsRouter = new OpenAPIHono()
   .use("/*", requirePaidUser)

@@ -10,26 +10,27 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
-import { accountsRouter } from "./api/internal/accounts/index.js";
-import { appstoreRouter } from "./api/internal/appstore.js";
-import { authRouter } from "./api/internal/auth.js";
-import { brokerageRouter } from "./api/internal/brokerage/index.js";
-import { chatRouter } from "./api/internal/chat/index.js";
-import { institutionsRouter } from "./api/internal/institutions.js";
-import { newsRouter } from "./api/internal/news.js";
-import { plaidRouter } from "./api/internal/plaid/index.js";
-import { researchRouter } from "./api/internal/research/index.js";
-import { snaptradeRouter } from "./api/internal/snaptrade/index.js";
-import { subscriptionsRouter } from "./api/internal/subscriptions/index.js";
-import { transactionsRouter } from "./api/internal/transactions/index.js";
-import { userRouter } from "./api/internal/user/index.js";
-import { zeroRouter } from "./api/internal/zero.js";
-import { v1Router } from "./api/public/v1/index.js";
+import { accountsRouter } from "./api/internal/accounts/index";
+import { appstoreRouter } from "./api/internal/appstore/index";
+import { authRouter } from "./api/internal/auth";
+import { brokerageRouter } from "./api/internal/brokerage/index";
+import { chatRouter } from "./api/internal/chat/index";
+import { cronRouter } from "./api/internal/cron/index";
+import { institutionsRouter } from "./api/internal/institutions";
+import { newsRouter } from "./api/internal/news";
+import { plaidRouter } from "./api/internal/plaid/index";
+import { researchRouter } from "./api/internal/research/index";
+import { snaptradeRouter } from "./api/internal/snaptrade/index";
+import { subscriptionsRouter } from "./api/internal/subscriptions/index";
+import { transactionsRouter } from "./api/internal/transactions/index";
+import { userRouter } from "./api/internal/user/index";
+import { zeroRouter } from "./api/internal/zero";
+import { v1Router } from "./api/public/v1/index";
 import {
   getPublicOriginFromRequest,
   handleMcpHttpRequest,
-} from "./lib/mcp/handle-mcp-request.js";
-import { buildMcpProtectedResourceMetadata } from "./lib/mcp/oauth-discovery.js";
+} from "./lib/mcp/handle-mcp-request";
+import { buildMcpProtectedResourceMetadata } from "./lib/mcp/oauth-discovery";
 
 const base = new OpenAPIHono();
 const publicApi = new OpenAPIHono();
@@ -102,7 +103,8 @@ base
   .route("/api/user", userRouter)
   .route("/api/institutions", institutionsRouter)
   .route("/api/plaid", plaidRouter)
-  .route("/api/appstore", appstoreRouter);
+  .route("/api/appstore", appstoreRouter)
+  .route("/api/cron", cronRouter);
 
 // ── Public API ──────────────────────────────────────────────────────
 

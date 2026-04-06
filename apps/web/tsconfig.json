@@ -23,9 +23,12 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./src/*", "../server/src/*"],
       "@cobalt-web/ui/*": ["../../packages/ui/src/*"],
-      "server/*": ["../server/src/*"]
+      "server/*": ["../server/src/*"],
+      "@modelcontextprotocol/sdk/*": [
+        "../server/node_modules/@modelcontextprotocol/sdk/dist/esm/*"
+      ]
     }
   }
 }

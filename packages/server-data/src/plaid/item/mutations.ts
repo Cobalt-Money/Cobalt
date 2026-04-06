@@ -84,6 +84,13 @@ export async function persistItemMetadata(params: {
   });
 }
 
+/** Upsert balance for a single Plaid account (Plaid accounts/get payload). */
+export function upsertBankBalanceFromPlaidAccount(
+  account: AccountBase
+): Promise<void> {
+  return syncBalanceForAccount(account);
+}
+
 /** Upsert balance for a single Plaid account. */
 async function syncBalanceForAccount(account: AccountBase): Promise<void> {
   const existing = await db.query.bankBalance.findFirst({
@@ -121,6 +128,19 @@ export async function syncNewAccountsForItem(
     .update(bankConnection)
     .set({ newAccountsAvailable: false, updatedAt: new Date() })
     .where(eq(bankConnection.plaidItemId, plaidItemId));
+}
+
+/**
+ * Insert a bank account row if missing (sync pipeline). Does not update metadata on conflict.
+ */
+export async function insertBankAccountIgnoreConflict(
+  plaidItemId: string,
+  account: AccountBase
+): Promise<void> {
+  await db
+    .insert(bankAccount)
+    .values(bankAccountInsertFromPlaid(plaidItemId)(account))
+    .onConflictDoNothing({ target: bankAccount.plaidAccountId });
 }
 
 /**

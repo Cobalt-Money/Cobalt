@@ -1,4 +1,4 @@
-import { betterAuthPublicBaseUrl } from "./better-auth-base-url.js";
+import { betterAuthPublicBaseUrl } from "./better-auth-base-url";
 
 /** RFC 9728 protected resource metadata for the MCP HTTP endpoint. */
 export function buildMcpProtectedResourceMetadata(

@@ -13,11 +13,11 @@ import {
 import {
   getInstitutionById,
   searchInstitutions,
-} from "@cobalt-web/server-data/plaid/actions";
+} from "@cobalt-web/server-data/plaid/item/actions";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
-import { requireAuth } from "./middleware.js";
+import { requireAuth } from "./middleware";
 
 // ── Route definitions ───────────────────────────────────────────────
 

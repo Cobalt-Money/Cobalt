@@ -1,7 +1,7 @@
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
-import { errorResponse } from "./shared/schemas.js";
+import { errorResponse } from "./shared/schemas";
 
 // ── Schemas (public API contract) ───────────────────────────────────
 

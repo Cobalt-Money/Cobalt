@@ -1,8 +1,6 @@
 import { env } from "@cobalt-web/env/server";
-import {
-  billingPortalResponseSchema,
-  createBillingPortalSession,
-} from "@cobalt-web/server-data/subscriptions";
+import { createBillingPortalSession } from "@cobalt-web/server-data/subscriptions/actions";
+import { billingPortalResponseSchema } from "@cobalt-web/server-data/subscriptions/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 

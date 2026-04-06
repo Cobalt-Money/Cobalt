@@ -1,9 +1,24 @@
 import { db } from "@cobalt-web/db";
+import { mobileSubscription } from "@cobalt-web/db/schema/mobile/subscriptions";
+import type { MobileSubscription } from "@cobalt-web/db/schema/mobile/subscriptions";
+import { eq } from "drizzle-orm";
 
 import {
   mobileSubscriptionGrantsAccess,
   stripeSubscriptionGrantsAccess,
 } from "./predicates.js";
+
+export async function findMobileSubscriptionByOriginalTransactionId(
+  originalTransactionId: string
+): Promise<MobileSubscription | undefined> {
+  const [row] = await db
+    .select()
+    .from(mobileSubscription)
+    .where(eq(mobileSubscription.originalTransactionId, originalTransactionId))
+    .limit(1);
+
+  return row;
+}
 
 /**
  * Returns true if the user has an active Stripe (Better Auth) subscription and/or

@@ -30,6 +30,15 @@ async function stockNewsRequest<T>(
   return response.json() as Promise<T>;
 }
 
+export interface StockNewsEvent {
+  event_name: string;
+  event_text: string;
+  event_id: string;
+  news_items: number;
+  date: string;
+  tickers: string[];
+}
+
 export interface StockNewsArticle {
   title: string;
   news_url: string;
@@ -41,6 +50,17 @@ export interface StockNewsArticle {
   date: string;
   tickers: string[];
   topics: string[];
+}
+
+export interface StockNewsEventsResponse {
+  data: StockNewsEvent[];
+  total_pages: number;
+}
+
+export interface StockNewsArticlesResponse {
+  event_name: string;
+  event_text: string;
+  data: StockNewsArticle[];
 }
 
 export interface StockNewsTickerArticlesResponse {
@@ -70,3 +90,29 @@ export function getTickerNews(params: {
 
   return stockNewsRequest<StockNewsTickerArticlesResponse>("", queryParams);
 }
+
+export const stockNewsAPI = {
+  getEventArticles(
+    eventId: string,
+    items = 50,
+    page = 1
+  ): Promise<StockNewsArticlesResponse> {
+    return stockNewsRequest<StockNewsArticlesResponse>("/events", {
+      eventid: eventId,
+      items: items.toString(),
+      page: page.toString(),
+    });
+  },
+
+  getEvents(page = 1): Promise<StockNewsEventsResponse> {
+    return stockNewsRequest<StockNewsEventsResponse>("/events", {
+      page: page.toString(),
+    });
+  },
+
+  getRecentEvents(): Promise<StockNewsEventsResponse> {
+    return this.getEvents(1);
+  },
+
+  getTickerNews,
+};

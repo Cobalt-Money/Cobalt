@@ -7,7 +7,7 @@ import { handleMutateRequest, handleQueryRequest } from "@rocicorp/zero/server";
 import { zeroNodePg } from "@rocicorp/zero/server/adapters/pg";
 import { Pool } from "pg";
 
-import { requirePaidUser } from "./middleware.js";
+import { requirePaidUser } from "./middleware";
 
 const zeroRouter = new OpenAPIHono<AppEnv>();
 

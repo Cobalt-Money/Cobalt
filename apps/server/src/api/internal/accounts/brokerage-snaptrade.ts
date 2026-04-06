@@ -7,7 +7,7 @@ import {
   snaptradeBrokerageAccountsListResponseSchema,
 } from "@cobalt-web/server-data/brokerage/snaptrade/schemas";
 import { disconnectBrokerageAccountByUserId } from "@cobalt-web/server-data/snaptrade/disconnect";
-import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions";
+import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions/queries";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 

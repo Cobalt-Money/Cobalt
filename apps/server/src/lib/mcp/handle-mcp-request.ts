@@ -1,9 +1,9 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp";
 import { z } from "zod";
 
-import { verifyOAuthAccessTokenForMcp } from "./verify-oidc-access-token.js";
-import type { McpAccessTokenPayload } from "./verify-oidc-access-token.js";
+import { verifyOAuthAccessTokenForMcp } from "./verify-oidc-access-token";
+import type { McpAccessTokenPayload } from "./verify-oidc-access-token";
 
 function mcpResourceUrlFromOrigin(origin: string): string {
   return new URL("/api/mcp", origin).href;

@@ -95,6 +95,20 @@ export async function disconnectSnaptradeAuthorizationByUserId(
   }
 }
 
+/**
+ * Delete a brokerage authorization record by its SnapTrade authorization ID.
+ * Used by webhook handlers when a connection is deleted upstream.
+ */
+export async function deleteSnaptradeAuthorization(
+  authorizationId: string
+): Promise<{ success: boolean; authorizationId: string }> {
+  await db
+    .delete(brokerageAuthorizations)
+    .where(eq(brokerageAuthorizations.authorizationId, authorizationId));
+
+  return { authorizationId, success: true };
+}
+
 export async function disconnectBrokerageAccountByUserId(
   userId: string,
   accountId: string

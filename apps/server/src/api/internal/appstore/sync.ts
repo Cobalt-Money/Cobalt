@@ -1,13 +1,16 @@
 import {
+  deriveStoreKitSyncFields,
+  insertMobileSubscriptionFromStoreKitSync,
+  updateMobileSubscriptionFromStoreKitSync,
+} from "@cobalt-web/server-data/subscriptions/mutations";
+import { findMobileSubscriptionByOriginalTransactionId } from "@cobalt-web/server-data/subscriptions/queries";
+import {
   appStoreSyncBodySchema,
   appStoreSyncErrorSchema,
   appStoreSyncResponseSchema,
-  syncAppStoreSubscription,
-} from "@cobalt-web/server-data/subscriptions";
+} from "@cobalt-web/server-data/subscriptions/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-
-import { requireAuth } from "./middleware.js";
 
 const syncRoute = createRoute({
   description:
@@ -49,25 +52,63 @@ const syncRoute = createRoute({
   tags: ["App Store"],
 });
 
-const syncRouter = new OpenAPIHono<AppEnv>();
+export const syncRouter = new OpenAPIHono<AppEnv>();
 
 syncRouter.openapi(syncRoute, async (c) => {
   const body = c.req.valid("json");
   const userId = c.var.user.id;
 
   try {
-    const result = await syncAppStoreSubscription(userId, {
-      environment: body.environment,
-      expiresAt: body.expiresAt,
-      latestTransactionId: body.latestTransactionId,
+    const now = new Date();
+    const fields = deriveStoreKitSyncFields(now, body);
+
+    const existing = await findMobileSubscriptionByOriginalTransactionId(
+      body.originalTransactionId
+    );
+
+    if (existing) {
+      await updateMobileSubscriptionFromStoreKitSync(
+        body.originalTransactionId,
+        {
+          environment: fields.environment,
+          expiresAt: fields.expiresAt,
+          latestTransactionId: fields.latestTransactionId,
+          productId: body.productId,
+          status: fields.status,
+          updatedAt: now,
+          userId,
+        }
+      );
+
+      return c.json(
+        {
+          action:
+            existing.userId === userId
+              ? ("updated" as const)
+              : ("transferred" as const),
+          subscriptionId: existing.id,
+          success: true as const,
+        },
+        200
+      );
+    }
+
+    const row = await insertMobileSubscriptionFromStoreKitSync({
+      createdAt: now,
+      environment: fields.environment,
+      expiresAt: fields.expiresAt,
+      latestTransactionId: fields.latestTransactionId,
       originalTransactionId: body.originalTransactionId,
       productId: body.productId,
+      status: fields.status,
+      updatedAt: now,
+      userId,
     });
 
     return c.json(
       {
-        action: result.action,
-        subscriptionId: result.subscriptionId,
+        action: "created" as const,
+        subscriptionId: row.id,
         success: true as const,
       },
       200
@@ -85,7 +126,3 @@ syncRouter.openapi(syncRoute, async (c) => {
     );
   }
 });
-
-export const appstoreRouter = new OpenAPIHono<AppEnv>()
-  .use("/*", requireAuth)
-  .route("/", syncRouter);

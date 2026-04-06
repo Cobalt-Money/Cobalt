@@ -1,7 +1,5 @@
-import {
-  subscriptionStatusResponseSchema,
-  userHasActiveSubscription,
-} from "@cobalt-web/server-data/subscriptions";
+import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions/queries";
+import { subscriptionStatusResponseSchema } from "@cobalt-web/server-data/subscriptions/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 

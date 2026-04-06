@@ -1,11 +1,11 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requirePaidUser } from "./middleware.js";
-import { eventDetailRouter } from "./news/event-detail.js";
-import { eventsRouter } from "./news/events.js";
-import { forYouRouter } from "./news/for-you.js";
-import { rssRouter } from "./news/rss.js";
-import { trendingRouter } from "./news/trending.js";
+import { requirePaidUser } from "./middleware";
+import { eventDetailRouter } from "./news/event-detail";
+import { eventsRouter } from "./news/events";
+import { forYouRouter } from "./news/for-you";
+import { rssRouter } from "./news/rss";
+import { trendingRouter } from "./news/trending";
 
 const newsRouter = new OpenAPIHono();
 

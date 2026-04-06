@@ -1,17 +1,21 @@
-import { createLinkTokenForUpdate } from "@cobalt-web/server-data/plaid/actions";
+import { createLinkTokenForUpdate } from "@cobalt-web/server-data/plaid/item/actions";
 import {
   clearItemError,
   getAccessTokenForItem,
-} from "@cobalt-web/server-data/plaid/mutations";
+} from "@cobalt-web/server-data/plaid/item/mutations";
 import {
   errorResponseSchema,
   linkTokenResponseSchema,
   plaidItemIdBodySchema,
   successResponseSchema,
   updateLinkTokenBodySchema,
-} from "@cobalt-web/server-data/plaid/schemas";
+} from "@cobalt-web/server-data/plaid/item/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { start } from "workflow/api";
+
+import { plaidInitialLiabilitiesSyncWorkflow } from "@/workflows/plaid/liabilities/workflow";
+import { plaidReauthSyncWorkflow } from "@/workflows/plaid/transactions/workflow";
 
 // ── Route definitions ───────────────────────────────────────────────
 
@@ -98,7 +102,9 @@ updateRouter.openapi(clearReauthRoute, async (c) => {
   try {
     await clearItemError(plaidItemId, userId);
 
-    // FUTURE: wire workflow triggers (plaidReauthSyncWorkflow, plaidInitialLiabilitiesSyncWorkflow)
+    // Fire-and-forget: trigger reauth sync and liabilities workflows
+    start(plaidReauthSyncWorkflow, [{ item_id: plaidItemId }]);
+    start(plaidInitialLiabilitiesSyncWorkflow, [plaidItemId]);
 
     return c.json({ success: true }, 200);
   } catch (error) {

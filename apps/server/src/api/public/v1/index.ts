@@ -1,7 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requireOAuth } from "../middleware.js";
-import { tickersRouter } from "./tickers.js";
+import { requireOAuth } from "../middleware";
+import { tickersRouter } from "./tickers";
 
 export const v1Router = new OpenAPIHono()
   .use("/*", requireOAuth)

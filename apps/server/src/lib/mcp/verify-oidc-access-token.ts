@@ -3,7 +3,7 @@ import { verifyAccessToken } from "better-auth/oauth2";
 import {
   betterAuthJwksUrl,
   betterAuthPublicBaseUrl,
-} from "./better-auth-base-url.js";
+} from "./better-auth-base-url";
 
 /** JWT access-token claims we read after verification (Better Auth / OIDC). */
 export interface McpAccessTokenPayload {

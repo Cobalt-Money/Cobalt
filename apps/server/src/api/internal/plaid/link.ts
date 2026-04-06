@@ -6,14 +6,14 @@ import {
   fetchItemAndAccounts,
   removeItem,
   triggerPlaidSync,
-} from "@cobalt-web/server-data/plaid/actions";
-import { isDuplicateAccountError } from "@cobalt-web/server-data/plaid/lib";
+} from "@cobalt-web/server-data/plaid/item/actions";
+import { isDuplicateAccountError } from "@cobalt-web/server-data/plaid/item/lib";
 import {
   persistItemMetadata,
   getAccessTokenForItem,
   syncNewAccountsForItem,
-} from "@cobalt-web/server-data/plaid/mutations";
-import { checkForDuplicateAccounts } from "@cobalt-web/server-data/plaid/queries";
+} from "@cobalt-web/server-data/plaid/item/mutations";
+import { checkForDuplicateAccounts } from "@cobalt-web/server-data/plaid/item/queries";
 import {
   errorResponseSchema,
   exchangeTokenBodySchema,
@@ -22,9 +22,14 @@ import {
   persistItemBodySchema,
   plaidItemIdBodySchema,
   successResponseSchema,
-} from "@cobalt-web/server-data/plaid/schemas";
+} from "@cobalt-web/server-data/plaid/item/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { start } from "workflow/api";
+
+import { plaidInitialInvestmentSyncWorkflow } from "@/workflows/plaid/investments/workflow";
+import { plaidInitialLiabilitiesSyncWorkflow } from "@/workflows/plaid/liabilities/workflow";
+import { plaidSyncWorkflow } from "@/workflows/plaid/transactions/workflow";
 
 // ── Route definitions ───────────────────────────────────────────────
 
@@ -221,7 +226,9 @@ linkRouter.openapi(persistItemRoute, async (c) => {
     // Trigger sync
     await triggerPlaidSync(access_token);
 
-    // FUTURE: wire workflow triggers (plaidInitialInvestmentSyncWorkflow, plaidInitialLiabilitiesSyncWorkflow)
+    // Fire-and-forget: trigger investment and liabilities workflows
+    start(plaidInitialInvestmentSyncWorkflow, [item_id]);
+    start(plaidInitialLiabilitiesSyncWorkflow, [item_id]);
 
     return c.json({ success: true }, 200);
   } catch (error: unknown) {
@@ -246,7 +253,16 @@ linkRouter.openapi(syncNewAccountsRoute, async (c) => {
     const accounts = await fetchAccounts(accessToken);
     await syncNewAccountsForItem(plaidItemId, accounts);
 
-    // FUTURE: wire workflow triggers (plaidSyncWorkflow, plaidInitialInvestmentSyncWorkflow, plaidInitialLiabilitiesSyncWorkflow)
+    // Fire-and-forget: trigger sync workflows for new accounts
+    start(plaidSyncWorkflow, [
+      {
+        historical_update_complete: false,
+        initial_update_complete: true,
+        item_id: plaidItemId,
+      },
+    ]);
+    start(plaidInitialInvestmentSyncWorkflow, [plaidItemId]);
+    start(plaidInitialLiabilitiesSyncWorkflow, [plaidItemId]);
 
     return c.json({ success: true }, 200);
   } catch (error) {

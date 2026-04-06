@@ -27,7 +27,7 @@ export const institutionSyncBodySchema = z.object({
 
 // ── Response schemas: Plaid proxy (search / detail) ─────────────────
 // Keys are snake_case to match what we return from Plaid SDK mappers in
-// `packages/server-data/src/plaid/actions.ts`. Column types reuse `institutionRowSchema.shape`
+// `packages/server-data/src/plaid/item/actions.ts`. Column types reuse `institutionRowSchema.shape`
 // where they match our table; `id` is Plaid `institution_id` (not our DB uuid).
 
 export const institutionSearchResultSchema = z.object({

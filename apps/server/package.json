@@ -3,16 +3,17 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsdown",
+    "build": "nitro build",
     "check-types": "tsc -b",
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
-    "dev": "bun run --hot src/index.ts",
-    "start": "bun run dist/index.mjs",
+    "dev": "nitro dev",
+    "start": "node .output/server/index.mjs",
     "extract-openapi": "bun ./scripts/extract-openapi.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@apple/app-store-server-library": "^3.0.0",
     "@better-auth/oauth-provider": "1.5.6",
     "@cobalt-web/auth": "workspace:*",
     "@cobalt-web/clients": "workspace:*",
@@ -24,18 +25,22 @@
     "@modelcontextprotocol/sdk": "^1.12.0",
     "@rocicorp/zero": "catalog:",
     "@scalar/hono-api-reference": "^0.10.4",
+    "ai": "^6.0.142",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "drizzle-orm": "1.0.0-beta.18-7eb39f0",
     "hono": "^4.8.2",
+    "nitro": "^3.0.260311-beta",
     "pg": "^8.16.3",
+    "rollup": "^4.60.1",
+    "snaptrade-typescript-sdk": "^9.0.160",
+    "workflow": "^4.2.0-beta.76",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/pg": "^8.16.0",
-    "tsdown": "^0.16.5",
     "typescript": "^5",
     "vitest": "^3.2.0"
   }

@@ -1,14 +1,14 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requirePaidUser } from "../middleware.js";
-import { activitiesRouter } from "./activities.js";
-import { balancesRouter } from "./balances.js";
-import { holdingsNewsRouter } from "./holdings-news.js";
-import { mergedBundleRouter } from "./merged-bundle.js";
-import { portfolioSnapshotsRouter } from "./portfolio-snapshots.js";
-import { positionsRouter } from "./positions.js";
-import { userBrokeragesRouter } from "./user-brokerages.js";
-import { userTickersRouter } from "./user-tickers.js";
+import { requirePaidUser } from "../middleware";
+import { activitiesRouter } from "./activities";
+import { balancesRouter } from "./balances";
+import { holdingsNewsRouter } from "./holdings-news";
+import { mergedBundleRouter } from "./merged-bundle";
+import { portfolioSnapshotsRouter } from "./portfolio-snapshots";
+import { positionsRouter } from "./positions";
+import { userBrokeragesRouter } from "./user-brokerages";
+import { userTickersRouter } from "./user-tickers";
 
 export const brokerageRouter = new OpenAPIHono()
   .use("/*", requirePaidUser)
