@@ -151,13 +151,11 @@ const columns: ColumnDef<TransactionListItem>[] = [
   {
     accessorFn: (row) => row.institutionName ?? row.accountName ?? "",
     cell: ({ row }) => {
-      const { accountName, institutionLogo, institutionName, institutionUrl } =
-        row.original;
+      const { accountName, institutionName, institutionUrl } = row.original;
 
       return (
         <div className={cellRow} title={institutionName?.trim() || accountName}>
           <InstitutionLogo
-            institutionLogo={institutionLogo}
             institutionName={institutionName}
             institutionUrl={institutionUrl}
           />
