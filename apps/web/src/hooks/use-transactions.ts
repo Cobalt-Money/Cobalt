@@ -1,9 +1,8 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import { mapZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo } from "react";
-
-import { mapZeroTransactionListRow } from "./lib/dto";
 
 export function useTransactions() {
   const [rows, result] = useQuery(queries.transactions.list());

@@ -16,11 +16,12 @@ import { Route as OauthConsentRouteImport } from './routes/oauth/consent'
 import { Route as AuthResearchRouteImport } from './routes/_auth/research'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthBrokerageRouteImport } from './routes/_auth/brokerage'
-import { Route as AuthAccountsRouteImport } from './routes/_auth/accounts'
 import { Route as AuthTransactionsRouteRouteImport } from './routes/_auth/transactions/route'
 import { Route as AuthAiChatRouteRouteImport } from './routes/_auth/ai-chat/route'
+import { Route as AuthAccountsRouteRouteImport } from './routes/_auth/accounts/route'
 import { Route as AuthTransactionsIndexRouteImport } from './routes/_auth/transactions/index'
 import { Route as AuthAiChatIndexRouteImport } from './routes/_auth/ai-chat/index'
+import { Route as AuthAccountsIndexRouteImport } from './routes/_auth/accounts/index'
 import { Route as AuthTransactionsTransactionIdRouteImport } from './routes/_auth/transactions/$transactionId'
 import { Route as AuthAiChatChatIdRouteImport } from './routes/_auth/ai-chat/$chatId'
 
@@ -58,11 +59,6 @@ const AuthBrokerageRoute = AuthBrokerageRouteImport.update({
   path: '/brokerage',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthAccountsRoute = AuthAccountsRouteImport.update({
-  id: '/accounts',
-  path: '/accounts',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
 const AuthTransactionsRouteRoute = AuthTransactionsRouteRouteImport.update({
   id: '/transactions',
   path: '/transactions',
@@ -71,6 +67,11 @@ const AuthTransactionsRouteRoute = AuthTransactionsRouteRouteImport.update({
 const AuthAiChatRouteRoute = AuthAiChatRouteRouteImport.update({
   id: '/ai-chat',
   path: '/ai-chat',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthAccountsRouteRoute = AuthAccountsRouteRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
   getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthTransactionsIndexRoute = AuthTransactionsIndexRouteImport.update({
@@ -82,6 +83,11 @@ const AuthAiChatIndexRoute = AuthAiChatIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthAiChatRouteRoute,
+} as any)
+const AuthAccountsIndexRoute = AuthAccountsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthAccountsRouteRoute,
 } as any)
 const AuthTransactionsTransactionIdRoute =
   AuthTransactionsTransactionIdRouteImport.update({
@@ -98,28 +104,29 @@ const AuthAiChatChatIdRoute = AuthAiChatChatIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/accounts': typeof AuthAccountsRouteRouteWithChildren
   '/ai-chat': typeof AuthAiChatRouteRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteRouteWithChildren
-  '/accounts': typeof AuthAccountsRoute
   '/brokerage': typeof AuthBrokerageRoute
   '/dashboard': typeof AuthDashboardRoute
   '/research': typeof AuthResearchRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/accounts/': typeof AuthAccountsIndexRoute
   '/ai-chat/': typeof AuthAiChatIndexRoute
   '/transactions/': typeof AuthTransactionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/accounts': typeof AuthAccountsRoute
   '/brokerage': typeof AuthBrokerageRoute
   '/dashboard': typeof AuthDashboardRoute
   '/research': typeof AuthResearchRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/accounts': typeof AuthAccountsIndexRoute
   '/ai-chat': typeof AuthAiChatIndexRoute
   '/transactions': typeof AuthTransactionsIndexRoute
 }
@@ -128,15 +135,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
   '/login': typeof LoginRoute
+  '/_auth/accounts': typeof AuthAccountsRouteRouteWithChildren
   '/_auth/ai-chat': typeof AuthAiChatRouteRouteWithChildren
   '/_auth/transactions': typeof AuthTransactionsRouteRouteWithChildren
-  '/_auth/accounts': typeof AuthAccountsRoute
   '/_auth/brokerage': typeof AuthBrokerageRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/research': typeof AuthResearchRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/_auth/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/_auth/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/_auth/accounts/': typeof AuthAccountsIndexRoute
   '/_auth/ai-chat/': typeof AuthAiChatIndexRoute
   '/_auth/transactions/': typeof AuthTransactionsIndexRoute
 }
@@ -145,28 +153,29 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/accounts'
     | '/ai-chat'
     | '/transactions'
-    | '/accounts'
     | '/brokerage'
     | '/dashboard'
     | '/research'
     | '/oauth/consent'
     | '/ai-chat/$chatId'
     | '/transactions/$transactionId'
+    | '/accounts/'
     | '/ai-chat/'
     | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
-    | '/accounts'
     | '/brokerage'
     | '/dashboard'
     | '/research'
     | '/oauth/consent'
     | '/ai-chat/$chatId'
     | '/transactions/$transactionId'
+    | '/accounts'
     | '/ai-chat'
     | '/transactions'
   id:
@@ -174,15 +183,16 @@ export interface FileRouteTypes {
     | '/'
     | '/_auth'
     | '/login'
+    | '/_auth/accounts'
     | '/_auth/ai-chat'
     | '/_auth/transactions'
-    | '/_auth/accounts'
     | '/_auth/brokerage'
     | '/_auth/dashboard'
     | '/_auth/research'
     | '/oauth/consent'
     | '/_auth/ai-chat/$chatId'
     | '/_auth/transactions/$transactionId'
+    | '/_auth/accounts/'
     | '/_auth/ai-chat/'
     | '/_auth/transactions/'
   fileRoutesById: FileRoutesById
@@ -245,13 +255,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthBrokerageRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_auth/accounts': {
-      id: '/_auth/accounts'
-      path: '/accounts'
-      fullPath: '/accounts'
-      preLoaderRoute: typeof AuthAccountsRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
     '/_auth/transactions': {
       id: '/_auth/transactions'
       path: '/transactions'
@@ -264,6 +267,13 @@ declare module '@tanstack/react-router' {
       path: '/ai-chat'
       fullPath: '/ai-chat'
       preLoaderRoute: typeof AuthAiChatRouteRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/accounts': {
+      id: '/_auth/accounts'
+      path: '/accounts'
+      fullPath: '/accounts'
+      preLoaderRoute: typeof AuthAccountsRouteRouteImport
       parentRoute: typeof AuthRouteRoute
     }
     '/_auth/transactions/': {
@@ -279,6 +289,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ai-chat/'
       preLoaderRoute: typeof AuthAiChatIndexRouteImport
       parentRoute: typeof AuthAiChatRouteRoute
+    }
+    '/_auth/accounts/': {
+      id: '/_auth/accounts/'
+      path: '/'
+      fullPath: '/accounts/'
+      preLoaderRoute: typeof AuthAccountsIndexRouteImport
+      parentRoute: typeof AuthAccountsRouteRoute
     }
     '/_auth/transactions/$transactionId': {
       id: '/_auth/transactions/$transactionId'
@@ -296,6 +313,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthAccountsRouteRouteChildren {
+  AuthAccountsIndexRoute: typeof AuthAccountsIndexRoute
+}
+
+const AuthAccountsRouteRouteChildren: AuthAccountsRouteRouteChildren = {
+  AuthAccountsIndexRoute: AuthAccountsIndexRoute,
+}
+
+const AuthAccountsRouteRouteWithChildren =
+  AuthAccountsRouteRoute._addFileChildren(AuthAccountsRouteRouteChildren)
 
 interface AuthAiChatRouteRouteChildren {
   AuthAiChatChatIdRoute: typeof AuthAiChatChatIdRoute
@@ -327,18 +355,18 @@ const AuthTransactionsRouteRouteWithChildren =
   )
 
 interface AuthRouteRouteChildren {
+  AuthAccountsRouteRoute: typeof AuthAccountsRouteRouteWithChildren
   AuthAiChatRouteRoute: typeof AuthAiChatRouteRouteWithChildren
   AuthTransactionsRouteRoute: typeof AuthTransactionsRouteRouteWithChildren
-  AuthAccountsRoute: typeof AuthAccountsRoute
   AuthBrokerageRoute: typeof AuthBrokerageRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthResearchRoute: typeof AuthResearchRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
+  AuthAccountsRouteRoute: AuthAccountsRouteRouteWithChildren,
   AuthAiChatRouteRoute: AuthAiChatRouteRouteWithChildren,
   AuthTransactionsRouteRoute: AuthTransactionsRouteRouteWithChildren,
-  AuthAccountsRoute: AuthAccountsRoute,
   AuthBrokerageRoute: AuthBrokerageRoute,
   AuthDashboardRoute: AuthDashboardRoute,
   AuthResearchRoute: AuthResearchRoute,

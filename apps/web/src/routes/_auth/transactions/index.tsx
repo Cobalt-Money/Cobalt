@@ -1,6 +1,7 @@
+import { TransactionsTable } from "@cobalt-web/ui/cobalt/transactions/transactions-table";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { TransactionsTable } from "@/components/transactions/transactions-table";
+import { useTransactions } from "@/hooks/use-transactions";
 
 export const Route = createFileRoute("/_auth/transactions/")({
   component: TransactionsListPage,
@@ -8,5 +9,6 @@ export const Route = createFileRoute("/_auth/transactions/")({
 });
 
 function TransactionsListPage() {
-  return <TransactionsTable />;
+  const { isComplete, items } = useTransactions();
+  return <TransactionsTable isComplete={isComplete} items={items} />;
 }

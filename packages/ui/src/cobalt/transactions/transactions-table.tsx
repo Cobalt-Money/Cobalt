@@ -20,6 +20,8 @@ import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 import type { MouseEvent, KeyboardEvent } from "react";
 import { Fragment, useCallback, useMemo, useState } from "react";
 
+import { InstitutionLogo } from "../logos/institution-logo";
+import { MerchantLogo } from "../logos/merchant-logo";
 import {
   CategoryIcon,
   getCategoryDisplayConfig,
@@ -31,9 +33,6 @@ import {
   transactionDateSortKey,
   transactionMonthGroupKey,
 } from "./lib/helpers";
-import { InstitutionLogo } from "./logos/institution-logo";
-import { MerchantLogo } from "./logos/merchant-logo";
-import { useTransactions } from "./use-transactions";
 
 const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -151,11 +150,13 @@ const columns: ColumnDef<TransactionListItem>[] = [
   {
     accessorFn: (row) => row.institutionName ?? row.accountName ?? "",
     cell: ({ row }) => {
-      const { accountName, institutionName, institutionUrl } = row.original;
+      const { accountName, institutionLogo, institutionName, institutionUrl } =
+        row.original;
 
       return (
         <div className={cellRow} title={institutionName?.trim() || accountName}>
           <InstitutionLogo
+            institutionLogo={institutionLogo}
             institutionName={institutionName}
             institutionUrl={institutionUrl}
           />
@@ -254,9 +255,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
       const { amount } = row.original;
       const formattedAmount = currency.format(Math.abs(amount));
       const amountColor =
-        amount >= 0
-          ? "text-red-600 dark:text-red-500"
-          : "text-green-600 dark:text-green-500";
+        amount >= 0 ? "text-red-600 dark:text-red-500" : "text-green-550";
       return (
         <div
           className={cn(cellRow, "whitespace-nowrap tabular-nums", amountColor)}
@@ -280,9 +279,14 @@ function isInteractiveCellTarget(target: EventTarget | null): boolean {
   );
 }
 
-export function TransactionsTable() {
+export function TransactionsTable({
+  isComplete,
+  items,
+}: {
+  isComplete: boolean;
+  items: TransactionListItem[];
+}) {
   const navigate = useNavigate();
-  const { isComplete, items } = useTransactions();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const openTransaction = useCallback(

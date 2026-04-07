@@ -3,7 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useMemo } from "react";
 
-import { useTransactions } from "@/components/transactions/use-transactions";
+import { useTransactions } from "@/hooks/use-transactions";
 
 import { useShellRouteTitle } from "./header/use-shell-route-title";
 
@@ -23,7 +23,7 @@ function TransactionDetailBreadcrumb({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex min-w-0 flex-1 items-center gap-1.5 text-base font-medium"
+      className="flex min-w-0 flex-1 items-center gap-1.5 text-lg font-medium leading-none tracking-tight sm:text-xl"
     >
       <Link
         className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
@@ -33,7 +33,7 @@ function TransactionDetailBreadcrumb({
       </Link>
       <HugeiconsIcon
         aria-hidden
-        className="size-4 shrink-0 text-muted-foreground"
+        className="size-[1.125rem] shrink-0 text-muted-foreground sm:size-5"
         icon={ArrowRight01Icon}
         strokeWidth={2}
       />
@@ -58,5 +58,11 @@ export function SiteHeaderPrimaryTitle() {
     return <TransactionDetailBreadcrumb transactionId={transactionId} />;
   }
 
-  return <h1 className="text-base font-medium">{title}</h1>;
+  return (
+    <div className="flex min-w-0 flex-1 items-center self-stretch">
+      <h1 className="min-w-0 truncate text-lg font-semibold leading-none tracking-tight sm:text-xl">
+        {title}
+      </h1>
+    </div>
+  );
 }

@@ -1,0 +1,29 @@
+{
+  "name": "@cobalt-web/color-thief",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "colorthief": "^3.3.1"
+  },
+  "devDependencies": {
+    "@cobalt-web/config": "workspace:*",
+    "@types/react": "catalog:",
+    "@vitejs/plugin-react": "^6.0.1",
+    "jsdom": "^26.0.0",
+    "react": "catalog:",
+    "typescript": "^5",
+    "vitest": "^3.2.0"
+  },
+  "peerDependencies": {
+    "react": "catalog:"
+  }
+}

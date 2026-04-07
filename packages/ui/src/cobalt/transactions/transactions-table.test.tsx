@@ -5,9 +5,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { TransactionsTable } from "./transactions-table";
 
-const { mockNavigate, mockUseTransactions } = vi.hoisted(() => ({
+const { mockNavigate } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
-  mockUseTransactions: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -17,10 +16,6 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     useNavigate: () => mockNavigate,
   };
 });
-
-vi.mock("./use-transactions", () => ({
-  useTransactions: () => mockUseTransactions(),
-}));
 
 function createMockTransaction(
   overrides: Partial<TransactionListItem> = {}
@@ -53,23 +48,13 @@ function createMockTransaction(
 
 describe("TransactionsTable", () => {
   it("shows the empty state when there are no transactions and loading is complete", () => {
-    mockUseTransactions.mockReturnValue({
-      isComplete: true,
-      items: [],
-    });
-
-    render(<TransactionsTable />);
+    render(<TransactionsTable isComplete items={[]} />);
 
     expect(screen.getByText("No transactions yet.")).toBeTruthy();
   });
 
   it("renders transaction name, formatted amount, and date when data is present", () => {
-    mockUseTransactions.mockReturnValue({
-      isComplete: true,
-      items: [createMockTransaction()],
-    });
-
-    render(<TransactionsTable />);
+    render(<TransactionsTable isComplete items={[createMockTransaction()]} />);
 
     const table = screen.getByRole("table");
     expect(within(table).getByText("Coffee Shop Purchase")).toBeTruthy();

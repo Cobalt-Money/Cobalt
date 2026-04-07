@@ -157,7 +157,7 @@ export function LogoImageWithFallback({
             let next = index + 1;
             while (next < candidates.length) {
               const u = candidates[next];
-              if (logoUrlState.get(u) !== "fail") {
+              if (u !== undefined && logoUrlState.get(u) !== "fail") {
                 break;
               }
               next += 1;

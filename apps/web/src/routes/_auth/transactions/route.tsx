@@ -1,3 +1,4 @@
+import { TransactionsToolbar } from "@cobalt-web/ui/cobalt/transactions/transactions-toolbar";
 import {
   createFileRoute,
   Outlet,
@@ -5,7 +6,6 @@ import {
 } from "@tanstack/react-router";
 
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
-import { TransactionsToolbar } from "@/components/transactions/transactions-toolbar";
 
 export const Route = createFileRoute("/_auth/transactions")({
   component: TransactionsLayout,

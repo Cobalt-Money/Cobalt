@@ -3,13 +3,13 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
+import { InstitutionLogo } from "../../logos/institution-logo";
+import { MerchantLogo } from "../../logos/merchant-logo";
 import {
   CategoryIcon,
   getCategoryDisplayConfig,
   getDetailedCategoryDisplayName,
 } from "../categories";
-import { InstitutionLogo } from "../logos/institution-logo";
-import { MerchantLogo } from "../logos/merchant-logo";
 import {
   shouldShowLocationSection,
   TransactionDetailLocationCard,
@@ -30,7 +30,7 @@ export function TransactionDetailSummary({
   const isDebit = transaction.amount > 0;
   const amountColor = isDebit
     ? "text-red-600 dark:text-red-500"
-    : "text-green-600 dark:text-green-500";
+    : "text-green-550";
 
   const category = transaction.personalFinanceCategory;
   const categoryConfig = category ? getCategoryDisplayConfig(category) : null;
@@ -101,6 +101,7 @@ export function TransactionDetailSummary({
         <div className="flex items-center gap-2.5 text-sm">
           <span className="flex size-5 shrink-0 items-center justify-center">
             <InstitutionLogo
+              institutionLogo={transaction.institutionLogo}
               institutionName={transaction.institutionName}
               institutionUrl={transaction.institutionUrl}
             />

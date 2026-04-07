@@ -117,7 +117,7 @@ export function formatTransactionAccountDisplayName(
   let lastLetterIndex = -1;
   for (let i = accountName.length - 1; i >= 0; i -= 1) {
     const char = accountName[i];
-    if (/[a-zA-Z]/.test(char)) {
+    if (char !== undefined && /[a-zA-Z]/.test(char)) {
       lastLetterIndex = i;
       break;
     }
