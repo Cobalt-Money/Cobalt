@@ -26,7 +26,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useZero } from "@rocicorp/zero/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 
 import { useAppSession } from "@/lib/providers/app-session";
 
@@ -93,6 +93,7 @@ function ChatsGroup() {
   const chats = useChats();
   const zero = useZero();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const prefetchMessages = useCallback(
     (chatId: string) => {
@@ -100,6 +101,22 @@ function ChatsGroup() {
     },
     [zero]
   );
+
+  const handlePointerEnter = useCallback(
+    (chatId: string) => {
+      hoverTimer.current = setTimeout(() => {
+        prefetchMessages(chatId);
+      }, 150);
+    },
+    [prefetchMessages]
+  );
+
+  const handlePointerLeave = useCallback(() => {
+    if (hoverTimer.current !== null) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+  }, []);
 
   return (
     <SidebarMenu className="gap-0.5">
@@ -110,7 +127,8 @@ function ChatsGroup() {
             <SidebarMenuButton
               className="px-2"
               isActive={pathname === chatPath}
-              onClick={() => prefetchMessages(chat.chatId)}
+              onPointerEnter={() => handlePointerEnter(chat.chatId)}
+              onPointerLeave={handlePointerLeave}
               render={
                 <Link
                   aria-label={chat.title ?? "Chat"}
