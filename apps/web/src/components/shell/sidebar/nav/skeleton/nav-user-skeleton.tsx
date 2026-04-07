@@ -10,11 +10,14 @@ export function NavUserSkeleton() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton className="pointer-events-none" disabled size="lg">
-          <Skeleton className="size-8 shrink-0 rounded-lg" />
-          <div className="grid min-w-0 flex-1 gap-1.5 text-left">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-3 w-32" />
+        <SidebarMenuButton
+          className="pointer-events-none"
+          disabled
+          size="default"
+        >
+          <Skeleton className="size-5 shrink-0 rounded-md" />
+          <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+            <Skeleton className="h-3.5 w-24" />
           </div>
         </SidebarMenuButton>
       </SidebarMenuItem>

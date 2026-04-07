@@ -1,7 +1,6 @@
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -163,18 +162,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" variant="inset" {...props}>
       <SidebarHeader className="p-1.5">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="px-2"
-              render={<a aria-label="Cobalt" href="/" />}
-            >
-              <span className="text-base font-semibold text-muted-foreground">
-                Cobalt
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {navUser ? <NavUser user={navUser} /> : <NavUserSkeleton />}
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={sidebarNav.navMain} />
@@ -185,9 +173,6 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-1.5">
-        {navUser ? <NavUser user={navUser} /> : <NavUserSkeleton />}
-      </SidebarFooter>
     </Sidebar>
   );
 }
