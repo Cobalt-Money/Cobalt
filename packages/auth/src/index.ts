@@ -89,6 +89,7 @@ export const auth = betterAuth({
     }),
     // this basically allows us to not have to configure all of the clients ourselvers(cursor, claude code, etc.)
     oauthProvider({
+      accessTokenExpiry: 60 * 60 * 24, // 24 hours — MCP clients don't reliably handle refresh tokens
       allowDynamicClientRegistration: true,
       // MCP clients (Cursor, etc.) register without a session; see "Dynamic Registration" / MCP in
       // https://better-auth.com/docs/plugins/oauth-provider
