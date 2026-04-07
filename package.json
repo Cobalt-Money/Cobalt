@@ -23,7 +23,7 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "turbo dev --filter=!zero-cache",
+    "dev": "turbo dev",
     "build": "turbo build",
     "start": "turbo run start --filter=web --filter=server --filter=zero-cache --filter=fumadocs",
     "check-types": "turbo check-types",
