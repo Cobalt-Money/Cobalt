@@ -110,7 +110,7 @@ function ChatsGroup() {
             <SidebarMenuButton
               className="px-2"
               isActive={pathname === chatPath}
-              onPointerEnter={() => prefetchMessages(chat.chatId)}
+              onClick={() => prefetchMessages(chat.chatId)}
               render={
                 <Link
                   aria-label={chat.title ?? "Chat"}
