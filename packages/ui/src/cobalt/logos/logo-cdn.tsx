@@ -7,7 +7,7 @@ export interface LogoCDNProps {
   /** Hostname only (e.g. `github.com`). */
   domain: string;
   clientId: string;
-  /** Letter(s) when Logo API returns nothing usable (guide uses one character). */
+  /** Initial letter when Logo API returns nothing usable (matches lettermark-style fallback). */
   fallbackText: string;
   /** @default "Logo by Brandfetch" */
   alt?: string;

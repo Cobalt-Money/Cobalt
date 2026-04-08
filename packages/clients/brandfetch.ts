@@ -3,6 +3,7 @@
  * Free tier: pass `clientId` from the Developer Portal on every request (`c` query param).
  *
  * Path: `https://cdn.brandfetch.io/domain/{domain}/w/{w}/h/{h}/[{theme/light|dark}/]{segment}?c=…`
+ * Ticker: `https://cdn.brandfetch.io/ticker/{TICKER}/w/{w}/h/{h}/?c=…` — see {@link brandfetchTickerDimensionsUrl}.
  * For `logo` and `symbol`, optional `.svg` suffix via `svg` (default true for logo/symbol).
  *
  * Some responses use **dimensions only** (no `logo` / `symbol` / `icon` segment):
@@ -26,6 +27,125 @@ function normalizeDomainInput(domain: string): string {
   }
   host = host.replace(/^www\./, "").split("/")[0] ?? host;
   return host.toLowerCase();
+}
+
+/** Uppercase stock/ETF ticker suitable for Brandfetch `ticker/` paths, or `null` if not usable. */
+export function normalizeTickerForBrandfetch(ticker: string): string | null {
+  const t = ticker.trim().toUpperCase();
+  if (!t || t === "—") {
+    return null;
+  }
+  if (!/^[A-Z0-9./-]+$/.test(t)) {
+    return null;
+  }
+  return t;
+}
+
+function normalizeTickerInput(ticker: string): string {
+  const t = normalizeTickerForBrandfetch(ticker);
+  if (!t) {
+    throw new Error("brandfetch: invalid or empty ticker");
+  }
+  return t;
+}
+
+function buildTickerCdnPath(
+  symbol: string,
+  w: number,
+  h: number,
+  segment: string,
+  theme?: BrandfetchTheme
+): string {
+  const sym = normalizeTickerInput(symbol);
+  const themePrefix = theme ? `theme/${theme}/` : "";
+  return `${BRANDFETCH_CDN_ORIGIN}/ticker/${encodeURIComponent(sym)}/w/${w}/h/${h}/${themePrefix}${segment}`;
+}
+
+/**
+ * CDN URL with width/height only — ticker identifier (no `logo` / `symbol` / `icon` segment).
+ * @example https://cdn.brandfetch.io/ticker/AAPL/w/400/h/400/?c=CLIENT_ID
+ */
+export function brandfetchTickerDimensionsUrl(
+  ticker: string,
+  clientId: string,
+  options?: { h?: number; w?: number }
+): string {
+  const sym = normalizeTickerInput(ticker);
+  const w = options?.w ?? 400;
+  const h = options?.h ?? 400;
+  const url = new URL(
+    `${BRANDFETCH_CDN_ORIGIN}/ticker/${encodeURIComponent(sym)}/w/${w}/h/${h}/`
+  );
+  url.searchParams.set("c", clientId);
+  return url.toString();
+}
+
+/**
+ * Explicit width/height and asset for a **ticker** (`logo` | `icon` | `symbol`).
+ * @see https://docs.brandfetch.com/logo-api/overview — `ticker/NKE`, type routes
+ */
+export function brandfetchTickerLogoAssetUrl(
+  ticker: string,
+  clientId: string,
+  options: {
+    asset?: BrandfetchLogoAsset;
+    h?: number;
+    svg?: boolean;
+    theme?: BrandfetchTheme;
+    w?: number;
+  } = {}
+): string {
+  const w = options.w ?? 800;
+  const h = options.h ?? 800;
+  const asset = options.asset ?? "symbol";
+  const segment = assetPathSegment(asset, options.svg);
+  const url = new URL(buildTickerCdnPath(ticker, w, h, segment, options.theme));
+  url.searchParams.set("c", clientId);
+  return url.toString();
+}
+
+/**
+ * `type=icon` with `fallback=lettermark` for a stock/ETF ticker.
+ * @example …/ticker/NKE/w/128/h/128/fallback/lettermark/type/icon?c=…
+ */
+export function brandfetchTickerIconLettermarkFallbackUrl(
+  ticker: string,
+  clientId: string,
+  options?: { h?: number; theme?: BrandfetchTheme; w?: number }
+): string {
+  const sym = normalizeTickerInput(ticker);
+  const w = options?.w ?? 128;
+  const h = options?.h ?? 128;
+  const themePart = options?.theme ? `theme/${options.theme}/` : "";
+  const path = `${BRANDFETCH_CDN_ORIGIN}/ticker/${encodeURIComponent(sym)}/w/${w}/h/${h}/${themePart}fallback/lettermark/type/icon`;
+  const url = new URL(path);
+  url.searchParams.set("c", clientId);
+  return url.toString();
+}
+
+/**
+ * **Icon-only** chain for small circular avatars — same idea as {@link brandfetchIconDomainUrls}
+ * but using the Logo API **ticker** route.
+ *
+ * @param options.size — Square edge length for CDN `w`/`h` (default **128**).
+ */
+export function brandfetchTickerIconUrls(
+  ticker: string,
+  clientId: string,
+  options?: { size?: number }
+): string[] {
+  const size = options?.size ?? 128;
+  return [
+    brandfetchTickerLogoAssetUrl(ticker, clientId, {
+      asset: "icon",
+      h: size,
+      w: size,
+    }),
+    brandfetchTickerIconLettermarkFallbackUrl(ticker, clientId, {
+      h: size,
+      w: size,
+    }),
+  ];
 }
 
 export type BrandfetchLogoAsset = "icon" | "logo" | "symbol";

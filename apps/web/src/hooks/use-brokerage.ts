@@ -6,12 +6,10 @@ export function useBrokerage() {
   const [accounts] = useQuery(queries.brokerage.accounts());
   const [positions] = useQuery(queries.brokerage.positions());
   const [recentActivities] = useQuery(queries.brokerage.recentActivities());
-  const [recentOrders] = useQuery(queries.brokerage.recentOrders());
 
   return {
     accounts,
     positions,
     recentActivities,
-    recentOrders,
   };
 }

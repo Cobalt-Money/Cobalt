@@ -22,7 +22,7 @@ export function SiteHeader() {
         <SiteHeaderPrimaryTitle />
         <button
           type="button"
-          className="flex h-9 min-w-0 max-w-[15rem] flex-1 items-center gap-2 rounded-lg bg-input/30 px-3 text-left text-sm text-muted-foreground transition-colors hover:bg-input/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="flex h-9 min-w-0 max-w-[15rem] flex-1 items-center gap-2 rounded-2xl bg-input/30 px-3 text-left text-sm text-muted-foreground transition-colors hover:bg-input/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           onClick={() => setOpen(true)}
           aria-haspopup="dialog"
           aria-label="Open command palette"

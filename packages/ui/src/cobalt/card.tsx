@@ -11,12 +11,12 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 import type { ComponentProps } from "react";
 
 /**
- * Extra surface treatment on top of the stock {@link Card}: border-forward
- * chrome, light translucency, and backdrop blur so content reads in layers on
- * `bg-background` / sidebar-inset (vs the stock ring-only edge).
+ * Extra surface treatment on top of the stock `Card`: same ghost fill as
+ * account cards (`cobalt/accounts/account-card.tsx`). No border or shadow —
+ * overrides the stock card ring.
  */
 const cobaltCardChrome =
-  "ring-0 border border-border/70 bg-card/85 shadow-xs backdrop-blur-md";
+  "border-0 bg-[oklch(0.949_0_0)] shadow-none ring-0 dark:bg-white/[0.06]";
 
 export type CobaltCardProps = ComponentProps<typeof Card>;
 

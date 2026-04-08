@@ -60,7 +60,7 @@ export function SiteHeaderPrimaryTitle() {
 
   return (
     <div className="flex min-w-0 flex-1 items-center self-stretch">
-      <h1 className="min-w-0 truncate text-lg font-semibold leading-tight tracking-tight sm:text-xl">
+      <h1 className="min-w-0 truncate text-xl font-semibold leading-tight tracking-tight sm:text-2xl">
         {title}
       </h1>
     </div>

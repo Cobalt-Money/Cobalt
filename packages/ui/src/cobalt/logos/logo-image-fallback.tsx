@@ -7,7 +7,8 @@ interface LogoImageWithFallbackProps {
   /** Applied to `<img>` (e.g. object-contain vs object-cover). */
   imgClassName: string;
   /**
-   * Shown when every candidate fails to load (LogoCDN-style letter fallback).
+   * Shown when every candidate fails to load: first initial of this string (Brandfetch
+   * `fallback=lettermark` uses the brand first letter; we mirror that locally).
    * @see https://docs.brandfetch.com/guides/customize-logo-api-fallback
    */
   fallbackText?: string;
@@ -47,6 +48,19 @@ function stableKeyFromCandidates(candidates: string[]): string {
   return candidates.join("|");
 }
 
+/** First character of `text` (Unicode code points), for lettermark-style chips. */
+function firstInitial(text: string): string {
+  const t = text.trim();
+  if (!t) {
+    return "";
+  }
+  return [...t][0] ?? "";
+}
+
+function letterFallbackClassName(): string {
+  return "flex size-full items-center justify-center rounded-full bg-zinc-900/20 text-[9px] font-semibold leading-none text-zinc-100 dark:bg-zinc-100/50 dark:text-zinc-900";
+}
+
 /**
  * Tries each `candidates` URL in order; on `error`, advances to the next.
  * Uses opacity + circular chip (dark tint in light mode, light tint in dark mode); optional
@@ -82,6 +96,14 @@ export function LogoImageWithFallback({
     if (!el) {
       return;
     }
+    const rect = el.getBoundingClientRect();
+    const margin = 300;
+    const vh = window.innerHeight;
+    const inView = rect.top < vh + margin && rect.bottom > -margin;
+    if (inView) {
+      setVisible(true);
+      return;
+    }
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
@@ -89,7 +111,7 @@ export function LogoImageWithFallback({
           io.disconnect();
         }
       },
-      { rootMargin: "300px" }
+      { rootMargin: `${margin}px` }
     );
     io.observe(el);
     return () => {
@@ -105,17 +127,17 @@ export function LogoImageWithFallback({
 
   if (exhausted) {
     if (fallbackText?.trim()) {
-      const letter = fallbackText.trim().slice(0, 3);
+      const letter = firstInitial(fallbackText);
       return (
         <div
           aria-label={alt.trim() || "Logo"}
           className={cn(
-            "flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-900/20 text-[9px] font-semibold leading-none text-zinc-100 dark:bg-zinc-100/50 dark:text-zinc-900",
+            "flex size-5 shrink-0 items-center justify-center overflow-hidden",
             className
           )}
           role="img"
         >
-          {letter}
+          <span className={letterFallbackClassName()}>{letter}</span>
         </div>
       );
     }
@@ -125,6 +147,8 @@ export function LogoImageWithFallback({
   const resolved = logoUrlResolved.get(key);
   const src = resolved ?? candidates[index];
   const canLoad = visible;
+  const letter = fallbackText?.trim() ? firstInitial(fallbackText) : "";
+  const showLetterUnderlay = Boolean(letter);
 
   return (
     <div
@@ -134,10 +158,18 @@ export function LogoImageWithFallback({
         className
       )}
     >
+      {showLetterUnderlay ? (
+        <span
+          aria-hidden
+          className={cn(letterFallbackClassName(), "absolute inset-0 z-0")}
+        >
+          {letter}
+        </span>
+      ) : null}
       <img
         alt={alt.trim() || "Logo"}
         className={cn(
-          "absolute inset-0 size-full transition-opacity duration-150",
+          "absolute inset-0 z-10 size-full transition-opacity duration-150",
           loaded ? "opacity-100" : "opacity-0",
           imgClassName
         )}
@@ -152,25 +184,27 @@ export function LogoImageWithFallback({
             console.warn("[logo] failed to load:", src);
           }
 
-          if (!resolved) {
-            // Skip any candidates we've already seen fail in this session.
-            let next = index + 1;
-            while (next < candidates.length) {
-              const u = candidates[next];
-              if (u !== undefined && logoUrlState.get(u) !== "fail") {
-                break;
-              }
-              next += 1;
-            }
-            if (next >= candidates.length) {
-              console.warn(
-                "[logo] all candidates exhausted for:",
-                alt,
-                candidates
-              );
-            }
-            setIndex(next);
+          const cachedOk = logoUrlResolved.get(key);
+          if (cachedOk !== undefined && src === cachedOk) {
+            logoUrlResolved.delete(key);
           }
+
+          let next = index + 1;
+          while (next < candidates.length) {
+            const u = candidates[next];
+            if (u !== undefined && logoUrlState.get(u) !== "fail") {
+              break;
+            }
+            next += 1;
+          }
+          if (next >= candidates.length) {
+            console.warn(
+              "[logo] all candidates exhausted for:",
+              alt,
+              candidates
+            );
+          }
+          setIndex(next);
         }}
         onLoad={() => {
           setLoaded(true);

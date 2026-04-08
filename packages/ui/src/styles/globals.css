@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -83,7 +83,7 @@
 }
 
 @theme inline {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -135,6 +135,8 @@
   }
   html {
     @apply font-sans;
+    /* ~16.5px from a 16px default — half step between 100% and 17px bump */
+    font-size: 103.125%;
   }
   .maplibregl-popup-content {
     @apply bg-transparent! shadow-none! p-0! rounded-none!;
