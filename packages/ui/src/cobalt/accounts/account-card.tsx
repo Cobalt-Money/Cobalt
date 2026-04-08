@@ -1,5 +1,7 @@
 import { Card, CardContent, CardFooter } from "@cobalt-web/ui/components/card";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { ArrowReloadHorizontalIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 
 import { AccountConnectionActions } from "./account-connection-actions";
@@ -64,8 +66,20 @@ export function AccountCard({
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-1">
           <AccountConnectionActions account={account} />
         </div>
-        <p className="shrink-0 text-right text-sm font-normal text-muted-foreground">
-          Last synced{" "}
+        <p
+          aria-label={
+            account.lastSyncedAt === null
+              ? "Never synced"
+              : `Last synced ${formatLastSyncedLabel(account.lastSyncedAt)}`
+          }
+          className="flex shrink-0 items-center justify-end gap-1.5 text-right text-sm font-normal text-muted-foreground"
+        >
+          <HugeiconsIcon
+            aria-hidden
+            className="size-6 shrink-0 text-muted-foreground"
+            icon={ArrowReloadHorizontalIcon}
+            strokeWidth={2}
+          />
           {account.lastSyncedAt === null ? (
             <span className="tabular-nums">—</span>
           ) : (

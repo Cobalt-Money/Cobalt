@@ -5,10 +5,9 @@ export function formatLastSyncedLabel(ms: number | null): string {
   }
   const diffMs = Date.now() - ms;
   if (diffMs < 0) {
-    return new Intl.DateTimeFormat("en-US", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(ms));
+    return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
+      new Date(ms)
+    );
   }
   const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
   const sec = diffMs / 1000;
@@ -26,10 +25,9 @@ export function formatLastSyncedLabel(ms: number | null): string {
   if (day < 14) {
     return rtf.format(-day, "day");
   }
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(ms));
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
+    new Date(ms)
+  );
 }
 
 export function formatLastSyncedTitle(ms: number | null): string | undefined {

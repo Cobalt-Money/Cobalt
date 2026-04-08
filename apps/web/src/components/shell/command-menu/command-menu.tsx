@@ -1,3 +1,5 @@
+"use client";
+
 import {
   CobaltCommandDialog,
   CobaltCommandInput,
@@ -9,35 +11,88 @@ import {
   CommandItem,
   CommandList,
 } from "@cobalt-web/ui/components/command";
+import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
+import {
+  AppleStocksIcon,
+  ArrowReloadHorizontalIcon,
+  CreditCardIcon,
+  Home04Icon,
+  SearchDollarIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import type { ReactNode } from "react";
 
-/** All top-level app routes (see `routeTree.gen.ts` / sidebar). */
+/** All top-level app routes — icons match {@link AppSidebar} `sidebarNav.navMain`. */
 const COMMAND_NAV_ROUTES: readonly {
+  icon: typeof Home04Icon;
   keywords?: string[];
   label: string;
   path:
-    | "/"
     | "/accounts"
     | "/brokerage"
     | "/dashboard"
     | "/research"
     | "/transactions";
 }[] = [
-  { keywords: ["index", "root"], label: "Home", path: "/" },
-  { label: "Dashboard", path: "/dashboard" },
-  { keywords: ["tx", "history"], label: "Transactions", path: "/transactions" },
-  { keywords: ["invest", "trading"], label: "Brokerage", path: "/brokerage" },
-  { keywords: ["bank"], label: "Accounts", path: "/accounts" },
-  { keywords: ["books", "notes"], label: "Research", path: "/research" },
+  { icon: Home04Icon, label: "Dashboard", path: "/dashboard" },
+  {
+    icon: ArrowReloadHorizontalIcon,
+    keywords: ["tx", "history"],
+    label: "Transactions",
+    path: "/transactions",
+  },
+  {
+    icon: AppleStocksIcon,
+    keywords: ["invest", "trading"],
+    label: "Brokerage",
+    path: "/brokerage",
+  },
+  {
+    icon: CreditCardIcon,
+    keywords: ["bank"],
+    label: "Accounts",
+    path: "/accounts",
+  },
+  {
+    icon: SearchDollarIcon,
+    keywords: ["books", "notes"],
+    label: "Research",
+    path: "/research",
+  },
 ];
 
-/**
- * Global command palette — `CobaltCommandDialog` + `CobaltCommandPaletteRoot` + `CobaltCommandInput`.
- */
-export function CommandMenu() {
-  const [open, setOpen] = useState(false);
+interface CommandMenuContextValue {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
+const CommandMenuContext = createContext<CommandMenuContextValue | null>(null);
+
+export function useCommandMenu(): CommandMenuContextValue {
+  const ctx = useContext(CommandMenuContext);
+  if (!ctx) {
+    throw new Error("useCommandMenu must be used within CommandMenuProvider");
+  }
+  return ctx;
+}
+
+function CommandMenuDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const navigate = useNavigate();
   const { resolvedTheme, setTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
@@ -46,31 +101,23 @@ export function CommandMenu() {
     setThemeReady(true);
   }, []);
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((o) => !o);
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+  const go = useCallback(
+    (to: (typeof COMMAND_NAV_ROUTES)[number]["path"]) => {
+      onOpenChange(false);
+      navigate({ to });
+    },
+    [navigate, onOpenChange]
+  );
 
-  const go = (to: (typeof COMMAND_NAV_ROUTES)[number]["path"]) => {
-    setOpen(false);
-    navigate({ to });
-  };
-
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
-    setOpen(false);
-  };
+    onOpenChange(false);
+  }, [onOpenChange, resolvedTheme, setTheme]);
 
   return (
     <CobaltCommandDialog
       description="Search for a page or action"
-      onOpenChange={setOpen}
+      onOpenChange={onOpenChange}
       open={open}
       showCloseButton={false}
       title="Command palette"
@@ -80,13 +127,19 @@ export function CommandMenu() {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Navigation">
-            {COMMAND_NAV_ROUTES.map(({ keywords, label, path }) => (
+            {COMMAND_NAV_ROUTES.map(({ icon, keywords, label, path }) => (
               <CommandItem
                 key={String(path)}
                 keywords={keywords}
                 onSelect={() => go(path)}
                 value={`${label} ${path}`}
               >
+                <HugeiconsIcon
+                  aria-hidden
+                  className="text-muted-foreground"
+                  icon={icon}
+                  strokeWidth={2}
+                />
                 {label}
               </CommandItem>
             ))}
@@ -113,5 +166,45 @@ export function CommandMenu() {
         </CommandList>
       </CobaltCommandPaletteRoot>
     </CobaltCommandDialog>
+  );
+}
+
+export function CommandMenuProvider({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setOpen((o) => !o);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const value = useMemo(() => ({ open, setOpen }), [open]);
+
+  return (
+    <CommandMenuContext.Provider value={value}>
+      {children}
+      <CommandMenuDialog onOpenChange={setOpen} open={open} />
+    </CommandMenuContext.Provider>
+  );
+}
+
+export function CommandMenuSearchShortcut() {
+  const isMac =
+    typeof navigator !== "undefined" &&
+    /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+
+  return (
+    <KbdGroup
+      aria-hidden
+      className="pointer-events-none hidden shrink-0 gap-0.5 sm:inline-flex"
+    >
+      <Kbd className="min-w-6 px-1">{isMac ? "⌘" : "Ctrl"}</Kbd>
+      <Kbd className="min-w-6 px-1">K</Kbd>
+    </KbdGroup>
   );
 }

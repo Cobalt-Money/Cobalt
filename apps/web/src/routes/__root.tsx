@@ -7,7 +7,6 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 // import { Agentation } from "agentation";
 
@@ -95,7 +94,6 @@ function RootDocument() {
             src="https://tweakcn.com/live-preview.min.js"
           />
         ) : null}
-        <TanStackRouterDevtools position="bottom-right" />
         <Scripts />
       </body>
     </html>

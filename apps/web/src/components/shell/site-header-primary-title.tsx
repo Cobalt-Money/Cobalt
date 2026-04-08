@@ -23,7 +23,7 @@ function TransactionDetailBreadcrumb({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex min-w-0 flex-1 items-center gap-1.5 text-lg font-medium leading-none tracking-tight sm:text-xl"
+      className="flex min-w-0 flex-1 items-center gap-1.5 text-lg font-medium leading-tight tracking-tight sm:text-xl"
     >
       <Link
         className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
@@ -60,7 +60,7 @@ export function SiteHeaderPrimaryTitle() {
 
   return (
     <div className="flex min-w-0 flex-1 items-center self-stretch">
-      <h1 className="min-w-0 truncate text-lg font-semibold leading-none tracking-tight sm:text-xl">
+      <h1 className="min-w-0 truncate text-lg font-semibold leading-tight tracking-tight sm:text-xl">
         {title}
       </h1>
     </div>

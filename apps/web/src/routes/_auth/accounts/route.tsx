@@ -1,4 +1,5 @@
 import { AccountsToolbar } from "@cobalt-web/ui/cobalt/accounts/accounts-toolbar";
+import { AccountsAddAccountFab } from "@cobalt-web/ui/cobalt/accounts/add-account-fab";
 import {
   createFileRoute,
   Outlet,
@@ -42,6 +43,7 @@ function AccountsLayoutInner() {
     >
       <div className="-mb-4 flex min-h-0 h-full min-w-0 flex-1 flex-col lg:-mb-6">
         <Outlet />
+        {isAccountsList ? <AccountsAddAccountFab /> : null}
       </div>
     </SidebarShellLayout>
   );

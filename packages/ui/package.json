@@ -12,6 +12,7 @@
     "./cobalt/accounts/*": "./src/cobalt/accounts/*",
     "./cobalt/logos/*": "./src/cobalt/logos/*",
     "./cobalt/transactions/*": "./src/cobalt/transactions/*",
+    "./cobalt/brokerage/*": "./src/cobalt/brokerage/*",
     "./cobalt/*": "./src/cobalt/*.tsx",
     "./hooks/*": "./src/hooks/*.ts",
     "./postcss.config": "./postcss.config.mjs"

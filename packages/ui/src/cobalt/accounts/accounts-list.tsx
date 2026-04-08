@@ -94,11 +94,6 @@ export function AccountsList({
           )}
         </div>
       ) : null}
-      {visible.length === 0 && !isComplete ? (
-        <div className="flex min-h-[min(42vh,360px)] items-center justify-center text-muted-foreground text-sm">
-          Loading…
-        </div>
-      ) : null}
     </div>
   );
 }

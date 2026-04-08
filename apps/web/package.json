@@ -55,7 +55,6 @@
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
     "@react-grab/mcp": "^0.1.29",
-    "@tanstack/react-router-devtools": "^1.141.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
     "@types/react": "catalog:",

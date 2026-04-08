@@ -18,7 +18,8 @@ import type { ComponentProps } from "react";
 /** Same merge as `DialogContent` + stock `CommandDialog` `className` (no `bg-background`; glass below). */
 function cobaltCommandDialogPopupClassNames() {
   return cn(
-    "fixed top-1/3 left-1/2 z-50 flex w-full max-w-[calc(100%-2rem)] -translate-x-1/2 translate-y-0 flex-col overflow-hidden rounded-2xl! p-0 text-sm ring-1 ring-foreground/5 duration-100 outline-none",
+    /* Below app chrome, clearly above vertical center (not `top-1/2` / mid-screen). */
+    "fixed top-[max(4.5rem,10svh)] left-1/2 z-50 flex w-full max-w-[calc(100%-2rem)] -translate-x-1/2 translate-y-0 flex-col overflow-hidden rounded-2xl! p-0 text-sm ring-1 ring-foreground/5 duration-100 outline-none",
     "max-h-[min(72vh,30rem)] sm:max-w-lg",
     "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
   );

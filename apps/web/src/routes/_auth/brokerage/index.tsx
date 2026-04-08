@@ -1,4 +1,6 @@
+import { BrokerageOverview } from "@cobalt-web/ui/cobalt/brokerage/brokerage-overview";
 import { createFileRoute } from "@tanstack/react-router";
+import type { ComponentProps } from "react";
 
 import { useBrokerage } from "@/hooks/use-brokerage";
 
@@ -8,6 +10,10 @@ export const Route = createFileRoute("/_auth/brokerage/")({
 });
 
 function BrokerageIndexPage() {
-  useBrokerage();
-  return null;
+  const data = useBrokerage();
+  return (
+    <BrokerageOverview
+      {...(data as ComponentProps<typeof BrokerageOverview>)}
+    />
+  );
 }
