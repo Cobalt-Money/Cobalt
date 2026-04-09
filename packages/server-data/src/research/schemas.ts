@@ -86,3 +86,44 @@ export const newsResponseSchema = z.object({
   total_items: z.number(),
   total_pages: z.number(),
 });
+
+// ── Stock screener (FMP company-screener) ───────────────────────────
+
+export const screenerQuerySchema = z.object({
+  betaLowerThan: z.coerce.number().optional().openapi({ example: 2 }),
+  betaMoreThan: z.coerce.number().optional().openapi({ example: 0.5 }),
+  country: z.string().min(1).optional().openapi({ example: "US" }),
+  dividendLowerThan: z.coerce.number().optional(),
+  dividendMoreThan: z.coerce.number().optional(),
+  exchange: z.string().min(1).optional().openapi({
+    description:
+      "Ignored — this endpoint always returns NASDAQ and NYSE listings only.",
+    example: "NASDAQ",
+  }),
+  industry: z.string().min(1).optional(),
+  isActivelyTrading: z
+    .enum(["true", "false"])
+    .optional()
+    .openapi({ description: "Filter actively trading names" }),
+  isEtf: z
+    .enum(["true", "false"])
+    .optional()
+    .openapi({ description: "ETF-only filter" }),
+  limit: z.coerce.number().int().min(1).max(500).optional().openapi({
+    example: 50,
+  }),
+  marketCapLowerThan: z.coerce.number().optional(),
+  marketCapMoreThan: z.coerce.number().optional(),
+  priceLowerThan: z.coerce.number().optional(),
+  priceMoreThan: z.coerce.number().optional(),
+  sector: z.string().min(1).optional().openapi({ example: "Technology" }),
+  volumeLowerThan: z.coerce.number().optional(),
+  volumeMoreThan: z.coerce.number().optional(),
+});
+
+export const screenerRowSchema = z.record(z.string(), z.unknown());
+
+export const screenerResponseSchema = z.object({
+  count: z.number(),
+  results: z.array(screenerRowSchema),
+});

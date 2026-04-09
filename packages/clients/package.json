@@ -10,7 +10,8 @@
     "./alpha-vantage": "./alpha-vantage.ts",
     "./snaptrade": "./snaptrade.ts",
     "./stock-news": "./stock-news.ts",
-    "./twelve-data": "./twelve-data.ts"
+    "./twelve-data": "./twelve-data.ts",
+    "./fmp": "./fmp.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"
