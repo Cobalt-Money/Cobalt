@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@cobalt-web/ui/components/button";
 // import { SidebarTrigger } from "@cobalt-web/ui/components/sidebar";
 import { BellDotIcon, EyeIcon, SearchIcon } from "@hugeicons/core-free-icons";

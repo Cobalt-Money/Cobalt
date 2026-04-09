@@ -1,5 +1,3 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import {
   extractDominantColorFromSource,
   extractPaletteFromSource,
@@ -11,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   mockGetSwatches: vi.fn(),
 }));
 
-vi.mock("colorthief", () => ({
+vi.mock(import("colorthief"), () => ({
   getColor: (...args: unknown[]) => mocks.mockGetColor(...args),
   getPalette: (...args: unknown[]) => mocks.mockGetPalette(...args),
   getSwatches: (...args: unknown[]) => mocks.mockGetSwatches(...args),

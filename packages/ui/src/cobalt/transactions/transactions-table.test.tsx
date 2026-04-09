@@ -1,7 +1,6 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import type * as TanStackRouter from "@tanstack/react-router";
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
 
 import { TransactionsTable } from "./transactions-table";
 
@@ -9,7 +8,7 @@ const { mockNavigate } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
 }));
 
-vi.mock("@tanstack/react-router", async (importOriginal) => {
+vi.mock(import("@tanstack/react-router"), async (importOriginal) => {
   const mod = await importOriginal<typeof TanStackRouter>();
   return {
     ...mod,
@@ -46,7 +45,7 @@ function createMockTransaction(
   };
 }
 
-describe("TransactionsTable", () => {
+describe(TransactionsTable, () => {
   it("shows the empty state when there are no transactions and loading is complete", () => {
     render(<TransactionsTable isComplete items={[]} />);
 

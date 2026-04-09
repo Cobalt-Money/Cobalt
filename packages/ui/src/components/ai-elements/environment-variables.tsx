@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge } from "@cobalt-web/ui/components/badge";
 import { Button } from "@cobalt-web/ui/components/button";
 import { Switch } from "@cobalt-web/ui/components/switch";

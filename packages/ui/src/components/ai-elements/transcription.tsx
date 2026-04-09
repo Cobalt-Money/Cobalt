@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import type { Experimental_TranscriptionResult as TranscriptionResult } from "ai";

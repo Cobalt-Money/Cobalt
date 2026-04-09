@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { AlertCircleIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";

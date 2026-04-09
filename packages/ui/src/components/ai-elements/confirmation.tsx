@@ -1,5 +1,3 @@
-"use client";
-
 import { Alert, AlertDescription } from "@cobalt-web/ui/components/alert";
 import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";

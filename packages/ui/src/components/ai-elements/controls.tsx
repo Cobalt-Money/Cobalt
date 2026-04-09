@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { Controls as ControlsPrimitive } from "@xyflow/react";
 import type { ComponentProps } from "react";

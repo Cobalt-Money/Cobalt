@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@cobalt-web/ui/components/button";
 import { ScrollArea, ScrollBar } from "@cobalt-web/ui/components/scroll-area";
 import { cn } from "@cobalt-web/ui/lib/utils";

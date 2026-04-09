@@ -1,5 +1,3 @@
-"use client";
-
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";

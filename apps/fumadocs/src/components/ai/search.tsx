@@ -1,4 +1,3 @@
-"use client";
 import { useChat, type UseChatHelpers } from "@ai-sdk/react";
 import { Presence } from "@radix-ui/react-presence";
 import { DefaultChatTransport, type Tool, type UIToolInvocation } from "ai";

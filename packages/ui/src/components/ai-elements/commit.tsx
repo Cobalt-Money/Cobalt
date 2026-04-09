@@ -1,5 +1,3 @@
-"use client";
-
 import { Avatar, AvatarFallback } from "@cobalt-web/ui/components/avatar";
 import { Button } from "@cobalt-web/ui/components/button";
 import {

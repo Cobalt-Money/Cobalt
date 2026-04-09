@@ -1,10 +1,10 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
 
 import { TransactionDetailView } from "./transaction-detail";
 
-vi.mock("@cobalt-web/ui/components/ui/map", () => ({
+// @ts-expect-error -- mock stubs intentionally don't match exact module return types (Map is forwardRef, MarkerContent/MapControls return ReactPortal)
+vi.mock(import("@cobalt-web/ui/components/ui/map"), () => ({
   Map: () => null,
   MapControls: () => null,
   MapMarker: () => null,
@@ -40,7 +40,7 @@ function createMockTransaction(
   };
 }
 
-describe("TransactionDetailView", () => {
+describe(TransactionDetailView, () => {
   it("renders merchant/title, formatted amount, and Activity", () => {
     render(<TransactionDetailView transaction={createMockTransaction()} />);
 

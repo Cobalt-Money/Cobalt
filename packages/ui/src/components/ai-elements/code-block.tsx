@@ -1,5 +1,4 @@
 /// <reference lib="dom" />
-"use client";
 
 import { Button } from "@cobalt-web/ui/components/button";
 import {

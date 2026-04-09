@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@cobalt-web/ui/lib/utils";
 
 import "maplibre-gl/dist/maplibre-gl.css";

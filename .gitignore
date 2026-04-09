@@ -51,6 +51,9 @@ tmp
 temp
 .sandbox
 
+# Claude Code worktrees (ephemeral, not user code)
+.claude/worktrees/
+
 # Zero dev cache (SQLite + WAL/SHM; created by `zero-cache-dev`, never commit)
 apps/zero-cache/zero.db*
 .vercel

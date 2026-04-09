@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@cobalt-web/ui/components/button";
 import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { cn } from "@cobalt-web/ui/lib/utils";

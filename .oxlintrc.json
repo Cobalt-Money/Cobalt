@@ -2,7 +2,8 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "extends": [
     "./node_modules/ultracite/config/oxlint/core/.oxlintrc.json",
-    "./node_modules/ultracite/config/oxlint/react/.oxlintrc.json"
+    "./node_modules/ultracite/config/oxlint/react/.oxlintrc.json",
+    "./node_modules/ultracite/config/oxlint/vitest/.oxlintrc.json"
   ],
   "ignorePatterns": [
     "apps/fumadocs/**",
@@ -10,7 +11,8 @@
     "**/routeTree.gen.ts",
     "**/zero-schema.gen.ts",
     "packages/ui/src/components/**",
-    "**/drizzle-zero.config.ts"
+    "**/drizzle-zero.config.ts",
+    ".claude/worktrees/**"
   ],
   "rules": {
     "func-style": "off",
@@ -19,6 +21,27 @@
     "@typescript-eslint/no-empty-object-type": "off",
     "react-perf/jsx-no-new-function-as-prop": "off",
     "no-inline-comments": "off",
-    "no-barrel-file": "warn"
-  }
+    "no-barrel-file": "warn",
+    "require-await": "error",
+    "unicorn/explicit-length-check": "error",
+    "vitest/no-importing-vitest-globals": "off",
+    "vitest/prefer-describe-function-title": "off",
+    "vitest/prefer-lowercase-title": "off",
+    "vitest/prefer-called-once": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.{test,spec}.{ts,tsx,js,jsx}",
+        "**/__tests__/**/*.{ts,tsx,js,jsx}"
+      ],
+      "plugins": ["vitest"],
+      "rules": {
+        "vitest/no-importing-vitest-globals": "off",
+        "vitest/prefer-describe-function-title": "off",
+        "vitest/prefer-lowercase-title": "off",
+        "vitest/prefer-called-once": "off"
+      }
+    }
+  ]
 }

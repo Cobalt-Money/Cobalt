@@ -12,6 +12,7 @@ export default defineConfig({
   plugins: [tsconfigPathsPlugin, tailwindcss(), viteReact()] as any,
   test: {
     environment: "jsdom",
+    globals: true,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     setupFiles: ["./src/test/setup.ts"],
   },

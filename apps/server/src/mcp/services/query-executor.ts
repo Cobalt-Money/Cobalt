@@ -54,12 +54,12 @@ export function safeReadOnlyQuery(
   limit: number = MAX_ROWS
 ): string {
   const normalized = normalizeQuery(query);
-  if (!isReadOnlyQuery(normalized)) {
+  const singleStatement = ensureSingleStatement(normalized);
+  if (!isReadOnlyQuery(singleStatement)) {
     throw new Error(
       "Only read-only queries are allowed (SELECT or WITH). Destructive or write operations, dangerous functions, and role changes are rejected."
     );
   }
-  const singleStatement = ensureSingleStatement(normalized);
   return enforceLimit(singleStatement, limit);
 }
 

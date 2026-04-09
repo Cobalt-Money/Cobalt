@@ -1,8 +1,6 @@
-import { describe, expect, it } from "vitest";
-
 import { safeReadOnlyQuery } from "../../src/mcp/services/query-executor.js";
 
-describe("safeReadOnlyQuery", () => {
+describe(safeReadOnlyQuery, () => {
   describe("allows valid read-only queries", () => {
     it("accepts a basic SELECT", () => {
       const result = safeReadOnlyQuery("SELECT * FROM transaction");
@@ -40,13 +38,9 @@ describe("safeReadOnlyQuery", () => {
       ["REVOKE", "REVOKE SELECT ON transaction FROM agent_readonly"],
     ];
 
-    for (const [keyword, query] of destructiveQueries) {
-      it(`rejects ${keyword}`, () => {
-        expect(() => safeReadOnlyQuery(query)).toThrow(
-          "Only read-only queries"
-        );
-      });
-    }
+    it.each(destructiveQueries)("rejects %s", (_keyword, query) => {
+      expect(() => safeReadOnlyQuery(query)).toThrow("Only read-only queries");
+    });
   });
 
   describe("rejects dangerous functions", () => {
@@ -62,18 +56,18 @@ describe("safeReadOnlyQuery", () => {
       "pg_sleep",
     ];
 
-    for (const fn of dangerousFunctions) {
-      it(`rejects ${fn}()`, () => {
-        expect(() => safeReadOnlyQuery(`SELECT ${fn}('/etc/passwd')`)).toThrow(
-          "Only read-only queries"
-        );
-      });
-    }
+    it.each(dangerousFunctions)("rejects %s()", (fn) => {
+      expect(() => safeReadOnlyQuery(`SELECT ${fn}('/etc/passwd')`)).toThrow(
+        "Only read-only queries"
+      );
+    });
   });
 
   describe("rejects SET ROLE", () => {
     it("rejects SET ROLE escalation", () => {
-      expect(() => safeReadOnlyQuery("SELECT 1; SET ROLE postgres")).toThrow();
+      expect(() => safeReadOnlyQuery("SELECT 1; SET ROLE postgres")).toThrow(
+        "Only a single SQL statement is allowed"
+      );
     });
   });
 
@@ -109,7 +103,7 @@ describe("safeReadOnlyQuery", () => {
     });
   });
 
-  describe("LIMIT enforcement", () => {
+  describe("lIMIT enforcement", () => {
     it("appends LIMIT when missing", () => {
       const result = safeReadOnlyQuery("SELECT * FROM transaction");
       expect(result).toBe("SELECT * FROM transaction LIMIT 500");
@@ -152,7 +146,7 @@ describe("safeReadOnlyQuery", () => {
     it("rejects destructive keywords hidden in queries after comment stripping", () => {
       expect(() =>
         safeReadOnlyQuery("SELECT 1 -- ignore\n; DELETE FROM transaction")
-      ).toThrow();
+      ).toThrow("Only a single SQL statement is allowed");
     });
   });
 });

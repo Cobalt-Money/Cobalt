@@ -70,6 +70,7 @@
     "husky": "^9.1.7",
     "oxfmt": "latest",
     "oxlint": "latest",
+    "oxlint-plugin-eslint": "1.59.0",
     "tailwindcss": "catalog:",
     "turbo": "^2.8.20",
     "typescript": "^6.0.2",

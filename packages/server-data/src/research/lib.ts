@@ -243,7 +243,7 @@ function getESTDateString(date: Date): string {
 }
 
 function aggregateTo10Minutes(data: PriceData[]): PriceData[] {
-  if (!data.length) {
+  if (data.length === 0) {
     return [];
   }
   const last = data.at(-1);
@@ -322,7 +322,7 @@ function extractEndOfDayPrices(
   data: PriceData[],
   daysBack?: number
 ): PriceData[] {
-  if (!data.length) {
+  if (data.length === 0) {
     return [];
   }
 
@@ -362,7 +362,7 @@ function extractEndOfDayPrices(
 }
 
 function extractYTDPrices(data: PriceData[]): PriceData[] {
-  if (!data.length) {
+  if (data.length === 0) {
     return [];
   }
   const { year } = getESTParts(new Date());
@@ -381,7 +381,7 @@ function extractYTDPrices(data: PriceData[]): PriceData[] {
 }
 
 function aggregateToWeekly(data: PriceData[], daysBack?: number): PriceData[] {
-  if (!data.length) {
+  if (data.length === 0) {
     return [];
   }
   const filtered = daysBack ? extractEndOfDayPrices(data, daysBack) : data;
@@ -412,7 +412,7 @@ function aggregateToWeekly(data: PriceData[], daysBack?: number): PriceData[] {
 }
 
 function aggregateToYearly(data: PriceData[]): PriceData[] {
-  if (!data.length) {
+  if (data.length === 0) {
     return [];
   }
   const groups: Record<number, PriceData[]> = {};

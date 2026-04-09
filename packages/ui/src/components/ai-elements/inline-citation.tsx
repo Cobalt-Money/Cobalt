@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge } from "@cobalt-web/ui/components/badge";
 import type { CarouselApi } from "@cobalt-web/ui/components/carousel";
 import {

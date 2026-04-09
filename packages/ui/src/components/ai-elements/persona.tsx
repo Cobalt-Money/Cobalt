@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@cobalt-web/ui/lib/utils";
 import type { RiveParameters } from "@rive-app/react-webgl2";
 import {
