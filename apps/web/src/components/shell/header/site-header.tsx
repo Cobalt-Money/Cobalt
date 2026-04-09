@@ -15,7 +15,7 @@ export function SiteHeader() {
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-stretch transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
-      <div className="flex h-full min-h-0 w-full min-w-0 items-center gap-2 px-4 pt-2 lg:gap-3 lg:px-6">
+      <div className="flex h-full min-h-0 w-full min-w-0 items-center gap-2 px-4 py-2 lg:gap-3 lg:px-6">
         {/* Sidebar toggle disabled for now — restore: <SidebarTrigger className="-ml-1" /> */}
         <SiteHeaderPrimaryTitle />
         <button

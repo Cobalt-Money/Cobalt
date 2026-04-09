@@ -14,8 +14,8 @@ import {
   AppleStocksIcon,
   ArrowReloadHorizontalIcon,
   AiChat02Icon,
-  ChartBarLineIcon,
-  Folder01Icon,
+  // ChartBarLineIcon,
+  // Folder01Icon,
   Home04Icon,
   NewsIcon,
   SearchDollarIcon,
@@ -56,11 +56,11 @@ const sidebarNav = {
       title: "Research",
       url: "/research",
     },
-    {
-      icon: <HugeiconsIcon icon={Folder01Icon} strokeWidth={2} />,
-      title: "Document Hub",
-      url: "/documents",
-    },
+    // {
+    //   icon: <HugeiconsIcon icon={Folder01Icon} strokeWidth={2} />,
+    //   title: "Document Hub",
+    //   url: "/documents",
+    // },
     {
       icon: <HugeiconsIcon icon={ArrowReloadHorizontalIcon} strokeWidth={2} />,
       title: "Transactions",
@@ -71,11 +71,11 @@ const sidebarNav = {
       title: "News",
       url: "/news",
     },
-    {
-      icon: <HugeiconsIcon icon={ChartBarLineIcon} strokeWidth={2} />,
-      title: "Prediction Markets",
-      url: "/prediction-markets",
-    },
+    // {
+    //   icon: <HugeiconsIcon icon={ChartBarLineIcon} strokeWidth={2} />,
+    //   title: "Prediction Markets",
+    //   url: "/prediction-markets",
+    // },
     {
       icon: <HugeiconsIcon icon={AiChat02Icon} strokeWidth={2} />,
       title: "AI Chat",
