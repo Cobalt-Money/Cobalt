@@ -1,10 +1,13 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import { buttonVariants } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { queries } from "@cobalt-web/zero";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useQuery } from "@rocicorp/zero/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 
 import { useTransactions } from "@/hooks/use-transactions";
 
@@ -87,6 +90,29 @@ function ResearchTickerHeader({ symbol }: { symbol: string }) {
   );
 }
 
+function AiChatThreadTitle({ chatId }: { chatId: string }) {
+  const [rows, detail] = useQuery(queries.chats.chatById({ chatId }));
+  const [row] = rows;
+  const loading = detail.type === "unknown" && rows.length === 0;
+  const label = typeof row?.title === "string" ? row.title.trim() : "";
+  let headline: ReactNode;
+  if (loading) {
+    headline = <span className="text-muted-foreground">Loading…</span>;
+  } else if (label && label.length > 0) {
+    headline = label;
+  } else {
+    headline = "Chat";
+  }
+
+  return (
+    <div className="flex min-w-0 flex-1 items-center self-stretch">
+      <h1 className="min-w-0 truncate text-xl font-semibold leading-tight tracking-tight sm:text-2xl">
+        {headline}
+      </h1>
+    </div>
+  );
+}
+
 /**
  * Shell header title area: default route title, or Linear-style breadcrumb on
  * `/transactions/:transactionId`, or ticker chrome on `/research/:symbol`.
@@ -97,6 +123,7 @@ export function SiteHeaderPrimaryTitle() {
   const normalized = pathname.replace(/\/$/, "") || "/";
   const transactionId = /^\/transactions\/([^/]+)$/.exec(normalized)?.[1];
   const researchSymbol = /^\/research\/([^/]+)$/.exec(normalized)?.[1];
+  const aiChatId = /^\/ai-chat\/([^/]+)$/.exec(normalized)?.[1];
 
   if (transactionId) {
     return <TransactionDetailBreadcrumb transactionId={transactionId} />;
@@ -104,6 +131,10 @@ export function SiteHeaderPrimaryTitle() {
 
   if (researchSymbol) {
     return <ResearchTickerHeader symbol={researchSymbol} />;
+  }
+
+  if (aiChatId) {
+    return <AiChatThreadTitle chatId={aiChatId} />;
   }
 
   return (

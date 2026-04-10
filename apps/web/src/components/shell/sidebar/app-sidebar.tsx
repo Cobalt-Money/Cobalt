@@ -8,10 +8,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cobalt-web/ui/components/sidebar";
+import { cn } from "@cobalt-web/ui/lib/utils";
 import { queries } from "@cobalt-web/zero";
 import {
   AppleStocksIcon,
-  ArrowDown01Icon,
   ArrowReloadHorizontalIcon,
   ArrowRight01Icon,
   // ChartBarLineIcon,
@@ -244,8 +244,11 @@ function ChatsGroup() {
                 <span className="min-w-0 flex-1 truncate">{section.label}</span>
                 <HugeiconsIcon
                   aria-hidden
-                  className="size-3.5 shrink-0"
-                  icon={collapsed ? ArrowRight01Icon : ArrowDown01Icon}
+                  className={cn(
+                    "size-3.5 shrink-0 transition-transform duration-100 ease-out",
+                    collapsed ? "rotate-0" : "rotate-90"
+                  )}
+                  icon={ArrowRight01Icon}
                   strokeWidth={2}
                 />
               </button>
@@ -254,31 +257,43 @@ function ChatsGroup() {
                 {section.label}
               </div>
             )}
-            {!collapsed &&
-              section.chats.map((chat) => {
-                const chatPath = `/ai-chat/${chat.chatId}`;
-                return (
-                  <SidebarMenuItem key={chat.chatId}>
-                    <SidebarMenuButton
-                      className="px-2"
-                      isActive={pathname === chatPath}
-                      onPointerEnter={() => handlePointerEnter(chat.chatId)}
-                      onPointerLeave={handlePointerLeave}
-                      render={
-                        <Link
-                          aria-label={chat.title ?? "Chat"}
-                          to="/ai-chat/$chatId"
-                          params={{ chatId: chat.chatId }}
-                        />
-                      }
-                    >
-                      <span className="truncate">
-                        {truncateTitle(chat.title ?? chat.chatId)}
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+            <div
+              className={cn(
+                "grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-in-out motion-reduce:duration-0",
+                collapsible && collapsed
+                  ? "grid-rows-[0fr] opacity-0"
+                  : "grid-rows-[1fr] opacity-100"
+              )}
+            >
+              <div className="min-h-0" inert={collapsible && collapsed}>
+                <div className="flex flex-col gap-0.5">
+                  {section.chats.map((chat) => {
+                    const chatPath = `/ai-chat/${chat.chatId}`;
+                    return (
+                      <SidebarMenuItem key={chat.chatId}>
+                        <SidebarMenuButton
+                          className="px-2"
+                          isActive={pathname === chatPath}
+                          onPointerEnter={() => handlePointerEnter(chat.chatId)}
+                          onPointerLeave={handlePointerLeave}
+                          render={
+                            <Link
+                              aria-label={chat.title ?? "Chat"}
+                              to="/ai-chat/$chatId"
+                              params={{ chatId: chat.chatId }}
+                            />
+                          }
+                        >
+                          <span className="truncate">
+                            {truncateTitle(chat.title ?? chat.chatId)}
+                          </span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         );
       })}
