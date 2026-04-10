@@ -1,5 +1,4 @@
-import { processQuoteData } from "@cobalt-web/server-data/research/lib";
-import { getQuoteData } from "@cobalt-web/server-data/research/queries";
+import { fmpGetQuote } from "@cobalt-web/server-data/research/fmp-ticker";
 import {
   errorResponseSchema,
   quoteResponseSchema,
@@ -31,13 +30,12 @@ export const quoteRouter = new OpenAPIHono<AppEnv>().openapi(
   async (c) => {
     try {
       const { symbol } = c.req.valid("query");
-      const raw = await getQuoteData(symbol);
-      const processed = processQuoteData(raw);
+      const quote = await fmpGetQuote(symbol);
       c.header(
         "Cache-Control",
         "public, s-maxage=900, stale-while-revalidate=3600"
       );
-      return c.json(processed, 200);
+      return c.json(quote, 200);
     } catch {
       return c.json({ error: "Failed to fetch quote data" }, 500);
     }

@@ -28,6 +28,7 @@ import { Route as AuthAiChatIndexRouteImport } from './routes/_auth/ai-chat/inde
 import { Route as AuthAccountsIndexRouteImport } from './routes/_auth/accounts/index'
 import { Route as AuthTransactionsTransactionIdRouteImport } from './routes/_auth/transactions/$transactionId'
 import { Route as AuthResearchSymbolRouteImport } from './routes/_auth/research/$symbol'
+import { Route as AuthNewsEventIdRouteImport } from './routes/_auth/news/$eventId'
 import { Route as AuthAiChatChatIdRouteImport } from './routes/_auth/ai-chat/$chatId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -125,6 +126,11 @@ const AuthResearchSymbolRoute = AuthResearchSymbolRouteImport.update({
   path: '/$symbol',
   getParentRoute: () => AuthResearchRouteRoute,
 } as any)
+const AuthNewsEventIdRoute = AuthNewsEventIdRouteImport.update({
+  id: '/$eventId',
+  path: '/$eventId',
+  getParentRoute: () => AuthNewsRouteRoute,
+} as any)
 const AuthAiChatChatIdRoute = AuthAiChatChatIdRouteImport.update({
   id: '/$chatId',
   path: '/$chatId',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthDashboardRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
+  '/news/$eventId': typeof AuthNewsEventIdRoute
   '/research/$symbol': typeof AuthResearchSymbolRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
   '/accounts/': typeof AuthAccountsIndexRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthDashboardRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
+  '/news/$eventId': typeof AuthNewsEventIdRoute
   '/research/$symbol': typeof AuthResearchSymbolRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
   '/accounts': typeof AuthAccountsIndexRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/_auth/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
+  '/_auth/news/$eventId': typeof AuthNewsEventIdRoute
   '/_auth/research/$symbol': typeof AuthResearchSymbolRoute
   '/_auth/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
   '/_auth/accounts/': typeof AuthAccountsIndexRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/oauth/consent'
     | '/ai-chat/$chatId'
+    | '/news/$eventId'
     | '/research/$symbol'
     | '/transactions/$transactionId'
     | '/accounts/'
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/oauth/consent'
     | '/ai-chat/$chatId'
+    | '/news/$eventId'
     | '/research/$symbol'
     | '/transactions/$transactionId'
     | '/accounts'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/_auth/dashboard'
     | '/oauth/consent'
     | '/_auth/ai-chat/$chatId'
+    | '/_auth/news/$eventId'
     | '/_auth/research/$symbol'
     | '/_auth/transactions/$transactionId'
     | '/_auth/accounts/'
@@ -393,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthResearchSymbolRouteImport
       parentRoute: typeof AuthResearchRouteRoute
     }
+    '/_auth/news/$eventId': {
+      id: '/_auth/news/$eventId'
+      path: '/$eventId'
+      fullPath: '/news/$eventId'
+      preLoaderRoute: typeof AuthNewsEventIdRouteImport
+      parentRoute: typeof AuthNewsRouteRoute
+    }
     '/_auth/ai-chat/$chatId': {
       id: '/_auth/ai-chat/$chatId'
       path: '/$chatId'
@@ -440,10 +459,12 @@ const AuthBrokerageRouteRouteWithChildren =
   AuthBrokerageRouteRoute._addFileChildren(AuthBrokerageRouteRouteChildren)
 
 interface AuthNewsRouteRouteChildren {
+  AuthNewsEventIdRoute: typeof AuthNewsEventIdRoute
   AuthNewsIndexRoute: typeof AuthNewsIndexRoute
 }
 
 const AuthNewsRouteRouteChildren: AuthNewsRouteRouteChildren = {
+  AuthNewsEventIdRoute: AuthNewsEventIdRoute,
   AuthNewsIndexRoute: AuthNewsIndexRoute,
 }
 

@@ -3,6 +3,7 @@ import { CobaltCard } from "@cobalt-web/ui/cobalt/card";
 import { cn, decodeHtmlEntities } from "@cobalt-web/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 import type {
   FinancialEventArticlePreview,
@@ -34,6 +35,14 @@ export interface NewsMagazineProps {
   readonly rssItems: readonly NewsMagazineSidebarItem[];
   readonly defaultTab?: NewsTab;
   readonly className?: string;
+  /**
+   * Wrap each event block (featured row or grid card) for client-side navigation,
+   * e.g. `<Link to={...}>{inner}</Link>`. Default: render `inner` only.
+   */
+  readonly renderEventLink?: (
+    event: FinancialEventCard,
+    inner: ReactNode
+  ) => ReactNode;
 }
 
 type MagazineSection =
@@ -240,9 +249,11 @@ function FeaturedEventSummary({ text }: { readonly text: string }) {
 function FeaturedEvent({
   event,
   imageRight,
+  renderEventLink,
 }: {
   event: FinancialEventCard;
   imageRight: boolean;
+  renderEventLink?: (event: FinancialEventCard, inner: ReactNode) => ReactNode;
 }) {
   const summary = event.summary?.trim() || event.eventText?.trim() || null;
   const img = event.articles.find((a) => a.imageUrl?.trim())?.imageUrl;
@@ -305,7 +316,7 @@ function FeaturedEvent({
     />
   );
 
-  return (
+  const article = (
     <article
       className={cn(
         "flex flex-col gap-6 lg:grid lg:items-stretch lg:gap-10",
@@ -327,14 +338,25 @@ function FeaturedEvent({
       )}
     </article>
   );
+
+  if (renderEventLink) {
+    return renderEventLink(event, article);
+  }
+  return article;
 }
 
-function GridCard({ event }: { event: FinancialEventCard }) {
+function GridCard({
+  event,
+  renderEventLink,
+}: {
+  event: FinancialEventCard;
+  renderEventLink?: (event: FinancialEventCard, inner: ReactNode) => ReactNode;
+}) {
   const img = event.articles.find((a) => a.imageUrl?.trim())?.imageUrl;
   const ts = eventTimestampMs(event);
   const timeLabel = ts === null ? null : compactTimeAgo(ts);
 
-  return (
+  const card = (
     <CobaltCard className="flex h-full flex-col gap-0 overflow-hidden p-0 transition-colors hover:bg-[oklch(0.94_0_0)] dark:hover:bg-white/[0.08]">
       <div className="bg-muted/50 relative aspect-[16/10] w-full shrink-0 overflow-hidden">
         {img ? (
@@ -374,6 +396,11 @@ function GridCard({ event }: { event: FinancialEventCard }) {
       </div>
     </CobaltCard>
   );
+
+  if (renderEventLink) {
+    return renderEventLink(event, card);
+  }
+  return card;
 }
 
 /**
@@ -617,6 +644,7 @@ export function NewsMagazine({
   rssItems,
   defaultTab = "general",
   className,
+  renderEventLink,
 }: NewsMagazineProps) {
   const [tab, setTab] = useState<NewsTab>(defaultTab);
 
@@ -645,8 +673,16 @@ export function NewsMagazine({
                   className="flex flex-col gap-8 lg:gap-10"
                   key={`fp-${sec.first.id}-${sec.second.id}`}
                 >
-                  <FeaturedEvent event={sec.first} imageRight={false} />
-                  <FeaturedEvent event={sec.second} imageRight={true} />
+                  <FeaturedEvent
+                    event={sec.first}
+                    imageRight={false}
+                    renderEventLink={renderEventLink}
+                  />
+                  <FeaturedEvent
+                    event={sec.second}
+                    imageRight={true}
+                    renderEventLink={renderEventLink}
+                  />
                 </div>
               );
             }
@@ -656,6 +692,7 @@ export function NewsMagazine({
                   event={sec.event}
                   imageRight={sec.imageRight}
                   key={`f-${sec.event.id}`}
+                  renderEventLink={renderEventLink}
                 />
               );
             }
@@ -666,7 +703,11 @@ export function NewsMagazine({
                 key={`g-${gridKey}`}
               >
                 {sec.events.map((e) => (
-                  <GridCard event={e} key={e.id} />
+                  <GridCard
+                    event={e}
+                    key={e.id}
+                    renderEventLink={renderEventLink}
+                  />
                 ))}
               </div>
             );

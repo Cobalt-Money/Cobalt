@@ -1,4 +1,4 @@
-import { getCompanyOverview } from "@cobalt-web/server-data/research/queries";
+import { fmpGetProfile } from "@cobalt-web/server-data/research/fmp-ticker";
 import {
   errorResponseSchema,
   overviewResponseSchema,
@@ -30,12 +30,12 @@ export const overviewRouter = new OpenAPIHono<AppEnv>().openapi(
   async (c) => {
     try {
       const { symbol } = c.req.valid("query");
-      const overview = await getCompanyOverview(symbol);
+      const profile = await fmpGetProfile(symbol);
       c.header(
         "Cache-Control",
         "public, s-maxage=604800, stale-while-revalidate=86400"
       );
-      return c.json(overview as Record<string, unknown>, 200);
+      return c.json(profile as unknown as Record<string, unknown>, 200);
     } catch {
       return c.json({ error: "Failed to fetch company overview" }, 500);
     }

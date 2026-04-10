@@ -50,10 +50,13 @@ export function ambientMeshStyle(
     };
   }
 
-  /* Dark: wash through bottom ~90%, neutral in top ~10%. */
+  /*
+   * Radial from bottom (not a tall linear-gradient): long vertical linears are a
+   * common source of “corduroy” / vertical banding on some GPUs.
+   */
   const wash = rgb
-    ? `linear-gradient(0deg, rgba(${rgb.r},${rgb.g},${rgb.b},0.26) 0%, rgba(${rgb.r},${rgb.g},${rgb.b},0.07) 46%, rgba(${rgb.r},${rgb.g},${rgb.b},0) 90%)`
-    : `linear-gradient(0deg, hsla(${hue}, 58%, 44%, 0.24) 0%, hsla(${hue}, 45%, 28%, 0.06) 59%, hsla(${hue}, 35%, 14%, 0) 90%)`;
+    ? `radial-gradient(ellipse 130% 85% at 50% 100%, rgba(${rgb.r},${rgb.g},${rgb.b},0.28) 0%, rgba(${rgb.r},${rgb.g},${rgb.b},0.14) 38%, rgba(${rgb.r},${rgb.g},${rgb.b},0.05) 58%, rgba(${rgb.r},${rgb.g},${rgb.b},0) 78%)`
+    : `radial-gradient(ellipse 130% 85% at 50% 100%, hsla(${hue}, 58%, 44%, 0.26) 0%, hsla(${hue}, 50%, 36%, 0.12) 40%, hsla(${hue}, 40%, 24%, 0.05) 58%, hsla(${hue}, 30%, 14%, 0) 78%)`;
 
   return {
     backgroundColor: "var(--sidebar-inset)",

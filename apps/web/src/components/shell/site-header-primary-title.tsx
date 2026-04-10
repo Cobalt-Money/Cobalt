@@ -56,20 +56,24 @@ function ResearchTickerHeader({ symbol }: { symbol: string }) {
   return (
     <nav
       aria-label="Research ticker"
-      className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5"
+      className="flex min-h-0 min-w-0 flex-1 items-center gap-2 self-stretch py-px sm:gap-2.5"
     >
       <Link
         aria-label="Back to research"
         className={cn(
-          buttonVariants({ size: "icon", variant: "ghost" }),
+          buttonVariants({ size: "icon-lg", variant: "ghost" }),
           "shrink-0 -ml-1"
         )}
         to="/research"
       >
-        <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
+        <HugeiconsIcon
+          className="size-7"
+          icon={ArrowLeft01Icon}
+          strokeWidth={2}
+        />
       </Link>
-      <TickerLogo size={36} symbol={sym} />
-      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5">
+      <TickerLogo size={28} symbol={sym} />
+      <div className="flex min-w-0 flex-1 flex-nowrap items-baseline gap-2 sm:gap-2.5">
         <span className="shrink-0 font-semibold text-lg leading-tight tracking-tight sm:text-xl">
           {sym}
         </span>

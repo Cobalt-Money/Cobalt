@@ -1,14 +1,5 @@
-import {
-  filterChartData,
-  getIntervalForTimePeriod,
-  processDailyData,
-  processIntradayData,
-} from "@cobalt-web/server-data/research/lib";
+import { fmpGetChart } from "@cobalt-web/server-data/research/fmp-ticker";
 import type { TimePeriod } from "@cobalt-web/server-data/research/lib";
-import {
-  getIntradayData,
-  getTimeSeriesData,
-} from "@cobalt-web/server-data/research/queries";
 import {
   chartQuerySchema,
   chartResponseSchema,
@@ -39,90 +30,28 @@ export const chartRouter = new OpenAPIHono<AppEnv>().openapi(
   route,
   async (c) => {
     try {
-      const {
-        symbol,
-        timePeriod,
-        interval: legacyInterval,
-      } = c.req.valid("query");
+      const { symbol, timePeriod } = c.req.valid("query");
+      const period = (timePeriod ?? "1M") as TimePeriod;
+      const points = await fmpGetChart(symbol, period);
 
-      let interval: "1min" | "60min" | "daily";
-      let outputsize: "compact" | "full";
-      let shouldFilter = false;
-
-      if (timePeriod) {
-        interval = getIntervalForTimePeriod(timePeriod as TimePeriod);
-        shouldFilter = true;
-        switch (timePeriod) {
-          case "1D":
-          case "1W": {
-            outputsize = "full";
-            break;
-          }
-          case "1M":
-          case "3M": {
-            outputsize = "compact";
-            break;
-          }
-          default: {
-            outputsize = "full";
-          }
-        }
-      } else if (legacyInterval) {
-        if (legacyInterval === "1min") {
-          interval = "1min";
-        } else if (legacyInterval === "60min") {
-          interval = "60min";
-        } else {
-          interval = "daily";
-        }
-        outputsize = "full";
-      } else {
-        interval = "1min";
-        outputsize = "compact";
-      }
-
-      let processedData;
-
-      if (interval === "daily") {
-        const response = await getTimeSeriesData({
-          interval: "daily",
-          outputsize,
-          symbol,
-        });
-        processedData = processDailyData(response as never);
-      } else {
-        const intervalValue = interval === "1min" ? "1min" : "60min";
-        const response = await getIntradayData({
-          extended_hours: false,
-          interval: intervalValue,
-          outputsize,
-          symbol,
-        });
-        const intervalKey =
-          intervalValue === "1min"
-            ? "Time Series (1min)"
-            : "Time Series (60min)";
-        processedData = processIntradayData(response as never, intervalKey);
-      }
-
-      if (shouldFilter && timePeriod) {
-        processedData = filterChartData(
-          processedData,
-          timePeriod as TimePeriod
-        );
-      }
-
-      const dataWithIds = processedData.map((item, index) => ({
-        ...item,
-        id: item.time || `chart-${index}`,
+      const data = points.map((p, i) => ({
+        close: p.close,
+        high: p.high,
+        id: p.date || `chart-${i}`,
+        low: p.low,
+        open: p.open,
+        price: p.close,
+        time: p.date,
+        volume: p.volume,
       }));
 
-      const cacheSeconds = interval === "daily" ? 86_400 : 900;
+      const isIntraday = period === "1D" || period === "1W";
+      const cacheSeconds = isIntraday ? 900 : 86_400;
       c.header(
         "Cache-Control",
         `public, s-maxage=${cacheSeconds}, stale-while-revalidate=3600`
       );
-      return c.json({ data: dataWithIds }, 200);
+      return c.json({ data }, 200);
     } catch {
       return c.json({ error: "Failed to fetch chart data" }, 500);
     }

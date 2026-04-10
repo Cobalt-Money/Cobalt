@@ -1,4 +1,4 @@
-import type { ChartPeriod } from "@/components/research/ticker-detail-sections";
+import type { ChartPeriod } from "@/components/research/lightweight-price-chart";
 
 export interface MockQuote {
   change: number;
@@ -59,32 +59,77 @@ export function mockNews(symbol: string): Record<string, unknown>[] {
   ];
 }
 
-/** Synthetic OHLC-style series for the chart (UI only). */
+/** Synthetic series for Lightweight Charts (UI only, UNIX timestamps). */
 export function mockChartPoints(
   period: ChartPeriod,
   symbol: string
-): { i: number; label: string; price: number; volume: number }[] {
+): { time: number; value: number }[] {
   const sym = symbol.trim().toUpperCase();
   const seed = [...sym].reduce((a, c) => a + (c.codePointAt(0) ?? 0), 0);
-  let count = 40;
-  if (period === "1D") {
-    count = 48;
-  } else if (period === "1W") {
-    count = 42;
-  } else if (period === "1M" || period === "3M") {
-    count = 45;
+
+  const now = Math.floor(Date.now() / 1000);
+  const DAY = 86_400;
+  let count: number;
+  let stepSeconds: number;
+
+  switch (period) {
+    case "1D": {
+      count = 78;
+      stepSeconds = 300;
+      break;
+    }
+    case "1W": {
+      count = 7 * 13;
+      stepSeconds = 1800;
+      break;
+    }
+    case "1M": {
+      count = 22;
+      stepSeconds = DAY;
+      break;
+    }
+    case "3M": {
+      count = 65;
+      stepSeconds = DAY;
+      break;
+    }
+    case "6M": {
+      count = 130;
+      stepSeconds = DAY;
+      break;
+    }
+    case "YTD": {
+      count = 90;
+      stepSeconds = DAY;
+      break;
+    }
+    case "1Y": {
+      count = 252;
+      stepSeconds = DAY;
+      break;
+    }
+    case "All": {
+      count = 500;
+      stepSeconds = DAY;
+      break;
+    }
+    default: {
+      count = 40;
+      stepSeconds = DAY;
+    }
   }
+
+  const startTime = now - count * stepSeconds;
   const base = 280 + (seed % 80);
+
   return Array.from({ length: count }, (_, i) => {
     const t = i / Math.max(1, count - 1);
     const wobble = Math.sin(t * Math.PI * 3 + seed * 0.01) * 12;
     const drift = t * 35;
     const price = base + wobble + drift + (i % 5) * 0.4;
     return {
-      i,
-      label: `T${i}`,
-      price: Math.round(price * 100) / 100,
-      volume: 1_000_000 + ((i * 17_000) % 5_000_000),
+      time: startTime + i * stepSeconds,
+      value: Math.round(price * 100) / 100,
     };
   });
 }

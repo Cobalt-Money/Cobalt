@@ -1,5 +1,5 @@
 import { NewsMagazine } from "@cobalt-web/ui/cobalt/news/news-magazine";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { useBrokerage } from "@/hooks/use-brokerage";
@@ -41,6 +41,15 @@ function NewsIndexPage() {
     <NewsMagazine
       eventsGeneral={events}
       eventsForYou={eventsForYou}
+      renderEventLink={(event, inner) => (
+        <Link
+          className="text-foreground block rounded-2xl no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          params={{ eventId: event.id }}
+          to="/news/$eventId"
+        >
+          {inner}
+        </Link>
+      )}
       rssItems={rssItems}
     />
   );
