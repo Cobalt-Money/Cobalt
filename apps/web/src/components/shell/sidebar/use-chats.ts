@@ -4,6 +4,8 @@ import { useQuery } from "@rocicorp/zero/react";
 export interface ChatRow {
   readonly chatId: string;
   readonly title: string | null;
+  readonly updatedAt: number | null;
+  readonly createdAt: number | null;
 }
 
 export function useChats() {

@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_auth/research")({
 
 function ResearchLayout() {
   return (
-    <SidebarShellLayout>
+    <SidebarShellLayout sidebarInsetClassName="bg-background">
       <Outlet />
     </SidebarShellLayout>
   );

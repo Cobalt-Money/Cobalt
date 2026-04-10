@@ -69,7 +69,7 @@ export default function ChatView() {
   );
 
   return (
-    <Conversation className="h-full min-h-0 w-full">
+    <Conversation className="h-full min-h-0 w-full [mask-image:linear-gradient(to_bottom,black_calc(100%-100px),transparent)]">
       <ConversationContent className="gap-0 px-0 pb-32">
         <div className={cn(CHAT_THREAD_COLUMN_CLASS, "flex flex-col gap-8")}>
           {sections.map((section) => {

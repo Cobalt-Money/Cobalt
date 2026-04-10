@@ -10,13 +10,6 @@ import {
 
 import { SiteHeaderPrimaryTitle } from "../site-header-primary-title";
 
-/**
- * Use on the main shell scroll container (below this header) so content fades
- * at the top viewport edge — same mask-image pattern as AI chat (SRI-218).
- */
-export const SITE_MAIN_SCROLL_AREA_MASK_CLASS =
-  "[mask-image:linear-gradient(to_bottom,transparent,rgb(0_0_0_/_0.2)_6px,black_12px)]";
-
 export function SiteHeader() {
   const { setOpen } = useCommandMenu();
 
