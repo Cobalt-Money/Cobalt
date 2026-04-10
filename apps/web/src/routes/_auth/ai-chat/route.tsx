@@ -12,8 +12,8 @@ export const Route = createFileRoute("/_auth/ai-chat")({
 function AiChatLayout() {
   return (
     <SidebarShellLayout flushBottom mainScrollMask={false}>
-      <div className="relative h-full min-h-0 flex-1">
-        <div className={cn(CHAT_THREAD_COLUMN_CLASS, "h-full min-h-0")}>
+      <div className="relative h-full min-h-0 w-full flex-1">
+        <div className="h-full min-h-0 w-full">
           <Outlet />
         </div>
         <div
