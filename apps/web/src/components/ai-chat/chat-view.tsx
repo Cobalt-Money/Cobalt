@@ -1,4 +1,3 @@
-import { cobaltPromptUserBubbleClass } from "@cobalt-web/ui/cobalt/prompt-input";
 import {
   Conversation,
   ConversationContent,
@@ -9,46 +8,92 @@ import {
   MessageContent,
   MessageResponse,
 } from "@cobalt-web/ui/components/ai-elements/message";
-import { cn } from "@cobalt-web/ui/lib/utils";
 import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useParams } from "@tanstack/react-router";
+import { useMemo } from "react";
+
+/** Zero row shape: `messageId` / `role` / `parts` are typed as `unknown` in query results. */
+interface ChatMessageRow {
+  messageId: unknown;
+  role: unknown;
+  parts: readonly { type: unknown; text_text: unknown }[];
+}
+
+function groupMessagesIntoSections(messages: readonly ChatMessageRow[]) {
+  const sections: {
+    user: ChatMessageRow | null;
+    assistants: ChatMessageRow[];
+  }[] = [];
+  let current: {
+    user: ChatMessageRow | null;
+    assistants: ChatMessageRow[];
+  } | null = null;
+
+  for (const message of messages) {
+    if (message.role === "user") {
+      if (current) {
+        sections.push(current);
+      }
+      current = { assistants: [], user: message };
+    } else if (current) {
+      current.assistants.push(message);
+    } else {
+      sections.push({ assistants: [message], user: null });
+    }
+  }
+  if (current) {
+    sections.push(current);
+  }
+
+  return sections;
+}
+
+function getTextContent(message: ChatMessageRow) {
+  return message.parts
+    .filter((p) => p.type === "text")
+    .map((p) => (typeof p.text_text === "string" ? p.text_text : ""))
+    .join("");
+}
 
 export default function ChatView() {
   const { chatId } = useParams({ from: "/_auth/ai-chat/$chatId" });
   const [messages] = useQuery(queries.chats.messages({ chatId }));
 
+  const sections = useMemo(
+    () => groupMessagesIntoSections(messages),
+    [messages]
+  );
+
   return (
     <Conversation className="h-full">
-      <ConversationContent className="px-1">
-        {messages.map((message) => {
-          const textContent = message.parts
-            .filter((p) => p.type === "text")
-            .map((p) => p.text_text ?? "")
-            .join("");
+      <ConversationContent className="px-0 pb-32">
+        {sections.map((section) => {
+          const sectionKey = section.user
+            ? String(section.user.messageId)
+            : String(section.assistants[0]?.messageId);
 
           return (
-            <Message
-              className={
-                message.role === "assistant" ? "max-w-full" : undefined
-              }
-              from={message.role as "user" | "assistant"}
-              key={String(message.messageId)}
-            >
-              <MessageContent
-                className={cn(
-                  message.role === "assistant"
-                    ? "w-full min-w-0 text-base leading-snug"
-                    : cn("text-base", cobaltPromptUserBubbleClass)
-                )}
-              >
-                {message.role === "assistant" ? (
-                  <MessageResponse>{textContent}</MessageResponse>
-                ) : (
-                  <p>{textContent}</p>
-                )}
-              </MessageContent>
-            </Message>
+            <div className="flex flex-col gap-8" key={sectionKey}>
+              {section.user && (
+                <div className="sticky top-0 z-10 w-full rounded-3xl bg-[oklch(0.949_0_0)] px-5 py-3.5 text-base text-foreground dark:bg-[oklch(0.29_0_0)]">
+                  <p>{getTextContent(section.user)}</p>
+                </div>
+              )}
+              {section.assistants.map((assistant) => (
+                <Message
+                  className="max-w-full"
+                  from="assistant"
+                  key={String(assistant.messageId)}
+                >
+                  <MessageContent className="w-full min-w-0 px-4 text-base leading-snug">
+                    <MessageResponse>
+                      {getTextContent(assistant)}
+                    </MessageResponse>
+                  </MessageContent>
+                </Message>
+              ))}
+            </div>
           );
         })}
       </ConversationContent>

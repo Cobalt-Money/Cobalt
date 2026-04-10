@@ -68,10 +68,11 @@ interface ThemeColors {
   areaBottomColor: string;
   areaTopColor: string;
   backgroundColor: string;
-  borderColor: string;
   crosshairLabelBg: string;
+  crosshairMarkerBorderColor: string;
   gridColor: string;
   lineColor: string;
+  mutedLineColor: string;
   textColor: string;
 }
 
@@ -87,10 +88,11 @@ function chartTheme(
       areaBottomColor: "rgba(0, 0, 0, 0)",
       areaTopColor: `${line}28`,
       backgroundColor: "transparent",
-      borderColor: "rgba(255, 255, 255, 0.06)",
       crosshairLabelBg: "#1e1e24",
+      crosshairMarkerBorderColor: "#111",
       gridColor: "rgba(255, 255, 255, 0.04)",
       lineColor: line,
+      mutedLineColor: "rgba(120, 120, 130, 0.45)",
       textColor: "#9ca3af",
     };
   }
@@ -99,12 +101,47 @@ function chartTheme(
     areaBottomColor: "rgba(255, 255, 255, 0)",
     areaTopColor: `${line}20`,
     backgroundColor: "transparent",
-    borderColor: "rgba(0, 0, 0, 0.06)",
     crosshairLabelBg: "#f3f4f6",
+    crosshairMarkerBorderColor: "#fff",
     gridColor: "rgba(0, 0, 0, 0.04)",
     lineColor: line,
+    mutedLineColor: "rgba(150, 150, 160, 0.4)",
     textColor: "#6b7280",
   };
+}
+
+/**
+ * Shared chart options for layout / grid / scales.
+ * Neither chart shows axes; only the base chart handles scroll/zoom.
+ */
+function sharedLayoutOptions(c: ThemeColors, height: number) {
+  return {
+    autoSize: true,
+    grid: {
+      horzLines: { color: c.gridColor, visible: false },
+      vertLines: { color: c.gridColor, visible: false },
+    },
+    height,
+    layout: {
+      attributionLogo: false,
+      background: { color: c.backgroundColor, type: ColorType.Solid },
+      textColor: c.textColor,
+    },
+    leftPriceScale: { visible: false },
+    rightPriceScale: {
+      borderVisible: false,
+      scaleMargins: { bottom: 0.08, top: 0.08 },
+      visible: false,
+    },
+    timeScale: {
+      borderVisible: false,
+      fixLeftEdge: true,
+      fixRightEdge: true,
+      rightOffset: 2,
+      timeVisible: true,
+      visible: false,
+    },
+  } as const;
 }
 
 export function LightweightPriceChart({
@@ -117,185 +154,269 @@ export function LightweightPriceChart({
   period,
   setPeriod,
 }: LightweightPriceChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<"Area", Time> | null>(null);
+  /** Container for the base chart (captures events, crosshair marker, muted line on hover). */
+  const baseContainerRef = useRef<HTMLDivElement>(null);
+  /** Container for the colored chart (pointer-events: none, clip-path drives the split). */
+  const coloredContainerRef = useRef<HTMLDivElement>(null);
+
+  const baseChartRef = useRef<IChartApi | null>(null);
+  const baseSeriesRef = useRef<ISeriesApi<"Area", Time> | null>(null);
+  const coloredChartRef = useRef<IChartApi | null>(null);
+  const coloredSeriesRef = useRef<ISeriesApi<"Area", Time> | null>(null);
+
+  /** Tracks whether the crosshair is currently over the chart. */
+  const isHoveringRef = useRef(false);
+
   const onCrosshairHoverRef = useRef(onCrosshairHover);
   onCrosshairHoverRef.current = onCrosshairHover;
   const periodRef = useRef(period);
   periodRef.current = period;
+  const colorsRef = useRef<ThemeColors | null>(null);
 
   const { resolvedTheme } = useTheme();
-
   const colors = chartTheme(resolvedTheme, lineColor);
+  colorsRef.current = colors;
 
+  /**
+   * Re-apply theme colors to both charts + series.
+   * Called when the color palette changes (theme switch or lineColor prop change).
+   */
   const applyTheme = useCallback(
-    (chart: IChartApi, series: ISeriesApi<"Area", Time>) => {
-      chart.applyOptions({
+    (
+      baseChart: IChartApi,
+      baseSeries: ISeriesApi<"Area", Time>,
+      coloredChart: IChartApi,
+      coloredSeries: ISeriesApi<"Area", Time>
+    ) => {
+      const c = colors;
+      const sharedUpdate = {
+        grid: {
+          horzLines: { color: c.gridColor, visible: false },
+          vertLines: { color: c.gridColor, visible: false },
+        },
+        layout: {
+          background: { color: c.backgroundColor, type: ColorType.Solid },
+          textColor: c.textColor,
+        },
+      };
+
+      baseChart.applyOptions({
+        ...sharedUpdate,
         crosshair: {
           horzLine: {
-            color: colors.textColor,
-            labelBackgroundColor: colors.crosshairLabelBg,
+            color: c.textColor,
+            labelBackgroundColor: c.crosshairLabelBg,
             labelVisible: false,
             style: 3,
             width: 1,
           },
           mode: CrosshairMode.Magnet,
           vertLine: {
-            color: colors.textColor,
-            labelBackgroundColor: colors.crosshairLabelBg,
+            color: c.textColor,
+            labelBackgroundColor: c.crosshairLabelBg,
             labelVisible: false,
             style: 3,
             width: 1,
           },
         },
-        grid: {
-          horzLines: { color: colors.gridColor, visible: false },
-          vertLines: { color: colors.gridColor, visible: false },
-        },
-        layout: {
-          background: { color: colors.backgroundColor, type: ColorType.Solid },
-          textColor: colors.textColor,
-        },
-        leftPriceScale: {
-          visible: false,
-        },
-        rightPriceScale: {
-          borderVisible: false,
-          visible: false,
-        },
-        timeScale: {
-          borderVisible: false,
-          visible: false,
-        },
+      });
+      coloredChart.applyOptions(sharedUpdate);
+
+      // Base series: invisible line that anchors the crosshair; becomes muted when hovering.
+      baseSeries.applyOptions({
+        bottomColor: "transparent",
+        crosshairMarkerBackgroundColor: c.lineColor,
+        crosshairMarkerBorderColor: c.crosshairMarkerBorderColor,
+        crosshairMarkerRadius: 5,
+        crosshairMarkerVisible: true,
+        lastValueVisible: false,
+        lineColor: isHoveringRef.current ? c.mutedLineColor : "transparent",
+        lineWidth: 2,
+        topColor: "transparent",
       });
 
-      series.applyOptions({
-        bottomColor: colors.areaBottomColor,
+      coloredSeries.applyOptions({
+        bottomColor: c.areaBottomColor,
+        crosshairMarkerVisible: false,
         lastValueVisible: false,
-        lineColor: colors.lineColor,
+        lineColor: c.lineColor,
         lineWidth: 2,
-        topColor: colors.areaTopColor,
+        topColor: c.areaTopColor,
       });
     },
     [colors]
   );
 
+  // ── Mount: create both chart instances once ──────────────────────
+
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
+    const baseContainer = baseContainerRef.current;
+    const coloredContainer = coloredContainerRef.current;
+    if (!baseContainer || !coloredContainer) {
       return;
     }
 
-    const chart = createChart(container, {
-      autoSize: true,
+    const c = colorsRef.current ?? chartTheme(undefined, lineColor);
+    const layout = sharedLayoutOptions(c, height);
+
+    // ── Base chart ── handles all user interaction + crosshair
+    const baseChart = createChart(baseContainer, {
+      ...layout,
       crosshair: {
         horzLine: {
-          color: colors.textColor,
-          labelBackgroundColor: colors.crosshairLabelBg,
+          color: c.textColor,
+          labelBackgroundColor: c.crosshairLabelBg,
           labelVisible: false,
           style: 3,
           width: 1,
         },
         mode: CrosshairMode.Magnet,
         vertLine: {
-          color: colors.textColor,
-          labelBackgroundColor: colors.crosshairLabelBg,
+          color: c.textColor,
+          labelBackgroundColor: c.crosshairLabelBg,
           labelVisible: false,
           style: 3,
           width: 1,
         },
       },
-      grid: {
-        horzLines: { color: colors.gridColor, visible: false },
-        vertLines: { color: colors.gridColor, visible: false },
-      },
       handleScale: { mouseWheel: true, pinch: true },
       handleScroll: { mouseWheel: true, pressedMouseMove: true },
-      height,
-      layout: {
-        attributionLogo: false,
-        background: { color: colors.backgroundColor, type: ColorType.Solid },
-        textColor: colors.textColor,
-      },
-      leftPriceScale: {
-        visible: false,
-      },
-      rightPriceScale: {
-        borderVisible: false,
-        scaleMargins: { bottom: 0.08, top: 0.08 },
-        visible: false,
-      },
-      timeScale: {
-        borderVisible: false,
-        fixLeftEdge: true,
-        fixRightEdge: true,
-        rightOffset: 2,
-        timeVisible: true,
-        visible: false,
-      },
     });
 
-    const series = chart.addSeries(AreaSeries, {
-      bottomColor: colors.areaBottomColor,
-      crosshairMarkerBackgroundColor: colors.lineColor,
-      crosshairMarkerBorderColor: resolvedTheme === "light" ? "#fff" : "#111",
+    // ── Colored chart ── passive overlay; no events, no crosshair
+    const coloredChart = createChart(coloredContainer, {
+      ...layout,
+      crosshair: {
+        horzLine: { visible: false },
+        vertLine: { visible: false },
+      },
+      handleScale: false,
+      handleScroll: false,
+    });
+
+    // Base series: transparent line that anchors the crosshair magnet.
+    // Becomes the muted gray line on hover (so the right portion shows gray).
+    const baseSeries = baseChart.addSeries(AreaSeries, {
+      bottomColor: "transparent",
+      crosshairMarkerBackgroundColor: c.lineColor,
+      crosshairMarkerBorderColor: c.crosshairMarkerBorderColor,
       crosshairMarkerRadius: 5,
       crosshairMarkerVisible: true,
       lastValueVisible: false,
-      lineColor: colors.lineColor,
+      lineColor: "transparent",
       lineWidth: 2,
       priceFormat: { minMove: 0.01, precision: 2, type: "price" },
       priceLineVisible: false,
-      topColor: colors.areaTopColor,
+      topColor: "transparent",
     });
 
-    chartRef.current = chart;
-    seriesRef.current = series;
+    // Colored series: always holds the full dataset; clip-path does the splitting.
+    const coloredSeries = coloredChart.addSeries(AreaSeries, {
+      bottomColor: c.areaBottomColor,
+      crosshairMarkerVisible: false,
+      lastValueVisible: false,
+      lineColor: c.lineColor,
+      lineWidth: 2,
+      priceFormat: { minMove: 0.01, precision: 2, type: "price" },
+      priceLineVisible: false,
+      topColor: c.areaTopColor,
+    });
 
-    chart.subscribeCrosshairMove((param) => {
+    baseChartRef.current = baseChart;
+    baseSeriesRef.current = baseSeries;
+    coloredChartRef.current = coloredChart;
+    coloredSeriesRef.current = coloredSeries;
+
+    // Keep the colored chart's visible range in sync with the base chart
+    // so scroll/zoom on the base chart is mirrored in the overlay.
+    baseChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (range) {
+        coloredChart.timeScale().setVisibleLogicalRange(range);
+      }
+    });
+
+    // ── Crosshair handler ── O(1): just a style property write per frame
+    baseChart.subscribeCrosshairMove((param) => {
       const notify = onCrosshairHoverRef.current;
-      if (!notify) {
+      const coloredEl = coloredContainerRef.current;
+
+      if (!param.time || !param.point || !coloredEl) {
+        if (isHoveringRef.current) {
+          isHoveringRef.current = false;
+          if (coloredEl) {
+            coloredEl.style.clipPath = "";
+          }
+          // Restore base series line to invisible.
+          baseSeries.applyOptions({ lineColor: "transparent" });
+        }
+        if (notify) {
+          notify(null);
+        }
         return;
       }
-      if (!param.time || !param.point) {
-        notify(null);
-        return;
+
+      // First hover event — make the base series show as muted gray.
+      if (!isHoveringRef.current) {
+        isHoveringRef.current = true;
+        baseSeries.applyOptions({
+          lineColor:
+            colorsRef.current?.mutedLineColor ?? "rgba(120,120,130,0.45)",
+        });
       }
-      const val = param.seriesData.get(series);
-      if (!val || !("value" in val)) {
-        notify(null);
-        return;
-      }
+
+      // Clip the colored overlay to everything left of the cursor.
+      // param.point.x is in chart-pane pixels; coloredEl.clientWidth is the container width.
+      const rightPct = Math.max(
+        0,
+        Math.min(100, (1 - param.point.x / coloredEl.clientWidth) * 100)
+      );
+      coloredEl.style.clipPath = `inset(0 ${rightPct.toFixed(2)}% 0 0)`;
+
+      const val = param.seriesData.get(baseSeries);
+      const price = val && "value" in val ? (val.value as number) : undefined;
       const ts = param.time as number;
-      notify({
-        price: val.value as number,
-        timeLabel: formatChartTimeLabel(ts, periodRef.current),
-      });
+
+      if (notify && price !== undefined) {
+        notify({
+          price,
+          timeLabel: formatChartTimeLabel(ts, periodRef.current),
+        });
+      }
     });
 
     return () => {
-      chart.remove();
-      chartRef.current = null;
-      seriesRef.current = null;
+      baseChart.remove();
+      coloredChart.remove();
+      baseChartRef.current = null;
+      baseSeriesRef.current = null;
+      coloredChartRef.current = null;
+      coloredSeriesRef.current = null;
     };
-    // only re-create chart when container mounts
+    // Only recreate when the container mounts/unmounts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const chart = chartRef.current;
-    const series = seriesRef.current;
-    if (!chart || !series) {
-      return;
-    }
-    applyTheme(chart, series);
-  }, [applyTheme]);
+  // ── Theme changes ────────────────────────────────────────────────
 
   useEffect(() => {
-    const series = seriesRef.current;
-    const chart = chartRef.current;
-    if (!series || !chart) {
+    const bc = baseChartRef.current;
+    const bs = baseSeriesRef.current;
+    const cc = coloredChartRef.current;
+    const cs = coloredSeriesRef.current;
+    if (!bc || !bs || !cc || !cs) {
+      return;
+    }
+    applyTheme(bc, bs, cc, cs);
+  }, [applyTheme]);
+
+  // ── Data changes ─────────────────────────────────────────────────
+
+  useEffect(() => {
+    const bs = baseSeriesRef.current;
+    const cs = coloredSeriesRef.current;
+    const bc = baseChartRef.current;
+    const cc = coloredChartRef.current;
+    if (!bs || !cs || !bc || !cc) {
       return;
     }
 
@@ -303,22 +424,51 @@ export function LightweightPriceChart({
       time: d.time as Time,
       value: d.value,
     }));
-    series.setData(formatted);
-    chart.timeScale().fitContent();
+    bs.setData(formatted);
+    cs.setData(formatted);
+    bc.timeScale().fitContent();
+    // Colored chart syncs via subscribeVisibleLogicalRangeChange, but also call
+    // fitContent directly so both start from the same initial range.
+    cc.timeScale().fitContent();
+
+    // Reset any active hover state.
+    isHoveringRef.current = false;
+    if (coloredContainerRef.current) {
+      coloredContainerRef.current.style.clipPath = "";
+    }
+    bs.applyOptions({ lineColor: "transparent" });
   }, [data]);
 
+  // ── Height changes ───────────────────────────────────────────────
+
   useEffect(() => {
-    const chart = chartRef.current;
-    if (!chart) {
+    const bc = baseChartRef.current;
+    const cc = coloredChartRef.current;
+    if (!bc || !cc) {
       return;
     }
-    chart.applyOptions({ height });
+    bc.applyOptions({ height });
+    cc.applyOptions({ height });
   }, [height]);
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-3">
-      <div className={cn("relative min-h-0 w-full min-w-0", chartClassName)}>
-        <div ref={containerRef} className="h-full w-full min-w-0" />
+      {/*
+       * Outer wrapper sets the explicit pixel height so both absolutely-positioned
+       * chart containers fill the right area. autoSize on each chart then handles
+       * responsive width changes.
+       */}
+      <div
+        className={cn("relative min-h-0 w-full min-w-0", chartClassName)}
+        style={{ height }}
+      >
+        {/* Base chart: event layer, muted line on hover, crosshair marker */}
+        <div ref={baseContainerRef} className="absolute inset-0" />
+        {/* Colored chart: visual overlay, clip-path applied on hover */}
+        <div
+          ref={coloredContainerRef}
+          className="pointer-events-none absolute inset-0"
+        />
       </div>
       <div
         aria-label="Chart time range"

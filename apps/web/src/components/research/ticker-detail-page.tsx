@@ -50,15 +50,6 @@ function parseNum(raw: unknown): number | null {
   return null;
 }
 
-function fmtPct(raw: unknown): string {
-  const n = parseNum(raw);
-  if (n === null) {
-    return "—";
-  }
-  const pct = n <= 1 && n >= -1 ? n * 100 : n;
-  return `${pct.toFixed(2)}%`;
-}
-
 function fmtNum(n: number | null, decimals = 2): string {
   if (n === null) {
     return "—";
@@ -79,38 +70,37 @@ function extractDescription(overview: Record<string, unknown> | null): string {
   return "";
 }
 
-function buildKpiRows(
-  overview: Record<string, unknown>
-): { label: string; value: string }[] {
-  const cap = parseNum(
-    overview.MarketCapitalization ?? overview.marketCap ?? overview.mktCap
-  );
-  const ev = parseNum(overview.EVToRevenue ?? overview.evToRevenue);
-  const pe = parseNum(overview.PERatio ?? overview.peRatioTTM ?? overview.pe);
-  const rev = parseNum(overview.RevenueTTM ?? overview.revenue);
-  const eps = parseNum(overview.EPS ?? overview.eps);
-  const beta = parseNum(overview.Beta ?? overview.beta);
-  const rawSector = overview.Sector ?? overview.sector;
-  const sector =
-    typeof rawSector === "string" && rawSector.trim() ? rawSector : "—";
+/** Mkt cap, P/E, Revenue, Sector — for inline header row. */
+function useFundamentalsSnapshot(overview: Record<string, unknown> | null) {
+  return useMemo(() => {
+    const cap = overview
+      ? parseNum(
+          overview.MarketCapitalization ?? overview.marketCap ?? overview.mktCap
+        )
+      : null;
+    const pe = overview
+      ? parseNum(overview.PERatio ?? overview.peRatioTTM ?? overview.pe)
+      : null;
+    const rev = overview
+      ? parseNum(overview.RevenueTTM ?? overview.revenue)
+      : null;
+    const rawSector = overview?.Sector ?? overview?.sector;
+    const sector =
+      typeof rawSector === "string" && rawSector.trim() ? rawSector : "—";
 
-  return [
-    { label: "Mkt cap", value: cap === null ? "—" : formatMarketCap(cap) },
-    { label: "EV / Sales", value: fmtNum(ev) },
-    { label: "P/E", value: fmtNum(pe) },
-    { label: "FY revenue", value: rev === null ? "—" : formatMarketCap(rev) },
-    { label: "EPS", value: fmtNum(eps) },
-    {
-      label: "Profit margin",
-      value: fmtPct(overview.ProfitMargin ?? overview.profitMargin),
-    },
-    { label: "Beta", value: fmtNum(beta) },
-    {
-      label: "Div yield",
-      value: fmtPct(overview.DividendYield ?? overview.dividendYield),
-    },
-    { label: "Sector", value: sector },
-  ];
+    return [
+      {
+        label: "Mkt cap",
+        value: cap === null ? "—" : formatMarketCap(cap),
+      },
+      { label: "P/E", value: fmtNum(pe) },
+      {
+        label: "Revenue",
+        value: rev === null ? "—" : formatMarketCap(rev),
+      },
+      { label: "Sector", value: sector },
+    ] as const;
+  }, [overview]);
 }
 
 // ── Sub-components ────────────────────────────────────────────────
@@ -149,19 +139,38 @@ function QuoteDisplay({
   );
 }
 
-function KpiGrid({ rows }: { rows: { label: string; value: string }[] }) {
+function FundamentalsInline({
+  loading,
+  rows,
+}: {
+  loading: boolean;
+  rows: readonly { label: string; value: string }[];
+}) {
+  if (loading) {
+    return (
+      <div className="flex min-h-[3.25rem] items-center justify-end sm:min-w-[12rem]">
+        <Loader2 className="size-4 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-      {rows.map((row) => (
-        <div
-          className="rounded-xl border border-border/50 bg-card/30 px-3 py-2 backdrop-blur-sm"
-          key={row.label}
-        >
-          <p className="text-muted-foreground text-xs">{row.label}</p>
-          <p className="font-medium text-sm tabular-nums">{row.value}</p>
+    <dl className="grid max-w-full grid-cols-2 gap-x-6 gap-y-3 text-right sm:flex sm:max-w-[min(100%,28rem)] sm:flex-wrap sm:justify-end sm:gap-x-8 sm:gap-y-2">
+      {rows.map(({ label, value }) => (
+        <div className="min-w-0 sm:text-right" key={label}>
+          <dt className="text-muted-foreground text-xs">{label}</dt>
+          <dd
+            className={cn(
+              "font-medium text-foreground text-sm tabular-nums",
+              label === "Sector" && "max-w-[10rem] truncate sm:max-w-[14rem]"
+            )}
+            title={label === "Sector" ? value : undefined}
+          >
+            {value}
+          </dd>
         </div>
       ))}
-    </div>
+    </dl>
   );
 }
 
@@ -220,44 +229,46 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
       ? "text-red-600 dark:text-red-400"
       : "text-green-600 dark:text-green-400";
 
-  const kpiRows = useMemo(
-    () => (overview ? buildKpiRows(overview) : []),
-    [overview]
-  );
+  const fundamentalsRows = useFundamentalsSnapshot(overview);
 
-  // ── Price block ──────────────────────────────────────────────────
+  // ── Price + fundamentals row ─────────────────────────────────────
 
-  let priceBlock: React.ReactNode;
+  let priceRow: React.ReactNode;
   if (quoteLoading && !quote) {
-    priceBlock = <InlineLoader text="Loading quote…" />;
+    priceRow = (
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <InlineLoader text="Loading quote…" />
+        <FundamentalsInline
+          loading={overviewLoading && !overview}
+          rows={fundamentalsRows}
+        />
+      </div>
+    );
   } else if (quote) {
-    priceBlock = (
-      <QuoteDisplay
-        changeClass={changeClass}
-        crosshair={chartCrosshair}
-        quote={quote}
-      />
+    priceRow = (
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="flex min-w-0 flex-col gap-1">
+          <QuoteDisplay
+            changeClass={changeClass}
+            crosshair={chartCrosshair}
+            quote={quote}
+          />
+        </div>
+        <FundamentalsInline
+          loading={overviewLoading && !overview}
+          rows={fundamentalsRows}
+        />
+      </div>
     );
   } else {
-    priceBlock = (
+    priceRow = (
       <p className="text-muted-foreground text-sm">Quote unavailable</p>
     );
   }
 
-  // ── KPI block ────────────────────────────────────────────────────
-
-  let kpiBlock: React.ReactNode = null;
-  if (overviewLoading && !overview) {
-    kpiBlock = <InlineLoader text="Loading fundamentals…" />;
-  } else if (kpiRows.length > 0) {
-    kpiBlock = <KpiGrid rows={kpiRows} />;
-  }
-
   return (
     <div className="flex w-full min-w-0 flex-col gap-6 pb-8 pt-1">
-      <div className={TICKER_BODY_ALIGN_CLASS}>
-        <div className="flex flex-col gap-1">{priceBlock}</div>
-      </div>
+      <div className={TICKER_BODY_ALIGN_CLASS}>{priceRow}</div>
 
       {chartLoading && chartPoints.length === 0 ? (
         <div
@@ -281,8 +292,6 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
       )}
 
       <div className={cn("flex flex-col gap-6", TICKER_BODY_ALIGN_CLASS)}>
-        {kpiBlock}
-
         <TickerDetailAbout description={description} />
       </div>
     </div>

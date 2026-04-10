@@ -7,7 +7,7 @@ import { cn } from "@cobalt-web/ui/lib/utils";
  * shadow, or focus ring — same ghost fill as `AccountCard`.
  */
 export const cobaltPromptInputChrome =
-  "border-0 bg-[oklch(0.949_0_0)] shadow-none ring-0 dark:bg-white/[0.06] has-[[data-slot=input-group-control]:focus-visible]:border-transparent has-[[data-slot=input-group-control]:focus-visible]:ring-0 has-[[data-slot][aria-invalid=true]]:border-transparent has-[[data-slot][aria-invalid=true]]:ring-0 dark:has-[[data-slot][aria-invalid=true]]:ring-0";
+  "border-0 bg-[oklch(0.949_0_0)] shadow-none ring-0 dark:bg-[oklch(0.29_0_0)] has-[[data-slot=input-group-control]:focus-visible]:border-transparent has-[[data-slot=input-group-control]:focus-visible]:ring-0 has-[[data-slot][aria-invalid=true]]:border-transparent has-[[data-slot][aria-invalid=true]]:ring-0 dark:has-[[data-slot][aria-invalid=true]]:ring-0";
 
 /**
  * User message bubble: same ghost fill and radius as the composer `InputGroup`
