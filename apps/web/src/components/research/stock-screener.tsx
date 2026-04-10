@@ -18,6 +18,7 @@ import {
   StarIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
@@ -267,7 +268,8 @@ function screenerCellContent(
         )}
         disabled={!symbol}
         type="button"
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
           if (symbol) {
             star.toggle(symbol);
           }
@@ -342,6 +344,7 @@ function screenerCellContent(
 }
 
 export function StockScreener() {
+  const navigate = useNavigate();
   const [data, setData] = useState<ScreenerResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -489,7 +492,19 @@ export function StockScreener() {
                 pickCell(row, ["companyName", "name"]),
               ].join("|");
               return (
-                <TableRow className="border-0" key={rowKey}>
+                <TableRow
+                  className="border-0 cursor-pointer hover:bg-muted/50"
+                  key={rowKey}
+                  onClick={() => {
+                    const s = rawTickerSymbol(row);
+                    if (s) {
+                      navigate({
+                        params: { symbol: s },
+                        to: "/research/$symbol",
+                      });
+                    }
+                  }}
+                >
                   {columns.map((col) => (
                     <TableCell
                       className={cn("py-1.5", col.columnClassName)}

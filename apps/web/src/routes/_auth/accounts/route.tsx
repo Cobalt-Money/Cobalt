@@ -32,6 +32,7 @@ function AccountsLayoutInner() {
 
   return (
     <SidebarShellLayout
+      flushBottom
       toolbar={
         isAccountsList ? (
           <AccountsToolbar
@@ -41,7 +42,7 @@ function AccountsLayoutInner() {
         ) : undefined
       }
     >
-      <div className="-mb-4 flex min-h-0 h-full min-w-0 flex-1 flex-col lg:-mb-6">
+      <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">
         <Outlet />
         {isAccountsList ? <AccountsAddAccountFab /> : null}
       </div>

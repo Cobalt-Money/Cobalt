@@ -18,9 +18,10 @@ function TransactionsLayout() {
 
   return (
     <SidebarShellLayout
+      flushBottom
       toolbar={isTransactionsList ? <TransactionsToolbar /> : undefined}
     >
-      <div className="-mb-4 flex min-h-0 h-full min-w-0 flex-1 flex-col lg:-mb-6">
+      <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">
         <Outlet />
       </div>
     </SidebarShellLayout>

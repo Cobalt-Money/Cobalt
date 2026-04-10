@@ -1,10 +1,14 @@
-import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
+import { buttonVariants } from "@cobalt-web/ui/components/button";
+import { cn } from "@cobalt-web/ui/lib/utils";
+import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { useTransactions } from "@/hooks/use-transactions";
 
+import { useAmbientInset } from "./ambient-inset-context";
 import { useShellRouteTitle } from "./header/use-shell-route-title";
 
 function TransactionDetailBreadcrumb({
@@ -44,18 +48,58 @@ function TransactionDetailBreadcrumb({
   );
 }
 
+/** Back control + logo + symbol / company (replaces plain “Ticker” title). */
+function ResearchTickerHeader({ symbol }: { symbol: string }) {
+  const { tickerCompanyName } = useAmbientInset();
+  const sym = symbol.trim().toUpperCase();
+
+  return (
+    <nav
+      aria-label="Research ticker"
+      className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5"
+    >
+      <Link
+        aria-label="Back to research"
+        className={cn(
+          buttonVariants({ size: "icon", variant: "ghost" }),
+          "shrink-0 -ml-1"
+        )}
+        to="/research"
+      >
+        <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
+      </Link>
+      <TickerLogo size={36} symbol={sym} />
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5">
+        <span className="shrink-0 font-semibold text-lg leading-tight tracking-tight sm:text-xl">
+          {sym}
+        </span>
+        {tickerCompanyName ? (
+          <span className="min-w-0 truncate text-muted-foreground text-sm leading-tight sm:text-base">
+            {tickerCompanyName}
+          </span>
+        ) : null}
+      </div>
+    </nav>
+  );
+}
+
 /**
  * Shell header title area: default route title, or Linear-style breadcrumb on
- * `/transactions/:transactionId`.
+ * `/transactions/:transactionId`, or ticker chrome on `/research/:symbol`.
  */
 export function SiteHeaderPrimaryTitle() {
   const title = useShellRouteTitle();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const normalized = pathname.replace(/\/$/, "") || "/";
   const transactionId = /^\/transactions\/([^/]+)$/.exec(normalized)?.[1];
+  const researchSymbol = /^\/research\/([^/]+)$/.exec(normalized)?.[1];
 
   if (transactionId) {
     return <TransactionDetailBreadcrumb transactionId={transactionId} />;
+  }
+
+  if (researchSymbol) {
+    return <ResearchTickerHeader symbol={researchSymbol} />;
   }
 
   return (

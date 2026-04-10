@@ -14,8 +14,8 @@ export const Route = createFileRoute("/_auth/ai-chat/")({
 
 function AiChatIndex() {
   return (
-    <Conversation>
-      <ConversationContent>
+    <Conversation className="h-full min-h-0">
+      <ConversationContent className="px-1">
         <ConversationEmptyState
           description="Select a chat from the sidebar or start a new conversation"
           icon={<HugeiconsIcon className="size-8" icon={AiChat02Icon} />}
