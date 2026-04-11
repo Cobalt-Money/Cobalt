@@ -299,9 +299,10 @@ function MonthGrid({
               key={cell.reactKey}
               onClick={() => onSelectDay(cell.day)}
               className={cn(
-                "flex h-32 flex-col rounded-2xl bg-muted/50 p-1.5 text-center transition-colors",
+                // Match site header Command+K search control: `bg-input/30` / `hover:bg-input/50`
+                "flex h-32 flex-col rounded-2xl bg-input/30 p-1.5 text-center transition-colors hover:bg-input/50",
                 today && "ring-2 ring-primary",
-                selected && "bg-primary/10 ring-2 ring-primary"
+                selected && "ring-2 ring-primary"
               )}
             >
               <div className="flex min-h-0 flex-1 items-center justify-center">
