@@ -64,7 +64,7 @@ export function NavUser({
               />
             }
           >
-            <Avatar className="size-5 shrink-0" shape="rounded">
+            <Avatar className="size-5 shrink-0 rounded-md">
               <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback className="text-[0.625rem]">
                 {initials}

@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Dialog,
   DialogContent,
@@ -53,7 +55,7 @@ function CommandDialog({
       </DialogHeader>
       <DialogContent
         className={cn(
-          "top-[max(4.5rem,10svh)] translate-y-0 overflow-hidden rounded-4xl! p-0",
+          "top-1/3 translate-y-0 overflow-hidden rounded-4xl! p-0",
           className
         )}
         showCloseButton={showCloseButton}

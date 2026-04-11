@@ -15,7 +15,9 @@ import {
   ArrowReloadHorizontalIcon,
   CreditCardIcon,
   Home04Icon,
+  Moon02Icon,
   SearchDollarIcon,
+  Sun01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
@@ -112,6 +114,8 @@ function CommandMenuDialog({
     onOpenChange(false);
   }, [onOpenChange, resolvedTheme, setTheme]);
 
+  const themeToggleIcon = resolvedTheme === "dark" ? Sun01Icon : Moon02Icon;
+
   return (
     <CobaltCommandDialog
       description="Search for a page or action"
@@ -157,6 +161,12 @@ function CommandMenuDialog({
                 onSelect={toggleTheme}
                 value="theme-toggle"
               >
+                <HugeiconsIcon
+                  aria-hidden
+                  className="text-muted-foreground"
+                  icon={themeToggleIcon}
+                  strokeWidth={2}
+                />
                 Toggle theme
               </CommandItem>
             </CommandGroup>

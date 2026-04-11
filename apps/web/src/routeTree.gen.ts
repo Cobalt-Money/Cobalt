@@ -15,12 +15,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OauthConsentRouteImport } from './routes/oauth/consent'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthTransactionsRouteRouteImport } from './routes/_auth/transactions/route'
+import { Route as AuthSubscriptionsRouteRouteImport } from './routes/_auth/subscriptions/route'
 import { Route as AuthResearchRouteRouteImport } from './routes/_auth/research/route'
 import { Route as AuthNewsRouteRouteImport } from './routes/_auth/news/route'
 import { Route as AuthBrokerageRouteRouteImport } from './routes/_auth/brokerage/route'
 import { Route as AuthAiChatRouteRouteImport } from './routes/_auth/ai-chat/route'
 import { Route as AuthAccountsRouteRouteImport } from './routes/_auth/accounts/route'
 import { Route as AuthTransactionsIndexRouteImport } from './routes/_auth/transactions/index'
+import { Route as AuthSubscriptionsIndexRouteImport } from './routes/_auth/subscriptions/index'
 import { Route as AuthResearchIndexRouteImport } from './routes/_auth/research/index'
 import { Route as AuthNewsIndexRouteImport } from './routes/_auth/news/index'
 import { Route as AuthBrokerageIndexRouteImport } from './routes/_auth/brokerage/index'
@@ -60,6 +62,11 @@ const AuthTransactionsRouteRoute = AuthTransactionsRouteRouteImport.update({
   path: '/transactions',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthSubscriptionsRouteRoute = AuthSubscriptionsRouteRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthResearchRouteRoute = AuthResearchRouteRouteImport.update({
   id: '/research',
   path: '/research',
@@ -89,6 +96,11 @@ const AuthTransactionsIndexRoute = AuthTransactionsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthTransactionsRouteRoute,
+} as any)
+const AuthSubscriptionsIndexRoute = AuthSubscriptionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthSubscriptionsRouteRoute,
 } as any)
 const AuthResearchIndexRoute = AuthResearchIndexRouteImport.update({
   id: '/',
@@ -145,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/brokerage': typeof AuthBrokerageRouteRouteWithChildren
   '/news': typeof AuthNewsRouteRouteWithChildren
   '/research': typeof AuthResearchRouteRouteWithChildren
+  '/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteRouteWithChildren
   '/dashboard': typeof AuthDashboardRoute
   '/oauth/consent': typeof OauthConsentRoute
@@ -157,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/brokerage/': typeof AuthBrokerageIndexRoute
   '/news/': typeof AuthNewsIndexRoute
   '/research/': typeof AuthResearchIndexRoute
+  '/subscriptions/': typeof AuthSubscriptionsIndexRoute
   '/transactions/': typeof AuthTransactionsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -173,6 +187,7 @@ export interface FileRoutesByTo {
   '/brokerage': typeof AuthBrokerageIndexRoute
   '/news': typeof AuthNewsIndexRoute
   '/research': typeof AuthResearchIndexRoute
+  '/subscriptions': typeof AuthSubscriptionsIndexRoute
   '/transactions': typeof AuthTransactionsIndexRoute
 }
 export interface FileRoutesById {
@@ -185,6 +200,7 @@ export interface FileRoutesById {
   '/_auth/brokerage': typeof AuthBrokerageRouteRouteWithChildren
   '/_auth/news': typeof AuthNewsRouteRouteWithChildren
   '/_auth/research': typeof AuthResearchRouteRouteWithChildren
+  '/_auth/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/_auth/transactions': typeof AuthTransactionsRouteRouteWithChildren
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/oauth/consent': typeof OauthConsentRoute
@@ -197,6 +213,7 @@ export interface FileRoutesById {
   '/_auth/brokerage/': typeof AuthBrokerageIndexRoute
   '/_auth/news/': typeof AuthNewsIndexRoute
   '/_auth/research/': typeof AuthResearchIndexRoute
+  '/_auth/subscriptions/': typeof AuthSubscriptionsIndexRoute
   '/_auth/transactions/': typeof AuthTransactionsIndexRoute
 }
 export interface FileRouteTypes {
@@ -209,6 +226,7 @@ export interface FileRouteTypes {
     | '/brokerage'
     | '/news'
     | '/research'
+    | '/subscriptions'
     | '/transactions'
     | '/dashboard'
     | '/oauth/consent'
@@ -221,6 +239,7 @@ export interface FileRouteTypes {
     | '/brokerage/'
     | '/news/'
     | '/research/'
+    | '/subscriptions/'
     | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -237,6 +256,7 @@ export interface FileRouteTypes {
     | '/brokerage'
     | '/news'
     | '/research'
+    | '/subscriptions'
     | '/transactions'
   id:
     | '__root__'
@@ -248,6 +268,7 @@ export interface FileRouteTypes {
     | '/_auth/brokerage'
     | '/_auth/news'
     | '/_auth/research'
+    | '/_auth/subscriptions'
     | '/_auth/transactions'
     | '/_auth/dashboard'
     | '/oauth/consent'
@@ -260,6 +281,7 @@ export interface FileRouteTypes {
     | '/_auth/brokerage/'
     | '/_auth/news/'
     | '/_auth/research/'
+    | '/_auth/subscriptions/'
     | '/_auth/transactions/'
   fileRoutesById: FileRoutesById
 }
@@ -314,6 +336,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthTransactionsRouteRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/subscriptions': {
+      id: '/_auth/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/subscriptions'
+      preLoaderRoute: typeof AuthSubscriptionsRouteRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/research': {
       id: '/_auth/research'
       path: '/research'
@@ -355,6 +384,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/transactions/'
       preLoaderRoute: typeof AuthTransactionsIndexRouteImport
       parentRoute: typeof AuthTransactionsRouteRoute
+    }
+    '/_auth/subscriptions/': {
+      id: '/_auth/subscriptions/'
+      path: '/'
+      fullPath: '/subscriptions/'
+      preLoaderRoute: typeof AuthSubscriptionsIndexRouteImport
+      parentRoute: typeof AuthSubscriptionsRouteRoute
     }
     '/_auth/research/': {
       id: '/_auth/research/'
@@ -485,6 +521,20 @@ const AuthResearchRouteRouteChildren: AuthResearchRouteRouteChildren = {
 const AuthResearchRouteRouteWithChildren =
   AuthResearchRouteRoute._addFileChildren(AuthResearchRouteRouteChildren)
 
+interface AuthSubscriptionsRouteRouteChildren {
+  AuthSubscriptionsIndexRoute: typeof AuthSubscriptionsIndexRoute
+}
+
+const AuthSubscriptionsRouteRouteChildren: AuthSubscriptionsRouteRouteChildren =
+  {
+    AuthSubscriptionsIndexRoute: AuthSubscriptionsIndexRoute,
+  }
+
+const AuthSubscriptionsRouteRouteWithChildren =
+  AuthSubscriptionsRouteRoute._addFileChildren(
+    AuthSubscriptionsRouteRouteChildren,
+  )
+
 interface AuthTransactionsRouteRouteChildren {
   AuthTransactionsTransactionIdRoute: typeof AuthTransactionsTransactionIdRoute
   AuthTransactionsIndexRoute: typeof AuthTransactionsIndexRoute
@@ -506,6 +556,7 @@ interface AuthRouteRouteChildren {
   AuthBrokerageRouteRoute: typeof AuthBrokerageRouteRouteWithChildren
   AuthNewsRouteRoute: typeof AuthNewsRouteRouteWithChildren
   AuthResearchRouteRoute: typeof AuthResearchRouteRouteWithChildren
+  AuthSubscriptionsRouteRoute: typeof AuthSubscriptionsRouteRouteWithChildren
   AuthTransactionsRouteRoute: typeof AuthTransactionsRouteRouteWithChildren
   AuthDashboardRoute: typeof AuthDashboardRoute
 }
@@ -516,6 +567,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthBrokerageRouteRoute: AuthBrokerageRouteRouteWithChildren,
   AuthNewsRouteRoute: AuthNewsRouteRouteWithChildren,
   AuthResearchRouteRoute: AuthResearchRouteRouteWithChildren,
+  AuthSubscriptionsRouteRoute: AuthSubscriptionsRouteRouteWithChildren,
   AuthTransactionsRouteRoute: AuthTransactionsRouteRouteWithChildren,
   AuthDashboardRoute: AuthDashboardRoute,
 }

@@ -1,12 +1,14 @@
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import type {
   ChartCrosshairHover,
   ChartPeriod,
 } from "@/components/research/lightweight-price-chart";
-import { LightweightPriceChart } from "@/components/research/lightweight-price-chart";
+import {
+  ChartPeriodToolbar,
+  LightweightPriceChart,
+} from "@/components/research/lightweight-price-chart";
 import { TickerDetailAbout } from "@/components/research/ticker-detail-sections";
 import type { TickerQuote } from "@/components/research/use-ticker-data";
 import {
@@ -17,11 +19,11 @@ import {
 import { useAmbientInset } from "@/components/shell/ambient-inset-context";
 
 /**
- * Left inset so body lines up with {@link ResearchTickerHeader}'s logo: `size-9`
- * back control + `gap-2` / `gap-2.5`, with the link's `-ml-1` folded in.
+ * Left inset so body lines up with {@link ResearchTickerHeader}'s logo: `icon-sm`
+ * (`size-8`) back control + `gap-2` / `gap-2.5`, with the link's `-ml-1` folded in.
  */
 const TICKER_BODY_ALIGN_CLASS =
-  "pl-[calc(2.25rem+0.5rem-0.25rem)] sm:pl-[calc(2.25rem+0.625rem-0.25rem)]";
+  "pl-[calc(2rem+0.5rem-0.25rem)] sm:pl-[calc(2rem+0.625rem-0.25rem)]";
 
 /** Cancels `SidebarShellLayout` horizontal padding so the chart spans the full main column. */
 const CHART_FULL_WIDTH_CLASS = "-mx-4 min-w-0 w-auto lg:-mx-6";
@@ -57,6 +59,99 @@ function fmtNum(n: number | null, decimals = 2): string {
   return n.toFixed(decimals);
 }
 
+function websiteHref(raw: string): string {
+  const t = raw.trim();
+  if (!t) {
+    return "";
+  }
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
+
+function websiteLabel(raw: string): string {
+  const t = raw.trim();
+  if (!t) {
+    return "";
+  }
+  try {
+    const host = new URL(websiteHref(t)).hostname.replace(/^www\./i, "");
+    return host || t;
+  } catch {
+    return t;
+  }
+}
+
+function overviewStr(
+  o: Record<string, unknown>,
+  camelKey: string,
+  pascalKey: string
+): string | null {
+  const a = o[camelKey];
+  if (typeof a === "string" && a.trim()) {
+    return a.trim();
+  }
+  const b = o[pascalKey];
+  if (typeof b === "string" && b.trim()) {
+    return b.trim();
+  }
+  return null;
+}
+
+interface KeyMetricRow {
+  href?: string;
+  label: string;
+  value: string;
+}
+
+function overviewNumericFields(o: Record<string, unknown>) {
+  const cap = parseNum(
+    o.marketCap ?? o.mktCap ?? o.MarketCapitalization ?? o.market_cap
+  );
+  const pe = parseNum(o.pe ?? o.PERatio ?? o.peRatioTTM ?? o.trailingPE);
+  const revenue = parseNum(
+    o.revenue ?? o.RevenueTTM ?? o.totalRevenue ?? o.Revenue
+  );
+  return { cap, pe, revenue };
+}
+
+function overviewDisplayStrings(o: Record<string, unknown>) {
+  return {
+    ceo: overviewStr(o, "ceo", "CEO") ?? "—",
+    country: overviewStr(o, "country", "Country") ?? "—",
+    industry: overviewStr(o, "industry", "Industry") ?? "—",
+    rawSite: overviewStr(o, "website", "Website") ?? "",
+    sector: overviewStr(o, "sector", "Sector") ?? "—",
+  };
+}
+
+function keyMetricsFromOverview(
+  overview: Record<string, unknown>
+): KeyMetricRow[] {
+  const { cap, pe, revenue } = overviewNumericFields(overview);
+  const { ceo, country, industry, rawSite, sector } =
+    overviewDisplayStrings(overview);
+
+  return [
+    {
+      label: "Market cap",
+      value: cap === null ? "—" : formatMarketCap(cap),
+    },
+    { label: "P/E", value: fmtNum(pe) },
+    {
+      label: "Revenue",
+      value: revenue === null ? "—" : formatMarketCap(revenue),
+    },
+    { label: "Sector", value: sector },
+    { label: "Industry", value: industry },
+    { label: "Country", value: country },
+    { label: "CEO", value: ceo },
+    {
+      label: "Website",
+      value: rawSite ? websiteLabel(rawSite) : "—",
+      ...(rawSite ? { href: websiteHref(rawSite) } : {}),
+    },
+  ];
+}
+
 function extractDescription(overview: Record<string, unknown> | null): string {
   if (!overview) {
     return "";
@@ -70,36 +165,13 @@ function extractDescription(overview: Record<string, unknown> | null): string {
   return "";
 }
 
-/** Mkt cap, P/E, Revenue, Sector — for inline header row. */
-function useFundamentalsSnapshot(overview: Record<string, unknown> | null) {
-  return useMemo(() => {
-    const cap = overview
-      ? parseNum(
-          overview.MarketCapitalization ?? overview.marketCap ?? overview.mktCap
-        )
-      : null;
-    const pe = overview
-      ? parseNum(overview.PERatio ?? overview.peRatioTTM ?? overview.pe)
-      : null;
-    const rev = overview
-      ? parseNum(overview.RevenueTTM ?? overview.revenue)
-      : null;
-    const rawSector = overview?.Sector ?? overview?.sector;
-    const sector =
-      typeof rawSector === "string" && rawSector.trim() ? rawSector : "—";
-
-    return [
-      {
-        label: "Mkt cap",
-        value: cap === null ? "—" : formatMarketCap(cap),
-      },
-      { label: "P/E", value: fmtNum(pe) },
-      {
-        label: "Revenue",
-        value: rev === null ? "—" : formatMarketCap(rev),
-      },
-      { label: "Sector", value: sector },
-    ] as const;
+/** Rows from FMP `/overview` profile (camelCase) plus legacy Alpha Vantage-style keys. */
+function useKeyMetricRows(overview: Record<string, unknown> | null) {
+  return useMemo((): KeyMetricRow[] => {
+    if (!overview) {
+      return [];
+    }
+    return keyMetricsFromOverview(overview);
   }, [overview]);
 }
 
@@ -139,47 +211,54 @@ function QuoteDisplay({
   );
 }
 
-function FundamentalsInline({
-  loading,
-  rows,
-}: {
-  loading: boolean;
-  rows: readonly { label: string; value: string }[];
-}) {
-  if (loading) {
-    return (
-      <div className="flex min-h-[3.25rem] items-center justify-end sm:min-w-[12rem]">
-        <Loader2 className="size-4 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
+function TickerKeyMetrics({ rows }: { rows: readonly KeyMetricRow[] }) {
   return (
-    <dl className="grid max-w-full grid-cols-2 gap-x-6 gap-y-3 text-right sm:flex sm:max-w-[min(100%,28rem)] sm:flex-wrap sm:justify-end sm:gap-x-8 sm:gap-y-2">
-      {rows.map(({ label, value }) => (
-        <div className="min-w-0 sm:text-right" key={label}>
-          <dt className="text-muted-foreground text-xs">{label}</dt>
-          <dd
-            className={cn(
-              "font-medium text-foreground text-sm tabular-nums",
-              label === "Sector" && "max-w-[10rem] truncate sm:max-w-[14rem]"
-            )}
-            title={label === "Sector" ? value : undefined}
-          >
-            {value}
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-function InlineLoader({ text }: { text: string }) {
-  return (
-    <div className="flex items-center gap-2 py-2">
-      <Loader2 className="size-5 animate-spin text-muted-foreground" />
-      <span className="text-muted-foreground text-sm">{text}</span>
-    </div>
+    <section aria-label="Key metrics" className="w-full min-w-0">
+      <h2 className="font-semibold text-foreground text-lg tracking-tight sm:text-xl">
+        Key metrics
+      </h2>
+      <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-3 lg:grid-cols-4">
+        {rows.map((row) => (
+          <div className="min-w-0" key={row.label}>
+            <dt className="text-muted-foreground text-sm font-medium leading-snug">
+              {row.label}
+            </dt>
+            <dd className="mt-1.5 min-w-0">
+              {row.href ? (
+                <a
+                  className="text-primary font-semibold text-base leading-snug underline-offset-4 hover:underline sm:text-lg"
+                  href={row.href}
+                  rel="noreferrer noopener"
+                  target="_blank"
+                >
+                  {row.value}
+                </a>
+              ) : (
+                <p
+                  className={cn(
+                    "font-semibold text-foreground text-base tabular-nums leading-snug sm:text-lg",
+                    row.label === "CEO" ||
+                      row.label === "Sector" ||
+                      row.label === "Industry"
+                      ? "break-words"
+                      : ""
+                  )}
+                  title={
+                    row.label === "CEO" ||
+                    row.label === "Industry" ||
+                    row.label === "Sector"
+                      ? row.value
+                      : undefined
+                  }
+                >
+                  {row.value}
+                </p>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
@@ -190,11 +269,11 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
   const { dominantHex, setResearchTicker } = useAmbientInset();
 
   const { data: quote, loading: quoteLoading } = useQuote(sym);
-  const { data: overview, loading: overviewLoading } = useOverview(sym);
+  const { data: overview } = useOverview(sym);
   const [period, setPeriod] = useState<ChartPeriod>("1M");
   const [chartCrosshair, setChartCrosshair] =
     useState<ChartCrosshairHover | null>(null);
-  const { data: chartPoints, loading: chartLoading } = useChart(sym, period);
+  const { data: chartPoints } = useChart(sym, period);
 
   const companyName = useMemo(() => {
     if (quote?.companyName) {
@@ -229,69 +308,48 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
       ? "text-red-600 dark:text-red-400"
       : "text-green-600 dark:text-green-400";
 
-  const fundamentalsRows = useFundamentalsSnapshot(overview);
+  const keyMetricRows = useKeyMetricRows(overview);
 
   // ── Price + fundamentals row ─────────────────────────────────────
 
-  let priceRow: React.ReactNode;
-  if (quoteLoading && !quote) {
-    priceRow = (
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <InlineLoader text="Loading quote…" />
-        <FundamentalsInline
-          loading={overviewLoading && !overview}
-          rows={fundamentalsRows}
+  const priceRow: React.ReactNode = quote ? (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+      <div className="flex min-w-0 flex-col gap-1">
+        <QuoteDisplay
+          changeClass={changeClass}
+          crosshair={chartCrosshair}
+          quote={quote}
         />
       </div>
-    );
-  } else if (quote) {
-    priceRow = (
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-        <div className="flex min-w-0 flex-col gap-1">
-          <QuoteDisplay
-            changeClass={changeClass}
-            crosshair={chartCrosshair}
-            quote={quote}
-          />
-        </div>
-        <FundamentalsInline
-          loading={overviewLoading && !overview}
-          rows={fundamentalsRows}
-        />
+      <ChartPeriodToolbar period={period} setPeriod={setPeriod} />
+    </div>
+  ) : (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+      <div className="flex min-w-0 flex-col gap-1">
+        {quoteLoading ? null : (
+          <p className="text-muted-foreground text-sm">Quote unavailable</p>
+        )}
       </div>
-    );
-  } else {
-    priceRow = (
-      <p className="text-muted-foreground text-sm">Quote unavailable</p>
-    );
-  }
+      <ChartPeriodToolbar period={period} setPeriod={setPeriod} />
+    </div>
+  );
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-6 pb-8 pt-1">
       <div className={TICKER_BODY_ALIGN_CLASS}>{priceRow}</div>
 
-      {chartLoading && chartPoints.length === 0 ? (
-        <div
-          className={cn(
-            "relative flex min-h-[400px] h-[400px] items-center justify-center",
-            CHART_FULL_WIDTH_CLASS
-          )}
-        >
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <LightweightPriceChart
-          chartClassName={CHART_FULL_WIDTH_CLASS}
-          data={chartPoints}
-          lineColor={chartColor}
-          onCrosshairHover={setChartCrosshair}
-          period={period}
-          periodToolbarClassName={TICKER_BODY_ALIGN_CLASS}
-          setPeriod={setPeriod}
-        />
-      )}
+      <LightweightPriceChart
+        chartClassName={CHART_FULL_WIDTH_CLASS}
+        data={chartPoints}
+        lineColor={chartColor}
+        onCrosshairHover={setChartCrosshair}
+        period={period}
+        setPeriod={setPeriod}
+        showPeriodToolbar={false}
+      />
 
-      <div className={cn("flex flex-col gap-6", TICKER_BODY_ALIGN_CLASS)}>
+      <div className={cn("flex flex-col gap-8", TICKER_BODY_ALIGN_CLASS)}>
+        <TickerKeyMetrics rows={keyMetricRows} />
         <TickerDetailAbout description={description} />
       </div>
     </div>

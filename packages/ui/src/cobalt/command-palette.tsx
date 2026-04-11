@@ -19,7 +19,7 @@ import type { ComponentProps } from "react";
 function cobaltCommandDialogPopupClassNames() {
   return cn(
     /* Below app chrome, clearly above vertical center (not `top-1/2` / mid-screen). */
-    "fixed top-[max(4.5rem,10svh)] left-1/2 z-50 flex w-full max-w-[calc(100%-2rem)] -translate-x-1/2 translate-y-0 flex-col overflow-hidden rounded-2xl! p-0 text-sm ring-1 ring-foreground/5 duration-100 outline-none",
+    "fixed top-[max(6rem,13svh)] left-1/2 z-50 flex w-full max-w-[calc(100%-2rem)] -translate-x-1/2 translate-y-0 flex-col overflow-hidden rounded-2xl! p-0 text-sm duration-100 outline-none",
     "max-h-[min(72vh,30rem)] sm:max-w-lg",
     "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
   );
@@ -27,7 +27,7 @@ function cobaltCommandDialogPopupClassNames() {
 
 /** Glass panel (product-only). */
 const cobaltCommandDialogContentClassName =
-  "border border-border/50   bg-popover/80 shadow-2xl supports-backdrop-filter:backdrop-blur-xs dark:bg-popover/99";
+  "bg-popover/80 shadow-2xl supports-backdrop-filter:backdrop-blur-xs dark:bg-popover/99";
 
 /** Lighter scrim than default `DialogOverlay` (`bg-black/80`). */
 const cobaltCommandDialogOverlayClassName =

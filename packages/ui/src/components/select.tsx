@@ -1,3 +1,5 @@
+"use client";
+
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {

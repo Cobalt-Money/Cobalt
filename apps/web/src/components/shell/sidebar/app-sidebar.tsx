@@ -21,6 +21,7 @@ import {
   SearchDollarIcon,
   CreditCardIcon,
   PlusSignIcon,
+  Calendar02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useZero } from "@rocicorp/zero/react";
@@ -32,7 +33,6 @@ import { useAppSession } from "@/lib/providers/app-session";
 
 import { NavMain } from "./nav/nav-main";
 import { NavUser } from "./nav/nav-user";
-import { NavUserSkeleton } from "./nav/skeleton/nav-user-skeleton";
 import { useChats } from "./use-chats";
 import type { ChatRow } from "./use-chats";
 
@@ -146,6 +146,11 @@ const sidebarNav = {
       icon: <HugeiconsIcon icon={ArrowReloadHorizontalIcon} strokeWidth={2} />,
       title: "Transactions",
       url: "/transactions",
+    },
+    {
+      icon: <HugeiconsIcon icon={Calendar02Icon} strokeWidth={2} />,
+      title: "Subscriptions",
+      url: "/subscriptions",
     },
     {
       icon: <HugeiconsIcon icon={NewsIcon} strokeWidth={2} />,
@@ -316,7 +321,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" variant="inset" {...props}>
       <SidebarHeader className="p-1.5">
-        {navUser ? <NavUser user={navUser} /> : <NavUserSkeleton />}
+        {navUser ? <NavUser user={navUser} /> : null}
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={sidebarNav.navMain} />

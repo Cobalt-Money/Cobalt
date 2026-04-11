@@ -23,6 +23,38 @@ const CHART_PERIODS = [
 
 export type ChartPeriod = (typeof CHART_PERIODS)[number];
 
+/** Fraction of the fitted logical span to trim from the left (recent-focused zoom). */
+const DEFAULT_ZOOM_TRIM_LEFT: Partial<Record<ChartPeriod, number>> = {
+  "1M": 0.22,
+  "3M": 0.18,
+};
+
+function applyRecentZoomForPeriod(
+  baseChart: IChartApi,
+  coloredChart: IChartApi,
+  period: ChartPeriod
+): void {
+  const trim = DEFAULT_ZOOM_TRIM_LEFT[period];
+  if (trim === undefined || trim <= 0) {
+    return;
+  }
+  const apply = (): void => {
+    const range = baseChart.timeScale().getVisibleLogicalRange();
+    if (!range) {
+      return;
+    }
+    const span = range.to - range.from;
+    if (!(span > 0)) {
+      return;
+    }
+    const from = range.from + span * trim;
+    const next = { from, to: range.to };
+    baseChart.timeScale().setVisibleLogicalRange(next);
+    coloredChart.timeScale().setVisibleLogicalRange(next);
+  };
+  requestAnimationFrame(apply);
+}
+
 export interface ChartDataPoint {
   time: number;
   value: number;
@@ -41,10 +73,48 @@ interface LightweightPriceChartProps {
   lineColor?: string;
   /** When the user moves the crosshair, updates the parent (e.g. header price). Cleared when crosshair leaves the series. */
   onCrosshairHover?: (value: ChartCrosshairHover | null) => void;
+  /**
+   * When false, the period buttons are not rendered under the chart (use {@link ChartPeriodToolbar} elsewhere).
+   * @default true
+   */
+  showPeriodToolbar?: boolean;
   /** Classes for the period toolbar so it lines up with body content (e.g. header logo alignment). */
   periodToolbarClassName?: string;
   period: ChartPeriod;
   setPeriod: (p: ChartPeriod) => void;
+}
+
+/** Period controls (1D, 1W, …) — can be placed in the header or under the chart. */
+export function ChartPeriodToolbar({
+  className,
+  period,
+  setPeriod,
+}: {
+  className?: string;
+  period: ChartPeriod;
+  setPeriod: (p: ChartPeriod) => void;
+}) {
+  return (
+    <div
+      aria-label="Chart time range"
+      className={cn("flex flex-wrap justify-end gap-1", className)}
+      role="toolbar"
+    >
+      {CHART_PERIODS.map((p) => (
+        <Button
+          aria-pressed={period === p}
+          className="h-9 px-2.5 text-sm"
+          key={p}
+          onClick={() => setPeriod(p)}
+          size="sm"
+          type="button"
+          variant={period === p ? "secondary" : "ghost"}
+        >
+          {p}
+        </Button>
+      ))}
+    </div>
+  );
 }
 
 function formatChartTimeLabel(tsSeconds: number, period: ChartPeriod): string {
@@ -110,11 +180,18 @@ function chartTheme(
   };
 }
 
+type ChartLayer = "base" | "overlay";
+
 /**
- * Shared chart options for layout / grid / scales.
- * Neither chart shows axes; only the base chart handles scroll/zoom.
+ * Shared chart options. Base chart shows the time (x) axis; overlay keeps the same
+ * time-scale height so panes align, but hides duplicate tick labels.
  */
-function sharedLayoutOptions(c: ThemeColors, height: number) {
+function sharedLayoutOptions(
+  c: ThemeColors,
+  height: number,
+  layer: ChartLayer
+) {
+  const isBase = layer === "base";
   return {
     autoSize: true,
     grid: {
@@ -125,7 +202,8 @@ function sharedLayoutOptions(c: ThemeColors, height: number) {
     layout: {
       attributionLogo: false,
       background: { color: c.backgroundColor, type: ColorType.Solid },
-      textColor: c.textColor,
+      /** Invisible scale text on overlay = no duplicate dates; pane still matches base. */
+      textColor: isBase ? c.textColor : "rgba(0,0,0,0)",
     },
     leftPriceScale: { visible: false },
     rightPriceScale: {
@@ -134,12 +212,15 @@ function sharedLayoutOptions(c: ThemeColors, height: number) {
       visible: false,
     },
     timeScale: {
+      borderColor: c.gridColor,
+      /** No horizontal rule under the dates; labels stay via ticksVisible. */
       borderVisible: false,
       fixLeftEdge: true,
       fixRightEdge: true,
       rightOffset: 2,
+      ticksVisible: isBase,
       timeVisible: true,
-      visible: false,
+      visible: true,
     },
   } as const;
 }
@@ -153,6 +234,7 @@ export function LightweightPriceChart({
   periodToolbarClassName,
   period,
   setPeriod,
+  showPeriodToolbar = true,
 }: LightweightPriceChartProps) {
   /** Container for the base chart (captures events, crosshair marker, muted line on hover). */
   const baseContainerRef = useRef<HTMLDivElement>(null);
@@ -189,19 +271,23 @@ export function LightweightPriceChart({
       coloredSeries: ISeriesApi<"Area", Time>
     ) => {
       const c = colors;
-      const sharedUpdate = {
+      const sharedGrid = {
         grid: {
           horzLines: { color: c.gridColor, visible: false },
           vertLines: { color: c.gridColor, visible: false },
         },
-        layout: {
-          background: { color: c.backgroundColor, type: ColorType.Solid },
-          textColor: c.textColor,
-        },
+      };
+      const baseLayout = {
+        background: { color: c.backgroundColor, type: ColorType.Solid },
+        textColor: c.textColor,
+      };
+      const overlayLayout = {
+        background: { color: c.backgroundColor, type: ColorType.Solid },
+        textColor: "rgba(0,0,0,0)",
       };
 
       baseChart.applyOptions({
-        ...sharedUpdate,
+        ...sharedGrid,
         crosshair: {
           horzLine: {
             color: c.textColor,
@@ -219,8 +305,24 @@ export function LightweightPriceChart({
             width: 1,
           },
         },
+        layout: baseLayout,
+        timeScale: {
+          borderColor: c.gridColor,
+          borderVisible: false,
+          ticksVisible: true,
+          visible: true,
+        },
       });
-      coloredChart.applyOptions(sharedUpdate);
+      coloredChart.applyOptions({
+        ...sharedGrid,
+        layout: overlayLayout,
+        timeScale: {
+          borderColor: c.gridColor,
+          borderVisible: false,
+          ticksVisible: false,
+          visible: true,
+        },
+      });
 
       // Base series: invisible line that anchors the crosshair; becomes muted when hovering.
       baseSeries.applyOptions({
@@ -257,11 +359,12 @@ export function LightweightPriceChart({
     }
 
     const c = colorsRef.current ?? chartTheme(undefined, lineColor);
-    const layout = sharedLayoutOptions(c, height);
+    const layoutBase = sharedLayoutOptions(c, height, "base");
+    const layoutOverlay = sharedLayoutOptions(c, height, "overlay");
 
     // ── Base chart ── handles all user interaction + crosshair
     const baseChart = createChart(baseContainer, {
-      ...layout,
+      ...layoutBase,
       crosshair: {
         horzLine: {
           color: c.textColor,
@@ -285,7 +388,7 @@ export function LightweightPriceChart({
 
     // ── Colored chart ── passive overlay; no events, no crosshair
     const coloredChart = createChart(coloredContainer, {
-      ...layout,
+      ...layoutOverlay,
       crosshair: {
         horzLine: { visible: false },
         vertLine: { visible: false },
@@ -430,6 +533,7 @@ export function LightweightPriceChart({
     // Colored chart syncs via subscribeVisibleLogicalRangeChange, but also call
     // fitContent directly so both start from the same initial range.
     cc.timeScale().fitContent();
+    applyRecentZoomForPeriod(bc, cc, period);
 
     // Reset any active hover state.
     isHoveringRef.current = false;
@@ -437,7 +541,7 @@ export function LightweightPriceChart({
       coloredContainerRef.current.style.clipPath = "";
     }
     bs.applyOptions({ lineColor: "transparent" });
-  }, [data]);
+  }, [data, period]);
 
   // ── Height changes ───────────────────────────────────────────────
 
@@ -470,25 +574,13 @@ export function LightweightPriceChart({
           className="pointer-events-none absolute inset-0"
         />
       </div>
-      <div
-        aria-label="Chart time range"
-        className={cn("flex flex-wrap gap-1", periodToolbarClassName)}
-        role="toolbar"
-      >
-        {CHART_PERIODS.map((p) => (
-          <Button
-            aria-pressed={period === p}
-            className="h-8 px-2 text-xs"
-            key={p}
-            onClick={() => setPeriod(p)}
-            size="sm"
-            type="button"
-            variant={period === p ? "secondary" : "ghost"}
-          >
-            {p}
-          </Button>
-        ))}
-      </div>
+      {showPeriodToolbar ? (
+        <ChartPeriodToolbar
+          className={periodToolbarClassName}
+          period={period}
+          setPeriod={setPeriod}
+        />
+      ) : null}
     </div>
   );
 }

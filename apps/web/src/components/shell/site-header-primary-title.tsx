@@ -59,50 +59,44 @@ function ResearchTickerHeader({ symbol }: { symbol: string }) {
   return (
     <nav
       aria-label="Research ticker"
-      className="flex min-h-0 min-w-0 flex-1 items-center gap-2 self-stretch py-px sm:gap-2.5"
+      className="flex min-h-0 min-w-0 flex-1 self-stretch"
     >
-      <Link
-        aria-label="Back to research"
-        className={cn(
-          buttonVariants({ size: "icon-lg", variant: "ghost" }),
-          "shrink-0 -ml-1"
-        )}
-        to="/research"
-      >
-        <HugeiconsIcon
-          className="size-7"
-          icon={ArrowLeft01Icon}
-          strokeWidth={2}
-        />
-      </Link>
-      <TickerLogo size={28} symbol={sym} />
-      <div className="flex min-w-0 flex-1 flex-nowrap items-baseline gap-2 sm:gap-2.5">
-        <span className="shrink-0 font-semibold text-lg leading-tight tracking-tight sm:text-xl">
-          {sym}
-        </span>
-        {tickerCompanyName ? (
-          <span className="min-w-0 truncate text-muted-foreground text-sm leading-tight sm:text-base">
-            {tickerCompanyName}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-nowrap items-center gap-2 sm:gap-2.5">
+        <Link
+          aria-label="Back to research"
+          className={cn(
+            buttonVariants({ size: "icon-sm", variant: "ghost" }),
+            "shrink-0 -ml-1"
+          )}
+          to="/research"
+        >
+          <HugeiconsIcon
+            className="size-6"
+            icon={ArrowLeft01Icon}
+            strokeWidth={2}
+          />
+        </Link>
+        <TickerLogo size={28} symbol={sym} />
+        <div className="flex min-w-0 items-baseline gap-2 sm:gap-2.5">
+          <span className="shrink-0 font-semibold text-lg leading-none tracking-tight sm:text-xl">
+            {sym}
           </span>
-        ) : null}
+          {tickerCompanyName ? (
+            <span className="min-w-0 truncate text-muted-foreground text-sm leading-none sm:text-base">
+              {tickerCompanyName}
+            </span>
+          ) : null}
+        </div>
       </div>
     </nav>
   );
 }
 
 function AiChatThreadTitle({ chatId }: { chatId: string }) {
-  const [rows, detail] = useQuery(queries.chats.chatById({ chatId }));
+  const [rows] = useQuery(queries.chats.chatById({ chatId }));
   const [row] = rows;
-  const loading = detail.type === "unknown" && rows.length === 0;
   const label = typeof row?.title === "string" ? row.title.trim() : "";
-  let headline: ReactNode;
-  if (loading) {
-    headline = <span className="text-muted-foreground">Loading…</span>;
-  } else if (label && label.length > 0) {
-    headline = label;
-  } else {
-    headline = "Chat";
-  }
+  const headline: ReactNode = label && label.length > 0 ? label : "Chat";
 
   return (
     <div className="flex min-w-0 flex-1 items-center self-stretch">

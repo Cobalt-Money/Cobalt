@@ -19,7 +19,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -347,10 +346,8 @@ export function StockScreener() {
   const navigate = useNavigate();
   const [data, setData] = useState<ScreenerResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    setLoading(true);
     setErrorMessage(null);
     try {
       const url = `${env.VITE_SERVER_URL}/api/research/screener`;
@@ -368,8 +365,6 @@ export function StockScreener() {
       setErrorMessage(
         error instanceof Error ? error.message : "Request failed"
       );
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -458,13 +453,6 @@ export function StockScreener() {
         </p>
       ) : null}
 
-      {loading && !data ? (
-        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-          <Loader2 aria-hidden className="size-4 animate-spin" />
-          Loading stocks…
-        </div>
-      ) : null}
-
       {rows.length > 0 ? (
         <Table className="[&_td]:px-0 [&_th]:px-0">
           <TableHeader className="[&_tr]:border-0">
@@ -523,7 +511,7 @@ export function StockScreener() {
         </Table>
       ) : null}
 
-      {!loading && data && rows.length === 0 && !errorMessage ? (
+      {data && rows.length === 0 && !errorMessage ? (
         <p className="text-muted-foreground text-sm">No rows returned.</p>
       ) : null}
     </div>

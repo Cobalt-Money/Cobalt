@@ -6,10 +6,12 @@ export function TickerDetailAbout({ description }: { description: string }) {
 
   return (
     <section className="w-full min-w-0">
-      <h2 className="font-normal text-muted-foreground text-xs">Description</h2>
+      <h2 className="font-semibold text-foreground text-lg tracking-tight sm:text-xl">
+        Description
+      </h2>
       <p
         className={cn(
-          "mt-1 text-sm leading-relaxed",
+          "mt-3 text-base leading-relaxed sm:text-[1.0625rem]",
           hasBody ? "text-foreground" : "text-muted-foreground"
         )}
       >

@@ -17,7 +17,6 @@ export interface FmpProfile {
   currency: string | null;
   description: string | null;
   dividendYield: number | null;
-  eps: number | null;
   exchange: string | null;
   fullTimeEmployees: number | null;
   industry: string | null;
@@ -25,6 +24,8 @@ export interface FmpProfile {
   marketCap: number | null;
   pe: number | null;
   price: number | null;
+  /** Latest annual revenue (or TTM) when available from enrichment. */
+  revenue: number | null;
   sector: string | null;
   symbol: string;
   website: string | null;
@@ -70,6 +71,17 @@ function firstObject(raw: unknown): Record<string, unknown> | null {
   return null;
 }
 
+/** First parseable finite number among candidates (profile + enrichment rows). */
+function firstFiniteNum(...candidates: unknown[]): number | null {
+  for (const c of candidates) {
+    const n = num(c);
+    if (n !== null) {
+      return n;
+    }
+  }
+  return null;
+}
+
 // ── Quote ─────────────────────────────────────────────────────────
 
 export async function fmpGetQuote(symbol: string): Promise<FmpQuote> {
@@ -91,14 +103,44 @@ export async function fmpGetQuote(symbol: string): Promise<FmpQuote> {
 
 // ── Profile / Overview ────────────────────────────────────────────
 
-export async function fmpGetProfile(symbol: string): Promise<FmpProfile> {
-  const raw = await fmpStableGet("profile", { symbol });
-  const item = firstObject(Array.isArray(raw) ? raw[0] : raw);
+function profilePe(
+  item: Record<string, unknown>,
+  kmTtm: Record<string, unknown> | null,
+  ratiosRow: Record<string, unknown> | null
+): number | null {
+  return firstFiniteNum(
+    item.pe,
+    item.priceToEarningsRatio,
+    item.peRatio,
+    item.trailingPE,
+    item.trailingPe,
+    kmTtm?.peRatioTTM,
+    kmTtm?.peRatio,
+    kmTtm?.priceEarningsRatioTTM,
+    ratiosRow?.priceToEarningsRatio,
+    ratiosRow?.peRatio
+  );
+}
 
-  if (!item) {
-    throw new Error(`No profile data available for ${symbol}`);
-  }
+function profileRevenue(
+  item: Record<string, unknown>,
+  kmTtm: Record<string, unknown> | null,
+  incomeRow: Record<string, unknown> | null
+): number | null {
+  return firstFiniteNum(
+    item.revenue,
+    kmTtm?.revenueTTM,
+    kmTtm?.revenue,
+    incomeRow?.revenue
+  );
+}
 
+function mapProfileItemToFmpProfile(
+  symbol: string,
+  item: Record<string, unknown>,
+  pe: number | null,
+  revenue: number | null
+): FmpProfile {
   return {
     beta: num(item.beta),
     ceo: str(item.ceo),
@@ -107,20 +149,71 @@ export async function fmpGetProfile(symbol: string): Promise<FmpProfile> {
     currency: str(item.currency),
     description: str(item.description),
     dividendYield: num(item.lastDiv),
-    eps: num(item.eps),
     exchange: str(item.exchangeShortName ?? item.exchange),
     fullTimeEmployees: num(item.fullTimeEmployees)
       ? Math.round(num(item.fullTimeEmployees) as number)
       : null,
     industry: str(item.industry),
     ipoDate: str(item.ipoDate),
-    marketCap: num(item.mktCap),
-    pe: num(item.pe),
+    /** Stable API uses `marketCap`; legacy/v3 samples used `mktCap`. */
+    marketCap: num(
+      item.mktCap ??
+        item.marketCap ??
+        item.market_cap ??
+        item.marketCapitalization
+    ),
+    pe,
     price: num(item.price),
+    revenue,
     sector: str(item.sector),
     symbol: str(item.symbol) ?? symbol,
     website: str(item.website),
   };
+}
+
+/**
+ * Stable `/profile` often omits P/E; merge optional `key-metrics-ttm`,
+ * latest `ratios` row (screener P/E), and latest annual `income-statement` for revenue.
+ */
+export async function fmpGetProfile(symbol: string): Promise<FmpProfile> {
+  const [profileRes, keyMetricsTtmRes, ratiosRes, incomeRes] =
+    await Promise.allSettled([
+      fmpStableGet("profile", { symbol }),
+      fmpStableGet("key-metrics-ttm", { symbol }),
+      fmpStableGet("ratios", { limit: 1, symbol }),
+      fmpStableGet("income-statement", {
+        limit: 1,
+        period: "annual",
+        symbol,
+      }),
+    ]);
+
+  if (profileRes.status === "rejected") {
+    throw profileRes.reason instanceof Error
+      ? profileRes.reason
+      : new Error(String(profileRes.reason));
+  }
+
+  const raw = profileRes.value;
+  const item = firstObject(Array.isArray(raw) ? raw[0] : raw);
+
+  if (!item) {
+    throw new Error(`No profile data available for ${symbol}`);
+  }
+
+  const kmTtm =
+    keyMetricsTtmRes.status === "fulfilled"
+      ? firstObject(keyMetricsTtmRes.value)
+      : null;
+  const ratiosRow =
+    ratiosRes.status === "fulfilled" ? firstObject(ratiosRes.value) : null;
+  const incomeRow =
+    incomeRes.status === "fulfilled" ? firstObject(incomeRes.value) : null;
+
+  const pe = profilePe(item, kmTtm, ratiosRow);
+  const revenue = profileRevenue(item, kmTtm, incomeRow);
+
+  return mapProfileItemToFmpProfile(symbol, item, pe, revenue);
 }
 
 // ── Historical Chart ──────────────────────────────────────────────

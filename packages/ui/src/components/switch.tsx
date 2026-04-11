@@ -1,3 +1,5 @@
+"use client";
+
 import { Switch as SwitchPrimitive } from "@base-ui/react/switch";
 import { cn } from "@cobalt-web/ui/lib/utils";
 

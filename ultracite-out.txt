@@ -1,0 +1,7 @@
+Checking formatting...
+
+apps/web/src/components/subscriptions/segmented-gauge.tsx (0ms)
+apps/web/src/components/subscriptions/subscriptions-calendar.tsx (0ms)
+
+Format issues found in above 2 files. Run without `--check` to fix.
+Finished in 1711ms on 989 files using 12 threads.

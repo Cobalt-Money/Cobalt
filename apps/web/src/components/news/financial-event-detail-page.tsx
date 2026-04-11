@@ -1,8 +1,9 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import { buttonVariants } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { ArrowLeft01Icon, LinkSquare01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { useFinancialEventDetail } from "@/hooks/use-financial-event-detail";
 
@@ -152,7 +153,13 @@ function BackToNewsLink() {
       className={cn(buttonVariants({ variant: "ghost" }), "w-fit")}
       to="/news"
     >
-      <ArrowLeft aria-hidden className="mr-2 size-4" />
+      <HugeiconsIcon
+        aria-hidden
+        icon={ArrowLeft01Icon}
+        size={16}
+        strokeWidth={2}
+        className="mr-2"
+      />
       Back to News
     </Link>
   );
@@ -292,9 +299,12 @@ function SourceArticleCard({ article }: { article: EventArticleRow }) {
         <span className="min-w-0 flex-1">
           <span className="text-foreground flex items-start justify-between gap-2 font-medium leading-snug">
             <span className="min-w-0">{article.title}</span>
-            <ExternalLink
+            <HugeiconsIcon
               aria-hidden
-              className="text-muted-foreground mt-0.5 size-4 shrink-0"
+              icon={LinkSquare01Icon}
+              size={16}
+              strokeWidth={2}
+              className="text-muted-foreground mt-0.5 shrink-0"
             />
           </span>
           <span className="text-muted-foreground mt-1 block text-sm">
