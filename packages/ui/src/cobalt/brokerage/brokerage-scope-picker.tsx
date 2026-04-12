@@ -4,8 +4,6 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@cobalt-web/ui/components/dropdown-menu";
@@ -14,120 +12,131 @@ import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useMemo } from "react";
 
-import type { BrokerageRowWithRelations } from "../accounts/lib/map-zero-to-account-cards";
+import { InstitutionLogo } from "../logos/institution-logo";
 
 export type BrokerageScope =
   | { type: "all" }
   | { type: "include"; accountIds: readonly string[] };
 
-export interface BrokerageAccountGroup {
-  groupKey: string;
-  groupLabel: string;
-  accounts: readonly BrokerageRowWithRelations[];
+/** Unified account shape for the scope picker — covers both SnapTrade and Plaid sources. */
+export interface ScopeAccount {
+  id: string;
+  displayName: string;
+  institutionName: string;
+  institutionLogo?: string | null;
+  institutionLogosExtra?: readonly string[] | null;
+  institutionUrl?: string | null;
 }
 
-function maskLast4(accountNumber: string | null | undefined): string | null {
-  if (!accountNumber?.trim()) {
-    return null;
-  }
-  const d = accountNumber.replaceAll(/\D/g, "");
-  if (d.length < 4) {
-    return null;
-  }
-  return `···${d.slice(-4)}`;
+interface InstitutionGroup {
+  accounts: ScopeAccount[];
+  logo?: string | null;
+  logosExtra?: readonly string[] | null;
+  name: string;
+  url?: string | null;
 }
 
-/** Group SnapTrade accounts by connection (authorization) for display. */
-export function groupBrokerageAccounts(
-  rows: readonly BrokerageRowWithRelations[]
-): BrokerageAccountGroup[] {
-  const bucket = new Map<
-    string,
-    { groupLabel: string; accounts: BrokerageRowWithRelations[] }
-  >();
-
-  for (const row of rows) {
-    const auth = row.brokerageAuthorization;
-    const groupKey =
-      auth?.authorizationId?.trim() ||
-      `inst:${(row.institutionName ?? "unknown").trim()}:${auth?.brokerageSlug ?? auth?.brokerage ?? row.id}`;
-    const groupLabel = (
-      auth?.name?.trim() ||
-      auth?.brokerage?.trim() ||
-      row.institutionName?.trim() ||
-      "Brokerage"
-    ).trim();
-
-    const cur = bucket.get(groupKey);
+function groupByInstitution(
+  accounts: readonly ScopeAccount[]
+): InstitutionGroup[] {
+  const map = new Map<string, InstitutionGroup>();
+  for (const acc of accounts) {
+    const key = acc.institutionName;
+    const cur = map.get(key);
     if (cur) {
-      cur.accounts.push(row);
+      cur.accounts.push(acc);
     } else {
-      bucket.set(groupKey, { accounts: [row], groupLabel });
+      map.set(key, {
+        accounts: [acc],
+        logo: acc.institutionLogo,
+        logosExtra: acc.institutionLogosExtra,
+        name: acc.institutionName,
+        url: acc.institutionUrl,
+      });
     }
   }
-
-  return [...bucket.entries()]
-    .map(([groupKey, { groupLabel, accounts }]) => ({
-      accounts: [...accounts].toSorted((a, b) =>
-        (a.name ?? "").localeCompare(b.name ?? "", undefined, {
-          sensitivity: "base",
-        })
-      ),
-      groupKey,
-      groupLabel,
-    }))
-    .toSorted((a, b) =>
-      a.groupLabel.localeCompare(b.groupLabel, undefined, {
-        sensitivity: "base",
-      })
-    );
-}
-
-function accountRowLabel(row: BrokerageRowWithRelations): string {
-  const mask = maskLast4(row.accountNumber);
-  const base = row.name?.trim() || row.accountType?.trim() || "Account";
-  return mask ? `${base} ${mask}` : base;
+  return [...map.values()].toSorted((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+  );
 }
 
 function scopeSummaryLabel(
   scope: BrokerageScope,
-  accounts: readonly BrokerageRowWithRelations[]
+  accounts: readonly ScopeAccount[]
 ): string {
   if (scope.type === "all") {
     return "All accounts";
   }
-  const ids = scope.accountIds;
-  if (ids.length === 1) {
-    const row = accounts.find((a) => a.id === ids[0]);
-    return row ? accountRowLabel(row) : "1 account";
+  const { accountIds } = scope;
+  if (accountIds.length === 1) {
+    const match = accounts.find((a) => a.id === accountIds[0]);
+    return match ? match.displayName : "1 account";
   }
-  return `${ids.length} accounts`;
+  return `${accountIds.length} accounts`;
 }
 
-function isIncluded(scope: BrokerageScope, accountId: string): boolean {
+function isIncluded(scope: BrokerageScope, id: string): boolean {
   if (scope.type === "all") {
     return true;
   }
-  return scope.accountIds.includes(accountId);
+  return scope.accountIds.includes(id);
+}
+
+function isInstitutionActive(
+  scope: BrokerageScope,
+  accounts: ScopeAccount[]
+): boolean {
+  if (scope.type === "all") {
+    return true;
+  }
+  return accounts.every((a) => scope.accountIds.includes(a.id));
+}
+
+function toggleInstitution(
+  scope: BrokerageScope,
+  institutionAccounts: ScopeAccount[],
+  allAccounts: readonly ScopeAccount[]
+): BrokerageScope {
+  const allIds = allAccounts.map((a) => a.id);
+  const instIds = new Set(institutionAccounts.map((a) => a.id));
+  const currentIds: Set<string> =
+    scope.type === "all" ? new Set(allIds) : new Set(scope.accountIds);
+
+  const allActive = institutionAccounts.every((a) => currentIds.has(a.id));
+
+  let nextIds: Set<string>;
+  if (allActive) {
+    nextIds = new Set([...currentIds].filter((id) => !instIds.has(id)));
+    if (nextIds.size === 0) {
+      return { type: "all" };
+    }
+  } else {
+    nextIds = new Set([...currentIds, ...instIds]);
+  }
+
+  if (nextIds.size === allIds.length) {
+    return { type: "all" };
+  }
+  return { accountIds: [...nextIds], type: "include" };
 }
 
 function toggleAccount(
-  accounts: readonly BrokerageRowWithRelations[],
+  accounts: readonly ScopeAccount[],
   scope: BrokerageScope,
-  accountId: string
+  id: string
 ): BrokerageScope {
   const allIds = accounts.map((a) => a.id);
   if (scope.type === "all") {
-    const next = allIds.filter((id) => id !== accountId);
+    const next = allIds.filter((aid) => aid !== id);
     return next.length === 0
       ? { type: "all" }
       : { accountIds: next, type: "include" };
   }
   const set = new Set(scope.accountIds);
-  if (set.has(accountId)) {
-    set.delete(accountId);
+  if (set.has(id)) {
+    set.delete(id);
   } else {
-    set.add(accountId);
+    set.add(id);
   }
   if (set.size === allIds.length) {
     return { type: "all" };
@@ -144,15 +153,15 @@ function toggleAccount(
 export function BrokerageScopePicker({
   accounts,
   className,
-  scope,
   onScopeChange,
+  scope,
 }: {
-  accounts: readonly BrokerageRowWithRelations[];
+  accounts: readonly ScopeAccount[];
   className?: string;
-  scope: BrokerageScope;
   onScopeChange: (next: BrokerageScope) => void;
+  scope: BrokerageScope;
 }) {
-  const groups = useMemo(() => groupBrokerageAccounts(accounts), [accounts]);
+  const groups = useMemo(() => groupByInstitution(accounts), [accounts]);
 
   if (accounts.length === 0) {
     return (
@@ -165,12 +174,13 @@ export function BrokerageScopePicker({
         <p className="text-[11px] font-medium tracking-[0.12em] uppercase">
           Accounts
         </p>
-        <p className="mt-2 leading-snug">No brokerage accounts linked.</p>
+        <p className="mt-2 leading-snug">No accounts linked.</p>
       </div>
     );
   }
 
   const summary = scopeSummaryLabel(scope, accounts);
+  const isAll = scope.type === "all";
 
   return (
     <DropdownMenu>
@@ -198,38 +208,77 @@ export function BrokerageScopePicker({
       <DropdownMenuContent
         align="end"
         className={cn(
-          "max-h-[min(280px,50vh)] w-[min(17rem,calc(100vw-1.5rem))] min-w-[12.5rem] overflow-y-auto rounded-xl border border-border/50 bg-popover/98 p-1 shadow-md ring-0 backdrop-blur-sm",
+          "max-h-[min(340px,55vh)] w-[min(17rem,calc(100vw-1.5rem))] min-w-[12.5rem] overflow-y-auto rounded-2xl border border-border/50 bg-popover/98 p-1 shadow-md ring-0 backdrop-blur-sm",
           "data-open:zoom-in-100 data-closed:zoom-out-100"
         )}
         side="bottom"
         sideOffset={8}
       >
-        <DropdownMenuItem
-          className="rounded-lg px-3 py-2.5 text-sm font-medium"
-          onClick={() => onScopeChange({ type: "all" })}
-        >
-          All accounts
-        </DropdownMenuItem>
-        <DropdownMenuSeparator className="bg-border/40" />
+        {/* Institution filter chips */}
+        <div className="flex flex-wrap gap-1 px-2 pt-2 pb-1">
+          <button
+            className={cn(
+              "inline-flex h-6 cursor-pointer items-center rounded-full bg-input/30 px-2.5 text-xs transition-colors hover:bg-input/50",
+              isAll ? "text-foreground font-medium" : "text-muted-foreground"
+            )}
+            onClick={() => onScopeChange({ type: "all" })}
+            type="button"
+          >
+            All
+          </button>
+          {groups.map((g) => {
+            const active = isInstitutionActive(scope, g.accounts);
+            return (
+              <button
+                className={cn(
+                  "inline-flex h-6 cursor-pointer items-center gap-1 rounded-full bg-input/30 px-2.5 text-xs transition-colors hover:bg-input/50",
+                  active
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground"
+                )}
+                key={g.name}
+                onClick={() =>
+                  onScopeChange(toggleInstitution(scope, g.accounts, accounts))
+                }
+                type="button"
+              >
+                <InstitutionLogo
+                  className="size-3.5 shrink-0 rounded-full"
+                  institutionLogo={g.logo}
+                  institutionLogosExtra={g.logosExtra}
+                  institutionName={g.name}
+                  institutionUrl={g.url ?? null}
+                />
+                {g.name}
+              </button>
+            );
+          })}
+        </div>
+        {/* Individual account checkboxes */}
         {groups.map((g, i) => (
-          <DropdownMenuGroup key={g.groupKey}>
+          <DropdownMenuGroup key={g.name}>
             {i > 0 ? <DropdownMenuSeparator className="bg-border/40" /> : null}
-            <DropdownMenuLabel className="px-2 py-1 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-              {g.groupLabel}
-            </DropdownMenuLabel>
-            {g.accounts.map((row) => {
-              const { id } = row;
-              const included = isIncluded(scope, id);
+            {g.accounts.map((acc) => {
+              const included = isIncluded(scope, acc.id);
               return (
                 <DropdownMenuCheckboxItem
                   checked={included}
                   className="rounded-lg py-1.5 pr-7 pl-2 text-xs"
-                  key={id}
-                  onCheckedChange={() => {
-                    onScopeChange(toggleAccount(accounts, scope, id));
-                  }}
+                  key={acc.id}
+                  onCheckedChange={() =>
+                    onScopeChange(toggleAccount(accounts, scope, acc.id))
+                  }
                 >
-                  <span className="truncate">{accountRowLabel(row)}</span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <InstitutionLogo
+                      className="size-5 shrink-0 rounded-full"
+                      institutionLogo={acc.institutionLogo}
+                      institutionLogosExtra={acc.institutionLogosExtra}
+                      institutionName={acc.institutionName}
+                      institutionUrl={acc.institutionUrl ?? null}
+                    />
+                    <span className="truncate">{acc.displayName}</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
               );
             })}
