@@ -2,27 +2,17 @@ import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { format } from "date-fns";
+import { format, startOfYear, subDays, subMonths, subYears } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 import type { BrokerageRowWithRelations } from "../accounts/lib/map-zero-to-account-cards";
 import { CardContent, CobaltCard } from "../card";
+import { brokerageInstitutionBranding } from "../logos/brokerage-institution-branding";
+import { BrokerageEmpty } from "./brokerage-empty";
 import { BrokerageScopePicker } from "./brokerage-scope-picker";
-import type { BrokerageScope } from "./brokerage-scope-picker";
+import type { BrokerageScope, ScopeAccount } from "./brokerage-scope-picker";
 import { TickerLogo } from "./ticker-logo";
-
-interface BrokerageBalanceRow {
-  cash?: number | null;
-  currencyCode?: string | null;
-}
 
 interface PositionRow {
   id: string;
@@ -38,6 +28,13 @@ interface PositionRow {
   brokerageAccount?: { id: string; name?: string | null } | null;
 }
 
+interface PortfolioSnapshotRow {
+  id: string;
+  accountId: string;
+  snapshotDate: number;
+  totalValue?: number | null;
+}
+
 interface ActivityRow {
   id: string;
   type?: string | null;
@@ -50,6 +47,46 @@ interface ActivityRow {
   brokerageAccount?: { id: string; name?: string | null } | null;
 }
 
+interface PlaidInvestmentAccountRow {
+  id: string;
+  plaidAccountId: string;
+  name: string;
+  mask?: string | null;
+  connection?: {
+    institutionLogo?: string | null;
+    institution?: {
+      logo?: string | null;
+      name?: string | null;
+      url?: string | null;
+    } | null;
+  } | null;
+}
+
+interface PlaidPositionRow {
+  id: string;
+  plaidAccountId: string;
+  quantity: number;
+  institutionPrice: number;
+  institutionValue: number;
+  costBasis?: number | null;
+  isoCurrencyCode?: string | null;
+  account?: { name?: string | null } | null;
+  security?: { tickerSymbol?: string | null; name?: string | null } | null;
+}
+
+interface PlaidActivityRow {
+  id: string;
+  plaidAccountId: string;
+  type: string;
+  subtype: string;
+  amount: number;
+  price: number;
+  date: string;
+  isoCurrencyCode?: string | null;
+  account?: { name?: string | null } | null;
+  security?: { tickerSymbol?: string | null; name?: string | null } | null;
+}
+
 const money = (amount: number, currency = "USD") =>
   new Intl.NumberFormat("en-US", {
     currency,
@@ -57,23 +94,6 @@ const money = (amount: number, currency = "USD") =>
     minimumFractionDigits: 0,
     style: "currency",
   }).format(amount);
-
-function sumUsdCash(accounts: readonly BrokerageRowWithRelations[]) {
-  let total = 0;
-  for (const acc of accounts) {
-    const bals = acc.balances as BrokerageBalanceRow[] | undefined;
-    for (const b of bals ?? []) {
-      if (b.cash === undefined || b.cash === null) {
-        continue;
-      }
-      const code = (b.currencyCode ?? "USD").toUpperCase();
-      if (code === "USD") {
-        total += b.cash;
-      }
-    }
-  }
-  return total;
-}
 
 function positionNotional(p: PositionRow): number | null {
   if (
@@ -167,17 +187,6 @@ function BrokeragePositionTableRow({ p }: { p: PositionRow }) {
   );
 }
 
-function investedTotal(positions: readonly PositionRow[]) {
-  let s = 0;
-  for (const p of positions) {
-    const n = positionNotional(p);
-    if (n !== null) {
-      s += n;
-    }
-  }
-  return s;
-}
-
 function formatEpochDate(ms: number | null | undefined) {
   if (ms === undefined || ms === null || Number.isNaN(ms)) {
     return "—";
@@ -189,7 +198,6 @@ const ACTIVITY_PAGE_SIZE = 7;
 
 /** Chart time-range tabs (visual only until range is wired to series data). */
 const BALANCE_CHART_RANGE_OPTIONS = [
-  "1D",
   "1W",
   "1M",
   "3M",
@@ -250,21 +258,61 @@ function activitySymbolLabel(a: ActivityRow): string {
   return "—";
 }
 
+function rangeStartEpoch(range: BalanceChartRange): number {
+  const now = new Date();
+  switch (range) {
+    case "1W": {
+      return subDays(now, 7).getTime();
+    }
+    case "1M": {
+      return subMonths(now, 1).getTime();
+    }
+    case "3M": {
+      return subMonths(now, 3).getTime();
+    }
+    case "YTD": {
+      return startOfYear(now).getTime();
+    }
+    case "1Y": {
+      return subYears(now, 1).getTime();
+    }
+    case "5Y": {
+      return subYears(now, 5).getTime();
+    }
+    case "All": {
+      return 0;
+    }
+    default: {
+      return 0;
+    }
+  }
+}
+
 export function BrokerageOverview({
   accounts,
   positions,
   recentActivities,
+  portfolioSnapshots,
+  plaidInvestmentAccounts,
+  plaidPositions,
+  plaidActivities,
 }: {
   accounts: readonly BrokerageRowWithRelations[];
+  plaidActivities: readonly PlaidActivityRow[];
+  plaidInvestmentAccounts: readonly PlaidInvestmentAccountRow[];
+  plaidPositions: readonly PlaidPositionRow[];
+  portfolioSnapshots: readonly PortfolioSnapshotRow[];
   positions: readonly PositionRow[];
   recentActivities: readonly ActivityRow[];
 }) {
   const [activityPageIndex, setActivityPageIndex] = useState(0);
   const [balanceChartRange, setBalanceChartRange] =
-    useState<BalanceChartRange>("1D");
+    useState<BalanceChartRange>("1M");
   const [brokerageScope, setBrokerageScope] = useState<BrokerageScope>({
     type: "all",
   });
+  const [hoveredValue, setHoveredValue] = useState<number | null>(null);
+  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
 
   const scopedAccountIds = useMemo(() => {
     if (brokerageScope.type === "all") {
@@ -273,36 +321,131 @@ export function BrokerageOverview({
     return new Set(brokerageScope.accountIds);
   }, [brokerageScope]);
 
-  const scopedAccounts = useMemo(() => {
-    if (scopedAccountIds === null) {
-      return accounts;
-    }
-    return accounts.filter((a) => scopedAccountIds.has(a.id));
-  }, [accounts, scopedAccountIds]);
+  // Unified account list for the scope picker
+  const scopeAccounts = useMemo((): ScopeAccount[] => {
+    const snaptrade = accounts.map((a): ScopeAccount => {
+      const digits = (a.accountNumber ?? "").replaceAll(/\D/g, "");
+      const mask = digits.length >= 4 ? `···${digits.slice(-4)}` : null;
+      const base = a.name?.trim() || a.accountType?.trim() || "Account";
+      const branding = brokerageInstitutionBranding(a);
+      return {
+        displayName: mask ? `${base} ${mask}` : base,
+        id: a.id,
+        institutionLogo: branding.institutionLogo,
+        institutionLogosExtra:
+          branding.institutionLogosExtra.length > 0
+            ? branding.institutionLogosExtra
+            : null,
+        institutionName:
+          a.institutionName?.trim() ||
+          (
+            a.brokerageAuthorization as { name?: string } | undefined
+          )?.name?.trim() ||
+          "Brokerage",
+        institutionUrl: branding.institutionUrl,
+      };
+    });
+    const plaid = plaidInvestmentAccounts.map((a): ScopeAccount => {
+      const mask = a.mask ? `···${a.mask}` : null;
+      const base = a.name?.trim() || "Investment";
+      const inst = a.connection?.institution;
+      return {
+        displayName: mask ? `${base} ${mask}` : base,
+        id: `plaid-inv-${a.plaidAccountId}`,
+        institutionLogo:
+          inst?.logo?.trim() ?? a.connection?.institutionLogo?.trim() ?? null,
+        institutionName: inst?.name?.trim() || "Investment",
+        institutionUrl: inst?.url?.trim() ?? null,
+      };
+    });
+    return [...snaptrade, ...plaid];
+  }, [accounts, plaidInvestmentAccounts]);
+
+  // Normalize Plaid positions into the shared PositionRow shape
+  const normalizedPlaidPositions = useMemo(
+    () =>
+      plaidPositions.map(
+        (p): PositionRow => ({
+          averagePurchasePrice:
+            p.costBasis !== undefined && p.costBasis !== null && p.quantity > 0
+              ? p.costBasis / p.quantity
+              : null,
+          brokerageAccount: {
+            id: `plaid-inv-${p.plaidAccountId}`,
+            name: p.account?.name ?? null,
+          },
+          currencyCode: p.isoCurrencyCode ?? null,
+          id: `plaid-pos-${p.id}`,
+          openPnl:
+            p.costBasis !== undefined && p.costBasis !== null
+              ? p.institutionValue - p.costBasis
+              : null,
+          price: p.institutionPrice,
+          symbol: p.security?.tickerSymbol ?? null,
+          symbolDescription: p.security?.name ?? null,
+          units: p.quantity,
+        })
+      ),
+    [plaidPositions]
+  );
+
+  // Normalize Plaid activities into the shared ActivityRow shape
+  const normalizedPlaidActivities = useMemo(
+    () =>
+      plaidActivities.map(
+        (a): ActivityRow => ({
+          amount: a.amount,
+          brokerageAccount: {
+            id: `plaid-inv-${a.plaidAccountId}`,
+            name: a.account?.name ?? null,
+          },
+          id: `plaid-act-${a.id}`,
+          price: a.price,
+          symbolDescription: a.security?.name ?? null,
+          symbolTicker: a.security?.tickerSymbol ?? null,
+          tradeDate: a.date ? new Date(a.date).getTime() : null,
+          type: a.subtype || a.type,
+        })
+      ),
+    [plaidActivities]
+  );
+
+  const allPositions = useMemo(
+    () => [...positions, ...normalizedPlaidPositions],
+    [positions, normalizedPlaidPositions]
+  );
+
+  const allActivities = useMemo(
+    () =>
+      [...recentActivities, ...normalizedPlaidActivities].toSorted(
+        (a, b) => (b.tradeDate ?? 0) - (a.tradeDate ?? 0)
+      ),
+    [recentActivities, normalizedPlaidActivities]
+  );
 
   const scopedPositions = useMemo(() => {
     if (scopedAccountIds === null) {
-      return positions;
+      return allPositions;
     }
-    return positions.filter(
+    return allPositions.filter(
       (p) =>
         p.brokerageAccount?.id !== undefined &&
         p.brokerageAccount?.id !== null &&
         scopedAccountIds.has(p.brokerageAccount.id)
     );
-  }, [positions, scopedAccountIds]);
+  }, [allPositions, scopedAccountIds]);
 
   const scopedActivities = useMemo(() => {
     if (scopedAccountIds === null) {
-      return recentActivities;
+      return allActivities;
     }
-    return recentActivities.filter(
+    return allActivities.filter(
       (a) =>
         a.brokerageAccount?.id !== undefined &&
         a.brokerageAccount?.id !== null &&
         scopedAccountIds.has(a.brokerageAccount.id)
     );
-  }, [recentActivities, scopedAccountIds]);
+  }, [allActivities, scopedAccountIds]);
 
   const activityTotalPages = Math.max(
     1,
@@ -325,20 +468,66 @@ export function BrokerageOverview({
     [activityPageNumber, activityTotalPages]
   );
 
-  const cashTotal = useMemo(() => sumUsdCash(scopedAccounts), [scopedAccounts]);
-  const invested = useMemo(
-    () => investedTotal(scopedPositions),
-    [scopedPositions]
-  );
-  const netWorth = cashTotal + invested;
+  const latestValue = useMemo(() => {
+    // SnapTrade: sum totalValue from most recent snapshot date
+    const scopedSnaps =
+      scopedAccountIds === null
+        ? portfolioSnapshots
+        : portfolioSnapshots.filter((s) => scopedAccountIds.has(s.accountId));
+    let snaptradePart = 0;
+    if (scopedSnaps.length > 0) {
+      const maxDate = Math.max(...scopedSnaps.map((s) => s.snapshotDate));
+      for (const s of scopedSnaps) {
+        if (s.snapshotDate === maxDate) {
+          snaptradePart += s.totalValue ?? 0;
+        }
+      }
+    }
+    // Plaid: sum current institutionValue across scoped investment accounts
+    let plaidPart = 0;
+    for (const p of plaidPositions) {
+      if (
+        scopedAccountIds === null ||
+        scopedAccountIds.has(`plaid-inv-${p.plaidAccountId}`)
+      ) {
+        plaidPart += p.institutionValue;
+      }
+    }
+    if (scopedSnaps.length === 0 && plaidPart === 0) {
+      return null;
+    }
+    return snaptradePart + plaidPart;
+  }, [portfolioSnapshots, plaidPositions, scopedAccountIds]);
 
   const chartPoints = useMemo(() => {
-    const base = Math.max(netWorth, 0);
-    return Array.from({ length: 14 }, (_, i) => ({
-      label: i,
-      v: base * (1 + Math.sin(i / 2.2) * 0.018 + (i % 3) * 0.002),
-    }));
-  }, [netWorth]);
+    const cutoff = rangeStartEpoch(balanceChartRange);
+    const filtered = portfolioSnapshots.filter((s) => {
+      if (s.snapshotDate < cutoff) {
+        return false;
+      }
+      if (scopedAccountIds !== null && !scopedAccountIds.has(s.accountId)) {
+        return false;
+      }
+      return true;
+    });
+
+    // Aggregate: sum totalValue across accounts per snapshot date
+    const byDate = new Map<number, number>();
+    for (const s of filtered) {
+      byDate.set(
+        s.snapshotDate,
+        (byDate.get(s.snapshotDate) ?? 0) + (s.totalValue ?? 0)
+      );
+    }
+
+    return [...byDate.entries()]
+      .toSorted((a, b) => a[0] - b[0])
+      .map(([epoch, value]) => ({
+        display: format(new Date(epoch), "MMM d, yyyy"),
+        label: epoch,
+        v: value,
+      }));
+  }, [portfolioSnapshots, scopedAccountIds, balanceChartRange]);
 
   /** Largest market value first; rows with unknown value sort last. */
   const positionsByValue = useMemo(
@@ -360,6 +549,23 @@ export function BrokerageOverview({
     [scopedPositions]
   );
 
+  if (accounts.length === 0 && plaidInvestmentAccounts.length === 0) {
+    return (
+      <div className="w-full min-w-0 py-2 sm:py-3">
+        <BrokerageEmpty />
+      </div>
+    );
+  }
+
+  let displayValue: string;
+  if (hoveredValue !== null) {
+    displayValue = money(hoveredValue);
+  } else if (latestValue === null) {
+    displayValue = "—";
+  } else {
+    displayValue = money(latestValue);
+  }
+
   return (
     <div className="w-full min-w-0 space-y-4 py-2 sm:py-3">
       <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
@@ -369,13 +575,21 @@ export function BrokerageOverview({
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                 <div className="min-w-0">
                   <p className="text-foreground text-2xl font-semibold tabular-nums tracking-tight sm:text-2xl">
-                    {money(netWorth)}
+                    {displayValue}
+                  </p>
+                  <p
+                    className={cn(
+                      "text-muted-foreground text-xs tabular-nums transition-opacity",
+                      hoveredDate ? "opacity-100" : "opacity-0"
+                    )}
+                  >
+                    {hoveredDate ?? "\u00A0"}
                   </p>
                 </div>
-                {accounts.length > 0 ? (
+                {scopeAccounts.length > 0 ? (
                   <div className="flex w-full shrink-0 justify-end sm:w-auto">
                     <BrokerageScopePicker
-                      accounts={accounts}
+                      accounts={scopeAccounts}
                       onScopeChange={setBrokerageScope}
                       scope={brokerageScope}
                     />
@@ -388,6 +602,21 @@ export function BrokerageOverview({
                 <AreaChart
                   data={chartPoints}
                   margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
+                  onMouseLeave={() => {
+                    setHoveredValue(null);
+                    setHoveredDate(null);
+                  }}
+                  onMouseMove={(e) => {
+                    const pt = (
+                      e as {
+                        activePayload?: {
+                          payload?: { display?: string; v?: number };
+                        }[];
+                      }
+                    ).activePayload?.[0]?.payload;
+                    setHoveredValue(pt?.v ?? null);
+                    setHoveredDate(pt?.display ?? null);
+                  }}
                 >
                   <defs>
                     <linearGradient
@@ -411,20 +640,6 @@ export function BrokerageOverview({
                   </defs>
                   <XAxis dataKey="label" hide />
                   <YAxis domain={["auto", "auto"]} hide width={0} />
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--card)",
-                      border: "1px solid oklch(0.5 0.02 280 / 0.25)",
-                      borderRadius: "12px",
-                      fontSize: "12px",
-                    }}
-                    formatter={(v) =>
-                      typeof v === "number"
-                        ? [money(v), "Balance"]
-                        : ["—", "Balance"]
-                    }
-                    labelStyle={{ display: "none" }}
-                  />
                   <Area
                     dataKey="v"
                     fill="url(#brokerageBalanceFill)"
@@ -471,7 +686,7 @@ export function BrokerageOverview({
             <ul className="flex-1">
               {scopedActivities.length === 0 ? (
                 <li className="text-muted-foreground list-none py-8 text-center text-sm">
-                  {recentActivities.length === 0
+                  {allActivities.length === 0
                     ? "No recent activity"
                     : "No activity for selected accounts"}
                 </li>
@@ -605,7 +820,7 @@ export function BrokerageOverview({
                       className="text-muted-foreground py-10 text-center"
                       colSpan={7}
                     >
-                      {positions.length === 0
+                      {allPositions.length === 0
                         ? "No holdings in your portfolio"
                         : "No holdings for selected accounts"}
                     </td>
