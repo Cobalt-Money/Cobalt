@@ -146,6 +146,7 @@ export function AllocationDonutChart({
             dataKey="value"
             innerRadius="70%"
             isAnimationActive={false}
+            minAngle={18}
             nameKey="name"
             onMouseEnter={
               sliceHighlight

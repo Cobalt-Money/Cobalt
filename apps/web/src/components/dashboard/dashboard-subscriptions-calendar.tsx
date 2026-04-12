@@ -1,11 +1,10 @@
 import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { queries } from "@cobalt-web/zero";
+import { useQuery } from "@rocicorp/zero/react";
 import { format, startOfMonth } from "date-fns";
 import { useMemo, useState } from "react";
-
-/** Demo total — replace when subscriptions are wired up. */
-const DEMO_MONTHLY_TOTAL_USD = 79;
 
 const formatMonthTotal = (amount: number) =>
   new Intl.NumberFormat("en-US", {
@@ -15,9 +14,62 @@ const formatMonthTotal = (amount: number) =>
     style: "currency",
   }).format(amount);
 
+interface RecurringRow {
+  streamType: string;
+  lastAmount: number;
+  lastDate?: string | null;
+  predictedNextDate?: string | null;
+}
+
 export function DashboardSubscriptionsCalendar() {
   const monthStart = useMemo(() => startOfMonth(new Date()), []);
   const [selected, setSelected] = useState<Date | undefined>(() => new Date());
+
+  const [rawStreams] = useQuery(queries.transactions.recurring());
+  const streams = rawStreams as unknown as RecurringRow[];
+
+  const outflows = useMemo(
+    () => streams.filter((s) => s.streamType === "outflow"),
+    [streams]
+  );
+
+  const monthlyTotal = useMemo(
+    () => outflows.reduce((sum, s) => sum + Math.abs(s.lastAmount), 0),
+    [outflows]
+  );
+
+  /** Days in the current month that have a past or predicted payment. */
+  const subscriptionDays = useMemo(() => {
+    const currentMonth = monthStart.getMonth();
+    const currentYear = monthStart.getFullYear();
+    const seen = new Set<string>();
+    const dates: Date[] = [];
+
+    const addDate = (dateStr: string) => {
+      const [yearStr, monthStr, dayStr] = dateStr.split("-");
+      const year = Number(yearStr);
+      const month = Number(monthStr) - 1;
+      const day = Number(dayStr);
+      if (year === currentYear && month === currentMonth) {
+        const key = dateStr;
+        if (!seen.has(key)) {
+          seen.add(key);
+          dates.push(new Date(year, month, day));
+        }
+      }
+    };
+
+    for (const s of outflows) {
+      if (s.lastDate) {
+        addDate(s.lastDate);
+      }
+      if (s.predictedNextDate) {
+        addDate(s.predictedNextDate);
+      }
+    }
+
+    return dates;
+  }, [outflows, monthStart]);
 
   return (
     <section
@@ -37,7 +89,7 @@ export function DashboardSubscriptionsCalendar() {
             <p className="text-muted-foreground text-right text-base">
               Monthly total:{" "}
               <span className="text-foreground font-semibold tabular-nums">
-                {formatMonthTotal(DEMO_MONTHLY_TOTAL_USD)}
+                {formatMonthTotal(monthlyTotal)}
               </span>
             </p>
           </div>
@@ -59,11 +111,16 @@ export function DashboardSubscriptionsCalendar() {
               "[&_.rdp-weekday]:text-base [&_[data-slot=button]]:text-lg"
             )}
             classNames={{
-              day: "border-0 shadow-none",
+              day: "relative rounded-2xl border-0 shadow-none",
               month_caption: "hidden",
               nav: "hidden",
             }}
             defaultMonth={monthStart}
+            modifiers={{ subscription: subscriptionDays }}
+            modifiersClassNames={{
+              subscription:
+                "after:absolute after:bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full after:bg-[#ffffff] after:content-['']",
+            }}
             mode="single"
             onSelect={setSelected}
             selected={selected}

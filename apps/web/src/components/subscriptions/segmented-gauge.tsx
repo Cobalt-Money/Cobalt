@@ -15,7 +15,6 @@ const CY = 155;
 const R = 120;
 const BAR_W = 16;
 const BAR_H = 36;
-const STAGGER_MS = 22;
 
 function segmentPose(
   i: number,
@@ -72,10 +71,6 @@ export function SegmentedGauge({
           const { rot, x, y } = segmentPose(i, segments, CX, CY, R);
           const active = i < filled;
 
-          const delay = active
-            ? i * STAGGER_MS
-            : (segments - 1 - i) * STAGGER_MS;
-
           const transform = `translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${rot.toFixed(1)})`;
 
           return (
@@ -90,7 +85,6 @@ export function SegmentedGauge({
                 stroke="currentColor"
                 strokeWidth={1}
                 opacity={active ? 0 : 0.18}
-                style={{ transition: `opacity 120ms ease ${delay}ms` }}
               />
               <rect
                 x={-BAR_W / 2}
@@ -100,7 +94,6 @@ export function SegmentedGauge({
                 rx={BAR_W / 2}
                 fill={activeColor}
                 opacity={active ? 1 - t * 0.35 : 0}
-                style={{ transition: `opacity 120ms ease ${delay}ms` }}
               />
             </g>
           );

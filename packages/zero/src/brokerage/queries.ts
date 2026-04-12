@@ -26,6 +26,65 @@ export const brokerageQueries = {
       .related("brokerageAuthorization");
   }),
 
+  /** Plaid investment transaction feed, newest first. */
+  plaidActivities: defineQuery(({ ctx }: { ctx: Context }) => {
+    const userId = ctx?.userId;
+    if (!userId) {
+      return zql.investmentActivity.where("id", NO_MATCH_ID);
+    }
+    return zql.investmentActivity
+      .whereExists("account", (acc) =>
+        acc.whereExists("connection", (conn) => conn.where("userId", userId))
+      )
+      .related("account")
+      .related("security")
+      .orderBy("date", "desc")
+      .limit(RECENT_ACTIVITY_LIMIT);
+  }),
+
+  /** Plaid bank accounts filtered to type = "investment". */
+  plaidInvestmentAccounts: defineQuery(({ ctx }: { ctx: Context }) => {
+    const userId = ctx?.userId;
+    if (!userId) {
+      return zql.bankAccount.where("id", NO_MATCH_ID);
+    }
+    return zql.bankAccount
+      .where("type", "investment")
+      .whereExists("connection", (conn) => conn.where("userId", userId))
+      .related("connection", (q) => q.related("institution"));
+  }),
+
+  /** Plaid investment holdings across all linked investment accounts. */
+  plaidPositions: defineQuery(({ ctx }: { ctx: Context }) => {
+    const userId = ctx?.userId;
+    if (!userId) {
+      return zql.investmentPosition.where("id", NO_MATCH_ID);
+    }
+    return zql.investmentPosition
+      .whereExists("account", (acc) =>
+        acc.whereExists("connection", (conn) => conn.where("userId", userId))
+      )
+      .related("account")
+      .related("security");
+  }),
+
+  /**
+   * Historical portfolio snapshots (SnapTrade) for the signed-in user.
+   * Each row is one brokerage account snapshot — use `totalValue` per `snapTradeAccountId`
+   * aggregated by month for the net-worth chart.
+   * Ordered oldest-first so callers can iterate in chronological order.
+   */
+  portfolioSnapshots: defineQuery(({ ctx }: { ctx: Context }) => {
+    const userId = ctx?.userId;
+    if (!userId) {
+      return zql.portfolioSnapshots.where("id", NO_MATCH_ID);
+    }
+    return zql.portfolioSnapshots
+      .where("userId", userId)
+      .orderBy("snapshotDate", "asc")
+      .limit(1000);
+  }),
+
   /** Flat holdings list across accounts (convenience for tables sorted by symbol). */
   positions: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
