@@ -68,7 +68,12 @@ export const brokerageQueries = {
       .related("security");
   }),
 
-  /** Daily portfolio value snapshots for all linked accounts, oldest-first for charting. */
+  /**
+   * Historical portfolio snapshots (SnapTrade) for the signed-in user.
+   * Each row is one brokerage account snapshot — use `totalValue` per `snapTradeAccountId`
+   * aggregated by month for the net-worth chart.
+   * Ordered oldest-first so callers can iterate in chronological order.
+   */
   portfolioSnapshots: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
@@ -76,7 +81,8 @@ export const brokerageQueries = {
     }
     return zql.portfolioSnapshots
       .where("userId", userId)
-      .orderBy("snapshotDate", "asc");
+      .orderBy("snapshotDate", "asc")
+      .limit(1000);
   }),
 
   /** Flat holdings list across accounts (convenience for tables sorted by symbol). */

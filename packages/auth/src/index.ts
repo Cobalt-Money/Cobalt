@@ -26,6 +26,9 @@ const spaOrigin = env.CORS_ORIGIN.replace(/\/$/, "");
 const oauthIssuerOrigin = new URL(env.BETTER_AUTH_URL).origin;
 const mcpResourceAudience = `${oauthIssuerOrigin}/api/mcp`;
 
+/** Only send Secure cookies when the auth server is actually on HTTPS. */
+const isSecureOrigin = env.BETTER_AUTH_URL.startsWith("https://");
+
 const trustedOrigins = [
   env.CORS_ORIGIN,
   "http://localhost:3000",
@@ -45,13 +48,14 @@ export const auth = betterAuth({
     },
   },
   advanced: {
-    crossSubDomainCookies: env.COOKIE_DOMAIN
-      ? { domain: env.COOKIE_DOMAIN, enabled: true }
-      : { enabled: false },
+    crossSubDomainCookies:
+      isSecureOrigin && env.COOKIE_DOMAIN
+        ? { domain: env.COOKIE_DOMAIN, enabled: true }
+        : { enabled: false },
     defaultCookieAttributes: {
       httpOnly: true,
       sameSite: "lax",
-      secure: true,
+      secure: isSecureOrigin,
     },
   },
   baseURL: env.BETTER_AUTH_URL,
