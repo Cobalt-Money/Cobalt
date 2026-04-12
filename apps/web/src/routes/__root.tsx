@@ -11,7 +11,6 @@ import { useEffect } from "react";
 // import { Agentation } from "agentation";
 
 import { AppSessionProvider } from "../lib/providers/app-session";
-import { ZeroProvider } from "../lib/providers/zero-client";
 
 import appCss from "../index.css?url";
 
@@ -77,13 +76,11 @@ function RootDocument() {
           enableSystem
         >
           <AppSessionProvider>
-            <ZeroProvider>
-              <TooltipProvider>
-                <div className="flex h-svh min-h-0 flex-col overflow-hidden">
-                  <Outlet />
-                </div>
-              </TooltipProvider>
-            </ZeroProvider>
+            <TooltipProvider>
+              <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+                <Outlet />
+              </div>
+            </TooltipProvider>
           </AppSessionProvider>
           <Toaster richColors />
         </ThemeProvider>

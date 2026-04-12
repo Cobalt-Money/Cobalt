@@ -353,14 +353,16 @@ export function TransactionsTable({
                       <TableCell
                         className={cn(
                           monthDividerBase,
-                          "px-3 py-2.5",
+                          "px-3 py-1.5",
                           roundedClass
                         )}
                         key={`${section.monthKey}-date`}
                       >
-                        <span className="truncate font-medium text-foreground text-sm">
-                          {section.label}
-                        </span>
+                        <div className={cn(cellRow, "whitespace-nowrap")}>
+                          <span className="truncate font-medium text-foreground text-sm">
+                            {section.label}
+                          </span>
+                        </div>
                       </TableCell>
                     );
                   }
