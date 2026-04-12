@@ -1,20 +1,15 @@
-import { LogoCDN } from "@cobalt-web/ui/cobalt/logos/logo-cdn";
+import { logoDevUrlByBrandName } from "@cobalt-web/clients/logo-dev";
+import { LogoImageWithFallback } from "@cobalt-web/ui/cobalt/logos/logo-image-fallback";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  addMonths,
-  endOfMonth,
-  format,
-  getDay,
-  isToday,
-  subMonths,
-} from "date-fns";
-import { useMemo, useState } from "react";
+import { endOfMonth, format, getDay, isToday } from "date-fns";
+import { useMemo } from "react";
 
 import { SegmentedGauge } from "@/components/subscriptions/segmented-gauge";
 
-const brandfetchClientId = "";
+const logoDevToken =
+  (
+    import.meta.env.VITE_LOGO_DEV_PUBLISHABLE_KEY as string | undefined
+  )?.trim() ?? "";
 
 interface Subscription {
   id: number;
@@ -188,48 +183,57 @@ const USD = new Intl.NumberFormat("en-US", {
   style: "currency",
 });
 
-function SubLogo({ sub }: { sub: Subscription }) {
-  if (brandfetchClientId) {
-    return (
-      <span className="inline-flex shrink-0" title={sub.name}>
-        <LogoCDN
-          alt={sub.name}
-          className="size-6 overflow-hidden rounded-full ring-1 ring-border/60"
-          clientId={brandfetchClientId}
-          domain={sub.domain}
-          fallbackText={sub.name}
-          imgClassName="object-cover"
-          logoApiSize={112}
-        />
-      </span>
-    );
+/**
+ * Trim raw names down to the first 1–2 meaningful words for logo.dev lookup.
+ */
+function logoLookupName(raw: string): string {
+  const words = raw.trim().split(/\s+/);
+  const kept: string[] = [];
+  for (const w of words) {
+    if (/^[A-F0-9]{6,}$/i.test(w)) {
+      break;
+    }
+    if (/^\d{4,}$/.test(w)) {
+      break;
+    }
+    kept.push(w);
+    if (kept.length >= 2) {
+      break;
+    }
   }
+  return kept.join(" ") || raw.trim();
+}
+
+function SubLogo({ sub }: { sub: Subscription }) {
+  const candidates = useMemo(() => {
+    if (!logoDevToken) {
+      return [];
+    }
+    const name = logoLookupName(sub.name);
+    return [
+      logoDevUrlByBrandName(name, {
+        format: "png",
+        size: 112,
+        token: logoDevToken,
+      }),
+    ];
+  }, [sub.name]);
 
   return (
-    <div
-      title={sub.name}
-      className={cn(
-        "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white",
-        sub.colorClass
-      )}
-    >
-      {sub.name[0]}
-    </div>
+    <LogoImageWithFallback
+      alt={sub.name}
+      candidates={candidates}
+      className="size-7 shrink-0 overflow-hidden rounded-full ring-1 ring-border/60"
+      fallbackText={sub.name}
+      imgClassName="object-cover"
+    />
   );
 }
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 const MAX_VISIBLE_LOGOS = 3;
 
-function MonthGrid({
-  date,
-  selectedDay,
-  onSelectDay,
-}: {
-  date: Date;
-  selectedDay: number;
-  onSelectDay: (day: number) => void;
-}) {
+function MonthGrid({ date }: { date: Date }) {
   const year = date.getFullYear();
   const month = date.getMonth();
   const daysInMonth = endOfMonth(date).getDate();
@@ -258,7 +262,7 @@ function MonthGrid({
   }, [year, month, daysInMonth, startPad]);
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 pb-8">
       <div className="grid grid-cols-7 gap-1">
         {WEEK_DAYS.map((d) => (
           <div
@@ -277,26 +281,21 @@ function MonthGrid({
           }
           const billers = billersOnDay(cell.date);
           const today = isToday(cell.date);
-          const selected = cell.day === selectedDay;
           const visible = billers.slice(0, MAX_VISIBLE_LOGOS);
           const overflow = billers.length - MAX_VISIBLE_LOGOS;
 
           const dayNumberClass = cn(
-            "text-center text-sm font-semibold leading-none tabular-nums",
-            selected || today
-              ? "font-bold text-primary"
-              : "text-muted-foreground"
+            "w-full text-center text-base font-semibold leading-none tabular-nums",
+            today ? "font-bold text-primary" : "text-muted-foreground"
           );
 
           return (
             <button
               type="button"
               key={cell.reactKey}
-              onClick={() => onSelectDay(cell.day)}
               className={cn(
-                "flex h-24 flex-col rounded-xl bg-input/30 p-1 text-center transition-colors hover:bg-input/50",
-                today && "ring-2 ring-primary",
-                selected && "ring-2 ring-primary"
+                "flex h-32 flex-col rounded-2xl bg-input/30 p-1.5 text-center transition-colors hover:bg-input/50",
+                today && "ring-2 ring-primary"
               )}
             >
               <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -313,8 +312,15 @@ function MonthGrid({
                   </div>
                 ) : null}
               </div>
-              <div className="shrink-0">
+              <div className="flex shrink-0 flex-col items-center gap-1.5 pb-0.5">
                 <span className={dayNumberClass}>{cell.day}</span>
+                <span
+                  aria-hidden
+                  className={cn(
+                    "size-1.5 shrink-0 rounded-full",
+                    billers.length > 0 ? "bg-primary" : "opacity-0"
+                  )}
+                />
               </div>
             </button>
           );
@@ -325,8 +331,8 @@ function MonthGrid({
 }
 
 export function BabySubscriptionsCalendar() {
-  const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
+  const currentDate = useMemo(() => new Date(), []);
+  const today = currentDate.getDate();
 
   const title = format(currentDate, "MMMM yyyy");
 
@@ -334,55 +340,24 @@ export function BabySubscriptionsCalendar() {
     () => calcMonthlyTotal(currentDate),
     [currentDate]
   );
-  const cumulative = useMemo(
-    () => calcCumulativeTotal(currentDate, selectedDay),
-    [currentDate, selectedDay]
+  const paidToDate = useMemo(
+    () => calcCumulativeTotal(currentDate, today),
+    [currentDate, today]
   );
-
-  const handlePrev = () => {
-    setCurrentDate((d) => subMonths(d, 1));
-    setSelectedDay(1);
-  };
-
-  const handleNext = () => {
-    setCurrentDate((d) => addMonths(d, 1));
-    setSelectedDay(1);
-  };
-
-  const selectedLabel = format(
-    new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedDay),
-    "MMM d"
-  );
+  const remaining = monthTotal - paidToDate;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex w-full flex-col gap-4">
       <SegmentedGauge
-        value={cumulative}
+        value={remaining}
         max={monthTotal}
-        label={USD.format(cumulative)}
-        sublabel={`Paid by ${selectedLabel}`}
+        label={USD.format(remaining)}
+        sublabel="Left to pay this month"
       />
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handlePrev}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={16} strokeWidth={2} />
-          </button>
-          <span className="text-sm font-semibold tabular-nums">{title}</span>
-          <button
-            type="button"
-            onClick={handleNext}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={2} />
-          </button>
-        </div>
-
-        <p className="text-sm text-muted-foreground">
+        <span className="text-base font-semibold tabular-nums">{title}</span>
+        <p className="text-base text-muted-foreground">
           Monthly total:{" "}
           <span className="font-semibold text-foreground">
             {USD.format(monthTotal)}
@@ -390,11 +365,7 @@ export function BabySubscriptionsCalendar() {
         </p>
       </div>
 
-      <MonthGrid
-        date={currentDate}
-        selectedDay={selectedDay}
-        onSelectDay={setSelectedDay}
-      />
+      <MonthGrid date={currentDate} />
     </div>
   );
 }

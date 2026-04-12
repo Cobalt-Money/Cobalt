@@ -1,9 +1,5 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
-import { AccountsList } from "@cobalt-web/ui/cobalt/accounts/accounts-list";
-import type {
-  AccountCardViewModel,
-  BrokerageRowWithRelations,
-} from "@cobalt-web/ui/cobalt/accounts/lib/map-zero-to-account-cards";
+import type { BrokerageRowWithRelations } from "@cobalt-web/ui/cobalt/accounts/lib/map-zero-to-account-cards";
 import { BrokerageOverview } from "@cobalt-web/ui/cobalt/brokerage/brokerage-overview";
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import type { FinancialEventCard } from "@cobalt-web/ui/cobalt/news/financial-events-feed";
@@ -33,10 +29,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
 import { ChatPromptInput } from "@/components/ai-chat/chat-prompt-input";
-import { DashboardInvestmentPerformanceCard } from "@/components/dashboard/dashboard-investment-performance-card";
-import { DashboardRecentTransactionsCard } from "@/components/dashboard/dashboard-recent-transactions-card";
-import { DashboardSubscriptionsCalendar } from "@/components/dashboard/dashboard-subscriptions-calendar";
-import { NetWorthSection } from "@/components/dashboard/net-worth-section";
+import { BabyAccounts } from "@/components/landing/baby/baby-accounts";
+import { BabyDashboard } from "@/components/landing/baby/baby-dashboard";
 import { BabySubscriptionsCalendar } from "@/components/landing/baby/baby-subscriptions-calendar";
 import type { ChartPeriod } from "@/components/research/lightweight-price-chart";
 import { LightweightPriceChart } from "@/components/research/lightweight-price-chart";
@@ -224,77 +218,6 @@ const TRANSACTIONS: TransactionListItem[] = [
     },
     website: "uber.com",
   }),
-];
-
-// ---------------------------------------------------------------------------
-// Mock data — Accounts
-// ---------------------------------------------------------------------------
-
-const MOCK_ACCOUNTS: AccountCardViewModel[] = [
-  {
-    accountTypeLabel: "Checking",
-    category: "banking",
-    description: "Chase Total Checking",
-    id: "mock-chase-checking",
-    institution: "Chase",
-    institutionLogo: null,
-    institutionLogosExtra: null,
-    institutionUrl: "chase.com",
-    kind: "bank",
-    lastSyncedAt: Date.now() - 1000 * 60 * 30,
-    mask: "4821",
-    plaidAccountId: "mock-plaid-1",
-    plaidItemId: "mock-item-1",
-    snaptradeAuthorizationId: null,
-  },
-  {
-    accountTypeLabel: "Savings",
-    category: "banking",
-    description: "Chase Savings",
-    id: "mock-chase-savings",
-    institution: "Chase",
-    institutionLogo: null,
-    institutionLogosExtra: null,
-    institutionUrl: "chase.com",
-    kind: "bank",
-    lastSyncedAt: Date.now() - 1000 * 60 * 30,
-    mask: "2290",
-    plaidAccountId: "mock-plaid-2",
-    plaidItemId: "mock-item-1",
-    snaptradeAuthorizationId: null,
-  },
-  {
-    accountTypeLabel: "Credit Card",
-    category: "credit",
-    description: "Apple Card",
-    id: "mock-apple-card",
-    institution: "Apple Card",
-    institutionLogo: null,
-    institutionLogosExtra: null,
-    institutionUrl: "apple.com",
-    kind: "bank",
-    lastSyncedAt: Date.now() - 1000 * 60 * 45,
-    mask: "7712",
-    plaidAccountId: "mock-plaid-3",
-    plaidItemId: "mock-item-2",
-    snaptradeAuthorizationId: null,
-  },
-  {
-    accountTypeLabel: "Individual Taxable",
-    category: "brokerage",
-    description: "Fidelity Brokerage",
-    id: "mock-fidelity",
-    institution: "Fidelity",
-    institutionLogo: null,
-    institutionLogosExtra: null,
-    institutionUrl: "fidelity.com",
-    kind: "brokerage",
-    lastSyncedAt: Date.now() - 1000 * 60 * 60 * 2,
-    mask: "9934",
-    plaidAccountId: null,
-    plaidItemId: null,
-    snaptradeAuthorizationId: "mock-snaptrade-1",
-  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -761,26 +684,13 @@ function MiniSidebar({
 // ---------------------------------------------------------------------------
 
 function DashboardView() {
-  return (
-    <div className="h-full overflow-hidden">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
-        <NetWorthSection />
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <DashboardRecentTransactionsCard />
-          <div className="flex justify-center">
-            <DashboardSubscriptionsCalendar />
-          </div>
-          <DashboardInvestmentPerformanceCard />
-        </div>
-      </div>
-    </div>
-  );
+  return <BabyDashboard />;
 }
 
 function AccountsView() {
   return (
-    <div className="h-full overflow-hidden px-4">
-      <AccountsList activeFilter="all" isComplete items={MOCK_ACCOUNTS} />
+    <div className="pl-4">
+      <BabyAccounts />
     </div>
   );
 }
