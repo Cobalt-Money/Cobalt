@@ -37,6 +37,25 @@ export function transactionsForUser(userId: string) {
     .limit(100);
 }
 
+/**
+ * All transactions for a user — used as a preload so the full history syncs
+ * into the client local store. Client-side typeahead (e.g. command palette)
+ * then runs **raw ZQL** against the warm cache with zero server roundtrips.
+ *
+ * See Zero docs on local-only ZQL + `zero.preload()`:
+ * https://zero.rocicorp.dev/docs/queries#local-only-queries
+ */
+export function allTransactionsForUser(userId: string) {
+  return zql.transaction
+    .whereExists("account", (acc) =>
+      acc.whereExists("connection", (conn) => conn.where("userId", userId))
+    )
+    .related("account", (q) =>
+      q.related("connection", (conn) => conn.related("institution"))
+    )
+    .orderBy("date", "desc");
+}
+
 export function recurringForUser(userId: string) {
   return zql.recurringStream
     .whereExists("account", (acc) =>

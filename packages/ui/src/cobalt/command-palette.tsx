@@ -19,15 +19,15 @@ import type { ComponentProps } from "react";
 function cobaltCommandDialogPopupClassNames() {
   return cn(
     /* Below app chrome, clearly above vertical center (not `top-1/2` / mid-screen). */
-    "fixed top-[max(6rem,13svh)] left-1/2 z-50 flex w-full max-w-[calc(100%-2rem)] -translate-x-1/2 translate-y-0 flex-col overflow-hidden rounded-2xl! p-0 text-sm duration-100 outline-none",
-    "max-h-[min(72vh,30rem)] sm:max-w-lg",
+    "fixed top-[max(6rem,13svh)] left-1/2 z-50 flex w-full max-w-[calc(100%-2rem)] -translate-x-1/2 translate-y-0 flex-col overflow-hidden rounded-3xl! p-0 text-sm duration-100 outline-none",
+    "max-h-[min(55vh,35rem)] sm:max-w-2xl",
     "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
   );
 }
 
-/** Glass panel (product-only). */
+/** Solid panel with oklch colors. */
 const cobaltCommandDialogContentClassName =
-  "bg-popover/80 shadow-2xl supports-backdrop-filter:backdrop-blur-xs dark:bg-popover/99";
+  "bg-[oklch(0.949_0_0)] shadow-2xl dark:bg-[oklch(0.29_0_0)]";
 
 /** Lighter scrim than default `DialogOverlay` (`bg-black/80`). */
 const cobaltCommandDialogOverlayClassName =
@@ -106,8 +106,8 @@ function CobaltCommandPaletteRoot({
     <Command
       className={cn(
         "gap-0 border-0 bg-transparent p-0 px-2 shadow-none rounded-none",
-        /* Slightly roomier than stock `max-h-72`, not full-viewport tall */
-        "[&_[data-slot=command-list]]:!max-h-[min(48vh,20rem)] [&_[data-slot=command-list]]:pb-2",
+        /* Command list matching dialog height */
+        "[&_[data-slot=command-list]]:!max-h-[min(45vh,28rem)] [&_[data-slot=command-list]]:pb-2",
         "[&_[cmdk-group]]:!p-0 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0",
         "[&_[cmdk-group-heading]]:!px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
         /* Light: `bg-muted` is ~white — use a visible tint; dark keeps token `muted`. */
@@ -132,11 +132,11 @@ function CobaltCommandInput({
   ...props
 }: ComponentProps<typeof CommandPrimitive.Input>) {
   return (
-    <div data-slot="cobalt-command-input-wrapper" className="px-4 py-4">
+    <div data-slot="cobalt-command-input-wrapper" className="px-4 py-5">
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
-          "w-full border-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
+          "w-full border-0 bg-transparent text-base outline-none placeholder:text-muted-foreground focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}
