@@ -1,6 +1,10 @@
+import { Sun02Icon, MoonIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useTheme } from "next-themes";
 
 import { AppPreview } from "@/components/landing/app-preview";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -27,15 +31,31 @@ function LandingPage() {
 }
 
 function Nav() {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
     <header className="flex items-center justify-between px-6 py-4">
       <span className="text-lg font-semibold">Cobalt</span>
-      <Link
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-        to="/login"
-      >
-        Sign in
-      </Link>
+      <div className="flex items-center gap-2">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => setTheme(isDark ? "light" : "dark")}
+        >
+          <HugeiconsIcon
+            icon={isDark ? Sun02Icon : MoonIcon}
+            size={18}
+            strokeWidth={2}
+          />
+        </Button>
+        <Link
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          to="/login"
+        >
+          Sign in
+        </Link>
+      </div>
     </header>
   );
 }

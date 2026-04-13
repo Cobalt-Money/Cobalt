@@ -95,7 +95,7 @@ const groups = groupByInstitution(MOCK_ACCOUNTS);
 
 export function BabyAccounts() {
   return (
-    <div className="pt-4 pb-4 sm:pt-6 sm:pb-6">
+    <div className="px-4 pt-4 pb-4 sm:pt-6 sm:pb-6">
       <div className="flex flex-col gap-10 sm:gap-12">
         {groups.map((group, sectionIndex) => (
           <section

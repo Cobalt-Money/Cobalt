@@ -1,6 +1,4 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
-import type { BrokerageRowWithRelations } from "@cobalt-web/ui/cobalt/accounts/lib/map-zero-to-account-cards";
-import { BrokerageOverview } from "@cobalt-web/ui/cobalt/brokerage/brokerage-overview";
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import type { FinancialEventCard } from "@cobalt-web/ui/cobalt/news/financial-events-feed";
 import type { NewsMagazineSidebarItem } from "@cobalt-web/ui/cobalt/news/news-magazine";
@@ -30,6 +28,7 @@ import { useState } from "react";
 
 import { ChatPromptInput } from "@/components/ai-chat/chat-prompt-input";
 import { BabyAccounts } from "@/components/landing/baby/baby-accounts";
+import { BabyBrokerage } from "@/components/landing/baby/baby-brokerage";
 import { BabyDashboard } from "@/components/landing/baby/baby-dashboard";
 import { BabySubscriptionsCalendar } from "@/components/landing/baby/baby-subscriptions-calendar";
 import type { ChartPeriod } from "@/components/research/lightweight-price-chart";
@@ -223,129 +222,6 @@ const TRANSACTIONS: TransactionListItem[] = [
 // ---------------------------------------------------------------------------
 // Mock data — Brokerage
 // ---------------------------------------------------------------------------
-
-const MOCK_BROKERAGE_ACCOUNTS: BrokerageRowWithRelations[] = [
-  {
-    accountId: "brok-acc-1",
-    accountNumber: "****9934",
-    accountType: "individual",
-    balances: [
-      {
-        cash: 1250,
-        currencyCode: "USD",
-        lastSync: Date.now(),
-        updatedAt: Date.now(),
-      } as unknown as NonNullable<
-        BrokerageRowWithRelations["balances"]
-      >[number],
-    ],
-    brokerageAuthorization: {
-      authorizationId: "auth-1",
-      brokerage: "FIDELITY",
-      brokerageSlug: "fidelity",
-      meta: null,
-      name: "Fidelity",
-    },
-    id: "brok-acc-1",
-    institutionName: "Fidelity",
-    metaData: null,
-    name: "Fidelity Brokerage Account",
-    portfolioGroup: null,
-  },
-];
-
-type PositionRow = Parameters<typeof BrokerageOverview>[0]["positions"][number];
-type ActivityRow = Parameters<
-  typeof BrokerageOverview
->[0]["recentActivities"][number];
-
-const MOCK_POSITIONS: PositionRow[] = [
-  {
-    averagePurchasePrice: 150,
-    brokerageAccount: { id: "brok-acc-1", name: "Fidelity Brokerage Account" },
-    currencyCode: "USD",
-    id: "pos-aapl",
-    lastSync: Date.now(),
-    openPnl: 579.28,
-    price: 198.44,
-    securityTypeDescription: "Equity",
-    symbol: "AAPL",
-    symbolDescription: "Apple Inc.",
-    units: 12,
-  },
-  {
-    averagePurchasePrice: 620,
-    brokerageAccount: { id: "brok-acc-1", name: "Fidelity Brokerage Account" },
-    currencyCode: "USD",
-    id: "pos-nvda",
-    lastSync: Date.now(),
-    openPnl: 1056.48,
-    price: 884.12,
-    securityTypeDescription: "Equity",
-    symbol: "NVDA",
-    symbolDescription: "NVIDIA Corp.",
-    units: 4,
-  },
-  {
-    averagePurchasePrice: 380,
-    brokerageAccount: { id: "brok-acc-1", name: "Fidelity Brokerage Account" },
-    currencyCode: "USD",
-    id: "pos-msft",
-    lastSync: Date.now(),
-    openPnl: 258.88,
-    price: 412.36,
-    securityTypeDescription: "Equity",
-    symbol: "MSFT",
-    symbolDescription: "Microsoft Corp.",
-    units: 8,
-  },
-  {
-    averagePurchasePrice: 480,
-    brokerageAccount: { id: "brok-acc-1", name: "Fidelity Brokerage Account" },
-    currencyCode: "USD",
-    id: "pos-voo",
-    lastSync: Date.now(),
-    openPnl: 972,
-    price: 528.6,
-    securityTypeDescription: "ETF",
-    symbol: "VOO",
-    symbolDescription: "Vanguard S&P 500 ETF",
-    units: 20,
-  },
-];
-
-const MOCK_ACTIVITIES: ActivityRow[] = [
-  {
-    amount: 1192,
-    brokerageAccount: { id: "brok-acc-1", name: "Fidelity Brokerage Account" },
-    id: "act-1",
-    price: 198.44,
-    symbolDescription: "Apple Inc.",
-    symbolTicker: "AAPL",
-    tradeDate: Date.now() - 86_400_000 * 3,
-    type: "BUY",
-  },
-  {
-    amount: 42.18,
-    brokerageAccount: { id: "brok-acc-1", name: "Fidelity Brokerage Account" },
-    id: "act-2",
-    price: null,
-    symbolDescription: "Vanguard S&P 500 ETF",
-    symbolTicker: "VOO",
-    tradeDate: Date.now() - 86_400_000 * 7,
-    type: "DIVIDEND",
-  },
-  {
-    amount: 3298.88,
-    brokerageAccount: { id: "brok-acc-1", name: "Fidelity Brokerage Account" },
-    id: "act-3",
-    price: 412.36,
-    symbolDescription: "Microsoft Corp.",
-    symbolTicker: "MSFT",
-    tradeDate: Date.now() - 86_400_000 * 14,
-    type: "BUY",
-  },
-];
 
 // ---------------------------------------------------------------------------
 // Mock data — News
@@ -558,7 +434,9 @@ function MiniSidebar({
       {/* User row */}
       <div className="flex items-center gap-2.5 rounded-md px-2 py-2">
         <div className="size-6 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-400 to-violet-500" />
-        <span className="truncate text-sm font-medium">Alex Johnson</span>
+        <span className="truncate text-sm font-medium text-foreground">
+          Alex Johnson
+        </span>
       </div>
 
       {/* Nav */}
@@ -598,76 +476,76 @@ function MiniSidebar({
         </button>
 
         <div className="flex flex-col gap-0.5">
-          <div className="px-2 pt-2 pb-1 text-left text-xs font-medium text-white/60">
+          <div className="px-2 pt-2 pb-1 text-left text-xs font-medium text-muted-foreground">
             Today
           </div>
           <button
-            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-white transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
             onClick={() => onNav("ai-chat")}
           >
             Q1 spending summary
           </button>
-          <div className="px-2 pt-2 pb-1 text-left text-xs font-medium text-white/60">
+          <div className="px-2 pt-2 pb-1 text-left text-xs font-medium text-muted-foreground">
             Yesterday
           </div>
           <button
-            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-white transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
             onClick={() => onNav("ai-chat")}
           >
             Subscription audit
           </button>
-          <div className="px-2 pt-2 pb-1 text-left text-xs font-medium text-white/60">
+          <div className="px-2 pt-2 pb-1 text-left text-xs font-medium text-muted-foreground">
             Last 7 Days
           </div>
           <button
-            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-white transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
             onClick={() => onNav("ai-chat")}
           >
             Portfolio rebalancing
           </button>
           <button
-            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-white transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
             onClick={() => onNav("ai-chat")}
           >
             Tax loss harvesting ideas
           </button>
           <button
-            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-white transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
             onClick={() => onNav("ai-chat")}
           >
             Emergency fund analysis
           </button>
-          <div className="px-2 pt-2 pb-1 text-left text-xs font-medium text-white/60">
+          <div className="px-2 pt-2 pb-1 text-left text-xs font-medium text-muted-foreground">
             Older
           </div>
           <button
-            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-white transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
             onClick={() => onNav("ai-chat")}
           >
             2025 year-end review
           </button>
           <button
-            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-white transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
             onClick={() => onNav("ai-chat")}
           >
             Roth vs Traditional IRA
           </button>
           <button
-            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-white transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
             onClick={() => onNav("ai-chat")}
           >
             Budget optimization
           </button>
           <button
-            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-white transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
             onClick={() => onNav("ai-chat")}
           >
@@ -698,11 +576,7 @@ function AccountsView() {
 function BrokerageView() {
   return (
     <div className="h-full overflow-hidden">
-      <BrokerageOverview
-        accounts={MOCK_BROKERAGE_ACCOUNTS}
-        positions={MOCK_POSITIONS}
-        recentActivities={MOCK_ACTIVITIES}
-      />
+      <BabyBrokerage />
     </div>
   );
 }
