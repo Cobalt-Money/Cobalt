@@ -13,10 +13,17 @@ import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import {
   AppleStocksIcon,
   ArrowReloadHorizontalIcon,
+  BellDotIcon,
   CreditCardIcon,
+  Download02Icon,
+  Edit02Icon,
+  EyeIcon,
+  File02Icon,
   Home04Icon,
   Moon02Icon,
+  Search02Icon,
   SearchDollarIcon,
+  Settings01Icon,
   Sun01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -39,9 +46,12 @@ const COMMAND_NAV_ROUTES: readonly {
   label: string;
   path:
     | "/accounts"
+    | "/ai-chat"
     | "/brokerage"
     | "/dashboard"
+    | "/news"
     | "/research"
+    | "/subscriptions"
     | "/transactions";
 }[] = [
   { icon: Home04Icon, label: "Dashboard", path: "/dashboard" },
@@ -69,7 +79,52 @@ const COMMAND_NAV_ROUTES: readonly {
     label: "Research",
     path: "/research",
   },
+  {
+    icon: Settings01Icon,
+    keywords: ["billing", "plan", "subscription"],
+    label: "Subscriptions",
+    path: "/subscriptions",
+  },
+  {
+    icon: BellDotIcon,
+    keywords: ["chat", "ai", "assistant"],
+    label: "AI Chat",
+    path: "/ai-chat",
+  },
+  {
+    icon: File02Icon,
+    keywords: ["articles", "updates"],
+    label: "News",
+    path: "/news",
+  },
 ];
+
+/** Actions that can be performed globally in the command menu */
+interface CommandAction {
+  icon: typeof Home04Icon;
+  keywords?: string[];
+  label: string;
+  handleSelect: () => void;
+}
+
+function renderCommandItem(action: CommandAction) {
+  return (
+    <CommandItem
+      key={action.label}
+      keywords={action.keywords}
+      onSelect={action.handleSelect}
+      value={action.label}
+    >
+      <HugeiconsIcon
+        aria-hidden
+        className="text-muted-foreground"
+        icon={action.icon}
+        strokeWidth={2}
+      />
+      {action.label}
+    </CommandItem>
+  );
+}
 
 interface CommandMenuContextValue {
   open: boolean;
@@ -116,6 +171,129 @@ function CommandMenuDialog({
 
   const themeToggleIcon = resolvedTheme === "dark" ? Sun01Icon : Moon02Icon;
 
+  const accountActions: CommandAction[] = [
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/accounts" });
+      },
+      icon: Edit02Icon,
+      keywords: ["create", "new", "connect", "link"],
+      label: "Add Account",
+    },
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/accounts" });
+      },
+      icon: EyeIcon,
+      keywords: ["view", "details", "balance", "info"],
+      label: "View Account Details",
+    },
+  ];
+
+  const transactionActions: CommandAction[] = [
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/transactions" });
+      },
+      icon: Search02Icon,
+      keywords: ["find", "query", "search", "filter"],
+      label: "Search Transactions",
+    },
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/transactions" });
+      },
+      icon: Edit02Icon,
+      keywords: ["create", "new", "add", "manual"],
+      label: "Add Manual Transaction",
+    },
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/transactions" });
+      },
+      icon: Download02Icon,
+      keywords: ["export", "download", "csv", "file"],
+      label: "Export Transactions",
+    },
+  ];
+
+  const brokerageActions: CommandAction[] = [
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/brokerage" });
+      },
+      icon: AppleStocksIcon,
+      keywords: ["search", "stocks", "funds", "holdings"],
+      label: "Search Holdings",
+    },
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/brokerage" });
+      },
+      icon: Edit02Icon,
+      keywords: ["trade", "buy", "sell", "execute"],
+      label: "Execute Trade",
+    },
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/brokerage" });
+      },
+      icon: BellDotIcon,
+      keywords: ["alert", "notification", "price", "watch"],
+      label: "Set Price Alert",
+    },
+  ];
+
+  const insightActions: CommandAction[] = [
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/dashboard" });
+      },
+      icon: SearchDollarIcon,
+      keywords: ["net", "worth", "total", "assets"],
+      label: "View Net Worth",
+    },
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/dashboard" });
+      },
+      icon: File02Icon,
+      keywords: ["cash", "flow", "income", "expense"],
+      label: "Cash Flow Analysis",
+    },
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/research" });
+      },
+      icon: File02Icon,
+      keywords: ["report", "generate", "summary", "export"],
+      label: "Generate Report",
+    },
+  ];
+
+  const settingActions: CommandAction[] = [
+    {
+      handleSelect: () => {
+        onOpenChange(false);
+        navigate({ to: "/subscriptions" });
+      },
+      icon: Settings01Icon,
+      keywords: ["settings", "preferences", "config", "billing"],
+      label: "Subscription Settings",
+    },
+  ];
+
   return (
     <CobaltCommandDialog
       description="Search for a page or action"
@@ -128,6 +306,7 @@ function CommandMenuDialog({
         <CobaltCommandInput placeholder="Type a command or search…" />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
+
           <CommandGroup heading="Navigation">
             {COMMAND_NAV_ROUTES.map(({ icon, keywords, label, path }) => (
               <CommandItem
@@ -146,8 +325,26 @@ function CommandMenuDialog({
               </CommandItem>
             ))}
           </CommandGroup>
-          {themeReady ? (
-            <CommandGroup heading="Settings">
+
+          <CommandGroup heading="Accounts">
+            {accountActions.map(renderCommandItem)}
+          </CommandGroup>
+
+          <CommandGroup heading="Transactions">
+            {transactionActions.map(renderCommandItem)}
+          </CommandGroup>
+
+          <CommandGroup heading="Brokerage">
+            {brokerageActions.map(renderCommandItem)}
+          </CommandGroup>
+
+          <CommandGroup heading="Insights">
+            {insightActions.map(renderCommandItem)}
+          </CommandGroup>
+
+          <CommandGroup heading="Settings">
+            {settingActions.map(renderCommandItem)}
+            {themeReady ? (
               <CommandItem
                 keywords={[
                   "appearance",
@@ -169,8 +366,8 @@ function CommandMenuDialog({
                 />
                 Toggle theme
               </CommandItem>
-            </CommandGroup>
-          ) : null}
+            ) : null}
+          </CommandGroup>
         </CommandList>
       </CobaltCommandPaletteRoot>
     </CobaltCommandDialog>
