@@ -1,33 +1,9 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
+import type { FinancialEventCard } from "@cobalt-web/ui/cobalt/news/financial-events-feed";
+import type { NewsMagazineSidebarItem } from "@cobalt-web/ui/cobalt/news/news-magazine";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { useMemo, useState } from "react";
-
-interface FinancialEventCard {
-  id: string;
-  eventName: string;
-  eventText: string;
-  summary: string;
-  tickers: string[];
-  topics: string[];
-  sentiment: "positive" | "negative" | "neutral";
-  date: number;
-  newsItems: number;
-  articles: {
-    id: string;
-    title: string;
-    sourceName: string;
-    imageUrl: string | null;
-    newsUrl: string;
-  }[];
-}
-
-interface NewsMagazineSidebarItem {
-  id: string;
-  title: string;
-  link: string;
-  publishedAt: number | null;
-}
 
 interface BabyNewsProps {
   eventsGeneral: FinancialEventCard[];
@@ -88,7 +64,7 @@ function RssSourceFavicon({ link }: { readonly link: string }) {
   return (
     <span
       aria-hidden
-      className="relative inline-flex size-5 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60"
+      className="relative inline-flex size-4 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60"
     >
       {fav ? (
         <img
@@ -118,7 +94,7 @@ function TickerIconRow({ tickers }: { readonly tickers: string[] }) {
   return (
     <div aria-hidden className="flex items-center gap-1.5">
       {list.map((sym) => (
-        <TickerLogo key={sym} size={22} symbol={sym} />
+        <TickerLogo key={sym} size={16} symbol={sym} />
       ))}
     </div>
   );
@@ -126,18 +102,20 @@ function TickerIconRow({ tickers }: { readonly tickers: string[] }) {
 
 function FeaturedEvent({ event }: { event: FinancialEventCard }) {
   const img = event.articles.find((a) => a.imageUrl?.trim())?.imageUrl ?? null;
-  const timeLabel = compactTimeAgo(event.date);
+  const timeLabel =
+    typeof event.date === "number" ? compactTimeAgo(event.date) : "";
   const sourceName = event.articles[0]?.sourceName ?? null;
+  const sourceUrl = event.articles[0]?.newsUrl ?? null;
 
   return (
-    <article className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_min(100%,440px)] lg:items-stretch lg:gap-10">
+    <article className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_min(100%,320px)] lg:items-stretch lg:gap-10">
       <div className="flex min-h-0 w-full min-w-0 flex-col gap-4">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-          <h2 className="shrink-0 text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+          <h2 className="shrink-0 text-left text-lg font-bold leading-tight tracking-tight text-foreground sm:text-xl">
             {event.eventName}
           </h2>
           {event.summary ? (
-            <p className="line-clamp-4 text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">
+            <p className="line-clamp-4 text-left text-xs leading-relaxed text-muted-foreground sm:text-sm">
               {event.summary}
             </p>
           ) : null}
@@ -145,16 +123,21 @@ function FeaturedEvent({ event }: { event: FinancialEventCard }) {
         <div className="flex w-full shrink-0 items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
             {sourceName ? (
-              <span className="text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                {sourceUrl ? <RssSourceFavicon link={sourceUrl} /> : null}
                 {sourceName}
               </span>
             ) : null}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <TickerIconRow tickers={event.tickers} />
+          <div className="flex shrink-0 items-center gap-1.5">
+            <TickerIconRow tickers={[...event.tickers]} />
             <time
-              className="shrink-0 text-sm tabular-nums text-muted-foreground"
-              dateTime={new Date(event.date).toISOString()}
+              className="shrink-0 text-xs tabular-nums text-muted-foreground"
+              dateTime={
+                typeof event.date === "number"
+                  ? new Date(event.date).toISOString()
+                  : undefined
+              }
             >
               {timeLabel}
             </time>
@@ -162,7 +145,7 @@ function FeaturedEvent({ event }: { event: FinancialEventCard }) {
         </div>
       </div>
       {img ? (
-        <div className="relative aspect-[16/10] w-full max-w-full shrink-0 overflow-hidden rounded-2xl bg-muted shadow-sm lg:aspect-auto lg:h-full lg:min-h-[264px] lg:self-stretch">
+        <div className="relative aspect-[16/9] w-full max-w-full shrink-0 overflow-hidden rounded-2xl bg-muted shadow-sm lg:aspect-[16/10] lg:max-h-48">
           <img
             alt=""
             className="absolute inset-0 size-full object-cover"
@@ -180,8 +163,10 @@ function FeaturedEvent({ event }: { event: FinancialEventCard }) {
 
 function GridCard({ event }: { event: FinancialEventCard }) {
   const img = event.articles.find((a) => a.imageUrl?.trim())?.imageUrl ?? null;
-  const timeLabel = compactTimeAgo(event.date);
+  const timeLabel =
+    typeof event.date === "number" ? compactTimeAgo(event.date) : "";
   const sourceName = event.articles[0]?.sourceName ?? null;
+  const sourceUrl = event.articles[0]?.newsUrl ?? null;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-colors hover:bg-accent/40">
@@ -199,13 +184,14 @@ function GridCard({ event }: { event: FinancialEventCard }) {
         )}
       </div>
       <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-2">
-        <h3 className="line-clamp-3 text-base font-semibold leading-snug text-foreground">
+        <h3 className="line-clamp-3 text-left text-sm font-semibold leading-snug text-foreground">
           {event.eventName}
         </h3>
         <div className="mt-auto flex w-full items-center justify-between gap-2 pt-0.5">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
             {sourceName ? (
-              <span className="truncate text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+                {sourceUrl ? <RssSourceFavicon link={sourceUrl} /> : null}
                 {sourceName}
               </span>
             ) : null}
@@ -213,7 +199,11 @@ function GridCard({ event }: { event: FinancialEventCard }) {
           <div className="flex shrink-0 items-center gap-1.5">
             <time
               className="shrink-0 text-xs tabular-nums text-muted-foreground"
-              dateTime={new Date(event.date).toISOString()}
+              dateTime={
+                typeof event.date === "number"
+                  ? new Date(event.date).toISOString()
+                  : undefined
+              }
             >
               {timeLabel}
             </time>
@@ -246,10 +236,8 @@ export function BabyNews({
     return eventsGeneral.filter((e) => eventMatchesTab(e, activeTab));
   }, [activeTab, eventsGeneral, eventsForYou]);
 
-  const [featuredEvent, ...remainingEvents] = events;
-
   return (
-    <div className="flex h-full w-full flex-col overflow-y-auto">
+    <div className="flex h-full w-full flex-col overflow-hidden pl-4 pt-1">
       <nav aria-label="News sections" className="mb-8 border-b border-border">
         <div className="flex flex-wrap gap-x-8 gap-y-2 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-nowrap sm:gap-x-10 sm:overflow-x-auto [&::-webkit-scrollbar]:hidden">
           {NEWS_TAB_DEFS.map(({ id, label }) => (
@@ -275,23 +263,35 @@ export function BabyNews({
 
       <div className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0 space-y-10">
-          {featuredEvent === undefined ? null : (
-            <FeaturedEvent event={featuredEvent} />
-          )}
-
-          {remainingEvents.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {remainingEvents.map((event) => (
-                <GridCard event={event} key={event.id} />
-              ))}
+          {events.length > 0 ? (
+            <div className="space-y-10">
+              {events.map((event, idx) => {
+                const posInCycle = idx % 4;
+                if (posInCycle === 0) {
+                  const nextEvent1 = events[idx + 1];
+                  const nextEvent2 = events[idx + 2];
+                  const nextEvent3 = events[idx + 3];
+                  return (
+                    <div key={event.id} className="space-y-10">
+                      <FeaturedEvent event={event} />
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {nextEvent1 && <GridCard event={nextEvent1} />}
+                        {nextEvent2 && <GridCard event={nextEvent2} />}
+                        {nextEvent3 && <GridCard event={nextEvent3} />}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })}
             </div>
           ) : null}
         </div>
 
-        <aside className="hidden border-t border-border pt-8 lg:block lg:sticky lg:top-4 lg:border-t-0 lg:pt-0">
+        <aside className="hidden border-t border-border pt-8 lg:block lg:sticky lg:top-4 lg:border-t-0 lg:pt-0 lg:w-64">
           {rssItems.length > 0 ? (
             <>
-              <h3 className="mb-4 text-lg font-bold tracking-tight text-foreground">
+              <h3 className="mb-4 text-left text-base font-bold tracking-tight text-foreground">
                 Latest News
               </h3>
               <ul className="space-y-1">
@@ -303,24 +303,36 @@ export function BabyNews({
                       rel="noopener noreferrer"
                       target="_blank"
                     >
-                      <p className="break-words font-semibold leading-snug text-foreground">
-                        {item.title}
-                      </p>
-                      <p className="mt-1.5 flex w-full min-w-0 items-center gap-2 text-sm text-muted-foreground">
-                        <RssSourceFavicon link={item.link} />
-                        {item.publishedAt === null ? null : (
-                          <time
-                            className="ml-auto shrink-0 tabular-nums"
-                            dateTime={new Date(item.publishedAt).toISOString()}
-                          >
-                            {formatDistanceStrict(
-                              new Date(item.publishedAt),
-                              new Date(),
-                              { addSuffix: true }
-                            )}
-                          </time>
-                        )}
-                      </p>
+                      <div className="flex flex-col gap-2">
+                        <p className="break-words text-left text-xs font-semibold leading-snug text-foreground">
+                          {item.title}
+                        </p>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <RssSourceFavicon link={item.link} />
+                            <span className="text-xs text-muted-foreground">
+                              {new URL(item.link).hostname.replace(
+                                /^www\./,
+                                ""
+                              )}
+                            </span>
+                          </div>
+                          {item.publishedAt === null ? null : (
+                            <time
+                              className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground"
+                              dateTime={new Date(
+                                item.publishedAt
+                              ).toISOString()}
+                            >
+                              {formatDistanceStrict(
+                                new Date(item.publishedAt),
+                                new Date(),
+                                { addSuffix: true }
+                              )}
+                            </time>
+                          )}
+                        </div>
+                      </div>
                     </a>
                   </li>
                 ))}

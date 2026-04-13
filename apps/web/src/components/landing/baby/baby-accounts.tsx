@@ -59,7 +59,7 @@ const MOCK_ACCOUNTS: MockAccount[] = [
     institution: "Fidelity",
     institutionLogo: null,
     institutionUrl: "fidelity.com",
-    lastSyncedAt: Date.now() - 1000 * 60 * 60 * 5,
+    lastSyncedAt: Date.now() - 1000 * 60 * 60 * 24,
     mask: "4421",
   },
 ];
@@ -105,7 +105,7 @@ export function BabyAccounts() {
           >
             <div className="mb-4 flex items-center gap-2.5 sm:mb-5">
               <InstitutionLogo
-                className="size-7 shrink-0 sm:size-8"
+                className="size-6 shrink-0 sm:size-7"
                 institutionLogo={group.institutionLogo}
                 institutionName={group.institution}
                 institutionUrl={group.institutionUrl}
@@ -138,9 +138,6 @@ export function BabyAccounts() {
                         institutionUrl={account.institutionUrl}
                       />
                     </div>
-                    <p className="mt-1 text-left text-sm font-medium leading-snug text-muted-foreground">
-                      {account.accountTypeLabel}
-                    </p>
                     <p
                       aria-label={`Account ending in ${account.mask}`}
                       className="mt-4 flex flex-wrap items-baseline gap-x-2 text-lg font-semibold leading-snug tabular-nums tracking-tight sm:mt-5 sm:text-xl"

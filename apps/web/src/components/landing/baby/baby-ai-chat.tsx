@@ -25,7 +25,7 @@ interface BabyAIChatProps {
 
 export function BabyAIChat({ messages }: BabyAIChatProps) {
   return (
-    <Conversation className="h-full min-h-0 w-full [mask-image:linear-gradient(to_bottom,black_calc(100%-100px),transparent)]">
+    <Conversation className="h-full min-h-0 w-full max-w-lg [mask-image:linear-gradient(to_bottom,black_calc(100%-100px),transparent)]">
       <ConversationContent className="gap-0 px-0 pb-32">
         <div className={cn(CHAT_THREAD_COLUMN_CLASS, "flex flex-col gap-8")}>
           {messages.map((msg) =>

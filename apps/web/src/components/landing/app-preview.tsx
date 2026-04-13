@@ -1,12 +1,11 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
-import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import type { FinancialEventCard } from "@cobalt-web/ui/cobalt/news/financial-events-feed";
 import type { NewsMagazineSidebarItem } from "@cobalt-web/ui/cobalt/news/news-magazine";
-import { NewsMagazine } from "@cobalt-web/ui/cobalt/news/news-magazine";
 import { TransactionsTable } from "@cobalt-web/ui/cobalt/transactions/transactions-table";
 import {
   Message,
   MessageContent,
+  MessageResponse,
 } from "@cobalt-web/ui/components/ai-elements/message";
 import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { cn } from "@cobalt-web/ui/lib/utils";
@@ -24,16 +23,15 @@ import {
   SearchIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { ChatPromptInput } from "@/components/ai-chat/chat-prompt-input";
 import { BabyAccounts } from "@/components/landing/baby/baby-accounts";
 import { BabyBrokerage } from "@/components/landing/baby/baby-brokerage";
 import { BabyDashboard } from "@/components/landing/baby/baby-dashboard";
+import { BabyNews } from "@/components/landing/baby/baby-news";
+import { BabyPromptInput } from "@/components/landing/baby/baby-prompt-input";
+import { BabyResearch } from "@/components/landing/baby/baby-research";
 import { BabySubscriptionsCalendar } from "@/components/landing/baby/baby-subscriptions-calendar";
-import type { ChartPeriod } from "@/components/research/lightweight-price-chart";
-import { LightweightPriceChart } from "@/components/research/lightweight-price-chart";
-import { mockChartPoints } from "@/components/research/ticker-detail-mock";
 import { BrowserWindow } from "@/components/ui/mock-browser-window";
 
 // ---------------------------------------------------------------------------
@@ -49,6 +47,18 @@ type NavId =
   | "subscriptions"
   | "news"
   | "ai-chat";
+
+type ChatThreadId =
+  | "new"
+  | "q1-summary"
+  | "subscriptions"
+  | "rebalancing"
+  | "tax-harvest"
+  | "emergency"
+  | "year-end"
+  | "roth-vs-traditional"
+  | "budget"
+  | "crypto";
 
 // ---------------------------------------------------------------------------
 // Mock data — Transactions
@@ -217,6 +227,84 @@ const TRANSACTIONS: TransactionListItem[] = [
     },
     website: "uber.com",
   }),
+  makeTx({
+    amount: -65,
+    date: "2026-03-26",
+    id: "tx-12",
+    institutionName: "Chase",
+    institutionUrl: "chase.com",
+    name: "Whole Foods Market",
+    personalFinanceCategory: {
+      detailed: "FOOD_AND_DRINK_GROCERIES",
+      primary: "FOOD_AND_DRINK",
+    },
+    website: "wholefoodsmarket.com",
+  }),
+  makeTx({
+    amount: -29.99,
+    date: "2026-03-25",
+    id: "tx-13",
+    institutionName: "Wells Fargo",
+    institutionUrl: "wellsfargo.com",
+    name: "Equinox Fitness",
+    personalFinanceCategory: {
+      detailed: "GENERAL_SERVICES_SUBSCRIPTION",
+      primary: "GENERAL_SERVICES",
+    },
+    website: "equinox.com",
+  }),
+  makeTx({
+    amount: -18.5,
+    date: "2026-03-24",
+    id: "tx-14",
+    institutionName: "Chase",
+    institutionUrl: "chase.com",
+    name: "AMC Theaters",
+    personalFinanceCategory: {
+      detailed: "ENTERTAINMENT_MOVIES_AND_THEATER",
+      primary: "ENTERTAINMENT",
+    },
+    website: "amctheatres.com",
+  }),
+  makeTx({
+    amount: -52.34,
+    date: "2026-03-23",
+    id: "tx-15",
+    institutionName: "Apple",
+    institutionUrl: "apple.com",
+    name: "DoorDash",
+    personalFinanceCategory: {
+      detailed: "FOOD_AND_DRINK_RESTAURANTS",
+      primary: "FOOD_AND_DRINK",
+    },
+    website: "doordash.com",
+  }),
+  makeTx({
+    amount: -45.67,
+    date: "2026-03-22",
+    id: "tx-16",
+    institutionName: "Chase",
+    institutionUrl: "chase.com",
+    name: "Shell Gas Station",
+    personalFinanceCategory: {
+      detailed: "TRANSPORTATION_GAS_STATIONS",
+      primary: "TRANSPORTATION",
+    },
+    website: "shell.com",
+  }),
+  makeTx({
+    amount: -11.32,
+    date: "2026-03-21",
+    id: "tx-17",
+    institutionName: "Wells Fargo",
+    institutionUrl: "wellsfargo.com",
+    name: "Lyft",
+    personalFinanceCategory: {
+      detailed: "TRANSPORTATION_TAXI_AND_RIDESHARE",
+      primary: "TRANSPORTATION",
+    },
+    website: "lyft.com",
+  }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -232,31 +320,31 @@ const MOCK_NEWS_EVENTS: FinancialEventCard[] = [
     articles: [
       {
         id: "art-1",
-        imageUrl: null,
+        imageUrl: "/landing/news/openai.png",
         newsUrl: "https://www.bloomberg.com",
         sourceName: "Bloomberg",
-        title: "Fed holds rates steady, signals patience on cuts",
+        title: "OpenAI valued at $300B in largest private fundraise ever",
       },
     ],
     createdAt: Date.now() - 1000 * 60 * 30,
     date: Date.now() - 1000 * 60 * 25,
     eventId: "evt-1",
-    eventName: "Fed holds rates steady amid cooling inflation",
+    eventName: "OpenAI raises $40B at $300B valuation in record round",
     eventText:
-      "The Federal Reserve voted unanimously to keep the benchmark interest rate unchanged, citing easing inflation pressure and a resilient labor market.",
+      "OpenAI closed a $40 billion funding round led by SoftBank, valuing the ChatGPT maker at $300 billion — the largest private tech fundraise in history.",
     id: "evt-1",
     newsItems: 8,
-    sentiment: "neutral",
+    sentiment: "positive",
     summary:
-      "The Federal Reserve voted to hold rates at the current target range, signaling a cautious approach as inflation trends toward the 2% target.",
-    tickers: ["SPY", "QQQ"],
-    topics: ["general", "government"],
+      "OpenAI's record $40B raise at a $300B valuation cements its position as the most valuable private company in the world, fueling a new wave of AI infrastructure investment.",
+    tickers: ["MSFT", "NVDA"],
+    topics: ["general", "ai", "tech"],
   },
   {
     articles: [
       {
         id: "art-2",
-        imageUrl: null,
+        imageUrl: "/landing/news/apple.png",
         newsUrl: "https://www.wsj.com",
         sourceName: "WSJ",
         title: "Apple Q2 earnings: Services hit all-time high",
@@ -280,7 +368,7 @@ const MOCK_NEWS_EVENTS: FinancialEventCard[] = [
     articles: [
       {
         id: "art-3",
-        imageUrl: null,
+        imageUrl: "/landing/news/nvidia.png",
         newsUrl: "https://www.reuters.com",
         sourceName: "Reuters",
         title: "NVIDIA crosses $3 trillion market cap",
@@ -304,7 +392,8 @@ const MOCK_NEWS_EVENTS: FinancialEventCard[] = [
     articles: [
       {
         id: "art-4",
-        imageUrl: null,
+        imageUrl:
+          "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80",
         newsUrl: "https://www.ft.com",
         sourceName: "FT",
         title: "March jobs report: 275K nonfarm payrolls added",
@@ -324,6 +413,32 @@ const MOCK_NEWS_EVENTS: FinancialEventCard[] = [
     tickers: [],
     topics: ["general", "government"],
   },
+  {
+    articles: [
+      {
+        id: "art-5",
+        imageUrl: "/landing/news/a16.png",
+        newsUrl: "https://www.forbes.com",
+        sourceName: "Forbes",
+        title:
+          "Andreessen Horowitz launches $800M AI fund focusing on infrastructure and applications",
+      },
+    ],
+    createdAt: Date.now() - 1000 * 60 * 60 * 12,
+    date: Date.now() - 1000 * 60 * 60 * 12,
+    eventId: "evt-5",
+    eventName:
+      "a16z unveils $800M dedicated fund for AI-powered startups and infrastructure",
+    eventText:
+      "Andreessen Horowitz announced its latest artificial intelligence-focused fund, committing $800 million to invest in next-generation AI companies addressing both infrastructure and application layers.",
+    id: "evt-5",
+    newsItems: 10,
+    sentiment: "positive",
+    summary:
+      "a16z's new $800M AI fund signals continued investor confidence in the sector, targeting opportunities in both AI infrastructure and enterprise software applications.",
+    tickers: [],
+    topics: ["general", "ai", "tech"],
+  },
 ];
 
 const MOCK_RSS_ITEMS: NewsMagazineSidebarItem[] = [
@@ -331,25 +446,48 @@ const MOCK_RSS_ITEMS: NewsMagazineSidebarItem[] = [
     id: "rss-1",
     link: "https://www.bloomberg.com",
     publishedAt: Date.now() - 1000 * 60 * 40,
-    title: "Markets wrap: S&P 500 closes at record high",
+    title:
+      "Markets wrap: S&P 500 closes at record high amid Fed patience signals",
   },
   {
     id: "rss-2",
     link: "https://www.wsj.com",
     publishedAt: Date.now() - 1000 * 60 * 90,
-    title: "Treasury yields edge higher after jobs data",
+    title: "Treasury yields edge higher after stronger-than-expected jobs data",
   },
   {
     id: "rss-3",
     link: "https://www.coindesk.com",
     publishedAt: Date.now() - 1000 * 60 * 120,
-    title: "Bitcoin tops $70K as ETF inflows accelerate",
+    title:
+      "Bitcoin tops $70K as ETF inflows accelerate and institutional demand grows",
   },
   {
     id: "rss-4",
     link: "https://www.reuters.com",
     publishedAt: Date.now() - 1000 * 60 * 180,
-    title: "Oil falls on demand outlook concerns",
+    title: "Oil falls on demand outlook concerns amid economic slowdown fears",
+  },
+  {
+    id: "rss-5",
+    link: "https://www.ft.com",
+    publishedAt: Date.now() - 1000 * 60 * 240,
+    title:
+      "European stocks surge on tech rally and easing rate cut timeline expectations",
+  },
+  {
+    id: "rss-6",
+    link: "https://www.cnbc.com",
+    publishedAt: Date.now() - 1000 * 60 * 300,
+    title:
+      "Magnificent Seven stocks power Nasdaq to fresh all-time highs this quarter",
+  },
+  {
+    id: "rss-7",
+    link: "https://www.ft.com",
+    publishedAt: Date.now() - 1000 * 60 * 360,
+    title:
+      "Central banks signal pause in interest rate hikes as inflation moderates globally",
   },
 ];
 
@@ -357,28 +495,182 @@ const MOCK_RSS_ITEMS: NewsMagazineSidebarItem[] = [
 // Mock data — AI Chat
 // ---------------------------------------------------------------------------
 
-const CHAT_MESSAGES = [
+const CHAT_THREADS: Record<
+  ChatThreadId,
   {
-    id: "1",
-    role: "user" as const,
-    text: "How much did I spend on food last month?",
+    title: string;
+    messages: { id: string; role: "user" | "assistant"; text: string }[];
+  }
+> = {
+  budget: {
+    messages: [
+      {
+        id: "1",
+        role: "user" as const,
+        text: "Optimize my budget",
+      },
+      {
+        id: "2",
+        role: "assistant" as const,
+        text: "You have $800/mo discretionary. Cutting dining out by half saves $400. Redirect that to your transit account for a 5.2% boost.",
+      },
+    ],
+    title: "Budget optimization",
   },
-  {
-    id: "2",
-    role: "assistant" as const,
-    text: "You spent $342 on food in March — up 12% from February. Restaurants made up $218 and groceries $124.",
+  crypto: {
+    messages: [
+      {
+        id: "1",
+        role: "user" as const,
+        text: "Analyze my crypto",
+      },
+      {
+        id: "2",
+        role: "assistant" as const,
+        text: "Crypto is 8% of portfolio ($38K). BTC and ETH only. Down 12% YTD. Consider rebalancing to your 5% target.",
+      },
+    ],
+    title: "Crypto portfolio analysis",
   },
-  {
-    id: "3",
-    role: "user" as const,
-    text: "Which subscription should I cancel?",
+  emergency: {
+    messages: [
+      {
+        id: "1",
+        role: "user" as const,
+        text: "Analyze my emergency fund",
+      },
+      {
+        id: "2",
+        role: "assistant" as const,
+        text: "You have 4.2 months of expenses saved ($21K). That's below the 6-month target. You're on track to reach it by November.",
+      },
+    ],
+    title: "Emergency fund analysis",
   },
-  {
-    id: "4",
-    role: "assistant" as const,
-    text: "Adobe CC at $19.99/mo hasn't had any activity in 47 days. That's your best candidate.",
+  new: {
+    messages: [
+      {
+        id: "1",
+        role: "user" as const,
+        text: "How much did I spend on food last month?",
+      },
+      {
+        id: "2",
+        role: "assistant" as const,
+        text: "You spent $342 on food in March — up 12% from February. Restaurants made up $218 and groceries $124.",
+      },
+      {
+        id: "3",
+        role: "user" as const,
+        text: "Which subscription should I cancel?",
+      },
+      {
+        id: "4",
+        role: "assistant" as const,
+        text: "Adobe CC at $19.99/mo hasn't had any activity in 47 days. That's your best candidate.",
+      },
+    ],
+    title: "New Chat",
   },
-];
+  "q1-summary": {
+    messages: [
+      {
+        id: "1",
+        role: "user" as const,
+        text: "Give me a spending summary for Q1",
+      },
+      {
+        id: "2",
+        role: "assistant" as const,
+        text: `**Q1 2026 Spending — $12,847 total**
+
+- **Housing**: $5,396 (42%) — rent & utilities  
+- **Food**: $2,313 (18%) — groceries + dining  
+- **Shopping**: $1,927 (15%) — clothes, gadgets  
+- **Bills**: $1,670 (13%) — phone, internet, insurance  
+- **Transport**: $1,542 (12%) — gas, Uber, transit
+
+*Up 8% from Q4 — mainly due to travel.*`,
+      },
+    ],
+    title: "Q1 spending summary",
+  },
+  rebalancing: {
+    messages: [
+      {
+        id: "1",
+        role: "user" as const,
+        text: "Rebalance my portfolio",
+      },
+      {
+        id: "2",
+        role: "assistant" as const,
+        text: "Your current allocation is 70/30 stocks/bonds. Target is 60/40. I'd recommend selling $15K of VTI and buying $15K of BND.",
+      },
+    ],
+    title: "Portfolio rebalancing",
+  },
+  "roth-vs-traditional": {
+    messages: [
+      {
+        id: "1",
+        role: "user" as const,
+        text: "Roth vs Traditional?",
+      },
+      {
+        id: "2",
+        role: "assistant" as const,
+        text: "At your 32% marginal rate, Traditional beats Roth. You'd save ~$3,200 in taxes per $10K contributed vs $0 with Roth.",
+      },
+    ],
+    title: "Roth vs Traditional IRA",
+  },
+  subscriptions: {
+    messages: [
+      {
+        id: "1",
+        role: "user" as const,
+        text: "Audit my subscriptions",
+      },
+      {
+        id: "2",
+        role: "assistant" as const,
+        text: "You have 7 active subscriptions totaling $127/mo. Netflix, Spotify, Adobe CC, Dropbox, Amazon Prime, iCloud+, and YouTube Premium.",
+      },
+    ],
+    title: "Subscription audit",
+  },
+  "tax-harvest": {
+    messages: [
+      {
+        id: "1",
+        role: "user" as const,
+        text: "Tax loss harvesting ideas",
+      },
+      {
+        id: "2",
+        role: "assistant" as const,
+        text: "You have $3,200 in unrealized losses in SCHG. Selling could offset $3,200 in capital gains + $1,000 of ordinary income.",
+      },
+    ],
+    title: "Tax loss harvesting ideas",
+  },
+  "year-end": {
+    messages: [
+      {
+        id: "1",
+        role: "user" as const,
+        text: "Give me a year-end review",
+      },
+      {
+        id: "2",
+        role: "assistant" as const,
+        text: "2025: Net worth up 23% to $485K. Income $320K, expenses $198K. Savings rate 38%. Top spending: housing, food, travel.",
+      },
+    ],
+    title: "2025 year-end review",
+  },
+};
 
 // ---------------------------------------------------------------------------
 // Sidebar
@@ -424,9 +716,11 @@ const NAV_ITEMS: { id: NavId; icon: React.ReactNode; label: string }[] = [
 
 function MiniSidebar({
   active,
+  onChatThread,
   onNav,
 }: {
   active: NavId;
+  onChatThread: (id: ChatThreadId) => void;
   onNav: (id: NavId) => void;
 }) {
   return (
@@ -469,7 +763,10 @@ function MiniSidebar({
               : "bg-input/60 text-muted-foreground hover:bg-input"
           )}
           type="button"
-          onClick={() => onNav("ai-chat")}
+          onClick={() => {
+            onNav("ai-chat");
+            onChatThread("new");
+          }}
         >
           <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} />
           <span>New Chat</span>
@@ -482,7 +779,10 @@ function MiniSidebar({
           <button
             className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
-            onClick={() => onNav("ai-chat")}
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("q1-summary");
+            }}
           >
             Q1 spending summary
           </button>
@@ -492,7 +792,10 @@ function MiniSidebar({
           <button
             className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
-            onClick={() => onNav("ai-chat")}
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("subscriptions");
+            }}
           >
             Subscription audit
           </button>
@@ -502,21 +805,30 @@ function MiniSidebar({
           <button
             className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
-            onClick={() => onNav("ai-chat")}
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("rebalancing");
+            }}
           >
             Portfolio rebalancing
           </button>
           <button
             className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
-            onClick={() => onNav("ai-chat")}
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("tax-harvest");
+            }}
           >
             Tax loss harvesting ideas
           </button>
           <button
             className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
-            onClick={() => onNav("ai-chat")}
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("emergency");
+            }}
           >
             Emergency fund analysis
           </button>
@@ -526,28 +838,40 @@ function MiniSidebar({
           <button
             className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
-            onClick={() => onNav("ai-chat")}
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("year-end");
+            }}
           >
             2025 year-end review
           </button>
           <button
             className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
-            onClick={() => onNav("ai-chat")}
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("roth-vs-traditional");
+            }}
           >
             Roth vs Traditional IRA
           </button>
           <button
             className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
-            onClick={() => onNav("ai-chat")}
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("budget");
+            }}
           >
             Budget optimization
           </button>
           <button
             className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
             type="button"
-            onClick={() => onNav("ai-chat")}
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("crypto");
+            }}
           >
             Crypto portfolio analysis
           </button>
@@ -566,11 +890,7 @@ function DashboardView() {
 }
 
 function AccountsView() {
-  return (
-    <div className="pl-4">
-      <BabyAccounts />
-    </div>
-  );
+  return <BabyAccounts />;
 }
 
 function BrokerageView() {
@@ -582,36 +902,7 @@ function BrokerageView() {
 }
 
 function ResearchView() {
-  const [period, setPeriod] = useState<ChartPeriod>("3M");
-  const data = mockChartPoints(period, "TSLA");
-
-  return (
-    <div className="flex h-full flex-col overflow-hidden p-4">
-      <div className="mb-4 flex items-center gap-3">
-        <TickerLogo size={32} symbol="TSLA" />
-        <div>
-          <p className="text-sm font-semibold leading-none">Tesla Inc.</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">
-            TSLA · NASDAQ
-          </p>
-        </div>
-        <div className="ml-auto text-right">
-          <p className="text-sm font-bold tabular-nums">$329.22</p>
-          <p className="mt-0.5 text-[10px] text-red-500 tabular-nums">
-            −0.39% today
-          </p>
-        </div>
-      </div>
-      <div className="min-h-0 flex-1">
-        <LightweightPriceChart
-          data={data}
-          height={220}
-          period={period}
-          setPeriod={setPeriod}
-        />
-      </div>
-    </div>
-  );
+  return <BabyResearch />;
 }
 
 function TransactionsView() {
@@ -632,29 +923,84 @@ function SubscriptionsView() {
 
 function NewsView() {
   return (
-    <div className="h-full overflow-hidden">
-      <NewsMagazine
-        defaultTab="general"
-        eventsForYou={MOCK_NEWS_EVENTS.slice(0, 2)}
-        eventsGeneral={MOCK_NEWS_EVENTS}
-        rssItems={MOCK_RSS_ITEMS}
-      />
-    </div>
+    <BabyNews
+      eventsForYou={MOCK_NEWS_EVENTS.slice(0, 2)}
+      eventsGeneral={MOCK_NEWS_EVENTS}
+      rssItems={MOCK_RSS_ITEMS}
+    />
   );
 }
 
-function AiChatView() {
+function AiChatView({ thread }: { thread: ChatThreadId }) {
+  const threadData = CHAT_THREADS[thread];
+  const [guestMessages, setGuestMessages] = useState<
+    { id: string; role: "user" | "assistant"; text: string }[]
+  >([]);
+  const [streamingText, setStreamingText] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+
+  useEffect(() => {
+    setGuestMessages([]);
+    setStreamingText("");
+    setIsStreaming(false);
+  }, [thread]);
+
+  const fullAssistantText =
+    "Sign in to Cobalt to get started 😉 — I'll connect to your accounts and give personalized insights about your spending, investments, and more.";
+
+  useEffect(() => {
+    if (!isStreaming || streamingText.length >= fullAssistantText.length) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setStreamingText((prev) => prev + fullAssistantText[prev.length]);
+    }, 10);
+
+    return () => clearTimeout(timeout);
+  }, [isStreaming, streamingText]);
+
+  const handleGuestSubmit = (userText: string) => {
+    setGuestMessages((prev) => [
+      ...prev,
+      { id: `guest-${prev.length}-1`, role: "user", text: userText },
+      {
+        id: `guest-${prev.length}-2`,
+        role: "assistant",
+        text: fullAssistantText,
+      },
+    ]);
+    setStreamingText("");
+    setIsStreaming(true);
+  };
+
+  const lastMessageId = guestMessages.at(-1)?.id;
+  const displayMessages = guestMessages.map((msg) => {
+    if (msg.role === "assistant" && isStreaming && msg.id === lastMessageId) {
+      return { ...msg, text: streamingText };
+    }
+    return msg;
+  });
+
+  const allMessages = [...threadData.messages, ...displayMessages];
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-hidden space-y-3 p-3">
-        {CHAT_MESSAGES.map((msg) => (
-          <Message from={msg.role} key={msg.id}>
-            <MessageContent>{msg.text}</MessageContent>
+    <div className="flex h-full flex-col max-w-xl mx-auto">
+      <div className="flex-1 overflow-hidden space-y-6 p-3">
+        {allMessages.map((msg) => (
+          <Message
+            className={msg.role === "assistant" ? "items-start" : undefined}
+            from={msg.role}
+            key={msg.id}
+          >
+            <MessageContent className="text-left">
+              <MessageResponse>{msg.text}</MessageResponse>
+            </MessageContent>
           </Message>
         ))}
       </div>
-      <div className="border-t border-border/60 p-3">
-        <ChatPromptInput />
+      <div className="p-3">
+        <BabyPromptInput onSubmit={handleGuestSubmit} />
       </div>
     </div>
   );
@@ -664,7 +1010,13 @@ function AiChatView() {
 // View map
 // ---------------------------------------------------------------------------
 
-function ActiveView({ active }: { active: NavId }) {
+function ActiveView({
+  active,
+  chatThread,
+}: {
+  active: NavId;
+  chatThread: ChatThreadId;
+}) {
   switch (active) {
     case "dashboard": {
       return <DashboardView />;
@@ -688,7 +1040,7 @@ function ActiveView({ active }: { active: NavId }) {
       return <NewsView />;
     }
     case "ai-chat": {
-      return <AiChatView />;
+      return <AiChatView thread={chatThread} />;
     }
     default: {
       return <DashboardView />;
@@ -702,11 +1054,16 @@ function ActiveView({ active }: { active: NavId }) {
 
 export function AppPreview() {
   const [active, setActive] = useState<NavId>("dashboard");
+  const [chatThread, setChatThread] = useState<ChatThreadId>("new");
 
   return (
     <BrowserWindow className="w-full h-full" size="2xl" variant="chrome">
       <div className="flex h-full overflow-hidden rounded-b-2xl bg-sidebar">
-        <MiniSidebar active={active} onNav={setActive} />
+        <MiniSidebar
+          active={active}
+          onChatThread={setChatThread}
+          onNav={setActive}
+        />
 
         {/* Inset content area */}
         <div className="m-1 ml-0 flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-sidebar-inset">
@@ -758,7 +1115,7 @@ export function AppPreview() {
           {/* Content */}
           <div className="min-h-0 flex-1 overflow-hidden">
             <div className="h-full overflow-hidden">
-              <ActiveView active={active} />
+              <ActiveView active={active} chatThread={chatThread} />
             </div>
           </div>
         </div>
