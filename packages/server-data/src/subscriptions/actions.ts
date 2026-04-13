@@ -1,28 +1,31 @@
-import { auth } from "@cobalt-web/auth";
+import { stripeClient } from "@cobalt-web/auth";
+import { db } from "@cobalt-web/db";
 
 /**
- * Creates a Stripe billing portal session for the given user via Better Auth's
- * stripe plugin (`auth.api.createBillingPortal`).
+ * Creates a Stripe billing portal session for the given user.
  *
- * Requires the `@better-auth/stripe` plugin to be configured on the auth instance.
+ * Reads the Stripe customer ID directly from `user.stripe_customer_id` rather
+ * than going through Better Auth's `createBillingPortal` API, which requires a
+ * separate `customer` table that this project does not use.
  */
 export async function createBillingPortalSession(
   userId: string,
-  returnUrl: string,
-  headers: Headers
+  returnUrl: string
 ): Promise<string> {
-  const data = await auth.api.createBillingPortal({
-    body: {
-      referenceId: userId,
-      returnUrl,
-    },
-    headers,
+  const user = await db.query.user.findFirst({
+    columns: { stripeCustomerId: true },
+    where: { id: { eq: userId } },
   });
 
-  const url = data?.url;
-  if (!url) {
-    throw new Error("Failed to create Stripe billing portal session");
+  const customerId = user?.stripeCustomerId;
+  if (!customerId) {
+    throw new Error("No Stripe customer found for this user");
   }
 
-  return url;
+  const session = await stripeClient.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: returnUrl,
+  });
+
+  return session.url;
 }
