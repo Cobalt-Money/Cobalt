@@ -4,7 +4,11 @@ export {
   mobileSubscriptionGrantsAccess,
   stripeSubscriptionGrantsAccess,
 } from "./predicates.js";
-export { userHasActiveSubscription } from "./queries.js";
+export {
+  userHasActiveSubscription,
+  userSubscriptionSource,
+} from "./queries.js";
+export type { SubscriptionSource } from "./queries.js";
 export type {
   AppStoreSyncInput,
   AppStoreSyncMutationResult,
