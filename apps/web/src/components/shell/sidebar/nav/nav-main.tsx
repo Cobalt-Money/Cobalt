@@ -9,7 +9,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 const navItemClassName =
-  "rounded-md px-2 py-1.5 text-[15px] text-muted-foreground [&_svg]:size-[15px] [&_svg]:shrink-0";
+  "rounded-md px-2 py-1.5 text-[15px] text-foreground [&_svg]:size-[15px] [&_svg]:shrink-0";
 
 export function NavMain({
   items,
