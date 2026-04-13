@@ -69,7 +69,7 @@ const SUBSCRIPTIONS: Subscription[] = [
     name: "Adobe CC",
   },
   {
-    amount: 120,
+    amount: 204,
     billingCycle: "monthly",
     billingDay: 3,
     colorClass: "bg-orange-500",
@@ -81,17 +81,17 @@ const SUBSCRIPTIONS: Subscription[] = [
     amount: 35.88,
     billingCycle: "yearly",
     billingDay: 15,
-    billingMonth: 2,
+    billingMonth: 3,
     colorClass: "bg-blue-600",
     domain: "1password.com",
     id: 7,
     name: "1Password",
   },
   {
-    amount: 96,
+    amount: 48,
     billingCycle: "yearly",
     billingDay: 20,
-    billingMonth: 0,
+    billingMonth: 3,
     colorClass: "bg-purple-600",
     domain: "linear.app",
     id: 8,
@@ -223,7 +223,7 @@ function SubLogo({ sub }: { sub: Subscription }) {
     <LogoImageWithFallback
       alt={sub.name}
       candidates={candidates}
-      className="size-7 shrink-0 overflow-hidden rounded-full ring-1 ring-border/60"
+      className="size-4 shrink-0 overflow-hidden rounded-full ring-1 ring-border/60"
       fallbackText={sub.name}
       imgClassName="object-cover"
     />
@@ -294,7 +294,7 @@ function MonthGrid({ date }: { date: Date }) {
               type="button"
               key={cell.reactKey}
               className={cn(
-                "flex h-32 flex-col rounded-2xl bg-input/30 p-1.5 text-center transition-colors hover:bg-input/50",
+                "flex h-20 flex-col rounded-2xl bg-input/30 p-1.5 text-center transition-colors hover:bg-input/50",
                 today && "ring-2 ring-primary"
               )}
             >
@@ -347,7 +347,7 @@ export function BabySubscriptionsCalendar() {
   const remaining = monthTotal - paidToDate;
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
       <SegmentedGauge
         value={remaining}
         max={monthTotal}
