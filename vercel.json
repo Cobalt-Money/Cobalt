@@ -1,4 +1,0 @@
-{
-  "outputDirectory": "apps/web/.vercel/output",
-  "buildCommand": "turbo build"
-}
