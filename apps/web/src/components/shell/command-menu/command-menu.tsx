@@ -1,8 +1,12 @@
+import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import {
   CobaltCommandDialog,
   CobaltCommandInput,
   CobaltCommandPaletteRoot,
 } from "@cobalt-web/ui/cobalt/command-palette";
+import { MerchantLogo } from "@cobalt-web/ui/cobalt/logos/merchant-logo";
+import { mapZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
+import type { ZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 import {
   CommandEmpty,
   CommandGroup,
@@ -10,6 +14,8 @@ import {
   CommandList,
 } from "@cobalt-web/ui/components/command";
 import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
+import { cn } from "@cobalt-web/ui/lib/utils";
+import { queries, zql } from "@cobalt-web/zero";
 import {
   AppleStocksIcon,
   ArrowReloadHorizontalIcon,
@@ -27,6 +33,7 @@ import {
   Sun01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useQuery, useZero } from "@rocicorp/zero/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
 import {
@@ -35,9 +42,10 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import type { ReactNode } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 
 /** All top-level app routes — icons match {@link AppSidebar} `sidebarNav.navMain`. */
 const COMMAND_NAV_ROUTES: readonly {
@@ -126,6 +134,73 @@ function renderCommandItem(action: CommandAction) {
   );
 }
 
+const transactionAmountFormatter = new Intl.NumberFormat("en-US", {
+  currency: "USD",
+  style: "currency",
+});
+
+const transactionDisplayName = (t: TransactionListItem): string =>
+  t.userOverrideName?.trim() ||
+  t.merchantName?.trim() ||
+  t.name?.trim() ||
+  "Untitled";
+
+const formatTransactionAmount = (amount: number | null | undefined): string =>
+  amount === null || amount === undefined
+    ? ""
+    : transactionAmountFormatter.format(Math.abs(amount));
+
+const parseDate = (date: unknown): Date | null => {
+  if (typeof date === "number" || typeof date === "string") {
+    return new Date(date);
+  }
+  return date instanceof Date ? date : null;
+};
+
+const formatTransactionDate = (date: unknown): string => {
+  const parsed = parseDate(date);
+  if (!parsed || Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+  return parsed.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+  });
+};
+
+const ILIKE_WILDCARD = (query: string): string => `%${query}%`;
+
+/** Pure query builders — no side effects, given the same search string they produce the same ZQL. */
+const buildRecentTransactionsQuery = () =>
+  zql.transaction
+    .related("account", (q) =>
+      q.related("connection", (c) => c.related("institution"))
+    )
+    .orderBy("date", "desc")
+    .limit(30);
+
+const buildTransactionSearchQuery = (trimmedSearch: string) => {
+  const pattern = ILIKE_WILDCARD(trimmedSearch);
+  return zql.transaction
+    .where(({ cmp, or }) =>
+      or(
+        cmp("name", "ILIKE", pattern),
+        cmp("merchantName", "ILIKE", pattern),
+        cmp("userOverrideName", "ILIKE", pattern)
+      )
+    )
+    .related("account", (q) =>
+      q.related("connection", (c) => c.related("institution"))
+    )
+    .orderBy("date", "desc")
+    .limit(50);
+};
+
+const toTransactionListItem = (row: unknown): TransactionListItem | null =>
+  mapZeroTransactionListRow(row as ZeroTransactionListRow);
+
+const isNotNull = <T,>(value: T | null): value is T => value !== null;
+
 interface CommandMenuContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -149,32 +224,109 @@ function CommandMenuDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const navigate = useNavigate();
+  const zero = useZero();
   const { resolvedTheme, setTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
+  const [pages, setPages] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+
+  const activePage = pages.at(-1);
+  const inSearchTransactions = activePage === "search-transactions";
+  const trimmedSearch = search.trim();
+
+  /**
+   * Lazy preload: warm the client cache with the full transaction history
+   * only when the user first enters the "Search Transactions" sub-page. The
+   * handle is kept alive for the session so subsequent entries are instant;
+   * cleanup runs on unmount (e.g. logout). Users who never search
+   * transactions pay zero sync cost.
+   */
+  const preloadHandleRef = useRef<{ cleanup: () => void } | null>(null);
+  useEffect(
+    () => () => {
+      preloadHandleRef.current?.cleanup();
+      preloadHandleRef.current = null;
+    },
+    []
+  );
+
+  /**
+   * Raw-ZQL local-only query against the warm client cache (preloaded above
+   * in `enterSearchTransactions`). Runs entirely client-side — zero server
+   * roundtrips per keystroke. See Zero docs on local-only queries.
+   */
+  const [transactionRows] = useQuery(
+    trimmedSearch.length > 0
+      ? buildTransactionSearchQuery(trimmedSearch)
+      : buildRecentTransactionsQuery(),
+    { enabled: inSearchTransactions }
+  );
+
+  const filteredTransactions = useMemo<TransactionListItem[]>(
+    () =>
+      inSearchTransactions
+        ? transactionRows.map(toTransactionListItem).filter(isNotNull)
+        : [],
+    [inSearchTransactions, transactionRows]
+  );
 
   useEffect(() => {
     setThemeReady(true);
   }, []);
 
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        setPages([]);
+        setSearch("");
+      }
+      onOpenChange(nextOpen);
+    },
+    [onOpenChange]
+  );
+
   const go = useCallback(
     (to: (typeof COMMAND_NAV_ROUTES)[number]["path"]) => {
-      onOpenChange(false);
+      handleOpenChange(false);
       navigate({ to });
     },
-    [navigate, onOpenChange]
+    [handleOpenChange, navigate]
   );
 
   const toggleTheme = useCallback(() => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
-    onOpenChange(false);
-  }, [onOpenChange, resolvedTheme, setTheme]);
+    handleOpenChange(false);
+  }, [handleOpenChange, resolvedTheme, setTheme]);
 
   const themeToggleIcon = resolvedTheme === "dark" ? Sun01Icon : Moon02Icon;
+
+  const enterSearchTransactions = useCallback(() => {
+    if (!preloadHandleRef.current) {
+      preloadHandleRef.current = zero.preload(queries.transactions.all());
+    }
+    setSearch("");
+    setPages((p) => [...p, "search-transactions"]);
+  }, [zero]);
+
+  const handleInputKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Backspace" && search.length === 0 && pages.length > 0) {
+        e.preventDefault();
+        setPages((p) => p.slice(0, -1));
+      }
+      if (e.key === "Escape" && pages.length > 0) {
+        e.preventDefault();
+        setPages((p) => p.slice(0, -1));
+        setSearch("");
+      }
+    },
+    [pages.length, search.length]
+  );
 
   const accountActions: CommandAction[] = [
     {
       handleSelect: () => {
-        onOpenChange(false);
+        handleOpenChange(false);
         navigate({ to: "/accounts" });
       },
       icon: Edit02Icon,
@@ -183,7 +335,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
-        onOpenChange(false);
+        handleOpenChange(false);
         navigate({ to: "/accounts" });
       },
       icon: EyeIcon,
@@ -194,17 +346,14 @@ function CommandMenuDialog({
 
   const transactionActions: CommandAction[] = [
     {
-      handleSelect: () => {
-        onOpenChange(false);
-        navigate({ to: "/transactions" });
-      },
+      handleSelect: enterSearchTransactions,
       icon: Search02Icon,
       keywords: ["find", "query", "search", "filter"],
       label: "Search Transactions",
     },
     {
       handleSelect: () => {
-        onOpenChange(false);
+        handleOpenChange(false);
         navigate({ to: "/transactions" });
       },
       icon: Edit02Icon,
@@ -213,7 +362,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
-        onOpenChange(false);
+        handleOpenChange(false);
         navigate({ to: "/transactions" });
       },
       icon: Download02Icon,
@@ -225,7 +374,7 @@ function CommandMenuDialog({
   const brokerageActions: CommandAction[] = [
     {
       handleSelect: () => {
-        onOpenChange(false);
+        handleOpenChange(false);
         navigate({ to: "/brokerage" });
       },
       icon: AppleStocksIcon,
@@ -234,7 +383,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
-        onOpenChange(false);
+        handleOpenChange(false);
         navigate({ to: "/brokerage" });
       },
       icon: Edit02Icon,
@@ -243,7 +392,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
-        onOpenChange(false);
+        handleOpenChange(false);
         navigate({ to: "/brokerage" });
       },
       icon: BellDotIcon,
@@ -255,7 +404,7 @@ function CommandMenuDialog({
   const insightActions: CommandAction[] = [
     {
       handleSelect: () => {
-        onOpenChange(false);
+        handleOpenChange(false);
         navigate({ to: "/dashboard" });
       },
       icon: SearchDollarIcon,
@@ -264,7 +413,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
-        onOpenChange(false);
+        handleOpenChange(false);
         navigate({ to: "/dashboard" });
       },
       icon: File02Icon,
@@ -273,7 +422,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
-        onOpenChange(false);
+        handleOpenChange(false);
         navigate({ to: "/research" });
       },
       icon: File02Icon,
@@ -285,7 +434,7 @@ function CommandMenuDialog({
   const settingActions: CommandAction[] = [
     {
       handleSelect: () => {
-        onOpenChange(false);
+        handleOpenChange(false);
         navigate({ to: "/subscriptions" });
       },
       icon: Settings01Icon,
@@ -294,80 +443,158 @@ function CommandMenuDialog({
     },
   ];
 
+  const handleSelectTransaction = useCallback(
+    (transactionId: string) => {
+      handleOpenChange(false);
+      navigate({
+        params: { transactionId },
+        to: "/transactions/$transactionId",
+      });
+    },
+    [handleOpenChange, navigate]
+  );
+
   return (
     <CobaltCommandDialog
       description="Search for a page or action"
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       open={open}
       showCloseButton={false}
       title="Command palette"
     >
-      <CobaltCommandPaletteRoot>
-        <CobaltCommandInput placeholder="Type a command or search…" />
+      <CobaltCommandPaletteRoot shouldFilter={!inSearchTransactions}>
+        <CobaltCommandInput
+          onKeyDown={handleInputKeyDown}
+          onValueChange={setSearch}
+          placeholder={
+            inSearchTransactions
+              ? "Search transactions…"
+              : "Type a command or search…"
+          }
+          value={search}
+        />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-
-          <CommandGroup heading="Navigation">
-            {COMMAND_NAV_ROUTES.map(({ icon, keywords, label, path }) => (
-              <CommandItem
-                key={String(path)}
-                keywords={keywords}
-                onSelect={() => go(path)}
-                value={`${label} ${path}`}
+          {inSearchTransactions ? (
+            <>
+              {filteredTransactions.length === 0 ? (
+                <CommandEmpty>
+                  {trimmedSearch.length > 0
+                    ? "No transactions found."
+                    : "No recent transactions."}
+                </CommandEmpty>
+              ) : null}
+              <CommandGroup
+                heading={trimmedSearch.length > 0 ? "Search results" : "Recent"}
               >
-                <HugeiconsIcon
-                  aria-hidden
-                  className="text-muted-foreground"
-                  icon={icon}
-                  strokeWidth={2}
-                />
-                {label}
-              </CommandItem>
-            ))}
-          </CommandGroup>
+                {filteredTransactions.map((t) => {
+                  const name = transactionDisplayName(t);
+                  const isInflow = (t.amount ?? 0) < 0;
+                  return (
+                    <CommandItem
+                      key={t.id}
+                      onSelect={() => handleSelectTransaction(t.id)}
+                      value={`${t.id} ${name} ${t.accountName ?? ""}`}
+                    >
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <MerchantLogo
+                          className="size-8 shrink-0"
+                          counterparties={t.counterparties}
+                          logoUrl={t.logoUrl}
+                          merchantName={t.merchantName}
+                          website={t.website}
+                        />
+                        <div className="flex min-w-0 flex-1 flex-col">
+                          <span className="truncate font-medium">{name}</span>
+                          <span className="truncate text-muted-foreground text-xs">
+                            {[t.accountName, formatTransactionDate(t.date)]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </span>
+                        </div>
+                        <span
+                          className={cn(
+                            "ml-auto shrink-0 font-medium tabular-nums",
+                            isInflow
+                              ? "text-green-550"
+                              : "text-red-600 dark:text-red-500"
+                          )}
+                        >
+                          {isInflow ? "+" : "-"}
+                          {formatTransactionAmount(t.amount)}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </>
+          ) : (
+            <>
+              <CommandEmpty>No results found.</CommandEmpty>
 
-          <CommandGroup heading="Accounts">
-            {accountActions.map(renderCommandItem)}
-          </CommandGroup>
+              <CommandGroup heading="Navigation">
+                {COMMAND_NAV_ROUTES.map(({ icon, keywords, label, path }) => (
+                  <CommandItem
+                    key={String(path)}
+                    keywords={keywords}
+                    onSelect={() => go(path)}
+                    value={`${label} ${path}`}
+                  >
+                    <HugeiconsIcon
+                      aria-hidden
+                      className="text-muted-foreground"
+                      icon={icon}
+                      strokeWidth={2}
+                    />
+                    {label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
 
-          <CommandGroup heading="Transactions">
-            {transactionActions.map(renderCommandItem)}
-          </CommandGroup>
+              <CommandGroup heading="Accounts">
+                {accountActions.map(renderCommandItem)}
+              </CommandGroup>
 
-          <CommandGroup heading="Brokerage">
-            {brokerageActions.map(renderCommandItem)}
-          </CommandGroup>
+              <CommandGroup heading="Transactions">
+                {transactionActions.map(renderCommandItem)}
+              </CommandGroup>
 
-          <CommandGroup heading="Insights">
-            {insightActions.map(renderCommandItem)}
-          </CommandGroup>
+              <CommandGroup heading="Brokerage">
+                {brokerageActions.map(renderCommandItem)}
+              </CommandGroup>
 
-          <CommandGroup heading="Settings">
-            {settingActions.map(renderCommandItem)}
-            {themeReady ? (
-              <CommandItem
-                keywords={[
-                  "appearance",
-                  "color",
-                  "dark",
-                  "light",
-                  "mode",
-                  "theme",
-                  "toggle",
-                ]}
-                onSelect={toggleTheme}
-                value="theme-toggle"
-              >
-                <HugeiconsIcon
-                  aria-hidden
-                  className="text-muted-foreground"
-                  icon={themeToggleIcon}
-                  strokeWidth={2}
-                />
-                Toggle theme
-              </CommandItem>
-            ) : null}
-          </CommandGroup>
+              <CommandGroup heading="Insights">
+                {insightActions.map(renderCommandItem)}
+              </CommandGroup>
+
+              <CommandGroup heading="Settings">
+                {settingActions.map(renderCommandItem)}
+                {themeReady ? (
+                  <CommandItem
+                    keywords={[
+                      "appearance",
+                      "color",
+                      "dark",
+                      "light",
+                      "mode",
+                      "theme",
+                      "toggle",
+                    ]}
+                    onSelect={toggleTheme}
+                    value="theme-toggle"
+                  >
+                    <HugeiconsIcon
+                      aria-hidden
+                      className="text-muted-foreground"
+                      icon={themeToggleIcon}
+                      strokeWidth={2}
+                    />
+                    Toggle theme
+                  </CommandItem>
+                ) : null}
+              </CommandGroup>
+            </>
+          )}
         </CommandList>
       </CobaltCommandPaletteRoot>
     </CobaltCommandDialog>
