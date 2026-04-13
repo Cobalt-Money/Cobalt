@@ -29,8 +29,7 @@ export const billingPortalRouter = new OpenAPIHono<AppEnv>().openapi(
     const appUrl = env.APP_URL;
     const url = await createBillingPortalSession(
       c.var.user.id,
-      `${appUrl}/settings`,
-      c.req.raw.headers
+      `${appUrl}/settings`
     );
     return c.json({ url }, 200);
   }

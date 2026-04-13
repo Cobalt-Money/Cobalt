@@ -1,6 +1,6 @@
 import {
   subscriptionStatusResponseSchema,
-  userHasActiveSubscription,
+  userSubscriptionSource,
 } from "@cobalt-web/server-data/subscriptions";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -25,10 +25,14 @@ const route = createRoute({
 export const statusRouter = new OpenAPIHono<AppEnv>().openapi(
   route,
   async (c) => {
-    const hasActiveSubscription = await userHasActiveSubscription(
-      c.var.user.id
-    );
+    const source = await userSubscriptionSource(c.var.user.id);
     c.header("Cache-Control", "private, no-store");
-    return c.json({ hasActiveSubscription }, 200);
+    return c.json(
+      {
+        hasActiveSubscription: source !== null,
+        subscriptionSource: source,
+      },
+      200
+    );
   }
 );

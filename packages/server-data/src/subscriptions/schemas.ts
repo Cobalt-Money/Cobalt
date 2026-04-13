@@ -4,6 +4,8 @@ import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 
 export const subscriptionStatusResponseSchema = z.object({
   hasActiveSubscription: z.boolean(),
+  /** "stripe" | "appstore" | null — null means no active subscription. */
+  subscriptionSource: z.enum(["stripe", "appstore"]).nullable(),
 });
 
 export const billingPortalResponseSchema = z.object({

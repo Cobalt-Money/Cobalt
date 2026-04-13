@@ -80,7 +80,7 @@ export default function ChatView() {
             return (
               <div className="flex flex-col gap-8" key={sectionKey}>
                 {section.user && (
-                  <div className="sticky top-0 z-10 w-full rounded-3xl bg-[oklch(0.949_0_0)] px-5 py-3.5 text-base text-foreground dark:bg-[oklch(0.29_0_0)]">
+                  <div className="w-full rounded-3xl bg-[oklch(0.949_0_0)] px-5 py-3.5 text-base text-foreground dark:bg-[oklch(0.29_0_0)]">
                     <p>{getTextContent(section.user)}</p>
                   </div>
                 )}
