@@ -786,6 +786,26 @@ function MiniSidebar({
           >
             Q1 spending summary
           </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            Coffee spend this month
+          </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            Checking buffer target
+          </button>
           <div className="px-2 pt-2 pb-1 text-left text-xs font-medium text-muted-foreground">
             Yesterday
           </div>
@@ -798,6 +818,26 @@ function MiniSidebar({
             }}
           >
             Subscription audit
+          </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            Travel budget for June trip
+          </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            Cash flow last 30 days
           </button>
           <div className="px-2 pt-2 pb-1 text-left text-xs font-medium text-muted-foreground">
             Last 7 Days
@@ -831,6 +871,36 @@ function MiniSidebar({
             }}
           >
             Emergency fund analysis
+          </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            Dividend income estimate
+          </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            High-yield savings comparison
+          </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            Credit card rewards review
           </button>
           <div className="px-2 pt-2 pb-1 text-left text-xs font-medium text-muted-foreground">
             Older
@@ -874,6 +944,56 @@ function MiniSidebar({
             }}
           >
             Crypto portfolio analysis
+          </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            401(k) contribution strategy
+          </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            Student loan payoff plan
+          </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            Mortgage refinance check
+          </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            HSA vs FSA breakdown
+          </button>
+          <button
+            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+            type="button"
+            onClick={() => {
+              onNav("ai-chat");
+              onChatThread("new");
+            }}
+          >
+            International ETF exposure
           </button>
         </div>
       </div>
