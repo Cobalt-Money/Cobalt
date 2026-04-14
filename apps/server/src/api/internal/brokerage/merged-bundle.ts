@@ -7,10 +7,13 @@ import { errorResponseSchema } from "@cobalt-web/server-data/brokerage/snaptrade
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requirePaidUser } from "../middleware.js";
+
 const route = createRoute({
   description:
     "Merged SnapTrade brokerage + Plaid investment data in one response (accounts, balances, positions, activities, snapshots, holdings-linked news).",
   method: "get",
+  middleware: [requirePaidUser] as const,
   path: "/",
   request: { query: mergedBrokerageQuerySchema },
   responses: {

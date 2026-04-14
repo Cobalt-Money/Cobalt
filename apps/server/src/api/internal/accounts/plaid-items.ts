@@ -12,8 +12,11 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requireAuth } from "../middleware.js";
+
 const listAccountsForItem = createRoute({
   method: "get",
+  middleware: [requireAuth] as const,
   path: "/items/{itemId}",
   request: { params: itemIdParamSchema },
   responses: {
@@ -30,6 +33,7 @@ const listAccountsForItem = createRoute({
 
 const listItems = createRoute({
   method: "get",
+  middleware: [requireAuth] as const,
   path: "/plaid-items",
   responses: {
     200: {
@@ -45,6 +49,7 @@ const listItems = createRoute({
 
 const listAlerts = createRoute({
   method: "get",
+  middleware: [requireAuth] as const,
   path: "/plaid-items/alerts",
   responses: {
     200: {
@@ -58,25 +63,22 @@ const listAlerts = createRoute({
   tags: ["Accounts"],
 });
 
-const plaidItemsRouter = new OpenAPIHono<AppEnv>();
-
-plaidItemsRouter.openapi(listAccountsForItem, async (c) => {
-  const { itemId } = c.req.valid("param");
-  const accounts = await getPlaidAccountsForItem(c.var.user.id, itemId);
-  c.header("Cache-Control", "private, max-age=60");
-  return c.json({ accounts }, 200);
-});
-
-plaidItemsRouter.openapi(listItems, async (c) => {
-  const items = await getUserPlaidItems(c.var.user.id);
-  c.header("Cache-Control", "private, max-age=60");
-  return c.json({ items }, 200);
-});
-
-plaidItemsRouter.openapi(listAlerts, async (c) => {
-  const alerts = await getPlaidItemsWithAlerts(c.var.user.id);
-  c.header("Cache-Control", "private, max-age=60");
-  return c.json({ alerts }, 200);
-});
+const plaidItemsRouter = new OpenAPIHono<AppEnv>()
+  .openapi(listAccountsForItem, async (c) => {
+    const { itemId } = c.req.valid("param");
+    const accounts = await getPlaidAccountsForItem(c.var.user.id, itemId);
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json({ accounts }, 200);
+  })
+  .openapi(listItems, async (c) => {
+    const items = await getUserPlaidItems(c.var.user.id);
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json({ items }, 200);
+  })
+  .openapi(listAlerts, async (c) => {
+    const alerts = await getPlaidItemsWithAlerts(c.var.user.id);
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json({ alerts }, 200);
+  });
 
 export { plaidItemsRouter };

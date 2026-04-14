@@ -7,8 +7,11 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requireAuth } from "../middleware.js";
+
 const route = createRoute({
   method: "post",
+  middleware: [requireAuth] as const,
   path: "/generate-connection-portal",
   request: {
     body: {

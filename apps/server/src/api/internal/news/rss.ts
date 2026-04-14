@@ -6,9 +6,12 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requirePaidUser } from "../middleware.js";
+
 const route = createRoute({
   description: "RSS feed articles filtered by company/category",
   method: "get",
+  middleware: [requirePaidUser] as const,
   path: "/rss",
   request: { query: rssQuerySchema },
   responses: {

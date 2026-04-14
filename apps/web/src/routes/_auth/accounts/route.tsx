@@ -6,6 +6,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 
+import { useAddAccount } from "@/components/accounts/add-account-provider";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 
 import {
@@ -29,6 +30,7 @@ function AccountsLayoutInner() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isAccountsList = pathname === "/accounts" || pathname === "/accounts/";
   const { activeFilter, setActiveFilter } = useAccountsLayout();
+  const { openAddAccount } = useAddAccount();
 
   return (
     <SidebarShellLayout
@@ -44,7 +46,9 @@ function AccountsLayoutInner() {
     >
       <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">
         <Outlet />
-        {isAccountsList ? <AccountsAddAccountFab /> : null}
+        {isAccountsList ? (
+          <AccountsAddAccountFab onClickUnified={openAddAccount} />
+        ) : null}
       </div>
     </SidebarShellLayout>
   );

@@ -6,10 +6,13 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requirePaidUser } from "../middleware.js";
+
 const route = createRoute({
   description:
     "Aggregated credit spending bucketed by period (daily/weekly/monthly)",
   method: "get",
+  middleware: [requirePaidUser] as const,
   path: "/credit-spending",
   request: {
     query: creditSpendingQuerySchema,

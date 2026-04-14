@@ -24,6 +24,35 @@ dist/         — Compiled output (tsdown)
 - Zero push endpoint for Rocicorp Zero real-time sync
 - Build produces a compiled binary via `bun build --compile`
 
+## Hono RPC chain contract
+
+**Every route, middleware, and sub-router registration MUST be chained into the `const` declaration it belongs to.** Hono's `.route()`, `.get()`, `.post()`, `.openapi()`, etc. return a _new_ type carrying the accumulated route schema — the statement form throws that type away and `typeof app` stays empty, breaking `hc<AppType>` in the web client.
+
+```ts
+// ❌ BAD — types lost, web client ends up untyped
+const router = new OpenAPIHono<AppEnv>();
+router.openapi(routeA, handlerA);
+router.openapi(routeB, handlerB);
+
+// ✅ GOOD — types propagate up through `typeof app`
+const router = new OpenAPIHono<AppEnv>()
+  .openapi(routeA, handlerA)
+  .openapi(routeB, handlerB);
+```
+
+**Auth gotcha:** `.use("/*", requireAuth)` returns a plain `Hono` and drops OpenAPIHono's `.openapi()` method from the chain's return type. Do NOT chain `.use(path, middleware)` before `.openapi(...)`. Instead, attach auth at the route level via `createRoute`'s `middleware` field:
+
+```ts
+const protectedRoute = createRoute({
+  method: "post",
+  middleware: [requireAuth] as const,
+  path: "/...",
+  // ...
+});
+```
+
+Every router file under `src/api/**` follows this contract. Preserve it when adding new routes.
+
 ## Skills
 
 Before building or modifying server features, read the relevant skill:

@@ -1,13 +1,12 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requireAuth } from "../middleware.js";
 import { bankAccountsRouter } from "./bank-accounts.js";
 import { brokerageSnaptradeRouter } from "./brokerage-snaptrade.js";
 import { creditCardsRouter } from "./credit-cards.js";
 import { plaidItemsRouter } from "./plaid-items.js";
 
+// requireAuth applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
 export const accountsRouter = new OpenAPIHono()
-  .use("/*", requireAuth)
   .route("/", bankAccountsRouter)
   .route("/", creditCardsRouter)
   .route("/", plaidItemsRouter)

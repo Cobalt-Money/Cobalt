@@ -10,10 +10,13 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requirePaidUser } from "../middleware.js";
+
 const route = createRoute({
   description:
     "Load messages and vote map for one chat. Returns 404 with empty messages when the chat is missing or inaccessible (matches legacy client behavior).",
   method: "get",
+  middleware: [requirePaidUser] as const,
   path: "/{chatId}",
   request: { params: chatIdParamSchema },
   responses: {

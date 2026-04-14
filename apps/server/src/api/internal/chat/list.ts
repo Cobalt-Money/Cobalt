@@ -6,10 +6,13 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requirePaidUser } from "../middleware.js";
+
 const route = createRoute({
   description:
     "List the authenticated user's chats (most recently updated first).",
   method: "get",
+  middleware: [requirePaidUser] as const,
   path: "/list",
   responses: {
     200: {

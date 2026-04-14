@@ -6,10 +6,13 @@ import {
 } from "@cobalt-web/server-data/user";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requireAuth } from "../middleware.js";
+
 const getRoute = createRoute({
   description:
     "Get the authenticated user's last-seen timestamp and whether financial updates should be shown",
   method: "get",
+  middleware: [requireAuth] as const,
   path: "/last-seen",
   responses: {
     200: {
@@ -27,6 +30,7 @@ const postRoute = createRoute({
   description:
     "Update the authenticated user's last-seen timestamp to now (called when user dismisses financial updates)",
   method: "post",
+  middleware: [requireAuth] as const,
   path: "/last-seen",
   responses: {
     200: {

@@ -1,12 +1,14 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requireAuth } from "../middleware.js";
 import { balanceSnapshotsRouter } from "./balance-snapshots.js";
 import { linkRouter } from "./link.js";
 import { updateRouter } from "./update.js";
 
+// NOTE: `requireAuth` is applied per-route via `createRoute({ middleware: ... })`
+// on each child router, not via `.use("/*", requireAuth)` on this parent.
+// `.use()` returns plain `Hono`, which drops OpenAPIHono's `.openapi()` method
+// and breaks the chained-type contract described in `apps/server/src/index.ts`.
 export const plaidRouter = new OpenAPIHono()
-  .use("/*", requireAuth)
   .route("/", linkRouter)
   .route("/", updateRouter)
   .route("/", balanceSnapshotsRouter);

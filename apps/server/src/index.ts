@@ -31,118 +31,65 @@ import {
 } from "./mcp/handle-mcp-request.js";
 import { buildMcpProtectedResourceMetadata } from "./mcp/oauth-discovery.js";
 
-const base = new OpenAPIHono();
-const publicApi = new OpenAPIHono();
-const app = new Hono();
+/**
+ * IMPORTANT — Hono RPC contract
+ *
+ * Every route/middleware registration in this file must be chained into the
+ * `const` declaration it belongs to. Hono's `.route()`, `.get()`, `.post()`,
+ * `.use()`, etc. return a *new* type with the accumulated route schema; the
+ * statement form (`const app = new Hono(); app.route(...)`) throws that type
+ * away and `typeof app` stays empty. The runtime still works, but `hc<AppType>`
+ * in the web client ends up untyped.
+ *
+ * If you need to add a route conditionally or in a loop, capture the chain
+ * result into a new `const` and continue from there — never mutate the bare
+ * variable via a statement call.
+ */
+
+// ── OAuth discovery helpers ─────────────────────────────────────────
+
 const oauthAuthServerMetadata = oauthProviderAuthServerMetadata(auth as never);
 const oauthOpenIdConfigMetadata = oauthProviderOpenIdConfigMetadata(
   auth as never
 );
 
-// ── Global Middleware ───────────────────────────────────────────────
-
-app.use(logger());
-app.use(
-  "/*",
-  cors({
-    allowHeaders: [
-      "Accept",
-      "Authorization",
-      "Content-Type",
-      "Last-Event-ID",
-      "Mcp-Protocol-Version",
-      "Mcp-Session-Id",
-      "mcp-protocol-version",
-      "mcp-session-id",
-    ],
-    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    credentials: true,
-    exposeHeaders: ["Mcp-Session-Id", "mcp-session-id"],
-    origin: env.CORS_ORIGIN,
-  })
-);
-
-// ── MCP + OAuth discovery (Streamable HTTP + RFC 9728 / AS metadata) ─
-
-// RFC 9728 — Protected Resource Metadata. First endpoint clients hit to
-// discover which authorization server protects the MCP resource.
-app.get("/.well-known/oauth-protected-resource/api/mcp", (c) => {
-  const origin = getPublicOriginFromRequest(c.req.raw);
-  const mcpResourceUrl = new URL("/api/mcp", origin).href;
-  return c.json(buildMcpProtectedResourceMetadata(mcpResourceUrl));
-});
-
-// RFC 8414 — Authorization Server Metadata (path-suffixed for issuer /api/auth).
-// Exposes authorize, token, registration, JWKS, and revocation endpoints.
+// Stable Hono-compatible wrapper so both well-known mount paths below can
+// reuse the same handler.
 const oauthAuthServerMetadataHandler = (c: { req: { raw: Request } }) =>
   oauthAuthServerMetadata(c.req.raw);
 
-app.get(
-  "/.well-known/oauth-authorization-server/api/auth",
-  oauthAuthServerMetadataHandler
-);
-// Some clients probe the root well-known path; serve the same document to avoid 404 noise.
-app.get(
-  "/.well-known/oauth-authorization-server",
-  oauthAuthServerMetadataHandler
-);
+// ── Internal API ────────────────────────────────────────────────────
 
-// OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
-app.get("/.well-known/openid-configuration", (c) =>
-  oauthOpenIdConfigMetadata(c.req.raw)
-);
-
-// Streamable HTTP MCP transport — requires Bearer token from the OAuth flow above.
-app.all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw));
-
-// ── Routes ──────────────────────────────────────────────────────────
-
-base
-  .route("/api/auth", authRouter)
-  .route("/api/zero", zeroRouter)
-  .route("/api/accounts", accountsRouter)
-  .route("/api/transactions", transactionsRouter)
-  .route("/api/brokerage", brokerageRouter)
-  .route("/api/chat", chatRouter)
-  .route("/api/news", newsRouter)
-  .route("/api/research", researchRouter)
-  .route("/api/snaptrade", snaptradeRouter)
-  .route("/api/subscriptions", subscriptionsRouter)
-  .route("/api/user", userRouter)
-  .route("/api/institutions", institutionsRouter)
-  .route("/api/plaid", plaidRouter)
-  .route("/api/appstore", appstoreRouter);
-
-// ── Public API ──────────────────────────────────────────────────────
-
-publicApi.route("/v1", v1Router);
-
-publicApi.doc("/v1/openapi.json", {
-  info: {
-    description:
-      "The Cobalt public API provides programmatic access to market data, portfolio analytics, and financial insights.",
-    title: "Cobalt Public API",
-    version: "1.0.0",
-  },
-  openapi: "3.1.0",
-  security: [{ bearerAuth: [] }],
-  servers: [{ description: "Production", url: "https://api.cobaltpf.com" }],
-});
-
-publicApi.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
-  bearerFormat: "OAuth 2.0 Access Token",
-  description:
-    "OAuth 2.0 access token obtained via the authorization code flow",
-  scheme: "bearer",
-  type: "http",
-});
-
-// ── Health ──────────────────────────────────────────────────────────
-
-app.get("/", (c) => c.text("OK"));
-
-// ── OpenAPI Docs (Cobalt spec + Better Auth via Scalar `sources`) ───
-
+// `/api/*` routes consumed by our own web + mobile clients. Hosted on an
+// `OpenAPIHono` so every router can expose Zod-derived schemas that feed
+// the `/openapi.json` document (used for Swift codegen and the in-repo
+// API reference at `/docs`).
+//
+// **Why statement-form mounts here?** Chaining all 14 sub-routers into a
+// single `new OpenAPIHono().route(...).route(...)` compound blows
+// TypeScript's recursion depth (TS2589) because each `.route()` call
+// merges the sub-router's accumulated OpenAPI schema into the parent
+// type, and the merger is quadratic in route count. The runtime is
+// completely unaffected by authoring style, so we mount via statements
+// here and let the web client pull types directly from each sub-router
+// type export below. This is the pattern the Hono docs recommend for
+// large RPC apps:
+// https://hono.dev/docs/guides/rpc#split-your-app-into-multiple-files
+const base: OpenAPIHono = new OpenAPIHono();
+base.route("/api/auth", authRouter);
+base.route("/api/zero", zeroRouter);
+base.route("/api/accounts", accountsRouter);
+base.route("/api/transactions", transactionsRouter);
+base.route("/api/brokerage", brokerageRouter);
+base.route("/api/chat", chatRouter);
+base.route("/api/news", newsRouter);
+base.route("/api/research", researchRouter);
+base.route("/api/snaptrade", snaptradeRouter);
+base.route("/api/subscriptions", subscriptionsRouter);
+base.route("/api/user", userRouter);
+base.route("/api/institutions", institutionsRouter);
+base.route("/api/plaid", plaidRouter);
+base.route("/api/appstore", appstoreRouter);
 base.doc31("/openapi.json", {
   info: {
     description: "Cobalt financial platform API",
@@ -152,26 +99,122 @@ base.doc31("/openapi.json", {
   openapi: "3.1.0",
 });
 
-app.get(
-  "/docs",
-  Scalar({
-    hideModels: true,
-    pageTitle: "Cobalt API",
-    sources: [
-      { title: "Cobalt API", url: "/openapi.json" },
-      {
-        title: "Better Auth",
-        url: "/api/auth/open-api/generate-schema",
-      },
-    ],
+// ── Public API ──────────────────────────────────────────────────────
+
+// Third-party developer surface at `/v1`. Kept on its own `OpenAPIHono`
+// instance so it can publish an independent title, server URL, and auth
+// scheme at `/v1/openapi.json` without leaking internal routes.
+const publicApi = new OpenAPIHono()
+  .route("/v1", v1Router)
+  .doc("/v1/openapi.json", {
+    info: {
+      description:
+        "The Cobalt public API provides programmatic access to market data, portfolio analytics, and financial insights.",
+      title: "Cobalt Public API",
+      version: "1.0.0",
+    },
+    openapi: "3.1.0",
+    security: [{ bearerAuth: [] }],
+    servers: [{ description: "Production", url: "https://api.cobaltpf.com" }],
+  });
+
+// `registerComponent` mutates the schema registry (not the Hono instance)
+// and doesn't return anything useful, so it runs as a side-effect statement
+// after the const. Not subject to the chain-return contract above.
+publicApi.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
+  bearerFormat: "OAuth 2.0 Access Token",
+  description:
+    "OAuth 2.0 access token obtained via the authorization code flow",
+  scheme: "bearer",
+  type: "http",
+});
+
+// ── Root app ────────────────────────────────────────────────────────
+
+const app = new Hono()
+  .use(logger())
+  .use(
+    "/*",
+    cors({
+      allowHeaders: [
+        "Accept",
+        "Authorization",
+        "Content-Type",
+        "Last-Event-ID",
+        "Mcp-Protocol-Version",
+        "Mcp-Session-Id",
+        "mcp-protocol-version",
+        "mcp-session-id",
+      ],
+      allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      credentials: true,
+      exposeHeaders: ["Mcp-Session-Id", "mcp-session-id"],
+      origin: env.CORS_ORIGIN,
+    })
+  )
+  // RFC 9728 — Protected Resource Metadata. First endpoint clients hit to
+  // discover which authorization server protects the MCP resource.
+  .get("/.well-known/oauth-protected-resource/api/mcp", (c) => {
+    const origin = getPublicOriginFromRequest(c.req.raw);
+    const mcpResourceUrl = new URL("/api/mcp", origin).href;
+    return c.json(buildMcpProtectedResourceMetadata(mcpResourceUrl));
   })
-);
+  // RFC 8414 — Authorization Server Metadata (path-suffixed for issuer
+  // /api/auth). Exposes authorize, token, registration, JWKS, and revocation
+  // endpoints.
+  .get(
+    "/.well-known/oauth-authorization-server/api/auth",
+    oauthAuthServerMetadataHandler
+  )
+  // Some clients probe the root well-known path; serve the same document to
+  // avoid 404 noise.
+  .get(
+    "/.well-known/oauth-authorization-server",
+    oauthAuthServerMetadataHandler
+  )
+  // OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
+  .get("/.well-known/openid-configuration", (c) =>
+    oauthOpenIdConfigMetadata(c.req.raw)
+  )
+  // Streamable HTTP MCP transport — requires Bearer token from the OAuth
+  // flow above.
+  .all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw))
+  .get("/", (c) => c.text("OK"))
+  .get(
+    "/docs",
+    Scalar({
+      hideModels: true,
+      pageTitle: "Cobalt API",
+      sources: [
+        { title: "Cobalt API", url: "/openapi.json" },
+        {
+          title: "Better Auth",
+          url: "/api/auth/open-api/generate-schema",
+        },
+      ],
+    })
+  )
+  .route("/", base)
+  .route("/", publicApi);
 
-// ── Mount OpenAPI apps ──────────────────────────────────────────────
-
-app.route("/", base);
-app.route("/", publicApi);
-
+// `typeof app` only carries the routes directly registered on `app`
+// (well-known / mcp / docs / `/v1` public API) because the `/api/*`
+// sub-routers are mounted on `base` via statement form to avoid TS2589.
+// Per-sub-router types are exported below so the web client can build
+// one typed `hc<…>()` proxy per feature — each proxy computes a shallow
+// schema type and avoids the recursion depth blow-up.
 export type AppType = typeof app;
+export type AccountsRouter = typeof accountsRouter;
+export type AppstoreRouter = typeof appstoreRouter;
+export type BrokerageRouter = typeof brokerageRouter;
+export type ChatRouter = typeof chatRouter;
+export type InstitutionsRouter = typeof institutionsRouter;
+export type NewsRouter = typeof newsRouter;
+export type PlaidRouter = typeof plaidRouter;
+export type ResearchRouter = typeof researchRouter;
+export type SnaptradeRouter = typeof snaptradeRouter;
+export type SubscriptionsRouter = typeof subscriptionsRouter;
+export type TransactionsRouter = typeof transactionsRouter;
+export type UserRouter = typeof userRouter;
 
 export default app;
