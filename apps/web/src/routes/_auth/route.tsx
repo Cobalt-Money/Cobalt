@@ -3,6 +3,7 @@ import { Navigate, Outlet, createFileRoute } from "@tanstack/react-router";
 import { AddAccountProvider } from "@/components/accounts/add-account-provider";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
 import { useAppSession } from "@/lib/providers/app-session";
+import { ZeroProvider } from "@/lib/providers/zero-client";
 
 /**
  * zbugs-style auth: resolve session in the layout (no async `beforeLoad` redirect).
@@ -26,9 +27,11 @@ function AuthLayout() {
 
   return (
     <AddAccountProvider>
-      <CommandMenuProvider>
-        <Outlet />
-      </CommandMenuProvider>
+      <ZeroProvider>
+        <CommandMenuProvider>
+          <Outlet />
+        </CommandMenuProvider>
+      </ZeroProvider>
     </AddAccountProvider>
   );
 }

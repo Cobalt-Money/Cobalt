@@ -11,7 +11,9 @@ const SSR_STUB_PREFIX = "\0ssr-stub:";
  * Packages that use WASM or are client-only (shiki syntax highlighting,
  * streamdown markdown streaming). These can't be bundled by Nitro's Rolldown
  * builder (WASM loading fails), so we stub them as empty modules on the server.
- * They only run inside `<ClientOnly>` on the client.
+ * Safe because `_auth/route.tsx` returns null while `useAppSession()` is
+ * pending, which is always the case during SSR — the components that import
+ * these packages never render server-side.
  */
 const ssrStubPackages = [
   "shiki",
@@ -92,11 +94,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     ssrStubPlugin(),
-    tanstackStart({
-      spa: {
-        enabled: true,
-      },
-    }),
+    tanstackStart(),
     nitro({}),
     patchServerRequirePlugin(),
     viteReact(),

@@ -1,7 +1,7 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "watchPatterns": ["apps/zero-cache/**"]
+    "watchPatterns": ["apps/zero-cache/**", "bun.lock"]
   },
   "deploy": {
     "overlapSeconds": 0
