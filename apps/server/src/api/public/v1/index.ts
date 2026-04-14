@@ -1,8 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requireOAuth } from "../middleware.js";
 import { tickersRouter } from "./tickers.js";
 
-export const v1Router = new OpenAPIHono()
-  .use("/*", requireOAuth)
-  .route("/tickers", tickersRouter);
+// requireOAuth applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
+export const v1Router = new OpenAPIHono().route("/tickers", tickersRouter);

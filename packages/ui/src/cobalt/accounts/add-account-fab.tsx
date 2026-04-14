@@ -34,8 +34,14 @@ const fabTriggerClass =
  */
 export function AccountsAddAccountFab({
   onChoose,
+  onClickUnified,
 }: {
   onChoose?: (id: AddAccountFabOptionId) => void;
+  /**
+   * When provided, tapping the FAB skips the speed-dial stack and immediately
+   * calls this handler — used by the unified Add Account dialog flow.
+   */
+  onClickUnified?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -115,6 +121,10 @@ export function AccountsAddAccountFab({
           )}
           type="button"
           onClick={() => {
+            if (onClickUnified) {
+              onClickUnified();
+              return;
+            }
             setExpanded(true);
           }}
         >

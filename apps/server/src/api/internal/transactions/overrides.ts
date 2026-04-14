@@ -9,8 +9,11 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requirePaidUser } from "../middleware.js";
+
 const patchCategory = createRoute({
   method: "patch",
+  middleware: [requirePaidUser] as const,
   path: "/{transactionId}/category",
   request: {
     body: {
@@ -35,6 +38,7 @@ const patchCategory = createRoute({
 const deleteCategory = createRoute({
   description: "Resets to Plaid's original category",
   method: "delete",
+  middleware: [requirePaidUser] as const,
   path: "/{transactionId}/category",
   request: { params: transactionIdParamSchema },
   responses: {
@@ -49,6 +53,7 @@ const deleteCategory = createRoute({
 
 const patchDate = createRoute({
   method: "patch",
+  middleware: [requirePaidUser] as const,
   path: "/{transactionId}/date",
   request: {
     body: {
@@ -73,6 +78,7 @@ const patchDate = createRoute({
 const deleteDate = createRoute({
   description: "Resets to Plaid's original date",
   method: "delete",
+  middleware: [requirePaidUser] as const,
   path: "/{transactionId}/date",
   request: { params: transactionIdParamSchema },
   responses: {
@@ -87,6 +93,7 @@ const deleteDate = createRoute({
 
 const patchName = createRoute({
   method: "patch",
+  middleware: [requirePaidUser] as const,
   path: "/{transactionId}/name",
   request: {
     body: {
@@ -111,6 +118,7 @@ const patchName = createRoute({
 const deleteName = createRoute({
   description: "Resets to Plaid's original name",
   method: "delete",
+  middleware: [requirePaidUser] as const,
   path: "/{transactionId}/name",
   request: { params: transactionIdParamSchema },
   responses: {

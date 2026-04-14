@@ -3,10 +3,13 @@ import { recurringStreamsResponseSchema } from "@cobalt-web/server-data/transact
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requirePaidUser } from "../middleware.js";
+
 const route = createRoute({
   description:
     "Active recurring transaction streams (subscriptions, bills, income)",
   method: "get",
+  middleware: [requirePaidUser] as const,
   path: "/recurring",
   responses: {
     200: {

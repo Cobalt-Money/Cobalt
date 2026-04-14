@@ -1,6 +1,7 @@
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
+import { requireOAuth } from "../middleware.js";
 import { errorResponse } from "./shared/schemas.js";
 
 // ── Schemas (public API contract) ───────────────────────────────────
@@ -55,6 +56,7 @@ const searchResultSchema = z.object({
 const getQuote = createRoute({
   description: "Get the latest quote for a ticker symbol",
   method: "get",
+  middleware: [requireOAuth] as const,
   path: "/{symbol}/quote",
   request: { params: tickerParamSchema },
   responses: {
@@ -71,6 +73,7 @@ const getQuote = createRoute({
 const searchTickers = createRoute({
   description: "Search for tickers by name or symbol",
   method: "get",
+  middleware: [requireOAuth] as const,
   path: "/search",
   request: { query: searchQuerySchema },
   responses: {

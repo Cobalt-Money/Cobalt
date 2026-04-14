@@ -5,10 +5,13 @@ import {
 } from "@cobalt-web/server-data/user";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requireAuth } from "../middleware.js";
+
 const route = createRoute({
   description:
     "Permanently delete the authenticated user's account and all associated data",
   method: "delete",
+  middleware: [requireAuth] as const,
   path: "/delete-account",
   responses: {
     200: {

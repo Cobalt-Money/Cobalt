@@ -13,8 +13,11 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requireAuth } from "../middleware.js";
+
 const list = createRoute({
   method: "get",
+  middleware: [requireAuth] as const,
   path: "/credit-cards",
   responses: {
     200: {
@@ -30,6 +33,7 @@ const list = createRoute({
 
 const patchLimit = createRoute({
   method: "patch",
+  middleware: [requireAuth] as const,
   path: "/credit-cards/{id}/credit-limit",
   request: {
     body: {
@@ -51,6 +55,7 @@ const patchLimit = createRoute({
 
 const deleteLimit = createRoute({
   method: "delete",
+  middleware: [requireAuth] as const,
   path: "/credit-cards/{id}/credit-limit",
   request: { params: accountIdParamSchema },
   responses: {
@@ -65,43 +70,40 @@ const deleteLimit = createRoute({
   tags: ["Accounts"],
 });
 
-const creditCardsRouter = new OpenAPIHono<AppEnv>();
+const creditCardsRouter = new OpenAPIHono<AppEnv>()
+  .openapi(list, async (c) => {
+    const accounts = await getCreditCards(c.var.user.id);
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json({ accounts }, 200);
+  })
+  .openapi(patchLimit, async (c) => {
+    const { id } = c.req.valid("param");
+    const { creditLimit } = c.req.valid("json");
 
-creditCardsRouter.openapi(list, async (c) => {
-  const accounts = await getCreditCards(c.var.user.id);
-  c.header("Cache-Control", "private, max-age=60");
-  return c.json({ accounts }, 200);
-});
+    const account = await getAccountOwner(id);
+    if (!account) {
+      return c.json({ error: "Account not found" }, 404);
+    }
+    if (account.userId !== c.var.user.id) {
+      return c.json({ error: "Unauthorized" }, 403);
+    }
 
-creditCardsRouter.openapi(patchLimit, async (c) => {
-  const { id } = c.req.valid("param");
-  const { creditLimit } = c.req.valid("json");
+    await setCreditLimitOverride(id, creditLimit);
+    return c.json({ success: true }, 200);
+  })
+  .openapi(deleteLimit, async (c) => {
+    const { id } = c.req.valid("param");
 
-  const account = await getAccountOwner(id);
-  if (!account) {
-    return c.json({ error: "Account not found" }, 404);
-  }
-  if (account.userId !== c.var.user.id) {
-    return c.json({ error: "Unauthorized" }, 403);
-  }
+    const account = await getAccountOwner(id);
+    if (!account) {
+      return c.json({ error: "Account not found" }, 404);
+    }
+    if (account.userId !== c.var.user.id) {
+      return c.json({ error: "Unauthorized" }, 403);
+    }
 
-  await setCreditLimitOverride(id, creditLimit);
-  return c.json({ success: true }, 200);
-});
-
-creditCardsRouter.openapi(deleteLimit, async (c) => {
-  const { id } = c.req.valid("param");
-
-  const account = await getAccountOwner(id);
-  if (!account) {
-    return c.json({ error: "Account not found" }, 404);
-  }
-  if (account.userId !== c.var.user.id) {
-    return c.json({ error: "Unauthorized" }, 403);
-  }
-
-  await clearCreditLimitOverride(id);
-  return c.json({ success: true }, 200);
-});
+    await clearCreditLimitOverride(id);
+    return c.json({ success: true }, 200);
+  });
 
 export { creditCardsRouter };

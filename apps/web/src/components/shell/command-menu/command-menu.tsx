@@ -1,4 +1,5 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-grid";
 import {
   CobaltCommandDialog,
   CobaltCommandInput,
@@ -46,6 +47,11 @@ import {
   useState,
 } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
+
+import {
+  useAccountLauncher,
+  useInstitutionSearch,
+} from "@/components/accounts/use-add-account-flow";
 
 /** All top-level app routes — icons match {@link AppSidebar} `sidebarNav.navMain`. */
 const COMMAND_NAV_ROUTES: readonly {
@@ -201,6 +207,19 @@ const toTransactionListItem = (row: unknown): TransactionListItem | null =>
 
 const isNotNull = <T,>(value: T | null): value is T => value !== null;
 
+function getPlaceholder(
+  inSearchTransactions: boolean,
+  inAddAccount: boolean
+): string {
+  if (inSearchTransactions) {
+    return "Search transactions…";
+  }
+  if (inAddAccount) {
+    return "Search banks, cards, and brokerages…";
+  }
+  return "Type a command or search…";
+}
+
 interface CommandMenuContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -232,7 +251,18 @@ function CommandMenuDialog({
 
   const activePage = pages.at(-1);
   const inSearchTransactions = activePage === "search-transactions";
+  const inAddAccount = activePage === "add-account";
   const trimmedSearch = search.trim();
+
+  const { data: plaidInstitutions = [] } = useInstitutionSearch(
+    search,
+    inAddAccount
+  );
+  const dismissAddAccount = useCallback(() => {
+    onOpenChange(false);
+  }, [onOpenChange]);
+  const { handleChoose: handleChooseInstitution } =
+    useAccountLauncher(dismissAddAccount);
 
   /**
    * Lazy preload: warm the client cache with the full transaction history
@@ -308,6 +338,11 @@ function CommandMenuDialog({
     setPages((p) => [...p, "search-transactions"]);
   }, [zero]);
 
+  const enterAddAccount = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "add-account"]);
+  }, []);
+
   const handleInputKeyDown = useCallback(
     (e: ReactKeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Backspace" && search.length === 0 && pages.length > 0) {
@@ -325,12 +360,9 @@ function CommandMenuDialog({
 
   const accountActions: CommandAction[] = [
     {
-      handleSelect: () => {
-        handleOpenChange(false);
-        navigate({ to: "/accounts" });
-      },
+      handleSelect: enterAddAccount,
       icon: Edit02Icon,
-      keywords: ["create", "new", "connect", "link"],
+      keywords: ["create", "new", "connect", "link", "bank", "brokerage"],
       label: "Add Account",
     },
     {
@@ -456,146 +488,159 @@ function CommandMenuDialog({
 
   return (
     <CobaltCommandDialog
+      className={cn(
+        "transition-[max-width,max-height,height] duration-200",
+        inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]"
+      )}
       description="Search for a page or action"
       onOpenChange={handleOpenChange}
       open={open}
       showCloseButton={false}
       title="Command palette"
     >
-      <CobaltCommandPaletteRoot shouldFilter={!inSearchTransactions}>
+      <CobaltCommandPaletteRoot
+        shouldFilter={!(inSearchTransactions || inAddAccount)}
+      >
         <CobaltCommandInput
           onKeyDown={handleInputKeyDown}
           onValueChange={setSearch}
-          placeholder={
-            inSearchTransactions
-              ? "Search transactions…"
-              : "Type a command or search…"
-          }
+          placeholder={getPlaceholder(inSearchTransactions, inAddAccount)}
           value={search}
         />
-        <CommandList>
-          {inSearchTransactions ? (
-            <>
-              {filteredTransactions.length === 0 ? (
-                <CommandEmpty>
-                  {trimmedSearch.length > 0
-                    ? "No transactions found."
-                    : "No recent transactions."}
-                </CommandEmpty>
-              ) : null}
-              <CommandGroup
-                heading={trimmedSearch.length > 0 ? "Search results" : "Recent"}
-              >
-                {filteredTransactions.map((t) => {
-                  const name = transactionDisplayName(t);
-                  const isInflow = (t.amount ?? 0) < 0;
-                  return (
-                    <CommandItem
-                      key={t.id}
-                      onSelect={() => handleSelectTransaction(t.id)}
-                      value={`${t.id} ${name} ${t.accountName ?? ""}`}
-                    >
-                      <div className="flex min-w-0 flex-1 items-center gap-3">
-                        <MerchantLogo
-                          className="size-8 shrink-0"
-                          counterparties={t.counterparties}
-                          logoUrl={t.logoUrl}
-                          merchantName={t.merchantName}
-                          website={t.website}
-                        />
-                        <div className="flex min-w-0 flex-1 flex-col">
-                          <span className="truncate font-medium">{name}</span>
-                          <span className="truncate text-muted-foreground text-xs">
-                            {[t.accountName, formatTransactionDate(t.date)]
-                              .filter(Boolean)
-                              .join(" · ")}
+        {inAddAccount ? (
+          <AddAccountGrid
+            compact
+            onChoose={handleChooseInstitution}
+            plaidInstitutions={plaidInstitutions}
+            searchQuery={search}
+          />
+        ) : (
+          <CommandList>
+            {inSearchTransactions ? (
+              <>
+                {filteredTransactions.length === 0 ? (
+                  <CommandEmpty>
+                    {trimmedSearch.length > 0
+                      ? "No transactions found."
+                      : "No recent transactions."}
+                  </CommandEmpty>
+                ) : null}
+                <CommandGroup
+                  heading={
+                    trimmedSearch.length > 0 ? "Search results" : "Recent"
+                  }
+                >
+                  {filteredTransactions.map((t) => {
+                    const name = transactionDisplayName(t);
+                    const isInflow = (t.amount ?? 0) < 0;
+                    return (
+                      <CommandItem
+                        key={t.id}
+                        onSelect={() => handleSelectTransaction(t.id)}
+                        value={`${t.id} ${name} ${t.accountName ?? ""}`}
+                      >
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <MerchantLogo
+                            className="size-8 shrink-0"
+                            counterparties={t.counterparties}
+                            logoUrl={t.logoUrl}
+                            merchantName={t.merchantName}
+                            website={t.website}
+                          />
+                          <div className="flex min-w-0 flex-1 flex-col">
+                            <span className="truncate font-medium">{name}</span>
+                            <span className="truncate text-muted-foreground text-xs">
+                              {[t.accountName, formatTransactionDate(t.date)]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </span>
+                          </div>
+                          <span
+                            className={cn(
+                              "ml-auto shrink-0 font-medium tabular-nums",
+                              isInflow
+                                ? "text-green-550"
+                                : "text-red-600 dark:text-red-500"
+                            )}
+                          >
+                            {isInflow ? "+" : "-"}
+                            {formatTransactionAmount(t.amount)}
                           </span>
                         </div>
-                        <span
-                          className={cn(
-                            "ml-auto shrink-0 font-medium tabular-nums",
-                            isInflow
-                              ? "text-green-550"
-                              : "text-red-600 dark:text-red-500"
-                          )}
-                        >
-                          {isInflow ? "+" : "-"}
-                          {formatTransactionAmount(t.amount)}
-                        </span>
-                      </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </>
+            ) : (
+              <>
+                <CommandEmpty>No results found.</CommandEmpty>
+
+                <CommandGroup heading="Navigation">
+                  {COMMAND_NAV_ROUTES.map(({ icon, keywords, label, path }) => (
+                    <CommandItem
+                      key={String(path)}
+                      keywords={keywords}
+                      onSelect={() => go(path)}
+                      value={`${label} ${path}`}
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={icon}
+                        strokeWidth={2}
+                      />
+                      {label}
                     </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </>
-          ) : (
-            <>
-              <CommandEmpty>No results found.</CommandEmpty>
+                  ))}
+                </CommandGroup>
 
-              <CommandGroup heading="Navigation">
-                {COMMAND_NAV_ROUTES.map(({ icon, keywords, label, path }) => (
-                  <CommandItem
-                    key={String(path)}
-                    keywords={keywords}
-                    onSelect={() => go(path)}
-                    value={`${label} ${path}`}
-                  >
-                    <HugeiconsIcon
-                      aria-hidden
-                      className="text-muted-foreground"
-                      icon={icon}
-                      strokeWidth={2}
-                    />
-                    {label}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+                <CommandGroup heading="Accounts">
+                  {accountActions.map(renderCommandItem)}
+                </CommandGroup>
 
-              <CommandGroup heading="Accounts">
-                {accountActions.map(renderCommandItem)}
-              </CommandGroup>
+                <CommandGroup heading="Transactions">
+                  {transactionActions.map(renderCommandItem)}
+                </CommandGroup>
 
-              <CommandGroup heading="Transactions">
-                {transactionActions.map(renderCommandItem)}
-              </CommandGroup>
+                <CommandGroup heading="Brokerage">
+                  {brokerageActions.map(renderCommandItem)}
+                </CommandGroup>
 
-              <CommandGroup heading="Brokerage">
-                {brokerageActions.map(renderCommandItem)}
-              </CommandGroup>
+                <CommandGroup heading="Insights">
+                  {insightActions.map(renderCommandItem)}
+                </CommandGroup>
 
-              <CommandGroup heading="Insights">
-                {insightActions.map(renderCommandItem)}
-              </CommandGroup>
-
-              <CommandGroup heading="Settings">
-                {settingActions.map(renderCommandItem)}
-                {themeReady ? (
-                  <CommandItem
-                    keywords={[
-                      "appearance",
-                      "color",
-                      "dark",
-                      "light",
-                      "mode",
-                      "theme",
-                      "toggle",
-                    ]}
-                    onSelect={toggleTheme}
-                    value="theme-toggle"
-                  >
-                    <HugeiconsIcon
-                      aria-hidden
-                      className="text-muted-foreground"
-                      icon={themeToggleIcon}
-                      strokeWidth={2}
-                    />
-                    Toggle theme
-                  </CommandItem>
-                ) : null}
-              </CommandGroup>
-            </>
-          )}
-        </CommandList>
+                <CommandGroup heading="Settings">
+                  {settingActions.map(renderCommandItem)}
+                  {themeReady ? (
+                    <CommandItem
+                      keywords={[
+                        "appearance",
+                        "color",
+                        "dark",
+                        "light",
+                        "mode",
+                        "theme",
+                        "toggle",
+                      ]}
+                      onSelect={toggleTheme}
+                      value="theme-toggle"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={themeToggleIcon}
+                        strokeWidth={2}
+                      />
+                      Toggle theme
+                    </CommandItem>
+                  ) : null}
+                </CommandGroup>
+              </>
+            )}
+          </CommandList>
+        )}
       </CobaltCommandPaletteRoot>
     </CobaltCommandDialog>
   );

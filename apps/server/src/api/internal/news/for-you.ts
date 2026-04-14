@@ -10,8 +10,11 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requirePaidUser } from "../middleware.js";
+
 const route = createRoute({
   method: "get",
+  middleware: [requirePaidUser] as const,
   path: "/events/for-you",
   request: { query: forYouQuerySchema },
   responses: {

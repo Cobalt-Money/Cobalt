@@ -1,13 +1,14 @@
 import { Toaster } from "@cobalt-web/ui/components/sonner";
 import { ThemeProvider } from "@cobalt-web/ui/components/theme-provider";
 import { TooltipProvider } from "@cobalt-web/ui/components/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   HeadContent,
   Outlet,
   Scripts,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 // import { Agentation } from "agentation";
 
 import { AppSessionProvider } from "../lib/providers/app-session";
@@ -50,6 +51,19 @@ export const Route = createRootRouteWithContext<Record<string, never>>()({
 });
 
 function RootDocument() {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+            staleTime: 1000 * 60,
+          },
+        },
+      })
+  );
+
   useEffect(() => {
     if (!import.meta.env.DEV) {
       return;
@@ -76,15 +90,17 @@ function RootDocument() {
           disableTransitionOnChange
           enableSystem
         >
-          <AppSessionProvider>
-            <ZeroProvider>
-              <TooltipProvider>
-                <div className="flex h-svh min-h-0 flex-col overflow-hidden">
-                  <Outlet />
-                </div>
-              </TooltipProvider>
-            </ZeroProvider>
-          </AppSessionProvider>
+          <QueryClientProvider client={queryClient}>
+            <AppSessionProvider>
+              <ZeroProvider>
+                <TooltipProvider>
+                  <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+                    <Outlet />
+                  </div>
+                </TooltipProvider>
+              </ZeroProvider>
+            </AppSessionProvider>
+          </QueryClientProvider>
           <Toaster richColors />
         </ThemeProvider>
         {/* {import.meta.env.DEV ? <Agentation /> : null} */}

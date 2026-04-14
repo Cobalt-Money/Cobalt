@@ -11,10 +11,13 @@ import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requireAuth } from "../middleware.js";
+
 const listRoute = createRoute({
   description:
     "SnapTrade-connected brokerage accounts only (Plaid investment accounts are listed via merged brokerage or bank account APIs).",
   method: "get",
+  middleware: [requireAuth] as const,
   path: "/brokerage",
   responses: {
     200: {

@@ -10,10 +10,13 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requirePaidUser } from "../middleware.js";
+
 const route = createRoute({
   description:
     "Financial events / news for tickers held across SnapTrade and Plaid investment positions.",
   method: "get",
+  middleware: [requirePaidUser] as const,
   path: "/holdings-news",
   request: { query: holdingsNewsQuerySchema },
   responses: {

@@ -13,6 +13,8 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requireAuth } from "../middleware.js";
+
 function triBool(v: unknown): boolean | undefined {
   if (v === "true") {
     return true;
@@ -56,6 +58,7 @@ function queryToParams(q: Record<string, unknown>): CompanyScreenerParams {
 
 const route = createRoute({
   method: "get",
+  middleware: [requireAuth] as const,
   path: "/screener",
   request: { query: screenerQuerySchema },
   responses: {
