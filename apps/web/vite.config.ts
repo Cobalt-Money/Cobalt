@@ -92,11 +92,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     ssrStubPlugin(),
-    tanstackStart({
-      spa: {
-        enabled: true,
-      },
-    }),
+    tanstackStart(),
     nitro({}),
     patchServerRequirePlugin(),
     viteReact(),
