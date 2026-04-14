@@ -44,6 +44,7 @@ public/
 - Route protection is handled via middleware in `src/middleware/auth.ts`
 - Dev server runs on port 3001
 - Database schema is **not** defined in `apps/web` — use `bun run db:push` / `db:generate` here (or `bun db:push` from repo root) against `packages/db`
+- Hono RPC clients live in `src/lib/clients/api-client.ts` — one `hc<RouterType>()` proxy per feature (e.g. `institutionsApi`, `plaidApi`, `snaptradeApi`). Import the specific client you need. See `apps/server/AGENTS.md` for the chain contract.
 
 ## Package References
 
