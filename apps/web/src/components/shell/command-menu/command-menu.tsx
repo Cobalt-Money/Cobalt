@@ -202,6 +202,17 @@ const buildTransactionSearchQuery = (trimmedSearch: string) => {
     .limit(50);
 };
 
+const buildRecentChatsQuery = () =>
+  zql.chats.orderBy("updatedAt", "desc").limit(30);
+
+const buildChatSearchQuery = (trimmedSearch: string) => {
+  const pattern = ILIKE_WILDCARD(trimmedSearch);
+  return zql.chats
+    .where(({ cmp }) => cmp("title", "ILIKE", pattern))
+    .orderBy("updatedAt", "desc")
+    .limit(50);
+};
+
 const toTransactionListItem = (row: unknown): TransactionListItem | null =>
   mapZeroTransactionListRow(row as ZeroTransactionListRow);
 
@@ -209,16 +220,38 @@ const isNotNull = <T,>(value: T | null): value is T => value !== null;
 
 function getPlaceholder(
   inSearchTransactions: boolean,
+  inSearchChats: boolean,
   inAddAccount: boolean
 ): string {
   if (inSearchTransactions) {
     return "Search transactions…";
+  }
+  if (inSearchChats) {
+    return "Search chats…";
   }
   if (inAddAccount) {
     return "Search banks, cards, and brokerages…";
   }
   return "Type a command or search…";
 }
+
+interface ChatSearchRow {
+  chatId: string;
+  title: string | null;
+  updatedAt: number | null;
+}
+
+const formatChatDate = (date: unknown): string => {
+  const parsed = parseDate(date);
+  if (!parsed || Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+  return parsed.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 interface CommandMenuContextValue {
   open: boolean;
@@ -251,6 +284,7 @@ function CommandMenuDialog({
 
   const activePage = pages.at(-1);
   const inSearchTransactions = activePage === "search-transactions";
+  const inSearchChats = activePage === "search-chats";
   const inAddAccount = activePage === "add-account";
   const trimmedSearch = search.trim();
 
@@ -280,6 +314,15 @@ function CommandMenuDialog({
     []
   );
 
+  const chatPreloadHandleRef = useRef<{ cleanup: () => void } | null>(null);
+  useEffect(
+    () => () => {
+      chatPreloadHandleRef.current?.cleanup();
+      chatPreloadHandleRef.current = null;
+    },
+    []
+  );
+
   /**
    * Raw-ZQL local-only query against the warm client cache (preloaded above
    * in `enterSearchTransactions`). Runs entirely client-side — zero server
@@ -298,6 +341,18 @@ function CommandMenuDialog({
         ? transactionRows.map(toTransactionListItem).filter(isNotNull)
         : [],
     [inSearchTransactions, transactionRows]
+  );
+
+  const [chatRows] = useQuery(
+    trimmedSearch.length > 0
+      ? buildChatSearchQuery(trimmedSearch)
+      : buildRecentChatsQuery(),
+    { enabled: inSearchChats }
+  );
+
+  const filteredChats = useMemo<ChatSearchRow[]>(
+    () => (inSearchChats ? (chatRows as unknown as ChatSearchRow[]) : []),
+    [inSearchChats, chatRows]
   );
 
   useEffect(() => {
@@ -336,6 +391,14 @@ function CommandMenuDialog({
     }
     setSearch("");
     setPages((p) => [...p, "search-transactions"]);
+  }, [zero]);
+
+  const enterSearchChats = useCallback(() => {
+    if (!chatPreloadHandleRef.current) {
+      chatPreloadHandleRef.current = zero.preload(queries.chats.list());
+    }
+    setSearch("");
+    setPages((p) => [...p, "search-chats"]);
   }, [zero]);
 
   const enterAddAccount = useCallback(() => {
@@ -463,6 +526,24 @@ function CommandMenuDialog({
     },
   ];
 
+  const aiChatActions: CommandAction[] = [
+    {
+      handleSelect: enterSearchChats,
+      icon: Search02Icon,
+      keywords: ["find", "query", "search", "chat", "conversation", "ai"],
+      label: "Search Chats",
+    },
+    {
+      handleSelect: () => {
+        handleOpenChange(false);
+        navigate({ to: "/ai-chat" });
+      },
+      icon: Edit02Icon,
+      keywords: ["create", "new", "chat", "conversation", "ai"],
+      label: "New Chat",
+    },
+  ];
+
   const settingActions: CommandAction[] = [
     {
       handleSelect: () => {
@@ -486,6 +567,50 @@ function CommandMenuDialog({
     [handleOpenChange, navigate]
   );
 
+  const handleSelectChat = useCallback(
+    (chatId: string) => {
+      handleOpenChange(false);
+      navigate({
+        params: { chatId },
+        to: "/ai-chat/$chatId",
+      });
+    },
+    [handleOpenChange, navigate]
+  );
+
+  const chatPrefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const prefetchedChatIdsRef = useRef<Set<string>>(new Set());
+  useEffect(
+    () => () => {
+      if (chatPrefetchTimerRef.current !== null) {
+        clearTimeout(chatPrefetchTimerRef.current);
+      }
+    },
+    []
+  );
+
+  const handleHighlightChange = useCallback(
+    (value: string) => {
+      if (!inSearchChats) {
+        return;
+      }
+      const [chatId] = value.split(" ", 1);
+      if (!chatId || prefetchedChatIdsRef.current.has(chatId)) {
+        return;
+      }
+      if (chatPrefetchTimerRef.current !== null) {
+        clearTimeout(chatPrefetchTimerRef.current);
+      }
+      chatPrefetchTimerRef.current = setTimeout(() => {
+        prefetchedChatIdsRef.current.add(chatId);
+        zero.preload(queries.chats.messages({ chatId }));
+      }, 150);
+    },
+    [inSearchChats, zero]
+  );
+
   return (
     <CobaltCommandDialog
       className={cn(
@@ -499,12 +624,17 @@ function CommandMenuDialog({
       title="Command palette"
     >
       <CobaltCommandPaletteRoot
-        shouldFilter={!(inSearchTransactions || inAddAccount)}
+        onValueChange={handleHighlightChange}
+        shouldFilter={!(inSearchTransactions || inSearchChats || inAddAccount)}
       >
         <CobaltCommandInput
           onKeyDown={handleInputKeyDown}
           onValueChange={setSearch}
-          placeholder={getPlaceholder(inSearchTransactions, inAddAccount)}
+          placeholder={getPlaceholder(
+            inSearchTransactions,
+            inSearchChats,
+            inAddAccount
+          )}
           value={search}
         />
         {inAddAccount ? (
@@ -516,7 +646,45 @@ function CommandMenuDialog({
           />
         ) : (
           <CommandList>
-            {inSearchTransactions ? (
+            {inSearchChats && (
+              <>
+                {filteredChats.length === 0 ? (
+                  <CommandEmpty>
+                    {trimmedSearch.length > 0
+                      ? "No chats found."
+                      : "No recent chats."}
+                  </CommandEmpty>
+                ) : null}
+                <CommandGroup
+                  heading={
+                    trimmedSearch.length > 0 ? "Search results" : "Recent"
+                  }
+                >
+                  {filteredChats.map((c) => {
+                    const title = c.title?.trim() || "Untitled chat";
+                    return (
+                      <CommandItem
+                        key={c.chatId}
+                        onSelect={() => handleSelectChat(c.chatId)}
+                        value={`${c.chatId} ${title}`}
+                      >
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <div className="flex min-w-0 flex-1 flex-col">
+                            <span className="truncate font-medium">
+                              {title}
+                            </span>
+                            <span className="truncate text-muted-foreground text-xs">
+                              {formatChatDate(c.updatedAt)}
+                            </span>
+                          </div>
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </>
+            )}
+            {inSearchTransactions && (
               <>
                 {filteredTransactions.length === 0 ? (
                   <CommandEmpty>
@@ -572,7 +740,8 @@ function CommandMenuDialog({
                   })}
                 </CommandGroup>
               </>
-            ) : (
+            )}
+            {!(inSearchChats || inSearchTransactions) && (
               <>
                 <CommandEmpty>No results found.</CommandEmpty>
 
@@ -601,6 +770,10 @@ function CommandMenuDialog({
 
                 <CommandGroup heading="Transactions">
                   {transactionActions.map(renderCommandItem)}
+                </CommandGroup>
+
+                <CommandGroup heading="AI Chat">
+                  {aiChatActions.map(renderCommandItem)}
                 </CommandGroup>
 
                 <CommandGroup heading="Brokerage">
