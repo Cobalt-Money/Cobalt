@@ -15,6 +15,10 @@ export const Route = createFileRoute("/")({
         content: "Track spending, investments, and subscriptions in one place.",
         name: "description",
       },
+      {
+        content: "app-id=6757945133",
+        name: "apple-itunes-app",
+      },
     ],
   }),
 });
