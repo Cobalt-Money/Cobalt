@@ -1,3 +1,4 @@
+import { PromptInputProvider } from "@cobalt-web/ui/components/ai-elements/prompt-input";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
@@ -12,21 +13,23 @@ export const Route = createFileRoute("/_auth/ai-chat")({
 function AiChatLayout() {
   return (
     <SidebarShellLayout flushBottom>
-      <div className="relative h-full min-h-0 w-full flex-1">
-        <div className="h-full min-h-0 w-full">
-          <Outlet />
-        </div>
-        <div
-          className={cn(
-            CHAT_THREAD_COLUMN_CLASS,
-            "pointer-events-none absolute bottom-0 left-0 right-0 z-10 pb-3"
-          )}
-        >
-          <div className="pointer-events-auto">
-            <ChatPromptInput />
+      <PromptInputProvider>
+        <div className="relative h-full min-h-0 w-full flex-1">
+          <div className="h-full min-h-0 w-full">
+            <Outlet />
+          </div>
+          <div
+            className={cn(
+              CHAT_THREAD_COLUMN_CLASS,
+              "pointer-events-none absolute bottom-0 left-0 right-0 z-10 pb-3"
+            )}
+          >
+            <div className="pointer-events-auto">
+              <ChatPromptInput />
+            </div>
           </div>
         </div>
-      </div>
+      </PromptInputProvider>
     </SidebarShellLayout>
   );
 }

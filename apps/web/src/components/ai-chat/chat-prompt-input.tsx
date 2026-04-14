@@ -1,7 +1,6 @@
 import { CobaltPromptInput } from "@cobalt-web/ui/cobalt/prompt-input";
 import {
   PromptInputBody,
-  PromptInputProvider,
   PromptInputSubmit,
   PromptInputTextarea,
   usePromptInputController,
@@ -140,9 +139,5 @@ function ChatPromptInputInner() {
 }
 
 export function ChatPromptInput() {
-  return (
-    <PromptInputProvider>
-      <ChatPromptInputInner />
-    </PromptInputProvider>
-  );
+  return <ChatPromptInputInner />;
 }
