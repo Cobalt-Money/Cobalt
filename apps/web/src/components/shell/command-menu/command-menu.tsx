@@ -361,10 +361,6 @@ function CommandMenuDialog({
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
-      if (!nextOpen) {
-        setPages([]);
-        setSearch("");
-      }
       onOpenChange(nextOpen);
     },
     [onOpenChange]
@@ -614,7 +610,6 @@ function CommandMenuDialog({
   return (
     <CobaltCommandDialog
       className={cn(
-        "transition-[max-width,max-height,height] duration-200",
         inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]"
       )}
       description="Search for a page or action"
@@ -826,7 +821,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((o) => !o);
+        setOpen((wasOpen) => !wasOpen);
       }
     };
     document.addEventListener("keydown", onKeyDown);
