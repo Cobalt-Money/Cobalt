@@ -1,8 +1,13 @@
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
-import { requireOAuth } from "../middleware.js";
 import { errorResponse } from "./shared/schemas.js";
+
+// NOTE: `requireOAuth` is intentionally NOT imported or attached here.
+// `scripts/extract-openapi.ts` imports this module at build time to
+// generate `openapi.json` for fumadocs/Scalar, and it relies on this
+// file being free of middleware/auth/env imports. Auth for the public
+// API is applied at the parent `v1Router` via `.use("/*", requireOAuth)`.
 
 // ── Schemas (public API contract) ───────────────────────────────────
 
@@ -56,7 +61,6 @@ const searchResultSchema = z.object({
 const getQuote = createRoute({
   description: "Get the latest quote for a ticker symbol",
   method: "get",
-  middleware: [requireOAuth] as const,
   path: "/{symbol}/quote",
   request: { params: tickerParamSchema },
   responses: {
@@ -73,7 +77,6 @@ const getQuote = createRoute({
 const searchTickers = createRoute({
   description: "Search for tickers by name or symbol",
   method: "get",
-  middleware: [requireOAuth] as const,
   path: "/search",
   request: { query: searchQuerySchema },
   responses: {
