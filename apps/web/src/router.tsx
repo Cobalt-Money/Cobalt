@@ -8,8 +8,8 @@ export interface RouterContext {
   zero: Zero;
 }
 
-export const getRouter = () => {
-  const router = createTanStackRouter({
+export const getRouter = () =>
+  createTanStackRouter({
     context: {},
     defaultNotFoundComponent: () => <div>Not Found</div>,
     defaultPreload: "intent",
@@ -17,8 +17,6 @@ export const getRouter = () => {
     routeTree,
     scrollRestoration: true,
   });
-  return router;
-};
 
 declare module "@tanstack/react-router" {
   interface Register {

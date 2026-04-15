@@ -17,7 +17,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouterState } from "@tanstack/react-router";
 
-import { InstantLink } from "@/components/instant-link";
+import { Link } from "@/components/links";
 
 const navItemClassName =
   "rounded-md px-2 py-1.5 text-[15px] text-foreground [&_svg]:size-[15px] [&_svg]:shrink-0";
@@ -72,7 +72,7 @@ export function NavMain() {
               <SidebarMenuButton
                 className={navItemClassName}
                 isActive={pathname === item.url}
-                render={<InstantLink aria-label={item.title} to={item.url} />}
+                render={<Link aria-label={item.title} to={item.url} />}
                 tooltip={item.title}
               >
                 {item.icon}
