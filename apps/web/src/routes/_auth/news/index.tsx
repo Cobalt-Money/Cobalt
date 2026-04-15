@@ -1,4 +1,6 @@
 import { NewsMagazine } from "@cobalt-web/ui/cobalt/news/news-magazine";
+import { queries } from "@cobalt-web/zero";
+import type { Zero } from "@rocicorp/zero";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 
@@ -8,6 +10,12 @@ import { useNewsRssSidebar } from "@/hooks/use-news-rss";
 
 export const Route = createFileRoute("/_auth/news/")({
   component: NewsIndexPage,
+  loader: ({ context }) => {
+    const z = context.zero as unknown as Zero;
+    z.run(queries.news.events());
+    z.run(queries.brokerage.positions());
+    z.run(queries.news.rssSidebar());
+  },
   staticData: { title: "News" },
 });
 

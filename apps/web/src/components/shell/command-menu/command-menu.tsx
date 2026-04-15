@@ -35,7 +35,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
 import {
   createContext,
@@ -185,6 +185,14 @@ const buildRecentTransactionsQuery = () =>
     .orderBy("date", "desc")
     .limit(30);
 
+const buildTransactionPrefetchQuery = () =>
+  zql.transaction
+    .related("account", (q) =>
+      q.related("connection", (c) => c.related("institution"))
+    )
+    .orderBy("date", "desc")
+    .limit(300);
+
 const buildTransactionSearchQuery = (trimmedSearch: string) => {
   const pattern = ILIKE_WILDCARD(trimmedSearch);
   return zql.transaction
@@ -276,6 +284,7 @@ function CommandMenuDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const navigate = useNavigate();
+  const router = useRouter();
   const zero = useZero();
   const { resolvedTheme, setTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
@@ -299,34 +308,8 @@ function CommandMenuDialog({
     useAccountLauncher(dismissAddAccount);
 
   /**
-   * Lazy preload: warm the client cache with the full transaction history
-   * only when the user first enters the "Search Transactions" sub-page. The
-   * handle is kept alive for the session so subsequent entries are instant;
-   * cleanup runs on unmount (e.g. logout). Users who never search
-   * transactions pay zero sync cost.
-   */
-  const preloadHandleRef = useRef<{ cleanup: () => void } | null>(null);
-  useEffect(
-    () => () => {
-      preloadHandleRef.current?.cleanup();
-      preloadHandleRef.current = null;
-    },
-    []
-  );
-
-  const chatPreloadHandleRef = useRef<{ cleanup: () => void } | null>(null);
-  useEffect(
-    () => () => {
-      chatPreloadHandleRef.current?.cleanup();
-      chatPreloadHandleRef.current = null;
-    },
-    []
-  );
-
-  /**
-   * Raw-ZQL local-only query against the warm client cache (preloaded above
-   * in `enterSearchTransactions`). Runs entirely client-side — zero server
-   * roundtrips per keystroke. See Zero docs on local-only queries.
+   * ZQL query against the cached transaction snapshot. Runs entirely
+   * client-side — zero server roundtrips per keystroke.
    */
   const [transactionRows] = useQuery(
     trimmedSearch.length > 0
@@ -368,10 +351,11 @@ function CommandMenuDialog({
 
   const go = useCallback(
     (to: (typeof COMMAND_NAV_ROUTES)[number]["path"]) => {
+      router.preloadRoute({ to });
       handleOpenChange(false);
       navigate({ to });
     },
-    [handleOpenChange, navigate]
+    [handleOpenChange, navigate, router]
   );
 
   const toggleTheme = useCallback(() => {
@@ -382,17 +366,13 @@ function CommandMenuDialog({
   const themeToggleIcon = resolvedTheme === "dark" ? Sun01Icon : Moon02Icon;
 
   const enterSearchTransactions = useCallback(() => {
-    if (!preloadHandleRef.current) {
-      preloadHandleRef.current = zero.preload(queries.transactions.all());
-    }
+    zero.run(buildTransactionPrefetchQuery());
     setSearch("");
     setPages((p) => [...p, "search-transactions"]);
   }, [zero]);
 
   const enterSearchChats = useCallback(() => {
-    if (!chatPreloadHandleRef.current) {
-      chatPreloadHandleRef.current = zero.preload(queries.chats.list());
-    }
+    zero.run(queries.chats.list());
     setSearch("");
     setPages((p) => [...p, "search-chats"]);
   }, [zero]);
@@ -426,6 +406,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/accounts" });
         handleOpenChange(false);
         navigate({ to: "/accounts" });
       },
@@ -444,6 +425,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/transactions" });
         handleOpenChange(false);
         navigate({ to: "/transactions" });
       },
@@ -453,6 +435,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/transactions" });
         handleOpenChange(false);
         navigate({ to: "/transactions" });
       },
@@ -465,6 +448,7 @@ function CommandMenuDialog({
   const brokerageActions: CommandAction[] = [
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/brokerage" });
         handleOpenChange(false);
         navigate({ to: "/brokerage" });
       },
@@ -474,6 +458,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/brokerage" });
         handleOpenChange(false);
         navigate({ to: "/brokerage" });
       },
@@ -483,6 +468,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/brokerage" });
         handleOpenChange(false);
         navigate({ to: "/brokerage" });
       },
@@ -495,6 +481,7 @@ function CommandMenuDialog({
   const insightActions: CommandAction[] = [
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/dashboard" });
         handleOpenChange(false);
         navigate({ to: "/dashboard" });
       },
@@ -504,6 +491,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/dashboard" });
         handleOpenChange(false);
         navigate({ to: "/dashboard" });
       },
@@ -513,6 +501,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/research" });
         handleOpenChange(false);
         navigate({ to: "/research" });
       },
@@ -531,6 +520,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/ai-chat" });
         handleOpenChange(false);
         navigate({ to: "/ai-chat" });
       },
@@ -543,6 +533,7 @@ function CommandMenuDialog({
   const settingActions: CommandAction[] = [
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/subscriptions" });
         handleOpenChange(false);
         navigate({ to: "/subscriptions" });
       },
@@ -554,24 +545,32 @@ function CommandMenuDialog({
 
   const handleSelectTransaction = useCallback(
     (transactionId: string) => {
+      router.preloadRoute({
+        params: { transactionId },
+        to: "/transactions/$transactionId",
+      });
       handleOpenChange(false);
       navigate({
         params: { transactionId },
         to: "/transactions/$transactionId",
       });
     },
-    [handleOpenChange, navigate]
+    [handleOpenChange, navigate, router]
   );
 
   const handleSelectChat = useCallback(
     (chatId: string) => {
+      router.preloadRoute({
+        params: { chatId },
+        to: "/ai-chat/$chatId",
+      });
       handleOpenChange(false);
       navigate({
         params: { chatId },
         to: "/ai-chat/$chatId",
       });
     },
-    [handleOpenChange, navigate]
+    [handleOpenChange, navigate, router]
   );
 
   const chatPrefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
