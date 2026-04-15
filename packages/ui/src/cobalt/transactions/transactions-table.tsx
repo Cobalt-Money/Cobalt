@@ -34,6 +34,10 @@ import {
   transactionMonthGroupKey,
 } from "./lib/helpers";
 
+function isCleanLeftClick(e: React.MouseEvent): boolean {
+  return e.button === 0 && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+}
+
 const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
   maximumFractionDigits: 2,
@@ -302,25 +306,19 @@ export function TransactionsTable({
 
   const onRowMouseDown = useCallback(
     (row: Row<TransactionListItem>, e: MouseEvent) => {
-      // Left click only, no modifier keys
-      if (
-        e.button === 0 &&
-        !e.altKey &&
-        !e.ctrlKey &&
-        !e.metaKey &&
-        !e.shiftKey
-      ) {
-        if (isInteractiveCellTarget(e.target)) {
-          return;
-        }
-        e.preventDefault();
-        // Preload the route before navigating
-        router.preloadRoute({
-          params: { transactionId: row.original.id },
-          to: "/transactions/$transactionId",
-        });
-        openTransaction(row);
+      if (!isCleanLeftClick(e)) {
+        return;
       }
+      if (isInteractiveCellTarget(e.target)) {
+        return;
+      }
+      e.preventDefault();
+      // Preload the route before navigating
+      router.preloadRoute({
+        params: { transactionId: row.original.id },
+        to: "/transactions/$transactionId",
+      });
+      openTransaction(row);
     },
     [router, openTransaction]
   );

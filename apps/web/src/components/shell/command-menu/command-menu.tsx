@@ -53,6 +53,10 @@ import {
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
 
+function isCleanLeftClick(e: React.MouseEvent): boolean {
+  return e.button === 0 && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+}
+
 /** All top-level app routes — icons match {@link AppSidebar} `sidebarNav.navMain`. */
 const COMMAND_NAV_ROUTES: readonly {
   icon: typeof Home04Icon;
@@ -660,6 +664,12 @@ function CommandMenuDialog({
                       <CommandItem
                         key={c.chatId}
                         onSelect={() => handleSelectChat(c.chatId)}
+                        onMouseDown={(e: React.MouseEvent) => {
+                          if (isCleanLeftClick(e)) {
+                            e.preventDefault();
+                            handleSelectChat(c.chatId);
+                          }
+                        }}
                         value={`${c.chatId} ${title}`}
                       >
                         <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -699,6 +709,12 @@ function CommandMenuDialog({
                       <CommandItem
                         key={t.id}
                         onSelect={() => handleSelectTransaction(t.id)}
+                        onMouseDown={(e: React.MouseEvent) => {
+                          if (isCleanLeftClick(e)) {
+                            e.preventDefault();
+                            handleSelectTransaction(t.id);
+                          }
+                        }}
                         value={`${t.id} ${name} ${t.accountName ?? ""}`}
                       >
                         <div className="flex min-w-0 flex-1 items-center gap-3">
