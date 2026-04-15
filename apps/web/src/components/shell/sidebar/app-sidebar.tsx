@@ -11,10 +11,11 @@ import {
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { useRouterState } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
 import { useMemo, useState } from "react";
 
+import { InstantLink } from "@/components/instant-link";
 import { useAppSession } from "@/lib/providers/app-session";
 
 import { NavMain } from "./nav/nav-main";
@@ -127,7 +128,7 @@ function ChatsGroup() {
         <SidebarMenuButton
           className={NEW_CHAT_SIDEBAR_BUTTON_CLASS}
           isActive={pathname === "/ai-chat"}
-          render={<Link aria-label="New Chat" to="/ai-chat" />}
+          render={<InstantLink aria-label="New Chat" to="/ai-chat" />}
         >
           <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} />
           <span className="truncate">New Chat</span>
@@ -191,7 +192,7 @@ function ChatsGroup() {
                           className="px-2"
                           isActive={pathname === chatPath}
                           render={
-                            <Link
+                            <InstantLink
                               aria-label={chat.title ?? "Chat"}
                               to="/ai-chat/$chatId"
                               params={{ chatId: chat.chatId }}
