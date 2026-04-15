@@ -1,13 +1,19 @@
 import { Sun02Icon, MoonIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
 
 import { AppPreview } from "@/components/landing/app-preview";
 import { Button } from "@/components/ui/button";
 import { Cursor, CursorProvider } from "@/components/ui/cursor";
+import { hasActiveSession } from "@/functions/has-active-session";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: async () => {
+    if (await hasActiveSession()) {
+      throw redirect({ to: "/ai-chat" });
+    }
+  },
   component: LandingPage,
   head: () => ({
     links: [
