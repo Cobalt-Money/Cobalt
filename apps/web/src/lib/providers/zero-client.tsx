@@ -3,6 +3,7 @@ import { mutators, schema } from "@cobalt-web/zero";
 import type { Context } from "@cobalt-web/zero";
 import type { Zero } from "@rocicorp/zero";
 import { ZeroProvider as BaseZeroProvider } from "@rocicorp/zero/react";
+import { useRouter } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useCallback, useMemo } from "react";
 
@@ -19,6 +20,7 @@ const cacheURL = env.VITE_ZERO_CACHE_URL ?? "http://localhost:4848";
  * no longer causes visible re-flashes or stuck spinners.
  */
 export function ZeroProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const session = useAppSession();
   const authenticatedUserId = session.data?.user.id;
   const userID = authenticatedUserId ?? "anon";
@@ -27,9 +29,20 @@ export function ZeroProvider({ children }: { children: ReactNode }) {
     [authenticatedUserId]
   );
 
-  const init = useCallback((z: Zero) => {
-    registerActiveZeroForLogout(z);
-  }, []);
+  const init = useCallback(
+    (z: Zero) => {
+      registerActiveZeroForLogout(z);
+      router.update({
+        context: {
+          ...router.options.context,
+          // @ts-expect-error - Router context for loaders
+          zero: z,
+        },
+      });
+      router.invalidate();
+    },
+    [router]
+  );
 
   return (
     <BaseZeroProvider

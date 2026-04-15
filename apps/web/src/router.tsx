@@ -1,7 +1,12 @@
+import type { Zero } from "@rocicorp/zero";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 
 import "./index.css";
 import { routeTree } from "./routeTree.gen";
+
+export interface RouterContext {
+  zero: Zero;
+}
 
 export const getRouter = () => {
   const router = createTanStackRouter({
