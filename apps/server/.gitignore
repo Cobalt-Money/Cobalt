@@ -2,6 +2,8 @@
 dist/
 /build
 /out/
+.output/
+.workflow-data/
 
 # dev
 .yarn/

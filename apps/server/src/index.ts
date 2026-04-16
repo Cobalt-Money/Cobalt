@@ -25,6 +25,7 @@ import { transactionsRouter } from "./api/internal/transactions/index.js";
 import { userRouter } from "./api/internal/user/index.js";
 import { zeroRouter } from "./api/internal/zero.js";
 import { v1Router } from "./api/public/v1/index.js";
+import { cronRefreshFundamentalsRouter } from "./cron/refresh-fundamentals.js";
 import {
   getPublicOriginFromRequest,
   handleMcpHttpRequest,
@@ -112,6 +113,10 @@ base
   .route("/api/institutions", institutionsRouter)
   .route("/api/plaid", plaidRouter)
   .route("/api/appstore", appstoreRouter);
+
+// ── Cron routes (no user auth — protected by CRON_SECRET) ───────────
+
+app.route("/api/cron", cronRefreshFundamentalsRouter);
 
 // ── Public API ──────────────────────────────────────────────────────
 

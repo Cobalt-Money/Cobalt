@@ -2,6 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "bunVersion": "1.x",
   "buildCommand": "bun run build",
+  "crons": [
+    {
+      "path": "/api/cron/refresh-fundamentals",
+      "schedule": "0 13 * * 1-5"
+    }
+  ],
   "env": {
     "VERCEL_EXPERIMENTAL_BACKENDS": "1"
   }
