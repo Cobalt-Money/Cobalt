@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { StockScreener } from "@/components/research/stock-screener";
+import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 
 export const Route = createFileRoute("/_auth/research/")({
   component: ResearchIndexPage,
@@ -8,5 +9,9 @@ export const Route = createFileRoute("/_auth/research/")({
 });
 
 function ResearchIndexPage() {
-  return <StockScreener />;
+  return (
+    <SidebarShellLayout>
+      <StockScreener />
+    </SidebarShellLayout>
+  );
 }
