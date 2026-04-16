@@ -16,6 +16,11 @@
       "sourceType": "github",
       "computedHash": "7e81acdd3028bb68aa4387b2bd083c5812a50e2be1bea08c76994dcfb8f6a3d3"
     },
+    "ai-gateway": {
+      "source": "vercel/vercel-plugin",
+      "sourceType": "github",
+      "computedHash": "7e29de30c6a55cbd343ee4aabfa7b909a0b2daf1a0ca9a9e437ec8928d4cc801"
+    },
     "ai-sdk": {
       "source": "vercel/ai",
       "sourceType": "github",
@@ -75,6 +80,11 @@
       "source": "planetscale/database-skills",
       "sourceType": "github",
       "computedHash": "2acf9fae4fcdb6c392923708b67234828f8a9f10b10dfa5d228eaab6e9108245"
+    },
+    "radix-to-baseui-migration": {
+      "source": "ghozysamudra/ai",
+      "sourceType": "github",
+      "computedHash": "558620322d10e9cb9b50132d2a943b49a61d3284c46cea42a4a926282282f4ce"
     },
     "tailwind-design-system": {
       "source": "wshobson/agents",
