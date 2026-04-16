@@ -1,4 +1,4 @@
-import type { TwelveDataTicker } from "@cobalt-web/clients/twelve-data";
+import type { Ticker } from "@cobalt-web/db/schema/research/tickers";
 
 // ── DTO types ─────────────────────────────────────────────────────
 
@@ -29,14 +29,14 @@ const TYPE_LABELS: Record<string, string> = {
   Warrant: "Warrant",
 };
 
-export function toTickerSearchItem(ticker: TwelveDataTicker): TickerSearchItem {
+export function dbTickerToSearchItem(row: Ticker): TickerSearchItem {
   return {
-    active: true,
-    currency: ticker.currency,
-    name: ticker.name,
-    region: ticker.country,
-    symbol: ticker.symbol,
-    type: TYPE_LABELS[ticker.type] ?? ticker.type,
+    active: row.isActive,
+    currency: row.currency ?? "",
+    name: row.name,
+    region: row.country ?? "",
+    symbol: row.symbol,
+    type: TYPE_LABELS[row.type] ?? row.type,
   };
 }
 
