@@ -14,5 +14,6 @@ export const Route = createFileRoute("/_auth/ai-chat/$chatId")({
 });
 
 function ChatRoute() {
-  return <ChatView />;
+  const { chatId } = Route.useParams();
+  return <ChatView key={chatId} />;
 }
