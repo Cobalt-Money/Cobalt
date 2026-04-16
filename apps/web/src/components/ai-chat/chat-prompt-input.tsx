@@ -9,12 +9,11 @@ import type { PromptInputMessage } from "@cobalt-web/ui/components/ai-elements/p
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useParams } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 
-async function handleChatPromptSubmit(_message: PromptInputMessage) {
-  // Wire-up to chat streaming / mutators will follow.
-}
+import { useChatStream } from "@/components/ai-chat/chat-stream-context";
 
 const PILL_INPUT_GROUP =
   "h-auto rounded-full has-[textarea]:rounded-full has-data-[align=block-end]:rounded-full";
@@ -26,9 +25,24 @@ const PLUS_BUTTON_CLASS =
 
 function ChatPromptInputInner() {
   const { textInput } = usePromptInputController();
+  const { submit, isStreaming } = useChatStream();
+  // strict: false so this works in both /_auth/ai-chat/ and /_auth/ai-chat/$chatId
+  const params = useParams({ strict: false }) as { chatId?: string };
   const [expanded, setExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const canSubmit = textInput.value.trim().length > 0;
+  const canSubmit = textInput.value.trim().length > 0 && !isStreaming;
+
+  const handleChatPromptSubmit = useCallback(
+    async (message: PromptInputMessage) => {
+      const content = message.text.trim();
+      if (!content) {
+        return;
+      }
+      setExpanded(false);
+      await submit(params.chatId, content);
+    },
+    [submit, params.chatId]
+  );
 
   const checkOverflow = useCallback(() => {
     const el = textareaRef.current;

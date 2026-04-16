@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "^3.0.84",
     "@better-auth/oauth-provider": "1.5.6",
     "@cobalt-web/auth": "workspace:*",
     "@cobalt-web/clients": "workspace:*",
@@ -23,6 +24,7 @@
     "@modelcontextprotocol/sdk": "^1.12.0",
     "@rocicorp/zero": "catalog:",
     "@scalar/hono-api-reference": "^0.10.4",
+    "ai": "^6",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "drizzle-orm": "1.0.0-beta.18-7eb39f0",

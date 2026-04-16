@@ -21,6 +21,10 @@ export const env = createEnv({
     /** Dedicated connection URI for the agent_readonly Postgres role (SELECT-only + RLS). Falls back to DATABASE_URL in dev. */
     AGENT_DATABASE_URL: z.string().min(1).optional(),
     AGENT_DB_POOL_MAX: z.coerce.number().int().min(1).max(20).default(3),
+    /** Vercel AI Gateway API key. Optional — chat endpoints return 503 when absent. */
+    AI_GATEWAY_API_KEY: z.string().min(1).optional(),
+    /** Vercel AI Gateway model slug (e.g. anthropic/claude-haiku-4.5). */
+    AI_GATEWAY_MODEL: z.string().default("anthropic/claude-haiku-4.5"),
     ALPHA_VANTAGE_API_KEY: z.string().min(1),
     APPLE_APP_BUNDLE_IDENTIFIER: z.string().min(1),
     APPLE_KEY_ID: z.string().min(1),

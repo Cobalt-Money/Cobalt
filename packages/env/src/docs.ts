@@ -6,8 +6,8 @@ export const env = createEnv({
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,
   server: {
+    AI_GATEWAY_API_KEY: z.string().min(1).optional(),
+    AI_GATEWAY_MODEL: z.string().default("anthropic/claude-sonnet-4.6"),
     OPENAPI_URL: z.url().default("http://localhost:3000/openapi.json"),
-    OPENROUTER_API_KEY: z.string().min(1).optional(),
-    OPENROUTER_MODEL: z.string().default("anthropic/claude-3.5-sonnet"),
   },
 });

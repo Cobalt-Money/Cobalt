@@ -1,3 +1,5 @@
+import type { schema } from "./schema.js";
+
 export type Context =
   | {
       userId: string;
@@ -6,6 +8,7 @@ export type Context =
 
 declare module "@rocicorp/zero" {
   interface DefaultTypes {
+    schema: typeof schema;
     context: Context;
   }
 }

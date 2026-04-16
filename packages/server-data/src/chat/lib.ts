@@ -1,4 +1,6 @@
-import type { parts } from "@cobalt-web/db/schema/zero-schema";
+import type { PartInsert } from "@cobalt-web/db/schema/ai/chat";
+import type { parts } from "@cobalt-web/db/schema/drizzle-schema";
+import type { UIMessage } from "ai";
 import type { InferSelectModel } from "drizzle-orm";
 
 type PartRow = InferSelectModel<typeof parts>;
@@ -88,6 +90,118 @@ function toolPart(p: PartRow, t: string): Record<string, unknown> | null {
     out.output = p.tool_output;
   }
   return out;
+}
+
+type UIMessagePart = UIMessage["parts"][number];
+
+/**
+ * Map a single AI SDK UIMessage part → DB `parts` insert row.
+ * Returns `null` for unrecognised / unsupported types so callers can filter.
+ */
+export function mapUIPartToDb(
+  part: UIMessagePart,
+  messageId: string,
+  order: number
+): PartInsert | null {
+  const base = { messageId, order, partId: crypto.randomUUID() };
+
+  switch (part.type) {
+    case "text": {
+      return { ...base, text_text: part.text, type: "text" };
+    }
+    case "reasoning": {
+      return {
+        ...base,
+        providerMetadata:
+          (part.providerMetadata as Record<string, unknown>) ?? null,
+        reasoning_text: part.text,
+        type: "reasoning",
+      };
+    }
+    case "file": {
+      return {
+        ...base,
+        file_filename: part.filename ?? null,
+        file_mediaType: part.mediaType,
+        file_url: part.url,
+        type: "file",
+      };
+    }
+    case "source-url": {
+      return {
+        ...base,
+        providerMetadata:
+          (part.providerMetadata as Record<string, unknown>) ?? null,
+        source_url_sourceId: part.sourceId,
+        source_url_title: part.title,
+        source_url_url: part.url,
+        type: "source-url",
+      };
+    }
+    case "source-document": {
+      return {
+        ...base,
+        providerMetadata:
+          (part.providerMetadata as Record<string, unknown>) ?? null,
+        source_document_filename: part.filename ?? null,
+        source_document_mediaType: part.mediaType,
+        source_document_sourceId: part.sourceId,
+        source_document_title: part.title,
+        type: "source-document",
+      };
+    }
+    case "step-start": {
+      return { ...base, type: "step-start" };
+    }
+    default: {
+      const t = (part as { type: string }).type;
+      if (t.startsWith("tool-")) {
+        const tp = part as {
+          type: string;
+          toolCallId: string;
+          state: string;
+          input?: unknown;
+          output?: unknown;
+          errorText?: string;
+        };
+        return {
+          ...base,
+          tool_errorText: tp.errorText ?? null,
+          tool_input: tp.input ? (tp.input as Record<string, unknown>) : null,
+          tool_output: tp.output
+            ? (tp.output as Record<string, unknown>)
+            : null,
+          tool_state: tp.state,
+          tool_toolCallId: tp.toolCallId,
+          type: t,
+        };
+      }
+      if (t.startsWith("data-") && "data" in part) {
+        return {
+          ...base,
+          data: (part as { type: string; data: unknown }).data as Record<
+            string,
+            unknown
+          >,
+          type: t,
+        };
+      }
+      return null;
+    }
+  }
+}
+
+/**
+ * Map all parts of a UIMessage to DB insert rows.
+ * Filters out any unsupported part types.
+ */
+export function mapUIMessagePartsToDbParts(
+  messageParts: UIMessage["parts"],
+  messageId: string
+): PartInsert[] {
+  return messageParts
+    .map((part, i) => mapUIPartToDb(part, messageId, i))
+    .filter((r): r is PartInsert => r !== null);
 }
 
 /** `parts` row → AI SDK message part. */

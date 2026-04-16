@@ -1,5 +1,5 @@
+import { createGateway } from "@ai-sdk/gateway";
 import { env } from "@cobalt-web/env/docs";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import {
   convertToModelMessages,
   stepCountIs,
@@ -68,8 +68,8 @@ async function chunkedAll<O>(promises: Promise<O>[]): Promise<O[]> {
   return out;
 }
 
-const openrouter = createOpenRouter({
-  apiKey: env.OPENROUTER_API_KEY,
+const gateway = createGateway({
+  apiKey: env.AI_GATEWAY_API_KEY,
 });
 
 /** System prompt, you can update it to provide more specific information */
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
   const reqJson = await req.json();
 
   const result = streamText({
-    model: openrouter.chat(env.OPENROUTER_MODEL),
+    model: gateway(env.AI_GATEWAY_MODEL),
     stopWhen: stepCountIs(5),
     tools: {
       search: searchTool,

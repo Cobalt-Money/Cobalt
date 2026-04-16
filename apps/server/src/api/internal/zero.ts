@@ -37,7 +37,6 @@ const zeroRouter = new OpenAPIHono<AppEnv>()
       dbProvider,
       (transact) =>
         transact((tx, name, args) =>
-          // Empty mutators registry — add @rocicorp/zero mutators when needed
           // @ts-expect-error TS2339 — mustGetMutator is never until mutators are defined
           mustGetMutator(mutators, name).fn({ args, ctx: zeroContext, tx })
         ),
