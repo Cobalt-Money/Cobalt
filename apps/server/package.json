@@ -3,11 +3,10 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsdown",
+    "build": "nitro build",
     "check-types": "tsc -b",
-    "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
-    "dev": "bun run --hot src/index.ts",
-    "start": "bun run dist/index.mjs",
+    "dev": "nitro dev",
+    "start": "node .output/server/index.mjs",
     "extract-openapi": "bun ./scripts/extract-openapi.ts",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -37,8 +36,10 @@
     "@cobalt-web/config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/pg": "^8.16.0",
-    "tsdown": "^0.16.5",
+    "nitro": "^3.0.260415-beta",
+    "rollup": "^4.60.1",
     "typescript": "^5",
-    "vitest": "^3.2.0"
+    "vitest": "^3.2.0",
+    "workflow": "^4.2.2"
   }
 }

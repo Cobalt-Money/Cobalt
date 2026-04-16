@@ -18,10 +18,10 @@ import {
   StarIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
+import { Link } from "@/components/links";
 import { sectorHugeiconForValue } from "@/components/research/sector-icons";
 
 type ScreenerRow = Record<string, unknown>;
@@ -343,7 +343,6 @@ function screenerCellContent(
 }
 
 export function StockScreener() {
-  const navigate = useNavigate();
   const [data, setData] = useState<ScreenerResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -479,29 +478,41 @@ export function StockScreener() {
                 pickCell(row, ["marketCap"]),
                 pickCell(row, ["companyName", "name"]),
               ].join("|");
+              const symbol = rawTickerSymbol(row);
               return (
                 <TableRow
-                  className="border-0 cursor-pointer hover:bg-muted/50"
+                  className="border-0 hover:bg-muted/50 relative"
                   key={rowKey}
-                  onClick={() => {
-                    const s = rawTickerSymbol(row);
-                    if (s) {
-                      navigate({
-                        params: { symbol: s },
-                        to: "/research/$symbol",
-                      });
-                    }
-                  }}
                 >
                   {columns.map((col) => (
                     <TableCell
                       className={cn("py-1.5", col.columnClassName)}
                       key={col.keys.join("-")}
                     >
-                      {screenerCellContent(row, col, {
-                        pinned: pinnedSymbols,
-                        toggle: togglePin,
-                      })}
+                      {col.keys[0] === "__watch" ? (
+                        <>
+                          {symbol ? (
+                            <span className="absolute inset-0 z-0 [&_a]:block [&_a]:size-full">
+                              <Link
+                                aria-label={`View ${symbol}`}
+                                params={{ symbol }}
+                                to="/research/$symbol"
+                              />
+                            </span>
+                          ) : null}
+                          <div className="relative z-10">
+                            {screenerCellContent(row, col, {
+                              pinned: pinnedSymbols,
+                              toggle: togglePin,
+                            })}
+                          </div>
+                        </>
+                      ) : (
+                        screenerCellContent(row, col, {
+                          pinned: pinnedSymbols,
+                          toggle: togglePin,
+                        })
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>

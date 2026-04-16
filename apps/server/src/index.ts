@@ -25,6 +25,7 @@ import { transactionsRouter } from "./api/internal/transactions/index.js";
 import { userRouter } from "./api/internal/user/index.js";
 import { zeroRouter } from "./api/internal/zero.js";
 import { v1Router } from "./api/public/v1/index.js";
+import { cronRefreshFundamentalsRouter } from "./cron/refresh-fundamentals.js";
 import {
   getPublicOriginFromRequest,
   handleMcpHttpRequest,
@@ -179,6 +180,8 @@ const app = new Hono()
   // Streamable HTTP MCP transport — requires Bearer token from the OAuth
   // flow above.
   .all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw))
+  // Cron routes (no user auth — protected by CRON_SECRET)
+  .route("/api/cron", cronRefreshFundamentalsRouter)
   .get("/", (c) => c.text("OK"))
   .get(
     "/docs",

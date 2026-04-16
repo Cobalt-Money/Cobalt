@@ -60,5 +60,5 @@ To use that single Postgres from every checkout:
 
 - **Zero package:** [`packages/zero/AGENTS.md`](../../packages/zero/AGENTS.md) — queries, mutators, `bun zero:generate`.
 - **zero-cache:** [`apps/zero-cache/AGENTS.md`](../../apps/zero-cache/AGENTS.md) — local and Docker.
-- **drizzle-zero:** generates `zero-schema.gen.ts` from `packages/db/src/schema/drizzle-schema.ts`; upstream docs in the [`drizzle-zero`](https://www.npmjs.com/package/drizzle-zero) package README.
+- **drizzle-zero:** generates `zero-schema.gen.ts` from `packages/db/src/schema/zero-schema.ts`; upstream docs in the [`drizzle-zero`](https://www.npmjs.com/package/drizzle-zero) package README.
 - Workflow structure borrows from `.sandbox/horizon-test/docs/local-sync/`. Cobalt does not ship a one-command “prod → local” data sync; use `pg_dump` / `pg_restore` or your host’s tooling ([workflow](./workflow.md#optional-copy-data-from-a-hosted-database)).
