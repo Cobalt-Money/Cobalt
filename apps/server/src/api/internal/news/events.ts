@@ -6,10 +6,13 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requirePaidUser } from "../middleware.js";
+
 const route = createRoute({
   description:
     "Cursor-paginated list of financial events with grouped articles",
   method: "get",
+  middleware: [requirePaidUser] as const,
   path: "/events",
   request: {
     query: eventsQuerySchema,

@@ -9,26 +9,13 @@ import {
   SidebarMenuItem,
 } from "@cobalt-web/ui/components/sidebar";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { queries } from "@cobalt-web/zero";
-import {
-  AppleStocksIcon,
-  ArrowReloadHorizontalIcon,
-  ArrowRight01Icon,
-  // ChartBarLineIcon,
-  // Folder01Icon,
-  Home04Icon,
-  NewsIcon,
-  SearchDollarIcon,
-  CreditCardIcon,
-  PlusSignIcon,
-  Calendar02Icon,
-} from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useZero } from "@rocicorp/zero/react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { useRouterState } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
+import { Link } from "@/components/links";
 import { useAppSession } from "@/lib/providers/app-session";
 
 import { NavMain } from "./nav/nav-main";
@@ -115,56 +102,6 @@ function groupChatsByTimePeriod(chats: readonly ChatRow[]) {
   return sections;
 }
 
-const sidebarNav = {
-  navMain: [
-    {
-      icon: <HugeiconsIcon icon={Home04Icon} strokeWidth={2} />,
-      title: "Dashboard",
-      url: "/dashboard",
-    },
-    {
-      icon: <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />,
-      title: "Accounts",
-      url: "/accounts",
-    },
-    {
-      icon: <HugeiconsIcon icon={AppleStocksIcon} strokeWidth={2} />,
-      title: "Brokerage",
-      url: "/brokerage",
-    },
-    {
-      icon: <HugeiconsIcon icon={SearchDollarIcon} strokeWidth={2} />,
-      title: "Research",
-      url: "/research",
-    },
-    // {
-    //   icon: <HugeiconsIcon icon={Folder01Icon} strokeWidth={2} />,
-    //   title: "Document Hub",
-    //   url: "/documents",
-    // },
-    {
-      icon: <HugeiconsIcon icon={ArrowReloadHorizontalIcon} strokeWidth={2} />,
-      title: "Transactions",
-      url: "/transactions",
-    },
-    {
-      icon: <HugeiconsIcon icon={Calendar02Icon} strokeWidth={2} />,
-      title: "Subscriptions",
-      url: "/subscriptions",
-    },
-    {
-      icon: <HugeiconsIcon icon={NewsIcon} strokeWidth={2} />,
-      title: "News",
-      url: "/news",
-    },
-    // {
-    //   icon: <HugeiconsIcon icon={ChartBarLineIcon} strokeWidth={2} />,
-    //   title: "Prediction Markets",
-    //   url: "/prediction-markets",
-    // },
-  ],
-};
-
 const NEW_CHAT_SIDEBAR_BUTTON_CLASS =
   "rounded-lg bg-input/80 px-2 transition-colors hover:bg-input hover:text-muted-foreground active:bg-input/90 data-active:bg-input data-active:text-foreground data-active:hover:bg-input/95 [&_svg]:size-[15px]";
 
@@ -183,32 +120,7 @@ function ChatsGroup() {
   const chatSections = useMemo(() => groupChatsByTimePeriod(chats), [chats]);
   const [collapsedLast30, setCollapsedLast30] = useState(false);
   const [collapsedOlder, setCollapsedOlder] = useState(false);
-  const zero = useZero();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const prefetchMessages = useCallback(
-    (chatId: string) => {
-      zero.preload(queries.chats.messages({ chatId }));
-    },
-    [zero]
-  );
-
-  const handlePointerEnter = useCallback(
-    (chatId: string) => {
-      hoverTimer.current = setTimeout(() => {
-        prefetchMessages(chatId);
-      }, 150);
-    },
-    [prefetchMessages]
-  );
-
-  const handlePointerLeave = useCallback(() => {
-    if (hoverTimer.current !== null) {
-      clearTimeout(hoverTimer.current);
-      hoverTimer.current = null;
-    }
-  }, []);
 
   return (
     <SidebarMenu className="gap-0.5">
@@ -279,13 +191,11 @@ function ChatsGroup() {
                         <SidebarMenuButton
                           className="px-2"
                           isActive={pathname === chatPath}
-                          onPointerEnter={() => handlePointerEnter(chat.chatId)}
-                          onPointerLeave={handlePointerLeave}
                           render={
                             <Link
                               aria-label={chat.title ?? "Chat"}
-                              to="/ai-chat/$chatId"
                               params={{ chatId: chat.chatId }}
+                              to="/ai-chat/$chatId"
                             />
                           }
                         >
@@ -324,7 +234,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         {navUser ? <NavUser user={navUser} /> : null}
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={sidebarNav.navMain} />
+        <NavMain />
         <SidebarGroup className="p-1.5">
           <SidebarGroupContent>
             <ChatsGroup />

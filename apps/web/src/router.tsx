@@ -1,10 +1,15 @@
+import type { Zero } from "@rocicorp/zero";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 
 import "./index.css";
 import { routeTree } from "./routeTree.gen";
 
-export const getRouter = () => {
-  const router = createTanStackRouter({
+export interface RouterContext {
+  zero: Zero;
+}
+
+export const getRouter = () =>
+  createTanStackRouter({
     context: {},
     defaultNotFoundComponent: () => <div>Not Found</div>,
     defaultPreload: "intent",
@@ -12,8 +17,6 @@ export const getRouter = () => {
     routeTree,
     scrollRestoration: true,
   });
-  return router;
-};
 
 declare module "@tanstack/react-router" {
   interface Register {

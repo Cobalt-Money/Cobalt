@@ -12,8 +12,11 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requireAuth } from "../middleware.js";
+
 const list = createRoute({
   method: "get",
+  middleware: [requireAuth] as const,
   path: "/",
   responses: {
     200: {
@@ -29,6 +32,7 @@ const list = createRoute({
 
 const detail = createRoute({
   method: "get",
+  middleware: [requireAuth] as const,
   path: "/bank/{id}",
   request: { params: accountIdParamSchema },
   responses: {
@@ -46,6 +50,7 @@ const detail = createRoute({
 
 const disconnect = createRoute({
   method: "delete",
+  middleware: [requireAuth] as const,
   path: "/bank/{id}",
   request: { params: accountIdParamSchema },
   responses: {
@@ -58,28 +63,25 @@ const disconnect = createRoute({
   tags: ["Accounts"],
 });
 
-const bankAccountsRouter = new OpenAPIHono<AppEnv>();
-
-bankAccountsRouter.openapi(list, async (c) => {
-  const accounts = await getBankAccounts(c.var.user.id);
-  c.header("Cache-Control", "private, max-age=60");
-  return c.json({ accounts }, 200);
-});
-
-bankAccountsRouter.openapi(detail, async (c) => {
-  const { id } = c.req.valid("param");
-  const account = await getBankAccountById(c.var.user.id, id);
-  if (!account) {
-    return c.json({ error: "Account not found" }, 404);
-  }
-  c.header("Cache-Control", "private, max-age=60");
-  return c.json(account, 200);
-});
-
-bankAccountsRouter.openapi(disconnect, async (c) => {
-  const { id } = c.req.valid("param");
-  const result = await disconnectBankConnection(c.var.user.id, id);
-  return c.json({ message: result.message, success: result.success }, 200);
-});
+const bankAccountsRouter = new OpenAPIHono<AppEnv>()
+  .openapi(list, async (c) => {
+    const accounts = await getBankAccounts(c.var.user.id);
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json({ accounts }, 200);
+  })
+  .openapi(detail, async (c) => {
+    const { id } = c.req.valid("param");
+    const account = await getBankAccountById(c.var.user.id, id);
+    if (!account) {
+      return c.json({ error: "Account not found" }, 404);
+    }
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json(account, 200);
+  })
+  .openapi(disconnect, async (c) => {
+    const { id } = c.req.valid("param");
+    const result = await disconnectBankConnection(c.var.user.id, id);
+    return c.json({ message: result.message, success: result.success }, 200);
+  });
 
 export { bankAccountsRouter };

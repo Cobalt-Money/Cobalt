@@ -160,4 +160,42 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  /**
+   * Thin overlay-style scrollbar that overrides macOS "Always show" mode and
+   * the chunky default Chromium track. Use on scrollports inside dialogs/panels
+   * where the OS chrome would otherwise look like a wrapper column.
+   */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-foreground) transparent;
+    scrollbar-color: color-mix(
+        in oklab,
+        var(--color-foreground) 18%,
+        transparent
+      )
+      transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: color-mix(
+      in oklab,
+      var(--color-foreground) 18%,
+      transparent
+    );
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(
+      in oklab,
+      var(--color-foreground) 30%,
+      transparent
+    );
+  }
 }

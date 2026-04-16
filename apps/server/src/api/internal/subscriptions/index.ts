@@ -1,10 +1,9 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requireAuth } from "../middleware.js";
 import { billingPortalRouter } from "./billing-portal.js";
 import { statusRouter } from "./status.js";
 
+// requireAuth applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
 export const subscriptionsRouter = new OpenAPIHono()
-  .use("/*", requireAuth)
   .route("/", statusRouter)
   .route("/", billingPortalRouter);

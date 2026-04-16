@@ -9,7 +9,7 @@ import {
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import {
   flexRender,
   getCoreRowModel,
@@ -33,6 +33,10 @@ import {
   transactionDateSortKey,
   transactionMonthGroupKey,
 } from "./lib/helpers";
+
+function isCleanLeftClick(e: React.MouseEvent): boolean {
+  return e.button === 0 && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+}
 
 const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -287,6 +291,7 @@ export function TransactionsTable({
   items: TransactionListItem[];
 }) {
   const navigate = useNavigate();
+  const router = useRouter();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const openTransaction = useCallback(
@@ -297,6 +302,25 @@ export function TransactionsTable({
       });
     },
     [navigate]
+  );
+
+  const onRowMouseDown = useCallback(
+    (row: Row<TransactionListItem>, e: MouseEvent) => {
+      if (!isCleanLeftClick(e)) {
+        return;
+      }
+      if (isInteractiveCellTarget(e.target)) {
+        return;
+      }
+      e.preventDefault();
+      // Preload the route before navigating
+      router.preloadRoute({
+        params: { transactionId: row.original.id },
+        to: "/transactions/$transactionId",
+      });
+      openTransaction(row);
+    },
+    [router, openTransaction]
   );
 
   const onRowActivate = useCallback(
@@ -395,8 +419,8 @@ export function TransactionsTable({
                   data-state={row.getIsSelected() ? "selected" : undefined}
                   key={row.id}
                   tabIndex={0}
-                  onClick={(e) => {
-                    onRowActivate(row, e);
+                  onMouseDown={(e) => {
+                    onRowMouseDown(row, e);
                   }}
                   onKeyDown={(e) => {
                     onRowActivate(row, e);

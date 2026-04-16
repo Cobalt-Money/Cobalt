@@ -3,6 +3,12 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
 import { errorResponse } from "./shared/schemas.js";
 
+// NOTE: `requireOAuth` is intentionally NOT imported or attached here.
+// `scripts/extract-openapi.ts` imports this module at build time to
+// generate `openapi.json` for fumadocs/Scalar, and it relies on this
+// file being free of middleware/auth/env imports. Auth for the public
+// API is applied at the parent `v1Router` via `.use("/*", requireOAuth)`.
+
 // ── Schemas (public API contract) ───────────────────────────────────
 
 const tickerParamSchema = z.object({

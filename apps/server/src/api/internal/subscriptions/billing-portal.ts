@@ -6,10 +6,13 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requireAuth } from "../middleware.js";
+
 const route = createRoute({
   description:
     "Create a Stripe billing portal session for the authenticated user",
   method: "post",
+  middleware: [requireAuth] as const,
   path: "/billing-portal",
   responses: {
     200: {

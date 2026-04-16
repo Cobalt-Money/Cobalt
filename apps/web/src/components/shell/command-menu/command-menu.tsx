@@ -1,4 +1,5 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-grid";
 import {
   CobaltCommandDialog,
   CobaltCommandInput,
@@ -34,7 +35,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
 import {
   createContext,
@@ -46,6 +47,15 @@ import {
   useState,
 } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
+
+import {
+  useAccountLauncher,
+  useInstitutionSearch,
+} from "@/components/accounts/use-add-account-flow";
+
+function isCleanLeftClick(e: React.MouseEvent): boolean {
+  return e.button === 0 && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+}
 
 /** All top-level app routes — icons match {@link AppSidebar} `sidebarNav.navMain`. */
 const COMMAND_NAV_ROUTES: readonly {
@@ -179,6 +189,14 @@ const buildRecentTransactionsQuery = () =>
     .orderBy("date", "desc")
     .limit(30);
 
+const buildTransactionPrefetchQuery = () =>
+  zql.transaction
+    .related("account", (q) =>
+      q.related("connection", (c) => c.related("institution"))
+    )
+    .orderBy("date", "desc")
+    .limit(300);
+
 const buildTransactionSearchQuery = (trimmedSearch: string) => {
   const pattern = ILIKE_WILDCARD(trimmedSearch);
   return zql.transaction
@@ -196,10 +214,56 @@ const buildTransactionSearchQuery = (trimmedSearch: string) => {
     .limit(50);
 };
 
+const buildRecentChatsQuery = () =>
+  zql.chats.orderBy("updatedAt", "desc").limit(30);
+
+const buildChatSearchQuery = (trimmedSearch: string) => {
+  const pattern = ILIKE_WILDCARD(trimmedSearch);
+  return zql.chats
+    .where(({ cmp }) => cmp("title", "ILIKE", pattern))
+    .orderBy("updatedAt", "desc")
+    .limit(50);
+};
+
 const toTransactionListItem = (row: unknown): TransactionListItem | null =>
   mapZeroTransactionListRow(row as ZeroTransactionListRow);
 
 const isNotNull = <T,>(value: T | null): value is T => value !== null;
+
+function getPlaceholder(
+  inSearchTransactions: boolean,
+  inSearchChats: boolean,
+  inAddAccount: boolean
+): string {
+  if (inSearchTransactions) {
+    return "Search transactions…";
+  }
+  if (inSearchChats) {
+    return "Search chats…";
+  }
+  if (inAddAccount) {
+    return "Search banks, cards, and brokerages…";
+  }
+  return "Type a command or search…";
+}
+
+interface ChatSearchRow {
+  chatId: string;
+  title: string | null;
+  updatedAt: number | null;
+}
+
+const formatChatDate = (date: unknown): string => {
+  const parsed = parseDate(date);
+  if (!parsed || Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+  return parsed.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 interface CommandMenuContextValue {
   open: boolean;
@@ -224,6 +288,7 @@ function CommandMenuDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const navigate = useNavigate();
+  const router = useRouter();
   const zero = useZero();
   const { resolvedTheme, setTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
@@ -232,28 +297,23 @@ function CommandMenuDialog({
 
   const activePage = pages.at(-1);
   const inSearchTransactions = activePage === "search-transactions";
+  const inSearchChats = activePage === "search-chats";
+  const inAddAccount = activePage === "add-account";
   const trimmedSearch = search.trim();
 
-  /**
-   * Lazy preload: warm the client cache with the full transaction history
-   * only when the user first enters the "Search Transactions" sub-page. The
-   * handle is kept alive for the session so subsequent entries are instant;
-   * cleanup runs on unmount (e.g. logout). Users who never search
-   * transactions pay zero sync cost.
-   */
-  const preloadHandleRef = useRef<{ cleanup: () => void } | null>(null);
-  useEffect(
-    () => () => {
-      preloadHandleRef.current?.cleanup();
-      preloadHandleRef.current = null;
-    },
-    []
+  const { data: plaidInstitutions = [] } = useInstitutionSearch(
+    search,
+    inAddAccount
   );
+  const dismissAddAccount = useCallback(() => {
+    onOpenChange(false);
+  }, [onOpenChange]);
+  const { handleChoose: handleChooseInstitution } =
+    useAccountLauncher(dismissAddAccount);
 
   /**
-   * Raw-ZQL local-only query against the warm client cache (preloaded above
-   * in `enterSearchTransactions`). Runs entirely client-side — zero server
-   * roundtrips per keystroke. See Zero docs on local-only queries.
+   * ZQL query against the cached transaction snapshot. Runs entirely
+   * client-side — zero server roundtrips per keystroke.
    */
   const [transactionRows] = useQuery(
     trimmedSearch.length > 0
@@ -270,16 +330,24 @@ function CommandMenuDialog({
     [inSearchTransactions, transactionRows]
   );
 
+  const [chatRows] = useQuery(
+    trimmedSearch.length > 0
+      ? buildChatSearchQuery(trimmedSearch)
+      : buildRecentChatsQuery(),
+    { enabled: inSearchChats }
+  );
+
+  const filteredChats = useMemo<ChatSearchRow[]>(
+    () => (inSearchChats ? (chatRows as unknown as ChatSearchRow[]) : []),
+    [inSearchChats, chatRows]
+  );
+
   useEffect(() => {
     setThemeReady(true);
   }, []);
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
-      if (!nextOpen) {
-        setPages([]);
-        setSearch("");
-      }
       onOpenChange(nextOpen);
     },
     [onOpenChange]
@@ -287,10 +355,11 @@ function CommandMenuDialog({
 
   const go = useCallback(
     (to: (typeof COMMAND_NAV_ROUTES)[number]["path"]) => {
+      router.preloadRoute({ to });
       handleOpenChange(false);
       navigate({ to });
     },
-    [handleOpenChange, navigate]
+    [handleOpenChange, navigate, router]
   );
 
   const toggleTheme = useCallback(() => {
@@ -301,12 +370,21 @@ function CommandMenuDialog({
   const themeToggleIcon = resolvedTheme === "dark" ? Sun01Icon : Moon02Icon;
 
   const enterSearchTransactions = useCallback(() => {
-    if (!preloadHandleRef.current) {
-      preloadHandleRef.current = zero.preload(queries.transactions.all());
-    }
+    zero.run(buildTransactionPrefetchQuery());
     setSearch("");
     setPages((p) => [...p, "search-transactions"]);
   }, [zero]);
+
+  const enterSearchChats = useCallback(() => {
+    zero.run(queries.chats.list());
+    setSearch("");
+    setPages((p) => [...p, "search-chats"]);
+  }, [zero]);
+
+  const enterAddAccount = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "add-account"]);
+  }, []);
 
   const handleInputKeyDown = useCallback(
     (e: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -325,16 +403,14 @@ function CommandMenuDialog({
 
   const accountActions: CommandAction[] = [
     {
-      handleSelect: () => {
-        handleOpenChange(false);
-        navigate({ to: "/accounts" });
-      },
+      handleSelect: enterAddAccount,
       icon: Edit02Icon,
-      keywords: ["create", "new", "connect", "link"],
+      keywords: ["create", "new", "connect", "link", "bank", "brokerage"],
       label: "Add Account",
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/accounts" });
         handleOpenChange(false);
         navigate({ to: "/accounts" });
       },
@@ -353,6 +429,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/transactions" });
         handleOpenChange(false);
         navigate({ to: "/transactions" });
       },
@@ -362,6 +439,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/transactions" });
         handleOpenChange(false);
         navigate({ to: "/transactions" });
       },
@@ -374,6 +452,7 @@ function CommandMenuDialog({
   const brokerageActions: CommandAction[] = [
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/brokerage" });
         handleOpenChange(false);
         navigate({ to: "/brokerage" });
       },
@@ -383,6 +462,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/brokerage" });
         handleOpenChange(false);
         navigate({ to: "/brokerage" });
       },
@@ -392,6 +472,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/brokerage" });
         handleOpenChange(false);
         navigate({ to: "/brokerage" });
       },
@@ -404,6 +485,7 @@ function CommandMenuDialog({
   const insightActions: CommandAction[] = [
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/dashboard" });
         handleOpenChange(false);
         navigate({ to: "/dashboard" });
       },
@@ -413,6 +495,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/dashboard" });
         handleOpenChange(false);
         navigate({ to: "/dashboard" });
       },
@@ -422,6 +505,7 @@ function CommandMenuDialog({
     },
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/research" });
         handleOpenChange(false);
         navigate({ to: "/research" });
       },
@@ -431,9 +515,29 @@ function CommandMenuDialog({
     },
   ];
 
+  const aiChatActions: CommandAction[] = [
+    {
+      handleSelect: enterSearchChats,
+      icon: Search02Icon,
+      keywords: ["find", "query", "search", "chat", "conversation", "ai"],
+      label: "Search Chats",
+    },
+    {
+      handleSelect: () => {
+        router.preloadRoute({ to: "/ai-chat" });
+        handleOpenChange(false);
+        navigate({ to: "/ai-chat" });
+      },
+      icon: Edit02Icon,
+      keywords: ["create", "new", "chat", "conversation", "ai"],
+      label: "New Chat",
+    },
+  ];
+
   const settingActions: CommandAction[] = [
     {
       handleSelect: () => {
+        router.preloadRoute({ to: "/subscriptions" });
         handleOpenChange(false);
         navigate({ to: "/subscriptions" });
       },
@@ -445,157 +549,281 @@ function CommandMenuDialog({
 
   const handleSelectTransaction = useCallback(
     (transactionId: string) => {
+      router.preloadRoute({
+        params: { transactionId },
+        to: "/transactions/$transactionId",
+      });
       handleOpenChange(false);
       navigate({
         params: { transactionId },
         to: "/transactions/$transactionId",
       });
     },
-    [handleOpenChange, navigate]
+    [handleOpenChange, navigate, router]
+  );
+
+  const handleSelectChat = useCallback(
+    (chatId: string) => {
+      router.preloadRoute({
+        params: { chatId },
+        to: "/ai-chat/$chatId",
+      });
+      handleOpenChange(false);
+      navigate({
+        params: { chatId },
+        to: "/ai-chat/$chatId",
+      });
+    },
+    [handleOpenChange, navigate, router]
+  );
+
+  const chatPrefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const prefetchedChatIdsRef = useRef<Set<string>>(new Set());
+  useEffect(
+    () => () => {
+      if (chatPrefetchTimerRef.current !== null) {
+        clearTimeout(chatPrefetchTimerRef.current);
+      }
+    },
+    []
+  );
+
+  const handleHighlightChange = useCallback(
+    (value: string) => {
+      if (!inSearchChats) {
+        return;
+      }
+      const [chatId] = value.split(" ", 1);
+      if (!chatId || prefetchedChatIdsRef.current.has(chatId)) {
+        return;
+      }
+      if (chatPrefetchTimerRef.current !== null) {
+        clearTimeout(chatPrefetchTimerRef.current);
+      }
+      chatPrefetchTimerRef.current = setTimeout(() => {
+        prefetchedChatIdsRef.current.add(chatId);
+        zero.preload(queries.chats.messages({ chatId }));
+      }, 150);
+    },
+    [inSearchChats, zero]
   );
 
   return (
     <CobaltCommandDialog
+      className={cn(
+        inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]"
+      )}
       description="Search for a page or action"
       onOpenChange={handleOpenChange}
       open={open}
       showCloseButton={false}
       title="Command palette"
     >
-      <CobaltCommandPaletteRoot shouldFilter={!inSearchTransactions}>
+      <CobaltCommandPaletteRoot
+        onValueChange={handleHighlightChange}
+        shouldFilter={!(inSearchTransactions || inSearchChats || inAddAccount)}
+      >
         <CobaltCommandInput
           onKeyDown={handleInputKeyDown}
           onValueChange={setSearch}
-          placeholder={
-            inSearchTransactions
-              ? "Search transactions…"
-              : "Type a command or search…"
-          }
+          placeholder={getPlaceholder(
+            inSearchTransactions,
+            inSearchChats,
+            inAddAccount
+          )}
           value={search}
         />
-        <CommandList>
-          {inSearchTransactions ? (
-            <>
-              {filteredTransactions.length === 0 ? (
-                <CommandEmpty>
-                  {trimmedSearch.length > 0
-                    ? "No transactions found."
-                    : "No recent transactions."}
-                </CommandEmpty>
-              ) : null}
-              <CommandGroup
-                heading={trimmedSearch.length > 0 ? "Search results" : "Recent"}
-              >
-                {filteredTransactions.map((t) => {
-                  const name = transactionDisplayName(t);
-                  const isInflow = (t.amount ?? 0) < 0;
-                  return (
-                    <CommandItem
-                      key={t.id}
-                      onSelect={() => handleSelectTransaction(t.id)}
-                      value={`${t.id} ${name} ${t.accountName ?? ""}`}
-                    >
-                      <div className="flex min-w-0 flex-1 items-center gap-3">
-                        <MerchantLogo
-                          className="size-8 shrink-0"
-                          counterparties={t.counterparties}
-                          logoUrl={t.logoUrl}
-                          merchantName={t.merchantName}
-                          website={t.website}
-                        />
-                        <div className="flex min-w-0 flex-1 flex-col">
-                          <span className="truncate font-medium">{name}</span>
-                          <span className="truncate text-muted-foreground text-xs">
-                            {[t.accountName, formatTransactionDate(t.date)]
-                              .filter(Boolean)
-                              .join(" · ")}
+        {inAddAccount ? (
+          <AddAccountGrid
+            compact
+            onChoose={handleChooseInstitution}
+            plaidInstitutions={plaidInstitutions}
+            searchQuery={search}
+          />
+        ) : (
+          <CommandList>
+            {inSearchChats && (
+              <>
+                {filteredChats.length === 0 ? (
+                  <CommandEmpty>
+                    {trimmedSearch.length > 0
+                      ? "No chats found."
+                      : "No recent chats."}
+                  </CommandEmpty>
+                ) : null}
+                <CommandGroup
+                  heading={
+                    trimmedSearch.length > 0 ? "Search results" : "Recent"
+                  }
+                >
+                  {filteredChats.map((c) => {
+                    const title = c.title?.trim() || "Untitled chat";
+                    return (
+                      <CommandItem
+                        key={c.chatId}
+                        onSelect={() => handleSelectChat(c.chatId)}
+                        onMouseDown={(e: React.MouseEvent) => {
+                          if (isCleanLeftClick(e)) {
+                            e.preventDefault();
+                            handleSelectChat(c.chatId);
+                          }
+                        }}
+                        value={`${c.chatId} ${title}`}
+                      >
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <div className="flex min-w-0 flex-1 flex-col">
+                            <span className="truncate font-medium">
+                              {title}
+                            </span>
+                            <span className="truncate text-muted-foreground text-xs">
+                              {formatChatDate(c.updatedAt)}
+                            </span>
+                          </div>
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </>
+            )}
+            {inSearchTransactions && (
+              <>
+                {filteredTransactions.length === 0 ? (
+                  <CommandEmpty>
+                    {trimmedSearch.length > 0
+                      ? "No transactions found."
+                      : "No recent transactions."}
+                  </CommandEmpty>
+                ) : null}
+                <CommandGroup
+                  heading={
+                    trimmedSearch.length > 0 ? "Search results" : "Recent"
+                  }
+                >
+                  {filteredTransactions.map((t) => {
+                    const name = transactionDisplayName(t);
+                    const isInflow = (t.amount ?? 0) < 0;
+                    return (
+                      <CommandItem
+                        key={t.id}
+                        onSelect={() => handleSelectTransaction(t.id)}
+                        onMouseDown={(e: React.MouseEvent) => {
+                          if (isCleanLeftClick(e)) {
+                            e.preventDefault();
+                            handleSelectTransaction(t.id);
+                          }
+                        }}
+                        value={`${t.id} ${name} ${t.accountName ?? ""}`}
+                      >
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <MerchantLogo
+                            className="size-8 shrink-0"
+                            counterparties={t.counterparties}
+                            logoUrl={t.logoUrl}
+                            merchantName={t.merchantName}
+                            website={t.website}
+                          />
+                          <div className="flex min-w-0 flex-1 flex-col">
+                            <span className="truncate font-medium">{name}</span>
+                            <span className="truncate text-muted-foreground text-xs">
+                              {[t.accountName, formatTransactionDate(t.date)]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </span>
+                          </div>
+                          <span
+                            className={cn(
+                              "ml-auto shrink-0 font-medium tabular-nums",
+                              isInflow
+                                ? "text-green-550"
+                                : "text-red-600 dark:text-red-500"
+                            )}
+                          >
+                            {isInflow ? "+" : "-"}
+                            {formatTransactionAmount(t.amount)}
                           </span>
                         </div>
-                        <span
-                          className={cn(
-                            "ml-auto shrink-0 font-medium tabular-nums",
-                            isInflow
-                              ? "text-green-550"
-                              : "text-red-600 dark:text-red-500"
-                          )}
-                        >
-                          {isInflow ? "+" : "-"}
-                          {formatTransactionAmount(t.amount)}
-                        </span>
-                      </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </>
+            )}
+            {!(inSearchChats || inSearchTransactions) && (
+              <>
+                <CommandEmpty>No results found.</CommandEmpty>
+
+                <CommandGroup heading="Navigation">
+                  {COMMAND_NAV_ROUTES.map(({ icon, keywords, label, path }) => (
+                    <CommandItem
+                      key={String(path)}
+                      keywords={keywords}
+                      onSelect={() => go(path)}
+                      value={`${label} ${path}`}
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={icon}
+                        strokeWidth={2}
+                      />
+                      {label}
                     </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </>
-          ) : (
-            <>
-              <CommandEmpty>No results found.</CommandEmpty>
+                  ))}
+                </CommandGroup>
 
-              <CommandGroup heading="Navigation">
-                {COMMAND_NAV_ROUTES.map(({ icon, keywords, label, path }) => (
-                  <CommandItem
-                    key={String(path)}
-                    keywords={keywords}
-                    onSelect={() => go(path)}
-                    value={`${label} ${path}`}
-                  >
-                    <HugeiconsIcon
-                      aria-hidden
-                      className="text-muted-foreground"
-                      icon={icon}
-                      strokeWidth={2}
-                    />
-                    {label}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+                <CommandGroup heading="Accounts">
+                  {accountActions.map(renderCommandItem)}
+                </CommandGroup>
 
-              <CommandGroup heading="Accounts">
-                {accountActions.map(renderCommandItem)}
-              </CommandGroup>
+                <CommandGroup heading="Transactions">
+                  {transactionActions.map(renderCommandItem)}
+                </CommandGroup>
 
-              <CommandGroup heading="Transactions">
-                {transactionActions.map(renderCommandItem)}
-              </CommandGroup>
+                <CommandGroup heading="AI Chat">
+                  {aiChatActions.map(renderCommandItem)}
+                </CommandGroup>
 
-              <CommandGroup heading="Brokerage">
-                {brokerageActions.map(renderCommandItem)}
-              </CommandGroup>
+                <CommandGroup heading="Brokerage">
+                  {brokerageActions.map(renderCommandItem)}
+                </CommandGroup>
 
-              <CommandGroup heading="Insights">
-                {insightActions.map(renderCommandItem)}
-              </CommandGroup>
+                <CommandGroup heading="Insights">
+                  {insightActions.map(renderCommandItem)}
+                </CommandGroup>
 
-              <CommandGroup heading="Settings">
-                {settingActions.map(renderCommandItem)}
-                {themeReady ? (
-                  <CommandItem
-                    keywords={[
-                      "appearance",
-                      "color",
-                      "dark",
-                      "light",
-                      "mode",
-                      "theme",
-                      "toggle",
-                    ]}
-                    onSelect={toggleTheme}
-                    value="theme-toggle"
-                  >
-                    <HugeiconsIcon
-                      aria-hidden
-                      className="text-muted-foreground"
-                      icon={themeToggleIcon}
-                      strokeWidth={2}
-                    />
-                    Toggle theme
-                  </CommandItem>
-                ) : null}
-              </CommandGroup>
-            </>
-          )}
-        </CommandList>
+                <CommandGroup heading="Settings">
+                  {settingActions.map(renderCommandItem)}
+                  {themeReady ? (
+                    <CommandItem
+                      keywords={[
+                        "appearance",
+                        "color",
+                        "dark",
+                        "light",
+                        "mode",
+                        "theme",
+                        "toggle",
+                      ]}
+                      onSelect={toggleTheme}
+                      value="theme-toggle"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={themeToggleIcon}
+                        strokeWidth={2}
+                      />
+                      Toggle theme
+                    </CommandItem>
+                  ) : null}
+                </CommandGroup>
+              </>
+            )}
+          </CommandList>
+        )}
       </CobaltCommandPaletteRoot>
     </CobaltCommandDialog>
   );
@@ -608,7 +836,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((o) => !o);
+        setOpen((wasOpen) => !wasOpen);
       }
     };
     document.addEventListener("keydown", onKeyDown);

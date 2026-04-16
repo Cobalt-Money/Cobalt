@@ -1,6 +1,8 @@
 import { Button } from "@cobalt-web/ui/components/button";
+import { queries } from "@cobalt-web/zero";
 import { CreditCardIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { Zero } from "@rocicorp/zero";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { DashboardInvestmentPerformanceCard } from "@/components/dashboard/dashboard-investment-performance-card";
@@ -12,6 +14,11 @@ import { useAccounts } from "@/hooks/use-accounts";
 
 export const Route = createFileRoute("/_auth/dashboard")({
   component: DashboardPage,
+  loader: ({ context }) => {
+    const z = context.zero as unknown as Zero;
+    z.run(queries.accounts.bankAccounts());
+    z.run(queries.accounts.brokerageAccounts());
+  },
   staticData: { title: "Dashboard" },
 });
 

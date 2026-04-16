@@ -7,8 +7,11 @@ import {
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
+import { requireAuth } from "../middleware.js";
+
 const getBalanceSnapshots = createRoute({
   method: "get",
+  middleware: [requireAuth] as const,
   path: "/balance-snapshots",
   request: { query: balanceSnapshotQuerySchema },
   responses: {
@@ -27,17 +30,18 @@ const getBalanceSnapshots = createRoute({
   tags: ["Plaid"],
 });
 
-const balanceSnapshotsRouter = new OpenAPIHono<AppEnv>();
-
-balanceSnapshotsRouter.openapi(getBalanceSnapshots, async (c) => {
-  try {
-    const query = c.req.valid("query");
-    const snapshots = await getBalanceSnapshotsByUserId(c.var.user.id, query);
-    c.header("Cache-Control", "private, max-age=86400");
-    return c.json({ snapshots }, 200);
-  } catch {
-    return c.json({ error: "Failed to fetch balance snapshots" }, 500);
+const balanceSnapshotsRouter = new OpenAPIHono<AppEnv>().openapi(
+  getBalanceSnapshots,
+  async (c) => {
+    try {
+      const query = c.req.valid("query");
+      const snapshots = await getBalanceSnapshotsByUserId(c.var.user.id, query);
+      c.header("Cache-Control", "private, max-age=86400");
+      return c.json({ snapshots }, 200);
+    } catch {
+      return c.json({ error: "Failed to fetch balance snapshots" }, 500);
+    }
   }
-});
+);
 
 export { balanceSnapshotsRouter };
