@@ -12,14 +12,15 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useParams } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
+import { useChatStream } from "@/components/ai-chat/chat-stream-context";
 import { CHAT_THREAD_COLUMN_CLASS } from "@/components/ai-chat/chat-thread-layout";
 
-/** Zero row shape: `messageId` / `role` / `parts` are typed as `unknown` in query results. */
 interface ChatMessageRow {
   messageId: unknown;
   role: unknown;
+  createdAt: unknown;
   parts: readonly { type: unknown; text_text: unknown }[];
 }
 
@@ -62,11 +63,51 @@ function getTextContent(message: ChatMessageRow) {
 export default function ChatView() {
   const { chatId } = useParams({ from: "/_auth/ai-chat/$chatId" });
   const [messages] = useQuery(queries.chats.messages({ chatId }));
+  const {
+    inFlightMessage,
+    isStreaming,
+    streamStartedAt,
+    clearStream,
+    setZeroMessages,
+  } = useChatStream();
+
+  useEffect(() => {
+    setZeroMessages(messages);
+  }, [messages, setZeroMessages]);
 
   const sections = useMemo(
     () => groupMessagesIntoSections(messages),
     [messages]
   );
+
+  /**
+   * Once streaming ends, keep showing the overlay until Zero delivers the
+   * assistant message (createdAt > streamStartedAt). This prevents any gap
+   * between the local streaming state and Zero's reactive data.
+   */
+  useEffect(() => {
+    if (!isStreaming && inFlightMessage && streamStartedAt !== null) {
+      const startMs = streamStartedAt.getTime();
+      const synced = messages.some(
+        (m) =>
+          m.role === "assistant" &&
+          typeof m.createdAt === "number" &&
+          m.createdAt > startMs
+      );
+      if (synced) {
+        clearStream();
+      }
+    }
+  }, [messages, isStreaming, inFlightMessage, streamStartedAt, clearStream]);
+
+  const inFlightText = inFlightMessage
+    ? inFlightMessage.parts
+        .filter((p) => p.type === "text")
+        .map((p) => ("text" in p ? p.text : ""))
+        .join("")
+    : "";
+
+  const showStreamingOverlay = inFlightMessage !== null;
 
   return (
     <Conversation className="h-full min-h-0 w-full [mask-image:linear-gradient(to_bottom,black_calc(100%-100px),transparent)]">
@@ -100,6 +141,14 @@ export default function ChatView() {
               </div>
             );
           })}
+
+          {showStreamingOverlay && (
+            <Message className="max-w-full" from="assistant">
+              <MessageContent className="w-full min-w-0 px-4 text-base leading-snug">
+                <MessageResponse>{inFlightText}</MessageResponse>
+              </MessageContent>
+            </Message>
+          )}
         </div>
       </ConversationContent>
       <ConversationScrollButton />

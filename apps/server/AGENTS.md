@@ -10,9 +10,29 @@ src/
 dist/         — Compiled output (tsdown)
 ```
 
+## Deployment
+
+**Deployed to Vercel** (see `vercel.json`). Uses Vercel Experimental Backends (`VERCEL_EXPERIMENTAL_BACKENDS=1`).
+
+- `apps/server` → Vercel
+- `apps/web` → Vercel
+- `apps/zero-cache` → Railway (separate service, **not** Vercel)
+
+### AI Gateway
+
+AI chat streaming uses **Vercel AI Gateway**. Set the following in the Vercel project environment variables:
+
+| Variable             | Description                                                         |
+| -------------------- | ------------------------------------------------------------------- |
+| `AI_GATEWAY_API_KEY` | Vercel AI Gateway API key (`vck_...`). Auto-injected on Vercel.     |
+| `AI_GATEWAY_MODEL`   | Optional model override. Defaults to `anthropic/claude-sonnet-4.6`. |
+
+Model strings follow the gateway format: `anthropic/claude-haiku-4.5`, `anthropic/claude-sonnet-4.6`, `vertex/gemini-2.5-flash`, etc. See [Vercel AI Gateway docs](https://vercel.com/docs/ai-gateway) for supported providers.
+
 ## Key Config Files
 
 - `tsdown.config.ts` — Build config: ESM output, externalizes `@cobalt-web/*` packages
+- `vercel.json` — Vercel deployment config (Bun runtime, build command)
 - `.env` — Environment variables (DATABASE_URL, BETTER_AUTH_SECRET, etc.)
 
 ## Conventions
