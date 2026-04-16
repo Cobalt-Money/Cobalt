@@ -1,13 +1,9 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-grid";
 import {
   CobaltCommandDialog,
   CobaltCommandInput,
   CobaltCommandPaletteRoot,
 } from "@cobalt-web/ui/cobalt/command-palette";
-import { MerchantLogo } from "@cobalt-web/ui/cobalt/logos/merchant-logo";
-import { mapZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
-import type { ZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 import {
   CommandEmpty,
   CommandGroup,
@@ -16,7 +12,6 @@ import {
 } from "@cobalt-web/ui/components/command";
 import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { queries, zql } from "@cobalt-web/zero";
 import {
   AppleStocksIcon,
   ArrowReloadHorizontalIcon,
@@ -34,7 +29,6 @@ import {
   Sun01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useQuery, useZero } from "@rocicorp/zero/react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
 import {
@@ -43,7 +37,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
@@ -53,9 +46,14 @@ import {
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
 
-function isCleanLeftClick(e: React.MouseEvent): boolean {
-  return e.button === 0 && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
-}
+import { ChatSearchResults, useChatSearch } from "./search-chats";
+import { TickerSearchResults, useTickerSearch } from "./search-tickers";
+import {
+  TransactionSearchResults,
+  useTransactionSearch,
+} from "./search-transactions";
+
+// ── Nav routes ────────────────────────────────────────────────────────────────
 
 /** All top-level app routes — icons match {@link AppSidebar} `sidebarNav.navMain`. */
 const COMMAND_NAV_ROUTES: readonly {
@@ -117,7 +115,8 @@ const COMMAND_NAV_ROUTES: readonly {
   },
 ];
 
-/** Actions that can be performed globally in the command menu */
+// ── Action types & renderer ───────────────────────────────────────────────────
+
 interface CommandAction {
   icon: typeof Home04Icon;
   keywords?: string[];
@@ -144,126 +143,46 @@ function renderCommandItem(action: CommandAction) {
   );
 }
 
-const transactionAmountFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
-  style: "currency",
-});
+// ── Placeholder ───────────────────────────────────────────────────────────────
 
-const transactionDisplayName = (t: TransactionListItem): string =>
-  t.userOverrideName?.trim() ||
-  t.merchantName?.trim() ||
-  t.name?.trim() ||
-  "Untitled";
-
-const formatTransactionAmount = (amount: number | null | undefined): string =>
-  amount === null || amount === undefined
-    ? ""
-    : transactionAmountFormatter.format(Math.abs(amount));
-
-const parseDate = (date: unknown): Date | null => {
-  if (typeof date === "number" || typeof date === "string") {
-    return new Date(date);
-  }
-  return date instanceof Date ? date : null;
-};
-
-const formatTransactionDate = (date: unknown): string => {
-  const parsed = parseDate(date);
-  if (!parsed || Number.isNaN(parsed.getTime())) {
-    return "";
-  }
-  return parsed.toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-  });
-};
-
-const ILIKE_WILDCARD = (query: string): string => `%${query}%`;
-
-/** Pure query builders — no side effects, given the same search string they produce the same ZQL. */
-const buildRecentTransactionsQuery = () =>
-  zql.transaction
-    .related("account", (q) =>
-      q.related("connection", (c) => c.related("institution"))
-    )
-    .orderBy("date", "desc")
-    .limit(30);
-
-const buildTransactionPrefetchQuery = () =>
-  zql.transaction
-    .related("account", (q) =>
-      q.related("connection", (c) => c.related("institution"))
-    )
-    .orderBy("date", "desc")
-    .limit(300);
-
-const buildTransactionSearchQuery = (trimmedSearch: string) => {
-  const pattern = ILIKE_WILDCARD(trimmedSearch);
-  return zql.transaction
-    .where(({ cmp, or }) =>
-      or(
-        cmp("name", "ILIKE", pattern),
-        cmp("merchantName", "ILIKE", pattern),
-        cmp("userOverrideName", "ILIKE", pattern)
-      )
-    )
-    .related("account", (q) =>
-      q.related("connection", (c) => c.related("institution"))
-    )
-    .orderBy("date", "desc")
-    .limit(50);
-};
-
-const buildRecentChatsQuery = () =>
-  zql.chats.orderBy("updatedAt", "desc").limit(30);
-
-const buildChatSearchQuery = (trimmedSearch: string) => {
-  const pattern = ILIKE_WILDCARD(trimmedSearch);
-  return zql.chats
-    .where(({ cmp }) => cmp("title", "ILIKE", pattern))
-    .orderBy("updatedAt", "desc")
-    .limit(50);
-};
-
-const toTransactionListItem = (row: unknown): TransactionListItem | null =>
-  mapZeroTransactionListRow(row as ZeroTransactionListRow);
-
-const isNotNull = <T,>(value: T | null): value is T => value !== null;
-
-function getPlaceholder(
-  inSearchTransactions: boolean,
-  inSearchChats: boolean,
-  inAddAccount: boolean
-): string {
-  if (inSearchTransactions) {
+function getPlaceholder(activePage: string | undefined): string {
+  if (activePage === "search-transactions") {
     return "Search transactions…";
   }
-  if (inSearchChats) {
+  if (activePage === "search-chats") {
     return "Search chats…";
   }
-  if (inAddAccount) {
+  if (activePage === "add-account") {
     return "Search banks, cards, and brokerages…";
+  }
+  if (activePage === "search-tickers") {
+    return "Search tickers…";
   }
   return "Type a command or search…";
 }
 
-interface ChatSearchRow {
-  chatId: string;
-  title: string | null;
-  updatedAt: number | null;
+// ── Sub-page helpers ──────────────────────────────────────────────────────────
+
+/** True when the palette is in a mode that manages its own item filtering. */
+function isClientFilteredPage(activePage: string | undefined): boolean {
+  return (
+    activePage === "search-transactions" ||
+    activePage === "search-chats" ||
+    activePage === "add-account" ||
+    activePage === "search-tickers"
+  );
 }
 
-const formatChatDate = (date: unknown): string => {
-  const parsed = parseDate(date);
-  if (!parsed || Number.isNaN(parsed.getTime())) {
-    return "";
-  }
-  return parsed.toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-};
+/** True when the default command groups (navigation, actions) should show. */
+function isDefaultCommandView(activePage: string | undefined): boolean {
+  return (
+    activePage !== "search-chats" &&
+    activePage !== "search-transactions" &&
+    activePage !== "search-tickers"
+  );
+}
+
+// ── Context ───────────────────────────────────────────────────────────────────
 
 interface CommandMenuContextValue {
   open: boolean;
@@ -280,6 +199,8 @@ export function useCommandMenu(): CommandMenuContextValue {
   return ctx;
 }
 
+// ── Dialog ────────────────────────────────────────────────────────────────────
+
 function CommandMenuDialog({
   open,
   onOpenChange,
@@ -289,7 +210,6 @@ function CommandMenuDialog({
 }) {
   const navigate = useNavigate();
   const router = useRouter();
-  const zero = useZero();
   const { resolvedTheme, setTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
   const [pages, setPages] = useState<string[]>([]);
@@ -299,57 +219,46 @@ function CommandMenuDialog({
   const inSearchTransactions = activePage === "search-transactions";
   const inSearchChats = activePage === "search-chats";
   const inAddAccount = activePage === "add-account";
+  const inSearchTickers = activePage === "search-tickers";
   const trimmedSearch = search.trim();
+
+  // ── Search hooks ────────────────────────────────────────────────────────────
+
+  const { filteredTransactions, prefetch: prefetchTransactions } =
+    useTransactionSearch(trimmedSearch, inSearchTransactions);
+
+  const {
+    filteredChats,
+    handleHighlight: handleChatHighlight,
+    prefetch: prefetchChats,
+  } = useChatSearch(trimmedSearch, inSearchChats);
+
+  const { tickerRows, filteredTickers } = useTickerSearch(
+    trimmedSearch,
+    inSearchTickers
+  );
+
+  // ── Add-account ─────────────────────────────────────────────────────────────
 
   const { data: plaidInstitutions = [] } = useInstitutionSearch(
     search,
     inAddAccount
   );
-  const dismissAddAccount = useCallback(() => {
-    onOpenChange(false);
-  }, [onOpenChange]);
-  const { handleChoose: handleChooseInstitution } =
-    useAccountLauncher(dismissAddAccount);
+  const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
+  const { handleChoose: handleChooseInstitution } = useAccountLauncher(dismiss);
 
-  /**
-   * ZQL query against the cached transaction snapshot. Runs entirely
-   * client-side — zero server roundtrips per keystroke.
-   */
-  const [transactionRows] = useQuery(
-    trimmedSearch.length > 0
-      ? buildTransactionSearchQuery(trimmedSearch)
-      : buildRecentTransactionsQuery(),
-    { enabled: inSearchTransactions }
-  );
-
-  const filteredTransactions = useMemo<TransactionListItem[]>(
-    () =>
-      inSearchTransactions
-        ? transactionRows.map(toTransactionListItem).filter(isNotNull)
-        : [],
-    [inSearchTransactions, transactionRows]
-  );
-
-  const [chatRows] = useQuery(
-    trimmedSearch.length > 0
-      ? buildChatSearchQuery(trimmedSearch)
-      : buildRecentChatsQuery(),
-    { enabled: inSearchChats }
-  );
-
-  const filteredChats = useMemo<ChatSearchRow[]>(
-    () => (inSearchChats ? (chatRows as unknown as ChatSearchRow[]) : []),
-    [inSearchChats, chatRows]
-  );
+  // ── Theme ───────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     setThemeReady(true);
   }, []);
 
+  const themeToggleIcon = resolvedTheme === "dark" ? Sun01Icon : Moon02Icon;
+
+  // ── Shared navigation ───────────────────────────────────────────────────────
+
   const handleOpenChange = useCallback(
-    (nextOpen: boolean) => {
-      onOpenChange(nextOpen);
-    },
+    (nextOpen: boolean) => onOpenChange(nextOpen),
     [onOpenChange]
   );
 
@@ -367,185 +276,31 @@ function CommandMenuDialog({
     handleOpenChange(false);
   }, [handleOpenChange, resolvedTheme, setTheme]);
 
-  const themeToggleIcon = resolvedTheme === "dark" ? Sun01Icon : Moon02Icon;
+  // ── Sub-page entry ──────────────────────────────────────────────────────────
 
   const enterSearchTransactions = useCallback(() => {
-    zero.run(buildTransactionPrefetchQuery());
+    prefetchTransactions();
     setSearch("");
     setPages((p) => [...p, "search-transactions"]);
-  }, [zero]);
+  }, [prefetchTransactions]);
 
   const enterSearchChats = useCallback(() => {
-    zero.run(queries.chats.list());
+    prefetchChats();
     setSearch("");
     setPages((p) => [...p, "search-chats"]);
-  }, [zero]);
+  }, [prefetchChats]);
+
+  const enterSearchTickers = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "search-tickers"]);
+  }, []);
 
   const enterAddAccount = useCallback(() => {
     setSearch("");
     setPages((p) => [...p, "add-account"]);
   }, []);
 
-  const handleInputKeyDown = useCallback(
-    (e: ReactKeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Backspace" && search.length === 0 && pages.length > 0) {
-        e.preventDefault();
-        setPages((p) => p.slice(0, -1));
-      }
-      if (e.key === "Escape" && pages.length > 0) {
-        e.preventDefault();
-        setPages((p) => p.slice(0, -1));
-        setSearch("");
-      }
-    },
-    [pages.length, search.length]
-  );
-
-  const accountActions: CommandAction[] = [
-    {
-      handleSelect: enterAddAccount,
-      icon: Edit02Icon,
-      keywords: ["create", "new", "connect", "link", "bank", "brokerage"],
-      label: "Add Account",
-    },
-    {
-      handleSelect: () => {
-        router.preloadRoute({ to: "/accounts" });
-        handleOpenChange(false);
-        navigate({ to: "/accounts" });
-      },
-      icon: EyeIcon,
-      keywords: ["view", "details", "balance", "info"],
-      label: "View Account Details",
-    },
-  ];
-
-  const transactionActions: CommandAction[] = [
-    {
-      handleSelect: enterSearchTransactions,
-      icon: Search02Icon,
-      keywords: ["find", "query", "search", "filter"],
-      label: "Search Transactions",
-    },
-    {
-      handleSelect: () => {
-        router.preloadRoute({ to: "/transactions" });
-        handleOpenChange(false);
-        navigate({ to: "/transactions" });
-      },
-      icon: Edit02Icon,
-      keywords: ["create", "new", "add", "manual"],
-      label: "Add Manual Transaction",
-    },
-    {
-      handleSelect: () => {
-        router.preloadRoute({ to: "/transactions" });
-        handleOpenChange(false);
-        navigate({ to: "/transactions" });
-      },
-      icon: Download02Icon,
-      keywords: ["export", "download", "csv", "file"],
-      label: "Export Transactions",
-    },
-  ];
-
-  const brokerageActions: CommandAction[] = [
-    {
-      handleSelect: () => {
-        router.preloadRoute({ to: "/brokerage" });
-        handleOpenChange(false);
-        navigate({ to: "/brokerage" });
-      },
-      icon: AppleStocksIcon,
-      keywords: ["search", "stocks", "funds", "holdings"],
-      label: "Search Holdings",
-    },
-    {
-      handleSelect: () => {
-        router.preloadRoute({ to: "/brokerage" });
-        handleOpenChange(false);
-        navigate({ to: "/brokerage" });
-      },
-      icon: Edit02Icon,
-      keywords: ["trade", "buy", "sell", "execute"],
-      label: "Execute Trade",
-    },
-    {
-      handleSelect: () => {
-        router.preloadRoute({ to: "/brokerage" });
-        handleOpenChange(false);
-        navigate({ to: "/brokerage" });
-      },
-      icon: BellDotIcon,
-      keywords: ["alert", "notification", "price", "watch"],
-      label: "Set Price Alert",
-    },
-  ];
-
-  const insightActions: CommandAction[] = [
-    {
-      handleSelect: () => {
-        router.preloadRoute({ to: "/dashboard" });
-        handleOpenChange(false);
-        navigate({ to: "/dashboard" });
-      },
-      icon: SearchDollarIcon,
-      keywords: ["net", "worth", "total", "assets"],
-      label: "View Net Worth",
-    },
-    {
-      handleSelect: () => {
-        router.preloadRoute({ to: "/dashboard" });
-        handleOpenChange(false);
-        navigate({ to: "/dashboard" });
-      },
-      icon: File02Icon,
-      keywords: ["cash", "flow", "income", "expense"],
-      label: "Cash Flow Analysis",
-    },
-    {
-      handleSelect: () => {
-        router.preloadRoute({ to: "/research" });
-        handleOpenChange(false);
-        navigate({ to: "/research" });
-      },
-      icon: File02Icon,
-      keywords: ["report", "generate", "summary", "export"],
-      label: "Generate Report",
-    },
-  ];
-
-  const aiChatActions: CommandAction[] = [
-    {
-      handleSelect: enterSearchChats,
-      icon: Search02Icon,
-      keywords: ["find", "query", "search", "chat", "conversation", "ai"],
-      label: "Search Chats",
-    },
-    {
-      handleSelect: () => {
-        router.preloadRoute({ to: "/ai-chat" });
-        handleOpenChange(false);
-        navigate({ to: "/ai-chat" });
-      },
-      icon: Edit02Icon,
-      keywords: ["create", "new", "chat", "conversation", "ai"],
-      label: "New Chat",
-    },
-  ];
-
-  const settingActions: CommandAction[] = [
-    {
-      handleSelect: () => {
-        router.preloadRoute({ to: "/subscriptions" });
-        handleOpenChange(false);
-        navigate({ to: "/subscriptions" });
-      },
-      icon: Settings01Icon,
-      keywords: ["settings", "preferences", "config", "billing"],
-      label: "Subscription Settings",
-    },
-  ];
+  // ── Navigation handlers ─────────────────────────────────────────────────────
 
   const handleSelectTransaction = useCallback(
     (transactionId: string) => {
@@ -564,51 +319,150 @@ function CommandMenuDialog({
 
   const handleSelectChat = useCallback(
     (chatId: string) => {
-      router.preloadRoute({
-        params: { chatId },
-        to: "/ai-chat/$chatId",
-      });
+      router.preloadRoute({ params: { chatId }, to: "/ai-chat/$chatId" });
       handleOpenChange(false);
-      navigate({
-        params: { chatId },
-        to: "/ai-chat/$chatId",
-      });
+      navigate({ params: { chatId }, to: "/ai-chat/$chatId" });
     },
     [handleOpenChange, navigate, router]
   );
 
-  const chatPrefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-  const prefetchedChatIdsRef = useRef<Set<string>>(new Set());
-  useEffect(
-    () => () => {
-      if (chatPrefetchTimerRef.current !== null) {
-        clearTimeout(chatPrefetchTimerRef.current);
-      }
+  const handleSelectTicker = useCallback(
+    (symbol: string) => {
+      router.preloadRoute({ params: { symbol }, to: "/research/$symbol" });
+      handleOpenChange(false);
+      navigate({ params: { symbol }, to: "/research/$symbol" });
     },
-    []
+    [handleOpenChange, navigate, router]
   );
 
-  const handleHighlightChange = useCallback(
-    (value: string) => {
-      if (!inSearchChats) {
-        return;
+  // ── Keyboard ────────────────────────────────────────────────────────────────
+
+  const handleInputKeyDown = useCallback(
+    (e: ReactKeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Backspace" && search.length === 0 && pages.length > 0) {
+        e.preventDefault();
+        setPages((p) => p.slice(0, -1));
       }
-      const [chatId] = value.split(" ", 1);
-      if (!chatId || prefetchedChatIdsRef.current.has(chatId)) {
-        return;
+      if (e.key === "Escape" && pages.length > 0) {
+        e.preventDefault();
+        setPages((p) => p.slice(0, -1));
+        setSearch("");
       }
-      if (chatPrefetchTimerRef.current !== null) {
-        clearTimeout(chatPrefetchTimerRef.current);
-      }
-      chatPrefetchTimerRef.current = setTimeout(() => {
-        prefetchedChatIdsRef.current.add(chatId);
-        zero.preload(queries.chats.messages({ chatId }));
-      }, 150);
     },
-    [inSearchChats, zero]
+    [pages.length, search.length]
   );
+
+  // ── Action groups ───────────────────────────────────────────────────────────
+
+  const accountActions: CommandAction[] = [
+    {
+      handleSelect: enterAddAccount,
+      icon: Edit02Icon,
+      keywords: ["create", "new", "connect", "link", "bank", "brokerage"],
+      label: "Add Account",
+    },
+    {
+      handleSelect: () => go("/accounts"),
+      icon: EyeIcon,
+      keywords: ["view", "details", "balance", "info"],
+      label: "View Account Details",
+    },
+  ];
+
+  const transactionActions: CommandAction[] = [
+    {
+      handleSelect: enterSearchTransactions,
+      icon: Search02Icon,
+      keywords: ["find", "query", "search", "filter"],
+      label: "Search Transactions",
+    },
+    {
+      handleSelect: () => go("/transactions"),
+      icon: Edit02Icon,
+      keywords: ["create", "new", "add", "manual"],
+      label: "Add Manual Transaction",
+    },
+    {
+      handleSelect: () => go("/transactions"),
+      icon: Download02Icon,
+      keywords: ["export", "download", "csv", "file"],
+      label: "Export Transactions",
+    },
+  ];
+
+  const brokerageActions: CommandAction[] = [
+    {
+      handleSelect: enterSearchTickers,
+      icon: Search02Icon,
+      keywords: ["find", "stock", "equity", "ticker", "symbol", "research"],
+      label: "Search Tickers",
+    },
+    {
+      handleSelect: () => go("/brokerage"),
+      icon: AppleStocksIcon,
+      keywords: ["search", "stocks", "funds", "holdings"],
+      label: "Search Holdings",
+    },
+    {
+      handleSelect: () => go("/brokerage"),
+      icon: Edit02Icon,
+      keywords: ["trade", "buy", "sell", "execute"],
+      label: "Execute Trade",
+    },
+    {
+      handleSelect: () => go("/brokerage"),
+      icon: BellDotIcon,
+      keywords: ["alert", "notification", "price", "watch"],
+      label: "Set Price Alert",
+    },
+  ];
+
+  const insightActions: CommandAction[] = [
+    {
+      handleSelect: () => go("/dashboard"),
+      icon: SearchDollarIcon,
+      keywords: ["net", "worth", "total", "assets"],
+      label: "View Net Worth",
+    },
+    {
+      handleSelect: () => go("/dashboard"),
+      icon: File02Icon,
+      keywords: ["cash", "flow", "income", "expense"],
+      label: "Cash Flow Analysis",
+    },
+    {
+      handleSelect: () => go("/research"),
+      icon: File02Icon,
+      keywords: ["report", "generate", "summary", "export"],
+      label: "Generate Report",
+    },
+  ];
+
+  const aiChatActions: CommandAction[] = [
+    {
+      handleSelect: enterSearchChats,
+      icon: Search02Icon,
+      keywords: ["find", "query", "search", "chat", "conversation", "ai"],
+      label: "Search Chats",
+    },
+    {
+      handleSelect: () => go("/ai-chat"),
+      icon: Edit02Icon,
+      keywords: ["create", "new", "chat", "conversation", "ai"],
+      label: "New Chat",
+    },
+  ];
+
+  const settingActions: CommandAction[] = [
+    {
+      handleSelect: () => go("/subscriptions"),
+      icon: Settings01Icon,
+      keywords: ["settings", "preferences", "config", "billing"],
+      label: "Subscription Settings",
+    },
+  ];
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <CobaltCommandDialog
@@ -622,17 +476,13 @@ function CommandMenuDialog({
       title="Command palette"
     >
       <CobaltCommandPaletteRoot
-        onValueChange={handleHighlightChange}
-        shouldFilter={!(inSearchTransactions || inSearchChats || inAddAccount)}
+        onValueChange={handleChatHighlight}
+        shouldFilter={!isClientFilteredPage(activePage)}
       >
         <CobaltCommandInput
           onKeyDown={handleInputKeyDown}
           onValueChange={setSearch}
-          placeholder={getPlaceholder(
-            inSearchTransactions,
-            inSearchChats,
-            inAddAccount
-          )}
+          placeholder={getPlaceholder(activePage)}
           value={search}
         />
         {inAddAccount ? (
@@ -645,113 +495,28 @@ function CommandMenuDialog({
         ) : (
           <CommandList>
             {inSearchChats && (
-              <>
-                {filteredChats.length === 0 ? (
-                  <CommandEmpty>
-                    {trimmedSearch.length > 0
-                      ? "No chats found."
-                      : "No recent chats."}
-                  </CommandEmpty>
-                ) : null}
-                <CommandGroup
-                  heading={
-                    trimmedSearch.length > 0 ? "Search results" : "Recent"
-                  }
-                >
-                  {filteredChats.map((c) => {
-                    const title = c.title?.trim() || "Untitled chat";
-                    return (
-                      <CommandItem
-                        key={c.chatId}
-                        onSelect={() => handleSelectChat(c.chatId)}
-                        onMouseDown={(e: React.MouseEvent) => {
-                          if (isCleanLeftClick(e)) {
-                            e.preventDefault();
-                            handleSelectChat(c.chatId);
-                          }
-                        }}
-                        value={`${c.chatId} ${title}`}
-                      >
-                        <div className="flex min-w-0 flex-1 items-center gap-3">
-                          <div className="flex min-w-0 flex-1 flex-col">
-                            <span className="truncate font-medium">
-                              {title}
-                            </span>
-                            <span className="truncate text-muted-foreground text-xs">
-                              {formatChatDate(c.updatedAt)}
-                            </span>
-                          </div>
-                        </div>
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              </>
+              <ChatSearchResults
+                filteredChats={filteredChats}
+                trimmedSearch={trimmedSearch}
+                onSelect={handleSelectChat}
+              />
             )}
             {inSearchTransactions && (
-              <>
-                {filteredTransactions.length === 0 ? (
-                  <CommandEmpty>
-                    {trimmedSearch.length > 0
-                      ? "No transactions found."
-                      : "No recent transactions."}
-                  </CommandEmpty>
-                ) : null}
-                <CommandGroup
-                  heading={
-                    trimmedSearch.length > 0 ? "Search results" : "Recent"
-                  }
-                >
-                  {filteredTransactions.map((t) => {
-                    const name = transactionDisplayName(t);
-                    const isInflow = (t.amount ?? 0) < 0;
-                    return (
-                      <CommandItem
-                        key={t.id}
-                        onSelect={() => handleSelectTransaction(t.id)}
-                        onMouseDown={(e: React.MouseEvent) => {
-                          if (isCleanLeftClick(e)) {
-                            e.preventDefault();
-                            handleSelectTransaction(t.id);
-                          }
-                        }}
-                        value={`${t.id} ${name} ${t.accountName ?? ""}`}
-                      >
-                        <div className="flex min-w-0 flex-1 items-center gap-3">
-                          <MerchantLogo
-                            className="size-8 shrink-0"
-                            counterparties={t.counterparties}
-                            logoUrl={t.logoUrl}
-                            merchantName={t.merchantName}
-                            website={t.website}
-                          />
-                          <div className="flex min-w-0 flex-1 flex-col">
-                            <span className="truncate font-medium">{name}</span>
-                            <span className="truncate text-muted-foreground text-xs">
-                              {[t.accountName, formatTransactionDate(t.date)]
-                                .filter(Boolean)
-                                .join(" · ")}
-                            </span>
-                          </div>
-                          <span
-                            className={cn(
-                              "ml-auto shrink-0 font-medium tabular-nums",
-                              isInflow
-                                ? "text-green-550"
-                                : "text-red-600 dark:text-red-500"
-                            )}
-                          >
-                            {isInflow ? "+" : "-"}
-                            {formatTransactionAmount(t.amount)}
-                          </span>
-                        </div>
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              </>
+              <TransactionSearchResults
+                filteredTransactions={filteredTransactions}
+                trimmedSearch={trimmedSearch}
+                onSelect={handleSelectTransaction}
+              />
             )}
-            {!(inSearchChats || inSearchTransactions) && (
+            {inSearchTickers && (
+              <TickerSearchResults
+                filteredTickers={filteredTickers}
+                tickerRows={tickerRows}
+                trimmedSearch={trimmedSearch}
+                onSelect={handleSelectTicker}
+              />
+            )}
+            {isDefaultCommandView(activePage) && (
               <>
                 <CommandEmpty>No results found.</CommandEmpty>
 
@@ -829,6 +594,8 @@ function CommandMenuDialog({
   );
 }
 
+// ── Provider ──────────────────────────────────────────────────────────────────
+
 export function CommandMenuProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
 
@@ -852,6 +619,8 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
     </CommandMenuContext.Provider>
   );
 }
+
+// ── Shortcut badge ────────────────────────────────────────────────────────────
 
 export function CommandMenuSearchShortcut() {
   const isMac =

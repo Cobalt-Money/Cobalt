@@ -43,7 +43,7 @@ export const env = createEnv({
     /** Cap @cobalt-web/db pool size — default 10 per `pg` is too high for small Postgres (Neon free, etc.). */
     DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(5),
     DATABASE_URL: z.string().min(1),
-    /** Financial Modeling Prep — market data / fundamentals. Optional until callers migrate off Alpha Vantage / Twelve Data. */
+    /** Financial Modeling Prep — market data / fundamentals. */
     FMP_API_KEY: z.string().min(1).optional(),
     GOOGLE_CLIENT_ID: z.string().min(1),
     GOOGLE_CLIENT_SECRET: z.string().min(1),
@@ -64,7 +64,6 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     TRUSTED_ORIGINS_EXTRA: commaList,
-    TWELVE_DATA_API_KEY: z.string().min(1),
     /** Pool for Zero mutate adapter (keep small if same DB as `DATABASE_URL`). */
     ZERO_DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(2),
   },

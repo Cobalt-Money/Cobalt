@@ -1,15 +1,25 @@
 import { alphaVantageRequest } from "@cobalt-web/clients/alpha-vantage";
-import { getAllTickers } from "@cobalt-web/clients/twelve-data";
+import { db } from "@cobalt-web/db";
+import { tickers } from "@cobalt-web/db/schema/research/tickers";
+import { and, eq, inArray } from "drizzle-orm";
 
 import { normalizeTickerForAlphaVantage } from "../research/lib.js";
-import { extractPrice, toTickerSearchItem } from "./lib.js";
+import { dbTickerToSearchItem, extractPrice } from "./lib.js";
 import type { TickerPrice, TickerSearchItem } from "./lib.js";
 
 // ── Search ─────────────────────────────────────────────────────────
 
 export async function searchTickers(): Promise<TickerSearchItem[]> {
-  const raw = await getAllTickers(["NASDAQ", "NYSE"]);
-  return raw.map(toTickerSearchItem);
+  const rows = await db
+    .select()
+    .from(tickers)
+    .where(
+      and(
+        eq(tickers.isActive, true),
+        inArray(tickers.exchange, ["NASDAQ", "NYSE"])
+      )
+    );
+  return rows.map(dbTickerToSearchItem);
 }
 
 // ── Price ──────────────────────────────────────────────────────────
