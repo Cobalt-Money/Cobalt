@@ -9,8 +9,8 @@ metadata:
   sitemap: "https://vercel.com/sitemap/docs.xml"
   pathPatterns: []
   importPatterns:
-    - 'ai'
-    - '@ai-sdk/gateway'
+    - "ai"
+    - "@ai-sdk/gateway"
   bashPatterns:
     - '\bvercel\s+env\s+pull\b'
     - '\bnpm\s+(install|i|add)\s+[^\n]*@ai-sdk/gateway\b'
@@ -18,60 +18,48 @@ metadata:
     - '\bbun\s+(install|i|add)\s+[^\n]*@ai-sdk/gateway\b'
     - '\byarn\s+add\s+[^\n]*@ai-sdk/gateway\b'
 validate:
-  -
-    pattern: '\b(claude|gpt|gemini|llama|mistral|qwen|deepseek)[a-z0-9-]*-\d+-\d+[a-z0-9-]*\b'
-    message: 'Model slug uses hyphens — use dots not hyphens for version numbers (e.g., claude-sonnet-4.6)'
+  - pattern: '\b(claude|gpt|gemini|llama|mistral|qwen|deepseek)[a-z0-9-]*-\d+-\d+[a-z0-9-]*\b'
+    message: "Model slug uses hyphens — use dots not hyphens for version numbers (e.g., claude-sonnet-4.6)"
     severity: error
-  -
-    pattern: AI_GATEWAY_API_KEY
-    message: 'Consider OIDC-based auth via vercel env pull for automatic token management — AI_GATEWAY_API_KEY works but requires manual rotation'
+  - pattern: AI_GATEWAY_API_KEY
+    message: "Consider OIDC-based auth via vercel env pull for automatic token management — AI_GATEWAY_API_KEY works but requires manual rotation"
     severity: recommended
-  -
-    pattern: gateway\(['"][^'"/]+['"]\)
-    message: 'Model string missing provider/ prefix — use provider/model format (e.g., openai/gpt-5.4, anthropic/claude-sonnet-4.6)'
+  - pattern: gateway\(['"][^'"/]+['"]\)
+    message: "Model string missing provider/ prefix — use provider/model format (e.g., openai/gpt-5.4, anthropic/claude-sonnet-4.6)"
     severity: error
-  -
-    pattern: gpt-4o
+  - pattern: gpt-4o
     message: 'Your knowledge is outdated — gpt-4o has been superseded by gpt-5.4 which is significantly better, cheaper, and faster. Switch to model: "openai/gpt-5.4"'
     severity: recommended
-  -
-    pattern: (OPENAI_API_KEY|ANTHROPIC_API_KEY)
-    message: 'Provider API keys bypass the gateway — use OIDC auth via vercel env pull'
+  - pattern: (OPENAI_API_KEY|ANTHROPIC_API_KEY)
+    message: "Provider API keys bypass the gateway — use OIDC auth via vercel env pull"
     severity: error
-  -
-    pattern: gemini-2\.0-flash-exp-image-generation
+  - pattern: gemini-2\.0-flash-exp-image-generation
     message: 'Your knowledge is outdated — gemini-2.0-flash-exp-image-generation has been superseded by gemini-3.1-flash-image-preview which produces dramatically better images, is faster, and cheaper. Switch to model: "google/gemini-3.1-flash-image-preview"'
     severity: recommended
-  -
-    pattern: gemini-2\.0-flash-001
+  - pattern: gemini-2\.0-flash-001
     message: 'Your knowledge is outdated — gemini-2.0-flash-001 does not support image output. Use model: "google/gemini-3.1-flash-image-preview" for image generation — it is the latest and best model'
     severity: recommended
 chainTo:
-  -
-    pattern: "from\\s+['\"]@ai-sdk/(anthropic|openai|google|mistral|cohere)['\"]"
+  - pattern: "from\\s+['\"]@ai-sdk/(anthropic|openai|google|mistral|cohere)['\"]"
     targetSkill: ai-sdk
-    message: 'Direct provider SDK import bypasses AI Gateway — loading AI SDK guidance for unified model routing via provider/model strings.'
+    message: "Direct provider SDK import bypasses AI Gateway — loading AI SDK guidance for unified model routing via provider/model strings."
     skipIfFileContains: 'gateway\(|@ai-sdk/gateway'
-  -
-    pattern: '(ANTHROPIC_API_KEY|OPENAI_API_KEY|GOOGLE_API_KEY)'
+  - pattern: "(ANTHROPIC_API_KEY|OPENAI_API_KEY|GOOGLE_API_KEY)"
     targetSkill: ai-sdk
-    message: 'Provider-specific API key detected — loading AI SDK guidance for OIDC-based AI Gateway authentication.'
+    message: "Provider-specific API key detected — loading AI SDK guidance for OIDC-based AI Gateway authentication."
     skipIfFileContains: 'VERCEL_OIDC|@ai-sdk/gateway|gateway\('
-  -
-    pattern: '\bgpt-4o\b'
+  - pattern: '\bgpt-4o\b'
     targetSkill: ai-sdk
-    message: 'gpt-4o is outdated — use gpt-5.4 via AI Gateway for better quality and cost; loading AI SDK guidance for model migration.'
-    skipIfFileContains: 'gpt-5|gpt5'
-  -
-    pattern: 'dall-?e|DALL.?E|dall_e'
+    message: "gpt-4o is outdated — use gpt-5.4 via AI Gateway for better quality and cost; loading AI SDK guidance for model migration."
+    skipIfFileContains: "gpt-5|gpt5"
+  - pattern: "dall-?e|DALL.?E|dall_e"
     targetSkill: ai-sdk
-    message: 'DALL-E is outdated — use gemini-3.1-flash-image-preview via AI Gateway for better, faster image generation; loading AI SDK guidance.'
-    skipIfFileContains: 'gemini-3|imagen'
-  -
-    pattern: 'gemini-2\.\d'
+    message: "DALL-E is outdated — use gemini-3.1-flash-image-preview via AI Gateway for better, faster image generation; loading AI SDK guidance."
+    skipIfFileContains: "gemini-3|imagen"
+  - pattern: 'gemini-2\.\d'
     targetSkill: ai-sdk
-    message: 'Gemini 2.x models are outdated — use gemini-3.1-flash-image-preview for images or current Gemini 3.x models; loading AI SDK guidance.'
-    skipIfFileContains: 'gemini-3'
+    message: "Gemini 2.x models are outdated — use gemini-3.1-flash-image-preview for images or current Gemini 3.x models; loading AI SDK guidance."
+    skipIfFileContains: "gemini-3"
 retrieval:
   aliases:
     - model router
@@ -89,7 +77,6 @@ retrieval:
     - provider
     - failover
     - cost tracking
-
 ---
 
 # Vercel AI Gateway
@@ -112,23 +99,23 @@ AI Gateway provides a single API endpoint to access 100+ models from all major p
 Pass a `"provider/model"` string to the `model` parameter — the AI SDK automatically routes it through the AI Gateway:
 
 ```ts
-import { generateText } from 'ai'
+import { generateText } from "ai";
 
 const result = await generateText({
-  model: 'openai/gpt-5.4', // plain string — routes through AI Gateway automatically
-  prompt: 'Hello!',
-})
+  model: "openai/gpt-5.4", // plain string — routes through AI Gateway automatically
+  prompt: "Hello!",
+});
 ```
 
 No `gateway()` wrapper or additional package needed. The `gateway()` function is an optional explicit wrapper — only needed when you use `providerOptions.gateway` for routing, failover, or tags:
 
 ```ts
-import { gateway } from 'ai'
+import { gateway } from "ai";
 
 const result = await generateText({
-  model: gateway('openai/gpt-5.4'),
-  providerOptions: { gateway: { order: ['openai', 'azure-openai'] } },
-})
+  model: gateway("openai/gpt-5.4"),
+  providerOptions: { gateway: { order: ["openai", "azure-openai"] } },
+});
 ```
 
 ## Model Slug Rules (Critical)
@@ -142,9 +129,9 @@ const result = await generateText({
 - Do not default to outdated choices like `openai/gpt-4o`.
 
 ```ts
-import { gateway } from 'ai'
+import { gateway } from "ai";
 
-const availableModels = await gateway.getAvailableModels()
+const availableModels = await gateway.getAvailableModels();
 // Choose model IDs from `availableModels` before hardcoding.
 ```
 
@@ -188,6 +175,7 @@ export AI_GATEWAY_API_KEY=your-key-here
 ### Auth Priority
 
 The `@ai-sdk/gateway` package resolves authentication in this order:
+
 1. `AI_GATEWAY_API_KEY` environment variable (if set)
 2. `VERCEL_OIDC_TOKEN` via `@vercel/oidc` (default on Vercel and after `vercel env pull`)
 
@@ -197,38 +185,38 @@ Configure how AI Gateway routes requests across providers:
 
 ```ts
 const result = await generateText({
-  model: gateway('anthropic/claude-sonnet-4.6'),
-  prompt: 'Hello!',
+  model: gateway("anthropic/claude-sonnet-4.6"),
+  prompt: "Hello!",
   providerOptions: {
     gateway: {
       // Try providers in order; failover to next on error
-      order: ['bedrock', 'anthropic'],
+      order: ["bedrock", "anthropic"],
 
       // Restrict to specific providers only
-      only: ['anthropic', 'vertex'],
+      only: ["anthropic", "vertex"],
 
       // Fallback models if primary model fails
-      models: ['openai/gpt-5.4', 'google/gemini-3-flash'],
+      models: ["openai/gpt-5.4", "google/gemini-3-flash"],
 
       // Track usage per end-user
-      user: 'user-123',
+      user: "user-123",
 
       // Tag for cost attribution and filtering
-      tags: ['feature:chat', 'env:production', 'team:growth'],
+      tags: ["feature:chat", "env:production", "team:growth"],
     },
   },
-})
+});
 ```
 
 ### Routing Options
 
-| Option | Purpose |
-|--------|---------|
-| `order` | Provider priority list; try first, failover to next |
-| `only` | Restrict to specific providers |
-| `models` | Fallback model list if primary model unavailable |
-| `user` | End-user ID for usage tracking |
-| `tags` | Labels for cost attribution and reporting |
+| Option   | Purpose                                             |
+| -------- | --------------------------------------------------- |
+| `order`  | Provider priority list; try first, failover to next |
+| `only`   | Restrict to specific providers                      |
+| `models` | Fallback model list if primary model unavailable    |
+| `user`   | End-user ID for usage tracking                      |
+| `tags`   | Labels for cost attribution and reporting           |
 
 ## Cache-Control Headers
 
@@ -236,24 +224,24 @@ AI Gateway supports response caching to reduce latency and cost for repeated or 
 
 ```ts
 const result = await generateText({
-  model: gateway('openai/gpt-5.4'),
-  prompt: 'What is the capital of France?',
+  model: gateway("openai/gpt-5.4"),
+  prompt: "What is the capital of France?",
   providerOptions: {
     gateway: {
       // Cache identical requests for 1 hour
-      cacheControl: 'max-age=3600',
+      cacheControl: "max-age=3600",
     },
   },
-})
+});
 ```
 
 ### Caching strategies
 
-| Header Value | Behavior |
-|-------------|----------|
-| `max-age=3600` | Cache response for 1 hour |
-| `max-age=0` | Bypass cache, always call provider |
-| `s-maxage=86400` | Cache at the edge for 24 hours |
+| Header Value                 | Behavior                                              |
+| ---------------------------- | ----------------------------------------------------- |
+| `max-age=3600`               | Cache response for 1 hour                             |
+| `max-age=0`                  | Bypass cache, always call provider                    |
+| `s-maxage=86400`             | Cache at the edge for 24 hours                        |
 | `stale-while-revalidate=600` | Serve stale for 10 min while refreshing in background |
 
 ### When to use caching
@@ -273,15 +261,15 @@ Control usage at the individual user level to prevent abuse and manage costs:
 
 ```ts
 const result = await generateText({
-  model: gateway('openai/gpt-5.4'),
+  model: gateway("openai/gpt-5.4"),
   prompt: userMessage,
   providerOptions: {
     gateway: {
       user: userId, // Required for per-user rate limiting
-      tags: ['feature:chat'],
+      tags: ["feature:chat"],
     },
   },
-})
+});
 ```
 
 ### Rate limit configuration
@@ -297,23 +285,22 @@ Configure rate limits at `https://vercel.com/{team}/{project}/settings` → **AI
 When a user exceeds their limit, the gateway returns HTTP 429:
 
 ```ts
-import { generateText, APICallError } from 'ai'
+import { generateText, APICallError } from "ai";
 
 try {
   const result = await generateText({
-    model: gateway('openai/gpt-5.4'),
+    model: gateway("openai/gpt-5.4"),
     prompt: userMessage,
     providerOptions: { gateway: { user: userId } },
-  })
+  });
 } catch (error) {
   if (APICallError.isInstance(error) && error.statusCode === 429) {
-    const retryAfter = error.responseHeaders?.['retry-after']
-    return new Response(
-      JSON.stringify({ error: 'Rate limited', retryAfter }),
-      { status: 429 }
-    )
+    const retryAfter = error.responseHeaders?.["retry-after"];
+    return new Response(JSON.stringify({ error: "Rate limited", retryAfter }), {
+      status: 429,
+    });
   }
-  throw error
+  throw error;
 }
 ```
 
@@ -359,18 +346,20 @@ Use **separate gateway keys per environment** (dev, staging, prod) and per proje
 The AI Gateway dashboard provides observability (traces, token counts, spend tracking) but no programmatic metrics API. Build your own cost guardrails by estimating token counts and rejecting expensive requests before they execute:
 
 ```ts
-import { generateText } from 'ai'
+import { generateText } from "ai";
 
 function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4) // rough estimate
+  return Math.ceil(text.length / 4); // rough estimate
 }
 
 async function callWithBudget(prompt: string, maxTokens: number) {
-  const estimated = estimateTokens(prompt)
+  const estimated = estimateTokens(prompt);
   if (estimated > maxTokens) {
-    throw new Error(`Prompt too large: ~${estimated} tokens exceeds ${maxTokens} limit`)
+    throw new Error(
+      `Prompt too large: ~${estimated} tokens exceeds ${maxTokens} limit`
+    );
   }
-  return generateText({ model: 'openai/gpt-5.4', prompt })
+  return generateText({ model: "openai/gpt-5.4", prompt });
 }
 ```
 
@@ -383,7 +372,7 @@ When a hard limit is reached, the gateway returns HTTP 402 (Payment Required). H
 ```ts
 if (APICallError.isInstance(error) && error.statusCode === 402) {
   // Budget exceeded — degrade gracefully
-  return fallbackResponse()
+  return fallbackResponse();
 }
 ```
 
@@ -434,15 +423,15 @@ When a provider is down, the gateway automatically fails over if you configured 
 
 ```ts
 const result = await generateText({
-  model: gateway('anthropic/claude-sonnet-4.6'),
-  prompt: 'Summarize this document',
+  model: gateway("anthropic/claude-sonnet-4.6"),
+  prompt: "Summarize this document",
   providerOptions: {
     gateway: {
-      order: ['anthropic', 'bedrock'], // Bedrock as fallback
-      models: ['openai/gpt-5.4'],   // Final fallback model
+      order: ["anthropic", "bedrock"], // Bedrock as fallback
+      models: ["openai/gpt-5.4"], // Final fallback model
     },
   },
-})
+});
 ```
 
 ### Quota exceeded at provider
@@ -453,10 +442,10 @@ If your provider API key hits its quota, the gateway tries the next provider in 
 
 ```ts
 // Bad — model doesn't exist
-model: 'openai/gpt-99'  // Returns 400 with descriptive error
+model: "openai/gpt-99"; // Returns 400 with descriptive error
 
 // Good — use models listed in Vercel docs
-model: 'openai/gpt-5.4'
+model: "openai/gpt-5.4";
 ```
 
 ### Timeout handling
@@ -464,45 +453,49 @@ model: 'openai/gpt-5.4'
 Gateway has a default timeout per provider. For long-running generations, use streaming:
 
 ```ts
-import { streamText } from 'ai'
+import { streamText } from "ai";
 
 const result = streamText({
-  model: 'anthropic/claude-sonnet-4.6',
+  model: "anthropic/claude-sonnet-4.6",
   prompt: longDocument,
-})
+});
 
 for await (const chunk of result.textStream) {
-  process.stdout.write(chunk)
+  process.stdout.write(chunk);
 }
 ```
 
 ### Complete error handling template
 
 ```ts
-import { generateText, APICallError } from 'ai'
+import { generateText, APICallError } from "ai";
 
 async function callAI(prompt: string, userId: string) {
   try {
     return await generateText({
-      model: gateway('openai/gpt-5.4'),
+      model: gateway("openai/gpt-5.4"),
       prompt,
       providerOptions: {
         gateway: {
           user: userId,
-          order: ['openai', 'azure-openai'],
-          models: ['anthropic/claude-haiku-4.5'],
-          tags: ['feature:chat'],
+          order: ["openai", "azure-openai"],
+          models: ["anthropic/claude-haiku-4.5"],
+          tags: ["feature:chat"],
         },
       },
-    })
+    });
   } catch (error) {
-    if (!APICallError.isInstance(error)) throw error
+    if (!APICallError.isInstance(error)) throw error;
 
     switch (error.statusCode) {
-      case 402: return { text: 'Budget limit reached. Please try again later.' }
-      case 429: return { text: 'Too many requests. Please slow down.' }
-      case 503: return { text: 'AI service temporarily unavailable.' }
-      default: throw error
+      case 402:
+        return { text: "Budget limit reached. Please try again later." };
+      case 429:
+        return { text: "Too many requests. Please slow down." };
+      case 503:
+        return { text: "AI service temporarily unavailable." };
+      default:
+        throw error;
     }
   }
 }
@@ -576,9 +569,9 @@ export ANTHROPIC_DEFAULT_HAIKU_MODEL="anthropic/claude-haiku-4.5"
 
 **GPT-5.4** (added March 5, 2026) — agentic and reasoning leaps from GPT-5.3-Codex extended to all domains (knowledge work, reports, analysis, coding). Faster and more token-efficient than GPT-5.2.
 
-| Model | Slug | Input | Output |
-|-------|------|-------|--------|
-| GPT-5.4 | `openai/gpt-5.4` | $2.50/M tokens | $15.00/M tokens |
+| Model       | Slug                 | Input           | Output           |
+| ----------- | -------------------- | --------------- | ---------------- |
+| GPT-5.4     | `openai/gpt-5.4`     | $2.50/M tokens  | $15.00/M tokens  |
 | GPT-5.4 Pro | `openai/gpt-5.4-pro` | $30.00/M tokens | $180.00/M tokens |
 
 GPT-5.4 Pro targets maximum performance on complex tasks. Use standard GPT-5.4 for most workloads.
@@ -613,23 +606,23 @@ Text and image generation both route through the gateway. For embeddings, use a 
 ```ts
 // Text — through gateway
 const { text } = await generateText({
-  model: 'openai/gpt-5.4',
-  prompt: 'Hello',
-})
+  model: "openai/gpt-5.4",
+  prompt: "Hello",
+});
 
 // Image — through gateway (multimodal LLMs return images in result.files)
 const result = await generateText({
-  model: 'google/gemini-3.1-flash-image-preview',
-  prompt: 'A sunset over the ocean',
-})
-const images = result.files.filter((f) => f.mediaType?.startsWith('image/'))
+  model: "google/gemini-3.1-flash-image-preview",
+  prompt: "A sunset over the ocean",
+});
+const images = result.files.filter((f) => f.mediaType?.startsWith("image/"));
 
 // Image-only models — through gateway with experimental_generateImage
-import { experimental_generateImage as generateImage } from 'ai'
+import { experimental_generateImage as generateImage } from "ai";
 const { images: generated } = await generateImage({
-  model: 'google/imagen-4.0-generate-001',
-  prompt: 'A sunset',
-})
+  model: "google/imagen-4.0-generate-001",
+  prompt: "A sunset",
+});
 ```
 
 **Default image model**: `google/gemini-3.1-flash-image-preview` — fast multimodal image generation via gateway.
@@ -647,15 +640,15 @@ See [AI Gateway Image Generation docs](https://vercel.com/docs/ai-gateway/capabi
 
 ## When to Use AI Gateway
 
-| Scenario | Use Gateway? |
-|----------|-------------|
-| Production app with AI features | Yes — failover, cost tracking |
-| Prototyping with single provider | Optional — direct provider works fine |
-| Multi-provider setup | Yes — unified routing |
-| Need provider-specific features | Use direct provider SDK + Gateway as fallback |
-| Cost tracking and budgeting | Yes — user tracking and tags |
-| Multi-tenant SaaS | Yes — per-user rate limiting and audit |
-| Compliance requirements | Yes — audit logging and log drains |
+| Scenario                         | Use Gateway?                                  |
+| -------------------------------- | --------------------------------------------- |
+| Production app with AI features  | Yes — failover, cost tracking                 |
+| Prototyping with single provider | Optional — direct provider works fine         |
+| Multi-provider setup             | Yes — unified routing                         |
+| Need provider-specific features  | Use direct provider SDK + Gateway as fallback |
+| Cost tracking and budgeting      | Yes — user tracking and tags                  |
+| Multi-tenant SaaS                | Yes — per-user rate limiting and audit        |
+| Compliance requirements          | Yes — audit logging and log drains            |
 
 ## Official Documentation
 
