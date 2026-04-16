@@ -10,15 +10,19 @@
 Add or switch these in **`apps/server/.env`** when using the local Docker database:
 
 ```bash
-# Local Postgres (Docker Compose — see docker-compose.local-db.yml)
-# Superuser (simplest while migrating / running Drizzle CLI):
+# Server runtime
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/cobalt
 
-# If DATABASE_URL is app_local (after grants), Drizzle Kit still needs postgres for DDL.
-# Set one of these (see packages/db/drizzle.config.ts — MIGRATION_URI wins):
-# MIGRATION_URI=postgresql://postgres:postgres@127.0.0.1:5433/cobalt
-# Or run: bun db:migrate:local
+# Drizzle Kit (db:generate / db:migrate). packages/db/drizzle.config.ts reads
+# LOCAL_DATABASE_URL first, then falls back to MIGRATION_URI — NOT DATABASE_URL.
+LOCAL_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/cobalt
 ```
+
+Notes:
+
+- **Drizzle Kit never reads `DATABASE_URL`.** You must set either `LOCAL_DATABASE_URL` (preferred) or `MIGRATION_URI`, otherwise `bun db:generate` / `bun db:migrate` throws `Either LOCAL_DATABASE_URL or MIGRATION_URI must be set`.
+- Using the `postgres` superuser for both is the simplest setup while migrating. If you later switch `DATABASE_URL` to `app_local:app_local_secret@…` (after `db:local:grants`) to test realistic RLS, keep `LOCAL_DATABASE_URL` pointed at the superuser so Drizzle Kit can still run DDL.
+- `bun db:migrate:local` forces the Docker superuser URL on port **5433** without needing `LOCAL_DATABASE_URL` in your env.
 
 After **`bun db:local:grants`**, you can use PlanetScale-style login users (see [`packages/db/planetscale/README.md`](../../packages/db/planetscale/README.md)):
 
@@ -107,7 +111,7 @@ bun dev
 
 Postgres is the **source of truth**. The **Zero client** and **zero-cache** replication expect a generated schema file that mirrors the Drizzle tables you expose to sync.
 
-In this repo, **[drizzle-zero](https://www.npmjs.com/package/drizzle-zero)** reads the single barrel file **`packages/db/src/schema/drizzle-schema.ts`** and writes **`packages/zero/src/zero-schema.gen.ts`**.
+In this repo, **[drizzle-zero](https://www.npmjs.com/package/drizzle-zero)** reads the single barrel file **`packages/db/src/schema/zero-schema.ts`** and writes **`packages/zero/src/zero-schema.gen.ts`**.
 
 ### When to run it
 
@@ -119,7 +123,7 @@ bun zero:generate
 
 This is the script in `packages/zero/package.json`:
 
-- `drizzle-zero generate --schema ../db/src/schema/drizzle-schema.ts --output ./src/zero-schema.gen.ts --format --force`
+- `drizzle-zero generate --schema ../db/src/schema/zero-schema.ts --output ./src/zero-schema.gen.ts --format --force`
 
 Commit the updated **`zero-schema.gen.ts`** with the same change set as your Drizzle migration.
 

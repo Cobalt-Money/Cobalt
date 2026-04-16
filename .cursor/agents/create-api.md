@@ -33,8 +33,8 @@ Postgres
 | Drizzle `pgTable` for a feature area                                                                                                    | `packages/db/src/schema/<domain>/<feature>/tables.ts`                                                                                                                                                                           |
 | Zod + `z.infer` + `*JsonbSelectRefinements` for that feature’s `jsonb`                                                                  | Same folder: `<feature>/zod.ts`                                                                                                                                                                                                 |
 | **Do not** add a nested `index.ts` inside `<feature>/` — re-export from the **domain** `index.ts` only (one barrel at the outer route). |
-| drizzle-zero codegen input (flat list of tables + legacy relations)                                                                     | `packages/db/src/schema/drizzle-schema.ts` only — not for runtime `db`                                                                                                                                                          |
-| Runtime `db` client                                                                                                                     | `packages/db/src/index.ts` (uses `schema` + v2 `relations`, not `drizzle-schema.ts`)                                                                                                                                            |
+| drizzle-zero codegen input (flat list of tables + legacy relations)                                                                     | `packages/db/src/schema/zero-schema.ts` only — not for runtime `db`                                                                                                                                                             |
+| Runtime `db` client                                                                                                                     | `packages/db/src/index.ts` (uses `schema` + v2 `relations`, not `zero-schema.ts`)                                                                                                                                               |
 | Query functions + return shapes (mappers)                                                                                               | `packages/server-data/src/<domain>/queries.ts` (split to `queries/*.ts` only if the file gets huge)                                                                                                                             |
 | Zod for OpenAPI: params, bodies, list/detail DTOs                                                                                       | `packages/server-data/src/<domain>/schemas.ts`                                                                                                                                                                                  |
 | DTO mappers, **relational row types**, **pure predicates** (`isX`, `matchesY`)                                                          | `packages/server-data/src/<domain>/lib.ts`                                                                                                                                                                                      |
@@ -95,7 +95,7 @@ Use the **relational** API when you need **nested loads** and **nested `where`**
 
 ## Zero
 
-- If the new/changed table is **replicated**: update **`drizzle-schema.ts`** if needed, run **`packages/zero`** `generate:zero`, restart **zero-cache**. **No** migration for Zod-only changes.
+- If the new/changed table is **replicated**: update **`zero-schema.ts`** if needed, run **`packages/zero`** `generate:zero`, restart **zero-cache**. **No** migration for Zod-only changes.
 
 ## Anti-patterns
 
