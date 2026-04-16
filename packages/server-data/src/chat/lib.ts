@@ -1,4 +1,4 @@
-import type { parts } from "@cobalt-web/db/schema/drizzle-schema";
+import type { parts } from "@cobalt-web/db/schema/zero-schema";
 import type { InferSelectModel } from "drizzle-orm";
 
 type PartRow = InferSelectModel<typeof parts>;

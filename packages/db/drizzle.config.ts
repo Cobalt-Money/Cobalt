@@ -27,7 +27,9 @@ export default defineConfig({
     roles: true,
   },
   out: path.resolve(__dirname, "src/migrations"),
-  schema: path.resolve(__dirname, "src/schema"),
+  // All tables drizzle-kit should manage. This is a superset of the tables
+  // exposed to Zero replication (see ./src/schema/zero-schema.ts).
+  schema: path.resolve(__dirname, "src/schema/drizzle-schema.ts"),
   strict: true,
   verbose: true,
 });
