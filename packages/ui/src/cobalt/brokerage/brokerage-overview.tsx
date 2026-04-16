@@ -4,7 +4,15 @@ import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { format, startOfYear, subDays, subMonths, subYears } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  useActiveTooltipDataPoints,
+} from "recharts";
 
 import type { BrokerageRowWithRelations } from "../accounts/lib/map-zero-to-account-cards";
 import { CardContent, CobaltCard } from "../card";
@@ -286,6 +294,29 @@ function rangeStartEpoch(range: BalanceChartRange): number {
       return 0;
     }
   }
+}
+
+interface ChartPoint {
+  display: string;
+  label: number;
+  v: number;
+}
+
+/** Reads the active tooltip data from within the Recharts v3 chart context and syncs it to parent state. */
+function ChartHoverSync({
+  setHoveredValue,
+  setHoveredDate,
+}: {
+  setHoveredValue: (v: number | null) => void;
+  setHoveredDate: (d: string | null) => void;
+}) {
+  const dataPoints = useActiveTooltipDataPoints<ChartPoint>();
+  useEffect(() => {
+    const pt = dataPoints?.[0];
+    setHoveredValue(pt?.v ?? null);
+    setHoveredDate(pt?.display ?? null);
+  }, [dataPoints, setHoveredValue, setHoveredDate]);
+  return null;
 }
 
 export function BrokerageOverview({
@@ -602,21 +633,6 @@ export function BrokerageOverview({
                 <AreaChart
                   data={chartPoints}
                   margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
-                  onMouseLeave={() => {
-                    setHoveredValue(null);
-                    setHoveredDate(null);
-                  }}
-                  onMouseMove={(e) => {
-                    const pt = (
-                      e as {
-                        activePayload?: {
-                          payload?: { display?: string; v?: number };
-                        }[];
-                      }
-                    ).activePayload?.[0]?.payload;
-                    setHoveredValue(pt?.v ?? null);
-                    setHoveredDate(pt?.display ?? null);
-                  }}
                 >
                   <defs>
                     <linearGradient
@@ -638,6 +654,11 @@ export function BrokerageOverview({
                       />
                     </linearGradient>
                   </defs>
+                  <Tooltip content={() => null} />
+                  <ChartHoverSync
+                    setHoveredDate={setHoveredDate}
+                    setHoveredValue={setHoveredValue}
+                  />
                   <XAxis dataKey="label" hide />
                   <YAxis domain={["auto", "auto"]} hide width={0} />
                   <Area
