@@ -57,10 +57,13 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "^3.0.103",
     "@cobalt-web/env": "workspace:*",
     "@tanstack/react-virtual": "^3.13.23",
+    "ai": "^6.0.167",
     "dotenv": "catalog:",
     "plaid": "^41.4.0",
+    "workflow": "^4.2.2",
     "zod": "catalog:"
   },
   "devDependencies": {

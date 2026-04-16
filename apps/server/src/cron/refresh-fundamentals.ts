@@ -16,7 +16,7 @@ function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export const cronRefreshFundamentalsRouter = new Hono().post(
+export const cronRefreshFundamentalsRouter = new Hono().get(
   "/refresh-fundamentals",
   async (c) => {
     const secret = env.CRON_SECRET;
