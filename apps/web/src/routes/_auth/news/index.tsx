@@ -1,9 +1,10 @@
 import { NewsMagazine } from "@cobalt-web/ui/cobalt/news/news-magazine";
 import { queries } from "@cobalt-web/zero";
 import type { Zero } from "@rocicorp/zero";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 
+import { Link } from "@/components/links";
 import { useBrokerage } from "@/hooks/use-brokerage";
 import { useFinancialEvents } from "@/hooks/use-financial-events";
 import { useNewsRssSidebar } from "@/hooks/use-news-rss";

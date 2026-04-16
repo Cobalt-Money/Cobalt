@@ -1,10 +1,9 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { buttonVariants } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { ArrowLeft01Icon, LinkSquare01Icon } from "@hugeicons/core-free-icons";
+import { LinkSquare01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Link } from "@tanstack/react-router";
 
+import { Link } from "@/components/links";
 import { useFinancialEventDetail } from "@/hooks/use-financial-event-detail";
 
 /** Narrow shape for synced financial event + articles (Zero row typing is permissive). */
@@ -145,24 +144,6 @@ function faviconUrlForNewsUrl(url: string): string {
   } catch {
     return "";
   }
-}
-
-function BackToNewsLink() {
-  return (
-    <Link
-      className={cn(buttonVariants({ variant: "ghost" }), "w-fit")}
-      to="/news"
-    >
-      <HugeiconsIcon
-        aria-hidden
-        icon={ArrowLeft01Icon}
-        size={16}
-        strokeWidth={2}
-        className="mr-2"
-      />
-      Back to News
-    </Link>
-  );
 }
 
 function StoryHeader({
@@ -347,7 +328,6 @@ export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
   if (raw === undefined) {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
-        <BackToNewsLink />
         <p className="text-muted-foreground text-sm">
           This story could not be loaded. It may have been removed or the link
           is invalid.
@@ -376,8 +356,6 @@ export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8">
-      <BackToNewsLink />
-
       <StoryHeader
         event={event}
         timeLabel={timeLabel}
