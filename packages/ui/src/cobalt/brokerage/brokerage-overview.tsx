@@ -3,7 +3,7 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { format, startOfYear, subDays, subMonths, subYears } from "date-fns";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -344,6 +344,30 @@ export function BrokerageOverview({
   });
   const [hoveredValue, setHoveredValue] = useState<number | null>(null);
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const coloredLayerRef = useRef<HTMLDivElement>(null);
+
+  const handleChartMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const container = chartContainerRef.current;
+      const coloredEl = coloredLayerRef.current;
+      if (!container || !coloredEl) {
+        return;
+      }
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const rightPct = Math.max(0, Math.min(100, (1 - x / rect.width) * 100));
+      coloredEl.style.clipPath = `inset(0 ${rightPct.toFixed(2)}% 0 0)`;
+    },
+    []
+  );
+
+  const handleChartMouseLeave = useCallback(() => {
+    const coloredEl = coloredLayerRef.current;
+    if (coloredEl) {
+      coloredEl.style.clipPath = "";
+    }
+  }, []);
 
   const scopedAccountIds = useMemo(() => {
     if (brokerageScope.type === "all") {
@@ -628,49 +652,80 @@ export function BrokerageOverview({
                 ) : null}
               </div>
             </div>
-            <div className="min-h-[200px] w-full min-w-0 flex-1 [&_.recharts-tooltip-cursor]:stroke-border/40">
-              <ResponsiveContainer height="100%" width="100%">
-                <AreaChart
-                  data={chartPoints}
-                  margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
-                >
-                  <defs>
-                    <linearGradient
-                      id="brokerageBalanceFill"
-                      x1="0"
-                      x2="0"
-                      y1="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor="var(--color-green-550)"
-                        stopOpacity={0.35}
-                      />
-                      <stop
-                        offset="100%"
-                        stopColor="var(--color-green-550)"
-                        stopOpacity={0}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <Tooltip content={() => null} />
-                  <ChartHoverSync
-                    setHoveredDate={setHoveredDate}
-                    setHoveredValue={setHoveredValue}
-                  />
-                  <XAxis dataKey="label" hide />
-                  <YAxis domain={["auto", "auto"]} hide width={0} />
-                  <Area
-                    dataKey="v"
-                    fill="url(#brokerageBalanceFill)"
-                    isAnimationActive={false}
-                    stroke="var(--color-green-550)"
-                    strokeWidth={2}
-                    type="monotone"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div
+              ref={chartContainerRef}
+              className="relative min-h-[200px] w-full min-w-0 flex-1 [&_.recharts-tooltip-cursor]:hidden"
+              onMouseLeave={handleChartMouseLeave}
+              onMouseMove={handleChartMouseMove}
+            >
+              {/* Muted base chart — always full width, handles all interaction */}
+              <div className="absolute inset-0">
+                <ResponsiveContainer height="100%" width="100%">
+                  <AreaChart
+                    data={chartPoints}
+                    margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
+                  >
+                    <Tooltip content={() => null} />
+                    <ChartHoverSync
+                      setHoveredDate={setHoveredDate}
+                      setHoveredValue={setHoveredValue}
+                    />
+                    <XAxis dataKey="label" hide />
+                    <YAxis domain={["auto", "auto"]} hide width={0} />
+                    <Area
+                      dataKey="v"
+                      fill="transparent"
+                      isAnimationActive={false}
+                      stroke="rgba(120,120,130,0.45)"
+                      strokeWidth={2}
+                      type="monotone"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Colored overlay — pointer-events none, clipped to left of cursor on hover */}
+              <div
+                ref={coloredLayerRef}
+                className="pointer-events-none absolute inset-0"
+              >
+                <ResponsiveContainer height="100%" width="100%">
+                  <AreaChart
+                    data={chartPoints}
+                    margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
+                  >
+                    <defs>
+                      <linearGradient
+                        id="brokerageBalanceFill"
+                        x1="0"
+                        x2="0"
+                        y1="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="var(--color-green-550)"
+                          stopOpacity={0.35}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="var(--color-green-550)"
+                          stopOpacity={0}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="label" hide />
+                    <YAxis domain={["auto", "auto"]} hide width={0} />
+                    <Area
+                      dataKey="v"
+                      fill="url(#brokerageBalanceFill)"
+                      isAnimationActive={false}
+                      stroke="var(--color-green-550)"
+                      strokeWidth={2}
+                      type="monotone"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
             <div
               aria-label="Chart time range"
