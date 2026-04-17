@@ -4,9 +4,9 @@ import * as RechartsPrimitive from "recharts";
 import type { TooltipValueType } from "recharts";
 
 // Format: { THEME_NAME: CSS_SELECTOR }
-const THEMES = { light: "", dark: ".dark" } as const;
+const THEMES = { dark: ".dark", light: "" } as const;
 
-const INITIAL_DIMENSION = { width: 320, height: 200 } as const;
+const INITIAL_DIMENSION = { height: 200, width: 320 } as const;
 type TooltipNameType = number | string;
 
 export type ChartConfig = Record<
@@ -20,9 +20,9 @@ export type ChartConfig = Record<
   )
 >;
 
-type ChartContextProps = {
+interface ChartContextProps {
   config: ChartConfig;
-};
+}
 
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
@@ -54,7 +54,7 @@ function ChartContainer({
   };
 }) {
   const uniqueId = React.useId();
-  const chartId = `chart-${id ?? uniqueId.replace(/:/g, "")}`;
+  const chartId = `chart-${id ?? uniqueId.replaceAll(":", "")}`;
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -222,10 +222,10 @@ function ChartTooltipContent({
                             "shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)",
                             {
                               "h-2.5 w-2.5": indicator === "dot",
-                              "w-1": indicator === "line",
+                              "my-0.5": nestLabel && indicator === "dashed",
                               "w-0 border-[1.5px] border-dashed bg-transparent":
                                 indicator === "dashed",
-                              "my-0.5": nestLabel && indicator === "dashed",
+                              "w-1": indicator === "line",
                             }
                           )}
                           style={
@@ -330,7 +330,7 @@ function getPayloadConfigFromPayload(
   key: string
 ) {
   if (typeof payload !== "object" || payload === null) {
-    return undefined;
+    return;
   }
 
   const payloadPayload =

@@ -38,7 +38,7 @@ export const encodeCursor = (date: Date | null, id: string): string => {
 export const decodeCursor = (cursor: string): GeneralEventsCursor | null => {
   try {
     const decoded = JSON.parse(
-      Buffer.from(cursor, "base64").toString("utf8")
+      Buffer.from(cursor, "base64").toString("utf-8")
     ) as GeneralEventsCursor;
 
     if (!decoded.id || typeof decoded.id !== "string") {
@@ -63,7 +63,7 @@ export const decodeCursorForYou = (
 ): ForYouEventsCursor | null => {
   try {
     const decoded = JSON.parse(
-      Buffer.from(cursor, "base64").toString("utf8")
+      Buffer.from(cursor, "base64").toString("utf-8")
     ) as ForYouEventsCursor;
 
     if (!decoded.id || typeof decoded.id !== "string") {
