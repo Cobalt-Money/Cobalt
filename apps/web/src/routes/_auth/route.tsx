@@ -1,5 +1,5 @@
 import { SidebarProvider } from "@cobalt-web/ui/components/sidebar";
-import { Navigate, Outlet, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 
 import { AddAccountProvider } from "@/components/accounts/add-account-provider";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
@@ -20,17 +20,7 @@ export const Route = createFileRoute("/_auth")({
   component: AuthLayout,
 });
 
-function AuthLayout() {
-  const session = useAppSession();
-
-  if (session.isPending) {
-    return null;
-  }
-
-  if (!session.data) {
-    return <Navigate replace to="/" />;
-  }
-
+function AuthShellWithOutlet() {
   return (
     <AddAccountProvider>
       <ZeroProvider>
@@ -45,4 +35,18 @@ function AuthLayout() {
       </ZeroProvider>
     </AddAccountProvider>
   );
+}
+
+function AuthLayout() {
+  const session = useAppSession();
+
+  if (session.isPending) {
+    return null;
+  }
+
+  if (!session.data) {
+    return <Navigate replace to="/" />;
+  }
+
+  return <AuthShellWithOutlet />;
 }

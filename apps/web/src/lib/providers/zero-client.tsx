@@ -35,7 +35,6 @@ export function ZeroProvider({ children }: { children: ReactNode }) {
       router.update({
         context: {
           ...router.options.context,
-          // @ts-expect-error - Router context for loaders
           zero: z,
         },
       });

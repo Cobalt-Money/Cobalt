@@ -1,4 +1,3 @@
-import { env } from "@cobalt-web/env/web";
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import {
   Table,
@@ -18,10 +17,12 @@ import {
   StarIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { Link } from "@/components/links";
+import { screenerQueryOptions } from "@/components/research/research-queries";
 import { sectorHugeiconForValue } from "@/components/research/sector-icons";
 
 type ScreenerRow = Record<string, unknown>;
@@ -34,11 +35,6 @@ interface ScreenerColumn {
   label: string;
   /** Narrow/wide hints for `<th>` / `<td>` (e.g. cap long text columns). */
   columnClassName?: string;
-}
-
-interface ScreenerResponse {
-  count: number;
-  results: ScreenerRow[];
 }
 
 function formatPct(v: unknown): string {
@@ -161,7 +157,7 @@ function consensusIconForLabel(raw: unknown) {
 const PCT_POSITIVE_CLASS = "text-green-550";
 const PCT_NEGATIVE_CLASS = "text-red-600 dark:text-red-400";
 
-/** Matches brokerage position P&L tones (`brokerage-overview` `openPnlToneClass`). */
+/** Matches holdings open P&L column tones (`positions-table`). */
 function pctChangeToneClass(v: unknown): string {
   if (typeof v !== "number" || !Number.isFinite(v)) {
     return "text-muted-foreground";
@@ -343,35 +339,7 @@ function screenerCellContent(
 }
 
 export function StockScreener() {
-  const [data, setData] = useState<ScreenerResponse | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setErrorMessage(null);
-    try {
-      const url = `${env.VITE_SERVER_URL}/api/research/screener`;
-      const res = await fetch(url, { credentials: "include" });
-      const json: unknown = await res.json();
-      if (!res.ok) {
-        const errObj = json as { error?: string };
-        setData(null);
-        setErrorMessage(errObj.error ?? `Request failed (${res.status})`);
-        return;
-      }
-      setData(json as ScreenerResponse);
-    } catch (error) {
-      setData(null);
-      setErrorMessage(
-        error instanceof Error ? error.message : "Request failed"
-      );
-    }
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      await load();
-    })();
-  }, [load]);
+  const { data, error } = useQuery(screenerQueryOptions);
 
   const rows = data?.results ?? EMPTY_SCREENER_ROWS;
 
@@ -446,9 +414,9 @@ export function StockScreener() {
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-4">
-      {errorMessage ? (
+      {error ? (
         <p className="text-destructive text-sm" role="alert">
-          {errorMessage}
+          {error.message}
         </p>
       ) : null}
 
@@ -522,7 +490,7 @@ export function StockScreener() {
         </Table>
       ) : null}
 
-      {data && rows.length === 0 && !errorMessage ? (
+      {data && rows.length === 0 && !error ? (
         <p className="text-muted-foreground text-sm">No rows returned.</p>
       ) : null}
     </div>

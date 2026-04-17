@@ -1,21 +1,24 @@
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
+import {
+  chartQueryOptions,
+  overviewQueryOptions,
+  quoteQueryOptions,
+  screenerRowFor,
+  screenerRowToQuote,
+} from "@/components/research/research-queries";
+import type { TickerQuote } from "@/components/research/research-queries";
 import type {
   ChartCrosshairHover,
   ChartPeriod,
-} from "@/components/research/lightweight-price-chart";
+} from "@/components/research/ticker/lightweight-price-chart";
 import {
   ChartPeriodToolbar,
   LightweightPriceChart,
-} from "@/components/research/lightweight-price-chart";
-import { TickerDetailAbout } from "@/components/research/ticker-detail-sections";
-import type { TickerQuote } from "@/components/research/use-ticker-data";
-import {
-  useChart,
-  useOverview,
-  useQuote,
-} from "@/components/research/use-ticker-data";
+} from "@/components/research/ticker/lightweight-price-chart";
+import { TickerDetailAbout } from "@/components/research/ticker/ticker-detail-sections";
 import { useAmbientInset } from "@/components/shell/ambient-inset-context";
 
 /**
@@ -106,7 +109,9 @@ function overviewNumericFields(o: Record<string, unknown>) {
   const cap = parseNum(
     o.marketCap ?? o.mktCap ?? o.MarketCapitalization ?? o.market_cap
   );
-  const pe = parseNum(o.pe ?? o.PERatio ?? o.peRatioTTM ?? o.trailingPE);
+  const pe = parseNum(
+    o.pe ?? o.peRatio ?? o.PERatio ?? o.peRatioTTM ?? o.trailingPE
+  );
   const revenue = parseNum(
     o.revenue ?? o.RevenueTTM ?? o.totalRevenue ?? o.Revenue
   );
@@ -267,13 +272,23 @@ function TickerKeyMetrics({ rows }: { rows: readonly KeyMetricRow[] }) {
 export function TickerDetailPage({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase();
   const { dominantHex, setResearchTicker } = useAmbientInset();
+  const queryClient = useQueryClient();
 
-  const { data: quote, loading: quoteLoading } = useQuote(sym);
-  const { data: overview } = useOverview(sym);
+  const { data: quote, isLoading: quoteLoading } = useQuery({
+    ...quoteQueryOptions(sym),
+    placeholderData: () => {
+      const row = screenerRowFor(queryClient, sym);
+      return row ? screenerRowToQuote(row, sym) : undefined;
+    },
+  });
+  const { data: overview } = useQuery({
+    ...overviewQueryOptions(sym),
+    placeholderData: () => screenerRowFor(queryClient, sym),
+  });
   const [period, setPeriod] = useState<ChartPeriod>("1M");
   const [chartCrosshair, setChartCrosshair] =
     useState<ChartCrosshairHover | null>(null);
-  const { data: chartPoints } = useChart(sym, period);
+  const { data: chartPoints } = useQuery(chartQueryOptions(sym, period));
 
   const companyName = useMemo(() => {
     if (quote?.companyName) {
@@ -302,13 +317,13 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
       ? dominantHex
       : undefined;
 
-  const description = extractDescription(overview);
+  const description = extractDescription(overview ?? null);
   const changeClass =
     (quote?.change ?? 0) < 0
       ? "text-red-600 dark:text-red-400"
       : "text-green-600 dark:text-green-400";
 
-  const keyMetricRows = useKeyMetricRows(overview);
+  const keyMetricRows = useKeyMetricRows(overview ?? null);
 
   // ── Price + fundamentals row ─────────────────────────────────────
 
@@ -340,7 +355,7 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
 
       <LightweightPriceChart
         chartClassName={CHART_FULL_WIDTH_CLASS}
-        data={chartPoints}
+        data={chartPoints ?? []}
         lineColor={chartColor}
         onCrosshairHover={setChartCrosshair}
         period={period}
