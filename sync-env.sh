@@ -33,12 +33,3 @@ done < <(find "$main" -name ".env*" \
 
 echo ""
 echo "Synced $count env file(s) from main worktree."
-
-# Give this worktree a unique ZERO_APP_ID so parallel zero-cache instances
-# don't share the same replica database / CVR storage.
-zero_env="$current/apps/zero-cache/.env"
-if [ -f "$zero_env" ]; then
-  random_suffix=$(openssl rand -hex 6)
-  sed -i '' "s/^ZERO_APP_ID=.*/ZERO_APP_ID=zero_dev_${random_suffix}/" "$zero_env"
-  echo "  ✓ ZERO_APP_ID set to zero_dev_${random_suffix}"
-fi
