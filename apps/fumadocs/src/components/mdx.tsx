@@ -18,8 +18,8 @@ import {
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
-    AmpIcon,
     APIPage,
+    AmpIcon,
     ClaudeIcon,
     CodexIcon,
     CursorIcon,

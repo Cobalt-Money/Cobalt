@@ -20,7 +20,9 @@ export default async function Page(props: {
 }) {
   const params = await props.params;
   const page = source.getPage(params.slug);
-  if (!page) notFound();
+  if (!page) {
+    notFound();
+  }
 
   // OpenAPI-generated pages
   if (page.data.type === "openapi") {
@@ -69,13 +71,15 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const params = await props.params;
   const page = source.getPage(params.slug);
-  if (!page) notFound();
+  if (!page) {
+    notFound();
+  }
 
   return {
-    title: page.data.title,
     description: page.data.description,
     openGraph: {
       images: getPageImage(page).url,
     },
+    title: page.data.title,
   };
 }

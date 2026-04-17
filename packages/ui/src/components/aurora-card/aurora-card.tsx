@@ -1,22 +1,21 @@
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
+import type { ReactNode } from "react";
 
 import { AuroraCardFrame } from "./aurora-card-frame";
 import { AuroraThemePicker } from "./aurora-theme-picker";
-import {
-  AURORA_THEME_PRESETS,
-  type AuroraThemePreset,
-} from "./aurora-theme-presets";
+import { AURORA_THEME_PRESETS } from "./aurora-theme-presets";
+import type { AuroraThemePreset } from "./aurora-theme-presets";
 
 const DEFAULT_THEME = AURORA_THEME_PRESETS[0]!;
 
-export type AuroraCardProps = {
+export interface AuroraCardProps {
   /** Optional demo content inside the glass card. */
   children?: ReactNode;
   className?: string;
   /** Show preset theme picker (demo / docs). @default false */
   showThemePicker?: boolean;
-};
+}
 
 /**
  * Full-screen–style aurora demo: optional theme picker + glass frame.

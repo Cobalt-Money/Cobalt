@@ -20,7 +20,8 @@ import { useIsMobile } from "@cobalt-web/ui/hooks/use-mobile";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { SidebarLeftIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
@@ -30,7 +31,7 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
-type SidebarContextProps = {
+interface SidebarContextProps {
   state: "expanded" | "collapsed";
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -38,7 +39,7 @@ type SidebarContextProps = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
-};
+}
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
@@ -87,9 +88,11 @@ function SidebarProvider({
   );
 
   // Helper to toggle the sidebar.
-  const toggleSidebar = React.useCallback(() => {
-    return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
-  }, [isMobile, setOpen, setOpenMobile]);
+  const toggleSidebar = React.useCallback(
+    () =>
+      isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open),
+    [isMobile, setOpen, setOpenMobile]
+  );
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
@@ -113,12 +116,12 @@ function SidebarProvider({
 
   const contextValue = React.useMemo<SidebarContextProps>(
     () => ({
-      state,
-      open,
-      setOpen,
       isMobile,
+      open,
       openMobile,
+      setOpen,
       setOpenMobile,
+      state,
       toggleSidebar,
     }),
     [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
@@ -409,8 +412,8 @@ function SidebarGroupLabel({
     ),
     render,
     state: {
-      slot: "sidebar-group-label",
       sidebar: "group-label",
+      slot: "sidebar-group-label",
     },
   });
 }
@@ -433,8 +436,8 @@ function SidebarGroupAction({
     ),
     render,
     state: {
-      slot: "sidebar-group-action",
       sidebar: "group-action",
+      slot: "sidebar-group-action",
     },
   });
 }
@@ -478,21 +481,21 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 const sidebarMenuButtonVariants = cva(
   "peer/menu-button group/menu-button flex w-full items-center gap-2 overflow-hidden rounded-lg px-3 py-2 text-left text-sm ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground data-active:bg-transparent data-active:font-medium data-active:text-sidebar-foreground data-active:[&_svg]:text-sidebar-foreground data-active:hover:bg-sidebar-accent data-active:hover:text-sidebar-accent-foreground data-active:hover:[&_svg]:text-sidebar-accent-foreground [&_svg]:size-4 [&_svg]:shrink-0 [&>span:last-child]:truncate",
   {
+    defaultVariants: {
+      size: "default",
+      variant: "default",
+    },
     variants: {
-      variant: {
-        default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        outline:
-          "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
-      },
       size: {
         default: "h-9 text-sm",
         sm: "h-8 text-xs",
         lg: "h-14 px-3 text-sm group-data-[collapsible=icon]:p-0!",
       },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
+      variant: {
+        default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        outline:
+          "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
+      },
     },
   }
 );
@@ -515,16 +518,16 @@ function SidebarMenuButton({
     defaultTagName: "button",
     props: mergeProps<"button">(
       {
-        className: cn(sidebarMenuButtonVariants({ variant, size }), className),
+        className: cn(sidebarMenuButtonVariants({ size, variant }), className),
       },
       props
     ),
     render: !tooltip ? render : <TooltipTrigger render={render} />,
     state: {
-      slot: "sidebar-menu-button",
+      active: isActive,
       sidebar: "menu-button",
       size,
-      active: isActive,
+      slot: "sidebar-menu-button",
     },
   });
 
@@ -575,8 +578,8 @@ function SidebarMenuAction({
     ),
     render,
     state: {
-      slot: "sidebar-menu-action",
       sidebar: "menu-action",
+      slot: "sidebar-menu-action",
     },
   });
 }
@@ -606,9 +609,9 @@ function SidebarMenuSkeleton({
   showIcon?: boolean;
 }) {
   // Random width between 50 to 90%.
-  const [width] = React.useState(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`;
-  });
+  const [width] = React.useState(
+    () => `${Math.floor(Math.random() * 40) + 50}%`
+  );
 
   return (
     <div
@@ -688,10 +691,10 @@ function SidebarMenuSubButton({
     ),
     render,
     state: {
-      slot: "sidebar-menu-sub-button",
+      active: isActive,
       sidebar: "menu-sub-button",
       size,
-      active: isActive,
+      slot: "sidebar-menu-sub-button",
     },
   });
 }

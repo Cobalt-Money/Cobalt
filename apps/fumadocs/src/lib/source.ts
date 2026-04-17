@@ -1,5 +1,6 @@
 import { docs } from "collections/server";
-import { type InferPageType, loader, multiple } from "fumadocs-core/source";
+import { loader, multiple } from "fumadocs-core/source";
+import type { InferPageType } from "fumadocs-core/source";
 import { lucideIconsPlugin } from "fumadocs-core/source/lucide-icons";
 import { openapiPlugin, openapiSource } from "fumadocs-openapi/server";
 
