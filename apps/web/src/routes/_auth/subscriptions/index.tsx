@@ -1,5 +1,4 @@
 import { queries } from "@cobalt-web/zero";
-import type { Zero } from "@rocicorp/zero";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { SubscriptionsCalendar } from "@/components/subscriptions/subscriptions-calendar";
@@ -7,8 +6,7 @@ import { SubscriptionsCalendar } from "@/components/subscriptions/subscriptions-
 export const Route = createFileRoute("/_auth/subscriptions/")({
   component: SubscriptionsPage,
   loader: ({ context }) => {
-    const z = context.zero as unknown as Zero;
-    z.run(queries.transactions.recurring());
+    context.zero.run(queries.transactions.recurring());
   },
   staticData: { title: "Subscriptions" },
 });

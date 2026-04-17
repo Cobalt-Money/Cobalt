@@ -1,31 +1,18 @@
-import { BrokerageOverview } from "@cobalt-web/ui/cobalt/brokerage/brokerage-overview";
 import { queries } from "@cobalt-web/zero";
-import type { Zero } from "@rocicorp/zero";
 import { createFileRoute } from "@tanstack/react-router";
-import type { ComponentProps } from "react";
 
-import { useBrokerage } from "@/hooks/use-brokerage";
+import { Overview } from "@/components/brokerage/overview";
 
 export const Route = createFileRoute("/_auth/brokerage/")({
-  component: BrokerageIndexPage,
+  component: Overview,
   loader: ({ context }) => {
-    const z = context.zero as unknown as Zero;
-    z.run(queries.brokerage.accounts());
-    z.run(queries.brokerage.positions());
-    z.run(queries.brokerage.recentActivities());
-    z.run(queries.brokerage.portfolioSnapshots());
-    z.run(queries.brokerage.plaidInvestmentAccounts());
-    z.run(queries.brokerage.plaidPositions());
-    z.run(queries.brokerage.plaidActivities());
+    context.zero.run(queries.brokerage.accounts());
+    context.zero.run(queries.brokerage.positions());
+    context.zero.run(queries.brokerage.recentActivities());
+    context.zero.run(queries.brokerage.portfolioSnapshots());
+    context.zero.run(queries.brokerage.plaidInvestmentAccounts());
+    context.zero.run(queries.brokerage.plaidPositions());
+    context.zero.run(queries.brokerage.plaidActivities());
   },
   staticData: { title: "Brokerage" },
 });
-
-function BrokerageIndexPage() {
-  const data = useBrokerage();
-  return (
-    <BrokerageOverview
-      {...(data as ComponentProps<typeof BrokerageOverview>)}
-    />
-  );
-}

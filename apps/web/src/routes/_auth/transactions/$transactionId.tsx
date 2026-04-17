@@ -1,6 +1,5 @@
 import { TransactionDetailView } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
 import { queries } from "@cobalt-web/zero";
-import type { Zero } from "@rocicorp/zero";
 import {
   createFileRoute,
   getRouteApi,
@@ -17,8 +16,7 @@ const transactionDetailRouteApi = getRouteApi(
 export const Route = createFileRoute("/_auth/transactions/$transactionId")({
   component: TransactionDetailRoute,
   loader: ({ context }) => {
-    const z = context.zero as unknown as Zero;
-    z.run(queries.transactions.all());
+    context.zero.run(queries.transactions.all());
   },
   staticData: { title: "Transaction" },
 });

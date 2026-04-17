@@ -1,21 +1,22 @@
 import { Toaster } from "@cobalt-web/ui/components/sonner";
 import { ThemeProvider } from "@cobalt-web/ui/components/theme-provider";
 import { TooltipProvider } from "@cobalt-web/ui/components/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import {
   HeadContent,
   Outlet,
   Scripts,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 // import { Agentation } from "agentation";
 
 import { AppSessionProvider } from "../lib/providers/app-session";
+import type { RouterContext } from "../router";
 
 import appCss from "../index.css?url";
 
-export const Route = createRootRouteWithContext<Record<string, never>>()({
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootDocument,
 
   head: () => ({
@@ -50,18 +51,7 @@ export const Route = createRootRouteWithContext<Record<string, never>>()({
 });
 
 function RootDocument() {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            refetchOnWindowFocus: false,
-            retry: 1,
-            staleTime: 1000 * 60,
-          },
-        },
-      })
-  );
+  const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
     if (!import.meta.env.DEV) {
