@@ -7,8 +7,5 @@
       "path": "/api/cron/refresh-fundamentals",
       "schedule": "0 13 * * 1-5"
     }
-  ],
-  "env": {
-    "VERCEL_EXPERIMENTAL_BACKENDS": "1"
-  }
+  ]
 }
