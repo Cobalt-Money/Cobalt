@@ -1,5 +1,7 @@
 import { fmpStableGet } from "@cobalt-web/clients/fmp";
 
+import type { FmpProfile } from "./schemas.js";
+
 // ── Types ─────────────────────────────────────────────────────────
 
 export interface FmpQuote {
@@ -9,27 +11,7 @@ export interface FmpQuote {
   currentPrice: number;
 }
 
-export interface FmpProfile {
-  beta: number | null;
-  ceo: string | null;
-  companyName: string;
-  country: string | null;
-  currency: string | null;
-  description: string | null;
-  dividendYield: number | null;
-  exchange: string | null;
-  fullTimeEmployees: number | null;
-  industry: string | null;
-  ipoDate: string | null;
-  marketCap: number | null;
-  pe: number | null;
-  price: number | null;
-  /** Latest annual revenue (or TTM) when available from enrichment. */
-  revenue: number | null;
-  sector: string | null;
-  symbol: string;
-  website: string | null;
-}
+export type { FmpProfile };
 
 export interface FmpHistoricalPoint {
   close: number;

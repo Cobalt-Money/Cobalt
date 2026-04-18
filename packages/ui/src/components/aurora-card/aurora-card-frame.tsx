@@ -1,13 +1,13 @@
 import { cn } from "@cobalt-web/ui/lib/utils";
 import type { ReactNode } from "react";
 
-export type AuroraCardFrameProps = {
+export interface AuroraCardFrameProps {
   borderGradient: string;
   children?: ReactNode;
   className?: string;
   /** Decorative accent orbs (e.g. brand colors). Hidden when empty. */
   accent?: ReactNode;
-};
+}
 
 /**
  * Glassmorphism card with gradient border mask (aurora “glow” frame).
@@ -37,8 +37,8 @@ export function AuroraCardFrame({
             "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
           WebkitMaskComposite: "xor",
           background: borderGradient,
-          maskComposite: "exclude",
           mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+          maskComposite: "exclude",
           opacity: 0.8,
           padding: "3px",
         }}

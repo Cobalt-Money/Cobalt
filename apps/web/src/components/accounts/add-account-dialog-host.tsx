@@ -22,6 +22,7 @@ export function AddAccountDialogHost({
   const dismiss = useCallback(() => {
     onOpenChange(false);
   }, [onOpenChange]);
+
   const { handleChoose } = useAccountLauncher(dismiss);
 
   useEffect(() => {

@@ -20,8 +20,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           position="float"
           className={cn(
             buttonVariants({
-              variant: "secondary",
               className: "text-fd-muted-foreground rounded-2xl",
+              variant: "secondary",
             })
           )}
         >

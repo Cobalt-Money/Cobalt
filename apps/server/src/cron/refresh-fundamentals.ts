@@ -29,6 +29,7 @@ export const cronRefreshFundamentalsRouter = new Hono().get(
 
     const today = new Date();
     const yesterday = new Date(today);
+
     yesterday.setDate(today.getDate() - 1);
 
     const run = await start(refreshFundamentalsWorkflow, [

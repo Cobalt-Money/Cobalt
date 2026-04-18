@@ -1,10 +1,11 @@
 import { SidebarProvider } from "@cobalt-web/ui/components/sidebar";
-import { Navigate, Outlet, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 
 import { AddAccountProvider } from "@/components/accounts/add-account-provider";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
 import { AppSidebar } from "@/components/shell/sidebar/app-sidebar";
+import { SettingsDialogProvider } from "@/components/shell/sidebar/nav/settings-dialog-provider";
 import { useAppSession } from "@/lib/providers/app-session";
 import { ZeroProvider } from "@/lib/providers/zero-client";
 
@@ -20,6 +21,25 @@ export const Route = createFileRoute("/_auth")({
   component: AuthLayout,
 });
 
+function AuthShellWithOutlet() {
+  return (
+    <AddAccountProvider>
+      <ZeroProvider>
+        <SettingsDialogProvider>
+          <CommandMenuProvider>
+            <SidebarProvider className="min-h-0 flex-1">
+              <AppSidebar />
+              <AmbientInsetProvider>
+                <Outlet />
+              </AmbientInsetProvider>
+            </SidebarProvider>
+          </CommandMenuProvider>
+        </SettingsDialogProvider>
+      </ZeroProvider>
+    </AddAccountProvider>
+  );
+}
+
 function AuthLayout() {
   const session = useAppSession();
 
@@ -31,18 +51,5 @@ function AuthLayout() {
     return <Navigate replace to="/" />;
   }
 
-  return (
-    <AddAccountProvider>
-      <ZeroProvider>
-        <CommandMenuProvider>
-          <SidebarProvider className="min-h-0 flex-1">
-            <AppSidebar />
-            <AmbientInsetProvider>
-              <Outlet />
-            </AmbientInsetProvider>
-          </SidebarProvider>
-        </CommandMenuProvider>
-      </ZeroProvider>
-    </AddAccountProvider>
-  );
+  return <AuthShellWithOutlet />;
 }

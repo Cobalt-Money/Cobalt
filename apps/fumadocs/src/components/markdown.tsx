@@ -4,15 +4,8 @@ import { DynamicCodeBlock } from "fumadocs-ui/components/dynamic-codeblock";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { ElementContent, Root, RootContent } from "hast";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
-import {
-  Children,
-  type ComponentProps,
-  type ReactElement,
-  type ReactNode,
-  Suspense,
-  use,
-  useDeferredValue,
-} from "react";
+import { Children, Suspense, use, useDeferredValue } from "react";
+import type { ComponentProps, ReactElement, ReactNode } from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { remark } from "remark";
 import remarkGfm from "remark-gfm";
@@ -26,30 +19,36 @@ export interface Processor {
 export function rehypeWrapWords() {
   return (tree: Root) => {
     visit(tree, ["text", "element"], (node, index, parent) => {
-      if (node.type === "element" && node.tagName === "pre") return "skip";
-      if (node.type !== "text" || !parent || index === undefined) return;
+      if (node.type === "element" && node.tagName === "pre") {
+        return "skip";
+      }
+      if (node.type !== "text" || !parent || index === undefined) {
+        return;
+      }
 
       const words = node.value.split(/(?=\s)/);
 
       // Create new span nodes for each word and whitespace
       const newNodes: ElementContent[] = words.flatMap((word) => {
-        if (word.length === 0) return [];
+        if (word.length === 0) {
+          return [];
+        }
 
         return {
-          type: "element",
-          tagName: "span",
+          children: [{ type: "text", value: word }],
           properties: {
             class: "animate-fd-fade-in",
           },
-          children: [{ type: "text", value: word }],
+          tagName: "span",
+          type: "element",
         };
       });
 
       Object.assign(node, {
-        type: "element",
-        tagName: "span",
-        properties: {},
         children: newNodes,
+        properties: {},
+        tagName: "span",
+        type: "element",
       } satisfies RootContent);
       return "skip";
     });
@@ -68,15 +67,15 @@ function createProcessor(): Processor {
       const hast = await processor.run(nodes);
 
       return toJsxRuntime(hast, {
-        development: false,
-        jsx,
-        jsxs,
         Fragment,
         components: {
           ...defaultMdxComponents,
-          pre: Pre,
-          img: undefined, // use JSX
+          img: undefined,
+          pre: Pre, // use JSX
         },
+        development: false,
+        jsx,
+        jsxs,
       });
     },
   };
@@ -86,7 +85,9 @@ function Pre(props: ComponentProps<"pre">) {
   const code = Children.only(props.children) as ReactElement;
   const codeProps = code.props as ComponentProps<"code">;
   const content = codeProps.children;
-  if (typeof content !== "string") return null;
+  if (typeof content !== "string") {
+    return null;
+  }
 
   let lang =
     codeProps.className
@@ -94,7 +95,9 @@ function Pre(props: ComponentProps<"pre">) {
       .find((v) => v.startsWith("language-"))
       ?.slice("language-".length) ?? "text";
 
-  if (lang === "mdx") lang = "md";
+  if (lang === "mdx") {
+    lang = "md";
+  }
 
   return <DynamicCodeBlock lang={lang} code={content.trimEnd()} />;
 }
