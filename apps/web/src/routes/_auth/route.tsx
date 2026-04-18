@@ -5,6 +5,7 @@ import { AddAccountProvider } from "@/components/accounts/add-account-provider";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
 import { AppSidebar } from "@/components/shell/sidebar/app-sidebar";
+import { SettingsDialogProvider } from "@/components/shell/sidebar/nav/settings-dialog-provider";
 import { useAppSession } from "@/lib/providers/app-session";
 import { ZeroProvider } from "@/lib/providers/zero-client";
 
@@ -24,14 +25,16 @@ function AuthShellWithOutlet() {
   return (
     <AddAccountProvider>
       <ZeroProvider>
-        <CommandMenuProvider>
-          <SidebarProvider className="min-h-0 flex-1">
-            <AppSidebar />
-            <AmbientInsetProvider>
-              <Outlet />
-            </AmbientInsetProvider>
-          </SidebarProvider>
-        </CommandMenuProvider>
+        <SettingsDialogProvider>
+          <CommandMenuProvider>
+            <SidebarProvider className="min-h-0 flex-1">
+              <AppSidebar />
+              <AmbientInsetProvider>
+                <Outlet />
+              </AmbientInsetProvider>
+            </SidebarProvider>
+          </CommandMenuProvider>
+        </SettingsDialogProvider>
       </ZeroProvider>
     </AddAccountProvider>
   );
