@@ -19,13 +19,36 @@ export const quoteResponseSchema = z.object({
   currentPrice: z.number(),
 });
 
-// ── Overview ───────────────────────────────────────────────────────
+// ── Overview (FMP profile, normalized in `fmpGetProfile`) ───────────
 
-export const overviewResponseSchema = z
-  .record(z.string(), z.unknown())
-  .openapi({
-    description: "Alpha Vantage company overview (all fields returned as-is)",
-  });
+/** Normalized company profile returned by `fmpGetProfile` in `fmp-ticker.ts`. */
+export const fmpProfileSchema = z.object({
+  beta: z.number().nullable(),
+  ceo: z.string().nullable(),
+  companyName: z.string(),
+  country: z.string().nullable(),
+  currency: z.string().nullable(),
+  description: z.string().nullable(),
+  dividendYield: z.number().nullable(),
+  exchange: z.string().nullable(),
+  fullTimeEmployees: z.number().nullable(),
+  industry: z.string().nullable(),
+  ipoDate: z.string().nullable(),
+  marketCap: z.number().nullable(),
+  pe: z.number().nullable(),
+  price: z.number().nullable(),
+  revenue: z.number().nullable(),
+  sector: z.string().nullable(),
+  symbol: z.string(),
+  website: z.string().nullable(),
+});
+
+export type FmpProfile = z.infer<typeof fmpProfileSchema>;
+
+export const overviewResponseSchema = fmpProfileSchema.openapi({
+  description:
+    "Normalized FMP company profile (stable `/profile` + optional P/E and revenue enrichment).",
+});
 
 // ── Chart ──────────────────────────────────────────────────────────
 
@@ -109,7 +132,7 @@ export const screenerQuerySchema = z.object({
     .enum(["true", "false"])
     .optional()
     .openapi({ description: "ETF-only filter" }),
-  limit: z.coerce.number().int().min(1).max(500).optional().openapi({
+  limit: z.coerce.number().int().min(1).max(10_000).optional().openapi({
     example: 50,
   }),
   marketCapLowerThan: z.coerce.number().optional(),

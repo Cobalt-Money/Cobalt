@@ -233,7 +233,7 @@ function CommandMenuDialog({
     prefetch: prefetchChats,
   } = useChatSearch(trimmedSearch, inSearchChats);
 
-  const { tickerRows, filteredTickers } = useTickerSearch(
+  const { filteredTickers, isLoadingUniverse, tickerRows } = useTickerSearch(
     trimmedSearch,
     inSearchTickers
   );
@@ -511,6 +511,7 @@ function CommandMenuDialog({
             {inSearchTickers && (
               <TickerSearchResults
                 filteredTickers={filteredTickers}
+                isLoadingUniverse={isLoadingUniverse}
                 tickerRows={tickerRows}
                 trimmedSearch={trimmedSearch}
                 onSelect={handleSelectTicker}
