@@ -23,7 +23,11 @@ const EXPANDED_INPUT_GROUP =
 const PLUS_BUTTON_CLASS =
   "flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
 
-function ChatPromptInputInner() {
+function ChatPromptInputInner({
+  extraInputGroupClassName,
+}: {
+  extraInputGroupClassName?: string;
+}) {
   const { textInput } = usePromptInputController();
   const { submit, isStreaming } = useChatStream();
   // strict: false so this works in both /_auth/ai-chat/ and /_auth/ai-chat/$chatId
@@ -98,7 +102,10 @@ function ChatPromptInputInner() {
 
   return (
     <CobaltPromptInput
-      inputGroupClassName={expanded ? EXPANDED_INPUT_GROUP : PILL_INPUT_GROUP}
+      inputGroupClassName={cn(
+        expanded ? EXPANDED_INPUT_GROUP : PILL_INPUT_GROUP,
+        extraInputGroupClassName
+      )}
       onSubmit={handleChatPromptSubmit}
     >
       {expanded ? (
@@ -110,7 +117,7 @@ function ChatPromptInputInner() {
               onBlur={handleBlur}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              placeholder="Message Cobalt…"
+              placeholder="Ask Cobalt"
             />
           </PromptInputBody>
           <div className="flex w-full items-center justify-between px-1.5 pb-2">
@@ -139,7 +146,7 @@ function ChatPromptInputInner() {
               className="min-h-0 max-h-12 overflow-hidden pl-2 py-3 text-base md:text-base"
               onBlur={handleBlur}
               onChange={handleChange}
-              placeholder="Message Cobalt…"
+              placeholder="Ask Cobalt"
               rows={1}
             />
           </PromptInputBody>
@@ -152,6 +159,12 @@ function ChatPromptInputInner() {
   );
 }
 
-export function ChatPromptInput() {
-  return <ChatPromptInputInner />;
+export function ChatPromptInput({
+  extraInputGroupClassName,
+}: {
+  extraInputGroupClassName?: string;
+} = {}) {
+  return (
+    <ChatPromptInputInner extraInputGroupClassName={extraInputGroupClassName} />
+  );
 }
