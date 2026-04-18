@@ -45,6 +45,7 @@ import {
   useAccountLauncher,
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
+import { useSettingsDialog } from "@/components/shell/sidebar/nav/settings-dialog-provider";
 
 import { ChatSearchResults, useChatSearch } from "./search-chats";
 import { TickerSearchResults, useTickerSearch } from "./search-tickers";
@@ -246,6 +247,7 @@ function CommandMenuDialog({
   );
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
   const { handleChoose: handleChooseInstitution } = useAccountLauncher(dismiss);
+  const { openSettings } = useSettingsDialog();
 
   // ── Theme ───────────────────────────────────────────────────────────────────
 
@@ -417,27 +419,6 @@ function CommandMenuDialog({
     },
   ];
 
-  const insightActions: CommandAction[] = [
-    {
-      handleSelect: () => go("/dashboard"),
-      icon: SearchDollarIcon,
-      keywords: ["net", "worth", "total", "assets"],
-      label: "View Net Worth",
-    },
-    {
-      handleSelect: () => go("/dashboard"),
-      icon: File02Icon,
-      keywords: ["cash", "flow", "income", "expense"],
-      label: "Cash Flow Analysis",
-    },
-    {
-      handleSelect: () => go("/research"),
-      icon: File02Icon,
-      keywords: ["report", "generate", "summary", "export"],
-      label: "Generate Report",
-    },
-  ];
-
   const aiChatActions: CommandAction[] = [
     {
       handleSelect: enterSearchChats,
@@ -453,12 +434,26 @@ function CommandMenuDialog({
     },
   ];
 
+  const openSettingsDialog = useCallback(
+    (section: "profile" | "appearance" | "notifications" | "billing") => {
+      handleOpenChange(false);
+      openSettings(section);
+    },
+    [handleOpenChange, openSettings]
+  );
+
   const settingActions: CommandAction[] = [
     {
-      handleSelect: () => go("/subscriptions"),
+      handleSelect: () => openSettingsDialog("profile"),
       icon: Settings01Icon,
-      keywords: ["settings", "preferences", "config", "billing"],
-      label: "Subscription Settings",
+      keywords: ["settings", "preferences", "account", "profile"],
+      label: "Settings",
+    },
+    {
+      handleSelect: () => openSettingsDialog("billing"),
+      icon: CreditCardIcon,
+      keywords: ["billing", "subscription", "plan", "payment"],
+      label: "Billing",
     },
   ];
 
@@ -554,10 +549,6 @@ function CommandMenuDialog({
 
                 <CommandGroup heading="Brokerage">
                   {brokerageActions.map(renderCommandItem)}
-                </CommandGroup>
-
-                <CommandGroup heading="Insights">
-                  {insightActions.map(renderCommandItem)}
                 </CommandGroup>
 
                 <CommandGroup heading="Settings">

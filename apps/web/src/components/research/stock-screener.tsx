@@ -15,7 +15,6 @@ import type { ReactNode } from "react";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { Link } from "@/components/links";
-import { screenerQueryOptions } from "@/components/research/research-queries";
 import { sectorHugeiconForValue } from "@/components/research/sector-icons";
 import { screenerUniverseQuery } from "@/hooks/research-queries";
 

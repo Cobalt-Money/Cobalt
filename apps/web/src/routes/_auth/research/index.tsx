@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { screenerQueryOptions } from "@/components/research/research-queries";
 import { StockScreener } from "@/components/research/stock-screener";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 import { screenerUniverseQuery } from "@/hooks/research-queries";
