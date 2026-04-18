@@ -38,7 +38,7 @@ export const overviewRouter = new OpenAPIHono<AppEnv>().openapi(
         "Cache-Control",
         "public, s-maxage=604800, stale-while-revalidate=86400"
       );
-      return c.json(profile as unknown as Record<string, unknown>, 200);
+      return c.json(profile, 200);
     } catch {
       return c.json({ error: "Failed to fetch company overview" }, 500);
     }

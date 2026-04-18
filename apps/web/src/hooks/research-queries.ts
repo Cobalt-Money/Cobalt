@@ -1,8 +1,10 @@
-import type { QueryClient } from "@tanstack/react-query";
+import type { FmpProfile } from "@cobalt-web/server-data/research/schemas";
 import { queryOptions } from "@tanstack/react-query";
 
 import type { ChartPeriod } from "@/components/research/ticker/lightweight-price-chart";
 import { researchApi } from "@/lib/clients/api-client";
+
+export type { FmpProfile };
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -36,6 +38,32 @@ export interface ScreenerResponse {
   results: ScreenerRow[];
 }
 
+/** Command K row (from screener universe). */
+export interface TickerSearchItem {
+  name: string;
+  symbol: string;
+  type: string;
+  /** Present when FMP screener included a last price. */
+  price?: number;
+}
+
+export function screenerRowToTickerSearchItem(
+  row: ScreenerRow
+): TickerSearchItem {
+  const sym = row.symbol ?? row.ticker;
+  const symbol = typeof sym === "string" ? sym.trim() : "";
+  const name =
+    (typeof row.companyName === "string" && row.companyName.trim()) ||
+    (typeof row.name === "string" && row.name.trim()) ||
+    symbol;
+  const type = row.isEtf === true ? "ETF" : "Equity";
+  const price =
+    typeof row.price === "number" && Number.isFinite(row.price)
+      ? row.price
+      : undefined;
+  return { name, price, symbol, type };
+}
+
 // ── Helpers ───────────────────────────────────────────────────────
 
 async function parseResponse<T>(res: Response): Promise<T> {
@@ -59,18 +87,27 @@ function toChartPoints(apiData: ChartApiPoint[]): ChartPoint[] {
   return points;
 }
 
-// ── Query options ─────────────────────────────────────────────────
+// ── Queries ───────────────────────────────────────────────────────
 
-export const screenerQueryOptions = queryOptions({
+/** Up to ~10k NASDAQ + NYSE names. Shared by Cmd-K + research table. */
+export const screenerUniverseQuery = queryOptions({
   queryFn: async () => {
-    const res = await researchApi.screener.$get({ query: {} });
+    const res = await researchApi.screener.$get({
+      query: {
+        country: "US",
+        isActivelyTrading: "true",
+        isEtf: "false",
+        limit: 10_000,
+        marketCapMoreThan: 0,
+      },
+    });
     return parseResponse<ScreenerResponse>(res);
   },
-  queryKey: ["research", "screener"],
-  staleTime: 1000 * 60,
+  queryKey: ["research", "screener", "universe"] as const,
+  staleTime: 1000 * 60 * 5,
 });
 
-export const quoteQueryOptions = (symbol: string) =>
+export const quoteQuery = (symbol: string) =>
   queryOptions({
     queryFn: async () => {
       const res = await researchApi.quote.$get({ query: { symbol } });
@@ -80,17 +117,17 @@ export const quoteQueryOptions = (symbol: string) =>
     staleTime: 1000 * 30,
   });
 
-export const overviewQueryOptions = (symbol: string) =>
+export const tickerOverview = (symbol: string) =>
   queryOptions({
     queryFn: async () => {
       const res = await researchApi.overview.$get({ query: { symbol } });
-      return parseResponse<Record<string, unknown>>(res);
+      return parseResponse<FmpProfile>(res);
     },
     queryKey: ["ticker", symbol, "overview"] as const,
     staleTime: 1000 * 60 * 5,
   });
 
-export const chartQueryOptions = (symbol: string, timePeriod: ChartPeriod) =>
+export const chartQuery = (symbol: string, timePeriod: ChartPeriod) =>
   queryOptions({
     queryFn: async () => {
       const res = await researchApi.chart.$get({
@@ -102,42 +139,3 @@ export const chartQueryOptions = (symbol: string, timePeriod: ChartPeriod) =>
     queryKey: ["ticker", symbol, "chart", timePeriod] as const,
     staleTime: 1000 * 60,
   });
-
-// ── Screener → ticker cache bridging ──────────────────────────────
-
-/** Finds the screener row for a symbol in the React Query cache, if loaded. */
-export function screenerRowFor(
-  queryClient: QueryClient,
-  symbol: string
-): ScreenerRow | undefined {
-  const cached = queryClient.getQueryData<ScreenerResponse>(
-    screenerQueryOptions.queryKey
-  );
-  const target = symbol.trim().toUpperCase();
-  return cached?.results.find((r) => {
-    const s = r.symbol ?? r.ticker;
-    return typeof s === "string" && s.trim().toUpperCase() === target;
-  });
-}
-
-/** Maps a screener row to the quote shape, for placeholder rendering. */
-export function screenerRowToQuote(
-  row: ScreenerRow,
-  fallbackSymbol: string
-): TickerQuote | undefined {
-  const price = typeof row.price === "number" ? row.price : null;
-  if (price === null) {
-    return;
-  }
-  const pct = typeof row.pctChange1d === "number" ? row.pctChange1d : 0;
-  const companyName =
-    (typeof row.companyName === "string" && row.companyName.trim()) ||
-    (typeof row.name === "string" && row.name.trim()) ||
-    fallbackSymbol;
-  return {
-    change: (price * pct) / 100,
-    changePercent: pct,
-    companyName,
-    currentPrice: price,
-  };
-}
