@@ -32,7 +32,7 @@ describe("extract wrappers", () => {
       quality: 1,
     });
 
-    expect(mocks.mockGetColor).toHaveBeenCalledTimes(1);
+    expect(mocks.mockGetColor).toHaveBeenCalledOnce();
     expect(mocks.mockGetColor).toHaveBeenCalledWith(canvas, {
       colorSpace: "rgb",
       quality: 1,

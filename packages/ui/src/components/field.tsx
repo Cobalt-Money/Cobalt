@@ -1,7 +1,8 @@
 import { Label } from "@cobalt-web/ui/components/label";
 import { Separator } from "@cobalt-web/ui/components/separator";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 import { useMemo } from "react";
 
 function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
@@ -51,17 +52,17 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
 const fieldVariants = cva(
   "group/field flex w-full gap-3 data-[invalid=true]:text-destructive",
   {
+    defaultVariants: {
+      orientation: "vertical",
+    },
     variants: {
       orientation: {
-        vertical: "flex-col *:w-full [&>.sr-only]:w-auto",
         horizontal:
           "flex-row items-center has-[>[data-slot=field-content]]:items-start *:data-[slot=field-label]:flex-auto has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
         responsive:
           "flex-col *:w-full @md/field-group:flex-row @md/field-group:items-center @md/field-group:*:w-auto @md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:*:data-[slot=field-label]:flex-auto [&>.sr-only]:w-auto @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
+        vertical: "flex-col *:w-full [&>.sr-only]:w-auto",
       },
-    },
-    defaultVariants: {
-      orientation: "vertical",
     },
   }
 );
@@ -176,7 +177,7 @@ function FieldError({
   errors,
   ...props
 }: React.ComponentProps<"div"> & {
-  errors?: Array<{ message?: string } | undefined>;
+  errors?: ({ message?: string } | undefined)[];
 }) {
   const content = useMemo(() => {
     if (children) {

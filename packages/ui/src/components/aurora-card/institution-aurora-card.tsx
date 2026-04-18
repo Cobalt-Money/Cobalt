@@ -3,16 +3,17 @@ import {
   useDominantColor,
 } from "@cobalt-web/color-thief";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { useMemo, type ReactNode } from "react";
+import { useMemo } from "react";
+import type { ReactNode } from "react";
 
 import { AuroraCardFrame } from "./aurora-card-frame";
 
-export type InstitutionAuroraCardProps = {
+export interface InstitutionAuroraCardProps {
   children: ReactNode;
   className?: string;
   /** HTTP(S) logo URL sampled with Color Thief (`crossOrigin=anonymous`). */
   logoUrl: string | null;
-};
+}
 
 /**
  * Aurora glass card whose background + border are derived from the institution logo

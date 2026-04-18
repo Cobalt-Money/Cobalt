@@ -1,13 +1,9 @@
 import { createGateway } from "@ai-sdk/gateway";
 import { env } from "@cobalt-web/env/docs";
-import {
-  convertToModelMessages,
-  stepCountIs,
-  streamText,
-  tool,
-  type UIMessage,
-} from "ai";
-import { Document, type DocumentData } from "flexsearch";
+import { convertToModelMessages, stepCountIs, streamText, tool } from "ai";
+import type { UIMessage } from "ai";
+import { Document } from "flexsearch";
+import type { DocumentData } from "flexsearch";
 import { z } from "zod";
 
 import { source } from "@/lib/source";
@@ -41,19 +37,23 @@ async function createSearchServer() {
 
   const docs = await chunkedAll(
     source.getPages().map(async (page) => {
-      if (!("getText" in page.data)) return null;
+      if (!("getText" in page.data)) {
+        return null;
+      }
 
       return {
-        title: page.data.title,
-        description: page.data.description,
-        url: page.url,
         content: await page.data.getText("raw"),
+        description: page.data.description,
+        title: page.data.title,
+        url: page.url,
       } as CustomDocument;
     })
   );
 
   for (const doc of docs) {
-    if (doc) search.add(doc);
+    if (doc) {
+      search.add(doc);
+    }
   }
 
   return search;
@@ -84,24 +84,25 @@ export async function POST(req: Request) {
   const reqJson = await req.json();
 
   const result = streamText({
-    model: gateway(env.AI_GATEWAY_MODEL),
-    stopWhen: stepCountIs(5),
-    tools: {
-      search: searchTool,
-    },
     messages: [
-      { role: "system", content: systemPrompt },
+      { content: systemPrompt, role: "system" },
       ...(await convertToModelMessages<ChatUIMessage>(reqJson.messages ?? [], {
         convertDataPart(part) {
-          if (part.type === "data-client")
+          if (part.type === "data-client") {
             return {
               type: "text",
               text: `[Client Context: ${JSON.stringify(part.data)}]`,
             };
+          }
         },
       })),
     ],
+    model: gateway(env.AI_GATEWAY_MODEL),
+    stopWhen: stepCountIs(5),
     toolChoice: "auto",
+    tools: {
+      search: searchTool,
+    },
   });
 
   return result.toUIMessageStreamResponse();
@@ -111,16 +112,16 @@ export type SearchTool = typeof searchTool;
 
 const searchTool = tool({
   description: "Search the docs content and return raw JSON results.",
-  inputSchema: z.object({
-    query: z.string(),
-    limit: z.number().int().min(1).max(100).default(10),
-  }),
   async execute({ query, limit }) {
     const search = await searchServer;
     return await search.searchAsync(query, {
+      enrich: true,
       limit,
       merge: true,
-      enrich: true,
     });
   },
+  inputSchema: z.object({
+    limit: z.number().int().min(1).max(100).default(10),
+    query: z.string(),
+  }),
 });
