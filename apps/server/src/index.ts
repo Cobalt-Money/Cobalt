@@ -31,6 +31,8 @@ import {
   handleMcpHttpRequest,
 } from "./mcp/handle-mcp-request.js";
 import { buildMcpProtectedResourceMetadata } from "./mcp/oauth-discovery.js";
+import { plaidWebhookRouter } from "./webhooks/plaid.js";
+import { snaptradeWebhookRouter } from "./webhooks/snaptrade.js";
 
 /**
  * IMPORTANT — Hono RPC contract
@@ -182,6 +184,9 @@ const app = new Hono()
   .all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw))
   // Cron routes (no user auth — protected by CRON_SECRET)
   .route("/api/cron", cronRefreshFundamentalsRouter)
+  // Webhook routes (no user auth — verified by provider signatures)
+  .route("/webhooks/plaid", plaidWebhookRouter)
+  .route("/webhooks/snaptrade", snaptradeWebhookRouter)
   .get("/", (c) => c.text("OK"))
   .get(
     "/docs",

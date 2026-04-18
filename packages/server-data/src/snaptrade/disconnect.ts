@@ -1,4 +1,3 @@
-import { snaptradeClient } from "@cobalt-web/clients/snaptrade";
 import { db } from "@cobalt-web/db";
 import {
   brokerageAccounts,
@@ -6,6 +5,8 @@ import {
   portfolioSnapshots,
 } from "@cobalt-web/db/schema/brokerage";
 import { and, eq, inArray } from "drizzle-orm";
+
+import { removeBrokerageAuthorization } from "./authorizations/actions.js";
 
 export async function disconnectSnaptradeAuthorizationByUserId(
   userId: string,
@@ -32,13 +33,10 @@ export async function disconnectSnaptradeAuthorizationByUserId(
       };
     }
 
-    const { providerUserId, providerUserSecret } = snaptradeUser;
-
     try {
-      await snaptradeClient.connections.removeBrokerageAuthorization({
-        authorizationId: snapTradeAuthorizationId,
-        userId: providerUserId,
-        userSecret: providerUserSecret,
+      await removeBrokerageAuthorization(snapTradeAuthorizationId, {
+        providerUserId: snaptradeUser.providerUserId,
+        providerUserSecret: snaptradeUser.providerUserSecret,
       });
     } catch {
       // Continue with DB cleanup if SnapTrade already removed the link

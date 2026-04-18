@@ -43,24 +43,6 @@ export async function fetchItemAndAccounts(accessToken: string) {
   return { accounts: accountsGet.data.accounts, item: itemGet.data.item };
 }
 
-/** Fetch institution name and logo from Plaid. */
-export async function fetchInstitutionDetails(
-  institutionId: string
-): Promise<{ logo: string | null; name: string | null }> {
-  try {
-    const inst = await plaidClient.institutionsGetById({
-      country_codes: [CountryCode.Us],
-      institution_id: institutionId,
-    });
-    return {
-      logo: inst.data.institution.logo ?? null,
-      name: inst.data.institution.name ?? null,
-    };
-  } catch {
-    return { logo: null, name: null };
-  }
-}
-
 /** Trigger a Plaid sync to fire the webhook. */
 export async function triggerPlaidSync(accessToken: string): Promise<void> {
   await plaidClient.transactionsSync({
@@ -200,61 +182,4 @@ function formatPlaidError(body: unknown): string | null {
     return `${b.error_code}: ${b.error_message}`;
   }
   return b.error_message ?? b.error_code ?? null;
-}
-
-/** Search institutions from Plaid. */
-export async function searchInstitutions(query?: string) {
-  if (query && query.length > 0) {
-    const response = await plaidClient.institutionsSearch({
-      country_codes: [CountryCode.Us],
-      options: { include_optional_metadata: true },
-      products: [Products.Transactions],
-      query,
-    });
-    return response.data.institutions.map((inst) => ({
-      id: inst.institution_id,
-      logo: inst.logo ?? null,
-      name: inst.name,
-      primary_color: inst.primary_color ?? null,
-      url: inst.url ?? null,
-    }));
-  }
-
-  const response = await plaidClient.institutionsGet({
-    count: 9,
-    country_codes: [CountryCode.Us],
-    offset: 0,
-    options: {
-      include_optional_metadata: true,
-      products: [Products.Transactions],
-    },
-  });
-  return response.data.institutions.map((inst) => ({
-    id: inst.institution_id,
-    logo: inst.logo ?? null,
-    name: inst.name,
-    primary_color: inst.primary_color ?? null,
-    url: inst.url ?? null,
-  }));
-}
-
-/** Get institution details by ID from Plaid. */
-export async function getInstitutionById(institutionId: string) {
-  const response = await plaidClient.institutionsGetById({
-    country_codes: [CountryCode.Us],
-    institution_id: institutionId,
-    options: { include_optional_metadata: true },
-  });
-
-  const inst = response.data.institution;
-  return {
-    id: inst.institution_id,
-    logo: inst.logo ?? null,
-    name: inst.name,
-    oauth: inst.oauth ?? false,
-    primary_color: inst.primary_color ?? null,
-    routing_numbers: inst.routing_numbers ?? [],
-    status: inst.status ?? null,
-    url: inst.url ?? null,
-  };
 }
