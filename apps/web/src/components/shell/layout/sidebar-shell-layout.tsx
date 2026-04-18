@@ -2,6 +2,7 @@ import { SidebarInset } from "@cobalt-web/ui/components/sidebar";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import type { ReactNode } from "react";
 
+import { GlobalFloatingChatInput } from "@/components/ai-chat/global-floating-chat-input";
 import { AmbientInsetLayer } from "@/components/shell/ambient-inset-layer";
 import {
   SHELL_CONTENT_BOTTOM_PADDING_CLASS,
@@ -46,6 +47,7 @@ export function SidebarShellLayout({
           {children}
         </div>
       </div>
+      <GlobalFloatingChatInput />
     </SidebarInset>
   );
 }
