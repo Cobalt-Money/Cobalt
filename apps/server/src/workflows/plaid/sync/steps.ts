@@ -811,6 +811,10 @@ async function batchUpsertRecurringStreams(
   }
 }
 
-export function dispatchSnapshotWorkflowStep(_userId: string): void {
+export async function dispatchSnapshotWorkflowStep(
+  _userId: string
+): Promise<void> {
   "use step";
+
+  await Promise.resolve();
 }

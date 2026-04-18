@@ -118,7 +118,7 @@ export async function fetchPlaidLiabilitiesStep(
   }
 }
 
-export function persistPlaidLiabilityBankAccountsStep(
+export async function persistPlaidLiabilityBankAccountsStep(
   plaidItemId: string,
   accounts: AccountBase[]
 ): Promise<number> {
@@ -127,7 +127,7 @@ export function persistPlaidLiabilityBankAccountsStep(
   const rows = accounts.map((a) =>
     mapPlaidLiabilityBankAccount(a, plaidItemId)
   );
-  return insertBankAccountsOnConflictDoNothing(rows);
+  return await insertBankAccountsOnConflictDoNothing(rows);
 }
 
 export async function persistPlaidLiabilityBankBalancesStep(

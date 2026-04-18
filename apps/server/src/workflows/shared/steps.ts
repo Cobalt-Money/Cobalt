@@ -34,12 +34,12 @@ export function toSerializableError(error: unknown): SerializableError {
  * NOTE: The error parameter MUST be a SerializableError (use toSerializableError)
  * because FatalError/RetryableError from 'workflow' cannot be serialized by devalue.
  */
-export function captureWorkflowExceptionStep(
+export async function captureWorkflowExceptionStep(
   _workflow: string,
   _error: SerializableError,
   _context?: Record<string, unknown>
 ): Promise<void> {
   "use step";
 
-  return Promise.resolve();
+  await Promise.resolve();
 }
