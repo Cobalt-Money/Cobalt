@@ -7,7 +7,7 @@ export default defineConfig({
   routes: { "/**": "./src/index.ts" },
   vercel: {
     functions: {
-      runtime: "bun1.x",
+      runtime: "nodejs22.x",
     },
   },
 });
