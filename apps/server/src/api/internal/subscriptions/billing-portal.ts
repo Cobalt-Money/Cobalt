@@ -13,7 +13,7 @@ const route = createRoute({
     "Create a Stripe billing portal session for the authenticated user",
   method: "post",
   middleware: [requireAuth] as const,
-  path: "/billing-portal",
+  path: "/billingPortal",
   responses: {
     200: {
       content: {

@@ -13,7 +13,7 @@ const getRoute = createRoute({
     "Get the authenticated user's last-seen timestamp and whether financial updates should be shown",
   method: "get",
   middleware: [requireAuth] as const,
-  path: "/last-seen",
+  path: "/lastSeen",
   responses: {
     200: {
       content: {
@@ -31,7 +31,7 @@ const postRoute = createRoute({
     "Update the authenticated user's last-seen timestamp to now (called when user dismisses financial updates)",
   method: "post",
   middleware: [requireAuth] as const,
-  path: "/last-seen",
+  path: "/lastSeen",
   responses: {
     200: {
       content: {

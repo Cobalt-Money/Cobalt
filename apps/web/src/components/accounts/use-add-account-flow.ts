@@ -150,7 +150,7 @@ export function useAccountLauncher(onDismiss: () => void) {
     async (broker: string) => {
       const loadingId = toast.loading("Opening connection portal…");
       try {
-        const res = await snaptradeApi["generate-connection-portal"].$post({
+        const res = await snaptradeApi.generateConnectionPortal.$post({
           json: { broker },
         });
         if (!res.ok) {
