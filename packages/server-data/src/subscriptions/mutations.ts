@@ -3,6 +3,8 @@ import { mobileSubscription } from "@cobalt-web/db/schema/mobile/subscriptions";
 import { eq } from "drizzle-orm";
 
 import type {
+  AppStoreNotificationInput,
+  AppStoreNotificationResult,
   AppStoreSyncInput,
   AppStoreSyncMutationResult,
 } from "./schemas.js";
@@ -101,4 +103,97 @@ export async function syncAppStoreSubscription(
     action: "created",
     subscriptionId: row.id,
   };
+}
+
+/**
+ * Applies an App Store Server Notification V2 event to `mobile_subscription`.
+ *
+ * We don't create rows here — the app's StoreKit handler calls `syncAppStoreSubscription`
+ * on purchase, which is the one place we know the `userId`. The webhook updates the
+ * status of a row that already exists. If the notification arrives before the sync
+ * (edge case: purchase completes, app backgrounds before calling `/api/appstore/sync`),
+ * we skip and let the next sync catch up.
+ */
+export async function applyAppStoreNotification(
+  input: AppStoreNotificationInput
+): Promise<AppStoreNotificationResult> {
+  const {
+    environment,
+    expiresAt,
+    latestTransactionId,
+    notificationType,
+    originalTransactionId,
+    productId,
+  } = input;
+
+  const existing = await db
+    .select()
+    .from(mobileSubscription)
+    .where(eq(mobileSubscription.originalTransactionId, originalTransactionId))
+    .limit(1);
+
+  const [record] = existing;
+  if (!record) {
+    return { action: "skipped", reason: "subscription_not_found" };
+  }
+
+  const nextStatus = mapNotificationToStatus(notificationType, record.status);
+
+  const update: Partial<typeof mobileSubscription.$inferInsert> = {
+    status: nextStatus,
+    updatedAt: new Date(),
+  };
+  if (productId) {
+    update.productId = productId;
+  }
+  if (environment) {
+    update.environment = environment;
+  }
+  if (expiresAt) {
+    update.expiresAt = expiresAt;
+  }
+  if (latestTransactionId) {
+    update.latestTransactionId = latestTransactionId;
+  }
+
+  await db
+    .update(mobileSubscription)
+    .set(update)
+    .where(eq(mobileSubscription.originalTransactionId, originalTransactionId));
+
+  return {
+    action: "updated",
+    status: nextStatus,
+    subscriptionId: record.id,
+  };
+}
+
+function mapNotificationToStatus(
+  notificationType: AppStoreNotificationInput["notificationType"],
+  currentStatus: string
+): string {
+  switch (notificationType) {
+    case "SUBSCRIBED":
+    case "DID_RENEW":
+    case "RENEWAL_EXTENDED":
+    case "OFFER_REDEEMED": {
+      return "active";
+    }
+    case "EXPIRED":
+    case "GRACE_PERIOD_EXPIRED": {
+      return "expired";
+    }
+    case "DID_FAIL_TO_RENEW": {
+      return "billing_retry";
+    }
+    case "REFUND":
+    case "REVOKE": {
+      return "cancelled";
+    }
+    default: {
+      // DID_CHANGE_RENEWAL_STATUS, PRICE_INCREASE, CONSUMPTION_REQUEST, etc.
+      // leave the status untouched — these are informational.
+      return currentStatus;
+    }
+  }
 }

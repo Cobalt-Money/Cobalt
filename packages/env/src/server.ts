@@ -27,6 +27,12 @@ export const env = createEnv({
     AI_GATEWAY_MODEL: z.string().default("anthropic/claude-haiku-4.5"),
     ALPHA_VANTAGE_API_KEY: z.string().min(1),
     APPLE_APP_BUNDLE_IDENTIFIER: z.string().min(1),
+    /** Numeric App Apple ID from App Store Connect. Required for Production App Store webhooks; ignored in Sandbox. */
+    APPLE_APP_ID: z.coerce.number().int().positive().optional(),
+    /** App Store Server Notifications environment. "Sandbox" (default) for dev/TestFlight, "Production" once the app ships. */
+    APPLE_APP_STORE_ENVIRONMENT: z
+      .enum(["Production", "Sandbox"])
+      .default("Sandbox"),
     APPLE_KEY_ID: z.string().min(1),
     APPLE_PRIVATE_KEY: z.string().min(1),
     APPLE_SERVICE_ID: z.string().min(1),

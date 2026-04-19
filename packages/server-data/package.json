@@ -29,6 +29,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@apple/app-store-server-library": "^1.6.0",
     "@cobalt-web/auth": "workspace:*",
     "@cobalt-web/clients": "workspace:*",
     "@cobalt-web/db": "workspace:*",
