@@ -12,6 +12,7 @@
     "./snaptrade/*": "./src/snaptrade/*.ts",
     "./snaptrade/disconnect": "./src/snaptrade/disconnect.ts",
     "./subscriptions": "./src/subscriptions/index.ts",
+    "./subscriptions/*": "./src/subscriptions/*.ts",
     "./news/lib": "./src/news/lib.ts",
     "./news/events/*": "./src/news/events/*.ts",
     "./news/detail/*": "./src/news/detail/*.ts",

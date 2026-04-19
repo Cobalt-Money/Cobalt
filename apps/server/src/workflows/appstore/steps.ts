@@ -1,8 +1,8 @@
-import { applyAppStoreNotification } from "@cobalt-web/server-data/subscriptions";
+import { applyAppStoreNotification } from "@cobalt-web/server-data/subscriptions/mutations";
 import type {
   AppStoreNotificationInput,
   AppStoreNotificationResult,
-} from "@cobalt-web/server-data/subscriptions";
+} from "@cobalt-web/server-data/subscriptions/schemas";
 
 export type AppStoreWebhookParams = AppStoreNotificationInput;
 
