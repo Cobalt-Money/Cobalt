@@ -2,7 +2,7 @@ import { queries } from "@cobalt-web/zero";
 import type { Zero } from "@rocicorp/zero";
 import { createFileRoute } from "@tanstack/react-router";
 
-import ChatView from "@/components/ai-chat/chat-view";
+import ChatView from "@/components/ai-chat/thread/view";
 
 export const Route = createFileRoute("/_auth/ai-chat/$chatId")({
   component: ChatRoute,

@@ -8,10 +8,8 @@ import {
   MessageContent,
   MessageResponse,
 } from "@cobalt-web/ui/components/ai-elements/message";
-import { cn } from "@cobalt-web/ui/lib/utils";
 
-import { ChatPromptInput } from "@/components/ai-chat/chat-prompt-input";
-import { CHAT_THREAD_COLUMN_CLASS } from "@/components/ai-chat/chat-thread-layout";
+import { ChatPromptInput } from "@/components/ai-chat/input/prompt-input";
 
 interface ChatMessage {
   id: string;
@@ -27,7 +25,7 @@ export function BabyAIChat({ messages }: BabyAIChatProps) {
   return (
     <Conversation className="h-full min-h-0 w-full max-w-lg [mask-image:linear-gradient(to_bottom,black_calc(100%-100px),transparent)]">
       <ConversationContent className="gap-0 px-0 pb-32">
-        <div className={cn(CHAT_THREAD_COLUMN_CLASS, "flex flex-col gap-8")}>
+        <div className="mx-auto flex w-full max-w-[44rem] flex-col gap-8">
           {messages.map((msg) =>
             msg.role === "user" ? (
               <div

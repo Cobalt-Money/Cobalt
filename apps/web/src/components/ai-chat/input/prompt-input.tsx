@@ -6,31 +6,27 @@ import {
   usePromptInputController,
 } from "@cobalt-web/ui/components/ai-elements/prompt-input";
 import type { PromptInputMessage } from "@cobalt-web/ui/components/ai-elements/prompt-input";
-import { cn } from "@cobalt-web/ui/lib/utils";
 import { PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useParams } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 
-import { useChatStream } from "@/components/ai-chat/chat-stream-context";
-
-const PILL_INPUT_GROUP =
-  "h-auto rounded-full has-[textarea]:rounded-full has-data-[align=block-end]:rounded-full";
-const EXPANDED_INPUT_GROUP =
-  "h-auto flex-col rounded-3xl has-[textarea]:rounded-3xl has-data-[align=block-end]:rounded-3xl";
-
-const PLUS_BUTTON_CLASS =
-  "flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
+import {
+  ModelChip,
+  ModelPicker,
+} from "@/components/ai-chat/input/model-picker";
+import { useChat } from "@/components/ai-chat/state/chat-context";
 
 function ChatPromptInputInner() {
   const { textInput } = usePromptInputController();
-  const { submit, isStreaming } = useChatStream();
+  const { submit, isStreaming, stop } = useChat();
   // strict: false so this works in both /_auth/ai-chat/ and /_auth/ai-chat/$chatId
   const params = useParams({ strict: false }) as { chatId?: string };
   const [expanded, setExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const canSubmit = textInput.value.trim().length > 0 && !isStreaming;
+  // Typing while streaming is allowed — submit routes the message into the queue.
+  const canSubmit = textInput.value.trim().length > 0;
 
   const handleChatPromptSubmit = useCallback(
     async (message: PromptInputMessage) => {
@@ -98,7 +94,12 @@ function ChatPromptInputInner() {
 
   return (
     <CobaltPromptInput
-      inputGroupClassName={expanded ? EXPANDED_INPUT_GROUP : PILL_INPUT_GROUP}
+      className="w-full min-w-0"
+      inputGroupClassName={
+        expanded
+          ? "h-auto flex-col rounded-3xl has-[textarea]:rounded-3xl has-data-[align=block-end]:rounded-3xl"
+          : "h-auto rounded-full has-[textarea]:rounded-full has-data-[align=block-end]:rounded-full"
+      }
       onSubmit={handleChatPromptSubmit}
     >
       {expanded ? (
@@ -114,19 +115,32 @@ function ChatPromptInputInner() {
             />
           </PromptInputBody>
           <div className="flex w-full items-center justify-between px-1.5 pb-2">
-            <button type="button" className={PLUS_BUTTON_CLASS}>
-              <HugeiconsIcon
-                icon={PlusSignIcon}
-                className="size-4"
-                strokeWidth={2}
-              />
-            </button>
-            <PromptInputSubmit disabled={!canSubmit} />
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <HugeiconsIcon
+                  icon={PlusSignIcon}
+                  className="size-4"
+                  strokeWidth={2}
+                />
+              </button>
+              <ModelPicker />
+            </div>
+            <PromptInputSubmit
+              disabled={!canSubmit && !isStreaming}
+              onStop={stop}
+              status={isStreaming ? "streaming" : "ready"}
+            />
           </div>
         </>
       ) : (
         <>
-          <button type="button" className={cn(PLUS_BUTTON_CLASS, "ml-1.5")}>
+          <button
+            type="button"
+            className="ml-1.5 flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
             <HugeiconsIcon
               icon={PlusSignIcon}
               className="size-4"
@@ -144,7 +158,12 @@ function ChatPromptInputInner() {
             />
           </PromptInputBody>
           <div className="flex shrink-0 items-center pr-1.5">
-            <PromptInputSubmit disabled={!canSubmit} />
+            <ModelChip />
+            <PromptInputSubmit
+              disabled={!canSubmit && !isStreaming}
+              onStop={stop}
+              status={isStreaming ? "streaming" : "ready"}
+            />
           </div>
         </>
       )}

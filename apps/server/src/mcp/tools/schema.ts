@@ -1,7 +1,7 @@
+import { agentDb } from "@cobalt-web/db/agent";
 import { sql } from "drizzle-orm";
 
 import { ALLOWED_TABLES } from "../constants.js";
-import { agentDb } from "../services/agent-db.js";
 
 const allowedTableNames = Object.keys(ALLOWED_TABLES);
 

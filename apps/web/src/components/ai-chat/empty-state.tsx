@@ -11,7 +11,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 
-import { CHAT_THREAD_COLUMN_CLASS } from "@/components/ai-chat/chat-thread-layout";
 import { useAppSession } from "@/lib/providers/app-session";
 
 interface QuickAction {
@@ -157,7 +156,7 @@ export function ChatEmptyState() {
       {isVisible && (
         <motion.div
           animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
-          className={`${CHAT_THREAD_COLUMN_CLASS} flex h-full flex-col items-center justify-center pb-32`}
+          className="mx-auto flex h-full w-full max-w-[44rem] flex-col items-center justify-center pb-32"
           exit={{ filter: "blur(4px)", opacity: 0, y: -8 }}
           initial={false}
           transition={{ duration: 0.2, ease: "easeOut" }}

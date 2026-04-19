@@ -1,7 +1,7 @@
+import { agentDb } from "@cobalt-web/db/agent";
 import { sql } from "drizzle-orm";
 
 import { MAX_ROWS, QUERY_TIMEOUT_MS } from "../constants.js";
-import { agentDb } from "./agent-db.js";
 
 const READ_ONLY_KEYWORDS = /^\s*(select|with)\s+/i;
 const FORBIDDEN_KEYWORDS =
