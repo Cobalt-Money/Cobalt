@@ -105,6 +105,15 @@ export const auth = betterAuth({
     }),
     stripe({
       createCustomerOnSignUp: false,
+      onEvent: async (event) => {
+        await Promise.resolve();
+        if (event.type === "invoice.payment_failed") {
+          const invoice = event.data.object as Stripe.Invoice;
+          console.warn(
+            `[stripe] payment failed for invoice ${invoice.id} (customer ${invoice.customer as string})`
+          );
+        }
+      },
       stripeClient,
       stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
       subscription: {
@@ -138,6 +147,17 @@ export const auth = betterAuth({
               allow_promotion_codes: true,
             },
           };
+        },
+        onSubscriptionUpdate: async ({ subscription }) => {
+          await Promise.resolve();
+          if (
+            subscription.status === "past_due" ||
+            subscription.status === "unpaid"
+          ) {
+            console.warn(
+              `[stripe] subscription ${subscription.id} is ${subscription.status} (user ${subscription.referenceId})`
+            );
+          }
         },
         plans: [
           {
