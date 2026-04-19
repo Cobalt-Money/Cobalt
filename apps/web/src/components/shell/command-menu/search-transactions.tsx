@@ -8,6 +8,7 @@ import {
   CommandGroup,
   CommandItem,
 } from "@cobalt-web/ui/components/command";
+import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { zql } from "@cobalt-web/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
@@ -187,5 +188,18 @@ export function TransactionSearchResults({
         })}
       </CommandGroup>
     </>
+  );
+}
+
+export function TransactionSearchFooter() {
+  return (
+    <div className="flex items-center gap-4 border-border/50 border-t px-4 py-2 text-muted-foreground text-xs">
+      <div className="flex items-center gap-2">
+        <KbdGroup>
+          <Kbd>↵</Kbd>
+        </KbdGroup>
+        <span>Open</span>
+      </div>
+    </div>
   );
 }

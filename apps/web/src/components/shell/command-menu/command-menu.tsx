@@ -50,6 +50,7 @@ import { useSettingsDialog } from "@/components/shell/sidebar/nav/settings-dialo
 import { ChatSearchResults, useChatSearch } from "./search-chats";
 import { TickerSearchResults, useTickerSearch } from "./search-tickers";
 import {
+  TransactionSearchFooter,
   TransactionSearchResults,
   useTransactionSearch,
 } from "./search-transactions";
@@ -583,6 +584,7 @@ function CommandMenuDialog({
             )}
           </CommandList>
         )}
+        {inSearchTransactions ? <TransactionSearchFooter /> : null}
       </CobaltCommandPaletteRoot>
     </CobaltCommandDialog>
   );
