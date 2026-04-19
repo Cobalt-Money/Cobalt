@@ -27,6 +27,8 @@ export async function loadSchemaFiles(): Promise<Record<string, string>> {
   const storage = useStorage("assets:db-schema");
   const keys = await storage.getKeys();
 
+  console.log("[schema-context] keys.length =", keys.length);
+
   if (keys.length === 0) {
     return { "README.md": "# Schema\n\nNo db schema assets found.\n" };
   }
