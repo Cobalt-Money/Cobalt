@@ -3,6 +3,7 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
+import { PrivateAmount } from "../../../components/privacy";
 import { InstitutionLogo } from "../../logos/institution-logo";
 import { MerchantLogo } from "../../logos/merchant-logo";
 import {
@@ -89,7 +90,9 @@ export function TransactionDetailSummary({
           amountColor
         )}
       >
-        {currency.format(Math.abs(transaction.amount))}
+        <PrivateAmount>
+          {currency.format(Math.abs(transaction.amount))}
+        </PrivateAmount>
       </p>
 
       <div className="flex flex-col gap-3">

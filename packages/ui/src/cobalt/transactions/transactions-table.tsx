@@ -20,6 +20,7 @@ import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 import type { MouseEvent, KeyboardEvent } from "react";
 import { Fragment, useCallback, useMemo, useState } from "react";
 
+import { PrivateAmount } from "../../components/privacy";
 import { InstitutionLogo } from "../logos/institution-logo";
 import { MerchantLogo } from "../logos/merchant-logo";
 import {
@@ -266,7 +267,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
         <div
           className={cn(cellRow, "whitespace-nowrap tabular-nums", amountColor)}
         >
-          {formattedAmount}
+          <PrivateAmount>{formattedAmount}</PrivateAmount>
         </div>
       );
     },
