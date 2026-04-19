@@ -2,6 +2,7 @@ import type { TransactionListItem } from "@cobalt-web/server-data/transactions/s
 import { MerchantLogo } from "@cobalt-web/ui/cobalt/logos/merchant-logo";
 import { mapZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 import type { ZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
+import { getTransactionDisplayName } from "@cobalt-web/ui/cobalt/transactions/lib/helpers";
 import {
   CommandEmpty,
   CommandGroup,
@@ -39,12 +40,6 @@ const formatAmount = (amount: number | null | undefined): string =>
   amount === null || amount === undefined
     ? ""
     : amountFormatter.format(Math.abs(amount));
-
-const displayName = (t: TransactionListItem): string =>
-  t.userOverrideName?.trim() ||
-  t.merchantName?.trim() ||
-  t.name?.trim() ||
-  "Untitled";
 
 const formatDate = (date: unknown): string => {
   const parsed = parseDate(date);
@@ -145,7 +140,7 @@ export function TransactionSearchResults({
         heading={trimmedSearch.length > 0 ? "Search results" : "Recent"}
       >
         {filteredTransactions.map((t) => {
-          const name = displayName(t);
+          const name = getTransactionDisplayName(t) || "Untitled";
           const isInflow = (t.amount ?? 0) < 0;
           return (
             <CommandItem
