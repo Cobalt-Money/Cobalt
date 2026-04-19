@@ -2,16 +2,22 @@ import { Button } from "@cobalt-web/ui/components/button";
 // import { SidebarTrigger } from "@cobalt-web/ui/components/sidebar";
 import { BellDotIcon, EyeIcon, SearchIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useState } from "react";
 
+import { NotificationsSheet } from "@/components/alerts/notifications-sheet";
 import {
   CommandMenuSearchShortcut,
   useCommandMenu,
 } from "@/components/shell/command-menu";
+import { useUserAlerts } from "@/hooks/use-user-alerts";
 
 import { SiteHeaderPrimaryTitle } from "../site-header-primary-title";
 
 export function SiteHeader() {
   const { setOpen } = useCommandMenu();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const { alerts } = useUserAlerts();
+  const hasAlerts = alerts.length > 0;
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-stretch overflow-visible transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -45,8 +51,13 @@ export function SiteHeader() {
             <HugeiconsIcon className="size-5" icon={EyeIcon} strokeWidth={2} />
           </Button>
           <Button
-            aria-label="Notifications"
-            className="text-muted-foreground"
+            aria-label={
+              hasAlerts
+                ? `Notifications (${alerts.length} need attention)`
+                : "Notifications"
+            }
+            className="relative text-muted-foreground"
+            onClick={() => setNotificationsOpen(true)}
             size="icon"
             type="button"
             variant="ghost"
@@ -56,9 +67,19 @@ export function SiteHeader() {
               icon={BellDotIcon}
               strokeWidth={2}
             />
+            {hasAlerts ? (
+              <span
+                aria-hidden
+                className="-translate-y-1/4 absolute top-2 right-2 size-1.5 translate-x-1/4 rounded-full bg-destructive ring-2 ring-background"
+              />
+            ) : null}
           </Button>
         </div>
       </div>
+      <NotificationsSheet
+        onOpenChange={setNotificationsOpen}
+        open={notificationsOpen}
+      />
     </header>
   );
 }

@@ -2,6 +2,7 @@ import { env } from "@cobalt-web/env/web";
 import { hc } from "hono/client";
 import type {
   AccountsRouter,
+  AlertsRouter,
   AppstoreRouter,
   BrokerageRouter,
   ChatRouter,
@@ -32,6 +33,7 @@ const url = env.VITE_SERVER_URL;
 const init = { init: { credentials: "include" } } as const;
 
 export const accountsApi = hc<AccountsRouter>(`${url}/api/accounts`, init);
+export const alertsApi = hc<AlertsRouter>(`${url}/api/alerts`, init);
 export const appstoreApi = hc<AppstoreRouter>(`${url}/api/appstore`, init);
 export const brokerageApi = hc<BrokerageRouter>(`${url}/api/brokerage`, init);
 export const chatApi = hc<ChatRouter>(`${url}/api/chat`, init);

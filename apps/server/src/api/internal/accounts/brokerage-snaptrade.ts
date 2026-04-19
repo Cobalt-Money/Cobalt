@@ -43,6 +43,7 @@ const deleteRoute = createRoute({
   description:
     "Disconnect a SnapTrade brokerage account (removes authorization, accounts, and related snapshots).",
   method: "delete",
+  middleware: [requireAuth] as const,
   path: "/brokerage/{accountId}",
   request: { params: brokerageAccountIdParamSchema },
   responses: {

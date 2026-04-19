@@ -142,7 +142,7 @@ export async function snaptradeConnectionBrokenWorkflow(
       brokerageAuthorizationId
     );
     await insertAlertStep({
-      message: `Go to Accounts → Brokerage Accounts tab and click Reconnect on the ${brokerageName} card.`,
+      message: `Reconnect ${brokerageName} to resume syncing positions and activity.`,
       metadata: { brokerageName },
       source: ALERT_SOURCES.SNAPTRADE,
       sourceId: brokerageAuthorizationId,
