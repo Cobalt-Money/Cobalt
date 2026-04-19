@@ -1,4 +1,5 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
+import { getTransactionDisplayName } from "@cobalt-web/ui/cobalt/transactions/lib/helpers";
 import { buttonVariants } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { queries } from "@cobalt-web/zero";
@@ -26,8 +27,7 @@ function TransactionDetailBreadcrumb({
     () => items.find((t) => t.id === transactionId),
     [items, transactionId]
   );
-  const label =
-    transaction?.merchantName?.trim() || transaction?.name?.trim() || null;
+  const label = transaction ? getTransactionDisplayName(transaction) : null;
 
   return (
     <nav

@@ -13,6 +13,22 @@ export function getTransactionDisplayDateString(
   return row.authorizedDate ?? row.date;
 }
 
+/**
+ * Name shown anywhere in the app: user override first, then Plaid's merchant,
+ * finally the raw transaction name. Trim fallbacks so whitespace-only overrides
+ * (or merchant names) don't win.
+ */
+export function getTransactionDisplayName(
+  row: Pick<TransactionListItem, "merchantName" | "name" | "userOverrideName">
+): string {
+  return (
+    row.userOverrideName?.trim() ||
+    row.merchantName?.trim() ||
+    row.name?.trim() ||
+    ""
+  );
+}
+
 /** Sort key for date column — same hierarchy as horizon (`authorizedDate` || `date`). */
 export function transactionDateSortKey(row: TransactionListItem): number {
   const raw = getTransactionDisplayDateString(row);
