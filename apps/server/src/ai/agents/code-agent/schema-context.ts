@@ -1,6 +1,4 @@
-// `useStorage` is Nitro's storage composable, not a React hook.
-/* eslint-disable react-hooks/rules-of-hooks */
-import { useStorage } from "nitro/storage";
+import { schemaFiles } from "./schema-files.gen.js";
 
 const EXCLUDE = new Set(["index.ts", "relations.ts"]);
 
@@ -18,33 +16,13 @@ function extractTableNames(content: string): string[] {
   return names;
 }
 
-/**
- * Load all Drizzle schema .ts files from Nitro's `assets:db-schema` mount
- * (configured in nitro.config.ts serverAssets) into a virtual filesystem map
- * for bash-tool.
- */
-export async function loadSchemaFiles(): Promise<Record<string, string>> {
-  const storage = useStorage("assets:db-schema");
-  const keys = await storage.getKeys();
-
-  console.log("[schema-context] keys.length =", keys.length);
-
-  if (keys.length === 0) {
-    return { "README.md": "# Schema\n\nNo db schema assets found.\n" };
-  }
-
+export function loadSchemaFiles(): Record<string, string> {
   const out: Record<string, string> = {};
   const tableIndex: { file: string; tables: string[] }[] = [];
 
-  for (const key of keys) {
-    // unstorage keys use `:` as separator — convert back to path segments.
-    const rel = key.replaceAll(":", "/");
+  for (const [rel, content] of Object.entries(schemaFiles)) {
     const basename = rel.split("/").pop() ?? rel;
     if (!rel.endsWith(".ts") || EXCLUDE.has(basename)) {
-      continue;
-    }
-    const content = await storage.getItem<string>(key);
-    if (typeof content !== "string") {
       continue;
     }
     out[rel] = content;
@@ -52,6 +30,10 @@ export async function loadSchemaFiles(): Promise<Record<string, string>> {
     if (tables.length > 0) {
       tableIndex.push({ file: rel, tables });
     }
+  }
+
+  if (Object.keys(out).length === 0) {
+    return { "README.md": "# Schema\n\nNo db schema assets found.\n" };
   }
 
   const readmeLines = [

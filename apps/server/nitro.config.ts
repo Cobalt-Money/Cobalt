@@ -11,10 +11,6 @@ export default defineConfig({
       baseName: "knowledge",
       dir: fileURLToPath(new URL("src/ai/knowledge", import.meta.url)),
     },
-    {
-      baseName: "db-schema",
-      dir: fileURLToPath(new URL("../../packages/db/src", import.meta.url)),
-    },
   ],
   vercel: {
     functions: {

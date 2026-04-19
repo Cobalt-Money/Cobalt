@@ -3,9 +3,10 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "build": "nitro build",
-    "check-types": "tsc -b",
-    "dev": "nitro dev",
+    "build": "bun ./scripts/gen-schema-files.ts && nitro build",
+    "check-types": "bun ./scripts/gen-schema-files.ts && tsc -b",
+    "dev": "bun ./scripts/gen-schema-files.ts && nitro dev",
+    "gen:schema-files": "bun ./scripts/gen-schema-files.ts",
     "start": "node .output/server/index.mjs",
     "extract-openapi": "bun ./scripts/extract-openapi.ts",
     "test": "vitest run",

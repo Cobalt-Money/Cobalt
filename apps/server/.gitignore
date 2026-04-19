@@ -56,3 +56,6 @@ lerna-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated
+src/ai/agents/code-agent/schema-files.gen.ts
