@@ -115,6 +115,41 @@ Rules:
 - **Anti-pattern:** `try { bulkInsert } catch { for (row of rows) rowInsert }`. The "happy path" (bulk insert without `onConflict`) breaks on every conflict, so you fall into the per-row path every run. Use batched `onConflictDoUpdate` from the start.
 - Require a **unique constraint** on the `target` column(s). "Match-first upsert" patterns (`SELECT then UPDATE or INSERT`) have a TOCTOU race under concurrent webhooks — add the constraint and use `onConflictDoUpdate`.
 
+## Imports in `workflow.ts` / `steps.ts` — **never barrel, always subpath**
+
+The Vercel Workflow bundler compiles each `"use workflow"` / `"use step"` function to **CJS** (the directive discovery pass + durable execution runtime both require it). CJS cannot contain top-level `await`, so anything pulled in transitively via top-level await breaks the build:
+
+```
+../../packages/auth/src/index.ts:17:26: ERROR: Top-level await is currently not supported with the "cjs" output format
+  17 │ const appleClientSecret = await getAppleClientSecret();
+```
+
+Barrel re-exports (`index.ts` with `export { … } from "./actions.js"`) evaluate every re-exported file as a side effect, so importing **one** symbol from a barrel drags in the entire module graph behind it. That's how `@cobalt-web/auth`'s top-level `await` (for the Apple Sign In client secret) ends up in a workflow bundle that only needs a plain DB mutation.
+
+Rules for workflow + step files:
+
+- **Import from the specific subpath**, not the barrel:
+
+  ```ts
+  // ✅ good
+  import { applyAppStoreNotification } from "@cobalt-web/server-data/subscriptions/mutations";
+  import type { AppStoreNotificationInput } from "@cobalt-web/server-data/subscriptions/schemas";
+
+  // ❌ bad — pulls in actions.ts → @cobalt-web/auth → top-level await
+  import { applyAppStoreNotification } from "@cobalt-web/server-data/subscriptions";
+  ```
+
+- **Never import `@cobalt-web/auth`** from a workflow/step. If you think you need Stripe client / auth context inside a workflow, pass the derived value in as a step parameter, don't reach into auth.
+- **When adding a new server-data domain**, mirror the pattern-form export so subpath imports work:
+  ```jsonc
+  // packages/server-data/package.json
+  "./subscriptions/*": "./src/subscriptions/*.ts"
+  ```
+  Barrel-only exports (`"./subscriptions": "./src/subscriptions/index.ts"` without the pattern form) are a trap — they force consumers through the barrel.
+- **Same rule for any file that re-exports from many modules** (e.g. `server-data/chat/index.ts`): prefer subpath imports in step/workflow files. The webhook handler, API routes, and server-only code can still use the barrel — only the workflow bundler cares.
+
+If you see `Top-level await is currently not supported with the "cjs" output format` in a build log, the fix is **always** "trace the import chain from the workflow/step file and replace the offending barrel import with a subpath import." Don't try to remove the top-level await from `@cobalt-web/auth` — `better-auth`'s Apple provider config needs the Apple client secret synchronously, and making auth init async cascades through every consumer.
+
 ## Reference implementations
 
 - **Workflow shape:** `apps/server/src/workflows/plaid/liabilities/` — `workflow.ts` orchestrates `getPlaidItemStep` → `fetchPlaidLiabilitiesStep` → conditional persist steps (including `Promise.all` for liability flavors).

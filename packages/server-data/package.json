@@ -12,6 +12,7 @@
     "./snaptrade/*": "./src/snaptrade/*.ts",
     "./snaptrade/disconnect": "./src/snaptrade/disconnect.ts",
     "./subscriptions": "./src/subscriptions/index.ts",
+    "./subscriptions/*": "./src/subscriptions/*.ts",
     "./news/lib": "./src/news/lib.ts",
     "./news/events/*": "./src/news/events/*.ts",
     "./news/detail/*": "./src/news/detail/*.ts",
@@ -29,6 +30,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@apple/app-store-server-library": "^1.6.0",
     "@cobalt-web/auth": "workspace:*",
     "@cobalt-web/clients": "workspace:*",
     "@cobalt-web/db": "workspace:*",
