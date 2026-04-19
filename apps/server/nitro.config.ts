@@ -1,14 +1,20 @@
+import { fileURLToPath } from "node:url";
+
 import { defineConfig } from "nitro";
 
 export default defineConfig({
   modules: ["workflow/nitro"],
-  // Bundle all @cobalt-web/* workspace packages into the output
   noExternals: true,
   routes: { "/**": "./src/index.ts" },
-  // Include knowledge .md files and db schema .ts files so fs.readFileSync works at runtime
   serverAssets: [
-    { baseName: "knowledge", dir: "./src/ai/knowledge" },
-    { baseName: "db-schema", dir: "../../packages/db/src" },
+    {
+      baseName: "knowledge",
+      dir: fileURLToPath(new URL("src/ai/knowledge", import.meta.url)),
+    },
+    {
+      baseName: "db-schema",
+      dir: fileURLToPath(new URL("../../packages/db/src", import.meta.url)),
+    },
   ],
   vercel: {
     functions: {
