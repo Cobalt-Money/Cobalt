@@ -1,3 +1,7 @@
 import { defineMutators } from "@rocicorp/zero";
 
-export const mutators = defineMutators({});
+import { transactionMutators } from "./transactions/mutators.js";
+
+export const mutators = defineMutators({
+  transaction: transactionMutators,
+});

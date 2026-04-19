@@ -108,6 +108,8 @@ function CobaltCommandPaletteRoot({
         "gap-0 border-0 bg-transparent p-0 px-2 shadow-none rounded-none",
         /* Command list matching dialog height */
         "[&_[data-slot=command-list]]:!max-h-[min(45vh,28rem)] [&_[data-slot=command-list]]:pb-2",
+        /* Hide native scrollbar chrome while keeping overflow scroll. */
+        "[&_[data-slot=command-list]]:[scrollbar-width:none] [&_[data-slot=command-list]::-webkit-scrollbar]:hidden",
         "[&_[cmdk-group]]:!p-0 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0",
         "[&_[cmdk-group-heading]]:!px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
         /* Light: `bg-muted` is ~white — use a visible tint; dark keeps token `muted`. */
