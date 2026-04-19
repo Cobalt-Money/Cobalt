@@ -1,24 +1,20 @@
-import { env } from "@cobalt-web/env/web";
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
 } from "@cobalt-web/ui/components/command";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import type { MouseEvent } from "react";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+import {
+  screenerRowToTickerSearchItem,
+  screenerUniverseQuery,
+} from "@/hooks/research-queries";
+import type { TickerSearchItem } from "@/hooks/research-queries";
 
-export interface TickerSearchItem {
-  name: string;
-  symbol: string;
-  type: string;
-}
-
-interface TickerWithPrice extends TickerSearchItem {
-  price?: number;
-}
+export type { TickerSearchItem };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -35,9 +31,16 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
 
 const formatPrice = (price: number): string => priceFormatter.format(price);
 
-function emptyMessage(rows: TickerSearchItem[], trimmedSearch: string): string {
-  if (rows.length === 0) {
+function emptyMessage(
+  rows: TickerSearchItem[],
+  trimmedSearch: string,
+  isLoadingUniverse: boolean
+): string {
+  if (isLoadingUniverse && rows.length === 0) {
     return "Loading tickers…";
+  }
+  if (rows.length === 0) {
+    return "No tickers.";
   }
   if (trimmedSearch.length > 0) {
     return "No tickers found.";
@@ -48,41 +51,21 @@ function emptyMessage(rows: TickerSearchItem[], trimmedSearch: string): string {
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 /**
- * Fetches all NASDAQ/NYSE tickers the first time `enabled` becomes true, then
- * fetches prices on-demand for whichever tickers are currently visible.
+ * Same React Query cache as research (`screenerUniverseQuery`). Price comes only
+ * from the screener row when FMP includes it — no secondary quote requests.
  */
 export function useTickerSearch(trimmedSearch: string, enabled: boolean) {
-  const [tickerRows, setTickerRows] = useState<TickerSearchItem[]>([]);
-  const [priceMap, setPriceMap] = useState<Map<string, number>>(new Map());
-  const fetchedRef = useRef(false);
-
-  // Fetch the full ticker list once on first open
-  useEffect(() => {
-    if (!enabled || fetchedRef.current) {
-      return;
-    }
-    fetchedRef.current = true;
-
-    const base = env.VITE_SERVER_URL;
-
-    async function load() {
-      try {
-        const res = await fetch(`${base}/api/research/search`, {
-          credentials: "include",
-        });
-        if (res.ok) {
-          const data = (await res.json()) as { tickers: TickerSearchItem[] };
-          if (data.tickers) {
-            setTickerRows(data.tickers);
-          }
-        }
-      } catch {
-        // Network or parse errors are silently ignored — ticker search degrades gracefully
-      }
-    }
-
-    load();
-  }, [enabled]);
+  const { data: universeData, isPending: universePending } = useQuery({
+    ...screenerUniverseQuery,
+    enabled,
+  });
+  const tickerRows = useMemo(
+    () =>
+      (universeData?.results ?? []).map((row) =>
+        screenerRowToTickerSearchItem(row)
+      ),
+    [universeData]
+  );
 
   const visibleTickers = useMemo<TickerSearchItem[]>(() => {
     if (!enabled || tickerRows.length === 0) {
@@ -100,77 +83,24 @@ export function useTickerSearch(trimmedSearch: string, enabled: boolean) {
       : tickerRows.slice(0, 30);
   }, [enabled, tickerRows, trimmedSearch]);
 
-  // Stable comma-separated string — only changes when the visible set actually changes
-  const symbolsKey = useMemo(
-    () => visibleTickers.map((t) => t.symbol).join(","),
-    [visibleTickers]
-  );
-
-  useEffect(() => {
-    if (!symbolsKey) {
-      return;
-    }
-
-    const base = env.VITE_SERVER_URL;
-    const controller = new AbortController();
-
-    async function fetchPrices() {
-      try {
-        const res = await fetch(
-          `${base}/api/research/batch-quotes?symbols=${encodeURIComponent(symbolsKey)}`,
-          { credentials: "include", signal: controller.signal }
-        );
-        if (!res.ok) {
-          return;
-        }
-        const data = (await res.json()) as {
-          quotes: { symbol: string; price: number | null }[];
-        };
-        if (!data.quotes) {
-          return;
-        }
-        setPriceMap((prev) => {
-          const next = new Map(prev);
-          for (const q of data.quotes) {
-            if (q.price !== null) {
-              next.set(q.symbol.toUpperCase(), q.price);
-            }
-          }
-          return next;
-        });
-      } catch {
-        // Aborted or network error — silently ignored
-      }
-    }
-
-    fetchPrices();
-
-    return () => {
-      controller.abort();
-    };
-  }, [symbolsKey]);
-
-  const filteredTickers = useMemo<TickerWithPrice[]>(
-    () =>
-      visibleTickers.map((t) => ({
-        ...t,
-        price: priceMap.get(t.symbol.toUpperCase()),
-      })),
-    [visibleTickers, priceMap]
-  );
-
-  return { filteredTickers, tickerRows };
+  return {
+    filteredTickers: visibleTickers,
+    isLoadingUniverse: universePending,
+    tickerRows,
+  };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function TickerSearchResults({
   filteredTickers,
+  isLoadingUniverse,
   tickerRows,
   trimmedSearch,
   onSelect,
 }: {
-  filteredTickers: TickerWithPrice[];
+  filteredTickers: TickerSearchItem[];
+  isLoadingUniverse: boolean;
   tickerRows: TickerSearchItem[];
   trimmedSearch: string;
   onSelect: (symbol: string) => void;
@@ -178,7 +108,9 @@ export function TickerSearchResults({
   return (
     <>
       {filteredTickers.length === 0 ? (
-        <CommandEmpty>{emptyMessage(tickerRows, trimmedSearch)}</CommandEmpty>
+        <CommandEmpty>
+          {emptyMessage(tickerRows, trimmedSearch, isLoadingUniverse)}
+        </CommandEmpty>
       ) : null}
       <CommandGroup
         heading={trimmedSearch.length > 0 ? "Search results" : "Top tickers"}

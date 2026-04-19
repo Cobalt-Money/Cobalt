@@ -1,22 +1,22 @@
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 
 export const gitConfig = {
-  user: "Sriketk",
-  repo: "cobalt-v2",
   branch: "main",
+  repo: "cobalt-v2",
+  user: "Sriketk",
 };
 
 export function baseOptions(): BaseLayoutProps {
   return {
-    nav: {
-      title: "Cobalt Docs",
-    },
+    githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
     links: [
       {
         text: "API Reference",
         url: "/docs/api-reference",
       },
     ],
-    githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
+    nav: {
+      title: "Cobalt Docs",
+    },
   };
 }

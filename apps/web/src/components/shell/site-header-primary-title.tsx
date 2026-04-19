@@ -5,10 +5,12 @@ import { queries } from "@cobalt-web/zero";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@rocicorp/zero/react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { useRouterState } from "@tanstack/react-router";
 import { useMemo } from "react";
 import type { ReactNode } from "react";
 
+import { Link } from "@/components/links";
+import { useFinancialEventDetail } from "@/hooks/use-financial-event-detail";
 import { useTransactions } from "@/hooks/use-transactions";
 
 import { useAmbientInset } from "./ambient-inset-context";
@@ -107,6 +109,35 @@ function AiChatThreadTitle({ chatId }: { chatId: string }) {
   );
 }
 
+function NewsEventBreadcrumb({ eventId }: { eventId: string }) {
+  const { event } = useFinancialEventDetail(eventId);
+  const label =
+    typeof event?.eventName === "string" ? event.eventName.trim() : null;
+
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className="flex min-w-0 flex-1 items-center gap-1.5 text-lg font-medium leading-tight tracking-tight sm:text-xl"
+    >
+      <Link
+        className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+        to="/news"
+      >
+        News
+      </Link>
+      <HugeiconsIcon
+        aria-hidden
+        className="size-[1.125rem] shrink-0 text-muted-foreground sm:size-5"
+        icon={ArrowRight01Icon}
+        strokeWidth={2}
+      />
+      <span className="min-w-0 truncate text-foreground">
+        {label ?? <span className="text-muted-foreground">Loading…</span>}
+      </span>
+    </nav>
+  );
+}
+
 /**
  * Shell header title area: default route title, or Linear-style breadcrumb on
  * `/transactions/:transactionId`, or ticker chrome on `/research/:symbol`.
@@ -118,6 +149,7 @@ export function SiteHeaderPrimaryTitle() {
   const transactionId = /^\/transactions\/([^/]+)$/.exec(normalized)?.[1];
   const researchSymbol = /^\/research\/([^/]+)$/.exec(normalized)?.[1];
   const aiChatId = /^\/ai-chat\/([^/]+)$/.exec(normalized)?.[1];
+  const newsEventId = /^\/news\/([^/]+)$/.exec(normalized)?.[1];
 
   if (transactionId) {
     return <TransactionDetailBreadcrumb transactionId={transactionId} />;
@@ -129,6 +161,10 @@ export function SiteHeaderPrimaryTitle() {
 
   if (aiChatId) {
     return <AiChatThreadTitle chatId={aiChatId} />;
+  }
+
+  if (newsEventId) {
+    return <NewsEventBreadcrumb eventId={newsEventId} />;
   }
 
   return (

@@ -1,19 +1,21 @@
+import { fetchInstitutionDetails } from "@cobalt-web/server-data/plaid/institutions/actions";
 import {
   createLinkToken,
   exchangePublicToken,
   fetchAccounts,
-  fetchInstitutionDetails,
   fetchItemAndAccounts,
   removeItem,
   triggerPlaidSync,
-} from "@cobalt-web/server-data/plaid/actions";
-import { isDuplicateAccountError } from "@cobalt-web/server-data/plaid/lib";
+} from "@cobalt-web/server-data/plaid/link/actions";
+import { isDuplicateAccountError } from "@cobalt-web/server-data/plaid/link/lib";
 import {
   persistItemMetadata,
-  getAccessTokenForItem,
   syncNewAccountsForItem,
-} from "@cobalt-web/server-data/plaid/mutations";
-import { checkForDuplicateAccounts } from "@cobalt-web/server-data/plaid/queries";
+} from "@cobalt-web/server-data/plaid/link/mutations";
+import {
+  checkForDuplicateAccounts,
+  getAccessTokenForItem,
+} from "@cobalt-web/server-data/plaid/link/queries";
 import {
   errorResponseSchema,
   exchangeTokenBodySchema,
@@ -22,10 +24,14 @@ import {
   persistItemBodySchema,
   plaidItemIdBodySchema,
   successResponseSchema,
-} from "@cobalt-web/server-data/plaid/schemas";
+} from "@cobalt-web/server-data/plaid/link/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { start } from "workflow/api";
 
+import { plaidInitialInvestmentSyncWorkflow } from "../../../workflows/plaid/investments/workflow.js";
+import { plaidLiabilitiesSyncWorkflow } from "../../../workflows/plaid/liabilities/workflow.js";
+import { plaidSyncWorkflow } from "../../../workflows/plaid/sync/workflow.js";
 import { requireAuth } from "../middleware.js";
 
 // ── Route definitions ───────────────────────────────────────────────
@@ -224,7 +230,10 @@ const linkRouter = new OpenAPIHono<AppEnv>()
       // Trigger sync
       await triggerPlaidSync(access_token);
 
-      // FUTURE: wire workflow triggers (plaidInitialInvestmentSyncWorkflow, plaidInitialLiabilitiesSyncWorkflow)
+      await Promise.all([
+        start(plaidInitialInvestmentSyncWorkflow, [item_id]),
+        start(plaidLiabilitiesSyncWorkflow, [item_id]),
+      ]);
 
       return c.json({ success: true }, 200);
     } catch (error: unknown) {
@@ -248,7 +257,17 @@ const linkRouter = new OpenAPIHono<AppEnv>()
       const accounts = await fetchAccounts(accessToken);
       await syncNewAccountsForItem(plaidItemId, accounts);
 
-      // FUTURE: wire workflow triggers (plaidSyncWorkflow, plaidInitialInvestmentSyncWorkflow, plaidInitialLiabilitiesSyncWorkflow)
+      await Promise.all([
+        start(plaidSyncWorkflow, [
+          {
+            historical_update_complete: false,
+            initial_update_complete: false,
+            item_id: plaidItemId,
+          },
+        ]),
+        start(plaidInitialInvestmentSyncWorkflow, [plaidItemId]),
+        start(plaidLiabilitiesSyncWorkflow, [plaidItemId]),
+      ]);
 
       return c.json({ success: true }, 200);
     } catch (error) {

@@ -6,6 +6,7 @@ import {
   usePromptInputController,
 } from "@cobalt-web/ui/components/ai-elements/prompt-input";
 import type { PromptInputMessage } from "@cobalt-web/ui/components/ai-elements/prompt-input";
+import { cn } from "@cobalt-web/ui/lib/utils";
 import { PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useParams } from "@tanstack/react-router";
@@ -18,7 +19,13 @@ import {
 } from "@/components/ai-chat/input/model-picker";
 import { useChat } from "@/components/ai-chat/state/chat-context";
 
-function ChatPromptInputInner() {
+interface ChatPromptInputInnerProps {
+  extraInputGroupClassName?: string;
+}
+
+function ChatPromptInputInner({
+  extraInputGroupClassName,
+}: ChatPromptInputInnerProps) {
   const { textInput } = usePromptInputController();
   const { submit, isStreaming, stop } = useChat();
   // strict: false so this works in both /_auth/ai-chat/ and /_auth/ai-chat/$chatId
@@ -95,11 +102,12 @@ function ChatPromptInputInner() {
   return (
     <CobaltPromptInput
       className="w-full min-w-0"
-      inputGroupClassName={
+      inputGroupClassName={cn(
         expanded
           ? "h-auto flex-col rounded-3xl has-[textarea]:rounded-3xl has-data-[align=block-end]:rounded-3xl"
-          : "h-auto rounded-full has-[textarea]:rounded-full has-data-[align=block-end]:rounded-full"
-      }
+          : "h-auto rounded-full has-[textarea]:rounded-full has-data-[align=block-end]:rounded-full",
+        extraInputGroupClassName
+      )}
       onSubmit={handleChatPromptSubmit}
     >
       {expanded ? (
@@ -111,7 +119,7 @@ function ChatPromptInputInner() {
               onBlur={handleBlur}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              placeholder="Message Cobalt…"
+              placeholder="Ask Cobalt"
             />
           </PromptInputBody>
           <div className="flex w-full items-center justify-between px-1.5 pb-2">
@@ -153,7 +161,7 @@ function ChatPromptInputInner() {
               className="min-h-0 max-h-12 overflow-hidden pl-2 py-3 text-base md:text-base"
               onBlur={handleBlur}
               onChange={handleChange}
-              placeholder="Message Cobalt…"
+              placeholder="Ask Cobalt"
               rows={1}
             />
           </PromptInputBody>
@@ -171,6 +179,12 @@ function ChatPromptInputInner() {
   );
 }
 
-export function ChatPromptInput() {
-  return <ChatPromptInputInner />;
+export function ChatPromptInput({
+  extraInputGroupClassName,
+}: {
+  extraInputGroupClassName?: string;
+} = {}) {
+  return (
+    <ChatPromptInputInner extraInputGroupClassName={extraInputGroupClassName} />
+  );
 }

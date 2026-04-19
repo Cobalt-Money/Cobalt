@@ -25,54 +25,48 @@ export function DashboardRecentTransactionsCard() {
             Recent transactions
           </h2>
 
-          {rows.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No transactions yet.
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-0">
-              {rows.map((tx) => {
-                const isInflow = tx.amount > 0;
-                const displayName =
-                  tx.userOverrideName ?? tx.merchantName ?? tx.name;
-                const dateLabel = format(parseISO(tx.date), "MMM d");
-                return (
-                  <li
-                    className="flex min-w-0 items-center justify-between gap-3 py-3"
-                    key={tx.id}
-                  >
-                    <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <MerchantLogo
-                        className="size-10 shrink-0"
-                        counterparties={null}
-                        deferUntilVisible={false}
-                        logoUrl={tx.logoUrl ?? null}
-                        merchantName={displayName}
-                        website={tx.website ?? null}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-foreground truncate font-medium">
-                          {displayName}
-                        </p>
-                        <p className="text-muted-foreground text-sm">
-                          {dateLabel}
-                        </p>
-                      </div>
+          <ul className="flex flex-col gap-0">
+            {rows.map((tx) => {
+              const isInflow = tx.amount > 0;
+              const displayName =
+                tx.userOverrideName ?? tx.merchantName ?? tx.name;
+              const dateLabel = format(parseISO(tx.date), "MMM d");
+              return (
+                <li
+                  className="flex min-w-0 items-center justify-between gap-3 py-3"
+                  key={tx.id}
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <MerchantLogo
+                      className="size-10 shrink-0"
+                      counterparties={null}
+                      deferUntilVisible={false}
+                      logoUrl={tx.logoUrl ?? null}
+                      merchantName={displayName}
+                      website={tx.website ?? null}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground truncate font-medium">
+                        {displayName}
+                      </p>
+                      <p className="text-muted-foreground text-sm">
+                        {dateLabel}
+                      </p>
                     </div>
-                    <p
-                      className={cn(
-                        "shrink-0 text-base font-semibold tabular-nums",
-                        isInflow ? "text-green-550" : "text-foreground"
-                      )}
-                    >
-                      {isInflow ? "+" : ""}
-                      {formatUsd(tx.amount)}
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                  </div>
+                  <p
+                    className={cn(
+                      "shrink-0 text-base font-semibold tabular-nums",
+                      isInflow ? "text-green-550" : "text-foreground"
+                    )}
+                  >
+                    {isInflow ? "+" : ""}
+                    {formatUsd(tx.amount)}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
         </CardContent>
       </CobaltCard>
     </section>

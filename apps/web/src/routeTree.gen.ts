@@ -13,11 +13,11 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OauthConsentRouteImport } from './routes/oauth/consent'
-import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthTransactionsRouteRouteImport } from './routes/_auth/transactions/route'
 import { Route as AuthSubscriptionsRouteRouteImport } from './routes/_auth/subscriptions/route'
 import { Route as AuthResearchRouteRouteImport } from './routes/_auth/research/route'
 import { Route as AuthNewsRouteRouteImport } from './routes/_auth/news/route'
+import { Route as AuthDashboardRouteRouteImport } from './routes/_auth/dashboard/route'
 import { Route as AuthBrokerageRouteRouteImport } from './routes/_auth/brokerage/route'
 import { Route as AuthAiChatRouteRouteImport } from './routes/_auth/ai-chat/route'
 import { Route as AuthAccountsRouteRouteImport } from './routes/_auth/accounts/route'
@@ -25,6 +25,7 @@ import { Route as AuthTransactionsIndexRouteImport } from './routes/_auth/transa
 import { Route as AuthSubscriptionsIndexRouteImport } from './routes/_auth/subscriptions/index'
 import { Route as AuthResearchIndexRouteImport } from './routes/_auth/research/index'
 import { Route as AuthNewsIndexRouteImport } from './routes/_auth/news/index'
+import { Route as AuthDashboardIndexRouteImport } from './routes/_auth/dashboard/index'
 import { Route as AuthBrokerageIndexRouteImport } from './routes/_auth/brokerage/index'
 import { Route as AuthAiChatIndexRouteImport } from './routes/_auth/ai-chat/index'
 import { Route as AuthAccountsIndexRouteImport } from './routes/_auth/accounts/index'
@@ -52,11 +53,6 @@ const OauthConsentRoute = OauthConsentRouteImport.update({
   path: '/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthDashboardRoute = AuthDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
 const AuthTransactionsRouteRoute = AuthTransactionsRouteRouteImport.update({
   id: '/transactions',
   path: '/transactions',
@@ -75,6 +71,11 @@ const AuthResearchRouteRoute = AuthResearchRouteRouteImport.update({
 const AuthNewsRouteRoute = AuthNewsRouteRouteImport.update({
   id: '/news',
   path: '/news',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthDashboardRouteRoute = AuthDashboardRouteRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthBrokerageRouteRoute = AuthBrokerageRouteRouteImport.update({
@@ -111,6 +112,11 @@ const AuthNewsIndexRoute = AuthNewsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthNewsRouteRoute,
+} as any)
+const AuthDashboardIndexRoute = AuthDashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthDashboardRouteRoute,
 } as any)
 const AuthBrokerageIndexRoute = AuthBrokerageIndexRouteImport.update({
   id: '/',
@@ -155,11 +161,11 @@ export interface FileRoutesByFullPath {
   '/accounts': typeof AuthAccountsRouteRouteWithChildren
   '/ai-chat': typeof AuthAiChatRouteRouteWithChildren
   '/brokerage': typeof AuthBrokerageRouteRouteWithChildren
+  '/dashboard': typeof AuthDashboardRouteRouteWithChildren
   '/news': typeof AuthNewsRouteRouteWithChildren
   '/research': typeof AuthResearchRouteRouteWithChildren
   '/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteRouteWithChildren
-  '/dashboard': typeof AuthDashboardRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/news/$eventId': typeof AuthNewsEventIdRoute
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/accounts/': typeof AuthAccountsIndexRoute
   '/ai-chat/': typeof AuthAiChatIndexRoute
   '/brokerage/': typeof AuthBrokerageIndexRoute
+  '/dashboard/': typeof AuthDashboardIndexRoute
   '/news/': typeof AuthNewsIndexRoute
   '/research/': typeof AuthResearchIndexRoute
   '/subscriptions/': typeof AuthSubscriptionsIndexRoute
@@ -176,7 +183,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/dashboard': typeof AuthDashboardRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/news/$eventId': typeof AuthNewsEventIdRoute
@@ -185,6 +191,7 @@ export interface FileRoutesByTo {
   '/accounts': typeof AuthAccountsIndexRoute
   '/ai-chat': typeof AuthAiChatIndexRoute
   '/brokerage': typeof AuthBrokerageIndexRoute
+  '/dashboard': typeof AuthDashboardIndexRoute
   '/news': typeof AuthNewsIndexRoute
   '/research': typeof AuthResearchIndexRoute
   '/subscriptions': typeof AuthSubscriptionsIndexRoute
@@ -198,11 +205,11 @@ export interface FileRoutesById {
   '/_auth/accounts': typeof AuthAccountsRouteRouteWithChildren
   '/_auth/ai-chat': typeof AuthAiChatRouteRouteWithChildren
   '/_auth/brokerage': typeof AuthBrokerageRouteRouteWithChildren
+  '/_auth/dashboard': typeof AuthDashboardRouteRouteWithChildren
   '/_auth/news': typeof AuthNewsRouteRouteWithChildren
   '/_auth/research': typeof AuthResearchRouteRouteWithChildren
   '/_auth/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/_auth/transactions': typeof AuthTransactionsRouteRouteWithChildren
-  '/_auth/dashboard': typeof AuthDashboardRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/_auth/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/_auth/news/$eventId': typeof AuthNewsEventIdRoute
@@ -211,6 +218,7 @@ export interface FileRoutesById {
   '/_auth/accounts/': typeof AuthAccountsIndexRoute
   '/_auth/ai-chat/': typeof AuthAiChatIndexRoute
   '/_auth/brokerage/': typeof AuthBrokerageIndexRoute
+  '/_auth/dashboard/': typeof AuthDashboardIndexRoute
   '/_auth/news/': typeof AuthNewsIndexRoute
   '/_auth/research/': typeof AuthResearchIndexRoute
   '/_auth/subscriptions/': typeof AuthSubscriptionsIndexRoute
@@ -224,11 +232,11 @@ export interface FileRouteTypes {
     | '/accounts'
     | '/ai-chat'
     | '/brokerage'
+    | '/dashboard'
     | '/news'
     | '/research'
     | '/subscriptions'
     | '/transactions'
-    | '/dashboard'
     | '/oauth/consent'
     | '/ai-chat/$chatId'
     | '/news/$eventId'
@@ -237,6 +245,7 @@ export interface FileRouteTypes {
     | '/accounts/'
     | '/ai-chat/'
     | '/brokerage/'
+    | '/dashboard/'
     | '/news/'
     | '/research/'
     | '/subscriptions/'
@@ -245,7 +254,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
-    | '/dashboard'
     | '/oauth/consent'
     | '/ai-chat/$chatId'
     | '/news/$eventId'
@@ -254,6 +262,7 @@ export interface FileRouteTypes {
     | '/accounts'
     | '/ai-chat'
     | '/brokerage'
+    | '/dashboard'
     | '/news'
     | '/research'
     | '/subscriptions'
@@ -266,11 +275,11 @@ export interface FileRouteTypes {
     | '/_auth/accounts'
     | '/_auth/ai-chat'
     | '/_auth/brokerage'
+    | '/_auth/dashboard'
     | '/_auth/news'
     | '/_auth/research'
     | '/_auth/subscriptions'
     | '/_auth/transactions'
-    | '/_auth/dashboard'
     | '/oauth/consent'
     | '/_auth/ai-chat/$chatId'
     | '/_auth/news/$eventId'
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/_auth/accounts/'
     | '/_auth/ai-chat/'
     | '/_auth/brokerage/'
+    | '/_auth/dashboard/'
     | '/_auth/news/'
     | '/_auth/research/'
     | '/_auth/subscriptions/'
@@ -322,13 +332,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_auth/dashboard': {
-      id: '/_auth/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthDashboardRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
     '/_auth/transactions': {
       id: '/_auth/transactions'
       path: '/transactions'
@@ -355,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/news'
       fullPath: '/news'
       preLoaderRoute: typeof AuthNewsRouteRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/dashboard': {
+      id: '/_auth/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthDashboardRouteRouteImport
       parentRoute: typeof AuthRouteRoute
     }
     '/_auth/brokerage': {
@@ -405,6 +415,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/news/'
       preLoaderRoute: typeof AuthNewsIndexRouteImport
       parentRoute: typeof AuthNewsRouteRoute
+    }
+    '/_auth/dashboard/': {
+      id: '/_auth/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof AuthDashboardIndexRouteImport
+      parentRoute: typeof AuthDashboardRouteRoute
     }
     '/_auth/brokerage/': {
       id: '/_auth/brokerage/'
@@ -494,6 +511,17 @@ const AuthBrokerageRouteRouteChildren: AuthBrokerageRouteRouteChildren = {
 const AuthBrokerageRouteRouteWithChildren =
   AuthBrokerageRouteRoute._addFileChildren(AuthBrokerageRouteRouteChildren)
 
+interface AuthDashboardRouteRouteChildren {
+  AuthDashboardIndexRoute: typeof AuthDashboardIndexRoute
+}
+
+const AuthDashboardRouteRouteChildren: AuthDashboardRouteRouteChildren = {
+  AuthDashboardIndexRoute: AuthDashboardIndexRoute,
+}
+
+const AuthDashboardRouteRouteWithChildren =
+  AuthDashboardRouteRoute._addFileChildren(AuthDashboardRouteRouteChildren)
+
 interface AuthNewsRouteRouteChildren {
   AuthNewsEventIdRoute: typeof AuthNewsEventIdRoute
   AuthNewsIndexRoute: typeof AuthNewsIndexRoute
@@ -554,22 +582,22 @@ interface AuthRouteRouteChildren {
   AuthAccountsRouteRoute: typeof AuthAccountsRouteRouteWithChildren
   AuthAiChatRouteRoute: typeof AuthAiChatRouteRouteWithChildren
   AuthBrokerageRouteRoute: typeof AuthBrokerageRouteRouteWithChildren
+  AuthDashboardRouteRoute: typeof AuthDashboardRouteRouteWithChildren
   AuthNewsRouteRoute: typeof AuthNewsRouteRouteWithChildren
   AuthResearchRouteRoute: typeof AuthResearchRouteRouteWithChildren
   AuthSubscriptionsRouteRoute: typeof AuthSubscriptionsRouteRouteWithChildren
   AuthTransactionsRouteRoute: typeof AuthTransactionsRouteRouteWithChildren
-  AuthDashboardRoute: typeof AuthDashboardRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthAccountsRouteRoute: AuthAccountsRouteRouteWithChildren,
   AuthAiChatRouteRoute: AuthAiChatRouteRouteWithChildren,
   AuthBrokerageRouteRoute: AuthBrokerageRouteRouteWithChildren,
+  AuthDashboardRouteRoute: AuthDashboardRouteRouteWithChildren,
   AuthNewsRouteRoute: AuthNewsRouteRouteWithChildren,
   AuthResearchRouteRoute: AuthResearchRouteRouteWithChildren,
   AuthSubscriptionsRouteRoute: AuthSubscriptionsRouteRouteWithChildren,
   AuthTransactionsRouteRoute: AuthTransactionsRouteRouteWithChildren,
-  AuthDashboardRoute: AuthDashboardRoute,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(

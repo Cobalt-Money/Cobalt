@@ -4,6 +4,7 @@ dist/
 /out/
 .output/
 .workflow-data/
+.swc/
 
 # dev
 .yarn/

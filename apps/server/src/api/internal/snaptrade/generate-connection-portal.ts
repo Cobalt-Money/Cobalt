@@ -1,9 +1,9 @@
-import { generateConnectionPortal } from "@cobalt-web/server-data/snaptrade/actions";
+import { generateConnectionPortal } from "@cobalt-web/server-data/snaptrade/auth/actions";
 import {
   connectionPortalResponseSchema,
   errorResponseSchema,
   generatePortalQuerySchema,
-} from "@cobalt-web/server-data/snaptrade/schemas";
+} from "@cobalt-web/server-data/snaptrade/auth/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 

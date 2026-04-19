@@ -1,7 +1,8 @@
 import { Button, buttonVariants } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { useConnectionState, useZero } from "@rocicorp/zero/react";
-import { Link } from "@tanstack/react-router";
+
+import { Link } from "@/components/links";
 
 /**
  * When the API returns 401/403 for Zero query or mutate, the client enters

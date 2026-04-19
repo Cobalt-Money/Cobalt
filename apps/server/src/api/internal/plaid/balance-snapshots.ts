@@ -1,9 +1,9 @@
-import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/plaid/queries";
+import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/plaid/snapshots/queries";
 import {
   balanceSnapshotListResponseSchema,
   balanceSnapshotQuerySchema,
   errorResponseSchema,
-} from "@cobalt-web/server-data/plaid/schemas";
+} from "@cobalt-web/server-data/plaid/snapshots/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 

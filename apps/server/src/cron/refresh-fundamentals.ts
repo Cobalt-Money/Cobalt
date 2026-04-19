@@ -16,7 +16,7 @@ function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export const cronRefreshFundamentalsRouter = new Hono().post(
+export const cronRefreshFundamentalsRouter = new Hono().get(
   "/refresh-fundamentals",
   async (c) => {
     const secret = env.CRON_SECRET;
@@ -29,6 +29,7 @@ export const cronRefreshFundamentalsRouter = new Hono().post(
 
     const today = new Date();
     const yesterday = new Date(today);
+
     yesterday.setDate(today.getDate() - 1);
 
     const run = await start(refreshFundamentalsWorkflow, [

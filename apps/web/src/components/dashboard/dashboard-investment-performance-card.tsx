@@ -1,8 +1,6 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
-import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { useBrokerage } from "@/hooks/use-brokerage";
@@ -50,56 +48,40 @@ export function DashboardInvestmentPerformanceCard() {
             Portfolio performance
           </h2>
 
-          {topHoldings.length === 0 ? (
-            <div className="flex flex-1 flex-col items-start justify-center gap-3">
-              <p className="text-muted-foreground text-sm">
-                No holdings yet. Connect a brokerage account to see your
-                portfolio performance.
-              </p>
-              <Button
-                render={<Link to="/brokerage" />}
-                size="sm"
-                variant="outline"
-              >
-                Connect brokerage
-              </Button>
-            </div>
-          ) : (
-            <ul className="flex flex-col gap-0">
-              {topHoldings.map((row) => {
-                const up = row.pct > 0;
-                const down = row.pct < 0;
-                return (
-                  <li
-                    className="flex min-w-0 items-center justify-between gap-3 py-3"
-                    key={row.id}
-                  >
-                    <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <TickerLogo size={40} symbol={row.symbol ?? ""} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-foreground text-sm font-semibold tracking-tight">
-                          {row.symbol}
-                        </p>
-                        <p className="text-muted-foreground truncate text-sm">
-                          {row.symbolDescription ?? row.symbol}
-                        </p>
-                      </div>
+          <ul className="flex flex-col gap-0">
+            {topHoldings.map((row) => {
+              const up = row.pct > 0;
+              const down = row.pct < 0;
+              return (
+                <li
+                  className="flex min-w-0 items-center justify-between gap-3 py-3"
+                  key={row.id}
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <TickerLogo size={40} symbol={row.symbol ?? ""} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground text-sm font-semibold tracking-tight">
+                        {row.symbol}
+                      </p>
+                      <p className="text-muted-foreground truncate text-sm">
+                        {row.symbolDescription ?? row.symbol}
+                      </p>
                     </div>
-                    <p
-                      className={cn(
-                        "shrink-0 text-base font-semibold tabular-nums",
-                        up && "text-green-550",
-                        down && "text-red-600 dark:text-red-500",
-                        !up && !down && "text-foreground"
-                      )}
-                    >
-                      {formatPct(row.pct)}
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                  </div>
+                  <p
+                    className={cn(
+                      "shrink-0 text-base font-semibold tabular-nums",
+                      up && "text-green-550",
+                      down && "text-red-600 dark:text-red-500",
+                      !up && !down && "text-foreground"
+                    )}
+                  >
+                    {formatPct(row.pct)}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
         </CardContent>
       </CobaltCard>
     </section>

@@ -3,12 +3,12 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 
 import type { AuroraThemePreset } from "./aurora-theme-presets";
 
-export type AuroraThemePickerProps = {
+export interface AuroraThemePickerProps {
   className?: string;
   currentId: string;
   onSelect: (theme: AuroraThemePreset) => void;
   themes: readonly AuroraThemePreset[];
-};
+}
 
 /** Circular preset swatches (Base UI `Button`). */
 export function AuroraThemePicker({

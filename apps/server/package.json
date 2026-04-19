@@ -34,6 +34,7 @@
     "mathjs": "^15.1.0",
     "parallel-web": "^0.3.1",
     "pg": "^8.16.3",
+    "snaptrade-typescript-sdk": "^9.0.160",
     "zod": "catalog:"
   },
   "devDependencies": {
