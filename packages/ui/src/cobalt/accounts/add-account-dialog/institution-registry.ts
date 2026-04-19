@@ -3,7 +3,7 @@ import type { AddAccountInstitution } from "./types";
 /**
  * Full SnapTrade-supported brokerage list (mirrored from horizon-test's
  * `STATIC_BROKERAGES`). `slug` is the SnapTrade broker identifier used by
- * `/api/snaptrade/generate-connection-portal`. `domain` feeds Brandfetch via
+ * `/api/snaptrade/generateConnectionPortal`. `domain` feeds Brandfetch via
  * `InstitutionLogo`'s `institutionUrl` candidate chain.
  */
 interface SnaptradeSeed {

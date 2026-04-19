@@ -21,7 +21,7 @@ export interface AccountCardViewModel {
   plaidAccountId: string | null;
   /** Plaid — `POST /api/plaid/link-token/update` for reconnect. */
   plaidItemId: string | null;
-  /** SnapTrade — `POST /api/snaptrade/generate-connection-portal` reconnect. */
+  /** SnapTrade — `POST /api/snaptrade/generateConnectionPortal` reconnect. */
   snaptradeAuthorizationId: string | null;
   /** Unix ms — latest sync time when available. */
   lastSyncedAt: number | null;

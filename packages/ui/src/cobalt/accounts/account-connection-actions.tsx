@@ -96,7 +96,7 @@ export function AccountConnectionActions({
     setBusy("reconnect");
     try {
       const res = await fetch(
-        `${env.VITE_SERVER_URL}/api/snaptrade/generate-connection-portal`,
+        `${env.VITE_SERVER_URL}/api/snaptrade/generateConnectionPortal`,
         {
           body: JSON.stringify({
             broker: "",

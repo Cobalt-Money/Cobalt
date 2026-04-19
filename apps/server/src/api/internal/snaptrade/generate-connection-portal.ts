@@ -12,7 +12,7 @@ import { requireAuth } from "../middleware.js";
 const route = createRoute({
   method: "post",
   middleware: [requireAuth] as const,
-  path: "/generate-connection-portal",
+  path: "/generateConnectionPortal",
   request: {
     body: {
       content: {

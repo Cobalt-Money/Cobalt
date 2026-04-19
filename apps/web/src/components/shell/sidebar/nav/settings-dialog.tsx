@@ -1,4 +1,3 @@
-import { env } from "@cobalt-web/env/web";
 import {
   Avatar,
   AvatarFallback,
@@ -15,6 +14,7 @@ import { Separator } from "@cobalt-web/ui/components/separator";
 import { Switch } from "@cobalt-web/ui/components/switch";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
+  AccountSetting01Icon,
   CreditCardIcon,
   Notification03Icon,
   UserCircle02Icon,
@@ -25,12 +25,19 @@ import type { IconSvgElement } from "@hugeicons/react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
+import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
+import { subscriptionsApi } from "@/lib/clients/api-client";
 import { authClient } from "@/lib/clients/auth-client";
 import { useAppSession } from "@/lib/providers/app-session";
 
 import { navUserInitials } from "./lib";
 
-type Section = "profile" | "appearance" | "notifications" | "billing";
+type Section =
+  | "profile"
+  | "account"
+  | "appearance"
+  | "notifications"
+  | "billing";
 
 const NAV_SECTIONS: {
   id: Section;
@@ -38,6 +45,7 @@ const NAV_SECTIONS: {
   icon: IconSvgElement;
 }[] = [
   { icon: UserCircle02Icon, id: "profile", label: "Profile" },
+  { icon: AccountSetting01Icon, id: "account", label: "Account" },
   { icon: EyeIcon, id: "appearance", label: "Appearance" },
   { icon: Notification03Icon, id: "notifications", label: "Notifications" },
   { icon: CreditCardIcon, id: "billing", label: "Billing" },
@@ -70,12 +78,12 @@ export function SettingsDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="gap-0 overflow-hidden p-0 sm:max-w-2xl"
+        className="gap-0 overflow-hidden p-0 sm:max-w-3xl"
         showCloseButton
       >
-        <div className="flex h-[520px]">
+        <div className="flex h-[640px]">
           {/* Left nav */}
-          <div className="flex w-44 shrink-0 flex-col gap-0.5 border-r border-border/60 p-3 pt-4">
+          <div className="flex w-44 shrink-0 flex-col gap-0.5 border-r border-border/60 bg-muted/40 p-3 pt-4">
             <p className="mb-1 px-2 py-1 text-xs font-medium tracking-widest text-muted-foreground uppercase">
               Settings
             </p>
@@ -106,6 +114,9 @@ export function SettingsDialog({
           <div className="flex flex-1 flex-col overflow-y-auto p-6 pr-12">
             {activeSection === "profile" && (
               <ProfileSection user={user} initials={initials} />
+            )}
+            {activeSection === "account" && (
+              <AccountSection userEmail={user?.email} />
             )}
             {activeSection === "appearance" && (
               <AppearanceSection theme={theme} setTheme={setTheme} />
@@ -212,6 +223,17 @@ function ProfileSection({
   );
 }
 
+// ─── Account ─────────────────────────────────────────────────────────────────
+
+function AccountSection({ userEmail }: { userEmail: string | undefined }) {
+  return (
+    <div className="flex flex-col gap-6">
+      <DialogTitle className="text-base font-semibold">Account</DialogTitle>
+      {userEmail && <DeleteAccountDialog userEmail={userEmail} />}
+    </div>
+  );
+}
+
 // ─── Appearance ───────────────────────────────────────────────────────────────
 
 function AppearanceSection({
@@ -270,12 +292,8 @@ function BillingSection() {
     let cancelled = false;
     const run = async () => {
       try {
-        const r = await fetch(`${env.VITE_SERVER_URL}/api/subscriptions`, {
-          credentials: "include",
-        });
-        const data = (await r.json()) as {
-          subscriptionSource: SubscriptionSource;
-        };
+        const res = await subscriptionsApi.index.$get();
+        const data = await res.json();
         if (!cancelled) {
           setSource(data.subscriptionSource);
         }
@@ -295,14 +313,11 @@ function BillingSection() {
     setPortalLoading(true);
     setPortalError(null);
     try {
-      const res = await fetch(
-        `${env.VITE_SERVER_URL}/api/subscriptions/billing-portal`,
-        { credentials: "include", method: "POST" }
-      );
+      const res = await subscriptionsApi.billingPortal.$post();
       if (!res.ok) {
         throw new Error("Failed to open billing portal");
       }
-      const { url } = (await res.json()) as { url: string };
+      const { url } = await res.json();
       window.location.href = url;
     } catch {
       setPortalError("Unable to open billing portal. Please try again.");
