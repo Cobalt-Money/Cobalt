@@ -7,6 +7,7 @@ import {
   CommandGroup,
   CommandItem,
 } from "@cobalt-web/ui/components/command";
+import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { zql } from "@cobalt-web/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
@@ -183,8 +184,10 @@ export function TransactionSearchResults({
                       : "text-red-600 dark:text-red-500"
                   )}
                 >
-                  {isInflow ? "+" : "-"}
-                  {formatAmount(t.amount)}
+                  <PrivateAmount>
+                    {isInflow ? "+" : "-"}
+                    {formatAmount(t.amount)}
+                  </PrivateAmount>
                 </span>
               </div>
             </CommandItem>

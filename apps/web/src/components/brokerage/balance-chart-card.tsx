@@ -5,6 +5,7 @@ import type {
 import { BrokerageScopePicker } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
 import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
 import { Button } from "@cobalt-web/ui/components/button";
+import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { format, startOfYear, subDays, subMonths, subYears } from "date-fns";
 import type { MouseEvent } from "react";
@@ -226,7 +227,7 @@ export function BalanceChartCard({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
             <div className="min-w-0">
               <p className="text-foreground text-2xl font-semibold tabular-nums tracking-tight sm:text-2xl">
-                {displayValue}
+                <PrivateAmount>{displayValue}</PrivateAmount>
               </p>
               <p
                 className={cn(

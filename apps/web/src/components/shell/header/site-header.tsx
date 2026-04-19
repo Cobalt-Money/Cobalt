@@ -1,6 +1,12 @@
 import { Button } from "@cobalt-web/ui/components/button";
+import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
 // import { SidebarTrigger } from "@cobalt-web/ui/components/sidebar";
-import { BellDotIcon, EyeIcon, SearchIcon } from "@hugeicons/core-free-icons";
+import {
+  BellDotIcon,
+  EyeIcon,
+  SearchIcon,
+  ViewOffSlashIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
@@ -18,6 +24,7 @@ export function SiteHeader() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { alerts } = useUserAlerts();
   const hasAlerts = alerts.length > 0;
+  const { hidden: privacyHidden, toggle: togglePrivacy } = usePrivacy();
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-stretch overflow-visible transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -42,13 +49,19 @@ export function SiteHeader() {
         </button>
         <div className="ml-auto flex shrink-0 items-center gap-0.5">
           <Button
-            aria-label="Visibility"
+            aria-label={privacyHidden ? "Show amounts" : "Hide amounts"}
+            aria-pressed={privacyHidden}
             className="text-muted-foreground"
+            onClick={togglePrivacy}
             size="icon"
             type="button"
             variant="ghost"
           >
-            <HugeiconsIcon className="size-5" icon={EyeIcon} strokeWidth={2} />
+            <HugeiconsIcon
+              className="size-5"
+              icon={privacyHidden ? ViewOffSlashIcon : EyeIcon}
+              strokeWidth={2}
+            />
           </Button>
           <Button
             aria-label={

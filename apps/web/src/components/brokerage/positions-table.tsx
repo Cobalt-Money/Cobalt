@@ -1,5 +1,6 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { useMemo } from "react";
 
@@ -92,23 +93,36 @@ function PositionTableRow({ p }: { p: PositionRow }) {
         </div>
       </td>
       <td className="text-muted-foreground px-2 py-2 tabular-nums">
-        {p.units === undefined || p.units === null
-          ? "—"
-          : p.units.toLocaleString()}
+        {p.units === undefined || p.units === null ? (
+          "—"
+        ) : (
+          <PrivateAmount>{p.units.toLocaleString()}</PrivateAmount>
+        )}
       </td>
       <td className="text-muted-foreground px-2 py-2 tabular-nums">
-        {p.averagePurchasePrice === undefined || p.averagePurchasePrice === null
-          ? "—"
-          : money(p.averagePurchasePrice)}
+        {p.averagePurchasePrice === undefined ||
+        p.averagePurchasePrice === null ? (
+          "—"
+        ) : (
+          <PrivateAmount>{money(p.averagePurchasePrice)}</PrivateAmount>
+        )}
       </td>
       <td className="text-muted-foreground px-2 py-2 tabular-nums">
-        {p.price === undefined || p.price === null ? "—" : money(p.price)}
+        {p.price === undefined || p.price === null ? (
+          "—"
+        ) : (
+          <PrivateAmount>{money(p.price)}</PrivateAmount>
+        )}
       </td>
       <td className="text-foreground px-2 py-2 font-medium tabular-nums">
-        {mkt === null ? "—" : money(mkt)}
+        {mkt === null ? "—" : <PrivateAmount>{money(mkt)}</PrivateAmount>}
       </td>
       <td className={cn("px-2 py-2 tabular-nums", openPnlToneClass(p.openPnl))}>
-        {p.openPnl === undefined || p.openPnl === null ? "—" : money(p.openPnl)}
+        {p.openPnl === undefined || p.openPnl === null ? (
+          "—"
+        ) : (
+          <PrivateAmount>{money(p.openPnl)}</PrivateAmount>
+        )}
       </td>
       <td className="text-muted-foreground max-w-[12rem] truncate py-2 pr-0 pl-2 text-right text-xs">
         {p.brokerageAccount?.name?.trim() ?? "—"}

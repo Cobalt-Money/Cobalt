@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@cobalt-web/ui/components/dialog";
+import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
+import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { endOfMonth, format, getDay, isToday } from "date-fns";
 import { useMemo, useState } from "react";
@@ -132,7 +134,7 @@ function DayDialog({
                   </span>
                 </div>
                 <span className="shrink-0 text-sm font-semibold tabular-nums">
-                  {USD.format(sub.amount)}
+                  <PrivateAmount>{USD.format(sub.amount)}</PrivateAmount>
                 </span>
               </div>
             ))}
@@ -141,7 +143,7 @@ function DayDialog({
               <div className="mt-1 flex items-center justify-between px-1 pt-2 border-t border-border/50">
                 <span className="text-xs text-muted-foreground">Total due</span>
                 <span className="text-sm font-semibold tabular-nums">
-                  {USD.format(dayTotal)}
+                  <PrivateAmount>{USD.format(dayTotal)}</PrivateAmount>
                 </span>
               </div>
             )}
@@ -339,6 +341,7 @@ export function SubscriptionsCalendar() {
   const currentDate = useMemo(() => new Date(), []);
   const today = currentDate.getDate();
   const [dialogDate, setDialogDate] = useState<Date | null>(null);
+  const { mask } = usePrivacy();
 
   const title = format(currentDate, "MMMM yyyy");
 
@@ -371,7 +374,7 @@ export function SubscriptionsCalendar() {
         <SegmentedGauge
           value={remaining}
           max={monthTotal}
-          label={USD.format(remaining)}
+          label={mask(USD.format(remaining))}
           sublabel="Left to pay this month"
         />
       )}
@@ -382,7 +385,7 @@ export function SubscriptionsCalendar() {
           <p className="text-base text-muted-foreground">
             Monthly total:{" "}
             <span className="font-semibold text-foreground">
-              {USD.format(monthTotal)}
+              <PrivateAmount>{USD.format(monthTotal)}</PrivateAmount>
             </span>
           </p>
         )}

@@ -9,6 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@cobalt-web/ui/components/dropdown-menu";
+import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
+import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { queries } from "@cobalt-web/zero";
 import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
@@ -578,6 +580,7 @@ export function NetWorthSection() {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [categoryHover, setCategoryHover] = useState<number | null>(null);
   const [scope, setScope] = useState<AccountScope>({ type: "all" });
+  const { mask } = usePrivacy();
 
   // Snapshot history — drives both the chart and headline totals
   const [rawBankSnapshots] = useQuery(queries.accounts.bankBalanceSnapshots());
@@ -845,7 +848,7 @@ export function NetWorthSection() {
   const categoryCenterValue =
     categoryHover === null
       ? undefined
-      : formatUsdInteger(categories[categoryHover]?.value ?? 0);
+      : mask(formatUsdInteger(categories[categoryHover]?.value ?? 0));
 
   // ── Render ───────────────────────────────────────────────────
 
@@ -873,11 +876,13 @@ export function NetWorthSection() {
                         ))}
                   </p>
                   <p className="text-foreground text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
-                    {formatUsdInteger(
-                      hoverIndex === null
-                        ? totalNetWorth
-                        : (chartData[hoverIndex]?.value ?? totalNetWorth)
-                    )}
+                    <PrivateAmount>
+                      {formatUsdInteger(
+                        hoverIndex === null
+                          ? totalNetWorth
+                          : (chartData[hoverIndex]?.value ?? totalNetWorth)
+                      )}
+                    </PrivateAmount>
                   </p>
                 </div>
                 <NetWorthScopePicker
