@@ -11,6 +11,7 @@ import {
 } from "ai";
 import type { UIMessage } from "ai";
 import { Hono } from "hono";
+import { start } from "workflow/api";
 
 import { createCodeAgent } from "../../../ai/agents/code-agent/code-agent.js";
 import {
@@ -19,6 +20,7 @@ import {
   parseModelWithReasoning,
 } from "../../../ai/model-provider.js";
 import type { ReasoningEffort } from "../../../ai/model-provider.js";
+import { generateChatTitleWorkflow } from "../../../workflows/chat-title/workflow.js";
 import { requirePaidUser } from "../middleware.js";
 
 const SYSTEM_PROMPT = [
@@ -28,6 +30,36 @@ const SYSTEM_PROMPT = [
 ].join(" ");
 
 const MAX_HISTORY = 20;
+
+function extractMessageText(message: UIMessage): string {
+  return message.parts
+    .filter(
+      (p): p is { text: string; type: "text" } =>
+        p.type === "text" && typeof (p as { text?: unknown }).text === "string"
+    )
+    .map((p) => p.text)
+    .join(" ")
+    .trim();
+}
+
+async function startChatTitle(
+  chatTitle: string | null,
+  chatId: string,
+  message: UIMessage
+): Promise<void> {
+  if (chatTitle || message.role !== "user") {
+    return;
+  }
+  const firstMessage = extractMessageText(message);
+  if (!firstMessage) {
+    return;
+  }
+  try {
+    await start(generateChatTitleWorkflow, [{ chatId, firstMessage }]);
+  } catch (error) {
+    console.error("[chat-title] failed to start workflow", error);
+  }
+}
 
 export const chatStreamRouter = new Hono<AppEnv>().post(
   "/:chatId/stream",
@@ -84,6 +116,7 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
     });
 
     await upsertMessage({ chatId, message });
+    await startChatTitle(chat.title, chatId, message);
 
     const allModelMessages = await convertToModelMessages(messages);
     const trimmed =

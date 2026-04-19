@@ -14,6 +14,16 @@ export async function createChat(
   return chatId;
 }
 
+export async function updateChatTitle(
+  chatId: string,
+  title: string
+): Promise<void> {
+  await db
+    .update(chats)
+    .set({ title, updatedAt: new Date() })
+    .where(eq(chats.chatId, chatId));
+}
+
 /**
  * Upsert a full UIMessage (user or assistant) into the DB.
  *
@@ -52,44 +62,4 @@ export async function upsertMessage({
       .set({ updatedAt: new Date() })
       .where(eq(chats.chatId, chatId));
   });
-}
-
-export async function appendUserMessage(
-  chatId: string,
-  content: string
-): Promise<string> {
-  const messageId = crypto.randomUUID();
-  await db.insert(messages).values({ chatId, messageId, role: "user" });
-  await db.insert(parts).values({
-    messageId,
-    order: 0,
-    partId: crypto.randomUUID(),
-    text_text: content,
-    type: "text",
-  });
-  await db
-    .update(chats)
-    .set({ updatedAt: new Date() })
-    .where(eq(chats.chatId, chatId));
-  return messageId;
-}
-
-export async function appendAssistantMessage(
-  chatId: string,
-  text: string
-): Promise<string> {
-  const messageId = crypto.randomUUID();
-  await db.insert(messages).values({ chatId, messageId, role: "assistant" });
-  await db.insert(parts).values({
-    messageId,
-    order: 0,
-    partId: crypto.randomUUID(),
-    text_text: text,
-    type: "text",
-  });
-  await db
-    .update(chats)
-    .set({ updatedAt: new Date() })
-    .where(eq(chats.chatId, chatId));
-  return messageId;
 }

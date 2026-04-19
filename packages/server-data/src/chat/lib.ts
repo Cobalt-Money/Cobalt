@@ -9,6 +9,21 @@ function nil(v: string | null | undefined): boolean {
   return v === undefined || v === null;
 }
 
+const MAX_TITLE_LENGTH = 50;
+const FALLBACK_WORD_COUNT = 6;
+
+export function generateFallbackTitle(firstMessage: string): string {
+  const cleaned = firstMessage.trim();
+  if (!cleaned) {
+    return "New chat";
+  }
+  const words = cleaned.split(/\s+/).slice(0, FALLBACK_WORD_COUNT);
+  const title = words.join(" ");
+  return title.length > MAX_TITLE_LENGTH
+    ? `${title.slice(0, MAX_TITLE_LENGTH - 3)}...`
+    : title;
+}
+
 function textPart(p: PartRow): Record<string, unknown> | null {
   return nil(p.text_text) ? null : { text: p.text_text, type: "text" };
 }
