@@ -11,6 +11,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
 import { accountsRouter } from "./api/internal/accounts/index.js";
+import { alertsRouter } from "./api/internal/alerts/index.js";
 import { appstoreRouter } from "./api/internal/appstore.js";
 import { authRouter } from "./api/internal/auth.js";
 import { brokerageRouter } from "./api/internal/brokerage/index.js";
@@ -82,6 +83,7 @@ const base: OpenAPIHono = new OpenAPIHono();
 base.route("/api/auth", authRouter);
 base.route("/api/zero", zeroRouter);
 base.route("/api/accounts", accountsRouter);
+base.route("/api/alerts", alertsRouter);
 base.route("/api/transactions", transactionsRouter);
 base.route("/api/brokerage", brokerageRouter);
 base.route("/api/chat", chatRouter);
@@ -213,6 +215,7 @@ const app = new Hono()
 // schema type and avoids the recursion depth blow-up.
 export type AppType = typeof app;
 export type AccountsRouter = typeof accountsRouter;
+export type AlertsRouter = typeof alertsRouter;
 export type AppstoreRouter = typeof appstoreRouter;
 export type BrokerageRouter = typeof brokerageRouter;
 export type ChatRouter = typeof chatRouter;

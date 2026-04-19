@@ -70,7 +70,7 @@ export async function plaidItemWebhookWorkflow(
       switch (webhook.webhook_code) {
         case "ERROR": {
           await insertAlertStep({
-            message: `Go to Accounts → Bank Accounts tab, find ${institutionName} and click Fix Connection.`,
+            message: `Reconnect ${institutionName} to resume syncing transactions and balances.`,
             metadata: alertMetadata,
             source: ALERT_SOURCES.PLAID,
             sourceId: itemId,
@@ -83,7 +83,7 @@ export async function plaidItemWebhookWorkflow(
 
         case "PENDING_DISCONNECT": {
           await insertAlertStep({
-            message: `Go to Accounts → Bank Accounts tab, find ${institutionName} and click Fix Connection.`,
+            message: `Reconnect ${institutionName} now to avoid losing access.`,
             metadata: alertMetadata,
             source: ALERT_SOURCES.PLAID,
             sourceId: itemId,
@@ -96,7 +96,7 @@ export async function plaidItemWebhookWorkflow(
 
         case "NEW_ACCOUNTS_AVAILABLE": {
           await insertAlertStep({
-            message: `Go to Accounts → Bank Accounts tab, find ${institutionName} and click Refresh connection (with the New badge).`,
+            message: `New accounts were added at ${institutionName}. Refresh to sync them.`,
             metadata: alertMetadata,
             source: ALERT_SOURCES.PLAID,
             sourceId: itemId,

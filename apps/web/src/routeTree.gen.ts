@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OauthConsentRouteImport } from './routes/oauth/consent'
+import { Route as AuthAlertsPreviewRouteImport } from './routes/_auth/alerts-preview'
 import { Route as AuthTransactionsRouteRouteImport } from './routes/_auth/transactions/route'
 import { Route as AuthSubscriptionsRouteRouteImport } from './routes/_auth/subscriptions/route'
 import { Route as AuthResearchRouteRouteImport } from './routes/_auth/research/route'
@@ -52,6 +53,11 @@ const OauthConsentRoute = OauthConsentRouteImport.update({
   id: '/oauth/consent',
   path: '/oauth/consent',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthAlertsPreviewRoute = AuthAlertsPreviewRouteImport.update({
+  id: '/alerts-preview',
+  path: '/alerts-preview',
+  getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthTransactionsRouteRoute = AuthTransactionsRouteRouteImport.update({
   id: '/transactions',
@@ -166,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/research': typeof AuthResearchRouteRouteWithChildren
   '/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteRouteWithChildren
+  '/alerts-preview': typeof AuthAlertsPreviewRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/news/$eventId': typeof AuthNewsEventIdRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/alerts-preview': typeof AuthAlertsPreviewRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/news/$eventId': typeof AuthNewsEventIdRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/_auth/research': typeof AuthResearchRouteRouteWithChildren
   '/_auth/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/_auth/transactions': typeof AuthTransactionsRouteRouteWithChildren
+  '/_auth/alerts-preview': typeof AuthAlertsPreviewRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/_auth/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/_auth/news/$eventId': typeof AuthNewsEventIdRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/research'
     | '/subscriptions'
     | '/transactions'
+    | '/alerts-preview'
     | '/oauth/consent'
     | '/ai-chat/$chatId'
     | '/news/$eventId'
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/alerts-preview'
     | '/oauth/consent'
     | '/ai-chat/$chatId'
     | '/news/$eventId'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '/_auth/research'
     | '/_auth/subscriptions'
     | '/_auth/transactions'
+    | '/_auth/alerts-preview'
     | '/oauth/consent'
     | '/_auth/ai-chat/$chatId'
     | '/_auth/news/$eventId'
@@ -331,6 +343,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/oauth/consent'
       preLoaderRoute: typeof OauthConsentRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_auth/alerts-preview': {
+      id: '/_auth/alerts-preview'
+      path: '/alerts-preview'
+      fullPath: '/alerts-preview'
+      preLoaderRoute: typeof AuthAlertsPreviewRouteImport
+      parentRoute: typeof AuthRouteRoute
     }
     '/_auth/transactions': {
       id: '/_auth/transactions'
@@ -587,6 +606,7 @@ interface AuthRouteRouteChildren {
   AuthResearchRouteRoute: typeof AuthResearchRouteRouteWithChildren
   AuthSubscriptionsRouteRoute: typeof AuthSubscriptionsRouteRouteWithChildren
   AuthTransactionsRouteRoute: typeof AuthTransactionsRouteRouteWithChildren
+  AuthAlertsPreviewRoute: typeof AuthAlertsPreviewRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
@@ -598,6 +618,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthResearchRouteRoute: AuthResearchRouteRouteWithChildren,
   AuthSubscriptionsRouteRoute: AuthSubscriptionsRouteRouteWithChildren,
   AuthTransactionsRouteRoute: AuthTransactionsRouteRouteWithChildren,
+  AuthAlertsPreviewRoute: AuthAlertsPreviewRoute,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(

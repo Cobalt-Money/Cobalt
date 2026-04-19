@@ -3,6 +3,7 @@
   "type": "module",
   "exports": {
     "./accounts/*": "./src/accounts/*.ts",
+    "./alerts/*": "./src/alerts/*.ts",
     "./brokerage/*": "./src/brokerage/*.ts",
     "./brokerage/plaid/*": "./src/brokerage/plaid/*.ts",
     "./brokerage/snaptrade/*": "./src/brokerage/snaptrade/*.ts",
