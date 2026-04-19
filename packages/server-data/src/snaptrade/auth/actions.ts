@@ -5,8 +5,6 @@ import type { AuthenticationApiLoginSnapTradeUserRequest } from "snaptrade-types
 
 import { getBrokerageUserByUserId } from "./queries.js";
 
-// ── User Registration (internal) ──────────────────────────────────
-
 interface SnapTradeCredentials {
   providerUserId: string;
   providerUserSecret: string;
@@ -38,8 +36,6 @@ async function registerSnapTradeUser(
   };
 }
 
-// ── Connection Portal ─────────────────────────────────────────────
-
 interface ConnectionPortalResult {
   redirectURI: string;
   sessionId: string | undefined;
@@ -50,7 +46,6 @@ export async function generateConnectionPortal(
   broker: string,
   reconnectAuthorizationId?: string
 ): Promise<ConnectionPortalResult> {
-  // Look up or register the user with SnapTrade
   const existingUser = await getBrokerageUserByUserId(userId);
   const userSession = existingUser ?? (await registerSnapTradeUser(userId));
 

@@ -48,6 +48,7 @@ coverage
 # Misc
 *.tgz
 .cache
+.swc/
 tmp
 temp
 .sandbox

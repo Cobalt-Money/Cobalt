@@ -1,50 +1,27 @@
 import { db } from "@cobalt-web/db";
 
-import { matchesDuplicateAccountMask, toBalanceSnapshotDTO } from "./lib.js";
-import type { BalanceSnapshot, BalanceSnapshotQuery } from "./schemas.js";
+import { matchesDuplicateAccountMask } from "./lib.js";
 
 /**
- * Get balance snapshots with enriched account metadata.
- * Relational: snapshot → account → connection (user scoping on connection.userId).
+ * Get access token for a Plaid item with ownership check.
+ * Throws if item not found or user doesn't own it.
  */
-export async function getBalanceSnapshotsByUserId(
+export async function getAccessTokenForItem(
   userId: string,
-  filters: BalanceSnapshotQuery
-): Promise<BalanceSnapshot[]> {
-  const whereParts = [
-    { account: { connection: { userId: { eq: userId } } } },
-  ] as const;
-
-  const withFilters = [
-    ...whereParts,
-    ...(filters.accountId
-      ? [{ plaidAccountId: { eq: filters.accountId } } as const]
-      : []),
-    ...(filters.startDate
-      ? [{ snapshotDate: { gte: filters.startDate } } as const]
-      : []),
-    ...(filters.endDate
-      ? [{ snapshotDate: { lte: filters.endDate } } as const]
-      : []),
-  ];
-  //fetching user snapshots from db
-  const rows = await db.query.bankBalanceSnapshot.findMany({
-    orderBy: { snapshotDate: "asc" },
-    where: { AND: withFilters },
-    with: {
-      account: {
-        with: {
-          connection: true,
-        },
-      },
+  plaidItemId: string
+): Promise<string> {
+  const item = await db.query.bankConnection.findFirst({
+    columns: { plaidAccessToken: true },
+    where: {
+      AND: [{ plaidItemId: { eq: plaidItemId } }, { userId: { eq: userId } }],
     },
   });
-  // only returnign snapshots we need by mutating dto
-  return rows.flatMap((row) =>
-    row.account === null
-      ? []
-      : [toBalanceSnapshotDTO({ ...row, account: row.account })]
-  );
+
+  if (!item) {
+    throw new Error("Item not found or access denied");
+  }
+
+  return item.plaidAccessToken;
 }
 
 /**

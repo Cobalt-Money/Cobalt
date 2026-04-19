@@ -13,7 +13,7 @@ import {
 import {
   getInstitutionById,
   searchInstitutions,
-} from "@cobalt-web/server-data/plaid/actions";
+} from "@cobalt-web/server-data/plaid/institutions/actions";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 

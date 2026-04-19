@@ -1,18 +1,19 @@
-import { createLinkTokenForUpdate } from "@cobalt-web/server-data/plaid/actions";
-import {
-  clearItemError,
-  getAccessTokenForItem,
-} from "@cobalt-web/server-data/plaid/mutations";
+import { createLinkTokenForUpdate } from "@cobalt-web/server-data/plaid/link/actions";
+import { clearItemError } from "@cobalt-web/server-data/plaid/link/mutations";
+import { getAccessTokenForItem } from "@cobalt-web/server-data/plaid/link/queries";
 import {
   errorResponseSchema,
   linkTokenResponseSchema,
   plaidItemIdBodySchema,
   successResponseSchema,
   updateLinkTokenBodySchema,
-} from "@cobalt-web/server-data/plaid/schemas";
+} from "@cobalt-web/server-data/plaid/link/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { start } from "workflow/api";
 
+import { plaidLiabilitiesSyncWorkflow } from "../../../workflows/plaid/liabilities/workflow.js";
+import { plaidReauthSyncWorkflow } from "../../../workflows/plaid/sync/workflow.js";
 import { requireAuth } from "../middleware.js";
 
 // ── Route definitions ───────────────────────────────────────────────
@@ -100,7 +101,10 @@ const updateRouter = new OpenAPIHono<AppEnv>()
     try {
       await clearItemError(plaidItemId, userId);
 
-      // FUTURE: wire workflow triggers (plaidReauthSyncWorkflow, plaidInitialLiabilitiesSyncWorkflow)
+      await Promise.all([
+        start(plaidReauthSyncWorkflow, [{ item_id: plaidItemId }]),
+        start(plaidLiabilitiesSyncWorkflow, [plaidItemId]),
+      ]);
 
       return c.json({ success: true }, 200);
     } catch (error) {

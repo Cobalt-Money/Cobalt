@@ -1,25 +1,27 @@
-import type { BalanceSnapshot } from "./schemas.js";
+import type { AccountBase } from "plaid";
 
-/**
- * Minimal row shape for `toBalanceSnapshotDTO` (matches relational `with` load;
- * full `bankAccount` rows are assignable here).
- */
-export interface BalanceSnapshotRelationalRow {
-  account: {
-    connection: { institutionName: string | null };
-    name: string;
-    subtype: string | null;
-    type: string;
-  };
-  availableBalance: number | null;
-  createdAt: Date;
-  creditLimit: number | null;
-  currentBalance: number;
-  id: string;
-  plaidAccountId: string;
-  snapshotDate: string;
-  snapshotSource: string;
-}
+/** Curried mapper: Plaid account → `bank_account` insert row (data-first config, data-last account). */
+export const bankAccountInsertFromPlaid =
+  (plaidItemId: string) => (account: AccountBase) => ({
+    mask: account.mask ?? null,
+    name: account.name || account.official_name || "Account",
+    officialName: account.official_name ?? null,
+    plaidAccountId: account.account_id,
+    plaidItemId,
+    subtype: account.subtype ?? null,
+    type: account.type,
+    verificationStatus: account.verification_status ?? null,
+  });
+
+/** Pure shape for `bank_balance` upsert from a Plaid account payload. */
+export const balanceRowFromPlaidAccount = (account: AccountBase) => ({
+  available: account.balances.available ?? null,
+  current: account.balances.current ?? 0,
+  isoCurrencyCode: account.balances.iso_currency_code ?? null,
+  limit: account.balances.limit ?? null,
+  plaidAccountId: account.account_id,
+  unofficialCurrencyCode: account.balances.unofficial_currency_code ?? null,
+});
 
 /** Row used when comparing a new Plaid account to existing DB accounts (duplicate check). */
 export interface ExistingAccountDuplicateRow {
@@ -38,29 +40,6 @@ export const matchesDuplicateAccountMask = (
   candidate.mask !== null &&
   existing.mask !== null &&
   candidate.mask === existing.mask;
-
-/** Map a relational balance snapshot row to the HTTP DTO. */
-export function toBalanceSnapshotDTO(
-  row: BalanceSnapshotRelationalRow
-): BalanceSnapshot {
-  const { account } = row;
-  const { connection } = account;
-
-  return {
-    accountName: account.name,
-    accountSubtype: account.subtype,
-    accountType: account.type,
-    availableBalance: row.availableBalance,
-    createdAt: row.createdAt.toISOString(),
-    creditLimit: row.creditLimit,
-    currentBalance: row.currentBalance,
-    id: row.id,
-    institutionName: connection.institutionName,
-    plaidAccountId: row.plaidAccountId,
-    snapshotDate: row.snapshotDate,
-    snapshotSource: row.snapshotSource,
-  };
-}
 
 /**
  * Custom error class for duplicate account detection.

@@ -12,50 +12,10 @@ import {
 import { and, eq, inArray } from "drizzle-orm";
 import type { AccountBase } from "plaid";
 
-/** Curried mapper: Plaid account → `bank_account` insert row (data-first config, data-last account). */
-const bankAccountInsertFromPlaid =
-  (plaidItemId: string) => (account: AccountBase) => ({
-    mask: account.mask ?? null,
-    name: account.name || account.official_name || "Account",
-    officialName: account.official_name ?? null,
-    plaidAccountId: account.account_id,
-    plaidItemId,
-    subtype: account.subtype ?? null,
-    type: account.type,
-    verificationStatus: account.verification_status ?? null,
-  });
-
-/** Pure shape for `bank_balance` upsert from a Plaid account payload. */
-const balanceRowFromPlaidAccount = (account: AccountBase) => ({
-  available: account.balances.available ?? null,
-  current: account.balances.current ?? 0,
-  isoCurrencyCode: account.balances.iso_currency_code ?? null,
-  limit: account.balances.limit ?? null,
-  plaidAccountId: account.account_id,
-  unofficialCurrencyCode: account.balances.unofficial_currency_code ?? null,
-});
-
-/**
- * Get access token for a Plaid item with ownership check.
- * Throws if item not found or user doesn't own it.
- */
-export async function getAccessTokenForItem(
-  userId: string,
-  plaidItemId: string
-): Promise<string> {
-  const item = await db.query.bankConnection.findFirst({
-    columns: { plaidAccessToken: true },
-    where: {
-      AND: [{ plaidItemId: { eq: plaidItemId } }, { userId: { eq: userId } }],
-    },
-  });
-
-  if (!item) {
-    throw new Error("Item not found or access denied");
-  }
-
-  return item.plaidAccessToken;
-}
+import {
+  bankAccountInsertFromPlaid,
+  balanceRowFromPlaidAccount,
+} from "./lib.js";
 
 /**
  * Persist Plaid item metadata to bankConnection.
