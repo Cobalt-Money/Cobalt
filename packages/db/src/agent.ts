@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 /**
- * Dedicated database connection for AI agent queries.
+ * Dedicated database connection for AI agent queries and MCP tools.
  * Uses AGENT_DATABASE_URL (a separate connection URI for the agent_readonly role)
  * and falls back to DATABASE_URL for local development.
  *

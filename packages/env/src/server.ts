@@ -54,6 +54,8 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    /** Parallel web search API key. Optional — web search/extract tools are disabled when absent. */
+    PARALLEL_API_KEY: z.string().min(1).optional(),
     PLAID_CLIENT_ID: z.string().min(1),
     PLAID_CLIENT_SECRET: z.string().min(1),
     PLAID_ENV: z.string().min(1).default("sandbox"),

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { ChatEmptyState } from "@/components/ai-chat/chat-empty-state";
+import { ChatEmptyState } from "@/components/ai-chat/empty-state";
 
 export const Route = createFileRoute("/_auth/ai-chat/")({
   component: AiChatIndex,
