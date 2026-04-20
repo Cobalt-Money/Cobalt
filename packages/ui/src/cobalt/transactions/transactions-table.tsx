@@ -1,11 +1,5 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { Checkbox } from "@cobalt-web/ui/components/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from "@cobalt-web/ui/components/table";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -17,8 +11,14 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import type { MouseEvent, KeyboardEvent } from "react";
-import { Fragment, useCallback, useMemo, useState } from "react";
+import type { Range, Virtualizer } from "@tanstack/react-virtual";
+import {
+  defaultRangeExtractor,
+  observeElementRect,
+  useVirtualizer,
+} from "@tanstack/react-virtual";
+import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { PrivateAmount } from "../../components/privacy";
 import { InstitutionLogo } from "../logos/institution-logo";
@@ -50,6 +50,39 @@ const currency = new Intl.NumberFormat("en-US", {
 const STATUS_PENDING_ICON = "/assets/vectors/pending.svg";
 const STATUS_POSTED_ICON = "/assets/vectors/posted.svg";
 
+/** Shared grid template so dividers and rows align on the same columns. */
+const GRID_TEMPLATE_COLUMNS =
+  "2.5rem 3rem 3.5rem 7rem minmax(0, 2fr) minmax(0, 1.5fr) 7rem";
+
+/**
+ * Fixed row height. Tabular content is uniform by design (truncated name,
+ * single-line date/amount/status, fixed-size logos), so the virtualizer uses
+ * this as the source of truth — no per-row measurement, no layout jitter.
+ * Month dividers reuse the same height so a future zero-virtual migration
+ * (SRI-254) is a drop-in replacement.
+ */
+const ROW_HEIGHT = 52;
+
+/**
+ * Wrap `observeElementRect` to treat a zero-sized scroll element as a
+ * reasonable fallback (jsdom + SSR report 0×0). Without this, the virtualizer
+ * renders no items at all until real layout happens.
+ */
+// biome-ignore lint/nursery/noReactPropAssignments: TanStack Virtual's observeElementRect API is callback-based; conforming to its signature.
+function observeElementRectWithFallback<TScroll extends Element>(
+  instance: Virtualizer<TScroll, Element>,
+  // eslint-disable-next-line promise/prefer-await-to-callbacks
+  cb: (rect: { height: number; width: number }) => void
+) {
+  return observeElementRect(instance, (rect) => {
+    // eslint-disable-next-line promise/prefer-await-to-callbacks
+    cb({
+      height: rect.height > 0 ? rect.height : 1200,
+      width: rect.width > 0 ? rect.width : 1000,
+    });
+  });
+}
+
 function truncateName(name: string, max = 40): string {
   if (name.length <= max) {
     return name;
@@ -57,49 +90,7 @@ function truncateName(name: string, max = 40): string {
   return `${name.slice(0, max)}…`;
 }
 
-/** Keeps every column vertically centered on a shared line height. */
 const cellRow = "flex items-center leading-5";
-
-/**
- * Insert sticky month sections (Linear-style) while preserving TanStack row order & selection.
- * Group key uses the same calendar month as the Date column.
- */
-function groupRowsByMonth(
-  rows: Row<TransactionListItem>[]
-): { label: string; monthKey: string; rows: Row<TransactionListItem>[] }[] {
-  const groups: {
-    label: string;
-    monthKey: string;
-    rows: Row<TransactionListItem>[];
-  }[] = [];
-
-  for (const row of rows) {
-    const monthKey = transactionMonthGroupKey(row.original);
-    const last = groups.at(-1);
-    if (!last || last.monthKey !== monthKey) {
-      groups.push({
-        label: formatMonthGroupLabel(monthKey),
-        monthKey,
-        rows: [row],
-      });
-    } else {
-      last.rows.push(row);
-    }
-  }
-  return groups;
-}
-
-function getColumnStableId(col: ColumnDef<TransactionListItem>): string {
-  if (typeof col.id === "string" && col.id.length > 0) {
-    return col.id;
-  }
-  if ("accessorKey" in col && typeof col.accessorKey === "string") {
-    return col.accessorKey;
-  }
-  return "";
-}
-
-const monthDividerBase = "bg-muted font-medium text-foreground";
 
 const columns: ColumnDef<TransactionListItem>[] = [
   {
@@ -131,7 +122,6 @@ const columns: ColumnDef<TransactionListItem>[] = [
     enableSorting: false,
     header: () => null,
     id: "select",
-    size: 40,
   },
   {
     accessorKey: "pending",
@@ -286,6 +276,44 @@ function isInteractiveCellTarget(target: EventTarget | null): boolean {
   );
 }
 
+type FlatItem =
+  | {
+      kind: "divider";
+      monthKey: string;
+      label: string;
+      count: number;
+    }
+  | {
+      kind: "row";
+      row: Row<TransactionListItem>;
+    };
+
+function flattenRowsByMonth(rows: Row<TransactionListItem>[]): FlatItem[] {
+  const items: FlatItem[] = [];
+  let currentMonthKey: string | null = null;
+  let currentDividerIndex = -1;
+
+  for (const row of rows) {
+    const monthKey = transactionMonthGroupKey(row.original);
+    if (monthKey !== currentMonthKey) {
+      currentMonthKey = monthKey;
+      currentDividerIndex = items.length;
+      items.push({
+        count: 0,
+        kind: "divider",
+        label: formatMonthGroupLabel(monthKey),
+        monthKey,
+      });
+    }
+    items.push({ kind: "row", row });
+    const divider = items[currentDividerIndex];
+    if (divider && divider.kind === "divider") {
+      divider.count += 1;
+    }
+  }
+  return items;
+}
+
 export function TransactionsTable({
   isComplete,
   items,
@@ -316,7 +344,6 @@ export function TransactionsTable({
         return;
       }
       e.preventDefault();
-      // Preload the route before navigating
       router.preloadRoute({
         params: { transactionId: row.original.id },
         to: "/transactions/$transactionId",
@@ -356,110 +383,204 @@ export function TransactionsTable({
   });
 
   const { rows } = table.getRowModel();
-  const monthSections = useMemo(() => groupRowsByMonth(rows), [rows]);
+  const flatItems = useMemo(() => flattenRowsByMonth(rows), [rows]);
 
-  const hasRows = rows.length > 0;
+  const stickyIndexes = useMemo(() => {
+    const out: number[] = [];
+    for (let i = 0; i < flatItems.length; i += 1) {
+      if (flatItems[i]?.kind === "divider") {
+        out.push(i);
+      }
+    }
+    return out;
+  }, [flatItems]);
+
+  const activeStickyIndexRef = useRef(0);
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
+  const [scrollMargin, setScrollMargin] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    if (!el) {
+      return;
+    }
+    let ancestor: HTMLElement | null = el.parentElement;
+    while (ancestor) {
+      const style = window.getComputedStyle(ancestor);
+      if (/(auto|scroll|overlay)/.test(style.overflowY)) {
+        break;
+      }
+      ancestor = ancestor.parentElement;
+    }
+    const parent = ancestor ?? document.documentElement;
+    setScrollParent(parent);
+
+    const parentRect = parent.getBoundingClientRect();
+    const listRect = el.getBoundingClientRect();
+    setScrollMargin(listRect.top - parentRect.top + parent.scrollTop);
+  }, [flatItems.length]);
+
+  const rangeExtractor = useCallback(
+    (range: Range) => {
+      const active =
+        [...stickyIndexes].toReversed().find((i) => range.startIndex >= i) ??
+        stickyIndexes[0];
+      if (active !== undefined) {
+        activeStickyIndexRef.current = active;
+      }
+      const next = new Set<number>(defaultRangeExtractor(range));
+      if (active !== undefined) {
+        next.add(active);
+      }
+      return [...next].toSorted((a, b) => a - b);
+    },
+    [stickyIndexes]
+  );
+
+  const virtualizer = useVirtualizer({
+    count: flatItems.length,
+    estimateSize: () => ROW_HEIGHT,
+    getItemKey: (index) => {
+      const it = flatItems[index];
+      if (!it) {
+        return index;
+      }
+      return it.kind === "divider" ? `divider-${it.monthKey}` : it.row.id;
+    },
+    getScrollElement: () => scrollParent,
+    // Ensures a sane render window before the scroll parent has been measured
+    // (SSR, initial mount, jsdom tests), so the first rows appear immediately.
+    initialRect: { height: 1200, width: 1000 },
+    observeElementRect: observeElementRectWithFallback,
+    overscan: 8,
+    rangeExtractor,
+    scrollMargin,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+  const totalSize = virtualizer.getTotalSize();
+  const hasRows = flatItems.length > 0;
 
   return (
-    <Table className="h-full min-w-full">
-      <TableBody>
-        {hasRows &&
-          monthSections.map((section) => (
-            <Fragment key={section.monthKey}>
-              <TableRow className="sticky top-0 z-10 border-0 hover:bg-transparent">
-                {columns.map((col, index) => {
-                  const colId = getColumnStableId(col);
-                  const isFirst = index === 0;
-                  const isLast = index === columns.length - 1;
-                  const roundedClass = cn(
-                    isFirst && "rounded-l-lg",
-                    isLast && "rounded-r-lg"
-                  );
-                  if (colId === "date") {
-                    return (
-                      <TableCell
-                        className={cn(
-                          monthDividerBase,
-                          "px-3 py-1.5",
-                          roundedClass
-                        )}
-                        key={`${section.monthKey}-date`}
-                      >
-                        <div className={cn(cellRow, "whitespace-nowrap")}>
-                          <span className="truncate font-medium text-foreground text-sm">
-                            {section.label}
-                          </span>
-                        </div>
-                      </TableCell>
-                    );
-                  }
-                  if (colId === "pending") {
-                    return (
-                      <TableCell
-                        className={cn(monthDividerBase, "p-3", roundedClass)}
-                        key={`${section.monthKey}-pending`}
-                      >
+    <div className="relative w-full flex-1 overflow-x-auto no-scrollbar">
+      <div className="w-full min-w-full text-sm" role="table">
+        <div
+          className="relative block w-full"
+          ref={listRef}
+          style={{ height: hasRows ? totalSize : undefined }}
+        >
+          {hasRows
+            ? virtualItems.map((vi) => {
+                const item = flatItems[vi.index];
+                if (!item) {
+                  return null;
+                }
+                const isActiveSticky =
+                  activeStickyIndexRef.current === vi.index;
+                const stickyStyle: CSSProperties = isActiveSticky
+                  ? { position: "sticky", top: 0, zIndex: 2 }
+                  : {
+                      left: 0,
+                      position: "absolute",
+                      right: 0,
+                      top: 0,
+                      transform: `translateY(${vi.start - scrollMargin}px)`,
+                    };
+
+                if (item.kind === "divider") {
+                  return (
+                    <div
+                      className="grid rounded-lg bg-muted font-medium text-foreground"
+                      data-index={vi.index}
+                      key={vi.key}
+                      role="row"
+                      style={{
+                        ...stickyStyle,
+                        gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
+                        height: ROW_HEIGHT,
+                        zIndex: 2,
+                      }}
+                    >
+                      <div className="p-3" role="presentation" />
+                      <div className="flex items-center p-3" role="cell">
                         <div className={cn(cellRow, "whitespace-nowrap")}>
                           <span className="font-normal tabular-nums text-muted-foreground text-sm">
-                            {section.rows.length}
+                            {item.count}
                           </span>
                         </div>
-                      </TableCell>
-                    );
-                  }
-                  return (
-                    <TableCell
-                      className={cn(monthDividerBase, "p-3", roundedClass)}
-                      key={`${section.monthKey}-${colId}`}
-                    />
+                      </div>
+                      <div className="p-3" role="presentation" />
+                      <div className="flex items-center p-3" role="cell">
+                        <div className={cn(cellRow, "whitespace-nowrap")}>
+                          <span className="truncate font-medium text-foreground text-sm">
+                            {item.label}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-3" role="presentation" />
+                      <div className="p-3" role="presentation" />
+                      <div className="p-3" role="presentation" />
+                    </div>
                   );
-                })}
-              </TableRow>
-              {section.rows.map((row) => (
-                <TableRow
-                  aria-label={`View details for ${getTransactionDisplayName(row.original)}`}
-                  className="group cursor-pointer border-0 font-normal hover:bg-transparent data-[state=selected]:bg-transparent"
-                  data-state={row.getIsSelected() ? "selected" : undefined}
-                  key={row.id}
-                  tabIndex={0}
-                  onMouseDown={(e) => {
-                    onRowMouseDown(row, e);
-                  }}
-                  onKeyDown={(e) => {
-                    onRowActivate(row, e);
-                  }}
-                >
-                  {row.getVisibleCells().map((cell, index, cells) => (
-                    <TableCell
-                      className={cn(
-                        "group-hover:bg-muted group-data-[state=selected]:bg-muted",
-                        index === 0 &&
-                          "group-hover:rounded-l-lg group-data-[state=selected]:rounded-l-lg",
-                        index === cells.length - 1 &&
-                          "group-hover:rounded-r-lg group-data-[state=selected]:rounded-r-lg"
-                      )}
-                      key={cell.id}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </Fragment>
-          ))}
-        {!hasRows && isComplete && (
-          <TableRow className="border-0">
-            <TableCell className="p-6" colSpan={columns.length}>
-              <div className="text-muted-foreground text-sm">
-                No transactions yet.
-              </div>
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+                }
+
+                const { row } = item;
+                const cells = row.getVisibleCells();
+                return (
+                  <div
+                    aria-label={`View details for ${getTransactionDisplayName(row.original)}`}
+                    className="group grid cursor-pointer font-normal"
+                    data-index={vi.index}
+                    data-state={row.getIsSelected() ? "selected" : undefined}
+                    key={vi.key}
+                    onKeyDown={(e) => {
+                      onRowActivate(row, e);
+                    }}
+                    onMouseDown={(e) => {
+                      onRowMouseDown(row, e);
+                    }}
+                    role="row"
+                    style={{
+                      ...stickyStyle,
+                      gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
+                      height: ROW_HEIGHT,
+                    }}
+                    tabIndex={0}
+                  >
+                    {cells.map((cell, index) => (
+                      <div
+                        className={cn(
+                          "flex min-w-0 items-center p-3",
+                          "group-hover:bg-muted group-data-[state=selected]:bg-muted",
+                          index === 0 &&
+                            "group-hover:rounded-l-lg group-data-[state=selected]:rounded-l-lg",
+                          index === cells.length - 1 &&
+                            "group-hover:rounded-r-lg group-data-[state=selected]:rounded-r-lg"
+                        )}
+                        key={cell.id}
+                        role="cell"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })
+            : null}
+        </div>
+        {!hasRows && isComplete ? (
+          <div className="p-6" role="row">
+            <div className="text-muted-foreground text-sm" role="cell">
+              No transactions yet.
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }

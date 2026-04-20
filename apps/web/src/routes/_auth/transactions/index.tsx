@@ -7,7 +7,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 export const Route = createFileRoute("/_auth/transactions/")({
   component: TransactionsListPage,
   loader: ({ context }) => {
-    context.zero.run(queries.transactions.all());
+    context.zero.run(queries.transactions.list());
   },
   staticData: { title: "Transactions" },
 });

@@ -25,6 +25,9 @@ export function isoDateToZeroDate(iso: string): number {
   return new Date(`${iso}T00:00:00.000Z`).getTime();
 }
 
+/** Row cap for the transactions list — bounded payload regardless of user volume. */
+const TRANSACTION_LIST_LIMIT = 500;
+
 export function transactionsForUser(userId: string) {
   return zql.transaction
     .whereExists("account", (acc) =>
@@ -34,26 +37,7 @@ export function transactionsForUser(userId: string) {
       q.related("connection", (conn) => conn.related("institution"))
     )
     .orderBy("date", "desc")
-    .limit(100);
-}
-
-/**
- * All transactions for a user — used as a preload so the full history syncs
- * into the client local store. Client-side typeahead (e.g. command palette)
- * then runs **raw ZQL** against the warm cache with zero server roundtrips.
- *
- * See Zero docs on local-only ZQL + `zero.preload()`:
- * https://zero.rocicorp.dev/docs/queries#local-only-queries
- */
-export function allTransactionsForUser(userId: string) {
-  return zql.transaction
-    .whereExists("account", (acc) =>
-      acc.whereExists("connection", (conn) => conn.where("userId", userId))
-    )
-    .related("account", (q) =>
-      q.related("connection", (conn) => conn.related("institution"))
-    )
-    .orderBy("date", "desc");
+    .limit(TRANSACTION_LIST_LIMIT);
 }
 
 export function recurringForUser(userId: string) {

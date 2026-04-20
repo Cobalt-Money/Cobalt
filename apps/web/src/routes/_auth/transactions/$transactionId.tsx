@@ -19,7 +19,7 @@ const transactionDetailRouteApi = getRouteApi(
 export const Route = createFileRoute("/_auth/transactions/$transactionId")({
   component: TransactionDetailRoute,
   loader: ({ context }) => {
-    context.zero.run(queries.transactions.all());
+    context.zero.run(queries.transactions.list());
   },
   staticData: { title: "Transaction" },
 });
