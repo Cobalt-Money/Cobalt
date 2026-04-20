@@ -4,8 +4,24 @@ import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo } from "react";
 
-export function useTransactions() {
-  const [rows, result] = useQuery(queries.transactions.list());
+interface Filters {
+  amount?: "all" | "income" | "expense";
+  amountMin?: number;
+  amountMax?: number;
+  status?: "all" | "pending" | "posted";
+  bank?: readonly string[];
+}
+
+export function useTransactions(filters: Filters = {}) {
+  const [rows, result] = useQuery(
+    queries.transactions.list({
+      amount: filters.amount ?? "all",
+      amountMax: filters.amountMax,
+      amountMin: filters.amountMin,
+      bank: filters.bank ? [...filters.bank] : [],
+      status: filters.status ?? "all",
+    })
+  );
 
   const items = useMemo(
     () =>
