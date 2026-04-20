@@ -1,3 +1,4 @@
+import { PrivacyProvider } from "@cobalt-web/ui/components/privacy";
 import { SidebarProvider } from "@cobalt-web/ui/components/sidebar";
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 import type { CSSProperties } from "react";
@@ -26,19 +27,18 @@ function AuthShellWithOutlet() {
   return (
     <AddAccountProvider>
       <ZeroProvider>
-        <SettingsDialogProvider>
-          <CommandMenuProvider>
-            <SidebarProvider
-              className="min-h-0 flex-1"
-              style={{ "--sidebar-width": "16rem" } as CSSProperties}
-            >
-              <AppSidebar />
-              <AmbientInsetProvider>
-                <Outlet />
-              </AmbientInsetProvider>
-            </SidebarProvider>
-          </CommandMenuProvider>
-        </SettingsDialogProvider>
+        <PrivacyProvider>
+          <SettingsDialogProvider>
+            <CommandMenuProvider>
+              <SidebarProvider className="min-h-0 flex-1">
+                <AppSidebar />
+                <AmbientInsetProvider>
+                  <Outlet />
+                </AmbientInsetProvider>
+              </SidebarProvider>
+            </CommandMenuProvider>
+          </SettingsDialogProvider>
+        </PrivacyProvider>
       </ZeroProvider>
     </AddAccountProvider>
   );

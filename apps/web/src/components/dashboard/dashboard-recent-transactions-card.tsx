@@ -1,5 +1,7 @@
 import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
 import { MerchantLogo } from "@cobalt-web/ui/cobalt/logos/merchant-logo";
+import { getTransactionDisplayName } from "@cobalt-web/ui/cobalt/transactions/lib/helpers";
+import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { parseISO, format } from "date-fns";
 
@@ -28,8 +30,7 @@ export function DashboardRecentTransactionsCard() {
           <ul className="flex flex-col gap-0">
             {rows.map((tx) => {
               const isInflow = tx.amount > 0;
-              const displayName =
-                tx.userOverrideName ?? tx.merchantName ?? tx.name;
+              const displayName = getTransactionDisplayName(tx);
               const dateLabel = format(parseISO(tx.date), "MMM d");
               return (
                 <li
@@ -60,8 +61,10 @@ export function DashboardRecentTransactionsCard() {
                       isInflow ? "text-green-550" : "text-foreground"
                     )}
                   >
-                    {isInflow ? "+" : ""}
-                    {formatUsd(tx.amount)}
+                    <PrivateAmount>
+                      {isInflow ? "+" : ""}
+                      {formatUsd(tx.amount)}
+                    </PrivateAmount>
                   </p>
                 </li>
               );

@@ -1,5 +1,6 @@
 import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
+import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
@@ -89,7 +90,7 @@ export function DashboardSubscriptionsCalendar() {
             <p className="text-muted-foreground text-right text-base">
               Monthly total:{" "}
               <span className="text-foreground font-semibold tabular-nums">
-                {formatMonthTotal(monthlyTotal)}
+                <PrivateAmount>{formatMonthTotal(monthlyTotal)}</PrivateAmount>
               </span>
             </p>
           </div>

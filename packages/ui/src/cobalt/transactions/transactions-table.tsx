@@ -20,6 +20,7 @@ import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 import type { MouseEvent, KeyboardEvent } from "react";
 import { Fragment, useCallback, useMemo, useState } from "react";
 
+import { PrivateAmount } from "../../components/privacy";
 import { InstitutionLogo } from "../logos/institution-logo";
 import { MerchantLogo } from "../logos/merchant-logo";
 import {
@@ -30,6 +31,7 @@ import {
 import {
   formatMonthGroupLabel,
   formatTransactionDateDisplay,
+  getTransactionDisplayName,
   transactionDateSortKey,
   transactionMonthGroupKey,
 } from "./lib/helpers";
@@ -117,7 +119,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
         role="presentation"
       >
         <Checkbox
-          aria-label={`Select transaction ${row.original.name}`}
+          aria-label={`Select transaction ${getTransactionDisplayName(row.original)}`}
           checked={row.getIsSelected()}
           onCheckedChange={(checked) => {
             row.toggleSelected(checked === true);
@@ -181,14 +183,14 @@ const columns: ColumnDef<TransactionListItem>[] = [
     id: "date",
   },
   {
-    accessorKey: "name",
+    accessorFn: (row) => getTransactionDisplayName(row),
     cell: ({ row }) => {
-      const transactionName = row.original.name;
-      const displayName = truncateName(transactionName);
+      const fullName = getTransactionDisplayName(row.original);
+      const displayName = truncateName(fullName);
       const { counterparties, logoUrl, merchantName, website } = row.original;
 
       return (
-        <div className="min-w-0 truncate" title={transactionName}>
+        <div className="min-w-0 truncate" title={fullName}>
           <div className={cn(cellRow, "gap-2")}>
             <MerchantLogo
               counterparties={counterparties}
@@ -202,6 +204,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
       );
     },
     header: "Name",
+    id: "name",
   },
   {
     accessorFn: (row) => {
@@ -264,7 +267,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
         <div
           className={cn(cellRow, "whitespace-nowrap tabular-nums", amountColor)}
         >
-          {formattedAmount}
+          <PrivateAmount>{formattedAmount}</PrivateAmount>
         </div>
       );
     },
@@ -414,7 +417,7 @@ export function TransactionsTable({
               </TableRow>
               {section.rows.map((row) => (
                 <TableRow
-                  aria-label={`View details for ${row.original.name}`}
+                  aria-label={`View details for ${getTransactionDisplayName(row.original)}`}
                   className="group cursor-pointer border-0 font-normal hover:bg-transparent data-[state=selected]:bg-transparent"
                   data-state={row.getIsSelected() ? "selected" : undefined}
                   key={row.id}

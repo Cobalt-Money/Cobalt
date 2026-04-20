@@ -2,11 +2,14 @@ import type { TransactionListItem } from "@cobalt-web/server-data/transactions/s
 import { MerchantLogo } from "@cobalt-web/ui/cobalt/logos/merchant-logo";
 import { mapZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 import type { ZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
+import { getTransactionDisplayName } from "@cobalt-web/ui/cobalt/transactions/lib/helpers";
 import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
 } from "@cobalt-web/ui/components/command";
+import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
+import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { zql } from "@cobalt-web/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
@@ -39,12 +42,6 @@ const formatAmount = (amount: number | null | undefined): string =>
   amount === null || amount === undefined
     ? ""
     : amountFormatter.format(Math.abs(amount));
-
-const displayName = (t: TransactionListItem): string =>
-  t.userOverrideName?.trim() ||
-  t.merchantName?.trim() ||
-  t.name?.trim() ||
-  "Untitled";
 
 const formatDate = (date: unknown): string => {
   const parsed = parseDate(date);
@@ -145,7 +142,7 @@ export function TransactionSearchResults({
         heading={trimmedSearch.length > 0 ? "Search results" : "Recent"}
       >
         {filteredTransactions.map((t) => {
-          const name = displayName(t);
+          const name = getTransactionDisplayName(t) || "Untitled";
           const isInflow = (t.amount ?? 0) < 0;
           return (
             <CommandItem
@@ -183,8 +180,10 @@ export function TransactionSearchResults({
                       : "text-red-600 dark:text-red-500"
                   )}
                 >
-                  {isInflow ? "+" : "-"}
-                  {formatAmount(t.amount)}
+                  <PrivateAmount>
+                    {isInflow ? "+" : "-"}
+                    {formatAmount(t.amount)}
+                  </PrivateAmount>
                 </span>
               </div>
             </CommandItem>
@@ -192,5 +191,18 @@ export function TransactionSearchResults({
         })}
       </CommandGroup>
     </>
+  );
+}
+
+export function TransactionSearchFooter() {
+  return (
+    <div className="flex items-center gap-4 border-border/50 border-t px-4 py-2 text-muted-foreground text-xs">
+      <div className="flex items-center gap-2">
+        <KbdGroup>
+          <Kbd>↵</Kbd>
+        </KbdGroup>
+        <span>Open</span>
+      </div>
+    </div>
   );
 }

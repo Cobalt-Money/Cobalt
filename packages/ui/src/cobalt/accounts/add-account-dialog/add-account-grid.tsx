@@ -157,8 +157,8 @@ export function AddAccountGrid({
       {/* Right pane */}
       <div
         className={cn(
-          "scrollbar-thin flex min-w-0 flex-1 flex-col overflow-y-auto",
-          compact ? "px-4 py-3" : "px-5 py-4"
+          "flex min-w-0 flex-1 flex-col overflow-y-auto",
+          compact ? "no-scrollbar px-4 py-3" : "scrollbar-thin px-5 py-4"
         )}
       >
         {visible.length === 0 ? (

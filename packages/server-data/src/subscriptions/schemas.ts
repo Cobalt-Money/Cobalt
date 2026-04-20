@@ -57,3 +57,41 @@ export const appStoreSyncErrorSchema = z.object({
   details: z.string().optional(),
   error: z.string(),
 });
+
+// ── App Store Server Notifications V2 ────────────────────────────────────────
+
+/** Notification types we explicitly handle. Everything else is logged + ignored. */
+export const appStoreNotificationTypeSchema = z.enum([
+  "SUBSCRIBED",
+  "DID_RENEW",
+  "RENEWAL_EXTENDED",
+  "OFFER_REDEEMED",
+  "EXPIRED",
+  "GRACE_PERIOD_EXPIRED",
+  "DID_FAIL_TO_RENEW",
+  "DID_CHANGE_RENEWAL_STATUS",
+  "REFUND",
+  "REFUND_DECLINED",
+  "REFUND_REVERSED",
+  "REVOKE",
+  "PRICE_INCREASE",
+  "CONSUMPTION_REQUEST",
+  "TEST",
+]);
+
+export type AppStoreNotificationType = z.infer<
+  typeof appStoreNotificationTypeSchema
+>;
+
+export interface AppStoreNotificationInput {
+  notificationType: AppStoreNotificationType;
+  originalTransactionId: string;
+  productId?: string;
+  environment?: "Production" | "Sandbox";
+  expiresAt?: Date;
+  latestTransactionId?: string;
+}
+
+export type AppStoreNotificationResult =
+  | { action: "updated"; subscriptionId: string; status: string }
+  | { action: "skipped"; reason: "subscription_not_found" };

@@ -32,6 +32,7 @@ import {
   handleMcpHttpRequest,
 } from "./mcp/handle-mcp-request.js";
 import { buildMcpProtectedResourceMetadata } from "./mcp/oauth-discovery.js";
+import { appstoreWebhookRouter } from "./webhooks/appstore.js";
 import { plaidWebhookRouter } from "./webhooks/plaid.js";
 import { snaptradeWebhookRouter } from "./webhooks/snaptrade.js";
 
@@ -157,36 +158,26 @@ const app = new Hono()
       origin: env.CORS_ORIGIN,
     })
   )
-  // RFC 9728 — Protected Resource Metadata. First endpoint clients hit to
-  // discover which authorization server protects the MCP resource.
   .get("/.well-known/oauth-protected-resource/api/mcp", (c) => {
+    // RFC 9728 — Protected Resource Metadata; first endpoint clients hit to discover which auth server protects MCP.
     const origin = getPublicOriginFromRequest(c.req.raw);
     const mcpResourceUrl = new URL("/api/mcp", origin).href;
     return c.json(buildMcpProtectedResourceMetadata(mcpResourceUrl));
   })
-  // RFC 8414 — Authorization Server Metadata (path-suffixed for issuer
-  // /api/auth). Exposes authorize, token, registration, JWKS, and revocation
-  // endpoints.
   .get(
     "/.well-known/oauth-authorization-server/api/auth",
     oauthAuthServerMetadataHandler
-  )
-  // Some clients probe the root well-known path; serve the same document to
-  // avoid 404 noise.
+  ) // RFC 8414 — Authorization Server Metadata (path-suffixed for issuer /api/auth); authorize, token, registration, JWKS, revocation.
   .get(
     "/.well-known/oauth-authorization-server",
     oauthAuthServerMetadataHandler
-  )
-  // OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
+  ) // Some clients probe the root well-known path; same document to avoid 404 noise.
   .get("/.well-known/openid-configuration", (c) =>
     oauthOpenIdConfigMetadata(c.req.raw)
-  )
-  // Streamable HTTP MCP transport — requires Bearer token from the OAuth
-  // flow above.
-  .all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw))
-  // Cron routes (no user auth — protected by CRON_SECRET)
-  .route("/api/cron", cronRefreshFundamentalsRouter)
-  // Webhook routes (no user auth — verified by provider signatures)
+  ) // OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
+  .all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw)) // Streamable HTTP MCP; Bearer from OAuth above.
+  .route("/api/cron", cronRefreshFundamentalsRouter) // Cron (no user auth — CRON_SECRET).
+  .route("/webhooks/appstore", appstoreWebhookRouter) // Webhooks (no user auth — provider signatures).
   .route("/webhooks/plaid", plaidWebhookRouter)
   .route("/webhooks/snaptrade", snaptradeWebhookRouter)
   .get("/", (c) => c.text("OK"))

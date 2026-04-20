@@ -1,6 +1,7 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
 import { Button } from "@cobalt-web/ui/components/button";
+import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { format } from "date-fns";
@@ -148,9 +149,11 @@ export function RecentActivityCard({
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-foreground text-sm font-medium tabular-nums">
-                      {a.amount === undefined || a.amount === null
-                        ? "—"
-                        : money(a.amount)}
+                      {a.amount === undefined || a.amount === null ? (
+                        "—"
+                      ) : (
+                        <PrivateAmount>{money(a.amount)}</PrivateAmount>
+                      )}
                     </p>
                     <p className="text-muted-foreground text-[11px] tabular-nums">
                       {formatEpochDate(a.tradeDate)}

@@ -1,5 +1,6 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { useMemo } from "react";
 
@@ -76,7 +77,9 @@ export function DashboardInvestmentPerformanceCard() {
                       !up && !down && "text-foreground"
                     )}
                   >
-                    {formatPct(row.pct)}
+                    <PrivateAmount length={5}>
+                      {formatPct(row.pct)}
+                    </PrivateAmount>
                   </p>
                 </li>
               );
