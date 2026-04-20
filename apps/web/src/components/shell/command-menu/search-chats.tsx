@@ -4,9 +4,13 @@ import {
   CommandItem,
 } from "@cobalt-web/ui/components/command";
 import { queries, zql } from "@cobalt-web/zero";
+import { Delete02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
+
+import { DeleteChatDialog } from "@/components/shell/sidebar/delete-chat-dialog";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -107,8 +111,26 @@ export function ChatSearchResults({
   trimmedSearch: string;
   onSelect: (chatId: string) => void;
 }) {
+  const [chatToDelete, setChatToDelete] = useState<ChatSearchRow | null>(null);
+
+  const requestDelete = useCallback((chat: ChatSearchRow, e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setChatToDelete(chat);
+  }, []);
+
   return (
     <>
+      <DeleteChatDialog
+        chatId={chatToDelete?.chatId ?? null}
+        chatTitle={chatToDelete?.title ?? null}
+        onOpenChange={(next) => {
+          if (!next) {
+            setChatToDelete(null);
+          }
+        }}
+        open={chatToDelete !== null}
+      />
       {filteredChats.length === 0 ? (
         <CommandEmpty>
           {trimmedSearch.length > 0 ? "No chats found." : "No recent chats."}
@@ -122,13 +144,13 @@ export function ChatSearchResults({
           return (
             <CommandItem
               key={c.chatId}
-              onSelect={() => onSelect(c.chatId)}
               onMouseDown={(e: MouseEvent) => {
                 if (isCleanLeftClick(e)) {
                   e.preventDefault();
                   onSelect(c.chatId);
                 }
               }}
+              onSelect={() => onSelect(c.chatId)}
               value={`${c.chatId} ${title}`}
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -138,6 +160,22 @@ export function ChatSearchResults({
                     {formatDate(c.updatedAt)}
                   </span>
                 </div>
+                <button
+                  aria-label={`Delete ${title}`}
+                  className="ml-auto inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-destructive"
+                  onClick={(e) => requestDelete(c, e)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  type="button"
+                >
+                  <HugeiconsIcon
+                    className="size-4"
+                    icon={Delete02Icon}
+                    strokeWidth={2}
+                  />
+                </button>
               </div>
             </CommandItem>
           );

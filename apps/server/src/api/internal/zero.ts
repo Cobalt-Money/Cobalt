@@ -33,16 +33,23 @@ const zeroRouter = new OpenAPIHono<AppEnv>()
     }
     const zeroContext = c.get("zeroContext");
 
-    const result = await handleMutateRequest(
-      dbProvider,
-      (transact) =>
-        transact((tx, name, args) =>
-          // @ts-expect-error TS2339 — mustGetMutator is never until mutators are defined
-          mustGetMutator(mutators, name).fn({ args, ctx: zeroContext, tx })
-        ),
-      c.req.raw
-    );
-    return c.json(result);
+    try {
+      const result = await handleMutateRequest(
+        dbProvider,
+        (transact) =>
+          transact((tx, name, args) =>
+            mustGetMutator(mutators, name).fn({ args, ctx: zeroContext, tx })
+          ),
+        c.req.raw
+      );
+      return c.json(result);
+    } catch (error) {
+      console.error("[zero mutate] handleMutateRequest threw", {
+        error,
+        userId: zeroContext?.userId,
+      });
+      throw error;
+    }
   });
 
 export { zeroRouter };

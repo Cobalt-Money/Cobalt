@@ -1,5 +1,6 @@
 import { SidebarProvider } from "@cobalt-web/ui/components/sidebar";
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
+import type { CSSProperties } from "react";
 
 import { AddAccountProvider } from "@/components/accounts/add-account-provider";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
@@ -27,7 +28,10 @@ function AuthShellWithOutlet() {
       <ZeroProvider>
         <SettingsDialogProvider>
           <CommandMenuProvider>
-            <SidebarProvider className="min-h-0 flex-1">
+            <SidebarProvider
+              className="min-h-0 flex-1"
+              style={{ "--sidebar-width": "16rem" } as CSSProperties}
+            >
               <AppSidebar />
               <AmbientInsetProvider>
                 <Outlet />
