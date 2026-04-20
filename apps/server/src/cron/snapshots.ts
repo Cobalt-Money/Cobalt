@@ -5,8 +5,13 @@
  * topic (one message per user). The consumer at /api/queues/snapshot-user
  * drains in the background with queue-native retries. CRON_SECRET gated.
  *
- * NOTE: schedule is currently parked under `// crons-disabled` in
- * apps/server/vercel.json — promote to `crons` when ready to activate.
+ * NOT YET WIRED IN vercel.json. To activate:
+ *   1. Add to `crons`:
+ *        { "path": "/api/cron/snapshots", "schedule": "0 22 * * *" }
+ *   2. Add `functions.<entry>.experimentalTriggers` for the queue
+ *      consumer (see apps/server/src/queue/snapshot-user.ts for the
+ *      path to wire). Entry key is the Nitro-compiled function path —
+ *      verify in the Vercel dashboard after first deploy.
  */
 
 import { env } from "@cobalt-web/env/server";
