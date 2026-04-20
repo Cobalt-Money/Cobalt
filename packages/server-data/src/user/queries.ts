@@ -1,7 +1,30 @@
 import { db } from "@cobalt-web/db";
+import { bankConnection } from "@cobalt-web/db/schema/banking";
+import { brokerageUser } from "@cobalt-web/db/schema/brokerage";
 
 /** Number of hours before financial updates should be shown again. */
 const UPDATE_THRESHOLD_HOURS = 24;
+
+/**
+ * Returns distinct userIds that have at least one connected Plaid bank
+ * connection or SnapTrade brokerage user. Used by cron fan-out (e.g. daily
+ * snapshots) to know who needs a per-user workflow dispatched.
+ */
+export async function getUserIdsWithConnectedAccounts(): Promise<string[]> {
+  const [bankUsers, brokerageUsers] = await Promise.all([
+    db.selectDistinct({ userId: bankConnection.userId }).from(bankConnection),
+    db.selectDistinct({ userId: brokerageUser.userId }).from(brokerageUser),
+  ]);
+
+  const ids = new Set<string>();
+  for (const row of bankUsers) {
+    ids.add(row.userId);
+  }
+  for (const row of brokerageUsers) {
+    ids.add(row.userId);
+  }
+  return [...ids];
+}
 
 /**
  * Returns the user's `lastSeenAt` timestamp (ISO string or null) and whether

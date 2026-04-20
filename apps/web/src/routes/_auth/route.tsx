@@ -1,7 +1,6 @@
 import { PrivacyProvider } from "@cobalt-web/ui/components/privacy";
 import { SidebarProvider } from "@cobalt-web/ui/components/sidebar";
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
-import type { CSSProperties } from "react";
 
 import { AddAccountProvider } from "@/components/accounts/add-account-provider";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";

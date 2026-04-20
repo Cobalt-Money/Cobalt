@@ -27,11 +27,13 @@ import { userRouter } from "./api/internal/user/index.js";
 import { zeroRouter } from "./api/internal/zero.js";
 import { v1Router } from "./api/public/v1/index.js";
 import { cronRefreshFundamentalsRouter } from "./cron/refresh-fundamentals.js";
+import { cronSnapshotsRouter } from "./cron/snapshots.js";
 import {
   getPublicOriginFromRequest,
   handleMcpHttpRequest,
 } from "./mcp/handle-mcp-request.js";
 import { buildMcpProtectedResourceMetadata } from "./mcp/oauth-discovery.js";
+import { snapshotUserQueueRouter } from "./queue/snapshot-user.js";
 import { appstoreWebhookRouter } from "./webhooks/appstore.js";
 import { plaidWebhookRouter } from "./webhooks/plaid.js";
 import { snaptradeWebhookRouter } from "./webhooks/snaptrade.js";
@@ -177,6 +179,8 @@ const app = new Hono()
   ) // OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
   .all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw)) // Streamable HTTP MCP; Bearer from OAuth above.
   .route("/api/cron", cronRefreshFundamentalsRouter) // Cron (no user auth — CRON_SECRET).
+  .route("/api/cron", cronSnapshotsRouter) // Schedule parked in vercel.json `// crons-disabled`.
+  .route("/api/queues/snapshot-user", snapshotUserQueueRouter) // Queue consumer (Vercel OIDC — private route).
   .route("/webhooks/appstore", appstoreWebhookRouter) // Webhooks (no user auth — provider signatures).
   .route("/webhooks/plaid", plaidWebhookRouter)
   .route("/webhooks/snaptrade", snaptradeWebhookRouter)

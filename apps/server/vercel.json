@@ -6,5 +6,21 @@
       "path": "/api/cron/refresh-fundamentals",
       "schedule": "0 13 * * 1-5"
     }
-  ]
+  ],
+  "// crons-disabled": [
+    {
+      "path": "/api/cron/snapshots",
+      "schedule": "0 22 * * *"
+    }
+  ],
+  "// queue-triggers": {
+    "// note": "Nitro compiles the whole Hono app to one catch-all function. Vercel Queues `experimentalTriggers` attaches to a function path — with Nitro, that's the single compiled entry. Verify the exact key on first deploy; the shape should be something like below. Consumer route is mounted at /api/queues/snapshot-user inside Hono.",
+    "functions": {
+      "src/index.ts": {
+        "experimentalTriggers": [
+          { "type": "queue/v2beta", "topic": "snapshots" }
+        ]
+      }
+    }
+  }
 }
