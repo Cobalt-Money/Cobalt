@@ -72,7 +72,7 @@ export const brokerageQueries = {
    * Historical portfolio snapshots (SnapTrade) for the signed-in user.
    * Each row is one brokerage account snapshot — use `totalValue` per `snapTradeAccountId`
    * aggregated by month for the net-worth chart.
-   * Ordered oldest-first so callers can iterate in chronological order.
+   * Ordered newest-first so the limit truncates old history, not the latest snapshots.
    */
   portfolioSnapshots: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
@@ -81,7 +81,7 @@ export const brokerageQueries = {
     }
     return zql.portfolioSnapshots
       .where("userId", userId)
-      .orderBy("snapshotDate", "asc")
+      .orderBy("snapshotDate", "desc")
       .limit(1000);
   }),
 

@@ -11,7 +11,7 @@ export const accountsQueries = {
   /**
    * Historical bank balance snapshots for the signed-in user's accounts.
    * Includes the joined `account` row so callers can read `type` (depository vs credit).
-   * Ordered oldest-first so callers can iterate in chronological order.
+   * Ordered newest-first so the limit truncates old history, not the latest snapshots.
    */
   bankAccounts: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
@@ -36,7 +36,7 @@ export const accountsQueries = {
       .related("account", (q) =>
         q.related("connection", (c) => c.related("institution"))
       )
-      .orderBy("snapshotDate", "asc")
+      .orderBy("snapshotDate", "desc")
       .limit(BANK_SNAPSHOT_LIMIT);
   }),
 
