@@ -6,11 +6,11 @@ const dateDisplay = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-/** Date shown in the table: `authorizedDate` when present, else `date` (matches horizon). */
+/** Date shown in the table: the posting `date` — matches the server's `orderBy("date", "desc")`. */
 export function getTransactionDisplayDateString(
-  row: Pick<TransactionListItem, "authorizedDate" | "date">
+  row: Pick<TransactionListItem, "date">
 ): string {
-  return row.authorizedDate ?? row.date;
+  return row.date;
 }
 
 /**
@@ -37,7 +37,7 @@ export function transactionDateSortKey(row: TransactionListItem): number {
 }
 
 export function formatTransactionDateDisplay(
-  row: Pick<TransactionListItem, "authorizedDate" | "date">
+  row: Pick<TransactionListItem, "date">
 ): string {
   const raw = getTransactionDisplayDateString(row);
   const day = String(raw).split("T")[0] ?? String(raw);
@@ -96,7 +96,7 @@ const monthGroupHeading = new Intl.DateTimeFormat("en-US", {
  * Uses the same display date as {@link transactionDateSortKey}.
  */
 export function transactionMonthGroupKey(
-  row: Pick<TransactionListItem, "authorizedDate" | "date">
+  row: Pick<TransactionListItem, "date">
 ): string {
   const raw = getTransactionDisplayDateString(row);
   const day = String(raw).split("T")[0] ?? String(raw);
