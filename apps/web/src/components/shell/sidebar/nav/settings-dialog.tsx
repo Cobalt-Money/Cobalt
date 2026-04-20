@@ -16,7 +16,6 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 import {
   AccountSetting01Icon,
   CreditCardIcon,
-  Notification03Icon,
   UserCircle02Icon,
   EyeIcon,
 } from "@hugeicons/core-free-icons";
@@ -32,12 +31,7 @@ import { useAppSession } from "@/lib/providers/app-session";
 
 import { navUserInitials } from "./lib";
 
-type Section =
-  | "profile"
-  | "account"
-  | "appearance"
-  | "notifications"
-  | "billing";
+type Section = "profile" | "account" | "appearance" | "billing";
 
 const NAV_SECTIONS: {
   id: Section;
@@ -47,7 +41,6 @@ const NAV_SECTIONS: {
   { icon: UserCircle02Icon, id: "profile", label: "Profile" },
   { icon: AccountSetting01Icon, id: "account", label: "Account" },
   { icon: EyeIcon, id: "appearance", label: "Appearance" },
-  { icon: Notification03Icon, id: "notifications", label: "Notifications" },
   { icon: CreditCardIcon, id: "billing", label: "Billing" },
 ];
 
@@ -121,7 +114,6 @@ export function SettingsDialog({
             {activeSection === "appearance" && (
               <AppearanceSection theme={theme} setTheme={setTheme} />
             )}
-            {activeSection === "notifications" && <NotificationsSection />}
             {activeSection === "billing" && <BillingSection />}
           </div>
         </div>
@@ -258,21 +250,6 @@ function AppearanceSection({
           />
         </SettingsRow>
       </div>
-    </div>
-  );
-}
-
-// ─── Notifications ────────────────────────────────────────────────────────────
-
-function NotificationsSection() {
-  return (
-    <div className="flex flex-col gap-6">
-      <DialogTitle className="text-base font-semibold">
-        Notifications
-      </DialogTitle>
-      <p className="text-sm text-muted-foreground">
-        Notification preferences coming soon.
-      </p>
     </div>
   );
 }
