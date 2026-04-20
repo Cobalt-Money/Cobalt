@@ -493,8 +493,8 @@ function CommandMenuDialog({
             {inSearchChats && (
               <ChatSearchResults
                 filteredChats={filteredChats}
-                trimmedSearch={trimmedSearch}
                 onSelect={handleSelectChat}
+                trimmedSearch={trimmedSearch}
               />
             )}
             {inSearchTransactions && (

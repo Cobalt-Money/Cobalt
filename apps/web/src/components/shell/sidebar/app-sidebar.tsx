@@ -5,19 +5,25 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cobalt-web/ui/components/sidebar";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { ArrowRight01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import {
+  ArrowRight01Icon,
+  Delete02Icon,
+  PlusSignIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouterState } from "@tanstack/react-router";
-import type { ComponentProps } from "react";
-import { useMemo, useState } from "react";
+import type { ComponentProps, MouseEvent } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { Link } from "@/components/links";
 import { useAppSession } from "@/lib/providers/app-session";
 
+import { DeleteChatDialog } from "./delete-chat-dialog";
 import { NavMain } from "./nav/nav-main";
 import { NavUser } from "./nav/nav-user";
 import { useChats } from "./use-chats";
@@ -115,15 +121,93 @@ function isCollapsibleChatPeriod(
   return period === "last30" || period === "older";
 }
 
+function ChatRowItem({
+  chat,
+  pathname,
+  onRequestDelete,
+}: {
+  chat: ChatRow;
+  pathname: string;
+  onRequestDelete: (chat: ChatRow, e: MouseEvent) => void;
+}) {
+  const chatPath = `/ai-chat/${chat.chatId}`;
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        isActive={pathname === chatPath}
+        render={
+          <Link
+            aria-label={chat.title ?? "Chat"}
+            params={{ chatId: chat.chatId }}
+            to="/ai-chat/$chatId"
+          />
+        }
+      >
+        <span className="truncate">
+          {truncateTitle(chat.title ?? chat.chatId)}
+        </span>
+      </SidebarMenuButton>
+      <SidebarMenuAction
+        aria-label={`Delete ${chat.title ?? "chat"}`}
+        className="right-2 hover:bg-transparent hover:text-destructive"
+        onClick={(e) => onRequestDelete(chat, e)}
+        showOnHover
+      >
+        <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
+      </SidebarMenuAction>
+    </SidebarMenuItem>
+  );
+}
+
+function ChatRowList({
+  chats,
+  pathname,
+  onRequestDelete,
+}: {
+  chats: readonly ChatRow[];
+  pathname: string;
+  onRequestDelete: (chat: ChatRow, e: MouseEvent) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      {chats.map((chat) => (
+        <ChatRowItem
+          chat={chat}
+          key={chat.chatId}
+          onRequestDelete={onRequestDelete}
+          pathname={pathname}
+        />
+      ))}
+    </div>
+  );
+}
+
 function ChatsGroup() {
   const chats = useChats();
   const chatSections = useMemo(() => groupChatsByTimePeriod(chats), [chats]);
   const [collapsedLast30, setCollapsedLast30] = useState(false);
   const [collapsedOlder, setCollapsedOlder] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [chatToDelete, setChatToDelete] = useState<ChatRow | null>(null);
+
+  const requestDelete = useCallback((chat: ChatRow, e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setChatToDelete(chat);
+  }, []);
 
   return (
     <SidebarMenu className="gap-0.5">
+      <DeleteChatDialog
+        chatId={chatToDelete?.chatId ?? null}
+        chatTitle={chatToDelete?.title ?? null}
+        onOpenChange={(next) => {
+          if (!next) {
+            setChatToDelete(null);
+          }
+        }}
+        open={chatToDelete !== null}
+      />
       <SidebarMenuItem>
         <SidebarMenuButton
           className={NEW_CHAT_SIDEBAR_BUTTON_CLASS}
@@ -148,7 +232,7 @@ function ChatsGroup() {
             {collapsible ? (
               <button
                 type="button"
-                className="flex w-full items-center gap-1.5 px-2 pt-2 pb-1 text-left font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
+                className="flex w-full items-center gap-1.5 px-3 pt-2 pb-1 text-left font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
                 aria-expanded={!collapsed}
                 onClick={() => {
                   if (section.period === "last30") {
@@ -170,45 +254,34 @@ function ChatsGroup() {
                 />
               </button>
             ) : (
-              <div className="px-2 pt-2 pb-1 font-medium text-muted-foreground text-xs">
+              <div className="px-3 pt-2 pb-1 font-medium text-muted-foreground text-xs">
                 {section.label}
               </div>
             )}
-            <div
-              className={cn(
-                "grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-in-out motion-reduce:duration-0",
-                collapsible && collapsed
-                  ? "grid-rows-[0fr] opacity-0"
-                  : "grid-rows-[1fr] opacity-100"
-              )}
-            >
-              <div className="min-h-0" inert={collapsible && collapsed}>
-                <div className="flex flex-col gap-0.5">
-                  {section.chats.map((chat) => {
-                    const chatPath = `/ai-chat/${chat.chatId}`;
-                    return (
-                      <SidebarMenuItem key={chat.chatId}>
-                        <SidebarMenuButton
-                          className="px-2"
-                          isActive={pathname === chatPath}
-                          render={
-                            <Link
-                              aria-label={chat.title ?? "Chat"}
-                              params={{ chatId: chat.chatId }}
-                              to="/ai-chat/$chatId"
-                            />
-                          }
-                        >
-                          <span className="truncate">
-                            {truncateTitle(chat.title ?? chat.chatId)}
-                          </span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
+            {collapsible ? (
+              <div
+                className={cn(
+                  "grid transition-[grid-template-rows,opacity] duration-200 ease-in-out motion-reduce:duration-0",
+                  collapsed
+                    ? "grid-rows-[0fr] opacity-0"
+                    : "grid-rows-[1fr] opacity-100"
+                )}
+              >
+                <div className="overflow-hidden" inert={collapsed}>
+                  <ChatRowList
+                    chats={section.chats}
+                    onRequestDelete={requestDelete}
+                    pathname={pathname}
+                  />
                 </div>
               </div>
-            </div>
+            ) : (
+              <ChatRowList
+                chats={section.chats}
+                onRequestDelete={requestDelete}
+                pathname={pathname}
+              />
+            )}
           </div>
         );
       })}
