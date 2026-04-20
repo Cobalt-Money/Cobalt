@@ -142,7 +142,9 @@ function rowToUIMessage(message: ChatMessageRow): UIMessage {
 
 export default function ChatView() {
   const { chatId } = useParams({ from: "/_auth/ai-chat/$chatId" });
-  const [messages] = useQuery(queries.chats.messages({ chatId }));
+  const [messages, messagesResult] = useQuery(
+    queries.chats.messages({ chatId })
+  );
   const {
     inFlightMessage,
     isStreaming,
@@ -179,6 +181,12 @@ export default function ChatView() {
       }
     }
   }, [messages, isStreaming, inFlightMessage, streamStartedAt, clearStream]);
+
+  if (messagesResult.type !== "complete") {
+    return (
+      <div className="h-full min-h-0 w-full [mask-image:linear-gradient(to_bottom,black_calc(100%-100px),transparent)]" />
+    );
+  }
 
   return (
     <Conversation
