@@ -10,6 +10,16 @@ import {
   transactionsForUser,
 } from "./lib.js";
 
+const listArgsSchema = z
+  .object({
+    amount: z.enum(["all", "income", "expense"]).optional(),
+    amountMax: z.number().nonnegative().optional(),
+    amountMin: z.number().nonnegative().optional(),
+    bank: z.array(z.string()).optional(),
+    status: z.enum(["all", "pending", "posted"]).optional(),
+  })
+  .optional();
+
 /** Transaction-related named queries (`queries.transactions.*`). Composed in root `queries.ts`. */
 export const transactionsQueries = {
   creditSpending: defineQuery(
@@ -25,12 +35,12 @@ export const transactionsQueries = {
     }
   ),
 
-  list: defineQuery(({ ctx }: { ctx: Context }) => {
+  list: defineQuery(listArgsSchema, ({ ctx, args }) => {
     const userId = ctx?.userId;
     if (!userId) {
       return zql.transaction.where("id", NO_MATCH_ID);
     }
-    return transactionsForUser(userId);
+    return transactionsForUser(userId, args ?? {});
   }),
 
   recurring: defineQuery(({ ctx }: { ctx: Context }) => {
