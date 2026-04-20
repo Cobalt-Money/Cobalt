@@ -24,6 +24,8 @@
     "./transactions/*": "./src/transactions/*.ts",
     "./types": "./src/types.ts",
     "./user": "./src/user/index.ts",
+    "./user/*": "./src/user/*.ts",
+    "./snapshots/*": "./src/snapshots/*.ts",
     "./chat/*": "./src/chat/*.ts"
   },
   "scripts": {
