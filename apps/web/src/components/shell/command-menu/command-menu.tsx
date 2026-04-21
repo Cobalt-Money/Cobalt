@@ -22,6 +22,7 @@ import {
   EyeIcon,
   File02Icon,
   Home04Icon,
+  Logout01Icon,
   Moon02Icon,
   Search02Icon,
   SearchDollarIcon,
@@ -46,6 +47,7 @@ import {
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
 import { useSettingsDialog } from "@/components/shell/sidebar/nav/settings-dialog-provider";
+import { logout } from "@/lib/zero-logout";
 
 import { ChatSearchResults, useChatSearch } from "./search-chats";
 import { TickerSearchResults, useTickerSearch } from "./search-tickers";
@@ -431,6 +433,12 @@ function CommandMenuDialog({
     [handleOpenChange, openSettings]
   );
 
+  const handleLogout = useCallback(async () => {
+    handleOpenChange(false);
+    await logout();
+    await router.navigate({ to: "/" });
+  }, [handleOpenChange, router]);
+
   const settingActions: CommandAction[] = [
     {
       handleSelect: () => openSettingsDialog("profile"),
@@ -443,6 +451,14 @@ function CommandMenuDialog({
       icon: CreditCardIcon,
       keywords: ["billing", "subscription", "plan", "payment"],
       label: "Billing",
+    },
+    {
+      handleSelect: () => {
+        void handleLogout();
+      },
+      icon: Logout01Icon,
+      keywords: ["logout", "log out", "sign out", "signout", "exit"],
+      label: "Log out",
     },
   ];
 

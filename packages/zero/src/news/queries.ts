@@ -5,7 +5,7 @@ import type { Context } from "../auth.js";
 import { zql } from "../schema.js";
 import { NO_MATCH_ID } from "../transactions/lib.js";
 
-const FINANCIAL_EVENTS_LIMIT = 50;
+const FINANCIAL_EVENTS_LIMIT = 300;
 const RSS_SIDEBAR_LIMIT = 18;
 
 /**

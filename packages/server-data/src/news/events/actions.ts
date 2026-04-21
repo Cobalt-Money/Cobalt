@@ -103,7 +103,7 @@ function extractWithReadability(
       configurable: true,
       value: url,
     });
-    return new Readability(document as unknown as Document).parse();
+    return new Readability(document as never).parse();
   } finally {
     console.error = originalConsoleError;
   }
