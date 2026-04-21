@@ -2,6 +2,7 @@ import { AccountsList } from "@cobalt-web/ui/cobalt/accounts/accounts-list";
 import { queries } from "@cobalt-web/zero";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useAddAccount } from "@/components/accounts/add-account-provider";
 import { useAccounts } from "@/hooks/use-accounts";
 
 import { useAccountsLayout } from "./accounts-layout-context";
@@ -18,12 +19,14 @@ export const Route = createFileRoute("/_auth/accounts/")({
 function AccountsListPage() {
   const { activeFilter } = useAccountsLayout();
   const { isComplete, items } = useAccounts();
+  const { openAddAccount } = useAddAccount();
 
   return (
     <AccountsList
       activeFilter={activeFilter}
       isComplete={isComplete}
       items={items}
+      onConnectAccount={openAddAccount}
     />
   );
 }

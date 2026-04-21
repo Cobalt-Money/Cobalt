@@ -5,6 +5,7 @@ import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { parseISO, format } from "date-fns";
 
+import { ConnectAccountEmpty } from "@/components/empty/connect-account-empty";
 import { useTransactions } from "@/hooks/use-transactions";
 
 const formatUsd = (amount: number) =>
@@ -26,6 +27,14 @@ export function DashboardRecentTransactionsCard() {
           <h2 className="text-foreground text-lg font-medium">
             Recent transactions
           </h2>
+
+          {rows.length === 0 ? (
+            <ConnectAccountEmpty
+              className="min-h-[220px] border-0"
+              description="Connect a bank to see your recent spending and income."
+              title="No transactions yet"
+            />
+          ) : null}
 
           <ul className="flex flex-col gap-0">
             {rows.map((tx) => {

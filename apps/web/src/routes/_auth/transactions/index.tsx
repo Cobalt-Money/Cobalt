@@ -3,6 +3,7 @@ import { TransactionsToolbar } from "@cobalt-web/ui/cobalt/transactions/transact
 import { queries } from "@cobalt-web/zero";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
+import { useAddAccount } from "@/components/accounts/add-account-provider";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 import { useBankOptions } from "@/hooks/use-bank-options";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -29,6 +30,7 @@ function TransactionsListPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const bankOptions = useBankOptions();
+  const { openAddAccount } = useAddAccount();
   const { isComplete, items } = useTransactions({
     amount: search.amount,
     amountMax: search.amountMax,
@@ -76,7 +78,11 @@ function TransactionsListPage() {
       }
     >
       <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">
-        <TransactionsTable isComplete={isComplete} items={items} />
+        <TransactionsTable
+          isComplete={isComplete}
+          items={items}
+          onConnectAccount={openAddAccount}
+        />
       </div>
     </SidebarShellLayout>
   );

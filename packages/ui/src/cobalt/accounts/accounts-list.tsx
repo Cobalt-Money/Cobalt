@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { ConnectAccountEmpty } from "../empty/connect-account-empty";
 import { InstitutionLogo } from "../logos/institution-logo";
 import { AccountCard } from "./account-card";
 import type { AccountsFilter } from "./accounts-toolbar";
@@ -13,10 +14,12 @@ export function AccountsList({
   activeFilter,
   isComplete,
   items,
+  onConnectAccount,
 }: {
   activeFilter: AccountsFilter;
   isComplete: boolean;
   items: AccountCardViewModel[];
+  onConnectAccount?: () => void;
 }) {
   const visible = useMemo(
     () => filterAccountCardsForToolbar(items, activeFilter),
@@ -31,14 +34,12 @@ export function AccountsList({
   return (
     <div className="pt-4 pb-4 sm:pt-6 sm:pb-6">
       {visible.length === 0 && isComplete ? (
-        <div className="flex min-h-[min(42vh,360px)] flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/15 px-6 py-14 text-center">
-          <p className="text-sm font-medium text-foreground">
-            No accounts in this view
-          </p>
-          <p className="mt-2 max-w-sm text-xs leading-relaxed text-muted-foreground">
-            Choose another filter or connect an account to see it here.
-          </p>
-        </div>
+        <ConnectAccountEmpty
+          className="min-h-[min(42vh,360px)]"
+          description="Choose another filter or connect an account to see it here."
+          onConnect={onConnectAccount}
+          title="No accounts in this view"
+        />
       ) : null}
       {visible.length > 0 ? (
         <div className="flex flex-col gap-10 sm:gap-12">

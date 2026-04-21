@@ -1,31 +1,15 @@
-import { Button } from "@cobalt-web/ui/components/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@cobalt-web/ui/components/empty";
+import { ConnectAccountEmpty } from "@cobalt-web/ui/cobalt/empty/connect-account-empty";
 import { ChartBarLineIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-export function BrokerageEmpty() {
+export function BrokerageEmpty({ onConnect }: { onConnect?: () => void }) {
   return (
-    <Empty className="min-h-[420px] rounded-3xl border border-dashed">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <HugeiconsIcon icon={ChartBarLineIcon} strokeWidth={1.5} />
-        </EmptyMedia>
-        <EmptyTitle>Connect your brokerage</EmptyTitle>
-        <EmptyDescription>
-          Link a brokerage or investment account to track your portfolio,
-          positions, and activity in one place.
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Button type="button">Connect account</Button>
-      </EmptyContent>
-    </Empty>
+    <ConnectAccountEmpty
+      className="min-h-[420px]"
+      description="Link a brokerage or investment account to track your portfolio, positions, and activity in one place."
+      icon={<HugeiconsIcon icon={ChartBarLineIcon} strokeWidth={1.5} />}
+      onConnect={onConnect}
+      title="Connect your brokerage"
+    />
   );
 }

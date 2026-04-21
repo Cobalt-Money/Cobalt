@@ -3,6 +3,7 @@ import { queries } from "@cobalt-web/zero";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 
+import { useAddAccount } from "@/components/accounts/add-account-provider";
 import { Link } from "@/components/links";
 import { useBrokerage } from "@/hooks/use-brokerage";
 import { useFinancialEvents } from "@/hooks/use-financial-events";
@@ -22,6 +23,7 @@ function NewsIndexPage() {
   const { events } = useFinancialEvents();
   const { items: rssItems } = useNewsRssSidebar();
   const { positions } = useBrokerage();
+  const { openAddAccount } = useAddAccount();
 
   const holdingSymbols = useMemo(() => {
     const s = new Set<string>();
@@ -48,6 +50,7 @@ function NewsIndexPage() {
     <NewsMagazine
       eventsGeneral={events}
       eventsForYou={eventsForYou}
+      onConnectAccount={openAddAccount}
       renderEventLink={(event, inner) => (
         <Link
           className="text-foreground block rounded-2xl no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring"

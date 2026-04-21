@@ -21,6 +21,7 @@ import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { PrivateAmount } from "../../components/privacy";
+import { ConnectAccountEmpty } from "../empty/connect-account-empty";
 import { InstitutionLogo } from "../logos/institution-logo";
 import { MerchantLogo } from "../logos/merchant-logo";
 import {
@@ -317,9 +318,11 @@ function flattenRowsByMonth(rows: Row<TransactionListItem>[]): FlatItem[] {
 export function TransactionsTable({
   isComplete,
   items,
+  onConnectAccount,
 }: {
   isComplete: boolean;
   items: TransactionListItem[];
+  onConnectAccount?: () => void;
 }) {
   const navigate = useNavigate();
   const router = useRouter();
@@ -575,8 +578,12 @@ export function TransactionsTable({
         </div>
         {!hasRows && isComplete ? (
           <div className="p-6" role="row">
-            <div className="text-muted-foreground text-sm" role="cell">
-              No transactions yet.
+            <div role="cell">
+              <ConnectAccountEmpty
+                description="Connect a bank account to start seeing your transactions here."
+                onConnect={onConnectAccount}
+                title="No transactions yet"
+              />
             </div>
           </div>
         ) : null}

@@ -27,6 +27,7 @@ import {
 } from "recharts";
 
 import { AllocationDonutChart } from "@/components/dashboard/net-worth-donut-chart";
+import { ConnectAccountEmpty } from "@/components/empty/connect-account-empty";
 
 // ── Formatters ────────────────────────────────────────────────────
 
@@ -921,11 +922,11 @@ export function NetWorthSection() {
 
               <div className="text-muted-foreground min-h-[200px] w-full min-w-0 flex-1 sm:min-h-[220px] [&_.recharts-cartesian-axis-tick-value]:tabular-nums">
                 {chartData.length === 0 ? (
-                  <div className="flex h-full items-center justify-center">
-                    <p className="text-muted-foreground text-sm">
-                      No snapshot history yet.
-                    </p>
-                  </div>
+                  <ConnectAccountEmpty
+                    className="h-full border-0"
+                    description="Connect a bank or brokerage and we'll start tracking your net worth over time."
+                    title="No snapshot history yet"
+                  />
                 ) : (
                   <ResponsiveContainer height="100%" width="100%">
                     <BarChart
@@ -982,11 +983,11 @@ export function NetWorthSection() {
               </p>
 
               {categories.length === 0 ? (
-                <div className="flex flex-1 items-center justify-center">
-                  <p className="text-muted-foreground text-sm">
-                    No accounts connected yet.
-                  </p>
-                </div>
+                <ConnectAccountEmpty
+                  className="flex-1 border-0"
+                  description="Link an account to see your allocation across categories."
+                  title="No accounts connected"
+                />
               ) : (
                 <>
                   <div className="flex justify-center">

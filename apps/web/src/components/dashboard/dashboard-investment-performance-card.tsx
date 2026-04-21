@@ -4,6 +4,7 @@ import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { useMemo } from "react";
 
+import { ConnectAccountEmpty } from "@/components/empty/connect-account-empty";
 import { useBrokerage } from "@/hooks/use-brokerage";
 
 interface PositionRow {
@@ -48,6 +49,14 @@ export function DashboardInvestmentPerformanceCard() {
           <h2 className="text-foreground text-lg font-medium">
             Portfolio performance
           </h2>
+
+          {topHoldings.length === 0 ? (
+            <ConnectAccountEmpty
+              className="min-h-[220px] border-0"
+              description="Link a brokerage to track your holdings and performance."
+              title="No holdings yet"
+            />
+          ) : null}
 
           <ul className="flex flex-col gap-0">
             {topHoldings.map((row) => {
