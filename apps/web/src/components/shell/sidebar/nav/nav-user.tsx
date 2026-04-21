@@ -22,7 +22,6 @@ import {
   MoreVerticalCircle01Icon,
   UserCircle02Icon,
   CreditCardIcon,
-  Notification03Icon,
   Logout01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -111,10 +110,6 @@ export function NavUser({
               <DropdownMenuItem onClick={() => openSettings("billing")}>
                 <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />
                 Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openSettings("notifications")}>
-                <HugeiconsIcon icon={Notification03Icon} strokeWidth={2} />
-                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

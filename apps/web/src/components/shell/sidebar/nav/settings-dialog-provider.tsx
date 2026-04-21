@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 
 import { SettingsDialog } from "./settings-dialog";
 
-type SettingsSection = "profile" | "appearance" | "notifications" | "billing";
+type SettingsSection = "profile" | "appearance" | "billing";
 
 interface SettingsDialogContextValue {
   openSettings: (section?: SettingsSection) => void;

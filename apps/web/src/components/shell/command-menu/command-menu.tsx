@@ -406,18 +406,6 @@ function CommandMenuDialog({
       keywords: ["search", "stocks", "funds", "holdings"],
       label: "Search Holdings",
     },
-    {
-      handleSelect: () => go("/brokerage"),
-      icon: Edit02Icon,
-      keywords: ["trade", "buy", "sell", "execute"],
-      label: "Execute Trade",
-    },
-    {
-      handleSelect: () => go("/brokerage"),
-      icon: BellDotIcon,
-      keywords: ["alert", "notification", "price", "watch"],
-      label: "Set Price Alert",
-    },
   ];
 
   const aiChatActions: CommandAction[] = [
@@ -436,7 +424,7 @@ function CommandMenuDialog({
   ];
 
   const openSettingsDialog = useCallback(
-    (section: "profile" | "appearance" | "notifications" | "billing") => {
+    (section: "profile" | "appearance" | "billing") => {
       handleOpenChange(false);
       openSettings(section);
     },
@@ -493,8 +481,8 @@ function CommandMenuDialog({
             {inSearchChats && (
               <ChatSearchResults
                 filteredChats={filteredChats}
-                trimmedSearch={trimmedSearch}
                 onSelect={handleSelectChat}
+                trimmedSearch={trimmedSearch}
               />
             )}
             {inSearchTransactions && (

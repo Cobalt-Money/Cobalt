@@ -10,6 +10,7 @@ import {
 import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
+import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 import { useTransactions } from "@/hooks/use-transactions";
 
 const transactionDetailRouteApi = getRouteApi(
@@ -19,7 +20,7 @@ const transactionDetailRouteApi = getRouteApi(
 export const Route = createFileRoute("/_auth/transactions/$transactionId")({
   component: TransactionDetailRoute,
   loader: ({ context }) => {
-    context.zero.run(queries.transactions.all());
+    context.zero.run(queries.transactions.list());
   },
   staticData: { title: "Transaction" },
 });
@@ -83,13 +84,17 @@ function TransactionDetailRoute() {
     };
   }, [transactionId, zero]);
 
-  if (!transaction) {
-    return (
-      <div className="mx-auto flex min-h-48 w-full max-w-2xl items-center justify-center text-muted-foreground text-sm">
-        Loading…
+  return (
+    <SidebarShellLayout flushBottom>
+      <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">
+        {transaction ? (
+          <TransactionDetailView edit={edit} transaction={transaction} />
+        ) : (
+          <div className="mx-auto flex min-h-48 w-full max-w-2xl items-center justify-center text-muted-foreground text-sm">
+            Loading…
+          </div>
+        )}
       </div>
-    );
-  }
-
-  return <TransactionDetailView edit={edit} transaction={transaction} />;
+    </SidebarShellLayout>
+  );
 }

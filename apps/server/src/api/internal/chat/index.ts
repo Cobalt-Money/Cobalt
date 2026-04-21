@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { chatCreateRouter } from "./create.js";
+import { chatDeleteRouter } from "./delete.js";
 import { chatDetailRouter } from "./detail.js";
 import { chatListRouter } from "./list.js";
 import { chatStreamRouter } from "./stream.js";
@@ -10,4 +11,5 @@ export const chatRouter = new OpenAPIHono()
   .route("/", chatListRouter)
   .route("/", chatDetailRouter)
   .route("/", chatCreateRouter)
+  .route("/", chatDeleteRouter)
   .route("/", chatStreamRouter);

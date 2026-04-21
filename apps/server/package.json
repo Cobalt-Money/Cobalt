@@ -28,6 +28,7 @@
     "@modelcontextprotocol/sdk": "^1.12.0",
     "@rocicorp/zero": "catalog:",
     "@scalar/hono-api-reference": "^0.10.4",
+    "@vercel/queue": "^0.1.6",
     "ai": "^6",
     "bash-tool": "^1.3.14",
     "better-auth": "catalog:",

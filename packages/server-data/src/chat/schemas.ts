@@ -70,6 +70,11 @@ export const chatErrorResponseSchema = z.object({
   error: z.string(),
 });
 
+export const chatDeleteResponseSchema = z.object({
+  chatId: chatIdShape,
+  success: z.boolean(),
+});
+
 // ── Inferred DTOs (single source of truth with OpenAPI schemas above) ─
 
 export type Conversation = z.infer<typeof conversationSchema>;

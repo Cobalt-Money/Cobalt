@@ -1,7 +1,7 @@
 import { db } from "@cobalt-web/db";
 import { chats, messages, parts } from "@cobalt-web/db/schema/drizzle-schema";
 import type { UIMessage } from "ai";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { mapUIMessagePartsToDbParts } from "./lib.js";
 
@@ -22,6 +22,25 @@ export async function updateChatTitle(
     .update(chats)
     .set({ title, updatedAt: new Date() })
     .where(eq(chats.chatId, chatId));
+}
+
+/**
+ * Delete a chat owned by `userId`. Returns `true` if a row was deleted.
+ * Messages and parts cascade via Postgres foreign keys.
+ *
+ * Used by the REST endpoint (mobile clients). The web app deletes through
+ * the Zero `chats.delete` mutator for optimistic UX; both paths ultimately
+ * remove the same row and benefit from the same FK cascade.
+ */
+export async function deleteChat(
+  userId: string,
+  chatId: string
+): Promise<boolean> {
+  const deleted = await db
+    .delete(chats)
+    .where(and(eq(chats.chatId, chatId), eq(chats.userId, userId)))
+    .returning({ chatId: chats.chatId });
+  return deleted.length > 0;
 }
 
 /**

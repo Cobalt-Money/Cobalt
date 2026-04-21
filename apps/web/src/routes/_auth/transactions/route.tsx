@@ -1,29 +1,22 @@
-import { TransactionsToolbar } from "@cobalt-web/ui/cobalt/transactions/transactions-toolbar";
-import {
-  createFileRoute,
-  Outlet,
-  useRouterState,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { z } from "zod";
 
-import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
+const amountSchema = z.enum(["all", "income", "expense"]).optional();
+const statusSchema = z.enum(["all", "pending", "posted"]).optional();
+const bankSchema = z.array(z.string()).optional();
+const amountBoundSchema = z.number().nonnegative().optional();
 
-export const Route = createFileRoute("/_auth/transactions")({
-  component: TransactionsLayout,
+const transactionsSearchSchema = z.object({
+  amount: amountSchema,
+  amountMax: amountBoundSchema,
+  amountMin: amountBoundSchema,
+  bank: bankSchema,
+  status: statusSchema,
 });
 
-function TransactionsLayout() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isTransactionsList =
-    pathname === "/transactions" || pathname === "/transactions/";
+export type TransactionsSearch = z.infer<typeof transactionsSearchSchema>;
 
-  return (
-    <SidebarShellLayout
-      flushBottom
-      toolbar={isTransactionsList ? <TransactionsToolbar /> : undefined}
-    >
-      <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">
-        <Outlet />
-      </div>
-    </SidebarShellLayout>
-  );
-}
+export const Route = createFileRoute("/_auth/transactions")({
+  component: () => <Outlet />,
+  validateSearch: transactionsSearchSchema,
+});
