@@ -6,15 +6,5 @@
       "path": "/api/cron/refresh-fundamentals",
       "schedule": "0 13 * * 1-5"
     }
-    // Re-enable once the horizon-test deployment's crons are deactivated:
-    // ,
-    // {
-    //   "path": "/api/cron/rss",
-    //   "schedule": "*/20 9-20 * * *"
-    // },
-    // {
-    //   "path": "/api/cron/financial-events",
-    //   "schedule": "*/30 11-23,0-2 * * *"
-    // }
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "_comment": "Cron entries parked here until the horizon-test deployment is deactivated. Move these back into vercel.json's `crons` array when ready. Vercel never reads this file — it's a plain sidecar for humans.",
+  "crons": [
+    {
+      "path": "/api/cron/rss",
+      "schedule": "*/20 9-20 * * *"
+    },
+    {
+      "path": "/api/cron/financial-events",
+      "schedule": "*/30 11-23,0-2 * * *"
+    }
+  ]
+}
