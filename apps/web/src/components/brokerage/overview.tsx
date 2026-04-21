@@ -5,7 +5,6 @@ import type {
   ScopeAccount,
 } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
 import { brokerageInstitutionBranding } from "@cobalt-web/ui/cobalt/logos/brokerage-institution-branding";
-import { Skeleton } from "boneyard-js/react";
 import { useMemo, useState } from "react";
 
 import { useAddAccount } from "@/components/accounts/add-account-provider";
@@ -16,11 +15,6 @@ import type {
   PortfolioSnapshotRow,
 } from "./balance-chart-card";
 import { BalanceChartCard } from "./balance-chart-card";
-import {
-  BalanceChartCardFixture,
-  PositionsTableFixture,
-  RecentActivityCardFixture,
-} from "./overview-fixtures";
 import type { PositionRow } from "./positions-table";
 import { PositionsTable } from "./positions-table";
 import type { ActivityRow } from "./recent-activity-card";
@@ -59,14 +53,11 @@ export function Overview() {
   const {
     accounts,
     accountsComplete,
-    activitiesComplete,
-    balanceComplete,
     plaidActivities,
     plaidInvestmentAccounts,
     plaidPositions,
     portfolioSnapshots,
     positions,
-    positionsComplete,
     recentActivities,
   } = useBrokerage();
 
@@ -231,43 +222,25 @@ export function Overview() {
 
   return (
     <div className="w-full min-w-0 space-y-4 py-2 sm:py-3">
-      <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <Skeleton
-          fixture={<BalanceChartCardFixture />}
-          loading={!balanceComplete}
-          name="brokerage-balance-chart"
-        >
-          <BalanceChartCard
-            brokerageScope={brokerageScope}
-            onScopeChange={setBrokerageScope}
-            plaidPositions={typedPlaidPositions}
-            portfolioSnapshots={typedPortfolioSnapshots}
-            scopedAccountIds={scopedAccountIds}
-            scopeAccounts={scopeAccounts}
-          />
-        </Skeleton>
-        <Skeleton
-          fixture={<RecentActivityCardFixture />}
-          loading={!activitiesComplete}
-          name="brokerage-recent-activity"
-        >
-          <RecentActivityCard
-            allActivities={allActivities}
-            scopedActivities={scopedActivities}
-          />
-        </Skeleton>
+      <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch">
+        <BalanceChartCard
+          brokerageScope={brokerageScope}
+          onScopeChange={setBrokerageScope}
+          plaidPositions={typedPlaidPositions}
+          portfolioSnapshots={typedPortfolioSnapshots}
+          scopedAccountIds={scopedAccountIds}
+          scopeAccounts={scopeAccounts}
+        />
+        <RecentActivityCard
+          allActivities={allActivities}
+          scopedActivities={scopedActivities}
+        />
       </div>
 
-      <Skeleton
-        fixture={<PositionsTableFixture />}
-        loading={!positionsComplete}
-        name="brokerage-positions"
-      >
-        <PositionsTable
-          allPositions={allPositions}
-          scopedPositions={scopedPositions}
-        />
-      </Skeleton>
+      <PositionsTable
+        allPositions={allPositions}
+        scopedPositions={scopedPositions}
+      />
     </div>
   );
 }
