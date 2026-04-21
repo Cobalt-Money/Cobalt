@@ -24,7 +24,7 @@ function BlogPostPage() {
   const { frontmatter, Component } = post;
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="h-svh overflow-y-auto bg-black text-white">
       <div className="container mx-auto max-w-3xl px-6 py-16">
         <Link
           className="mb-8 inline-block text-gray-400 text-sm hover:text-white"

@@ -17,7 +17,7 @@ function BlogIndex() {
   const posts = getBlogPosts();
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="h-svh overflow-y-auto bg-black text-white">
       <div className="container mx-auto max-w-3xl px-6 py-16">
         <header className="mb-12">
           <h1 className="mb-3 font-bold font-manrope text-4xl">Blog</h1>

@@ -35,7 +35,7 @@ function PricingPage() {
     : features.filter((_, i) => i !== 0);
 
   return (
-    <section className="relative w-full min-h-screen flex flex-col items-center py-16 sm:py-20">
+    <section className="relative w-full h-svh overflow-y-auto flex flex-col items-center py-16 sm:py-20">
       <div className="w-full max-w-6xl mx-auto px-6 relative z-10">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16">
