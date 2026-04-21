@@ -27,8 +27,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "@tanstack/react-router";
 
-import { authClient } from "@/lib/clients/auth-client";
-import { deleteActiveZeroReplicaOnLogout } from "@/lib/zero-logout";
+import { logout } from "@/lib/zero-logout";
 
 import { navUserInitials } from "./lib";
 import { useSettingsDialog } from "./settings-dialog-provider";
@@ -48,8 +47,7 @@ export function NavUser({
   const { openSettings } = useSettingsDialog();
 
   const handleLogout = async () => {
-    await authClient.signOut();
-    await deleteActiveZeroReplicaOnLogout();
+    await logout();
     await router.navigate({ to: "/" });
   };
 

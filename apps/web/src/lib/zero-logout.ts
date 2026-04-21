@@ -1,5 +1,7 @@
 import type { Zero } from "@rocicorp/zero";
 
+import { authClient } from "@/lib/clients/auth-client";
+
 let activeZero: Zero | undefined;
 
 /**
@@ -23,4 +25,10 @@ export async function deleteActiveZeroReplicaOnLogout(): Promise<void> {
   if (activeZero === z) {
     activeZero = undefined;
   }
+}
+
+/** Signs the user out and clears the local Zero replica. */
+export async function logout(): Promise<void> {
+  await authClient.signOut();
+  await deleteActiveZeroReplicaOnLogout();
 }
