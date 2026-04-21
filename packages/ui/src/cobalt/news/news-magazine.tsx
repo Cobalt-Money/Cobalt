@@ -9,18 +9,9 @@ import type {
   FinancialEventArticlePreview,
   FinancialEventCard,
 } from "./financial-events-feed";
+import type { NewsTab } from "./news-toolbar";
 
-export const NEWS_TAB_DEFS = [
-  { id: "general", label: "General" },
-  { id: "for-you", label: "For You" },
-  { id: "tech", label: "Tech" },
-  { id: "government", label: "Government" },
-  { id: "ai", label: "AI" },
-  { id: "announcement", label: "Announcement" },
-  { id: "earnings", label: "Earnings" },
-] as const;
-
-export type NewsTab = (typeof NEWS_TAB_DEFS)[number]["id"];
+export type { NewsTab } from "./news-toolbar";
 
 export interface NewsMagazineSidebarItem {
   readonly id: string;
@@ -33,7 +24,7 @@ export interface NewsMagazineProps {
   readonly eventsGeneral: readonly FinancialEventCard[];
   readonly eventsForYou: readonly FinancialEventCard[];
   readonly rssItems: readonly NewsMagazineSidebarItem[];
-  readonly defaultTab?: NewsTab;
+  readonly tab: NewsTab;
   readonly className?: string;
   /**
    * Wrap each event block (featured row or grid card) for client-side navigation,
@@ -480,42 +471,6 @@ function buildSections(
   return sections;
 }
 
-function NewsTabs({
-  tab,
-  onTabChange,
-}: {
-  tab: NewsTab;
-  onTabChange: (t: NewsTab) => void;
-}) {
-  return (
-    <div className="border-border mb-8 border-b">
-      <nav
-        aria-label="News sections"
-        className="flex flex-wrap gap-x-8 gap-y-2 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-nowrap sm:gap-x-10 sm:overflow-x-auto [&::-webkit-scrollbar]:hidden"
-      >
-        {NEWS_TAB_DEFS.map(({ id, label }) => (
-          <button
-            className={cn(
-              "relative shrink-0 pb-3 text-base transition-colors",
-              tab === id
-                ? "text-foreground font-semibold"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-            key={id}
-            onClick={() => onTabChange(id)}
-            type="button"
-          >
-            {label}
-            {tab === id ? (
-              <span className="bg-amber-500 absolute inset-x-0 bottom-0 h-0.5 rounded-full" />
-            ) : null}
-          </button>
-        ))}
-      </nav>
-    </div>
-  );
-}
-
 /** ~row height for title + meta + padding (no sidebar scroll; slice to viewport). */
 const RSS_ROW_ESTIMATE_PX = 92;
 
@@ -642,12 +597,10 @@ export function NewsMagazine({
   eventsGeneral,
   eventsForYou,
   rssItems,
-  defaultTab = "general",
+  tab,
   className,
   renderEventLink,
 }: NewsMagazineProps) {
-  const [tab, setTab] = useState<NewsTab>(defaultTab);
-
   const activeEvents = useMemo(() => {
     if (tab === "for-you") {
       return eventsForYou;
@@ -662,8 +615,6 @@ export function NewsMagazine({
 
   return (
     <div className={cn("w-full", className)}>
-      <NewsTabs onTabChange={setTab} tab={tab} />
-
       <div className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0 space-y-10 lg:space-y-12">
           {sections.map((sec) => {

@@ -8,6 +8,8 @@ import { useBrokerage } from "@/hooks/use-brokerage";
 import { useFinancialEvents } from "@/hooks/use-financial-events";
 import { useNewsRssSidebar } from "@/hooks/use-news-rss";
 
+import { useNewsLayout } from "./news-layout-context";
+
 export const Route = createFileRoute("/_auth/news/")({
   component: NewsIndexPage,
   loader: ({ context }) => {
@@ -22,6 +24,7 @@ function NewsIndexPage() {
   const { events } = useFinancialEvents();
   const { items: rssItems } = useNewsRssSidebar();
   const { positions } = useBrokerage();
+  const { activeTab } = useNewsLayout();
 
   const holdingSymbols = useMemo(() => {
     const s = new Set<string>();
@@ -46,6 +49,7 @@ function NewsIndexPage() {
 
   return (
     <NewsMagazine
+      tab={activeTab}
       eventsGeneral={events}
       eventsForYou={eventsForYou}
       renderEventLink={(event, inner) => (
