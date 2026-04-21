@@ -68,13 +68,13 @@ const COMMAND_NAV_ROUTES: readonly {
     | "/accounts"
     | "/ai-chat"
     | "/brokerage"
-    | "/dashboard"
+    | "/home"
     | "/news"
     | "/research"
     | "/subscriptions"
     | "/transactions";
 }[] = [
-  { icon: Home04Icon, label: "Dashboard", path: "/dashboard" },
+  { icon: Home04Icon, label: "Home", path: "/home" },
   {
     icon: ArrowReloadHorizontalIcon,
     keywords: ["tx", "history"],
