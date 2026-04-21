@@ -27,7 +27,9 @@
     "./chat/*": "./src/chat/*.ts"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@apple/app-store-server-library": "^1.6.0",
@@ -36,14 +38,17 @@
     "@cobalt-web/db": "workspace:*",
     "@cobalt-web/env": "workspace:*",
     "@hono/zod-openapi": "^1.2.2",
+    "@mozilla/readability": "^0.5.0",
     "ai": "^6",
     "drizzle-orm": "1.0.0-beta.18-7eb39f0",
+    "linkedom": "^0.18.12",
     "plaid": "^41.4.0",
     "snaptrade-typescript-sdk": "^9.0.160",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.0"
   }
 }

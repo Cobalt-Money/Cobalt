@@ -19,9 +19,18 @@ export default defineConfig({
       files: [
         "**/*.{test,spec}.{ts,tsx,js,jsx}",
         "**/__tests__/**/*.{ts,tsx,js,jsx}",
+        // Test infrastructure (spawn helpers, setup files) sits under
+        // `tests/` alongside the suites it supports — relax the same rules.
+        "**/tests/**/*.{ts,tsx,js,jsx}",
+        "**/test-setup.ts",
       ],
       plugins: ["vitest"],
       rules: {
+        // Vitest 3's typed-mock pattern uses `vi.mock(import("..."), ...)` and
+        // `typeof import("...")` inside `importActual<...>()`; the formatter
+        // rewrites string args to the `import(...)` form, which this rule then
+        // flags as a type annotation. False positive in test contexts.
+        "@typescript-eslint/consistent-type-imports": "off",
         "vitest/no-importing-vitest-globals": "off",
         "vitest/prefer-called-once": "off",
         "vitest/prefer-describe-function-title": "off",

@@ -1,4 +1,6 @@
 import { db } from "@cobalt-web/db";
+import { financialEvents } from "@cobalt-web/db/schema/features";
+import { eq as drizzleEq, inArray } from "drizzle-orm";
 
 import {
   decodeCursor,
@@ -55,3 +57,39 @@ export const getFinancialEventsWithArticles = async (
     nextCursor,
   };
 };
+
+// ── Processed-event checks (used by the cron to skip already-summarized events)
+
+export async function listProcessedEventIds(
+  eventIds: string[]
+): Promise<Set<string>> {
+  if (eventIds.length === 0) {
+    return new Set<string>();
+  }
+  const rows = await db
+    .select({
+      eventId: financialEvents.eventId,
+      scrapedArticlesCount: financialEvents.scrapedArticlesCount,
+      summary: financialEvents.summary,
+    })
+    .from(financialEvents)
+    .where(inArray(financialEvents.eventId, eventIds));
+
+  return new Set(
+    rows
+      .filter((r) => r.summary && r.scrapedArticlesCount > 0)
+      .map((r) => r.eventId)
+  );
+}
+
+export async function isEventProcessed(eventId: string): Promise<boolean> {
+  const [row] = await db
+    .select({
+      scrapedArticlesCount: financialEvents.scrapedArticlesCount,
+      summary: financialEvents.summary,
+    })
+    .from(financialEvents)
+    .where(drizzleEq(financialEvents.eventId, eventId))
+    .limit(1);
+  return Boolean(row?.summary && row.scrapedArticlesCount > 0);
+}

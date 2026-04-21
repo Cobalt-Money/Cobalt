@@ -2,7 +2,12 @@ import { env } from "@cobalt-web/env/server";
 
 const BASE_URL = "https://stocknewsapi.com/api/v1";
 
-async function stockNewsRequest<T>(
+/**
+ * GET `https://stocknewsapi.com/api/v1{endpoint}` with the `token` query param
+ * baked in. Callers pass endpoint-specific params + the expected response type.
+ * Mirrors the shape of `fmpStableGet`.
+ */
+export async function stockNewsRequest<T>(
   endpoint: string,
   params: Record<string, string> = {}
 ): Promise<T> {
@@ -30,6 +35,8 @@ async function stockNewsRequest<T>(
   return response.json() as Promise<T>;
 }
 
+// Shared payload shape — every Stock News endpoint that returns article rows
+// produces this. Kept at the transport layer because multiple domains consume it.
 export interface StockNewsArticle {
   title: string;
   news_url: string;
@@ -41,32 +48,4 @@ export interface StockNewsArticle {
   date: string;
   tickers: string[];
   topics: string[];
-}
-
-export interface StockNewsTickerArticlesResponse {
-  data: StockNewsArticle[];
-  total_pages: number;
-  total_items: number;
-}
-
-export function getTickerNews(params: {
-  tickers: string;
-  items?: number;
-  sourceexclude?: string;
-  type?: string;
-}): Promise<StockNewsTickerArticlesResponse> {
-  const queryParams: Record<string, string> = {
-    tickers: params.tickers,
-  };
-  if (params.items) {
-    queryParams.items = params.items.toString();
-  }
-  if (params.sourceexclude) {
-    queryParams.sourceexclude = params.sourceexclude;
-  }
-  if (params.type) {
-    queryParams.type = params.type;
-  }
-
-  return stockNewsRequest<StockNewsTickerArticlesResponse>("", queryParams);
 }
