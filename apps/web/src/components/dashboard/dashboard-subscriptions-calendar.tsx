@@ -7,6 +7,8 @@ import { useQuery } from "@rocicorp/zero/react";
 import { format, startOfMonth } from "date-fns";
 import { useMemo, useState } from "react";
 
+import { ConnectAccountEmpty } from "@/components/empty/connect-account-empty";
+
 const formatMonthTotal = (amount: number) =>
   new Intl.NumberFormat("en-US", {
     currency: "USD",
@@ -83,50 +85,64 @@ export function DashboardSubscriptionsCalendar() {
             Subscriptions &amp; payments
           </h2>
 
-          <div className="mb-5 flex w-full items-baseline justify-between gap-4">
-            <p className="text-foreground shrink-0 text-lg font-semibold tracking-tight">
-              {format(monthStart, "MMMM yyyy")}
-            </p>
-            <p className="text-muted-foreground text-right text-base">
-              Monthly total:{" "}
-              <span className="text-foreground font-semibold tabular-nums">
-                <PrivateAmount>{formatMonthTotal(monthlyTotal)}</PrivateAmount>
-              </span>
-            </p>
-          </div>
+          {outflows.length === 0 ? null : (
+            <div className="mb-5 flex w-full items-baseline justify-between gap-4">
+              <p className="text-foreground shrink-0 text-lg font-semibold tracking-tight">
+                {format(monthStart, "MMMM yyyy")}
+              </p>
+              <p className="text-muted-foreground text-right text-base">
+                Monthly total:{" "}
+                <span className="text-foreground font-semibold tabular-nums">
+                  <PrivateAmount>
+                    {formatMonthTotal(monthlyTotal)}
+                  </PrivateAmount>
+                </span>
+              </p>
+            </div>
+          )}
 
-          <Calendar
-            className={cn(
-              "border-0 bg-transparent p-0 pt-1 shadow-none ring-0",
-              "[--cell-size:--spacing(13)]",
-              "[--cell-radius:var(--radius-2xl)]",
-              "[&_.rdp-month]:gap-2.5",
-              "[&_.rdp-weekdays]:gap-1.5",
-              "[&_.rdp-week]:gap-1.5",
-              "[&_[data-slot=button]]:!rounded-2xl",
-              "[&_[data-slot=button]]:border-0 [&_[data-slot=button]]:shadow-none",
-              "[&_[data-slot=button]]:bg-muted/80 [&_[data-slot=button]]:hover:bg-muted/95",
-              "[&_[data-slot=button][data-selected-single=true]]:!bg-primary",
-              "[&_[data-slot=button][data-selected-single=true]]:!text-primary-foreground",
-              "[&_[data-slot=button][data-selected-single=true]]:hover:!bg-primary/90",
-              "[&_.rdp-weekday]:text-base [&_[data-slot=button]]:text-lg"
-            )}
-            classNames={{
-              day: "relative rounded-2xl border-0 shadow-none",
-              month_caption: "hidden",
-              nav: "hidden",
-            }}
-            defaultMonth={monthStart}
-            modifiers={{ subscription: subscriptionDays }}
-            modifiersClassNames={{
-              subscription:
-                "after:absolute after:bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full after:bg-[#ffffff] after:content-['']",
-            }}
-            mode="single"
-            onSelect={setSelected}
-            selected={selected}
-            weekStartsOn={1}
-          />
+          {outflows.length === 0 ? (
+            <ConnectAccountEmpty
+              className="min-h-[260px] border-0"
+              description="Connect a bank to automatically detect recurring subscriptions and bills."
+              title="No subscriptions detected yet"
+            />
+          ) : null}
+
+          {outflows.length === 0 ? null : (
+            <Calendar
+              className={cn(
+                "border-0 bg-transparent p-0 pt-1 shadow-none ring-0",
+                "[--cell-size:--spacing(13)]",
+                "[--cell-radius:var(--radius-2xl)]",
+                "[&_.rdp-month]:gap-2.5",
+                "[&_.rdp-weekdays]:gap-1.5",
+                "[&_.rdp-week]:gap-1.5",
+                "[&_[data-slot=button]]:!rounded-2xl",
+                "[&_[data-slot=button]]:border-0 [&_[data-slot=button]]:shadow-none",
+                "[&_[data-slot=button]]:bg-muted/80 [&_[data-slot=button]]:hover:bg-muted/95",
+                "[&_[data-slot=button][data-selected-single=true]]:!bg-primary",
+                "[&_[data-slot=button][data-selected-single=true]]:!text-primary-foreground",
+                "[&_[data-slot=button][data-selected-single=true]]:hover:!bg-primary/90",
+                "[&_.rdp-weekday]:text-base [&_[data-slot=button]]:text-lg"
+              )}
+              classNames={{
+                day: "relative rounded-2xl border-0 shadow-none",
+                month_caption: "hidden",
+                nav: "hidden",
+              }}
+              defaultMonth={monthStart}
+              modifiers={{ subscription: subscriptionDays }}
+              modifiersClassNames={{
+                subscription:
+                  "after:absolute after:bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full after:bg-[#ffffff] after:content-['']",
+              }}
+              mode="single"
+              onSelect={setSelected}
+              selected={selected}
+              weekStartsOn={1}
+            />
+          )}
         </CardContent>
       </CobaltCard>
     </section>

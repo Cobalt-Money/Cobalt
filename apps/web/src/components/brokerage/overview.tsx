@@ -7,6 +7,7 @@ import type {
 import { brokerageInstitutionBranding } from "@cobalt-web/ui/cobalt/logos/brokerage-institution-branding";
 import { useMemo, useState } from "react";
 
+import { useAddAccount } from "@/components/accounts/add-account-provider";
 import { useBrokerage } from "@/hooks/use-brokerage";
 
 import type {
@@ -48,6 +49,7 @@ interface PlaidActivityRow {
 }
 
 export function Overview() {
+  const { openAddAccount } = useAddAccount();
   const {
     accounts,
     positions,
@@ -212,7 +214,7 @@ export function Overview() {
   if (isEmpty) {
     return (
       <div className="w-full min-w-0 py-2 sm:py-3">
-        <BrokerageEmpty />
+        <BrokerageEmpty onConnect={openAddAccount} />
       </div>
     );
   }

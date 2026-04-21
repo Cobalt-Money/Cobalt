@@ -1,5 +1,6 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import { CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { ConnectAccountEmpty } from "@cobalt-web/ui/cobalt/empty/connect-account-empty";
 import { cn, decodeHtmlEntities } from "@cobalt-web/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -34,6 +35,8 @@ export interface NewsMagazineProps {
     event: FinancialEventCard,
     inner: ReactNode
   ) => ReactNode;
+  /** Called when the "For You" empty-state CTA is clicked. */
+  readonly onConnectAccount?: () => void;
 }
 
 type MagazineSection =
@@ -600,6 +603,7 @@ export function NewsMagazine({
   tab,
   className,
   renderEventLink,
+  onConnectAccount,
 }: NewsMagazineProps) {
   const activeEvents = useMemo(() => {
     if (tab === "for-you") {
@@ -617,6 +621,14 @@ export function NewsMagazine({
     <div className={cn("w-full", className)}>
       <div className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0 space-y-10 lg:space-y-12">
+          {tab === "for-you" && sections.length === 0 ? (
+            <ConnectAccountEmpty
+              className="min-h-[320px]"
+              description="Link a brokerage or investment account and we'll surface news for the tickers you hold."
+              onConnect={onConnectAccount}
+              title="No personalized news yet"
+            />
+          ) : null}
           {sections.map((sec) => {
             if (sec.type === "featuredPair") {
               return (

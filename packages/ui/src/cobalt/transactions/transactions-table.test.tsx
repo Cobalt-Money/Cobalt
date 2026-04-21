@@ -49,7 +49,7 @@ describe(TransactionsTable, () => {
   it("shows the empty state when there are no transactions and loading is complete", () => {
     render(<TransactionsTable isComplete items={[]} />);
 
-    expect(screen.getByText("No transactions yet.")).toBeTruthy();
+    expect(screen.getByText("No transactions yet")).toBeTruthy();
   });
 
   it("renders transaction name, formatted amount, and date when data is present", () => {
