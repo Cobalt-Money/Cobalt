@@ -6,8 +6,8 @@ import { DashboardRecentTransactionsCard } from "@/components/dashboard/dashboar
 import { DashboardSubscriptionsCalendar } from "@/components/dashboard/dashboard-subscriptions-calendar";
 import { NetWorthSection } from "@/components/dashboard/net-worth-section";
 
-export const Route = createFileRoute("/_auth/dashboard/")({
-  component: DashboardPage,
+export const Route = createFileRoute("/_auth/home/")({
+  component: HomePage,
   loader: ({ context }) => {
     context.zero.run(queries.accounts.bankAccounts());
     context.zero.run(queries.accounts.brokerageAccounts());
@@ -22,10 +22,10 @@ export const Route = createFileRoute("/_auth/dashboard/")({
     context.zero.run(queries.brokerage.plaidPositions());
     context.zero.run(queries.brokerage.plaidActivities());
   },
-  staticData: { title: "Dashboard" },
+  staticData: { title: "Home" },
 });
 
-function DashboardPage() {
+function HomePage() {
   return (
     <>
       <NetWorthSection />

@@ -21,7 +21,7 @@ function RouteComponent() {
       return new URL(`/api/auth/oauth2/authorize${search}`, env.VITE_SERVER_URL)
         .href;
     }
-    return `${window.location.origin}/dashboard`;
+    return `${window.location.origin}/home`;
   }, []);
 
   if (session.isPending) {
@@ -33,7 +33,7 @@ function RouteComponent() {
   }
 
   if (session.data) {
-    return <Navigate replace to="/dashboard" />;
+    return <Navigate replace to="/home" />;
   }
 
   return (

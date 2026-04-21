@@ -16,8 +16,8 @@ export default function SocialAuth({
   const callbackURL =
     callbackURLProp ??
     (typeof window === "undefined"
-      ? "/dashboard"
-      : `${window.location.origin}/dashboard`);
+      ? "/home"
+      : `${window.location.origin}/home`);
 
   const handleGoogleAuth = async () => {
     setLoading(true);

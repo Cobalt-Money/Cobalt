@@ -25,8 +25,8 @@ const navItemClassName =
 const NAV_MAIN_ITEMS = [
   {
     icon: <HugeiconsIcon icon={Home04Icon} strokeWidth={2} />,
-    title: "Dashboard",
-    url: "/dashboard" as const,
+    title: "Home",
+    url: "/home" as const,
   },
   {
     icon: <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />,
