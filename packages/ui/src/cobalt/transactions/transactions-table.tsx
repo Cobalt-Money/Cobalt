@@ -319,14 +319,42 @@ export function TransactionsTable({
   isComplete,
   items,
   onConnectAccount,
+  rowSelection: rowSelectionProp,
+  onRowSelectionChange,
 }: {
   isComplete: boolean;
   items: TransactionListItem[];
   onConnectAccount?: () => void;
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: (next: RowSelectionState) => void;
 }) {
   const navigate = useNavigate();
   const router = useRouter();
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [internalRowSelection, setInternalRowSelection] =
+    useState<RowSelectionState>({});
+  const isControlled = rowSelectionProp !== undefined;
+  const rowSelection = isControlled ? rowSelectionProp : internalRowSelection;
+  const setRowSelection = useCallback(
+    (
+      updater:
+        | RowSelectionState
+        | ((old: RowSelectionState) => RowSelectionState)
+    ) => {
+      const next =
+        typeof updater === "function"
+          ? (updater as (old: RowSelectionState) => RowSelectionState)(
+              rowSelection
+            )
+          : updater;
+      if (isControlled) {
+        onRowSelectionChange?.(next);
+      } else {
+        setInternalRowSelection(next);
+        onRowSelectionChange?.(next);
+      }
+    },
+    [isControlled, onRowSelectionChange, rowSelection]
+  );
 
   const openTransaction = useCallback(
     (row: Row<TransactionListItem>) => {
@@ -387,6 +415,70 @@ export function TransactionsTable({
 
   const { rows } = table.getRowModel();
   const flatItems = useMemo(() => flattenRowsByMonth(rows), [rows]);
+
+  const rowIdsByMonth = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const row of rows) {
+      const key = transactionMonthGroupKey(row.original);
+      const list = map.get(key);
+      if (list) {
+        list.push(row.id);
+      } else {
+        map.set(key, [row.id]);
+      }
+    }
+    return map;
+  }, [rows]);
+
+  const toggleMonthSelection = useCallback(
+    (monthKey: string, checked: boolean) => {
+      const ids = rowIdsByMonth.get(monthKey);
+      if (!ids) {
+        return;
+      }
+      setRowSelection((old) => {
+        if (checked) {
+          const next = { ...old };
+          for (const id of ids) {
+            next[id] = true;
+          }
+          return next;
+        }
+        const idSet = new Set(ids);
+        const next: RowSelectionState = {};
+        for (const key of Object.keys(old)) {
+          if (!idSet.has(key)) {
+            next[key] = old[key] as boolean;
+          }
+        }
+        return next;
+      });
+    },
+    [rowIdsByMonth, setRowSelection]
+  );
+
+  const getMonthSelectionState = useCallback(
+    (monthKey: string): "none" | "some" | "all" => {
+      const ids = rowIdsByMonth.get(monthKey);
+      if (!ids || ids.length === 0) {
+        return "none";
+      }
+      let selected = 0;
+      for (const id of ids) {
+        if (rowSelection[id]) {
+          selected += 1;
+        }
+      }
+      if (selected === 0) {
+        return "none";
+      }
+      if (selected === ids.length) {
+        return "all";
+      }
+      return "some";
+    },
+    [rowIdsByMonth, rowSelection]
+  );
 
   const stickyIndexes = useMemo(() => {
     const out: number[] = [];
@@ -493,9 +585,12 @@ export function TransactionsTable({
                     };
 
                 if (item.kind === "divider") {
+                  const selectionState = getMonthSelectionState(item.monthKey);
+                  const isChecked = selectionState === "all";
+                  const isIndeterminate = selectionState === "some";
                   return (
                     <div
-                      className="grid rounded-lg bg-muted font-medium text-foreground"
+                      className="group/month grid rounded-lg bg-muted font-medium text-foreground"
                       data-index={vi.index}
                       key={vi.key}
                       role="row"
@@ -506,7 +601,32 @@ export function TransactionsTable({
                         zIndex: 2,
                       }}
                     >
-                      <div className="p-3" role="presentation" />
+                      <div
+                        className={cn(
+                          "flex items-center p-3",
+                          "opacity-0 group-hover/month:opacity-100 group-focus-within/month:opacity-100",
+                          selectionState !== "none" && "opacity-100"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onKeyDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        role="presentation"
+                      >
+                        <Checkbox
+                          aria-label={`Select all transactions in ${item.label}`}
+                          checked={isChecked}
+                          indeterminate={isIndeterminate}
+                          onCheckedChange={(checked) => {
+                            toggleMonthSelection(
+                              item.monthKey,
+                              checked === true
+                            );
+                          }}
+                        />
+                      </div>
                       <div className="flex items-center p-3" role="cell">
                         <div className={cn(cellRow, "whitespace-nowrap")}>
                           <span className="font-normal tabular-nums text-muted-foreground text-sm">
