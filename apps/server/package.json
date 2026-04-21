@@ -9,7 +9,10 @@
     "start": "node .output/server/index.mjs",
     "extract-openapi": "bun ./scripts/extract-openapi.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts --exclude '**/*.happy.integration.test.ts'",
+    "test:integration:happy": "vitest run --config vitest.integration.config.ts tests/workflows/news/financial-events.happy.integration.test.ts",
+    "test:integration:all": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.84",

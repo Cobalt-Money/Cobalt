@@ -19,6 +19,7 @@ Project-specific guidance that complements generic skills (e.g. Rocicorp Zero, D
 - **[Mutations](mutations/SKILL.md)** — Zero custom mutators vs REST (Hono RPC), when to use both, optimistic UX, server-data convergence.
 - **[Workflows](workflows/SKILL.md)** — `workflow.ts` + `steps.ts` + `lib.ts`, server-data boundaries, step granularity, naming.
 - **[Webhooks](webhooks/SKILL.md)** — thin HTTP transport, verification in server-data, dispatch to workflows, env + mounting conventions.
+- **[Testing](testing/SKILL.md)** — co-located unit tests, server-based integration harness, mocking boundaries, DB-shape validation, what runs on every push vs manually.
 
 ## Quick pointers
 

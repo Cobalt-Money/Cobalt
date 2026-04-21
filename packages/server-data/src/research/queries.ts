@@ -1,5 +1,6 @@
 import { alphaVantageRequest } from "@cobalt-web/clients/alpha-vantage";
-import { getTickerNews } from "@cobalt-web/clients/stock-news";
+import { stockNewsRequest } from "@cobalt-web/clients/stock-news";
+import type { StockNewsArticle } from "@cobalt-web/clients/stock-news";
 
 import type { AlphaVantageQuoteResponse } from "./lib.js";
 import { normalizeTickerForAlphaVantage } from "./lib.js";
@@ -95,9 +96,17 @@ export function getBalanceSheet(symbol: string) {
 
 // ── Research news ──────────────────────────────────────────────────
 
-export function getResearchNews(symbol: string) {
-  return getTickerNews({
-    items: 50,
+interface StockNewsTickerArticlesResponse {
+  data: StockNewsArticle[];
+  total_pages: number;
+  total_items: number;
+}
+
+export function getResearchNews(
+  symbol: string
+): Promise<StockNewsTickerArticlesResponse> {
+  return stockNewsRequest<StockNewsTickerArticlesResponse>("", {
+    items: "50",
     sourceexclude: "Benzinga,The Motley Fool,Zacks Investment Research",
     tickers: symbol,
     type: "Article",
