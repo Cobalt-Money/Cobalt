@@ -7,7 +7,7 @@ export const Route = createFileRoute("/terms")({
 
 function TermsOfService() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="h-svh overflow-y-auto bg-black text-white">
       <div className="container mx-auto px-6 py-16 max-w-4xl">
         <h1 className="text-4xl font-bold font-manrope mb-8">
           Terms of Service

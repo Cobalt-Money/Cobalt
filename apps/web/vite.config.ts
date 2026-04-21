@@ -1,7 +1,10 @@
+import mdx from "@mdx-js/rollup";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
+import remarkFrontmatter from "remark-frontmatter";
+import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
 
@@ -94,10 +97,20 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     ssrStubPlugin(),
+    {
+      ...mdx({
+        jsxImportSource: "react",
+        remarkPlugins: [
+          remarkFrontmatter,
+          [remarkMdxFrontmatter, { name: "frontmatter" }],
+        ],
+      }),
+      enforce: "pre",
+    },
     tanstackStart(),
     nitro({}),
     patchServerRequirePlugin(),
-    viteReact(),
+    viteReact({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
   ],
   preview: {
     port: 3001,
