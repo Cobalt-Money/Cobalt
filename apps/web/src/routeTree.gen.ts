@@ -15,7 +15,9 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as OauthConsentRouteImport } from './routes/oauth/consent'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AuthAlertsPreviewRouteImport } from './routes/_auth/alerts-preview'
 import { Route as AuthTransactionsRouteRouteImport } from './routes/_auth/transactions/route'
 import { Route as AuthSubscriptionsRouteRouteImport } from './routes/_auth/subscriptions/route'
@@ -67,9 +69,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OauthConsentRoute = OauthConsentRouteImport.update({
   id: '/oauth/consent',
   path: '/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthAlertsPreviewRoute = AuthAlertsPreviewRouteImport.update({
@@ -194,7 +206,9 @@ export interface FileRoutesByFullPath {
   '/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteRouteWithChildren
   '/alerts-preview': typeof AuthAlertsPreviewRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/oauth/consent': typeof OauthConsentRoute
+  '/blog/': typeof BlogIndexRoute
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/news/$eventId': typeof AuthNewsEventIdRoute
   '/research/$symbol': typeof AuthResearchSymbolRoute
@@ -215,7 +229,9 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/alerts-preview': typeof AuthAlertsPreviewRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/oauth/consent': typeof OauthConsentRoute
+  '/blog': typeof BlogIndexRoute
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/news/$eventId': typeof AuthNewsEventIdRoute
   '/research/$symbol': typeof AuthResearchSymbolRoute
@@ -246,7 +262,9 @@ export interface FileRoutesById {
   '/_auth/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/_auth/transactions': typeof AuthTransactionsRouteRouteWithChildren
   '/_auth/alerts-preview': typeof AuthAlertsPreviewRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/oauth/consent': typeof OauthConsentRoute
+  '/blog/': typeof BlogIndexRoute
   '/_auth/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/_auth/news/$eventId': typeof AuthNewsEventIdRoute
   '/_auth/research/$symbol': typeof AuthResearchSymbolRoute
@@ -277,7 +295,9 @@ export interface FileRouteTypes {
     | '/subscriptions'
     | '/transactions'
     | '/alerts-preview'
+    | '/blog/$slug'
     | '/oauth/consent'
+    | '/blog/'
     | '/ai-chat/$chatId'
     | '/news/$eventId'
     | '/research/$symbol'
@@ -298,7 +318,9 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/alerts-preview'
+    | '/blog/$slug'
     | '/oauth/consent'
+    | '/blog'
     | '/ai-chat/$chatId'
     | '/news/$eventId'
     | '/research/$symbol'
@@ -328,7 +350,9 @@ export interface FileRouteTypes {
     | '/_auth/subscriptions'
     | '/_auth/transactions'
     | '/_auth/alerts-preview'
+    | '/blog/$slug'
     | '/oauth/consent'
+    | '/blog/'
     | '/_auth/ai-chat/$chatId'
     | '/_auth/news/$eventId'
     | '/_auth/research/$symbol'
@@ -350,7 +374,9 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   OauthConsentRoute: typeof OauthConsentRoute
+  BlogIndexRoute: typeof BlogIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -397,11 +423,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/oauth/consent': {
       id: '/oauth/consent'
       path: '/oauth/consent'
       fullPath: '/oauth/consent'
       preLoaderRoute: typeof OauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth/alerts-preview': {
@@ -692,7 +732,9 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
+  BlogSlugRoute: BlogSlugRoute,
   OauthConsentRoute: OauthConsentRoute,
+  BlogIndexRoute: BlogIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
