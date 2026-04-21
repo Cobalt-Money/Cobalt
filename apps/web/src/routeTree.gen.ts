@@ -638,8 +638,9 @@ const AuthHomeRouteRouteChildren: AuthHomeRouteRouteChildren = {
   AuthHomeIndexRoute: AuthHomeIndexRoute,
 }
 
-const AuthHomeRouteRouteWithChildren =
-  AuthHomeRouteRoute._addFileChildren(AuthHomeRouteRouteChildren)
+const AuthHomeRouteRouteWithChildren = AuthHomeRouteRoute._addFileChildren(
+  AuthHomeRouteRouteChildren,
+)
 
 interface AuthNewsRouteRouteChildren {
   AuthNewsEventIdRoute: typeof AuthNewsEventIdRoute
