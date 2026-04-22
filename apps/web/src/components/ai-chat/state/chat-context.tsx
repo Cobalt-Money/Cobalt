@@ -222,6 +222,25 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const baseModel = normalizeGatewayModelId(model);
       const modelId = reasoning ? `${baseModel}+reasoning` : baseModel;
 
+      // RAF-throttled flush: AI SDK can emit chunks far faster than React can
+      // usefully render. Coalesce them so React re-renders at most once per
+      // frame, matching what useChat's experimental_throttle provides.
+      let pendingMessage: UIMessage | null = null;
+      let rafId: number | null = null;
+      const flushPending = () => {
+        rafId = null;
+        const msg = pendingMessage;
+        if (msg && !abort.signal.aborted) {
+          setState((prev) => ({ ...prev, inFlightMessage: msg }));
+        }
+      };
+      const cancelPending = () => {
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+      };
+
       try {
         const res = await fetch(`${serverUrl}/api/chat/${chatId}/stream`, {
           body: JSON.stringify({
@@ -264,13 +283,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           if (abort.signal.aborted) {
             break;
           }
-          setState((prev) => ({ ...prev, inFlightMessage: msg }));
+          pendingMessage = msg;
+          if (rafId === null) {
+            rafId = requestAnimationFrame(flushPending);
+          }
+        }
+
+        // Stream ended naturally — flush the final snapshot synchronously so
+        // the completed message lands before the Zero-sync handoff runs.
+        cancelPending();
+        if (pendingMessage && !abort.signal.aborted) {
+          setState((prev) => ({ ...prev, inFlightMessage: pendingMessage }));
         }
       } catch (error) {
         if (!(error instanceof Error && error.name === "AbortError")) {
           console.error("[chat-stream] unexpected error:", error);
         }
       } finally {
+        cancelPending();
         if (!abort.signal.aborted) {
           setState((prev) => ({ ...prev, isStreaming: false }));
         }
