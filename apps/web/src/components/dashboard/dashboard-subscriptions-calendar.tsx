@@ -7,6 +7,7 @@ import { useQuery } from "@rocicorp/zero/react";
 import { format, startOfMonth } from "date-fns";
 import { useMemo, useState } from "react";
 
+import { DashboardSubscriptionsCalendarSkeleton } from "@/components/dashboard/skeletons/dashboard-subscriptions-calendar-skeleton";
 import { ConnectAccountEmpty } from "@/components/empty/connect-account-empty";
 
 const formatMonthTotal = (amount: number) =>
@@ -28,8 +29,9 @@ export function DashboardSubscriptionsCalendar() {
   const monthStart = useMemo(() => startOfMonth(new Date()), []);
   const [selected, setSelected] = useState<Date | undefined>(() => new Date());
 
-  const [rawStreams] = useQuery(queries.transactions.recurring());
+  const [rawStreams, result] = useQuery(queries.transactions.recurring());
   const streams = rawStreams as unknown as RecurringRow[];
+  const isComplete = result.type === "complete";
 
   const outflows = useMemo(
     () => streams.filter((s) => s.streamType === "outflow"),
@@ -73,6 +75,10 @@ export function DashboardSubscriptionsCalendar() {
 
     return dates;
   }, [outflows, monthStart]);
+
+  if (!isComplete && streams.length === 0) {
+    return <DashboardSubscriptionsCalendarSkeleton />;
+  }
 
   return (
     <section

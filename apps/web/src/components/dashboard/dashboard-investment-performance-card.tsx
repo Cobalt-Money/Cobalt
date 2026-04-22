@@ -4,6 +4,7 @@ import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { useMemo } from "react";
 
+import { DashboardInvestmentPerformanceCardSkeleton } from "@/components/dashboard/skeletons/dashboard-investment-performance-card-skeleton";
 import { ConnectAccountEmpty } from "@/components/empty/connect-account-empty";
 import { useBrokerage } from "@/hooks/use-brokerage";
 
@@ -22,7 +23,7 @@ const formatPct = (pct: number) => {
 };
 
 export function DashboardInvestmentPerformanceCard() {
-  const { positions } = useBrokerage();
+  const { positions, positionsComplete } = useBrokerage();
   const typedPositions = positions as unknown as PositionRow[];
 
   const topHoldings = useMemo(
@@ -38,6 +39,10 @@ export function DashboardInvestmentPerformanceCard() {
         .slice(0, 6),
     [typedPositions]
   );
+
+  if (!positionsComplete && typedPositions.length === 0) {
+    return <DashboardInvestmentPerformanceCardSkeleton />;
+  }
 
   return (
     <section
