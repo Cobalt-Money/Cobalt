@@ -17,7 +17,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 
 import { useAgentSettings } from "../state/agent-settings-context";
 import type { AgentEffort, AgentMode } from "../state/agent-settings-context";
-import { useChat } from "../state/chat-context";
 
 interface ModelDef {
   id: string;
@@ -72,7 +71,6 @@ const MODES: { id: AgentMode; label: string }[] = [
 
 function useModelPickerState() {
   const { settings, setSettings } = useAgentSettings();
-  const { isStreaming } = useChat();
   const currentModel = MODELS.find((m) => m.id === settings.model) ?? MODELS[0];
   const canReason = currentModel?.supportsReasoning ?? false;
   const availableEfforts = ALL_EFFORTS.filter(
@@ -107,7 +105,6 @@ function useModelPickerState() {
     availableEfforts,
     canReason,
     currentModel,
-    isStreaming,
     selectEffort,
     selectMode,
     selectModel,
@@ -116,13 +113,16 @@ function useModelPickerState() {
   };
 }
 
+interface ModelPickerProps {
+  isStreaming: boolean;
+}
+
 /** Compact single-chip dropdown for the collapsed pill input. */
-export function ModelChip() {
+export function ModelChip({ isStreaming }: ModelPickerProps) {
   const {
     availableEfforts,
     canReason,
     currentModel,
-    isStreaming,
     selectEffort,
     selectModel,
     selectMode,
@@ -175,12 +175,11 @@ export function ModelChip() {
 }
 
 /** Expanded toolbar version for the open input. */
-export function ModelPicker() {
+export function ModelPicker({ isStreaming }: ModelPickerProps) {
   const {
     availableEfforts,
     canReason,
     currentModel,
-    isStreaming,
     selectEffort,
     selectModel,
     selectMode,

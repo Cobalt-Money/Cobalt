@@ -2,8 +2,17 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Streamdown animation keyframes (sd-fadeIn / sd-blurIn / sd-slideUp) and the
+ * [data-sd-animate] selector. Loaded so the `animated` prop on MessageResponse
+ * works out of the box if we want to re-enable per-word fade/blur later. */
+@import "streamdown/styles.css";
 @source "../../../apps/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
+@source "../../node_modules/streamdown/dist/*.js";
+@source "../../node_modules/@streamdown/cjk/dist/*.js";
+@source "../../node_modules/@streamdown/code/dist/*.js";
+@source "../../node_modules/@streamdown/math/dist/*.js";
+@source "../../node_modules/@streamdown/mermaid/dist/*.js";
 
 @custom-variant dark (&:is(.dark *));
 
