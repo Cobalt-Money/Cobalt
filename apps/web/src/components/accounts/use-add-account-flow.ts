@@ -14,6 +14,8 @@ import {
   snaptradeApi,
 } from "@/lib/clients/api-client";
 
+import { useOnboarding } from "./onboarding-context";
+
 export interface PlaidInstitution {
   id: string;
   name: string;
@@ -71,36 +73,28 @@ export function useInstitutionSearch(query: string, enabled: boolean) {
 export function useAccountLauncher(onDismiss: () => void) {
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const pendingPlaidRef = useRef(false);
+  const { startOnboarding } = useOnboarding();
 
   const onPlaidSuccess = useCallback(
     async (publicToken: string, _metadata: PlaidLinkOnSuccessMetadata) => {
-      const loadingId = toast.loading("Connecting your account…");
       try {
-        const exch = await plaidApi["exchange-token"].$post({
+        const res = await plaidApi.linkComplete.$post({
           json: { public_token: publicToken },
         });
-        if (!exch.ok) {
-          throw new Error("Failed to exchange token");
-        }
-        const { access_token, item_id } = await exch.json();
-        const persist = await plaidApi.items.persist.$post({
-          json: { access_token, item_id },
-        });
-        if (!persist.ok) {
-          const err = await persist.json();
+        if (!res.ok) {
+          const err = (await res.json()) as { error?: string };
           throw new Error(err.error ?? "Failed to connect account");
         }
-        toast.dismiss(loadingId);
-        toast.success("Account connected!");
+        const { runId } = await res.json();
+        startOnboarding(runId);
         onDismiss();
       } catch (error) {
-        toast.dismiss(loadingId);
         toast.error(
           error instanceof Error ? error.message : "Failed to connect account"
         );
       }
     },
-    [onDismiss]
+    [onDismiss, startOnboarding]
   );
 
   const onPlaidExit = useCallback(

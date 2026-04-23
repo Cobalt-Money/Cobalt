@@ -3,14 +3,7 @@ import {
   toSerializableError,
 } from "../../shared/steps";
 import { getPlaidItemStep } from "../sync/steps";
-import {
-  fetchPlaidLiabilitiesStep,
-  persistPlaidCreditLiabilitiesStep,
-  persistPlaidLiabilityBankAccountsStep,
-  persistPlaidLiabilityBankBalancesStep,
-  persistPlaidMortgageLiabilitiesStep,
-  persistPlaidStudentLoanLiabilitiesStep,
-} from "./steps";
+import { syncLiabilities } from "./orchestration";
 
 export interface PlaidLiabilitiesSyncResult {
   success: boolean;
@@ -26,25 +19,7 @@ export async function plaidLiabilitiesSyncWorkflow(
 
   try {
     const item = await getPlaidItemStep(itemId);
-
-    const fetched = await fetchPlaidLiabilitiesStep(item.plaidAccessToken);
-
-    if (fetched.skipped) {
-      return { itemId, success: true };
-    }
-
-    await persistPlaidLiabilityBankAccountsStep(
-      item.plaidItemId,
-      fetched.accounts
-    );
-    await persistPlaidLiabilityBankBalancesStep(fetched.accounts);
-
-    await Promise.all([
-      persistPlaidCreditLiabilitiesStep(fetched.liabilities.credit),
-      persistPlaidMortgageLiabilitiesStep(fetched.liabilities.mortgage),
-      persistPlaidStudentLoanLiabilitiesStep(fetched.liabilities.student),
-    ]);
-
+    await syncLiabilities(item.plaidAccessToken, item.plaidItemId);
     return { itemId, success: true };
   } catch (error) {
     const errorMessage =

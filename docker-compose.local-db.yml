@@ -12,6 +12,17 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: cobalt
+    # Zero's change-streamer replicates via Postgres logical replication, which
+    # requires wal_level=logical. Default is "replica" and zero-cache refuses
+    # to start without this.
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
     # PG 18+ images: mount parent dir (data lives in a versioned subdir). See docker-library/postgres#1259.
     volumes:
       - cobalt_pgdata:/var/lib/postgresql

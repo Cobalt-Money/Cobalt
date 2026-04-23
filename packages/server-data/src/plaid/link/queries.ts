@@ -1,6 +1,23 @@
 import { db } from "@cobalt-web/db";
+import { bankConnection } from "@cobalt-web/db/schema/banking";
+import { eq } from "drizzle-orm";
 
+import type { DuplicateCheckCandidate } from "./lib.js";
 import { matchesDuplicateAccountMask } from "./lib.js";
+
+/** Fetch a bankConnection row by Plaid item ID. Throws when not found. */
+export async function getBankConnectionByItemId(plaidItemId: string) {
+  const [item] = await db
+    .select()
+    .from(bankConnection)
+    .where(eq(bankConnection.plaidItemId, plaidItemId))
+    .limit(1);
+
+  if (!item) {
+    throw new Error(`Plaid item not found: ${plaidItemId}`);
+  }
+  return item;
+}
 
 /**
  * Get access token for a Plaid item with ownership check.
@@ -26,12 +43,15 @@ export async function getAccessTokenForItem(
 
 /**
  * Check for duplicate accounts before linking.
- * Compares institution_id + mask + type to detect existing accounts.
+ *
+ * Primary match: Plaid's `persistent_account_id` (stable across re-links, renames,
+ * mask changes). Fallback for accounts where Plaid didn't provide one: the
+ * legacy institution_id + mask + type heuristic.
  */
 export async function checkForDuplicateAccounts(
   userId: string,
   institutionId: string | null,
-  newAccounts: { mask: string | null; type: string; name: string }[]
+  newAccounts: DuplicateCheckCandidate[]
 ): Promise<{
   isDuplicate: boolean;
   duplicateAccounts: { name: string; createdAt: Date }[];
@@ -57,14 +77,22 @@ export async function checkForDuplicateAccounts(
       createdAt: c.createdAt,
       mask: a.mask,
       name: a.name,
+      persistentAccountId: a.persistentAccountId,
       type: a.type,
     }))
   );
 
   const duplicateAccounts = newAccounts.flatMap((newAccount) => {
-    const match = existingAccounts.find((existing) =>
-      matchesDuplicateAccountMask(newAccount, existing)
-    );
+    const match = existingAccounts.find((existing) => {
+      if (
+        newAccount.persistentAccountId &&
+        existing.persistentAccountId &&
+        newAccount.persistentAccountId === existing.persistentAccountId
+      ) {
+        return true;
+      }
+      return matchesDuplicateAccountMask(newAccount, existing);
+    });
     return match ? [{ createdAt: match.createdAt, name: match.name }] : [];
   });
 

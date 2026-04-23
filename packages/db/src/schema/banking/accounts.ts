@@ -26,6 +26,7 @@ export const bankAccount = pgTable.withRLS(
     mask: text("mask"),
     name: text("name").notNull(),
     officialName: text("official_name"),
+    persistentAccountId: text("persistent_account_id"),
     plaidAccountId: text("plaid_account_id").notNull().unique(),
     plaidItemId: text("plaid_item_id")
       .notNull()
@@ -41,6 +42,7 @@ export const bankAccount = pgTable.withRLS(
   (table) => [
     index("bank_account_connection_id_idx").on(table.plaidItemId),
     index("bank_account_connection_type_idx").on(table.plaidItemId, table.type),
+    index("bank_account_persistent_id_idx").on(table.persistentAccountId),
     appFullAccess(),
     agentSelectViaBankConnection(table.plaidItemId),
   ]

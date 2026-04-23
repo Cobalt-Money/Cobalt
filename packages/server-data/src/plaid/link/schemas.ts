@@ -1,12 +1,11 @@
 import { z } from "@hono/zod-openapi";
 
-export const exchangeTokenBodySchema = z.object({
+export const linkCompleteBodySchema = z.object({
   public_token: z.string(),
 });
 
-export const persistItemBodySchema = z.object({
-  access_token: z.string(),
-  item_id: z.string(),
+export const linkCompleteResponseSchema = z.object({
+  runId: z.string(),
 });
 
 export const plaidItemIdBodySchema = z.object({
@@ -20,11 +19,6 @@ export const updateLinkTokenBodySchema = z.object({
 
 export const linkTokenResponseSchema = z.object({
   link_token: z.string(),
-});
-
-export const exchangeTokenResponseSchema = z.object({
-  access_token: z.string(),
-  item_id: z.string(),
 });
 
 export const successResponseSchema = z.object({
