@@ -5,10 +5,8 @@ import * as schema from "@cobalt-web/db/schema/auth";
 import { env } from "@cobalt-web/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { createAuthMiddleware } from "better-auth/api";
 import { jwt, lastLoginMethod, openAPI } from "better-auth/plugins";
 import { bearer } from "better-auth/plugins/bearer";
-import { google } from "better-auth/social-providers";
 import { Stripe } from "stripe";
 
 import { getAppleClientSecret } from "./apple-secret.js";
@@ -66,20 +64,6 @@ export const auth = betterAuth({
   disabledPaths: ["/token"],
   emailAndPassword: {
     enabled: false,
-  },
-  hooks: {
-    before: createAuthMiddleware(async (ctx) => {
-      ctx.context.socialProviders = [
-        ...ctx.context.socialProviders,
-        {
-          ...google({
-            clientId: env.GOOGLE_IOS_CLIENT_ID,
-          }),
-          id: "google_ios",
-        },
-      ];
-      await Promise.resolve();
-    }),
   },
   plugins: [
     lastLoginMethod({
@@ -193,7 +177,7 @@ export const auth = betterAuth({
       clientSecret: appleClientSecret,
     },
     google: {
-      clientId: env.GOOGLE_CLIENT_ID,
+      clientId: [env.GOOGLE_CLIENT_ID, env.GOOGLE_IOS_CLIENT_ID],
       clientSecret: env.GOOGLE_CLIENT_SECRET,
     },
   },
