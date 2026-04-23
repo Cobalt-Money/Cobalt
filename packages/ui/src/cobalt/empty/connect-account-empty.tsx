@@ -34,12 +34,7 @@ export function ConnectAccountEmpty({
   title = "Connect an account to get started",
 }: ConnectAccountEmptyProps) {
   return (
-    <Empty
-      className={cn(
-        "min-h-[280px] rounded-3xl border border-dashed",
-        className
-      )}
-    >
+    <Empty className={cn("min-h-[280px] rounded-3xl", className)}>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           {icon ?? <HugeiconsIcon icon={BankIcon} strokeWidth={1.5} />}

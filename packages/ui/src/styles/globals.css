@@ -2,8 +2,17 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Streamdown animation keyframes (sd-fadeIn / sd-blurIn / sd-slideUp) and the
+ * [data-sd-animate] selector. Loaded so the `animated` prop on MessageResponse
+ * works out of the box if we want to re-enable per-word fade/blur later. */
+@import "streamdown/styles.css";
 @source "../../../apps/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
+@source "../../node_modules/streamdown/dist/*.js";
+@source "../../node_modules/@streamdown/cjk/dist/*.js";
+@source "../../node_modules/@streamdown/code/dist/*.js";
+@source "../../node_modules/@streamdown/math/dist/*.js";
+@source "../../node_modules/@streamdown/mermaid/dist/*.js";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -34,13 +43,13 @@
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
   --radius: 0.625rem;
-  --sidebar: oklch(0.9642 0 0);
+  --sidebar: oklch(0.935 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent: oklch(0.895 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-border: oklch(0.885 0 0);
   --sidebar-ring: oklch(0.708 0 0);
   --sidebar-inset: oklch(0.9761 0 0);
   /** Extra green scale stop (between default 500/600) — light */

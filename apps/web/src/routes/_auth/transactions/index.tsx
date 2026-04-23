@@ -1,7 +1,11 @@
+import type { ExportFormat } from "@cobalt-web/ui/cobalt/transactions/lib/export";
+import { exportTransactions } from "@cobalt-web/ui/cobalt/transactions/lib/export";
 import { TransactionsTable } from "@cobalt-web/ui/cobalt/transactions/transactions-table";
 import { TransactionsToolbar } from "@cobalt-web/ui/cobalt/transactions/transactions-toolbar";
 import { queries } from "@cobalt-web/zero";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import type { RowSelectionState } from "@tanstack/react-table";
+import { useCallback, useState } from "react";
 
 import { useAddAccount } from "@/components/accounts/add-account-provider";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
@@ -39,6 +43,23 @@ function TransactionsListPage() {
     status: search.status,
   });
 
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const selectedCount = Object.keys(rowSelection).length;
+
+  const handleExport = useCallback(
+    (format: ExportFormat) => {
+      const selected =
+        selectedCount > 0
+          ? items.filter((item) => rowSelection[item.id])
+          : items;
+      if (selected.length === 0) {
+        return;
+      }
+      exportTransactions(selected, format);
+    },
+    [items, rowSelection, selectedCount]
+  );
+
   return (
     <SidebarShellLayout
       flushBottom
@@ -46,6 +67,8 @@ function TransactionsListPage() {
         <TransactionsToolbar
           bankOptions={bankOptions}
           filters={search}
+          onExport={handleExport}
+          selectedCount={selectedCount}
           onFiltersChange={(next) => {
             navigate({
               replace: true,
@@ -82,6 +105,8 @@ function TransactionsListPage() {
           isComplete={isComplete}
           items={items}
           onConnectAccount={openAddAccount}
+          onRowSelectionChange={setRowSelection}
+          rowSelection={rowSelection}
         />
       </div>
     </SidebarShellLayout>

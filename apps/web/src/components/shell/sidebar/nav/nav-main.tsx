@@ -12,7 +12,7 @@ import {
   CreditCardIcon,
   Home04Icon,
   NewsIcon,
-  SearchDollarIcon,
+  Search02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouterState } from "@tanstack/react-router";
@@ -20,41 +20,41 @@ import { useRouterState } from "@tanstack/react-router";
 import { Link } from "@/components/links";
 
 const navItemClassName =
-  "rounded-md px-2 py-1.5 text-[15px] text-foreground [&_svg]:size-[15px] [&_svg]:shrink-0";
+  "rounded-md px-2 py-1.5 text-[15px] font-normal text-foreground/60 data-active:text-foreground data-active:font-normal [&_svg]:size-[15px] [&_svg]:shrink-0";
 
 const NAV_MAIN_ITEMS = [
   {
-    icon: <HugeiconsIcon icon={Home04Icon} strokeWidth={2} />,
-    title: "Dashboard",
-    url: "/dashboard" as const,
+    icon: <HugeiconsIcon icon={Home04Icon} strokeWidth={1.5} />,
+    title: "Home",
+    url: "/home" as const,
   },
   {
-    icon: <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />,
+    icon: <HugeiconsIcon icon={CreditCardIcon} strokeWidth={1.5} />,
     title: "Accounts",
     url: "/accounts" as const,
   },
   {
-    icon: <HugeiconsIcon icon={AppleStocksIcon} strokeWidth={2} />,
+    icon: <HugeiconsIcon icon={AppleStocksIcon} strokeWidth={1.5} />,
     title: "Brokerage",
     url: "/brokerage" as const,
   },
   {
-    icon: <HugeiconsIcon icon={SearchDollarIcon} strokeWidth={2} />,
+    icon: <HugeiconsIcon icon={Search02Icon} strokeWidth={1.5} />,
     title: "Research",
     url: "/research" as const,
   },
   {
-    icon: <HugeiconsIcon icon={ArrowReloadHorizontalIcon} strokeWidth={2} />,
+    icon: <HugeiconsIcon icon={ArrowReloadHorizontalIcon} strokeWidth={1.5} />,
     title: "Transactions",
     url: "/transactions" as const,
   },
   {
-    icon: <HugeiconsIcon icon={Calendar02Icon} strokeWidth={2} />,
+    icon: <HugeiconsIcon icon={Calendar02Icon} strokeWidth={1.5} />,
     title: "Subscriptions",
     url: "/subscriptions" as const,
   },
   {
-    icon: <HugeiconsIcon icon={NewsIcon} strokeWidth={2} />,
+    icon: <HugeiconsIcon icon={NewsIcon} strokeWidth={1.5} />,
     title: "News",
     url: "/news" as const,
   },

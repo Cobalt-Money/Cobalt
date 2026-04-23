@@ -5,6 +5,7 @@ import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { parseISO, format } from "date-fns";
 
+import { DashboardRecentTransactionsCardSkeleton } from "@/components/dashboard/skeletons/dashboard-recent-transactions-card-skeleton";
 import { ConnectAccountEmpty } from "@/components/empty/connect-account-empty";
 import { useTransactions } from "@/hooks/use-transactions";
 
@@ -17,8 +18,12 @@ const formatUsd = (amount: number) =>
   }).format(amount);
 
 export function DashboardRecentTransactionsCard() {
-  const { items } = useTransactions();
+  const { items, isComplete } = useTransactions();
   const rows = items.slice(0, 6);
+
+  if (!isComplete && items.length === 0) {
+    return <DashboardRecentTransactionsCardSkeleton />;
+  }
 
   return (
     <section aria-label="Recent transactions" className="h-full min-w-0 w-full">

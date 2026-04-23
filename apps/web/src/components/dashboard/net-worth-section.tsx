@@ -27,6 +27,7 @@ import {
 } from "recharts";
 
 import { AllocationDonutChart } from "@/components/dashboard/net-worth-donut-chart";
+import { NetWorthSectionSkeleton } from "@/components/dashboard/skeletons/net-worth-section-skeleton";
 import { ConnectAccountEmpty } from "@/components/empty/connect-account-empty";
 
 // ── Formatters ────────────────────────────────────────────────────
@@ -584,13 +585,18 @@ export function NetWorthSection() {
   const { mask } = usePrivacy();
 
   // Snapshot history — drives both the chart and headline totals
-  const [rawBankSnapshots] = useQuery(queries.accounts.bankBalanceSnapshots());
-  const [rawPortfolioSnapshots] = useQuery(
+  const [rawBankSnapshots, bankResult] = useQuery(
+    queries.accounts.bankBalanceSnapshots()
+  );
+  const [rawPortfolioSnapshots, portfolioResult] = useQuery(
     queries.brokerage.portfolioSnapshots()
   );
   const allBankSnapshots = rawBankSnapshots as unknown as BankSnapshotRow[];
   const allPortfolioSnapshots =
     rawPortfolioSnapshots as unknown as PortfolioSnapshotRow[];
+
+  const isDataComplete =
+    bankResult.type === "complete" && portfolioResult.type === "complete";
 
   // ── Unique account lists for the picker ──────────────────────────
 
@@ -853,6 +859,14 @@ export function NetWorthSection() {
 
   // ── Render ───────────────────────────────────────────────────
 
+  if (
+    !isDataComplete &&
+    allBankSnapshots.length === 0 &&
+    allPortfolioSnapshots.length === 0
+  ) {
+    return <NetWorthSectionSkeleton />;
+  }
+
   return (
     <section aria-label="Net worth overview" className="w-full min-w-0">
       <CobaltCard className="overflow-hidden rounded-3xl py-3">
@@ -862,20 +876,6 @@ export function NetWorthSection() {
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 px-5 sm:gap-5 sm:px-6">
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0 space-y-1">
-                  <p className="text-muted-foreground text-sm font-medium">
-                    {hoverIndex === null
-                      ? scopeLabel(
-                          scope,
-                          bankAccountEntries,
-                          portfolioAccountEntries
-                        )
-                      : (chartData[hoverIndex]?.fullLabel ??
-                        scopeLabel(
-                          scope,
-                          bankAccountEntries,
-                          portfolioAccountEntries
-                        ))}
-                  </p>
                   <p className="text-foreground text-3xl font-semibold tracking-tight tabular-nums sm:text-4xl">
                     <PrivateAmount>
                       {formatUsdInteger(

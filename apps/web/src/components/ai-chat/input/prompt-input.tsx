@@ -134,7 +134,7 @@ function ChatPromptInputInner({
                   strokeWidth={2}
                 />
               </button>
-              <ModelPicker />
+              <ModelPicker isStreaming={isStreaming} />
             </div>
             <PromptInputSubmit
               disabled={!canSubmit && !isStreaming}
@@ -166,7 +166,7 @@ function ChatPromptInputInner({
             />
           </PromptInputBody>
           <div className="flex shrink-0 items-center pr-1.5">
-            <ModelChip />
+            <ModelChip isStreaming={isStreaming} />
             <PromptInputSubmit
               disabled={!canSubmit && !isStreaming}
               onStop={stop}

@@ -1,19 +1,15 @@
+import { LogoCDN } from "@cobalt-web/ui/cobalt/logos/logo-cdn";
 import { Sun02Icon, MoonIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Link, createFileRoute, redirect } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
+import { useEffect, useRef, useState } from "react";
 
 import { AppPreview } from "@/components/landing/app-preview";
 import { Button } from "@/components/ui/button";
 import { Cursor, CursorProvider } from "@/components/ui/cursor";
-import { hasActiveSession } from "@/functions/has-active-session";
 
 export const Route = createFileRoute("/")({
-  beforeLoad: async () => {
-    if (await hasActiveSession()) {
-      throw redirect({ to: "/ai-chat" });
-    }
-  },
   component: LandingPage,
   head: () => ({
     links: [
@@ -163,6 +159,7 @@ function WorksWith() {
 }
 
 interface ShowcaseProps {
+  bare?: boolean;
   description: string;
   eyebrow: string;
   flip?: boolean;
@@ -171,6 +168,7 @@ interface ShowcaseProps {
 }
 
 function Showcase({
+  bare,
   eyebrow,
   title,
   description,
@@ -191,14 +189,18 @@ function Showcase({
         </p>
       </div>
       <div className={flip ? "lg:order-1" : undefined}>
-        <div className="overflow-hidden rounded-2xl border bg-background shadow-sm">
-          <div className="flex items-center gap-1.5 border-b bg-muted/40 px-4 py-3">
-            <span className="size-2.5 rounded-full bg-foreground/15" />
-            <span className="size-2.5 rounded-full bg-foreground/15" />
-            <span className="size-2.5 rounded-full bg-foreground/15" />
+        {bare ? (
+          visual
+        ) : (
+          <div className="overflow-hidden rounded-2xl border bg-background shadow-sm">
+            <div className="flex items-center gap-1.5 border-b bg-muted/40 px-4 py-3">
+              <span className="size-2.5 rounded-full bg-foreground/15" />
+              <span className="size-2.5 rounded-full bg-foreground/15" />
+              <span className="size-2.5 rounded-full bg-foreground/15" />
+            </div>
+            <div className="p-6">{visual}</div>
           </div>
-          <div className="p-6">{visual}</div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -218,10 +220,19 @@ function FeatureShowcase() {
 
         <div className="flex flex-col gap-28 lg:gap-36">
           <Showcase
+            bare
             description="Ask about your money from Claude, Cursor, or ChatGPT — no tab-switching, no copy-paste. Your finances go wherever you already think."
             eyebrow="MCP"
             title="Cobalt lives inside your chatbot."
             visual={<McpVisual />}
+          />
+          <Showcase
+            bare
+            description="Plug Cobalt into ChatGPT as a connector. It reads your balances, categorizes spend, and answers questions — right inside the chat you already use."
+            eyebrow="ChatGPT"
+            flip
+            title="Your money, inside ChatGPT."
+            visual={<ChatGPTVisual />}
           />
           <Showcase
             description="Search a transaction. Categorize a charge. Jump to a holding. Hit ⌘K and type what you want — Cobalt does the rest."
@@ -262,25 +273,589 @@ function FeatureShowcase() {
   );
 }
 
+interface TerminalEntry {
+  id: number;
+  prompt: string;
+}
+
 function McpVisual() {
+  const [entries, setEntries] = useState<TerminalEntry[]>([]);
+  const [draft, setDraft] = useState("");
+  const [streamingText, setStreamingText] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const fullResponse = "I'd love to answer that. First, connect your accounts.";
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({
+      behavior: "smooth",
+      top: scrollRef.current.scrollHeight,
+    });
+  }, [entries.length, streamingText.length]);
+
+  useEffect(() => {
+    if (!isStreaming || streamingText.length >= fullResponse.length) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setStreamingText(fullResponse.slice(0, streamingText.length + 1));
+    }, 15);
+    return () => clearTimeout(timer);
+  }, [isStreaming, streamingText]);
+
+  const submit = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      return;
+    }
+    setEntries((prev) => [...prev, { id: Date.now(), prompt: trimmed }]);
+    setDraft("");
+    setStreamingText("");
+    setIsStreaming(true);
+  };
+
   return (
-    <div className="flex flex-col gap-3 font-mono text-sm">
-      <div className="flex items-start gap-3">
-        <span className="mt-0.5 shrink-0 text-xs text-muted-foreground">
-          you
+    <div
+      className="w-full overflow-hidden rounded-lg border bg-[#1a1a1a] shadow-2xl shadow-black/40"
+      onClick={(e) => {
+        if (
+          e.target === e.currentTarget ||
+          !(e.target as HTMLElement).closest("a, input")
+        ) {
+          inputRef.current?.focus();
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          inputRef.current?.focus();
+        }
+      }}
+      role="application"
+      style={{
+        fontFamily: "'JetBrains Mono', 'SF Mono', Menlo, monospace",
+      }}
+    >
+      <div className="relative flex items-center gap-1.5 border-b border-white/10 bg-[#2d2d2d] px-3 py-2">
+        <span className="size-3 rounded-full bg-[#ff5f57]" />
+        <span className="size-3 rounded-full bg-[#febc2e]" />
+        <span className="size-3 rounded-full bg-[#28c840]" />
+        <span className="-translate-x-1/2 absolute left-1/2 text-[11px] text-white/40">
+          ~/projects/finances — claude
         </span>
-        <span>what did I spend on restaurants last month?</span>
       </div>
-      <div className="flex items-start gap-3">
-        <span className="mt-0.5 shrink-0 text-xs text-primary">cobalt</span>
-        <div className="flex-1 space-y-2">
-          <div className="inline-flex items-center gap-1.5 rounded-md border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground">
-            {`→ tool call: transactions.sum(category="restaurants")`}
+
+      <div
+        className="max-h-[440px] overflow-y-auto p-4 text-[12px] text-[#e6e4dd] leading-[1.55] no-scrollbar"
+        ref={scrollRef}
+      >
+        <div className="mb-3 rounded border border-[#d97757]/40 bg-[#d97757]/5 px-3 py-2">
+          <div>
+            <span className="text-[#d97757]">✻</span>
+            <span className="ml-2 text-white/90">Welcome to Claude Code!</span>
           </div>
-          <p className="leading-relaxed">
-            $847 across 23 transactions — 18% over September. Three late-night
-            Uber Eats orders did most of the damage.
-          </p>
+          <div className="mt-1 pl-5 text-[11px] text-white/40">
+            /help for help, /status for your current setup
+          </div>
+          <div className="mt-1 pl-5 text-[11px] text-white/40">
+            cwd: /Users/alex/projects/finances
+          </div>
+        </div>
+
+        <div className="text-white/90">
+          <span className="text-white/40">&gt;</span>
+          <span className="ml-2">
+            what did I spend on restaurants last month?
+          </span>
+        </div>
+        <div className="mt-3">
+          <span className="text-[#d97757]">⏺</span>
+          <span className="ml-2 text-white/80">
+            I'll check your restaurant spending via Cobalt.
+          </span>
+        </div>
+        <div className="mt-3">
+          <span className="text-[#7fb069]">⏺</span>
+          <span className="ml-2 text-white/90">cobalt - </span>
+          <span className="text-[#d0c58a]">transactions_sum</span>
+          <span className="text-white/50">(category: </span>
+          <span className="text-[#9ccc8d]">"restaurants"</span>
+          <span className="text-white/50">, period: </span>
+          <span className="text-[#9ccc8d]">"last_month"</span>
+          <span className="text-white/50">)</span>
+        </div>
+        <div className="mt-0.5 pl-5 text-white/50">
+          <span>⎿</span>
+          <span className="ml-2 text-white/60">
+            total: $847.23 · count: 23 · vs_prev: +18%
+          </span>
+        </div>
+        <div className="mt-3">
+          <span className="text-[#d97757]">⏺</span>
+          <span className="ml-2 text-white/90">
+            You spent <span className="text-white">$847</span> on restaurants
+            last month across 23 transactions —{" "}
+            <span className="text-[#febc2e]">18% over</span> September. Three
+            late-night Uber Eats orders did most of the damage.
+          </span>
+        </div>
+
+        {entries.map((entry, idx) => (
+          <div key={entry.id}>
+            <div className="mt-4 text-white/90">
+              <span className="text-white/40">&gt;</span>
+              <span className="ml-2">{entry.prompt}</span>
+            </div>
+            {idx === entries.length - 1 && isStreaming ? (
+              <>
+                <div className="mt-3">
+                  <span className="text-[#d97757]">⏺</span>
+                  <span className="ml-2 text-white/80">
+                    {streamingText}
+                    {streamingText.length < fullResponse.length && (
+                      <span className="animate-pulse">_</span>
+                    )}
+                  </span>
+                </div>
+                {streamingText.length >= fullResponse.length && (
+                  <>
+                    <div className="mt-2">
+                      <span className="text-[#febc2e]">⏺</span>
+                      <span className="ml-2 text-white/70">
+                        cobalt mcp · not authenticated
+                      </span>
+                    </div>
+                    <div className="mt-2 pl-5">
+                      <Link
+                        className="inline-flex items-center gap-1.5 rounded border border-[#d97757]/50 bg-[#d97757]/10 px-2.5 py-1 text-[#d97757] text-[11px] hover:bg-[#d97757]/20"
+                        to="/login"
+                      >
+                        → Sign in to Cobalt
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="mt-3">
+                  <span className="text-[#d97757]">⏺</span>
+                  <span className="ml-2 text-white/80">{fullResponse}</span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-[#febc2e]">⏺</span>
+                  <span className="ml-2 text-white/70">
+                    cobalt mcp · not authenticated
+                  </span>
+                </div>
+                <div className="mt-2 pl-5">
+                  <Link
+                    className="inline-flex items-center gap-1.5 rounded border border-[#d97757]/50 bg-[#d97757]/10 px-2.5 py-1 text-[#d97757] text-[11px] hover:bg-[#d97757]/20"
+                    to="/login"
+                  >
+                    → Sign in to Cobalt
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+
+        <div className="mt-4 rounded border border-white/15 px-3 py-2">
+          <div className="flex items-center gap-2 text-white/70">
+            <span className="text-[#d97757]">&gt;</span>
+            <input
+              className="flex-1 border-none bg-transparent text-white/90 placeholder-white/30 outline-none"
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submit();
+                }
+              }}
+              placeholder={
+                entries.length === 0
+                  ? 'Try "rebalance my portfolio"'
+                  : "Ask anything about your money…"
+              }
+              ref={inputRef}
+              type="text"
+              value={draft}
+            />
+            {draft.length === 0 && (
+              <span className="inline-block h-[13px] w-[6px] animate-pulse bg-white/60" />
+            )}
+          </div>
+        </div>
+        <div className="mt-1.5 flex items-center justify-between text-[10px] text-white/35">
+          <span>? for shortcuts</span>
+          <span>
+            cobalt mcp ·{" "}
+            {entries.length > 0 ? (
+              <span className="text-[#febc2e]">sign in required</span>
+            ) : (
+              <span className="text-[#7fb069]">connected</span>
+            )}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface GPTEntry {
+  id: number;
+  prompt: string;
+  response: string;
+  tool: { args: string; name: string; result: string };
+}
+
+const GPT_SCRIPTED: Omit<GPTEntry, "id" | "prompt">[] = [
+  {
+    response:
+      "Your net worth across all connected accounts is **$146,422**, up **2.3%** this month. Your Fidelity brokerage drove most of the gain (+$2,840).",
+    tool: {
+      args: '{ "include": ["cash", "investments", "crypto"] }',
+      name: "cobalt.net_worth",
+      result: "{ total: 146422, delta_30d: 3287, delta_pct: 2.3 }",
+    },
+  },
+  {
+    response:
+      "You spent **$312** on coffee over the last 90 days — 47 transactions, averaging $6.63. Blue Bottle leads at $118.",
+    tool: {
+      args: '{ "category": "coffee", "period": "90d" }',
+      name: "cobalt.transactions_sum",
+      result: "{ total: 312.11, count: 47, top: 'Blue Bottle' }",
+    },
+  },
+  {
+    response:
+      "You have **3 subscriptions** you haven't used in 60+ days: Planet Fitness ($60/mo), Adobe CC ($55/mo), and Headspace ($13/mo). Canceling saves $1,536/yr.",
+    tool: {
+      args: '{ "unused_days": 60 }',
+      name: "cobalt.subscriptions_list",
+      result: "{ count: 3, annualized_savings: 1536 }",
+    },
+  },
+];
+
+function renderMarkdown(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((chunk, i) => {
+    if (chunk.startsWith("**") && chunk.endsWith("**")) {
+      return (
+        <strong className="font-semibold text-white" key={i}>
+          {chunk.slice(2, -2)}
+        </strong>
+      );
+    }
+    return <span key={i}>{chunk}</span>;
+  });
+}
+
+function ChatGPTVisual() {
+  const conversations: Record<string, GPTEntry[]> = {
+    "Cobalt finances": [
+      {
+        id: 0,
+        prompt: "what's my net worth right now?",
+        response:
+          "Your net worth across all connected accounts is **$146,422**, up **2.3%** this month. Your Fidelity brokerage drove most of the gain (+$2,840).",
+        tool: {
+          args: '{ "include": ["cash", "investments", "crypto"] }',
+          name: "cobalt.net_worth",
+          result: "{ total: 146422, delta_30d: 3287, delta_pct: 2.3 }",
+        },
+      },
+    ],
+    "Trip to Lisbon": [
+      {
+        id: 1,
+        prompt: "help me plan a trip to Lisbon",
+        response:
+          "I'll help you plan your trip to Lisbon! Let me check your financial situation to see how much you can comfortably spend.",
+        tool: {
+          args: '{ "include": ["checking", "savings"] }',
+          name: "cobalt.accounts_summary",
+          result: '{ "available_cash": 8945, "monthly_income": 4200 }',
+        },
+      },
+      {
+        id: 2,
+        prompt: "how many days should I go for",
+        response:
+          "Based on your available funds, a 5-7 day trip would be ideal. You could budget roughly $1,200-1,500 total (flights + accommodation + activities). With your monthly income, this won't strain your finances.",
+        tool: {
+          args: '{ "available": 8945, "monthly_income": 4200, "trip_duration": 7 }',
+          name: "cobalt.budget_recommendation",
+          result:
+            '{ "recommended_budget": 1350, "breakeven_months": 0.3, "savings_impact": "minimal" }',
+        },
+      },
+    ],
+  };
+
+  const [entries, setEntries] = useState<GPTEntry[]>(
+    conversations["Trip to Lisbon"]
+  );
+  const [draft, setDraft] = useState("");
+  const [streaming, setStreaming] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [showToolDetail, setShowToolDetail] = useState<number | null>(null);
+  const [activeConversation, setActiveConversation] =
+    useState("Trip to Lisbon");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const brandfetchClientId = process.env.VITE_BRANDFETCH_CLIENT_ID || "";
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({
+      behavior: "smooth",
+      top: scrollRef.current.scrollHeight,
+    });
+  }, [entries.length, streaming.length]);
+
+  useEffect(() => {
+    if (!isStreaming || entries.length === 0) {
+      return;
+    }
+    const target = entries.at(-1)?.response ?? "";
+    if (streaming.length >= target.length) {
+      setIsStreaming(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setStreaming(target.slice(0, streaming.length + 1));
+    }, 12);
+    return () => clearTimeout(timer);
+  }, [isStreaming, streaming, entries]);
+
+  const submit = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      return;
+    }
+    const scripted = GPT_SCRIPTED[entries.length % GPT_SCRIPTED.length];
+    setEntries((prev) => [
+      ...prev,
+      { id: Date.now(), prompt: trimmed, ...scripted },
+    ]);
+    setDraft("");
+    setStreaming("");
+    setIsStreaming(true);
+  };
+
+  const switchConversation = (name: string) => {
+    setActiveConversation(name);
+    setEntries(conversations[name] || []);
+    setDraft("");
+    setStreaming("");
+    setIsStreaming(false);
+  };
+
+  return (
+    <div
+      className="flex h-[520px] w-full overflow-hidden rounded-xl border border-white/10 bg-[#212121] shadow-2xl shadow-black/40"
+      onClick={(e) => {
+        if (!(e.target as HTMLElement).closest("a, input, button")) {
+          inputRef.current?.focus();
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          inputRef.current?.focus();
+        }
+      }}
+      role="application"
+    >
+      <aside className="hidden w-[150px] flex-col border-r border-white/5 bg-[#171717] p-1.5 text-[11px] text-white/80 sm:flex">
+        {brandfetchClientId && (
+          <div className="mb-3 flex items-center justify-center">
+            <LogoCDN
+              domain="openai.com"
+              clientId={brandfetchClientId}
+              fallbackText="O"
+              logoApiSize={24}
+              className="size-6"
+              imgClassName="size-6"
+            />
+          </div>
+        )}
+        <div className="mt-2 px-2 text-[11px] uppercase tracking-wider text-white/40">
+          Today
+        </div>
+        {["Cobalt finances", "Trip to Lisbon", "React hooks refresher"].map(
+          (name) => (
+            <button
+              className={`mt-0.5 w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                activeConversation === name
+                  ? "bg-white/10 text-white"
+                  : "text-white/60 hover:text-white/80"
+              }`}
+              key={name}
+              onClick={() => switchConversation(name)}
+              type="button"
+            >
+              {name}
+            </button>
+          )
+        )}
+        <div className="mt-auto flex items-center gap-2 rounded-md px-2 py-2 text-white/70">
+          <div className="flex size-6 items-center justify-center rounded-full bg-[#ab68ff] text-[11px] font-semibold text-white">
+            A
+          </div>
+          Alex
+        </div>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-between border-b border-white/5 px-4 py-3 text-white/90">
+          <div className="flex items-center gap-2 text-[14px] font-medium">
+            ChatGPT
+            <span className="text-white/40">5</span>
+            <svg
+              className="size-3 text-white/40"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeWidth="2" />
+            </svg>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-full border border-[#10a37f]/40 bg-[#10a37f]/10 px-2 py-0.5 text-[11px] text-[#10a37f]">
+            <span className="size-1.5 rounded-full bg-[#10a37f]" />
+            Cobalt connected
+          </div>
+        </header>
+
+        <div
+          className="flex-1 overflow-y-auto px-6 py-5 text-[14px] text-white/90 no-scrollbar"
+          ref={scrollRef}
+        >
+          <div className="mx-auto max-w-2xl space-y-5">
+            {entries.map((entry, idx) => {
+              const isLast = idx === entries.length - 1;
+              const text = isLast && isStreaming ? streaming : entry.response;
+              return (
+                <div className="space-y-5" key={entry.id}>
+                  <div className="flex justify-end">
+                    <div className="max-w-[85%] rounded-3xl bg-[#2f2f2f] px-4 py-2.5 leading-relaxed">
+                      {entry.prompt}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <button
+                      className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[12px] text-white/70 hover:bg-white/10"
+                      onClick={() =>
+                        setShowToolDetail(
+                          showToolDetail === entry.id ? null : entry.id
+                        )
+                      }
+                      type="button"
+                    >
+                      <span className="flex size-4 items-center justify-center rounded bg-gradient-to-br from-amber-300 to-amber-600 text-[9px] font-bold text-black">
+                        C
+                      </span>
+                      Used <span className="text-white">Cobalt</span>
+                      <span className="text-white/40">
+                        · {entry.tool.name.replace("cobalt.", "")}
+                      </span>
+                      <svg
+                        className={`size-3 transition-transform ${showToolDetail === entry.id ? "rotate-180" : ""}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M19 9l-7 7-7-7"
+                          strokeLinecap="round"
+                          strokeWidth="2"
+                        />
+                      </svg>
+                    </button>
+                    {showToolDetail === entry.id && (
+                      <div className="space-y-1 rounded-lg border border-white/10 bg-black/30 p-3 font-mono text-[11px] text-white/70">
+                        <div>
+                          <span className="text-[#10a37f]">→</span>{" "}
+                          <span className="text-white/90">
+                            {entry.tool.name}
+                          </span>
+                          <span className="text-white/50">
+                            ({entry.tool.args})
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-white/40">←</span>{" "}
+                          <span className="text-[#d0c58a]">
+                            {entry.tool.result}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="leading-relaxed">
+                      {renderMarkdown(text)}
+                      {isLast && isStreaming && (
+                        <span className="ml-0.5 inline-block size-2 animate-pulse rounded-full bg-white/60" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="px-4 pb-4">
+          <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-full border border-white/10 bg-[#2f2f2f] px-3 py-1.5">
+            <button className="text-white/50 hover:text-white/80" type="button">
+              <svg
+                className="size-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12 4v16m8-8H4"
+                  strokeLinecap="round"
+                  strokeWidth="2"
+                />
+              </svg>
+            </button>
+            <input
+              className="flex-1 border-none bg-transparent text-[14px] text-white outline-none"
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submit();
+                }
+              }}
+              ref={inputRef}
+              type="text"
+              value={draft}
+            />
+            <button
+              className="flex size-6 items-center justify-center rounded-full bg-white text-black hover:bg-white/90 disabled:opacity-30"
+              disabled={!draft.trim()}
+              onClick={submit}
+              type="button"
+            >
+              <svg
+                className="size-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12 19V5M5 12l7-7 7 7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -326,25 +901,231 @@ function CommandKVisual() {
   );
 }
 
+interface ChatEntry {
+  id: number;
+  prompt: string;
+}
+
 function ChatVisual() {
+  const [chatEntries, setChatEntries] = useState<ChatEntry[]>([]);
+  const [chatDraft, setChatDraft] = useState("");
+  const [chatStreamingText, setChatStreamingText] = useState("");
+  const [isChatStreaming, setIsChatStreaming] = useState(false);
+  const chatInputRef = useRef<HTMLInputElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  const chatResponse =
+    "To answer that, I need to connect to your accounts. Sign in to Cobalt and I can give you real-time insights about your savings goals and help you make better financial decisions.";
+
+  useEffect(() => {
+    chatScrollRef.current?.scrollTo({
+      behavior: "smooth",
+      top: chatScrollRef.current.scrollHeight,
+    });
+  }, [chatEntries.length, chatStreamingText.length]);
+
+  useEffect(() => {
+    if (!isChatStreaming || chatStreamingText.length >= chatResponse.length) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setChatStreamingText(chatResponse.slice(0, chatStreamingText.length + 1));
+    }, 15);
+    return () => clearTimeout(timer);
+  }, [isChatStreaming, chatStreamingText]);
+
+  const chatSubmit = () => {
+    const trimmed = chatDraft.trim();
+    if (!trimmed) {
+      return;
+    }
+    setChatEntries((prev) => [...prev, { id: Date.now(), prompt: trimmed }]);
+    setChatDraft("");
+    setChatStreamingText("");
+    setIsChatStreaming(true);
+  };
+
   return (
-    <div className="space-y-4 text-sm">
-      <div className="ml-auto w-fit max-w-[80%] rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-primary-foreground">
-        am I on track to hit $20k saved by December?
+    <div className="flex h-[420px] flex-col rounded-2xl border bg-background overflow-hidden shadow-sm">
+      <div
+        className="flex-1 space-y-4 overflow-y-auto p-4 text-sm no-scrollbar"
+        ref={chatScrollRef}
+      >
+        <div className="flex justify-end">
+          <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-primary-foreground">
+            am I on track to hit $20k saved by December?
+          </div>
+        </div>
+        <div className="space-y-2">
+          <div className="max-w-[85%] rounded-2xl rounded-tl-sm border bg-muted/30 px-4 py-3">
+            <p className="leading-relaxed">
+              Yes &mdash; you&apos;re at $16,820 and saving $1,240/mo on
+              average. You&apos;ll clear $20k around November 18 if nothing
+              changes.
+            </p>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground pl-2">
+            <button className="rounded p-1 hover:bg-muted text-foreground/50">
+              <svg
+                className="size-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2h-2.93a2 2 0 00-1.41.59l-2.17 1.83a1 1 0 01-1.6-.74V16z"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                />
+              </svg>
+            </button>
+            <button className="rounded p-1 hover:bg-muted text-foreground/50">
+              <svg
+                className="size-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m0 0l-2-1m2 1v2.5M14 4l-2 1m0 0l-2-1m2 1v2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                />
+              </svg>
+            </button>
+            <button className="rounded p-1 hover:bg-muted text-foreground/50">
+              <svg
+                className="size-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                />
+              </svg>
+            </button>
+            <button className="rounded p-1 hover:bg-muted text-foreground/50">
+              <svg
+                className="size-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M4 12a8 8 0 018-8v0m0 0a8 8 0 110 16v0m0-16v16"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {chatEntries.map((entry, idx) => (
+          <div key={entry.id} className="space-y-2">
+            <div className="flex justify-end">
+              <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-primary-foreground">
+                {entry.prompt}
+              </div>
+            </div>
+            {idx === chatEntries.length - 1 && isChatStreaming ? (
+              <div className="space-y-2">
+                <div className="max-w-[85%] rounded-2xl rounded-tl-sm border bg-muted/30 px-4 py-3">
+                  <p className="leading-relaxed">
+                    {chatStreamingText}
+                    {chatStreamingText.length < chatResponse.length && (
+                      <span className="animate-pulse">▌</span>
+                    )}
+                  </p>
+                </div>
+                {chatStreamingText.length >= chatResponse.length && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground pl-2">
+                    <Link
+                      className="inline-flex items-center gap-1.5 rounded border border-primary/50 bg-primary/10 px-3 py-1.5 text-primary hover:bg-primary/20"
+                      to="/login"
+                    >
+                      Sign in to Cobalt
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="max-w-[85%] rounded-2xl rounded-tl-sm border bg-muted/30 px-4 py-3">
+                  <p className="leading-relaxed">{chatResponse}</p>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground pl-2">
+                  <Link
+                    className="inline-flex items-center gap-1.5 rounded border border-primary/50 bg-primary/10 px-3 py-1.5 text-primary hover:bg-primary/20"
+                    to="/login"
+                  >
+                    Sign in to Cobalt
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
-      <div className="w-fit max-w-[90%] space-y-3 rounded-2xl rounded-bl-sm border bg-muted/30 px-4 py-3.5">
-        <p className="leading-relaxed">
-          Yes &mdash; you&apos;re at $16,820 and saving $1,240/mo on average.
-          You&apos;ll clear $20k around November 18 if nothing changes.
-        </p>
-        <div className="flex h-14 items-end gap-1">
-          {[30, 42, 38, 55, 61, 70, 78, 84, 92].map((h) => (
-            <div
-              className="flex-1 rounded-sm bg-primary/50"
-              key={h}
-              style={{ height: `${h}%` }}
-            />
-          ))}
+
+      <div className="border-t p-3">
+        <div className="flex items-end gap-2 rounded-full border bg-background px-3 py-2">
+          <button className="flex size-6 flex-shrink-0 items-center justify-center rounded-full hover:bg-muted text-foreground/60">
+            <svg
+              className="size-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 5v14m7-7H5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+              />
+            </svg>
+          </button>
+          <input
+            className="flex-1 border-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            onChange={(e) => setChatDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                chatSubmit();
+              }
+            }}
+            placeholder="Ask anything"
+            ref={chatInputRef}
+            type="text"
+            value={chatDraft}
+          />
+          <button
+            className="flex size-7 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-background hover:opacity-90 disabled:opacity-50"
+            disabled={!chatDraft.trim()}
+            onClick={chatSubmit}
+            type="button"
+          >
+            <svg
+              className="size-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M5 12h14M12 5l7 7-7 7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+              />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

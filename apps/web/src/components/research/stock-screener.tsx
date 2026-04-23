@@ -16,6 +16,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { Link } from "@/components/links";
 import { sectorHugeiconForValue } from "@/components/research/sector-icons";
+import { StockScreenerSkeleton } from "@/components/research/skeletons/stock-screener-skeleton";
 import { screenerUniverseQuery } from "@/hooks/research-queries";
 
 declare module "@tanstack/react-table" {
@@ -310,7 +311,7 @@ function buildColumns({
 }
 
 export function StockScreener() {
-  const { data, error } = useQuery(screenerUniverseQuery);
+  const { data, error, isPending } = useQuery(screenerUniverseQuery);
 
   const rows = data?.results ?? EMPTY_SCREENER_ROWS;
 
@@ -400,6 +401,10 @@ export function StockScreener() {
 
   const virtualItems = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
+
+  if (isPending && rows.length === 0) {
+    return <StockScreenerSkeleton />;
+  }
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-4">

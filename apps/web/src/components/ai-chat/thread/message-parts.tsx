@@ -3,16 +3,54 @@ import type { UIMessage } from "ai";
 import type { ReactNode } from "react";
 import { memo } from "react";
 
+import { useAgentSettings } from "../state/agent-settings-context";
 import { ToolPartRenderer } from "../tool-renderers";
 import type { ToolRendererContext } from "../tool-renderers";
 import { CitationComponent } from "../tool-renderers/citation/citation-component";
 import { ReasoningBlock } from "./reasoning-block";
 import { StepTask } from "./step-task";
+import { charsPerSecForModel, useSmoothText } from "./use-smooth-text";
 
 type MessagePart = UIMessage["parts"][number];
 
 const citationComponents = { cite: CitationComponent };
 const citationAllowedTags = { cite: ["url", "title", "excerpt"] };
+
+interface TextPartProps {
+  text: string;
+  isStreaming: boolean;
+  hasWebSearchOutput: boolean;
+}
+
+/** Text bubble with smoothed typewriter reveal layered under streamdown's
+ * per-word animation. Hook only smooths while streaming; once the source text
+ * stops growing, the RAF loop catches up and terminates. */
+const TextPart = memo(function TextPart({
+  text,
+  isStreaming,
+  hasWebSearchOutput,
+}: TextPartProps) {
+  const { settings } = useAgentSettings();
+  const smoothed = useSmoothText(text, {
+    charsPerSec: charsPerSecForModel(settings.model),
+  });
+  const isAnimating = isStreaming || smoothed.length < text.length;
+  return (
+    <div className="[&_ul]:pl-6 [&_ol]:pl-6 [&_li]:mb-1 [&_ul_ul]:pl-6 [&_ol_ol]:pl-6 [&_ul_ol]:pl-6 [&_ol_ul]:pl-6">
+      <MessageResponse
+        isAnimating={isAnimating}
+        {...(hasWebSearchOutput
+          ? {
+              allowedTags: citationAllowedTags,
+              components: citationComponents,
+            }
+          : {})}
+      >
+        {smoothed}
+      </MessageResponse>
+    </div>
+  );
+});
 
 type RenderItem =
   | { kind: "step"; stepIndex: number; parts: MessagePart[] }
@@ -88,24 +126,13 @@ export const MessagePartsRenderer = memo(function MessagePartsRenderer({
 
     if (part.type === "text") {
       return (
-        <div
+        <TextPart
           // eslint-disable-next-line react/no-array-index-key
           key={`${message.id}-text-${partIndex}`}
-          className="[&_ul]:pl-6 [&_ol]:pl-6 [&_li]:mb-1 [&_ul_ul]:pl-6 [&_ol_ol]:pl-6 [&_ul_ol]:pl-6 [&_ol_ul]:pl-6"
-        >
-          <MessageResponse
-            caret="block"
-            isAnimating={isStreaming}
-            {...(hasWebSearchOutput
-              ? {
-                  allowedTags: citationAllowedTags,
-                  components: citationComponents,
-                }
-              : {})}
-          >
-            {part.text}
-          </MessageResponse>
-        </div>
+          hasWebSearchOutput={hasWebSearchOutput}
+          isStreaming={isStreaming}
+          text={part.text}
+        />
       );
     }
 

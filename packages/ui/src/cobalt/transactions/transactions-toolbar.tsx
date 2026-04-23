@@ -1,4 +1,10 @@
 import { Button } from "@cobalt-web/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@cobalt-web/ui/components/dropdown-menu";
 
 import { AmountFilter } from "./filters/amount-filter";
 import type { AmountFilterType } from "./filters/amount-filter";
@@ -6,6 +12,7 @@ import { BankFilter } from "./filters/bank-filter";
 import type { BankOption } from "./filters/bank-filter";
 import { StatusFilter } from "./filters/status-filter";
 import type { StatusFilterValue } from "./filters/status-filter";
+import type { ExportFormat } from "./lib/export";
 
 export type { BankOption } from "./filters/bank-filter";
 
@@ -21,13 +28,18 @@ export interface TransactionsToolbarProps {
   filters: TransactionsToolbarFilters;
   bankOptions: readonly BankOption[];
   onFiltersChange: (next: TransactionsToolbarFilters) => void;
+  onExport?: (format: ExportFormat) => void;
+  selectedCount?: number;
 }
 
 export function TransactionsToolbar({
   filters,
   bankOptions,
   onFiltersChange,
+  onExport,
+  selectedCount = 0,
 }: TransactionsToolbarProps) {
+  const label = selectedCount > 0 ? `Export (${selectedCount})` : "Export all";
   return (
     <div className="flex w-full min-w-0 flex-col gap-4 bg-sidebar-inset px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-6">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -60,9 +72,36 @@ export function TransactionsToolbar({
           value={filters.bank ?? []}
         />
       </div>
-      <Button className="shrink-0" size="sm" type="button" variant="outline">
-        Export
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              className="shrink-0"
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              {label}
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={() => {
+              onExport?.("csv");
+            }}
+          >
+            Export as CSV
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              onExport?.("xlsx");
+            }}
+          >
+            Export as Excel (.xlsx)
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

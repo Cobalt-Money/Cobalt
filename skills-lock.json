@@ -96,6 +96,11 @@
       "sourceType": "well-known",
       "computedHash": "74b5f9e1e24d7662000c28d6572e438ac71847d60ea0a8704b088441355e3371"
     },
+    "streamdown": {
+      "source": "vercel/streamdown",
+      "sourceType": "github",
+      "computedHash": "c842552c75b80abb74ef8f92481d34684c709884dd2df22c2ab3b183aee582fe"
+    },
     "tailwind-design-system": {
       "source": "wshobson/agents",
       "sourceType": "github",

@@ -12,7 +12,7 @@ import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useParams } from "@tanstack/react-router";
 import type { UIMessage } from "ai";
-import { useEffect, useMemo } from "react";
+import { memo, useEffect, useMemo } from "react";
 
 import { useChat } from "@/components/ai-chat/state/chat-context";
 import { MessagePartsRenderer } from "@/components/ai-chat/thread/message-parts";
@@ -140,6 +140,102 @@ function rowToUIMessage(message: ChatMessageRow): UIMessage {
   };
 }
 
+/**
+ * Structural equality on the fields we actually render. Guards against Zero
+ * handing us a fresh row reference for unchanged content — without this, every
+ * streamed chunk would force a full re-render of every settled message.
+ */
+function rowPartsEqual(
+  a: readonly ChatMessagePart[],
+  b: readonly ChatMessagePart[]
+): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i += 1) {
+    const ap = a[i];
+    const bp = b[i];
+    if (!(ap && bp)) {
+      return false;
+    }
+    if (ap.type !== bp.type) {
+      return false;
+    }
+    if (ap.text_text !== bp.text_text) {
+      return false;
+    }
+    if (ap.reasoning_text !== bp.reasoning_text) {
+      return false;
+    }
+    if (ap.tool_state !== bp.tool_state) {
+      return false;
+    }
+    if (ap.tool_toolCallId !== bp.tool_toolCallId) {
+      return false;
+    }
+    if (ap.tool_input !== bp.tool_input) {
+      return false;
+    }
+    if (ap.tool_output !== bp.tool_output) {
+      return false;
+    }
+    if (ap.tool_errorText !== bp.tool_errorText) {
+      return false;
+    }
+    if (ap.data !== bp.data) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function rowsEqual(a: ChatMessageRow, b: ChatMessageRow): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (a.messageId !== b.messageId) {
+    return false;
+  }
+  if (a.role !== b.role) {
+    return false;
+  }
+  return rowPartsEqual(a.parts, b.parts);
+}
+
+const UserBubble = memo(
+  function UserBubble({ row }: { row: ChatMessageRow }) {
+    const text = useMemo(() => getTextContent(row), [row]);
+    return (
+      <Message className="w-full max-w-full" from="user">
+        <MessageContent
+          className={cn(
+            "w-full max-w-full text-base leading-snug",
+            "group-[.is-user]:rounded-3xl group-[.is-user]:bg-[oklch(0.949_0_0)] group-[.is-user]:px-5 group-[.is-user]:py-3.5 group-[.is-user]:text-foreground",
+            "dark:group-[.is-user]:bg-[oklch(0.29_0_0)]"
+          )}
+        >
+          <p className="whitespace-pre-wrap">{text}</p>
+        </MessageContent>
+      </Message>
+    );
+  },
+  (prev, next) => rowsEqual(prev.row, next.row)
+);
+
+const AssistantBubble = memo(
+  function AssistantBubble({ row }: { row: ChatMessageRow }) {
+    const message = useMemo(() => rowToUIMessage(row), [row]);
+    return (
+      <Message className="max-w-full" from="assistant">
+        <MessageContent className="w-full min-w-0 px-4 text-base leading-snug">
+          <MessagePartsRenderer isStreaming={false} message={message} />
+        </MessageContent>
+      </Message>
+    );
+  },
+  (prev, next) => rowsEqual(prev.row, next.row)
+);
+
 export default function ChatView() {
   const { chatId } = useParams({ from: "/_auth/ai-chat/$chatId" });
   const [messages, messagesResult] = useQuery(
@@ -199,34 +295,12 @@ export default function ChatView() {
 
             return (
               <div className="flex flex-col gap-8" key={sectionKey}>
-                {section.user && (
-                  <Message className="w-full max-w-full" from="user">
-                    <MessageContent
-                      className={cn(
-                        "w-full max-w-full text-base leading-snug",
-                        "group-[.is-user]:rounded-3xl group-[.is-user]:bg-[oklch(0.949_0_0)] group-[.is-user]:px-5 group-[.is-user]:py-3.5 group-[.is-user]:text-foreground",
-                        "dark:group-[.is-user]:bg-[oklch(0.29_0_0)]"
-                      )}
-                    >
-                      <p className="whitespace-pre-wrap">
-                        {getTextContent(section.user)}
-                      </p>
-                    </MessageContent>
-                  </Message>
-                )}
+                {section.user && <UserBubble row={section.user} />}
                 {section.assistants.map((assistant) => (
-                  <Message
-                    className="max-w-full"
-                    from="assistant"
+                  <AssistantBubble
                     key={String(assistant.messageId)}
-                  >
-                    <MessageContent className="w-full min-w-0 px-4 text-base leading-snug">
-                      <MessagePartsRenderer
-                        isStreaming={false}
-                        message={rowToUIMessage(assistant)}
-                      />
-                    </MessageContent>
-                  </Message>
+                    row={assistant}
+                  />
                 ))}
               </div>
             );

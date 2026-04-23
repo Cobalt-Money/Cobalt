@@ -46,7 +46,8 @@ import {
   useAccountLauncher,
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
-import { useSettingsDialog } from "@/components/shell/sidebar/nav/settings-dialog-provider";
+import { SettingsGrid } from "@/components/settings/settings-grid";
+import type { SettingsSection } from "@/components/settings/settings-grid";
 import { logout } from "@/lib/zero-logout";
 
 import { ChatSearchResults, useChatSearch } from "./search-chats";
@@ -68,13 +69,13 @@ const COMMAND_NAV_ROUTES: readonly {
     | "/accounts"
     | "/ai-chat"
     | "/brokerage"
-    | "/dashboard"
+    | "/home"
     | "/news"
     | "/research"
     | "/subscriptions"
     | "/transactions";
 }[] = [
-  { icon: Home04Icon, label: "Dashboard", path: "/dashboard" },
+  { icon: Home04Icon, label: "Home", path: "/home" },
   {
     icon: ArrowReloadHorizontalIcon,
     keywords: ["tx", "history"],
@@ -218,12 +219,15 @@ function CommandMenuDialog({
   const [themeReady, setThemeReady] = useState(false);
   const [pages, setPages] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [settingsSection, setSettingsSection] =
+    useState<SettingsSection>("profile");
 
   const activePage = pages.at(-1);
   const inSearchTransactions = activePage === "search-transactions";
   const inSearchChats = activePage === "search-chats";
   const inAddAccount = activePage === "add-account";
   const inSearchTickers = activePage === "search-tickers";
+  const inSettings = activePage === "settings";
   const trimmedSearch = search.trim();
 
   // ── Search hooks ────────────────────────────────────────────────────────────
@@ -250,7 +254,6 @@ function CommandMenuDialog({
   );
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
   const { handleChoose: handleChooseInstitution } = useAccountLauncher(dismiss);
-  const { openSettings } = useSettingsDialog();
 
   // ── Theme ───────────────────────────────────────────────────────────────────
 
@@ -303,6 +306,12 @@ function CommandMenuDialog({
   const enterAddAccount = useCallback(() => {
     setSearch("");
     setPages((p) => [...p, "add-account"]);
+  }, []);
+
+  const enterSettings = useCallback((section: SettingsSection) => {
+    setSearch("");
+    setSettingsSection(section);
+    setPages((p) => [...p, "settings"]);
   }, []);
 
   // ── Navigation handlers ─────────────────────────────────────────────────────
@@ -425,14 +434,6 @@ function CommandMenuDialog({
     },
   ];
 
-  const openSettingsDialog = useCallback(
-    (section: "profile" | "appearance" | "billing") => {
-      handleOpenChange(false);
-      openSettings(section);
-    },
-    [handleOpenChange, openSettings]
-  );
-
   const handleLogout = useCallback(async () => {
     handleOpenChange(false);
     await logout();
@@ -441,13 +442,13 @@ function CommandMenuDialog({
 
   const settingActions: CommandAction[] = [
     {
-      handleSelect: () => openSettingsDialog("profile"),
+      handleSelect: () => enterSettings("profile"),
       icon: Settings01Icon,
       keywords: ["settings", "preferences", "account", "profile"],
       label: "Settings",
     },
     {
-      handleSelect: () => openSettingsDialog("billing"),
+      handleSelect: () => enterSettings("billing"),
       icon: CreditCardIcon,
       keywords: ["billing", "subscription", "plan", "payment"],
       label: "Billing",
@@ -467,7 +468,8 @@ function CommandMenuDialog({
   return (
     <CobaltCommandDialog
       className={cn(
-        inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]"
+        inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
+        inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl"
       )}
       description="Search for a page or action"
       onOpenChange={handleOpenChange}
@@ -479,20 +481,30 @@ function CommandMenuDialog({
         onValueChange={handleChatHighlight}
         shouldFilter={!isClientFilteredPage(activePage)}
       >
-        <CobaltCommandInput
-          onKeyDown={handleInputKeyDown}
-          onValueChange={setSearch}
-          placeholder={getPlaceholder(activePage)}
-          value={search}
-        />
-        {inAddAccount ? (
+        {inSettings ? null : (
+          <CobaltCommandInput
+            onKeyDown={handleInputKeyDown}
+            onValueChange={setSearch}
+            placeholder={getPlaceholder(activePage)}
+            value={search}
+          />
+        )}
+        {inSettings && (
+          <SettingsGrid
+            activeSection={settingsSection}
+            compact
+            onSectionChange={setSettingsSection}
+          />
+        )}
+        {!inSettings && inAddAccount && (
           <AddAccountGrid
             compact
             onChoose={handleChooseInstitution}
             plaidInstitutions={plaidInstitutions}
             searchQuery={search}
           />
-        ) : (
+        )}
+        {!(inSettings || inAddAccount) && (
           <CommandList>
             {inSearchChats && (
               <ChatSearchResults

@@ -52,12 +52,13 @@ export function Overview() {
   const { openAddAccount } = useAddAccount();
   const {
     accounts,
-    positions,
-    recentActivities,
-    portfolioSnapshots,
+    accountsComplete,
+    plaidActivities,
     plaidInvestmentAccounts,
     plaidPositions,
-    plaidActivities,
+    portfolioSnapshots,
+    positions,
+    recentActivities,
   } = useBrokerage();
 
   const typedAccounts =
@@ -211,7 +212,7 @@ export function Overview() {
   const isEmpty =
     typedAccounts.length === 0 && typedPlaidInvestmentAccounts.length === 0;
 
-  if (isEmpty) {
+  if (accountsComplete && isEmpty) {
     return (
       <div className="w-full min-w-0 py-2 sm:py-3">
         <BrokerageEmpty onConnect={openAddAccount} />
@@ -221,7 +222,7 @@ export function Overview() {
 
   return (
     <div className="w-full min-w-0 space-y-4 py-2 sm:py-3">
-      <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch">
         <BalanceChartCard
           brokerageScope={brokerageScope}
           onScopeChange={setBrokerageScope}
