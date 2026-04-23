@@ -3,7 +3,9 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { authClient } from "@/lib/clients/auth-client";
+import { useAppSession } from "@/lib/providers/app-session";
 
 export const Route = createFileRoute("/pricing")({
   component: PricingPage,
@@ -21,11 +23,48 @@ const features = [
   "Advanced security & encryption",
 ];
 
+function signedInCtaButtonLabel(
+  isSubscribing: boolean,
+  isAnnual: boolean
+): string {
+  if (isSubscribing) {
+    return "Redirecting…";
+  }
+  if (isAnnual) {
+    return "Start 30-day free trial";
+  }
+  return "Subscribe monthly";
+}
+
 function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(true);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const session = useAppSession();
+  const isSignedIn = Boolean(session.data?.user);
 
   const monthlyPrice = 6.99;
   const annualPrice = 70;
+
+  const handleSubscribe = async () => {
+    const plan = isAnnual ? "cobalt-annual" : "cobalt-monthly";
+    setIsSubscribing(true);
+    try {
+      const { data, error } = await authClient.subscription.upgrade({
+        cancelUrl: `${window.location.origin}/pricing`,
+        plan,
+        successUrl: `${window.location.origin}/dashboard`,
+      });
+      if (error) {
+        throw new Error(error.message ?? "Failed to start checkout");
+      }
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error("[pricing] subscribe failed", error);
+      setIsSubscribing(false);
+    }
+  };
 
   const currentPrice = isAnnual ? annualPrice : monthlyPrice;
   const currentPeriod = isAnnual ? "year" : "month";
@@ -125,16 +164,29 @@ function PricingPage() {
                   </div>
 
                   {/* CTA Button */}
-                  <Link
-                    className={buttonVariants({
-                      className:
-                        "w-full lg:w-auto bg-gradient-to-r from-yellow-400 to-orange-400 text-black hover:from-yellow-500 hover:to-orange-500 font-semibold py-3 text-base px-8 flex items-center justify-center gap-2",
-                      size: "lg",
-                    })}
-                    to="/login"
-                  >
-                    {isAnnual ? "Start 30-day free trial" : "Subscribe monthly"}
-                  </Link>
+                  {isSignedIn ? (
+                    <Button
+                      className="w-full lg:w-auto bg-gradient-to-r from-yellow-400 to-orange-400 text-black hover:from-yellow-500 hover:to-orange-500 font-semibold py-3 text-base px-8 flex items-center justify-center gap-2"
+                      disabled={isSubscribing}
+                      onClick={handleSubscribe}
+                      size="lg"
+                    >
+                      {signedInCtaButtonLabel(isSubscribing, isAnnual)}
+                    </Button>
+                  ) : (
+                    <Link
+                      className={buttonVariants({
+                        className:
+                          "w-full lg:w-auto bg-gradient-to-r from-yellow-400 to-orange-400 text-black hover:from-yellow-500 hover:to-orange-500 font-semibold py-3 text-base px-8 flex items-center justify-center gap-2",
+                        size: "lg",
+                      })}
+                      to="/login"
+                    >
+                      {isAnnual
+                        ? "Start 30-day free trial"
+                        : "Subscribe monthly"}
+                    </Link>
+                  )}
                   <p className="text-xs text-muted-foreground mt-2">
                     {isAnnual
                       ? "Free trial on annual plan—billed after 30 days."

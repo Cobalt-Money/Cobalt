@@ -12,6 +12,8 @@ import {
 import { and, eq, inArray } from "drizzle-orm";
 import type { AccountBase } from "plaid";
 
+import { upsertInstitutionByPlaidId } from "../../institutions/mutations.js";
+import { getInstitutionById } from "../institutions/actions.js";
 import {
   bankAccountInsertFromPlaid,
   balanceRowFromPlaidAccount,
@@ -44,8 +46,115 @@ export async function persistItemMetadata(params: {
   });
 }
 
+/**
+ * Onboarding persist: fetch institution details (best-effort), upsert the
+ * `institution` row so the mapper has a URL for Brandfetch/Logo.dev, then
+ * insert the bankConnection row.
+ */
+export async function persistOnboardingItem(params: {
+  accessToken: string;
+  item: {
+    available_products?: string[] | null;
+    billed_products?: string[] | null;
+    institution_id?: string | null;
+    webhook?: string | null;
+  };
+  itemId: string;
+  userId: string;
+}): Promise<void> {
+  const institutionId = params.item.institution_id ?? null;
+  let institutionName: string | null = null;
+
+  if (institutionId) {
+    const details = await getInstitutionById(institutionId);
+    institutionName = details.name;
+    await upsertInstitutionByPlaidId({
+      logo: details.logo,
+      name: details.name,
+      oauth: details.oauth,
+      plaidInstitutionId: details.id,
+      primaryColor: details.primary_color,
+      routingNumbers: details.routing_numbers,
+      status: details.status ? String(details.status) : null,
+      url: details.url,
+    });
+  }
+
+  await persistItemMetadata({
+    accessToken: params.accessToken,
+    availableProducts: (params.item.available_products ?? []) as string[],
+    billedProducts: (params.item.billed_products ?? []) as string[],
+    institutionId,
+    institutionLogo: null,
+    institutionName,
+    itemId: params.itemId,
+    userId: params.userId,
+    webhookUrl: params.item.webhook ?? null,
+  });
+}
+
+/**
+ * Apply ITEM webhook state changes to bankConnection. Returns a result so the
+ * caller can decide whether to emit telemetry for unhandled codes.
+ */
+export async function applyItemWebhookState(params: {
+  webhookCode: string;
+  plaidItemId: string;
+  error?: unknown;
+}): Promise<
+  | { success: true; webhookCode: string }
+  | { skipped: true; webhookCode: string }
+> {
+  const { webhookCode, plaidItemId } = params;
+
+  switch (webhookCode) {
+    case "NEW_ACCOUNTS_AVAILABLE": {
+      await db
+        .update(bankConnection)
+        .set({ newAccountsAvailable: true, updatedAt: new Date() })
+        .where(eq(bankConnection.plaidItemId, plaidItemId));
+      return { success: true, webhookCode };
+    }
+
+    case "ERROR": {
+      await db
+        .update(bankConnection)
+        .set({
+          error: (params.error ??
+            null) as (typeof bankConnection.$inferInsert)["error"],
+          updatedAt: new Date(),
+        })
+        .where(eq(bankConnection.plaidItemId, plaidItemId));
+      return { success: true, webhookCode };
+    }
+
+    case "PENDING_DISCONNECT": {
+      const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await db
+        .update(bankConnection)
+        .set({ pendingDisconnectAt: sevenDaysFromNow, updatedAt: new Date() })
+        .where(eq(bankConnection.plaidItemId, plaidItemId));
+      return { success: true, webhookCode };
+    }
+
+    case "LOGIN_REPAIRED": {
+      await db
+        .update(bankConnection)
+        .set({ error: null, pendingDisconnectAt: null, updatedAt: new Date() })
+        .where(eq(bankConnection.plaidItemId, plaidItemId));
+      return { success: true, webhookCode };
+    }
+
+    default: {
+      return { skipped: true, webhookCode };
+    }
+  }
+}
+
 /** Upsert balance for a single Plaid account. */
-async function syncBalanceForAccount(account: AccountBase): Promise<void> {
+export async function upsertBalanceForPlaidAccount(
+  account: AccountBase
+): Promise<void> {
   const existing = await db.query.bankBalance.findFirst({
     where: { plaidAccountId: { eq: account.account_id } },
   });
@@ -74,7 +183,7 @@ export async function syncNewAccountsForItem(
       .values(accounts.map(toInsert))
       .onConflictDoNothing({ target: bankAccount.plaidAccountId });
 
-    await Promise.all(accounts.map(syncBalanceForAccount));
+    await Promise.all(accounts.map(upsertBalanceForPlaidAccount));
   }
 
   await db

@@ -14,12 +14,17 @@ import { useCallback, useEffect, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import { toast } from "sonner";
 
+import { cobaltToast } from "../toasts";
 import type { AccountCardViewModel } from "./lib/map-zero-to-account-cards";
 
 interface AccountConnectionActionsProps {
   account: Pick<
     AccountCardViewModel,
     | "id"
+    | "institution"
+    | "institutionLogo"
+    | "institutionLogosExtra"
+    | "institutionUrl"
     | "kind"
     | "plaidAccountId"
     | "plaidItemId"
@@ -148,7 +153,7 @@ export function AccountConnectionActions({
         if (!res.ok || !data.success) {
           throw new Error(data.message ?? "Disconnect failed");
         }
-        toast.success(data.message ?? "Disconnected");
+        cobaltToast.accountDisconnected(account);
       } else {
         const res = await fetch(
           `${env.VITE_SERVER_URL}/api/accounts/brokerage/${encodeURIComponent(account.id)}`,
@@ -165,7 +170,7 @@ export function AccountConnectionActions({
         if (!res.ok || data.success === false) {
           throw new Error(data.message ?? "Disconnect failed");
         }
-        toast.success(data.message ?? "Disconnected");
+        cobaltToast.accountDisconnected(account);
       }
       setDisconnectOpen(false);
     } catch (error) {

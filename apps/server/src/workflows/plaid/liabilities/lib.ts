@@ -14,6 +14,7 @@ export function mapPlaidLiabilityBankAccount(
     mask: account.mask ?? null,
     name: account.name || account.official_name || "Account",
     officialName: account.official_name ?? null,
+    persistentAccountId: account.persistent_account_id ?? null,
     plaidAccountId: account.account_id,
     plaidItemId,
     subtype: account.subtype ?? null,

@@ -6,6 +6,7 @@ export const bankAccountInsertFromPlaid =
     mask: account.mask ?? null,
     name: account.name || account.official_name || "Account",
     officialName: account.official_name ?? null,
+    persistentAccountId: account.persistent_account_id ?? null,
     plaidAccountId: account.account_id,
     plaidItemId,
     subtype: account.subtype ?? null,
@@ -23,11 +24,20 @@ export const balanceRowFromPlaidAccount = (account: AccountBase) => ({
   unofficialCurrencyCode: account.balances.unofficial_currency_code ?? null,
 });
 
+/** Incoming Plaid account payload we want to dedup against existing rows. */
+export interface DuplicateCheckCandidate {
+  mask: string | null;
+  name: string;
+  persistentAccountId: string | null;
+  type: string;
+}
+
 /** Row used when comparing a new Plaid account to existing DB accounts (duplicate check). */
 export interface ExistingAccountDuplicateRow {
   createdAt: Date;
   mask: string | null;
   name: string;
+  persistentAccountId: string | null;
   type: string;
 }
 

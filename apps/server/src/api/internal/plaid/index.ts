@@ -2,6 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { balanceSnapshotsRouter } from "./balance-snapshots.js";
 import { linkRouter } from "./link.js";
+import { progressRouter } from "./progress.js";
 import { updateRouter } from "./update.js";
 
 // NOTE: `requireAuth` is applied per-route via `createRoute({ middleware: ... })`
@@ -11,4 +12,5 @@ import { updateRouter } from "./update.js";
 export const plaidRouter = new OpenAPIHono()
   .route("/", linkRouter)
   .route("/", updateRouter)
-  .route("/", balanceSnapshotsRouter);
+  .route("/", balanceSnapshotsRouter)
+  .route("/", progressRouter);

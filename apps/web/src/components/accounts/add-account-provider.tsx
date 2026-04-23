@@ -8,6 +8,8 @@ import {
 import type { ReactNode } from "react";
 
 import { AddAccountDialogHost } from "./add-account-dialog-host";
+import { OnboardingProgressProvider } from "./onboarding-context";
+import { OnboardingProgress } from "./onboarding-progress";
 
 interface AddAccountContextValue {
   open: boolean;
@@ -41,9 +43,12 @@ export function AddAccountProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AddAccountContext.Provider value={value}>
-      {children}
-      <AddAccountDialogHost onOpenChange={setOpen} open={open} />
-    </AddAccountContext.Provider>
+    <OnboardingProgressProvider>
+      <AddAccountContext.Provider value={value}>
+        {children}
+        <AddAccountDialogHost onOpenChange={setOpen} open={open} />
+        <OnboardingProgress />
+      </AddAccountContext.Provider>
+    </OnboardingProgressProvider>
   );
 }

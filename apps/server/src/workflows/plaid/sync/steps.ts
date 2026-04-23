@@ -1,28 +1,93 @@
 import { db } from "@cobalt-web/db";
 import {
   bankAccount,
-  bankBalance,
   bankBalanceSnapshot,
   bankConnection,
-  recurringStream,
-  transaction,
 } from "@cobalt-web/db/schema/banking";
 import { portfolioSnapshots } from "@cobalt-web/db/schema/brokerage";
-import { fetchAccounts } from "@cobalt-web/server-data/plaid/link/actions";
 import {
-  fetchRecurringStreams,
-  syncTransactionsPage,
-} from "@cobalt-web/server-data/plaid/transactions/actions";
+  exchangePublicToken,
+  fetchAccounts,
+  fetchItemAndAccounts,
+  removeItem,
+  triggerPlaidSync,
+} from "@cobalt-web/server-data/plaid/link/actions";
+import { bankAccountInsertFromPlaid } from "@cobalt-web/server-data/plaid/link/lib";
+import {
+  applyItemWebhookState,
+  persistOnboardingItem,
+  upsertBalanceForPlaidAccount,
+} from "@cobalt-web/server-data/plaid/link/mutations";
+import {
+  checkForDuplicateAccounts,
+  getBankConnectionByItemId,
+} from "@cobalt-web/server-data/plaid/link/queries";
+import { insertBalanceSnapshots } from "@cobalt-web/server-data/plaid/snapshots/mutations";
+import {
+  getPostedTransactionsForAccount,
+  getSnapshotDatesForAccount,
+} from "@cobalt-web/server-data/plaid/snapshots/queries";
+import { syncTransactionsPage } from "@cobalt-web/server-data/plaid/transactions/actions";
 import {
   applyPendingOverrides,
   persistTransactions,
   removeTransactionsByIds,
+  setTransactionsCursor,
+  syncRecurringForItem,
 } from "@cobalt-web/server-data/plaid/transactions/mutations";
 import { getUserOverrides } from "@cobalt-web/server-data/plaid/transactions/queries";
 import type { UserOverrides } from "@cobalt-web/server-data/plaid/transactions/queries";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import type { AccountBase, TransactionStream } from "plaid";
-import { FatalError, RetryableError } from "workflow";
+import { and, eq, sql } from "drizzle-orm";
+import type { AccountBase } from "plaid";
+import { FatalError, RetryableError, getWritable } from "workflow";
+
+export type PlaidOnboardingPhase =
+  | "exchange"
+  | "validate"
+  | "duplicate"
+  | "persist"
+  | "connecting"
+  | "waiting_for_plaid"
+  | "accounts"
+  | "balances"
+  | "transactions"
+  | "historical"
+  | "holdings"
+  | "investment_transactions"
+  | "liabilities"
+  | "done"
+  | "error";
+
+export interface PlaidOnboardingProgress {
+  phase: PlaidOnboardingPhase;
+  status: "start" | "done";
+  itemId: string;
+  detail?: Record<string, unknown>;
+  at: number;
+}
+
+export async function emitOnboardingProgressStep(
+  event: Omit<PlaidOnboardingProgress, "at">
+) {
+  "use step";
+
+  const writer = getWritable<PlaidOnboardingProgress>({
+    namespace: "progress",
+  }).getWriter();
+  try {
+    await writer.write({ ...event, at: Date.now() });
+  } finally {
+    writer.releaseLock();
+  }
+}
+
+export async function closeOnboardingProgressStep() {
+  "use step";
+
+  await getWritable<PlaidOnboardingProgress>({
+    namespace: "progress",
+  }).close();
+}
 
 function getTodayDateOnly(): string {
   return new Date().toISOString().split("T").at(0) ?? "";
@@ -66,17 +131,7 @@ function getPlaidErrorCode(error: unknown): string | undefined {
 export async function getPlaidItemStep(itemId: string) {
   "use step";
 
-  const [item] = await db
-    .select()
-    .from(bankConnection)
-    .where(eq(bankConnection.plaidItemId, itemId))
-    .limit(1);
-
-  if (!item) {
-    throw new Error(`Plaid item not found: ${itemId}`);
-  }
-
-  return item;
+  return await getBankConnectionByItemId(itemId);
 }
 
 export async function updateItemStateStep(params: {
@@ -86,60 +141,21 @@ export async function updateItemStateStep(params: {
 }) {
   "use step";
 
-  const { webhook_code, item_id } = params;
-
-  if (!item_id) {
-    throw new FatalError(`ITEM webhook missing item_id: ${webhook_code}`);
+  if (!params.item_id) {
+    throw new FatalError(
+      `ITEM webhook missing item_id: ${params.webhook_code}`
+    );
   }
 
-  switch (webhook_code) {
-    case "NEW_ACCOUNTS_AVAILABLE": {
-      await db
-        .update(bankConnection)
-        .set({ newAccountsAvailable: true, updatedAt: new Date() })
-        .where(eq(bankConnection.plaidItemId, item_id));
-      break;
-    }
+  const result = await applyItemWebhookState({
+    error: params.error,
+    plaidItemId: params.item_id,
+    webhookCode: params.webhook_code,
+  });
 
-    case "ERROR": {
-      const errorPayload = params.error ?? null;
-      await db
-        .update(bankConnection)
-        .set({
-          error: errorPayload as (typeof bankConnection.$inferInsert)["error"],
-          updatedAt: new Date(),
-        })
-        .where(eq(bankConnection.plaidItemId, item_id));
-      break;
-    }
-
-    case "PENDING_DISCONNECT": {
-      const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-      await db
-        .update(bankConnection)
-        .set({ pendingDisconnectAt: sevenDaysFromNow, updatedAt: new Date() })
-        .where(eq(bankConnection.plaidItemId, item_id));
-      break;
-    }
-
-    case "LOGIN_REPAIRED": {
-      await db
-        .update(bankConnection)
-        .set({
-          error: null,
-          pendingDisconnectAt: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(bankConnection.plaidItemId, item_id));
-      break;
-    }
-
-    default: {
-      return { skipped: true, webhook_code };
-    }
-  }
-
-  return { success: true, webhook_code };
+  return "skipped" in result
+    ? { skipped: true, webhook_code: result.webhookCode }
+    : { success: true, webhook_code: result.webhookCode };
 }
 
 export async function syncAccountsAndBalancesStep(
@@ -150,24 +166,22 @@ export async function syncAccountsAndBalancesStep(
 
   try {
     const accounts = await fetchAccounts(accessToken);
+    const toInsert = bankAccountInsertFromPlaid(itemId);
 
     await Promise.allSettled(
       accounts.map(async (account) => {
         await db
           .insert(bankAccount)
-          .values({
-            mask: account.mask || null,
-            name: account.name || account.official_name || "Account",
-            officialName: account.official_name || null,
-            plaidAccountId: account.account_id,
-            plaidItemId: itemId,
-            subtype: account.subtype || null,
-            type: account.type,
-            verificationStatus: (account.verification_status as string) || null,
-          })
-          .onConflictDoNothing();
+          .values(toInsert(account))
+          .onConflictDoUpdate({
+            set: {
+              persistentAccountId: sql`coalesce(${bankAccount.persistentAccountId}, excluded.persistent_account_id)`,
+              updatedAt: new Date(),
+            },
+            target: bankAccount.plaidAccountId,
+          });
 
-        await persistPlaidBalance(account);
+        await upsertBalanceForPlaidAccount(account);
 
         return { accountId: account.account_id, success: true };
       })
@@ -205,6 +219,7 @@ export async function reconcileOrphanAccountsStep(
       .select({
         mask: bankAccount.mask,
         name: bankAccount.name,
+        persistentAccountId: bankAccount.persistentAccountId,
         plaidAccountId: bankAccount.plaidAccountId,
         subtype: bankAccount.subtype,
         type: bankAccount.type,
@@ -256,6 +271,7 @@ export async function reconcileOrphanAccountsStep(
 function findMatchingNewAccount(
   orphan: {
     plaidAccountId: string;
+    persistentAccountId: string | null;
     type: string;
     subtype: string | null;
     name: string;
@@ -263,6 +279,7 @@ function findMatchingNewAccount(
   },
   accounts: {
     account_id: string;
+    persistent_account_id?: string | null;
     type: string;
     subtype?: string | null;
     name?: string | null;
@@ -270,6 +287,15 @@ function findMatchingNewAccount(
     mask?: string | null;
   }[]
 ): { account_id: string } | null {
+  if (orphan.persistentAccountId) {
+    const byPersistentId = accounts.find(
+      (a) => a.persistent_account_id === orphan.persistentAccountId
+    );
+    if (byPersistentId) {
+      return byPersistentId;
+    }
+  }
+
   const sameType = accounts.filter((a) => a.type === orphan.type);
   if (sameType.length === 0) {
     return null;
@@ -418,10 +444,7 @@ export async function syncTransactionsStep(
       currentCursor = nextCursor;
       hasMore = more;
 
-      await db
-        .update(bankConnection)
-        .set({ transactionsCursor: currentCursor, updatedAt: new Date() })
-        .where(eq(bankConnection.plaidItemId, itemId));
+      await setTransactionsCursor(itemId, currentCursor);
     }
 
     await applyPendingOverrides(pendingOverrides);
@@ -446,7 +469,7 @@ export async function syncBalancesStep(accessToken: string, _itemId: string) {
     const accounts = await fetchAccounts(accessToken);
 
     await Promise.allSettled(
-      accounts.map((account) => persistPlaidBalance(account))
+      accounts.map((account) => upsertBalanceForPlaidAccount(account))
     );
     return { accounts };
   } catch (error) {
@@ -461,71 +484,8 @@ export async function syncRecurringStep(accessToken: string, itemId: string) {
   "use step";
 
   try {
-    const existingStreams = await db
-      .select({ streamId: recurringStream.streamId })
-      .from(recurringStream)
-      .innerJoin(
-        bankAccount,
-        eq(recurringStream.plaidAccountId, bankAccount.plaidAccountId)
-      )
-      .where(eq(bankAccount.plaidItemId, itemId));
-
-    const existingStreamIds = new Set(
-      existingStreams
-        .map((s) => s.streamId)
-        .filter((id): id is string => id !== null)
-    );
-
-    const { inflowStreams, outflowStreams, updatedDatetime } =
-      await fetchRecurringStreams(accessToken);
-
-    const allStreams = [
-      ...inflowStreams.map((stream) => ({
-        ...stream,
-        type: "inflow" as const,
-      })),
-      ...outflowStreams.map((stream) => ({
-        ...stream,
-        type: "outflow" as const,
-      })),
-    ];
-
-    const totalAdded = allStreams.filter(
-      (s) => !existingStreamIds.has(s.stream_id)
-    ).length;
-    const totalModified = allStreams.filter((s) =>
-      existingStreamIds.has(s.stream_id)
-    ).length;
-
-    await batchUpsertRecurringStreams(allStreams);
-
-    for (const stream of allStreams) {
-      existingStreamIds.delete(stream.stream_id);
-    }
-
-    let totalRemoved = 0;
-    if (existingStreamIds.size > 0) {
-      const removedStreamIds = [...existingStreamIds];
-      totalRemoved = removedStreamIds.length;
-      await db
-        .delete(recurringStream)
-        .where(inArray(recurringStream.streamId, removedStreamIds));
-    }
-
-    await db
-      .update(bankConnection)
-      .set({
-        recurringUpdatedDatetime: updatedDatetime,
-        updatedAt: new Date(),
-      })
-      .where(eq(bankConnection.plaidItemId, itemId));
-
-    return {
-      added: totalAdded,
-      modified: totalModified,
-      removed: totalRemoved,
-      success: true,
-    };
+    const result = await syncRecurringForItem(accessToken, itemId);
+    return { ...result, success: true as const };
   } catch (error) {
     const errorCode = getPlaidErrorCode(error);
 
@@ -593,25 +553,14 @@ async function backfillAccountSnapshots(account: {
   const { plaidAccountId, currentBalance, availableBalance, creditLimit } =
     account;
 
-  const transactions = await db
-    .select({ amount: transaction.amount, date: transaction.date })
-    .from(transaction)
-    .where(
-      and(
-        eq(transaction.plaidAccountId, plaidAccountId),
-        eq(transaction.pending, false)
-      )
-    )
-    .orderBy(desc(transaction.date));
+  const transactions = await getPostedTransactionsForAccount(plaidAccountId);
 
   if (transactions.length === 0) {
     return { created: 0, oldestDate: null, skipped: 0 };
   }
 
   const oldestTxDate = transactions.at(-1)?.date;
-  const newestTxDate = transactions[0]?.date;
-
-  if (!oldestTxDate || !newestTxDate) {
+  if (!oldestTxDate) {
     return { created: 0, oldestDate: null, skipped: 0 };
   }
 
@@ -620,50 +569,32 @@ async function backfillAccountSnapshots(account: {
     dailyTotals.set(tx.date, (dailyTotals.get(tx.date) ?? 0) + tx.amount);
   }
 
-  const endDate = new Date();
-  const startDate = new Date(oldestTxDate);
-  const dates = getDateRange(startDate, endDate);
+  const dates = getDateRange(new Date(oldestTxDate), new Date());
   const historicalBalances = calculateHistoricalBalances(
     currentBalance,
     dailyTotals,
     dates
   );
 
-  const existingSnapshots = await db
-    .select({ date: bankBalanceSnapshot.snapshotDate })
-    .from(bankBalanceSnapshot)
-    .where(eq(bankBalanceSnapshot.plaidAccountId, plaidAccountId));
-
-  const existingDates = new Set(existingSnapshots.map((s) => s.date));
+  const existingDates = new Set(
+    await getSnapshotDatesForAccount(plaidAccountId)
+  );
   const snapshotsToInsert = historicalBalances.filter(
     (snap) => !existingDates.has(snap.date)
   );
-
   const skipped = historicalBalances.length - snapshotsToInsert.length;
-  const todayStr = getTodayDateOnly();
-  const BATCH_SIZE = 100;
-  let created = 0;
 
-  for (let i = 0; i < snapshotsToInsert.length; i += BATCH_SIZE) {
-    const batch = snapshotsToInsert.slice(i, i + BATCH_SIZE);
-    await db
-      .insert(bankBalanceSnapshot)
-      .values(
-        batch.map((snap) => ({
-          availableBalance: snap.date === todayStr ? availableBalance : null,
-          creditLimit,
-          currentBalance: snap.balance,
-          plaidAccountId,
-          snapshotDate: snap.date,
-          snapshotSource:
-            snap.date === todayStr
-              ? ("webhook" as const)
-              : ("backfill" as const),
-        }))
-      )
-      .onConflictDoNothing();
-    created += batch.length;
-  }
+  const todayStr = getTodayDateOnly();
+  const created = await insertBalanceSnapshots(
+    snapshotsToInsert.map((snap) => ({
+      availableBalance: snap.date === todayStr ? availableBalance : null,
+      creditLimit,
+      currentBalance: snap.balance,
+      plaidAccountId,
+      snapshotDate: snap.date,
+      snapshotSource: snap.date === todayStr ? "webhook" : "backfill",
+    }))
+  );
 
   return {
     created,
@@ -704,117 +635,87 @@ function calculateHistoricalBalances(
   return balances.toReversed();
 }
 
-async function persistPlaidBalance(account: AccountBase): Promise<void> {
-  const existingBalance = await db
-    .select()
-    .from(bankBalance)
-    .where(eq(bankBalance.plaidAccountId, account.account_id))
-    .limit(1);
-
-  const balanceData = {
-    available: account.balances.available ?? null,
-    current: account.balances.current ?? 0,
-    isoCurrencyCode: account.balances.iso_currency_code || null,
-    limit: account.balances.limit ?? null,
-    plaidAccountId: account.account_id,
-    unofficialCurrencyCode: account.balances.unofficial_currency_code || null,
-  };
-
-  await (existingBalance.length > 0
-    ? db
-        .update(bankBalance)
-        .set({ ...balanceData, updatedAt: new Date() })
-        .where(eq(bankBalance.plaidAccountId, account.account_id))
-    : db.insert(bankBalance).values(balanceData));
-}
-
-const RECURRING_STREAM_BATCH_SIZE = 100;
-
-type RecurringStreamRow = TransactionStream & { type: "inflow" | "outflow" };
-
-function mapRecurringStreamBase(s: RecurringStreamRow, today: string) {
-  const isActive =
-    s.is_active && s.predicted_next_date && s.predicted_next_date < today
-      ? false
-      : (s.is_active ?? false);
-  return {
-    averageAmount: s.average_amount?.amount ?? 0,
-    firstDate: s.first_date,
-    isActive,
-    isUserModified: s.is_user_modified ?? false,
-    lastAmount: s.last_amount?.amount ?? 0,
-    lastDate: s.last_date ?? s.first_date,
-    plaidAccountId: s.account_id,
-    streamId: s.stream_id,
-    streamType: s.type,
-  };
-}
-
-function mapRecurringStreamMeta(s: RecurringStreamRow) {
-  return {
-    category: s.category ?? null,
-    categoryId: s.category_id ?? null,
-    description: s.description ?? "",
-    frequency: s.frequency ?? "UNKNOWN",
-    lastUserModifiedDatetime: s.last_user_modified_datetime ?? null,
-    merchantName: s.merchant_name ?? null,
-    personalFinanceCategory: s.personal_finance_category
-      ? {
-          confidence_level:
-            s.personal_finance_category.confidence_level ?? "UNKNOWN",
-          detailed: s.personal_finance_category.detailed,
-          primary: s.personal_finance_category.primary,
-        }
-      : null,
-    predictedNextDate: s.predicted_next_date ?? null,
-    status: s.status ?? "UNKNOWN",
-    transactionIds: s.transaction_ids ?? [],
-  };
-}
-
-async function batchUpsertRecurringStreams(
-  streams: RecurringStreamRow[]
-): Promise<void> {
-  const today = getTodayDateOnly();
-
-  const rows = streams.map((s) => ({
-    ...mapRecurringStreamBase(s, today),
-    ...mapRecurringStreamMeta(s),
-  }));
-
-  for (let i = 0; i < rows.length; i += RECURRING_STREAM_BATCH_SIZE) {
-    const batch = rows.slice(i, i + RECURRING_STREAM_BATCH_SIZE);
-    await db
-      .insert(recurringStream)
-      .values(batch)
-      .onConflictDoUpdate({
-        set: {
-          averageAmount: sql`excluded.average_amount`,
-          category: sql`excluded.category`,
-          categoryId: sql`excluded.category_id`,
-          description: sql`excluded.description`,
-          frequency: sql`excluded.frequency`,
-          isActive: sql`excluded.is_active`,
-          isUserModified: sql`excluded.is_user_modified`,
-          lastAmount: sql`excluded.last_amount`,
-          lastDate: sql`excluded.last_date`,
-          lastUserModifiedDatetime: sql`excluded.last_user_modified_datetime`,
-          merchantName: sql`excluded.merchant_name`,
-          personalFinanceCategory: sql`excluded.personal_finance_category`,
-          predictedNextDate: sql`excluded.predicted_next_date`,
-          status: sql`excluded.status`,
-          transactionIds: sql`excluded.transaction_ids`,
-          updatedAt: new Date(),
-        },
-        target: recurringStream.streamId,
-      });
-  }
-}
-
 export async function dispatchSnapshotWorkflowStep(
   _userId: string
 ): Promise<void> {
   "use step";
 
   await Promise.resolve();
+}
+
+// ── Onboarding-phase steps ─────────────────────────────────────────
+// Wrap Plaid REST calls + mutations in steps so each has retry + replay.
+
+export async function exchangePublicTokenStep(
+  publicToken: string
+): Promise<{ accessToken: string; itemId: string }> {
+  "use step";
+
+  const { access_token, item_id } = await exchangePublicToken(publicToken);
+  return { accessToken: access_token, itemId: item_id };
+}
+
+export async function fetchItemForOnboardingStep(accessToken: string) {
+  "use step";
+
+  return await fetchItemAndAccounts(accessToken);
+}
+
+export interface DuplicateCheckInput {
+  userId: string;
+  institutionId: string | null;
+  accounts: AccountBase[];
+}
+
+export async function duplicateCheckStep(input: DuplicateCheckInput) {
+  "use step";
+
+  return await checkForDuplicateAccounts(
+    input.userId,
+    input.institutionId,
+    input.accounts.map((a) => ({
+      mask: a.mask ?? null,
+      name: a.name || a.official_name || "Account",
+      persistentAccountId: a.persistent_account_id ?? null,
+      type: a.type,
+    }))
+  );
+}
+
+/** Best-effort cleanup of a Plaid item. Swallows failures (non-critical). */
+export async function removeItemStep(accessToken: string): Promise<void> {
+  "use step";
+
+  try {
+    await removeItem(accessToken);
+  } catch {
+    // Cleanup failure is non-critical; the Plaid item becomes a dangling record
+    // but onboarding flow must not throw on this path.
+  }
+}
+
+export interface PersistOnboardingItemInput {
+  accessToken: string;
+  itemId: string;
+  item: {
+    available_products?: string[] | null;
+    billed_products?: string[] | null;
+    institution_id?: string | null;
+    webhook?: string | null;
+  };
+  userId: string;
+}
+
+export async function persistOnboardingItemStep(
+  input: PersistOnboardingItemInput
+): Promise<void> {
+  "use step";
+
+  await persistOnboardingItem(input);
+}
+
+export async function triggerPlaidSyncStep(accessToken: string): Promise<void> {
+  "use step";
+
+  await triggerPlaidSync(accessToken);
 }

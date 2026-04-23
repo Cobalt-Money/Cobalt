@@ -21,4 +21,9 @@ export default defineConfig({
       runtime: "nodejs22.x",
     },
   },
+  // workflow/nitro writes run state into .workflow-data/ on every step; keep
+  // the dev watcher out or every workflow run triggers a rebuild storm.
+  watchOptions: {
+    ignored: ["**/.workflow-data/**", "**/.swc/**"],
+  },
 });

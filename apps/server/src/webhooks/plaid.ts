@@ -11,7 +11,7 @@ import type {
   RecurringTransactionsUpdateWebhook,
   SyncUpdatesAvailableWebhook,
 } from "plaid";
-import { start } from "workflow/api";
+import { getHookByToken, resumeHook, start } from "workflow/api";
 
 import {
   plaidHoldingsWorkflow,
@@ -20,6 +20,7 @@ import {
 import { plaidItemWebhookWorkflow } from "../workflows/plaid/item/workflow.js";
 import { plaidLiabilitiesSyncWorkflow } from "../workflows/plaid/liabilities/workflow.js";
 import {
+  plaidOnboardingHookToken,
   plaidRecurringTransactionsWorkflow,
   plaidSyncWorkflow,
 } from "../workflows/plaid/sync/workflow.js";
@@ -48,14 +49,21 @@ async function handleTransactionsWebhook(webhook: PlaidWebhook) {
   switch (webhook.webhook_code) {
     case "SYNC_UPDATES_AVAILABLE": {
       const w = webhook as SyncUpdatesAvailableWebhook;
-      await start(plaidSyncWorkflow, [
-        {
-          historical_update_complete: w.historical_update_complete,
-          initial_update_complete: w.initial_update_complete,
-          item_id: w.item_id,
-        },
-      ]);
-      console.log(`[plaid] Triggered sync workflow for item: ${w.item_id}`);
+      const token = plaidOnboardingHookToken(w.item_id);
+      const payload = {
+        historical_update_complete: w.historical_update_complete,
+        initial_update_complete: w.initial_update_complete,
+      };
+      const hook = await getHookByToken(token).catch(() => null);
+      if (hook) {
+        await resumeHook(token, payload);
+        console.log(
+          `[plaid] Resumed onboarding run ${hook.runId} for item: ${w.item_id}`
+        );
+      } else {
+        await start(plaidSyncWorkflow, [{ ...payload, item_id: w.item_id }]);
+        console.log(`[plaid] Triggered sync workflow for item: ${w.item_id}`);
+      }
       break;
     }
 
