@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "pkill -f '@rocicorp/zero/out' 2>/dev/null; pkill -f zero-cache-dev 2>/dev/null; exit 0",
     "dev": "dotenv -e .env -- zero-cache-dev",
     "start": "dotenv -e .env -- zero-cache-dev",
     "compose:up": "docker compose up -d",
