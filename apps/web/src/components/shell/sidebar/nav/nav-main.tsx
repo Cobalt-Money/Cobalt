@@ -12,7 +12,7 @@ import {
   CreditCardIcon,
   Home04Icon,
   NewsIcon,
-  SearchDollarIcon,
+  Search02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouterState } from "@tanstack/react-router";
@@ -39,7 +39,7 @@ const NAV_MAIN_ITEMS = [
     url: "/brokerage" as const,
   },
   {
-    icon: <HugeiconsIcon icon={SearchDollarIcon} strokeWidth={1.5} />,
+    icon: <HugeiconsIcon icon={Search02Icon} strokeWidth={1.5} />,
     title: "Research",
     url: "/research" as const,
   },
