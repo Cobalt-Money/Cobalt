@@ -19,7 +19,6 @@ import {
   useSidebar,
 } from "@cobalt-web/ui/components/sidebar";
 import {
-  MoreVerticalCircle01Icon,
   UserCircle02Icon,
   CreditCardIcon,
   Logout01Icon,
@@ -63,22 +62,15 @@ export function NavUser({
               />
             }
           >
-            <Avatar className="size-5 shrink-0 rounded-md">
+            <Avatar className="size-7 shrink-0 rounded-md">
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="text-[0.625rem]">
-                {initials}
-              </AvatarFallback>
+              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
             </Avatar>
-            <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium text-muted-foreground">
+            <div className="grid min-w-0 flex-1 text-left leading-tight">
+              <span className="truncate font-medium text-base text-muted-foreground">
                 {user.name}
               </span>
             </div>
-            <HugeiconsIcon
-              icon={MoreVerticalCircle01Icon}
-              strokeWidth={2}
-              className="ml-auto size-4"
-            />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="min-w-56"
