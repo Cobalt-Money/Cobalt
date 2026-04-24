@@ -26,6 +26,15 @@ export type UserOverrideCategoryJson = z.infer<
   typeof userOverrideCategoryJsonSchema
 >;
 
+/** User-authored rich-text note (`notes`). ProseMirror/Tiptap JSON — structural shape. */
+export interface TransactionNotesJson {
+  type?: string;
+  attrs?: Record<string, unknown>;
+  content?: TransactionNotesJson[];
+  marks?: { type: string; attrs?: Record<string, unknown> }[];
+  text?: string;
+}
+
 /** Plaid `location` on a transaction (physical merchants; often all-null for online). */
 export const locationJsonSchema = z.object({
   address: z.string().nullable(),

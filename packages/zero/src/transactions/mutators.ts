@@ -1,6 +1,6 @@
 import { userOverrideCategoryJsonSchema } from "@cobalt-web/db/schema/banking";
 import { defineMutator } from "@rocicorp/zero";
-import type { Transaction } from "@rocicorp/zero";
+import type { ReadonlyJSONObject, Transaction } from "@rocicorp/zero";
 import { z } from "zod";
 
 import type { Context } from "../auth.js";
@@ -19,6 +19,24 @@ const updateDateSchema = transactionIdSchema.extend({
 
 const updateCategorySchema = transactionIdSchema.extend({
   category: userOverrideCategoryJsonSchema,
+});
+
+const NOTES_MAX_SERIALIZED_BYTES = 100_000;
+
+// Typed as `ReadonlyJSONObject` so the inferred arg is assignable to Zero's
+// `notes` column (json). Shape validation runs via `transactionNotesBodySchema`
+// on the REST path; here we just assert it's an object and bound payload size.
+const tiptapDocSchema = z
+  .custom<ReadonlyJSONObject>(
+    (val) => typeof val === "object" && val !== null && !Array.isArray(val),
+    { message: "Expected a Tiptap document object" }
+  )
+  .refine((doc) => JSON.stringify(doc).length <= NOTES_MAX_SERIALIZED_BYTES, {
+    message: `Note exceeds ${NOTES_MAX_SERIALIZED_BYTES} serialized bytes`,
+  });
+
+const updateNotesSchema = transactionIdSchema.extend({
+  notes: tiptapDocSchema,
 });
 
 async function assertOwnsTransaction(
@@ -71,6 +89,13 @@ export const transactionMutators = {
       userOverrideName: null,
     });
   }),
+  resetNotes: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
+    await assertOwnsTransaction(tx, ctx, args.id);
+    await tx.mutate.transaction.update({
+      id: args.id,
+      notes: null,
+    });
+  }),
   updateCategory: defineMutator(
     updateCategorySchema,
     async ({ args, ctx, tx }) => {
@@ -93,6 +118,13 @@ export const transactionMutators = {
     await tx.mutate.transaction.update({
       id: args.id,
       userOverrideName: args.name.trim(),
+    });
+  }),
+  updateNotes: defineMutator(updateNotesSchema, async ({ args, ctx, tx }) => {
+    await assertOwnsTransaction(tx, ctx, args.id);
+    await tx.mutate.transaction.update({
+      id: args.id,
+      notes: args.notes,
     });
   }),
 };

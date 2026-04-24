@@ -7,11 +7,42 @@ import {
   transaction,
   transactionJsonbSelectRefinements,
 } from "@cobalt-web/db/schema/banking";
+import type { TransactionNotesJson } from "@cobalt-web/db/schema/banking";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 
 /** Same as `personalFinanceCategoryJsonSchema` — kept for OpenAPI route imports. */
 export const personalFinanceCategorySchema = personalFinanceCategoryJsonSchema;
+
+/** ProseMirror / Tiptap document — re-exported from db to keep a single source of truth. */
+export type TiptapDoc = TransactionNotesJson;
+
+const NOTES_MAX_SERIALIZED_BYTES = 100_000;
+
+/** Base recursive schema for a Tiptap doc. Use `tiptapDocSchema` for size-capped validation. */
+const tiptapDocBaseSchema: z.ZodType<TiptapDoc> = z.lazy(() =>
+  z
+    .object({
+      attrs: z.record(z.string(), z.any()).optional(),
+      content: z.array(tiptapDocBaseSchema).optional(),
+      marks: z
+        .array(
+          z.object({
+            attrs: z.record(z.string(), z.any()).optional(),
+            type: z.string(),
+          })
+        )
+        .optional(),
+      text: z.string().optional(),
+      type: z.string().optional(),
+    })
+    .passthrough()
+);
+
+export const tiptapDocSchema = tiptapDocBaseSchema.refine(
+  (doc) => JSON.stringify(doc).length <= NOTES_MAX_SERIALIZED_BYTES,
+  { message: `Note exceeds ${NOTES_MAX_SERIALIZED_BYTES} serialized bytes` }
+);
 
 /** `transaction` row fields exposed on the list (see `getUserTransactions`). */
 const transactionListItemRowSchema = createSelectSchema(transaction, {
@@ -69,6 +100,7 @@ export const transactionListItemSchema = transactionListItemRowSchema
     institutionLogo: institutionListSlice.shape.logo,
     institutionName: institutionListSlice.shape.name.nullable(),
     institutionUrl: institutionListSlice.shape.url,
+    notes: tiptapDocBaseSchema.nullable(),
   });
 
 export type TransactionListItem = z.infer<typeof transactionListItemSchema>;
@@ -149,4 +181,8 @@ export const transactionOverrideDateBodySchema = z.object({
 
 export const transactionOverrideNameBodySchema = z.object({
   name: z.string().min(1),
+});
+
+export const transactionNotesBodySchema = z.object({
+  notes: tiptapDocSchema,
 });

@@ -60,6 +60,8 @@
     "@ai-sdk/gateway": "^3.0.103",
     "@cobalt-web/env": "workspace:*",
     "@tanstack/react-virtual": "^3.13.23",
+    "@tiptap/core": "^3",
+    "@tiptap/extension-table": "^3.22.4",
     "ai": "^6.0.167",
     "dotenv": "catalog:",
     "plaid": "^41.4.0",

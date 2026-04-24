@@ -1,6 +1,7 @@
 import type { TransactionDetailEditHandlers } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
 import { TransactionDetailView } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
 import { mutators, queries } from "@cobalt-web/zero";
+import type { ReadonlyJSONObject } from "@rocicorp/zero";
 import { useZero } from "@rocicorp/zero/react";
 import {
   createFileRoute,
@@ -61,6 +62,11 @@ function TransactionDetailRoute() {
           .mutate(mutators.transaction.resetDate({ id: transactionId }))
           .server.catch(reportFailure("date"));
       },
+      onResetNotes: () => {
+        void zero
+          .mutate(mutators.transaction.resetNotes({ id: transactionId }))
+          .server.catch(reportFailure("notes"));
+      },
       onUpdateCategory: (category) => {
         void zero
           .mutate(
@@ -80,6 +86,18 @@ function TransactionDetailRoute() {
         void zero
           .mutate(mutators.transaction.updateName({ id: transactionId, name }))
           .server.catch(reportFailure("name"));
+      },
+      onUpdateNotes: (notes) => {
+        void zero
+          .mutate(
+            mutators.transaction.updateNotes({
+              id: transactionId,
+              // Tiptap's typed JSON doc is structurally a JSON object; Zero's
+              // column type requires `ReadonlyJSONObject` (index-signatured).
+              notes: notes as ReadonlyJSONObject,
+            })
+          )
+          .server.catch(reportFailure("notes"));
       },
     };
   }, [transactionId, zero]);
