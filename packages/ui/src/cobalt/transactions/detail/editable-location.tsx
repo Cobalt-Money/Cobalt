@@ -17,7 +17,6 @@ interface EditableLocationProps {
   onQueryChange: (query: string) => void;
   onReset: () => void;
   onSubmit: (location: LocationJson) => void;
-  query: string;
   results: GeocodeResult[];
 }
 
@@ -35,10 +34,9 @@ export function EditableLocation({
   onQueryChange,
   onReset,
   onSubmit,
-  query,
   results,
 }: EditableLocationProps) {
-  const initial = summarize(location);
+  const seeded = summarize(location);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -55,13 +53,10 @@ export function EditableLocation({
 
   function pick(r: GeocodeResult) {
     onSubmit(r.location);
-    onQueryChange(summarize(r.location));
+    onQueryChange("");
     setOpen(false);
     inputRef.current?.blur();
   }
-
-  const trimmed = query.trim();
-  const showDropdown = open && trimmed.length >= 2 && trimmed !== initial;
 
   return (
     <div className="flex items-center gap-1 text-base" ref={wrapRef}>
@@ -77,6 +72,8 @@ export function EditableLocation({
           aria-label="Transaction location"
           autoComplete="off"
           className="min-w-0 flex-1 cursor-text bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
+          defaultValue={seeded}
+          key={seeded}
           onChange={(e) => {
             onQueryChange(e.target.value);
             setOpen(true);
@@ -85,7 +82,10 @@ export function EditableLocation({
           onKeyDown={(e) => {
             if (e.key === "Escape") {
               e.preventDefault();
-              onQueryChange(initial);
+              if (inputRef.current) {
+                inputRef.current.value = seeded;
+              }
+              onQueryChange("");
               setOpen(false);
               inputRef.current?.blur();
             }
@@ -94,9 +94,8 @@ export function EditableLocation({
           ref={inputRef}
           spellCheck={false}
           type="text"
-          value={query}
         />
-        {showDropdown ? (
+        {open ? (
           <div className="absolute top-full left-0 z-50 mt-1 w-full min-w-[20rem] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
             {loading && results.length === 0 ? (
               <div className="px-2 py-2 text-muted-foreground text-xs">

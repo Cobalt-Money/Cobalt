@@ -60,7 +60,6 @@ function TransactionDetailRoute() {
       locationSearch: {
         loading: locationLoading,
         onQueryChange: setLocationQuery,
-        query: locationQuery,
         results: locationResults,
       },
       onResetCategory: () => {
@@ -73,15 +72,15 @@ function TransactionDetailRoute() {
           .mutate(mutators.transaction.resetDate({ id: transactionId }))
           .server.catch(reportFailure("date"));
       },
-      onResetNotes: () => {
-        void zero
-          .mutate(mutators.transaction.resetNotes({ id: transactionId }))
-          .server.catch(reportFailure("notes"));
-      },
       onResetLocation: () => {
         void zero
           .mutate(mutators.transaction.resetLocation({ id: transactionId }))
           .server.catch(reportFailure("location"));
+      },
+      onResetNotes: () => {
+        void zero
+          .mutate(mutators.transaction.resetNotes({ id: transactionId }))
+          .server.catch(reportFailure("notes"));
       },
       onUpdateCategory: (category) => {
         void zero
@@ -93,17 +92,17 @@ function TransactionDetailRoute() {
           )
           .server.catch(reportFailure("category"));
       },
+      onUpdateDate: (date) => {
+        void zero
+          .mutate(mutators.transaction.updateDate({ date, id: transactionId }))
+          .server.catch(reportFailure("date"));
+      },
       onUpdateLocation: (location) => {
         void zero
           .mutate(
             mutators.transaction.updateLocation({ id: transactionId, location })
           )
           .server.catch(reportFailure("location"));
-      },
-      onUpdateDate: (date) => {
-        void zero
-          .mutate(mutators.transaction.updateDate({ date, id: transactionId }))
-          .server.catch(reportFailure("date"));
       },
       onUpdateName: (name) => {
         void zero
@@ -123,7 +122,7 @@ function TransactionDetailRoute() {
           .server.catch(reportFailure("notes"));
       },
     };
-  }, [transactionId, zero, locationLoading, locationQuery, locationResults]);
+  }, [transactionId, zero, locationLoading, locationResults]);
 
   return (
     <SidebarShellLayout flushBottom>
