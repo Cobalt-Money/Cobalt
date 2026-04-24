@@ -319,12 +319,14 @@ export function TransactionsTable({
   isComplete,
   items,
   onConnectAccount,
+  onOpenTransaction,
   rowSelection: rowSelectionProp,
   onRowSelectionChange,
 }: {
   isComplete: boolean;
   items: TransactionListItem[];
   onConnectAccount?: () => void;
+  onOpenTransaction?: (transaction: TransactionListItem) => void;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: (next: RowSelectionState) => void;
 }) {
@@ -358,12 +360,16 @@ export function TransactionsTable({
 
   const openTransaction = useCallback(
     (row: Row<TransactionListItem>) => {
+      if (onOpenTransaction) {
+        onOpenTransaction(row.original);
+        return;
+      }
       navigate({
         params: { transactionId: row.original.id },
         to: "/transactions/$transactionId",
       });
     },
-    [navigate]
+    [navigate, onOpenTransaction]
   );
 
   const onRowMouseDown = useCallback(
@@ -375,13 +381,15 @@ export function TransactionsTable({
         return;
       }
       e.preventDefault();
-      router.preloadRoute({
-        params: { transactionId: row.original.id },
-        to: "/transactions/$transactionId",
-      });
+      if (!onOpenTransaction) {
+        router.preloadRoute({
+          params: { transactionId: row.original.id },
+          to: "/transactions/$transactionId",
+        });
+      }
       openTransaction(row);
     },
-    [router, openTransaction]
+    [router, openTransaction, onOpenTransaction]
   );
 
   const onRowActivate = useCallback(

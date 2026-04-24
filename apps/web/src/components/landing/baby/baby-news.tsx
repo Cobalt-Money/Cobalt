@@ -9,6 +9,8 @@ interface BabyNewsProps {
   eventsGeneral: FinancialEventCard[];
   eventsForYou: FinancialEventCard[];
   rssItems: NewsMagazineSidebarItem[];
+  onOpenEvent?: (event: FinancialEventCard) => void;
+  onOpenRssItem?: (item: NewsMagazineSidebarItem) => void;
 }
 
 const NEWS_TAB_DEFS = [
@@ -100,15 +102,64 @@ function TickerIconRow({ tickers }: { readonly tickers: string[] }) {
   );
 }
 
-function FeaturedEvent({ event }: { event: FinancialEventCard }) {
+function RssItemBody({ item }: { item: NewsMagazineSidebarItem }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="break-words text-left text-xs font-semibold leading-snug text-foreground">
+        {item.title}
+      </p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <RssSourceFavicon link={item.link} />
+          <span className="text-xs text-muted-foreground">
+            {hostnameFromUrl(item.link)}
+          </span>
+        </div>
+        {item.publishedAt === null ? null : (
+          <time
+            className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground"
+            dateTime={new Date(item.publishedAt).toISOString()}
+          >
+            {formatDistanceStrict(new Date(item.publishedAt), new Date(), {
+              addSuffix: true,
+            })}
+          </time>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FeaturedEvent({
+  event,
+  onOpen,
+}: {
+  event: FinancialEventCard;
+  onOpen?: (event: FinancialEventCard) => void;
+}) {
   const img = event.articles.find((a) => a.imageUrl?.trim())?.imageUrl ?? null;
   const timeLabel =
     typeof event.date === "number" ? compactTimeAgo(event.date) : "";
   const sourceName = event.articles[0]?.sourceName ?? null;
   const sourceUrl = event.articles[0]?.newsUrl ?? null;
 
+  const Wrapper = onOpen ? "button" : "article";
+  const wrapperProps = onOpen
+    ? {
+        onClick: () => onOpen(event),
+        type: "button" as const,
+      }
+    : {};
+
   return (
-    <article className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_min(100%,320px)] lg:items-stretch lg:gap-10">
+    <Wrapper
+      {...wrapperProps}
+      className={cn(
+        "flex flex-col gap-6 text-left lg:grid lg:grid-cols-[minmax(0,1fr)_min(100%,320px)] lg:items-stretch lg:gap-10",
+        onOpen &&
+          "cursor-pointer rounded-2xl transition-colors hover:bg-accent/30"
+      )}
+    >
       <div className="flex min-h-0 w-full min-w-0 flex-col gap-4">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
           <h2 className="shrink-0 text-left text-lg font-bold leading-tight tracking-tight text-foreground sm:text-xl">
@@ -157,19 +208,39 @@ function FeaturedEvent({ event }: { event: FinancialEventCard }) {
       ) : (
         <div className="aspect-[16/10] w-full max-w-full shrink-0 rounded-2xl bg-gradient-to-br from-muted to-muted/30 lg:aspect-auto lg:h-full lg:min-h-[264px] lg:self-stretch" />
       )}
-    </article>
+    </Wrapper>
   );
 }
 
-function GridCard({ event }: { event: FinancialEventCard }) {
+function GridCard({
+  event,
+  onOpen,
+}: {
+  event: FinancialEventCard;
+  onOpen?: (event: FinancialEventCard) => void;
+}) {
   const img = event.articles.find((a) => a.imageUrl?.trim())?.imageUrl ?? null;
   const timeLabel =
     typeof event.date === "number" ? compactTimeAgo(event.date) : "";
   const sourceName = event.articles[0]?.sourceName ?? null;
   const sourceUrl = event.articles[0]?.newsUrl ?? null;
 
+  const Wrapper = onOpen ? "button" : "div";
+  const wrapperProps = onOpen
+    ? {
+        onClick: () => onOpen(event),
+        type: "button" as const,
+      }
+    : {};
+
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-colors hover:bg-accent/40">
+    <Wrapper
+      {...wrapperProps}
+      className={cn(
+        "flex h-full flex-col overflow-hidden rounded-2xl border bg-card text-left transition-colors hover:bg-accent/40",
+        onOpen && "cursor-pointer"
+      )}
+    >
       <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-muted/50">
         {img ? (
           <img
@@ -210,7 +281,7 @@ function GridCard({ event }: { event: FinancialEventCard }) {
           </div>
         </div>
       </div>
-    </div>
+    </Wrapper>
   );
 }
 
@@ -226,6 +297,8 @@ export function BabyNews({
   eventsGeneral,
   eventsForYou,
   rssItems,
+  onOpenEvent,
+  onOpenRssItem,
 }: BabyNewsProps) {
   const [activeTab, setActiveTab] = useState<NewsTab>("general");
 
@@ -273,11 +346,17 @@ export function BabyNews({
                   const nextEvent3 = events[idx + 3];
                   return (
                     <div key={event.id} className="space-y-10">
-                      <FeaturedEvent event={event} />
+                      <FeaturedEvent event={event} onOpen={onOpenEvent} />
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {nextEvent1 && <GridCard event={nextEvent1} />}
-                        {nextEvent2 && <GridCard event={nextEvent2} />}
-                        {nextEvent3 && <GridCard event={nextEvent3} />}
+                        {nextEvent1 && (
+                          <GridCard event={nextEvent1} onOpen={onOpenEvent} />
+                        )}
+                        {nextEvent2 && (
+                          <GridCard event={nextEvent2} onOpen={onOpenEvent} />
+                        )}
+                        {nextEvent3 && (
+                          <GridCard event={nextEvent3} onOpen={onOpenEvent} />
+                        )}
                       </div>
                     </div>
                   );
@@ -297,43 +376,24 @@ export function BabyNews({
               <ul className="space-y-1">
                 {rssItems.slice(0, 8).map((item) => (
                   <li key={item.id}>
-                    <a
-                      className="-mx-2 block min-w-0 rounded-lg px-2 py-3 transition-colors hover:bg-muted/40"
-                      href={item.link}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      <div className="flex flex-col gap-2">
-                        <p className="break-words text-left text-xs font-semibold leading-snug text-foreground">
-                          {item.title}
-                        </p>
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5">
-                            <RssSourceFavicon link={item.link} />
-                            <span className="text-xs text-muted-foreground">
-                              {new URL(item.link).hostname.replace(
-                                /^www\./,
-                                ""
-                              )}
-                            </span>
-                          </div>
-                          {item.publishedAt === null ? null : (
-                            <time
-                              className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground"
-                              dateTime={new Date(
-                                item.publishedAt
-                              ).toISOString()}
-                            >
-                              {formatDistanceStrict(
-                                new Date(item.publishedAt),
-                                new Date(),
-                                { addSuffix: true }
-                              )}
-                            </time>
-                          )}
-                        </div>
-                      </div>
-                    </a>
+                    {onOpenRssItem ? (
+                      <button
+                        className="-mx-2 block w-full min-w-0 rounded-lg px-2 py-3 text-left transition-colors hover:bg-muted/40"
+                        onClick={() => onOpenRssItem(item)}
+                        type="button"
+                      >
+                        <RssItemBody item={item} />
+                      </button>
+                    ) : (
+                      <a
+                        className="-mx-2 block min-w-0 rounded-lg px-2 py-3 transition-colors hover:bg-muted/40"
+                        href={item.link}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        <RssItemBody item={item} />
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>

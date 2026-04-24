@@ -23,7 +23,20 @@ import { useCallback, useMemo, useState } from "react";
 
 import { sectorHugeiconForValue } from "@/components/research/sector-icons";
 
-const MOCK_SCREENER_DATA = [
+interface ScreenerRow {
+  consensus: string;
+  marketCap: number;
+  name: string;
+  pctChange1d: number;
+  pctChangeYtd: number;
+  peRatio: number;
+  price: number;
+  sector: string;
+  symbol: string;
+  volume?: number;
+}
+
+const MOCK_SCREENER_DATA: ScreenerRow[] = [
   {
     consensus: "Strong Buy",
     marketCap: 3_500_000_000_000,
@@ -384,7 +397,17 @@ function ConsensusCell({ consensus }: { consensus?: string }) {
   );
 }
 
-export function BabyResearch() {
+export type BabyScreenerRow = ScreenerRow;
+
+export function getBabyScreenerData(): readonly BabyScreenerRow[] {
+  return MOCK_SCREENER_DATA;
+}
+
+export function BabyResearch({
+  onOpenTicker,
+}: {
+  onOpenTicker?: (row: BabyScreenerRow) => void;
+} = {}) {
   const [pinnedSymbols, setPinnedSymbols] = useState<Set<string>>(
     () => new Set()
   );
@@ -456,6 +479,7 @@ export function BabyResearch() {
             <TableRow
               className="border-0 cursor-pointer hover:bg-muted/50 align-middle"
               key={row.symbol}
+              onClick={() => onOpenTicker?.(row)}
             >
               <TableCell className="py-1.5 min-w-fit shrink-0 align-middle">
                 <div className="pr-3">

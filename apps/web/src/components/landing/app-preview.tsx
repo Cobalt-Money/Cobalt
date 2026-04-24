@@ -1,6 +1,8 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import type { FinancialEventCard } from "@cobalt-web/ui/cobalt/news/financial-events-feed";
 import type { NewsMagazineSidebarItem } from "@cobalt-web/ui/cobalt/news/news-magazine";
+import { TransactionDetailActivity } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-activity";
+import { TransactionDetailSummary } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-summary";
 import { TransactionsTable } from "@cobalt-web/ui/cobalt/transactions/transactions-table";
 import {
   Message,
@@ -8,9 +10,11 @@ import {
   MessageResponse,
 } from "@cobalt-web/ui/components/ai-elements/message";
 import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
+import { Separator } from "@cobalt-web/ui/components/separator";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
   AppleStocksIcon,
+  ArrowLeft01Icon,
   ArrowReloadHorizontalIcon,
   BellDotIcon,
   Calendar02Icon,
@@ -23,15 +27,19 @@ import {
   SearchIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import { BabyAccounts } from "@/components/landing/baby/baby-accounts";
 import { BabyBrokerage } from "@/components/landing/baby/baby-brokerage";
 import { BabyDashboard } from "@/components/landing/baby/baby-dashboard";
 import { BabyNews } from "@/components/landing/baby/baby-news";
+import { BabyNewsArticle } from "@/components/landing/baby/baby-news-article";
 import { BabyPromptInput } from "@/components/landing/baby/baby-prompt-input";
+import type { BabyScreenerRow } from "@/components/landing/baby/baby-research";
 import { BabyResearch } from "@/components/landing/baby/baby-research";
 import { BabySubscriptionsCalendar } from "@/components/landing/baby/baby-subscriptions-calendar";
+import { BabyTickerDetail } from "@/components/landing/baby/baby-ticker-detail";
 import { BrowserWindow } from "@/components/ui/mock-browser-window";
 
 // ---------------------------------------------------------------------------
@@ -92,12 +100,80 @@ function makeTx(
   };
 }
 
+function loc(
+  address: string,
+  city: string,
+  region: string,
+  postal: string,
+  lat: number,
+  lon: number
+): NonNullable<TransactionListItem["location"]> {
+  return {
+    address,
+    city,
+    country: "US",
+    lat,
+    lon,
+    postal_code: postal,
+    region,
+    store_number: null,
+  };
+}
+
+function note(text: string): NonNullable<TransactionListItem["notes"]> {
+  return {
+    content: [
+      {
+        content: [{ text, type: "text" }],
+        type: "paragraph",
+      },
+    ],
+    type: "doc",
+  };
+}
+
+function noteWithBullets(
+  intro: string,
+  items: string[]
+): NonNullable<TransactionListItem["notes"]> {
+  return {
+    content: [
+      {
+        content: [{ text: intro, type: "text" }],
+        type: "paragraph",
+      },
+      {
+        content: items.map((item) => ({
+          content: [
+            {
+              content: [{ text: item, type: "text" }],
+              type: "paragraph",
+            },
+          ],
+          type: "listItem",
+        })),
+        type: "bulletList",
+      },
+    ],
+    type: "doc",
+  };
+}
+
 const TRANSACTIONS: TransactionListItem[] = [
   makeTx({
     amount: -4.5,
     date: "2026-04-11",
     id: "tx-1",
+    location: loc(
+      "66 Mint St",
+      "San Francisco",
+      "CA",
+      "94103",
+      37.7824,
+      -122.4067
+    ),
     name: "Blue Bottle Coffee",
+    notes: note("Morning oat milk latte before standup."),
     personalFinanceCategory: {
       detailed: "FOOD_AND_DRINK_COFFEE",
       primary: "FOOD_AND_DRINK",
@@ -111,6 +187,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionName: "Fidelity",
     institutionUrl: "fidelity.com",
     name: "Spotify",
+    notes: note("Premium family plan — split with Alex."),
     personalFinanceCategory: {
       detailed: "ENTERTAINMENT_MUSIC_AND_AUDIO",
       primary: "ENTERTAINMENT",
@@ -124,6 +201,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionName: "Chase",
     institutionUrl: "chase.com",
     name: "Payroll",
+    notes: note("Bi-weekly direct deposit from employer."),
     personalFinanceCategory: { detailed: "INCOME_WAGES", primary: "INCOME" },
   }),
   makeTx({
@@ -133,6 +211,13 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionName: "Apple",
     institutionUrl: "apple.com",
     name: "Amazon",
+    notes: noteWithBullets("Order contents:", [
+      "Anker 65W USB-C charger (2-pack)",
+      "Monoprice 6ft HDMI 2.1 cable",
+      "Velcro cable ties, 50ct",
+      "Logitech MX Master 3S mouse",
+      "Rain-X windshield washer fluid",
+    ]),
     personalFinanceCategory: {
       detailed: "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES",
       primary: "GENERAL_MERCHANDISE",
@@ -146,6 +231,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionName: "Wells Fargo",
     institutionUrl: "wellsfargo.com",
     name: "PG&E",
+    notes: note("April electric + gas bill. Higher than March — space heater."),
     personalFinanceCategory: {
       detailed: "HOME_IMPROVEMENT_UTILITIES",
       primary: "HOME_IMPROVEMENT",
@@ -159,6 +245,9 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionName: "Chase",
     institutionUrl: "chase.com",
     name: "Netflix",
+    notes: note(
+      "Standard plan. Consider downgrading — barely watched in March."
+    ),
     personalFinanceCategory: {
       detailed: "ENTERTAINMENT_TV_AND_MOVIES",
       primary: "ENTERTAINMENT",
@@ -172,6 +261,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionName: "Apple",
     institutionUrl: "apple.com",
     name: "iCloud",
+    notes: note("200GB tier — photo library keeps growing."),
     personalFinanceCategory: {
       detailed: "GENERAL_SERVICES_SUBSCRIPTION",
       primary: "GENERAL_SERVICES",
@@ -184,7 +274,9 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-8",
     institutionName: "Chase",
     institutionUrl: "chase.com",
+    location: loc("19 W 57th St", "New York", "NY", "10019", 40.7638, -73.9737),
     name: "Nobu",
+    notes: note("Birthday dinner with Priya. Black cod was worth it."),
     personalFinanceCategory: {
       detailed: "FOOD_AND_DRINK_RESTAURANTS",
       primary: "FOOD_AND_DRINK",
@@ -197,7 +289,16 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-9",
     institutionName: "Bank of America",
     institutionUrl: "bankofamerica.com",
+    location: loc(
+      "1288 Howard St, Apt 4B",
+      "San Francisco",
+      "CA",
+      "94103",
+      37.7765,
+      -122.4117
+    ),
     name: "March Rent",
+    notes: note("Monthly rent — autopay. Lease renewal in June."),
     personalFinanceCategory: {
       detailed: "RENT_AND_UTILITIES_RENT",
       primary: "RENT_AND_UTILITIES",
@@ -209,7 +310,16 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-10",
     institutionName: "Chase",
     institutionUrl: "chase.com",
+    location: loc(
+      "555 9th St",
+      "San Francisco",
+      "CA",
+      "94103",
+      37.7717,
+      -122.4077
+    ),
     name: "Trader Joe's",
+    notes: note("Weekly groceries + flowers."),
     personalFinanceCategory: {
       detailed: "FOOD_AND_DRINK_GROCERIES",
       primary: "FOOD_AND_DRINK",
@@ -222,7 +332,16 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-11",
     institutionName: "Wells Fargo",
     institutionUrl: "wellsfargo.com",
+    location: loc(
+      "Mission St & 16th St",
+      "San Francisco",
+      "CA",
+      "94103",
+      37.7651,
+      -122.4196
+    ),
     name: "Uber",
+    notes: note("Ride home after the company offsite dinner."),
     personalFinanceCategory: {
       detailed: "TRANSPORTATION_TAXI_AND_RIDESHARE",
       primary: "TRANSPORTATION",
@@ -235,7 +354,16 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-12",
     institutionName: "Chase",
     institutionUrl: "chase.com",
+    location: loc(
+      "399 4th St",
+      "San Francisco",
+      "CA",
+      "94107",
+      37.7799,
+      -122.4005
+    ),
     name: "Whole Foods Market",
+    notes: note("Restocked pantry — olive oil, coffee beans, snacks."),
     personalFinanceCategory: {
       detailed: "FOOD_AND_DRINK_GROCERIES",
       primary: "FOOD_AND_DRINK",
@@ -248,7 +376,16 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-13",
     institutionName: "Wells Fargo",
     institutionUrl: "wellsfargo.com",
+    location: loc(
+      "301 Pine St",
+      "San Francisco",
+      "CA",
+      "94104",
+      37.7923,
+      -122.4014
+    ),
     name: "Equinox Fitness",
+    notes: note("Monthly membership. Goal: hit classes 3x/week."),
     personalFinanceCategory: {
       detailed: "GENERAL_SERVICES_SUBSCRIPTION",
       primary: "GENERAL_SERVICES",
@@ -261,7 +398,16 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-14",
     institutionName: "Chase",
     institutionUrl: "chase.com",
+    location: loc(
+      "135 4th St",
+      "San Francisco",
+      "CA",
+      "94103",
+      37.7847,
+      -122.4055
+    ),
     name: "AMC Theaters",
+    notes: note("Saw Dune: Part Two finally. Worth the IMAX upcharge."),
     personalFinanceCategory: {
       detailed: "ENTERTAINMENT_MOVIES_AND_THEATER",
       primary: "ENTERTAINMENT",
@@ -275,6 +421,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionName: "Apple",
     institutionUrl: "apple.com",
     name: "DoorDash",
+    notes: note("Late-night Thai from Lers Ros. Tip was 20%."),
     personalFinanceCategory: {
       detailed: "FOOD_AND_DRINK_RESTAURANTS",
       primary: "FOOD_AND_DRINK",
@@ -287,7 +434,16 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-16",
     institutionName: "Chase",
     institutionUrl: "chase.com",
+    location: loc(
+      "1301 Harrison St",
+      "San Francisco",
+      "CA",
+      "94103",
+      37.7706,
+      -122.4107
+    ),
     name: "Shell Gas Station",
+    notes: note("Full tank before the Tahoe drive."),
     personalFinanceCategory: {
       detailed: "TRANSPORTATION_GAS_STATIONS",
       primary: "TRANSPORTATION",
@@ -300,7 +456,16 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-17",
     institutionName: "Wells Fargo",
     institutionUrl: "wellsfargo.com",
+    location: loc(
+      "1455 Market St",
+      "San Francisco",
+      "CA",
+      "94103",
+      37.7762,
+      -122.4171
+    ),
     name: "Lyft",
+    notes: note("Quick ride to the dentist appointment."),
     personalFinanceCategory: {
       detailed: "TRANSPORTATION_TAXI_AND_RIDESHARE",
       primary: "TRANSPORTATION",
@@ -1024,13 +1189,133 @@ function BrokerageView() {
 }
 
 function ResearchView() {
-  return <BabyResearch />;
+  const [selectedTicker, setSelectedTicker] = useState<BabyScreenerRow | null>(
+    null
+  );
+
+  if (selectedTicker) {
+    return (
+      <BackableScreen label="Research" onBack={() => setSelectedTicker(null)}>
+        <BabyTickerDetail
+          data={{
+            marketCap: selectedTicker.marketCap,
+            name: selectedTicker.name,
+            pctChange1d: selectedTicker.pctChange1d,
+            pctChangeYtd: selectedTicker.pctChangeYtd,
+            peRatio: selectedTicker.peRatio,
+            price: selectedTicker.price,
+            sector: selectedTicker.sector,
+            symbol: selectedTicker.symbol,
+            volume: selectedTicker.volume,
+          }}
+        />
+      </BackableScreen>
+    );
+  }
+
+  return <BabyResearch onOpenTicker={setSelectedTicker} />;
+}
+
+function BackableScreen({
+  children,
+  label,
+  onBack,
+}: {
+  children: ReactNode;
+  label: string;
+  onBack: () => void;
+}) {
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-[42px] shrink-0 items-center px-4 pt-2">
+        <button
+          className="-ml-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-lg font-semibold text-foreground transition-colors hover:bg-muted"
+          onClick={onBack}
+          type="button"
+        >
+          <HugeiconsIcon
+            aria-hidden
+            className="size-5"
+            icon={ArrowLeft01Icon}
+            strokeWidth={2}
+          />
+          <span>{label}</span>
+        </button>
+      </div>
+      <div className="min-h-0 flex-1 overflow-auto">{children}</div>
+    </div>
+  );
+}
+
+interface NotesNode {
+  type?: string;
+  text?: string;
+  content?: NotesNode[];
+}
+
+function nodeText(node: NotesNode): string {
+  if (typeof node.text === "string") {
+    return node.text;
+  }
+  if (!Array.isArray(node.content)) {
+    return "";
+  }
+  return node.content.map(nodeText).join("");
+}
+
+function NotesRenderer({ doc }: { doc: NotesNode }) {
+  const children = Array.isArray(doc.content) ? doc.content : [];
+  return (
+    <div className="flex flex-col gap-2 text-left text-sm text-foreground">
+      {children.map((node, i) => {
+        if (node.type === "bulletList") {
+          const items = Array.isArray(node.content) ? node.content : [];
+          return (
+            // eslint-disable-next-line react/no-array-index-key
+            <ul className="list-disc space-y-1 pl-5" key={i}>
+              {items.map((item, j) => (
+                // eslint-disable-next-line react/no-array-index-key
+                <li key={j}>{nodeText(item)}</li>
+              ))}
+            </ul>
+          );
+        }
+        return (
+          // eslint-disable-next-line react/no-array-index-key
+          <p className="whitespace-pre-wrap" key={i}>
+            {nodeText(node)}
+          </p>
+        );
+      })}
+    </div>
+  );
 }
 
 function TransactionsView() {
+  const [selectedTx, setSelectedTx] = useState<TransactionListItem | null>(
+    null
+  );
+
+  if (selectedTx) {
+    return (
+      <BackableScreen onBack={() => setSelectedTx(null)} label="Transactions">
+        <div className="mx-auto flex w-full min-w-0 max-w-2xl flex-col gap-8 pt-[10vh] pb-8">
+          <TransactionDetailSummary transaction={selectedTx} />
+          {selectedTx.notes ? <NotesRenderer doc={selectedTx.notes} /> : null}
+          <Separator />
+          <TransactionDetailActivity transaction={selectedTx} />
+        </div>
+      </BackableScreen>
+    );
+  }
+
   return (
     <div className="h-full overflow-hidden pt-4">
-      <TransactionsTable isComplete items={TRANSACTIONS} />
+      <TransactionsTable
+        isComplete
+        items={TRANSACTIONS}
+        onOpenTransaction={setSelectedTx}
+      />
     </div>
   );
 }
@@ -1044,10 +1329,40 @@ function SubscriptionsView() {
 }
 
 function NewsView() {
+  const [selectedEvent, setSelectedEvent] = useState<FinancialEventCard | null>(
+    null
+  );
+  const [selectedRssItem, setSelectedRssItem] =
+    useState<NewsMagazineSidebarItem | null>(null);
+
+  if (selectedEvent || selectedRssItem) {
+    return (
+      <BackableScreen
+        onBack={() => {
+          setSelectedEvent(null);
+          setSelectedRssItem(null);
+        }}
+        label="News"
+      >
+        <div className="mx-auto w-full max-w-2xl pt-6 pb-8">
+          <BabyNewsArticle event={selectedEvent} rssItem={selectedRssItem} />
+        </div>
+      </BackableScreen>
+    );
+  }
+
   return (
     <BabyNews
       eventsForYou={MOCK_NEWS_EVENTS.slice(0, 2)}
       eventsGeneral={MOCK_NEWS_EVENTS}
+      onOpenEvent={(e) => {
+        setSelectedRssItem(null);
+        setSelectedEvent(e);
+      }}
+      onOpenRssItem={(item) => {
+        setSelectedEvent(null);
+        setSelectedRssItem(item);
+      }}
       rssItems={MOCK_RSS_ITEMS}
     />
   );
@@ -1180,7 +1495,7 @@ export function AppPreview() {
 
   return (
     <BrowserWindow className="w-full h-full" size="2xl" variant="chrome">
-      <div className="flex h-full overflow-hidden rounded-b-2xl bg-sidebar">
+      <div className="flex h-full overflow-hidden rounded-2xl bg-sidebar">
         <MiniSidebar
           active={active}
           onChatThread={setChatThread}

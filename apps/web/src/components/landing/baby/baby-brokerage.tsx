@@ -266,11 +266,13 @@ const mockScopeAccounts: ScopeAccount[] = [
     displayName: "Fidelity Brokerage · ···9934",
     id: "brok-1",
     institutionName: "Fidelity",
+    institutionUrl: "fidelity.com",
   },
   {
     displayName: "Robinhood Brokerage · ···8821",
     id: "brok-2",
     institutionName: "Robinhood",
+    institutionUrl: "robinhood.com",
   },
 ];
 
