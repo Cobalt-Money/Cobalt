@@ -72,6 +72,9 @@ export const transaction = pgTable.withRLS(
       "user_override_category"
     ).$type<UserOverrideCategoryJson | null>(),
     userOverrideDate: date("user_override_date"),
+    userOverrideLocation: jsonb(
+      "user_override_location"
+    ).$type<LocationJson | null>(),
     userOverrideName: text("user_override_name"),
     website: text("website"),
   },

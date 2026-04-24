@@ -127,6 +127,7 @@ export async function getUserTransactions(
         personalFinanceCategory: row.personalFinanceCategory,
         userOverrideCategory: row.userOverrideCategory,
         userOverrideDate: row.userOverrideDate,
+        userOverrideLocation: row.userOverrideLocation,
         userOverrideName: row.userOverrideName,
         website: row.website,
       },

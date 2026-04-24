@@ -1,4 +1,7 @@
-import { userOverrideCategoryJsonSchema } from "@cobalt-web/db/schema/banking";
+import {
+  locationJsonSchema,
+  userOverrideCategoryJsonSchema,
+} from "@cobalt-web/db/schema/banking";
 import { defineMutator } from "@rocicorp/zero";
 import type { ReadonlyJSONObject, Transaction } from "@rocicorp/zero";
 import { z } from "zod";
@@ -37,6 +40,10 @@ const tiptapDocSchema = z
 
 const updateNotesSchema = transactionIdSchema.extend({
   notes: tiptapDocSchema,
+});
+
+const updateLocationSchema = transactionIdSchema.extend({
+  location: locationJsonSchema,
 });
 
 async function assertOwnsTransaction(
@@ -82,6 +89,16 @@ export const transactionMutators = {
       userOverrideDate: null,
     });
   }),
+  resetLocation: defineMutator(
+    transactionIdSchema,
+    async ({ args, ctx, tx }) => {
+      await assertOwnsTransaction(tx, ctx, args.id);
+      await tx.mutate.transaction.update({
+        id: args.id,
+        userOverrideLocation: null,
+      });
+    }
+  ),
   resetName: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
     await assertOwnsTransaction(tx, ctx, args.id);
     await tx.mutate.transaction.update({
@@ -113,6 +130,16 @@ export const transactionMutators = {
       userOverrideDate: isoDateToEpochMs(args.date),
     });
   }),
+  updateLocation: defineMutator(
+    updateLocationSchema,
+    async ({ args, ctx, tx }) => {
+      await assertOwnsTransaction(tx, ctx, args.id);
+      await tx.mutate.transaction.update({
+        id: args.id,
+        userOverrideLocation: args.location,
+      });
+    }
+  ),
   updateName: defineMutator(updateNameSchema, async ({ args, ctx, tx }) => {
     await assertOwnsTransaction(tx, ctx, args.id);
     await tx.mutate.transaction.update({

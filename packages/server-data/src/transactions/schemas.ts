@@ -1,6 +1,7 @@
 import {
   bankAccount,
   institution,
+  locationJsonSchema,
   personalFinanceCategoryJsonSchema,
   recurringStream,
   recurringStreamJsonbSelectRefinements,
@@ -91,6 +92,7 @@ export const transactionListItemSchema = transactionListItemRowSchema
     plaidAccountId: true,
     userOverrideCategory: true,
     userOverrideDate: true,
+    userOverrideLocation: true,
     userOverrideName: true,
     website: true,
   })
@@ -175,14 +177,38 @@ export const creditSpendingQuerySchema = z.object({
   period: z.enum(["1w", "1m", "3m", "6m", "1y", "all"]),
 });
 
-export const transactionOverrideDateBodySchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+/**
+ * Sparse partial update for a transaction. Any field omitted is left unchanged;
+ * `null` clears the override (RFC 7396 semantics).
+ */
+export const transactionPatchBodySchema = z
+  .object({
+    notes: tiptapDocSchema.nullable().optional(),
+    userOverrideCategory: personalFinanceCategoryJsonSchema
+      .nullable()
+      .optional(),
+    userOverrideDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .nullable()
+      .optional(),
+    userOverrideLocation: locationJsonSchema.nullable().optional(),
+    userOverrideName: z.string().min(1).nullable().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, {
+    message: "At least one field is required",
+  });
+
+/** Single Nominatim search result, normalised to our `LocationJson` plus `display_name`. */
+export const geocodeSearchResultSchema = z.object({
+  displayName: z.string(),
+  location: locationJsonSchema,
 });
 
-export const transactionOverrideNameBodySchema = z.object({
-  name: z.string().min(1),
+export const geocodeSearchResponseSchema = z.object({
+  results: z.array(geocodeSearchResultSchema),
 });
 
-export const transactionNotesBodySchema = z.object({
-  notes: tiptapDocSchema,
+export const geocodeSearchQuerySchema = z.object({
+  q: z.string().min(2).max(200),
 });

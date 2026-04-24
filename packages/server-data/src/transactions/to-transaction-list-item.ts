@@ -29,6 +29,7 @@ export interface TransactionRowInput {
   personalFinanceCategory: TransactionListItem["personalFinanceCategory"];
   userOverrideCategory: TransactionListItem["userOverrideCategory"];
   userOverrideDate: string | Date | number | null | undefined;
+  userOverrideLocation: TransactionListItem["location"];
   userOverrideName: string | null | undefined;
   website: string | null | undefined;
 }
@@ -60,7 +61,7 @@ export function toTransactionListItem(input: {
     institutionLogo: inst?.logo ?? null,
     institutionName: inst?.name ?? null,
     institutionUrl: inst?.url ?? null,
-    location: row.location,
+    location: row.userOverrideLocation ?? row.location,
     logoUrl: row.logoUrl ?? null,
     merchantName: row.merchantName ?? null,
     name: row.name,
@@ -71,6 +72,7 @@ export function toTransactionListItem(input: {
     plaidAccountId: account.plaidAccountId,
     userOverrideCategory: row.userOverrideCategory,
     userOverrideDate: normalizedOverrideDate,
+    userOverrideLocation: row.userOverrideLocation ?? null,
     userOverrideName: row.userOverrideName ?? null,
     website: row.website ?? null,
   };

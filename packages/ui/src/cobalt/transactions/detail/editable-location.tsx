@@ -1,0 +1,143 @@
+import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import { Location01Icon, Refresh01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useEffect, useRef, useState } from "react";
+
+type LocationJson = NonNullable<TransactionListItem["location"]>;
+
+export interface GeocodeResult {
+  displayName: string;
+  location: LocationJson;
+}
+
+interface EditableLocationProps {
+  isOverridden: boolean;
+  loading: boolean;
+  location: LocationJson | null;
+  onQueryChange: (query: string) => void;
+  onReset: () => void;
+  onSubmit: (location: LocationJson) => void;
+  query: string;
+  results: GeocodeResult[];
+}
+
+function summarize(loc: LocationJson | null): string {
+  if (!loc) {
+    return "";
+  }
+  return [loc.address, loc.city, loc.region].filter(Boolean).join(", ");
+}
+
+export function EditableLocation({
+  isOverridden,
+  loading,
+  location,
+  onQueryChange,
+  onReset,
+  onSubmit,
+  query,
+  results,
+}: EditableLocationProps) {
+  const initial = summarize(location);
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  function pick(r: GeocodeResult) {
+    onSubmit(r.location);
+    onQueryChange(summarize(r.location));
+    setOpen(false);
+    inputRef.current?.blur();
+  }
+
+  const trimmed = query.trim();
+  const showDropdown = open && trimmed.length >= 2 && trimmed !== initial;
+
+  return (
+    <div className="flex items-center gap-1 text-base" ref={wrapRef}>
+      <div className="relative flex flex-1 items-center gap-2.5">
+        <span className="flex size-5 shrink-0 items-center justify-center">
+          <HugeiconsIcon
+            className="size-5 text-muted-foreground"
+            icon={Location01Icon}
+            strokeWidth={2}
+          />
+        </span>
+        <input
+          aria-label="Transaction location"
+          autoComplete="off"
+          className="min-w-0 flex-1 cursor-text bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
+          onChange={(e) => {
+            onQueryChange(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              onQueryChange(initial);
+              setOpen(false);
+              inputRef.current?.blur();
+            }
+          }}
+          placeholder="Add location"
+          ref={inputRef}
+          spellCheck={false}
+          type="text"
+          value={query}
+        />
+        {showDropdown ? (
+          <div className="absolute top-full left-0 z-50 mt-1 w-full min-w-[20rem] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
+            {loading && results.length === 0 ? (
+              <div className="px-2 py-2 text-muted-foreground text-xs">
+                Searching…
+              </div>
+            ) : null}
+            {!loading && results.length === 0 ? (
+              <div className="px-2 py-2 text-muted-foreground text-xs">
+                No matches
+              </div>
+            ) : null}
+            {results.map((r) => (
+              <button
+                className="block w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted focus:bg-muted focus:outline-none"
+                key={r.displayName}
+                onClick={() => pick(r)}
+                type="button"
+              >
+                {r.displayName}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      {isOverridden ? (
+        <button
+          className="flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-muted-foreground text-xs hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={() => {
+            onReset();
+            onQueryChange("");
+          }}
+          type="button"
+        >
+          <HugeiconsIcon
+            className="size-3"
+            icon={Refresh01Icon}
+            strokeWidth={2}
+          />
+          Reset
+        </button>
+      ) : null}
+    </div>
+  );
+}

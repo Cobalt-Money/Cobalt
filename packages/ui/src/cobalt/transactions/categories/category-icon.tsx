@@ -60,7 +60,7 @@ export function CategoryIcon({ icon }: { icon: CategoryPrimaryGlyph }) {
   return (
     <HugeiconsIcon
       aria-hidden
-      className="text-muted-foreground size-4 shrink-0 [&_svg]:block"
+      className="text-muted-foreground size-6 shrink-0 [&_svg]:block"
       icon={icon as IconSvgElement}
       strokeWidth={2}
     />

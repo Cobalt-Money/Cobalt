@@ -8,10 +8,11 @@ import {
   getRouteApi,
   useNavigate,
 } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
+import { useGeocodeSearch } from "@/hooks/use-geocode-search";
 import { useTransactions } from "@/hooks/use-transactions";
 
 const transactionDetailRouteApi = getRouteApi(
@@ -43,6 +44,10 @@ function TransactionDetailRoute() {
     }
   }, [isComplete, navigate, transaction]);
 
+  const [locationQuery, setLocationQuery] = useState("");
+  const { data: locationResults = [], isFetching: locationLoading } =
+    useGeocodeSearch(locationQuery);
+
   const edit = useMemo<TransactionDetailEditHandlers>(() => {
     function reportFailure(label: string) {
       return (err: unknown) => {
@@ -52,6 +57,12 @@ function TransactionDetailRoute() {
     }
 
     return {
+      locationSearch: {
+        loading: locationLoading,
+        onQueryChange: setLocationQuery,
+        query: locationQuery,
+        results: locationResults,
+      },
       onResetCategory: () => {
         void zero
           .mutate(mutators.transaction.resetCategory({ id: transactionId }))
@@ -67,6 +78,11 @@ function TransactionDetailRoute() {
           .mutate(mutators.transaction.resetNotes({ id: transactionId }))
           .server.catch(reportFailure("notes"));
       },
+      onResetLocation: () => {
+        void zero
+          .mutate(mutators.transaction.resetLocation({ id: transactionId }))
+          .server.catch(reportFailure("location"));
+      },
       onUpdateCategory: (category) => {
         void zero
           .mutate(
@@ -76,6 +92,13 @@ function TransactionDetailRoute() {
             })
           )
           .server.catch(reportFailure("category"));
+      },
+      onUpdateLocation: (location) => {
+        void zero
+          .mutate(
+            mutators.transaction.updateLocation({ id: transactionId, location })
+          )
+          .server.catch(reportFailure("location"));
       },
       onUpdateDate: (date) => {
         void zero
@@ -100,7 +123,7 @@ function TransactionDetailRoute() {
           .server.catch(reportFailure("notes"));
       },
     };
-  }, [transactionId, zero]);
+  }, [transactionId, zero, locationLoading, locationQuery, locationResults]);
 
   return (
     <SidebarShellLayout flushBottom>

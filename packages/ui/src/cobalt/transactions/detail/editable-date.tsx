@@ -39,7 +39,7 @@ export function EditableDate({
   const selected = isoToDateOnly(dateIso);
 
   return (
-    <div className="flex items-center gap-1 text-sm">
+    <div className="flex items-center gap-1 text-base">
       <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger
           render={

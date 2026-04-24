@@ -55,7 +55,7 @@ export function EditableCategory({
     : null;
 
   return (
-    <div className="flex min-w-0 items-center gap-1 text-sm leading-5">
+    <div className="flex min-w-0 items-center gap-1 text-base leading-6">
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
@@ -66,7 +66,7 @@ export function EditableCategory({
             >
               {categoryConfig ? (
                 <>
-                  <span className="flex size-5 shrink-0 items-center justify-center">
+                  <span className="flex size-6 shrink-0 items-center justify-center">
                     <CategoryIcon icon={categoryConfig.icon} />
                   </span>
                   <span className="flex min-w-0 items-center gap-1.5">
