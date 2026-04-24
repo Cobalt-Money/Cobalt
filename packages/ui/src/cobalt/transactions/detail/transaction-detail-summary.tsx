@@ -41,7 +41,6 @@ export interface GeocodeSearchResult {
 export interface LocationSearchState {
   loading: boolean;
   onQueryChange: (query: string) => void;
-  query: string;
   results: GeocodeSearchResult[];
 }
 
@@ -181,7 +180,6 @@ export function TransactionDetailSummary({
             onQueryChange={edit.locationSearch.onQueryChange}
             onReset={edit.onResetLocation}
             onSubmit={edit.onUpdateLocation}
-            query={edit.locationSearch.query}
             results={edit.locationSearch.results}
           />
         ) : null}
