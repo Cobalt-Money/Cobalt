@@ -158,6 +158,7 @@ export const transactionJsonbSelectRefinements = {
   paymentMeta: paymentMetaJsonSchema.nullable(),
   personalFinanceCategory: personalFinanceCategoryJsonSchema.nullable(),
   userOverrideCategory: userOverrideCategoryJsonSchema.nullable(),
+  userOverrideLocation: locationJsonSchema.nullable(),
 } as const;
 
 /** Refinements for `createSelectSchema(recurringStream, …)`. */

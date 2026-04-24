@@ -1,18 +1,30 @@
 import { db } from "@cobalt-web/db";
+import type { Transaction } from "@cobalt-web/db/schema/banking";
 import { transaction } from "@cobalt-web/db/schema/banking";
 import { eq } from "drizzle-orm";
 
-export async function updateTransactionOverride(
+/**
+ * Sparse partial update — only the fields present in `patch` are written.
+ * Pass `null` to clear an override (mirrors RFC 7396 JSON Merge Patch).
+ */
+export async function patchTransaction(
   transactionId: string,
-  field:
-    | "notes"
-    | "userOverrideCategory"
-    | "userOverrideDate"
-    | "userOverrideName",
-  value: unknown
+  patch: Partial<
+    Pick<
+      Transaction,
+      | "notes"
+      | "userOverrideCategory"
+      | "userOverrideDate"
+      | "userOverrideLocation"
+      | "userOverrideName"
+    >
+  >
 ) {
+  if (Object.keys(patch).length === 0) {
+    return;
+  }
   await db
     .update(transaction)
-    .set({ [field]: value })
+    .set(patch)
     .where(eq(transaction.id, transactionId));
 }

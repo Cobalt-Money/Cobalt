@@ -17,11 +17,14 @@ import {
 import { getTransactionDisplayName } from "../lib/helpers";
 import { EditableCategory } from "./editable-category";
 import { EditableDate } from "./editable-date";
+import { EditableLocation } from "./editable-location";
 import { EditableName } from "./editable-name";
 import {
   shouldShowLocationSection,
   TransactionDetailLocationCard,
 } from "./transaction-detail-location";
+
+type LocationJson = NonNullable<TransactionListItem["location"]>;
 
 const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -30,12 +33,27 @@ const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
 });
 
+export interface GeocodeSearchResult {
+  displayName: string;
+  location: LocationJson;
+}
+
+export interface LocationSearchState {
+  loading: boolean;
+  onQueryChange: (query: string) => void;
+  query: string;
+  results: GeocodeSearchResult[];
+}
+
 export interface TransactionDetailEditHandlers {
+  locationSearch: LocationSearchState;
   onResetCategory: () => void;
   onResetDate: () => void;
   onResetNotes: () => void;
+  onResetLocation: () => void;
   onUpdateCategory: (value: { detailed: string; primary: string }) => void;
   onUpdateDate: (dateIso: string) => void;
+  onUpdateLocation: (location: LocationJson) => void;
   onUpdateName: (name: string) => void;
   onUpdateNotes: (doc: TiptapDoc) => void;
 }
@@ -101,7 +119,7 @@ export function TransactionDetailSummary({
       </p>
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2.5 text-sm">
+        <div className="flex items-center gap-2.5 text-base">
           <img
             alt=""
             aria-hidden
@@ -119,7 +137,7 @@ export function TransactionDetailSummary({
             {transaction.pending ? "Pending" : "Posted"}
           </span>
         </div>
-        <div className="flex items-center gap-2.5 text-sm">
+        <div className="flex items-center gap-2.5 text-base">
           <span className="flex size-5 shrink-0 items-center justify-center">
             <InstitutionLogo
               institutionLogo={transaction.institutionLogo}
@@ -154,6 +172,19 @@ export function TransactionDetailSummary({
         ) : (
           <ReadOnlyCategoryRow category={category} />
         )}
+
+        {edit ? (
+          <EditableLocation
+            isOverridden={Boolean(transaction.userOverrideLocation)}
+            loading={edit.locationSearch.loading}
+            location={transaction.location}
+            onQueryChange={edit.locationSearch.onQueryChange}
+            onReset={edit.onResetLocation}
+            onSubmit={edit.onUpdateLocation}
+            query={edit.locationSearch.query}
+            results={edit.locationSearch.results}
+          />
+        ) : null}
       </div>
 
       {showLocation ? (
@@ -177,14 +208,14 @@ function ReadOnlyCategoryRow({
     : null;
   return (
     <div
-      className="flex min-w-0 items-center gap-2 text-sm leading-5"
+      className="flex min-w-0 items-center gap-2 text-base leading-6"
       title={
         detailedLabel
           ? `${categoryConfig.label} › ${detailedLabel}`
           : categoryConfig.label
       }
     >
-      <span className="flex size-5 shrink-0 items-center justify-center">
+      <span className="flex size-6 shrink-0 items-center justify-center">
         <CategoryIcon icon={categoryConfig.icon} />
       </span>
       <div className="flex min-w-0 items-center gap-1.5">

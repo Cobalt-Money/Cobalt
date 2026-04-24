@@ -40,6 +40,7 @@ function createMockTransaction(
     plaidAccountId: "plaid-acc-1",
     userOverrideCategory: null,
     userOverrideDate: null,
+    userOverrideLocation: null,
     userOverrideName: null,
     website: null,
     ...overrides,

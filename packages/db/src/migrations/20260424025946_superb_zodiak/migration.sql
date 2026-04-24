@@ -1,0 +1,1 @@
+ALTER TABLE "transaction" ADD COLUMN "user_override_location" jsonb;
