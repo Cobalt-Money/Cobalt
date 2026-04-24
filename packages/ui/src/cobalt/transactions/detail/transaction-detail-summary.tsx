@@ -84,7 +84,7 @@ export function TransactionDetailSummary({
           />
         ) : (
           <div className="min-w-0 flex-1">
-            <h1 className="text-balance font-medium text-2xl text-foreground leading-tight tracking-tight sm:text-3xl">
+            <h1 className="text-balance text-left font-medium text-2xl text-foreground leading-tight tracking-tight sm:text-3xl">
               {displayName}
             </h1>
             {transaction.merchantName &&
@@ -108,7 +108,7 @@ export function TransactionDetailSummary({
       </div>
       <p
         className={cn(
-          "font-semibold text-xl tabular-nums tracking-tight",
+          "text-left font-semibold text-xl tabular-nums tracking-tight",
           amountColor
         )}
       >
