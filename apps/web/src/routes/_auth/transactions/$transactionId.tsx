@@ -92,17 +92,17 @@ function TransactionDetailRoute() {
           )
           .server.catch(reportFailure("category"));
       },
-      onUpdateDate: (date) => {
-        void zero
-          .mutate(mutators.transaction.updateDate({ date, id: transactionId }))
-          .server.catch(reportFailure("date"));
-      },
       onUpdateLocation: (location) => {
         void zero
           .mutate(
             mutators.transaction.updateLocation({ id: transactionId, location })
           )
           .server.catch(reportFailure("location"));
+      },
+      onUpdateDate: (date) => {
+        void zero
+          .mutate(mutators.transaction.updateDate({ date, id: transactionId }))
+          .server.catch(reportFailure("date"));
       },
       onUpdateName: (name) => {
         void zero
