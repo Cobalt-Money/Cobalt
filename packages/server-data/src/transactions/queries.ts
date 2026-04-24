@@ -71,7 +71,7 @@ export async function getUserTransactions(
   if (searchPattern) {
     whereParts.push({
       RAW: (t, { sql: sqlOp }) =>
-        sqlOp`(${t.name} ILIKE ${searchPattern} OR ${t.merchantName} ILIKE ${searchPattern})`,
+        sqlOp`(${t.name} ILIKE ${searchPattern} OR ${t.merchantName} ILIKE ${searchPattern} OR ${t.notes}::text ILIKE ${searchPattern})`,
     });
   }
 
@@ -122,6 +122,7 @@ export async function getUserTransactions(
         logoUrl: row.logoUrl,
         merchantName: row.merchantName,
         name: row.name,
+        notes: row.notes ?? null,
         pending: row.pending,
         personalFinanceCategory: row.personalFinanceCategory,
         userOverrideCategory: row.userOverrideCategory,

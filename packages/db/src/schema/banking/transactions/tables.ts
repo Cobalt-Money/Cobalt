@@ -20,6 +20,7 @@ import type {
   PaymentMetaJson,
   PersonalFinanceCategoryJson,
   RecurringTransactionIdsJson,
+  TransactionNotesJson,
   UserOverrideCategoryJson,
 } from "./zod";
 
@@ -46,6 +47,7 @@ export const transaction = pgTable.withRLS(
     merchantEntityId: text("merchant_entity_id"),
     merchantName: text("merchant_name"),
     name: text("name").notNull(),
+    notes: jsonb("notes").$type<TransactionNotesJson | null>(),
     originalDescription: text("original_description"),
     paymentChannel: varchar("payment_channel"),
     paymentMeta: jsonb("payment_meta").$type<PaymentMetaJson | null>(),

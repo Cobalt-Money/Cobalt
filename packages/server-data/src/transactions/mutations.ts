@@ -4,7 +4,11 @@ import { eq } from "drizzle-orm";
 
 export async function updateTransactionOverride(
   transactionId: string,
-  field: "userOverrideCategory" | "userOverrideDate" | "userOverrideName",
+  field:
+    | "notes"
+    | "userOverrideCategory"
+    | "userOverrideDate"
+    | "userOverrideName",
   value: unknown
 ) {
   await db

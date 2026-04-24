@@ -24,6 +24,7 @@ export interface TransactionRowInput {
   logoUrl: string | null | undefined;
   merchantName: string | null | undefined;
   name: string;
+  notes: TransactionListItem["notes"];
   pending: boolean | null | undefined;
   personalFinanceCategory: TransactionListItem["personalFinanceCategory"];
   userOverrideCategory: TransactionListItem["userOverrideCategory"];
@@ -63,6 +64,7 @@ export function toTransactionListItem(input: {
     logoUrl: row.logoUrl ?? null,
     merchantName: row.merchantName ?? null,
     name: row.name,
+    notes: row.notes ?? null,
     pending: row.pending ?? false,
     personalFinanceCategory:
       row.userOverrideCategory ?? row.personalFinanceCategory,

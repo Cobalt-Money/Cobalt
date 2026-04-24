@@ -208,3 +208,85 @@
     );
   }
 }
+
+/* Tiptap placeholder: the extension sets data-placeholder on empty nodes; CSS renders it. */
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--color-muted-foreground);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Tiptap content styling — recommended by Tiptap docs: global CSS with @apply. */
+.ProseMirror {
+  @apply text-foreground;
+}
+.ProseMirror :first-child {
+  @apply mt-0;
+}
+.ProseMirror h1 {
+  @apply mt-6 mb-2 font-semibold text-2xl tracking-tight;
+}
+.ProseMirror h2 {
+  @apply mt-5 mb-2 font-semibold text-xl tracking-tight;
+}
+.ProseMirror h3 {
+  @apply mt-4 mb-2 font-semibold text-lg tracking-tight;
+}
+.ProseMirror p {
+  @apply my-2 leading-relaxed;
+}
+.ProseMirror ul {
+  @apply my-2 list-disc pl-6;
+}
+.ProseMirror ol {
+  @apply my-2 list-decimal pl-6;
+}
+.ProseMirror li p {
+  @apply my-0;
+}
+.ProseMirror blockquote {
+  @apply my-3 border-border border-l-2 pl-3 text-muted-foreground italic;
+}
+.ProseMirror code {
+  @apply rounded bg-muted px-1 py-0.5 font-mono text-sm;
+}
+.ProseMirror pre {
+  @apply my-3 overflow-x-auto rounded-md bg-muted p-3 font-mono text-sm;
+}
+.ProseMirror pre code {
+  @apply bg-transparent p-0;
+}
+.ProseMirror hr {
+  @apply my-4 border-border border-t;
+}
+.ProseMirror a {
+  @apply text-primary underline underline-offset-2;
+}
+.ProseMirror strong {
+  @apply font-semibold;
+}
+.ProseMirror table {
+  @apply my-3 w-full table-fixed border-collapse overflow-hidden;
+}
+.ProseMirror table td,
+.ProseMirror table th {
+  @apply min-w-[4rem] border border-border px-2 py-1 align-top;
+}
+.ProseMirror table th {
+  @apply bg-muted/50 text-left font-semibold;
+}
+.ProseMirror table .selectedCell {
+  @apply bg-accent/40;
+}
+.ProseMirror table .column-resize-handle {
+  @apply pointer-events-none absolute top-0 right-[-2px] bottom-[-2px] z-10 w-1 bg-primary/50;
+}
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+.ProseMirror .tableWrapper {
+  @apply my-3 overflow-x-auto;
+}

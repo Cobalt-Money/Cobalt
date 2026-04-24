@@ -1,4 +1,7 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type {
+  TiptapDoc,
+  TransactionListItem,
+} from "@cobalt-web/server-data/transactions/schemas";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -30,9 +33,11 @@ const currency = new Intl.NumberFormat("en-US", {
 export interface TransactionDetailEditHandlers {
   onResetCategory: () => void;
   onResetDate: () => void;
+  onResetNotes: () => void;
   onUpdateCategory: (value: { detailed: string; primary: string }) => void;
   onUpdateDate: (dateIso: string) => void;
   onUpdateName: (name: string) => void;
+  onUpdateNotes: (doc: TiptapDoc) => void;
 }
 
 export function TransactionDetailSummary({

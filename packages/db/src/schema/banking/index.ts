@@ -56,6 +56,7 @@ export type {
   RecurringTransactionIdsJson,
   TransactionCounterpartyJson,
   TransactionCounterpartyType,
+  TransactionNotesJson,
   UserOverrideCategoryJson,
 } from "./transactions/zod";
 export type {

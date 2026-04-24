@@ -34,6 +34,7 @@ function createMockTransaction(
     logoUrl: null,
     merchantName: null,
     name: "Coffee Shop Purchase",
+    notes: null,
     pending: false,
     personalFinanceCategory: null,
     plaidAccountId: "plaid-acc-1",

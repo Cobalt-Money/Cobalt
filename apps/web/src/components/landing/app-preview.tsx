@@ -79,6 +79,7 @@ function makeTx(
     location: null,
     logoUrl: null,
     merchantName: null,
+    notes: null,
     pending: false,
     personalFinanceCategory: null,
     plaidAccountId: "plaid-acc-1",

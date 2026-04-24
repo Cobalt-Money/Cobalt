@@ -2,6 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { creditSpendingRouter } from "./credit-spending.js";
 import { listRouter } from "./list.js";
+import { notesRouter } from "./notes.js";
 import { overridesRouter } from "./overrides.js";
 import { recurringRouter } from "./recurring.js";
 
@@ -10,4 +11,5 @@ export const transactionsRouter = new OpenAPIHono()
   .route("/", listRouter)
   .route("/", recurringRouter)
   .route("/", creditSpendingRouter)
-  .route("/", overridesRouter);
+  .route("/", overridesRouter)
+  .route("/", notesRouter);
