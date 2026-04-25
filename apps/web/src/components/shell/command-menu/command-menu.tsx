@@ -253,7 +253,8 @@ function CommandMenuDialog({
     inAddAccount
   );
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
-  const { handleChoose: handleChooseInstitution } = useAccountLauncher(dismiss);
+  const { handleChoose: handleChooseInstitution, updateModeDialog } =
+    useAccountLauncher(dismiss);
 
   // ── Theme ───────────────────────────────────────────────────────────────────
 
@@ -466,143 +467,148 @@ function CommandMenuDialog({
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <CobaltCommandDialog
-      className={cn(
-        inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
-        inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl"
-      )}
-      description="Search for a page or action"
-      onOpenChange={handleOpenChange}
-      open={open}
-      showCloseButton={false}
-      title="Command palette"
-    >
-      <CobaltCommandPaletteRoot
-        onValueChange={handleChatHighlight}
-        shouldFilter={!isClientFilteredPage(activePage)}
+    <>
+      {updateModeDialog}
+      <CobaltCommandDialog
+        className={cn(
+          inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
+          inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl"
+        )}
+        description="Search for a page or action"
+        onOpenChange={handleOpenChange}
+        open={open}
+        showCloseButton={false}
+        title="Command palette"
       >
-        {inSettings ? null : (
-          <CobaltCommandInput
-            onKeyDown={handleInputKeyDown}
-            onValueChange={setSearch}
-            placeholder={getPlaceholder(activePage)}
-            value={search}
-          />
-        )}
-        {inSettings && (
-          <SettingsGrid
-            activeSection={settingsSection}
-            compact
-            onSectionChange={setSettingsSection}
-          />
-        )}
-        {!inSettings && inAddAccount && (
-          <AddAccountGrid
-            compact
-            onChoose={handleChooseInstitution}
-            plaidInstitutions={plaidInstitutions}
-            searchQuery={search}
-          />
-        )}
-        {!(inSettings || inAddAccount) && (
-          <CommandList>
-            {inSearchChats && (
-              <ChatSearchResults
-                filteredChats={filteredChats}
-                onSelect={handleSelectChat}
-                trimmedSearch={trimmedSearch}
-              />
-            )}
-            {inSearchTransactions && (
-              <TransactionSearchResults
-                filteredTransactions={filteredTransactions}
-                trimmedSearch={trimmedSearch}
-                onSelect={handleSelectTransaction}
-              />
-            )}
-            {inSearchTickers && (
-              <TickerSearchResults
-                filteredTickers={filteredTickers}
-                isLoadingUniverse={isLoadingUniverse}
-                tickerRows={tickerRows}
-                trimmedSearch={trimmedSearch}
-                onSelect={handleSelectTicker}
-              />
-            )}
-            {isDefaultCommandView(activePage) && (
-              <>
-                <CommandEmpty>No results found.</CommandEmpty>
+        <CobaltCommandPaletteRoot
+          onValueChange={handleChatHighlight}
+          shouldFilter={!isClientFilteredPage(activePage)}
+        >
+          {inSettings ? null : (
+            <CobaltCommandInput
+              onKeyDown={handleInputKeyDown}
+              onValueChange={setSearch}
+              placeholder={getPlaceholder(activePage)}
+              value={search}
+            />
+          )}
+          {inSettings && (
+            <SettingsGrid
+              activeSection={settingsSection}
+              compact
+              onSectionChange={setSettingsSection}
+            />
+          )}
+          {!inSettings && inAddAccount && (
+            <AddAccountGrid
+              compact
+              onChoose={handleChooseInstitution}
+              plaidInstitutions={plaidInstitutions}
+              searchQuery={search}
+            />
+          )}
+          {!(inSettings || inAddAccount) && (
+            <CommandList>
+              {inSearchChats && (
+                <ChatSearchResults
+                  filteredChats={filteredChats}
+                  onSelect={handleSelectChat}
+                  trimmedSearch={trimmedSearch}
+                />
+              )}
+              {inSearchTransactions && (
+                <TransactionSearchResults
+                  filteredTransactions={filteredTransactions}
+                  trimmedSearch={trimmedSearch}
+                  onSelect={handleSelectTransaction}
+                />
+              )}
+              {inSearchTickers && (
+                <TickerSearchResults
+                  filteredTickers={filteredTickers}
+                  isLoadingUniverse={isLoadingUniverse}
+                  tickerRows={tickerRows}
+                  trimmedSearch={trimmedSearch}
+                  onSelect={handleSelectTicker}
+                />
+              )}
+              {isDefaultCommandView(activePage) && (
+                <>
+                  <CommandEmpty>No results found.</CommandEmpty>
 
-                <CommandGroup heading="Navigation">
-                  {COMMAND_NAV_ROUTES.map(({ icon, keywords, label, path }) => (
-                    <CommandItem
-                      key={String(path)}
-                      keywords={keywords}
-                      onSelect={() => go(path)}
-                      value={`${label} ${path}`}
-                    >
-                      <HugeiconsIcon
-                        aria-hidden
-                        className="text-muted-foreground"
-                        icon={icon}
-                        strokeWidth={2}
-                      />
-                      {label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
+                  <CommandGroup heading="Navigation">
+                    {COMMAND_NAV_ROUTES.map(
+                      ({ icon, keywords, label, path }) => (
+                        <CommandItem
+                          key={String(path)}
+                          keywords={keywords}
+                          onSelect={() => go(path)}
+                          value={`${label} ${path}`}
+                        >
+                          <HugeiconsIcon
+                            aria-hidden
+                            className="text-muted-foreground"
+                            icon={icon}
+                            strokeWidth={2}
+                          />
+                          {label}
+                        </CommandItem>
+                      )
+                    )}
+                  </CommandGroup>
 
-                <CommandGroup heading="Accounts">
-                  {accountActions.map(renderCommandItem)}
-                </CommandGroup>
+                  <CommandGroup heading="Accounts">
+                    {accountActions.map(renderCommandItem)}
+                  </CommandGroup>
 
-                <CommandGroup heading="Transactions">
-                  {transactionActions.map(renderCommandItem)}
-                </CommandGroup>
+                  <CommandGroup heading="Transactions">
+                    {transactionActions.map(renderCommandItem)}
+                  </CommandGroup>
 
-                <CommandGroup heading="AI Chat">
-                  {aiChatActions.map(renderCommandItem)}
-                </CommandGroup>
+                  <CommandGroup heading="AI Chat">
+                    {aiChatActions.map(renderCommandItem)}
+                  </CommandGroup>
 
-                <CommandGroup heading="Brokerage">
-                  {brokerageActions.map(renderCommandItem)}
-                </CommandGroup>
+                  <CommandGroup heading="Brokerage">
+                    {brokerageActions.map(renderCommandItem)}
+                  </CommandGroup>
 
-                <CommandGroup heading="Settings">
-                  {settingActions.map(renderCommandItem)}
-                  {themeReady ? (
-                    <CommandItem
-                      keywords={[
-                        "appearance",
-                        "color",
-                        "dark",
-                        "dark mode",
-                        "light",
-                        "light mode",
-                        "mode",
-                        "theme",
-                        "toggle",
-                      ]}
-                      onSelect={toggleTheme}
-                      value="theme-toggle"
-                    >
-                      <HugeiconsIcon
-                        aria-hidden
-                        className="text-muted-foreground"
-                        icon={themeToggleIcon}
-                        strokeWidth={2}
-                      />
-                      Toggle theme
-                    </CommandItem>
-                  ) : null}
-                </CommandGroup>
-              </>
-            )}
-          </CommandList>
-        )}
-        {inSearchTransactions ? <TransactionSearchFooter /> : null}
-      </CobaltCommandPaletteRoot>
-    </CobaltCommandDialog>
+                  <CommandGroup heading="Settings">
+                    {settingActions.map(renderCommandItem)}
+                    {themeReady ? (
+                      <CommandItem
+                        keywords={[
+                          "appearance",
+                          "color",
+                          "dark",
+                          "dark mode",
+                          "light",
+                          "light mode",
+                          "mode",
+                          "theme",
+                          "toggle",
+                        ]}
+                        onSelect={toggleTheme}
+                        value="theme-toggle"
+                      >
+                        <HugeiconsIcon
+                          aria-hidden
+                          className="text-muted-foreground"
+                          icon={themeToggleIcon}
+                          strokeWidth={2}
+                        />
+                        Toggle theme
+                      </CommandItem>
+                    ) : null}
+                  </CommandGroup>
+                </>
+              )}
+            </CommandList>
+          )}
+          {inSearchTransactions ? <TransactionSearchFooter /> : null}
+        </CobaltCommandPaletteRoot>
+      </CobaltCommandDialog>
+    </>
   );
 }
 

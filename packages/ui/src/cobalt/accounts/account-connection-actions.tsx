@@ -10,12 +10,13 @@ import {
   AlertDialogTitle,
 } from "@cobalt-web/ui/components/alert-dialog";
 import { Button } from "@cobalt-web/ui/components/button";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import { toast } from "sonner";
 
 import { cobaltToast } from "../toasts";
 import type { AccountCardViewModel } from "./lib/map-zero-to-account-cards";
+import { useOptionalOnboardingHost } from "./onboarding-host";
 
 interface AccountConnectionActionsProps {
   account: Pick<
@@ -32,22 +33,86 @@ interface AccountConnectionActionsProps {
   >;
 }
 
+interface ReauthSession {
+  hookToken: string;
+  runId: string;
+  linkToken: string;
+}
+
 export function AccountConnectionActions({
   account,
 }: AccountConnectionActionsProps) {
   const [plaidToken, setPlaidToken] = useState<string | null>(null);
   const [busy, setBusy] = useState<"disconnect" | "reconnect" | null>(null);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
+  // Active reauth session — holds the hookToken/runId from /link-token/update.
+  // Cleared on success or exit so a stale session can't resolve a later flow.
+  const sessionRef = useRef<ReauthSession | null>(null);
+  const onboardingHost = useOptionalOnboardingHost();
 
-  const onPlaidSuccess = useCallback(() => {
+  const onPlaidSuccess = useCallback(async () => {
     setPlaidToken(null);
-    toast.success("Bank connection updated");
-  }, []);
+    const session = sessionRef.current;
+    sessionRef.current = null;
+    if (!session) {
+      return;
+    }
+    if (!onboardingHost) {
+      // Component is rendered outside `<OnboardingHostContext.Provider>`.
+      // No way to resolve the workflow; surface the error so the user knows.
+      toast.error("Cannot finish reconnect — onboarding host not mounted");
+      return;
+    }
+    try {
+      // Resume the parked workflow — its reauth branch clears error state,
+      // resolves alerts, and runs the full sync (accounts/tx/snapshots).
+      await onboardingHost.resolveLink({
+        hookToken: session.hookToken,
+        publicToken: "reauth",
+      });
+      onboardingHost.startOnboarding(session.runId);
+      cobaltToast.accountsUpdated({
+        institution: account.institution,
+        institutionLogo: account.institutionLogo,
+        institutionLogosExtra: account.institutionLogosExtra,
+        institutionUrl: account.institutionUrl,
+      });
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not refresh connection"
+      );
+    }
+  }, [
+    account.institution,
+    account.institutionLogo,
+    account.institutionLogosExtra,
+    account.institutionUrl,
+    onboardingHost,
+  ]);
+
+  const onPlaidExit = useCallback(() => {
+    setPlaidToken(null);
+    const session = sessionRef.current;
+    sessionRef.current = null;
+    if (!(session && onboardingHost)) {
+      return;
+    }
+    // User abandoned reauth — terminate the parked workflow so the run
+    // doesn't sit waiting until its hook expires.
+    void (async () => {
+      try {
+        await onboardingHost.resolveLink({
+          cancelled: true,
+          hookToken: session.hookToken,
+        });
+      } catch {
+        // Best-effort cleanup; server-side timeout is the fallback.
+      }
+    })();
+  }, [onboardingHost]);
 
   const { open: openPlaid, ready: plaidReady } = usePlaidLink({
-    onExit: () => {
-      setPlaidToken(null);
-    },
+    onExit: onPlaidExit,
     onSuccess: onPlaidSuccess,
     token: plaidToken,
   });
@@ -78,14 +143,18 @@ export function AccountConnectionActions({
       );
       const data = (await res.json()) as {
         error?: string;
+        hookToken?: string;
         link_token?: string;
+        runId?: string;
       };
-      if (!res.ok) {
+      if (!res.ok || !data.link_token || !data.hookToken || !data.runId) {
         throw new Error(data.error ?? "Could not start reconnect");
       }
-      if (!data.link_token) {
-        throw new Error("No link token");
-      }
+      sessionRef.current = {
+        hookToken: data.hookToken,
+        linkToken: data.link_token,
+        runId: data.runId,
+      };
       setPlaidToken(data.link_token);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Reconnect failed");

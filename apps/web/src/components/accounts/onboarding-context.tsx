@@ -1,3 +1,4 @@
+import { OnboardingHostContext } from "@cobalt-web/ui/cobalt/accounts/onboarding-host";
 import {
   createContext,
   useCallback,
@@ -7,10 +8,17 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 
+import { plaidApi } from "@/lib/clients/api-client";
+
 interface OnboardingContextValue {
   onboardingRunId: string | null;
   startOnboarding: (runId: string) => void;
   finishOnboarding: () => void;
+  resolveLink: (input: {
+    hookToken: string;
+    publicToken?: string;
+    cancelled?: boolean;
+  }) => Promise<void>;
 }
 
 const STORAGE_KEY = "cobalt:onboardingRunId";
@@ -63,14 +71,41 @@ export function OnboardingProgressProvider({
     setOnboardingRunId(null);
   }, []);
 
+  const resolveLink = useCallback(
+    async (input: {
+      hookToken: string;
+      publicToken?: string;
+      cancelled?: boolean;
+    }): Promise<void> => {
+      const res = await plaidApi.resolveLink.$post({ json: input });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error ?? "Failed to resume flow");
+      }
+    },
+    []
+  );
+
   const value = useMemo(
-    () => ({ finishOnboarding, onboardingRunId, startOnboarding }),
-    [onboardingRunId, startOnboarding, finishOnboarding]
+    () => ({
+      finishOnboarding,
+      onboardingRunId,
+      resolveLink,
+      startOnboarding,
+    }),
+    [onboardingRunId, startOnboarding, finishOnboarding, resolveLink]
+  );
+
+  const hostValue = useMemo(
+    () => ({ resolveLink, startOnboarding }),
+    [resolveLink, startOnboarding]
   );
 
   return (
     <OnboardingContext.Provider value={value}>
-      {children}
+      <OnboardingHostContext.Provider value={hostValue}>
+        {children}
+      </OnboardingHostContext.Provider>
     </OnboardingContext.Provider>
   );
 }

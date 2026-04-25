@@ -104,11 +104,13 @@ export function AddAccountGrid({
       pool = [...SNAPTRADE_INSTITUTIONS];
     }
 
+    // Dedupe by id, not name. Same `ins_X` can appear in both bank + credit
+    // seed lists (e.g. Discover/Chase/Capital One/Citi) — those are the same
+    // Plaid Item, not two tiles.
     const byKey = new Map<string, AddAccountInstitution>();
     for (const i of pool) {
-      const key = `${i.provider}:${i.name.toLowerCase()}`;
-      if (!byKey.has(key)) {
-        byKey.set(key, i);
+      if (!byKey.has(i.id)) {
+        byKey.set(i.id, i);
       }
     }
     const deduped = [...byKey.values()];

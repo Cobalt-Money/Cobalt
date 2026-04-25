@@ -1,27 +1,21 @@
 import {
   createLinkToken,
-  fetchAccounts,
+  createLinkTokenForUpdate,
 } from "@cobalt-web/server-data/plaid/link/actions";
-import { syncNewAccountsForItem } from "@cobalt-web/server-data/plaid/link/mutations";
-import { getAccessTokenForItem } from "@cobalt-web/server-data/plaid/link/queries";
+import { findExistingHealthyConnection } from "@cobalt-web/server-data/plaid/link/queries";
 import {
+  createLinkTokenBodySchema,
   errorResponseSchema,
-  linkCompleteBodySchema,
-  linkCompleteResponseSchema,
   linkTokenResponseSchema,
-  plaidItemIdBodySchema,
+  resolveLinkBodySchema,
   successResponseSchema,
 } from "@cobalt-web/server-data/plaid/link/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
-import { start } from "workflow/api";
+import { v7 as uuidv7 } from "uuid";
+import { resumeHook, start } from "workflow/api";
 
-import { plaidInitialInvestmentSyncWorkflow } from "../../../workflows/plaid/investments/workflow.js";
-import { plaidLiabilitiesSyncWorkflow } from "../../../workflows/plaid/liabilities/workflow.js";
-import {
-  plaidInitialSyncWorkflow,
-  plaidSyncWorkflow,
-} from "../../../workflows/plaid/sync/workflow.js";
+import { plaidAddAccountWorkflow } from "../../../workflows/plaid/sync/workflow.js";
 import { requireAuth } from "../middleware.js";
 
 // ── Route definitions ───────────────────────────────────────────────
@@ -29,125 +23,146 @@ import { requireAuth } from "../middleware.js";
 const createLinkTokenRoute = createRoute({
   method: "post",
   middleware: [requireAuth] as const,
-  path: "/create-link-token",
+  path: "/createLinkToken",
+  request: {
+    body: {
+      content: { "application/json": { schema: createLinkTokenBodySchema } },
+      required: false,
+    },
+  },
   responses: {
     200: {
       content: { "application/json": { schema: linkTokenResponseSchema } },
-      description: "Link token created",
+      description:
+        "Link token minted; workflow parked on hook. Client must echo the Plaid Link outcome via /resolveLink",
     },
     500: {
       content: { "application/json": { schema: errorResponseSchema } },
       description: "Server error",
     },
   },
-  summary: "Create a Plaid link token",
+  summary: "Mint a Plaid link token and start the parked add-account workflow",
   tags: ["Plaid"],
 });
 
-const linkCompleteRoute = createRoute({
+const resolveLinkRoute = createRoute({
   method: "post",
   middleware: [requireAuth] as const,
-  path: "/linkComplete",
+  path: "/resolveLink",
   request: {
     body: {
-      content: { "application/json": { schema: linkCompleteBodySchema } },
-    },
-  },
-  responses: {
-    200: {
-      content: { "application/json": { schema: linkCompleteResponseSchema } },
-      description: "Onboarding workflow started; tail /progress/:runId",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
-  },
-  summary: "Complete Plaid Link:    public_token and start onboarding workflow",
-  tags: ["Plaid"],
-});
-
-const syncNewAccountsRoute = createRoute({
-  method: "post",
-  middleware: [requireAuth] as const,
-  path: "/sync-new-accounts",
-  request: {
-    body: {
-      content: { "application/json": { schema: plaidItemIdBodySchema } },
+      content: { "application/json": { schema: resolveLinkBodySchema } },
     },
   },
   responses: {
     200: {
       content: { "application/json": { schema: successResponseSchema } },
-      description: "Accounts synced",
+      description: "Workflow resumed",
     },
-    404: {
+    400: {
       content: { "application/json": { schema: errorResponseSchema } },
-      description: "Item not found",
+      description: "Invalid payload or foreign hook token",
     },
     500: {
       content: { "application/json": { schema: errorResponseSchema } },
       description: "Server error",
     },
   },
-  summary: "Sync new accounts after Plaid Link update",
+  summary: "Resolve a parked add-account workflow (Plaid onSuccess or onExit)",
   tags: ["Plaid"],
 });
 
 // ── Handlers ────────────────────────────────────────────────────────
+// Hook tokens are opaque UUID v7s — sortable by mint time, unguessable, and
+// short-lived (parked workflow auto-cancels at 5m). No userId or other
+// routing info embedded — the workflow run holds that, and the token never
+// leaves the server↔client trust boundary.
 
 const linkRouter = new OpenAPIHono<AppEnv>()
   .openapi(createLinkTokenRoute, async (c) => {
     try {
-      const result = await createLinkToken(c.var.user.id);
-      return c.json(result, 200);
-    } catch {
-      return c.json({ error: "Error generating link token" }, 500);
-    }
-  })
-  .openapi(linkCompleteRoute, async (c) => {
-    try {
-      const { public_token } = c.req.valid("json");
-      const { runId } = await start(plaidInitialSyncWorkflow, [
-        { publicToken: public_token, userId: c.var.user.id },
-      ]);
-      return c.json({ runId }, 200);
+      // Body is optional. New client posts `{ institutionId }` (Plaid `ins_X`,
+      // optionally `plaid:`-prefixed) so the server can detect Scenario C
+      // up-front and mint an update-mode token tied to the existing access
+      // token. Older clients post nothing → fresh link.
+      const body = await c.req
+        .json<{ institutionId?: string }>()
+        .catch(() => ({}) as { institutionId?: string });
+
+      const userId = c.var.user.id;
+      const insId = body.institutionId?.replace(/^plaid:/, "");
+
+      // ── Scenario C: existing healthy connection at this institution.
+      if (insId?.startsWith("ins_")) {
+        const existing = await findExistingHealthyConnection(userId, insId);
+        if (existing) {
+          const tokenResult = await createLinkTokenForUpdate(
+            existing.plaidAccessToken,
+            userId,
+            "add-accounts"
+          );
+          const hookToken = uuidv7();
+          const run = await start(plaidAddAccountWorkflow, [
+            {
+              hookToken,
+              updateMode: {
+                accessToken: existing.plaidAccessToken,
+                plaidItemId: existing.plaidItemId,
+              },
+              userId,
+            },
+          ]);
+          return c.json(
+            {
+              hookToken,
+              institutionLogo: existing.institutionLogo,
+              institutionName: existing.institutionName,
+              institutionUrl: existing.institutionUrl,
+              link_token: tokenResult.link_token,
+              mode: "update" as const,
+              plaidItemId: existing.plaidItemId,
+              runId: run.runId,
+            },
+            200
+          );
+        }
+      }
+
+      // ── Fresh link.
+      const tokenResult = await createLinkToken(userId);
+      const hookToken = uuidv7();
+      const run = await start(plaidAddAccountWorkflow, [{ hookToken, userId }]);
+      return c.json(
+        {
+          hookToken,
+          link_token: tokenResult.link_token,
+          runId: run.runId,
+        },
+        200
+      );
     } catch (error) {
+      console.error("[/createLinkToken] failed", error);
       const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to start onboarding workflow";
+        error instanceof Error ? error.message : "Error generating link token";
       return c.json({ error: message }, 500);
     }
   })
-  .openapi(syncNewAccountsRoute, async (c) => {
-    const { plaidItemId } = c.req.valid("json");
-    const userId = c.var.user.id;
+  .openapi(resolveLinkRoute, async (c) => {
+    const { cancelled, hookToken, publicToken } = c.req.valid("json");
+
+    if (!cancelled && !publicToken) {
+      return c.json(
+        { error: "Must provide publicToken or cancelled: true" },
+        400
+      );
+    }
 
     try {
-      const accessToken = await getAccessTokenForItem(userId, plaidItemId);
-      const accounts = await fetchAccounts(accessToken);
-      await syncNewAccountsForItem(plaidItemId, accounts);
-
-      await Promise.all([
-        start(plaidSyncWorkflow, [
-          {
-            historical_update_complete: false,
-            initial_update_complete: false,
-            item_id: plaidItemId,
-          },
-        ]),
-        start(plaidInitialInvestmentSyncWorkflow, [plaidItemId]),
-        start(plaidLiabilitiesSyncWorkflow, [plaidItemId]),
-      ]);
-
+      await resumeHook(hookToken, { cancelled, publicToken });
       return c.json({ success: true }, 200);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to sync new accounts";
-      if (message.includes("not found") || message.includes("access denied")) {
-        return c.json({ error: message }, 404);
-      }
+        error instanceof Error ? error.message : "Failed to resume workflow";
       return c.json({ error: message }, 500);
     }
   });
