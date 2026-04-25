@@ -2,6 +2,7 @@ import { LogoCDN } from "@cobalt-web/ui/cobalt/logos/logo-cdn";
 import { Sun02Icon, MoonIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
 
@@ -42,6 +43,22 @@ function LandingStyles() {
   );
 }
 
+function Container({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`mx-auto w-full max-w-7xl px-6 2xl:max-w-[100rem] ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
 function LandingPage() {
   return (
     <>
@@ -63,96 +80,126 @@ function Nav() {
   const isDark = theme === "dark";
 
   return (
-    <header className="flex items-center justify-between px-6 py-4">
-      <span className="font-display text-xl">Cobalt</span>
-      <div className="flex items-center gap-2">
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => setTheme(isDark ? "light" : "dark")}
-        >
-          <HugeiconsIcon
-            icon={isDark ? Sun02Icon : MoonIcon}
-            size={18}
-            strokeWidth={2}
-          />
-        </Button>
-        <Link
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-          to="/login"
-        >
-          Sign in
-        </Link>
-      </div>
+    <header className="sticky top-0 z-50 py-4 bg-background/80 backdrop-blur-sm">
+      <Container className="flex items-center justify-between">
+        <span className="text-xl">Cobalt</span>
+        <div className="flex items-center gap-6">
+          <nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex">
+            <a
+              href="#features"
+              className="hover:text-foreground transition-colors"
+            >
+              Features
+            </a>
+            <a
+              href="/privacy"
+              className="hover:text-foreground transition-colors"
+            >
+              Privacy
+            </a>
+            <a
+              href="/terms"
+              className="hover:text-foreground transition-colors"
+            >
+              Terms
+            </a>
+          </nav>
+          <div className="flex items-center gap-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+            >
+              <HugeiconsIcon
+                icon={isDark ? Sun02Icon : MoonIcon}
+                size={18}
+                strokeWidth={2}
+              />
+            </Button>
+            <Link
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+              to="/login"
+            >
+              Sign in
+            </Link>
+          </div>
+        </div>
+      </Container>
     </header>
   );
 }
 
+const AGENTS = [
+  { icon: "/landing/agents/openai.svg", name: "ChatGPT" },
+  { icon: "/landing/agents/Claude_AI_symbol.svg", name: "Claude" },
+  {
+    icon: "/landing/agents/cursor-logo-icon-freelogovectors.net_.png",
+    name: "Cursor",
+  },
+  {
+    icon: "/landing/agents/gemini-google-icon-symbol-logo-free-png.webp",
+    name: "Gemini",
+  },
+];
+
 function Hero() {
   return (
-    <section className="flex flex-col items-center gap-12 py-20 text-center">
-      <div className="flex flex-col items-center gap-7 px-6">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-          Other finance apps give you homework
-        </p>
-        <h1 className="font-display max-w-4xl text-6xl italic tracking-tight sm:text-7xl lg:text-8xl">
-          Talk to your money.
-        </h1>
-        <p className="max-w-sm text-xl text-muted-foreground">
-          Spend seconds, not Sundays, on yours.
-        </p>
-        <Link
-          className="rounded-md bg-primary px-6 py-3 font-medium text-primary-foreground hover:opacity-90"
-          to="/login"
-        >
-          Get started free
-        </Link>
-      </div>
-      <CursorProvider className="mx-auto h-[80vh] w-[90%]">
-        <Cursor className="pointer-events-none">
-          <svg
-            className="size-7 text-primary"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 40 40"
-          >
-            <path
-              fill="currentColor"
-              d="M1.8 4.4 7 36.2c.3 1.8 2.6 2.3 3.6.8l3.9-5.7c1.7-2.5 4.5-4.1 7.5-4.3l6.9-.5c1.8-.1 2.5-2.4 1.1-3.5L5 2.5c-1.4-1.1-3.5 0-3.3 1.9Z"
-            />
-          </svg>
-        </Cursor>
-        <AppPreview />
-      </CursorProvider>
+    <section className="py-20">
+      <Container className="flex flex-col gap-16">
+        <div className="flex flex-col gap-6">
+          <h1 className="text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
+            Talk to your money.
+          </h1>
+          <p className="text-2xl text-muted-foreground">
+            Spend seconds on your finances, not Sundays.
+          </p>
+        </div>
+        <CursorProvider className="h-[80vh] w-full">
+          <Cursor className="pointer-events-none">
+            <svg
+              className="size-7 text-primary"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 40 40"
+            >
+              <path
+                fill="currentColor"
+                d="M1.8 4.4 7 36.2c.3 1.8 2.6 2.3 3.6.8l3.9-5.7c1.7-2.5 4.5-4.1 7.5-4.3l6.9-.5c1.8-.1 2.5-2.4 1.1-3.5L5 2.5c-1.4-1.1-3.5 0-3.3 1.9Z"
+              />
+            </svg>
+          </Cursor>
+          <AppPreview />
+        </CursorProvider>
+      </Container>
     </section>
   );
 }
 
 function WorksWith() {
-  const surfaces = [
-    "Claude",
-    "Cursor",
-    "ChatGPT",
-    "Raycast",
-    "Terminal",
-    "VS Code",
-    "Warp",
-  ];
+  const items = [...AGENTS, ...AGENTS];
+
   return (
-    <section className="border-y px-6 py-10">
-      <div className="mx-auto flex max-w-5xl flex-col items-center gap-4">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-          Works where you already do
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-          {surfaces.map((name) => (
-            <span
-              className="text-base font-medium text-foreground/60"
-              key={name}
-            >
-              {name}
-            </span>
+    <section className="border-y py-10 overflow-hidden">
+      <div className="flex">
+        <motion.div
+          className="flex shrink-0 items-center gap-12 pr-12"
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ duration: 20, ease: "linear", repeat: Infinity }}
+        >
+          {items.map((agent, i) => (
+            <div key={i} className="flex items-center gap-3 shrink-0">
+              <div className="flex size-10 items-center justify-center rounded-xl border bg-background shadow-sm">
+                <img
+                  alt={agent.name}
+                  className="size-6 object-contain"
+                  src={agent.icon}
+                />
+              </div>
+              <span className="text-base font-medium text-foreground/60 whitespace-nowrap">
+                {agent.name}
+              </span>
+            </div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
