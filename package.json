@@ -52,6 +52,8 @@
     "test": "turbo test",
     "fix": "ultracite fix",
     "dump": "bun run scripts/dump.ts",
+    "db:check-slots": "bun run scripts/check-slots.ts",
+    "db:drop-slots": "bun run scripts/check-slots.ts --drop",
     "sync-env": "bash sync-env.sh",
     "sync-sandbox": "bash sync-sandbox.sh",
     "prepare": "husky"
