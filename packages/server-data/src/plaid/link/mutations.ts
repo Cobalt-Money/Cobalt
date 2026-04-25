@@ -19,9 +19,7 @@ import {
   balanceRowFromPlaidAccount,
 } from "./lib.js";
 
-/**
- * Persist Plaid item metadata to bankConnection.
- */
+/** Persist Plaid item metadata to bankConnection. */
 export async function persistItemMetadata(params: {
   accessToken: string;
   availableProducts: string[];

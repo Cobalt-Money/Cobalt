@@ -15,7 +15,9 @@ import {
 import { bankAccountInsertFromPlaid } from "@cobalt-web/server-data/plaid/link/lib";
 import {
   applyItemWebhookState,
+  clearItemError,
   persistOnboardingItem,
+  syncNewAccountsForItem,
   upsertBalanceForPlaidAccount,
 } from "@cobalt-web/server-data/plaid/link/mutations";
 import {
@@ -47,6 +49,7 @@ export type PlaidOnboardingPhase =
   | "duplicate"
   | "persist"
   | "connecting"
+  | "waiting_for_link"
   | "waiting_for_plaid"
   | "accounts"
   | "balances"
@@ -56,6 +59,7 @@ export type PlaidOnboardingPhase =
   | "investment_transactions"
   | "liabilities"
   | "done"
+  | "cancelled"
   | "error";
 
 export interface PlaidOnboardingProgress {
@@ -718,4 +722,33 @@ export async function triggerPlaidSyncStep(accessToken: string): Promise<void> {
   "use step";
 
   await triggerPlaidSync(accessToken);
+}
+
+/**
+ * Update-mode: fetch the latest accounts list from Plaid and persist any new
+ * ones onto the existing Item. Uses `onConflictDoNothing` so already-connected
+ * accounts stay untouched.
+ */
+export async function persistNewAccountsForItemStep(
+  accessToken: string,
+  plaidItemId: string
+): Promise<void> {
+  "use step";
+
+  const accounts = await fetchAccounts(accessToken);
+  await syncNewAccountsForItem(plaidItemId, accounts);
+}
+
+/**
+ * Reauth: drops `bank_connection.error` + `pendingDisconnectAt`, resolves any
+ * open user alerts for this Item. Called after the user finishes Plaid Link
+ * in reauth mode.
+ */
+export async function clearItemErrorStep(
+  plaidItemId: string,
+  userId: string
+): Promise<void> {
+  "use step";
+
+  await clearItemError(plaidItemId, userId);
 }

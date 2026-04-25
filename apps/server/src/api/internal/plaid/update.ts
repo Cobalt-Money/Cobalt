@@ -1,22 +1,17 @@
 import { createLinkTokenForUpdate } from "@cobalt-web/server-data/plaid/link/actions";
-import { clearItemError } from "@cobalt-web/server-data/plaid/link/mutations";
 import { getAccessTokenForItem } from "@cobalt-web/server-data/plaid/link/queries";
 import {
   errorResponseSchema,
   linkTokenResponseSchema,
-  plaidItemIdBodySchema,
-  successResponseSchema,
   updateLinkTokenBodySchema,
 } from "@cobalt-web/server-data/plaid/link/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { v7 as uuidv7 } from "uuid";
 import { start } from "workflow/api";
 
-import { plaidLiabilitiesSyncWorkflow } from "../../../workflows/plaid/liabilities/workflow.js";
-import { plaidReauthSyncWorkflow } from "../../../workflows/plaid/sync/workflow.js";
+import { plaidAddAccountWorkflow } from "../../../workflows/plaid/sync/workflow.js";
 import { requireAuth } from "../middleware.js";
-
-// ── Route definitions ───────────────────────────────────────────────
 
 const updateLinkTokenRoute = createRoute({
   method: "post",
@@ -32,7 +27,8 @@ const updateLinkTokenRoute = createRoute({
   responses: {
     200: {
       content: { "application/json": { schema: linkTokenResponseSchema } },
-      description: "Link token created",
+      description:
+        "Link token minted; workflow parked on hook. Client must echo the Plaid Link outcome via /resolveLink",
     },
     404: {
       content: { "application/json": { schema: errorResponseSchema } },
@@ -43,49 +39,50 @@ const updateLinkTokenRoute = createRoute({
       description: "Server error",
     },
   },
-  summary: "Create a Plaid link token for update mode",
+  summary: "Mint an update-mode link token and start the parked workflow",
   tags: ["Plaid"],
 });
 
-const clearReauthRoute = createRoute({
-  method: "post",
-  middleware: [requireAuth] as const,
-  path: "/clear-reauth",
-  request: {
-    body: {
-      content: { "application/json": { schema: plaidItemIdBodySchema } },
-    },
-  },
-  responses: {
-    200: {
-      content: { "application/json": { schema: successResponseSchema } },
-      description: "Reauth cleared",
-    },
-    404: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Item not found",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
-  },
-  summary: "Clear re-auth state after fixing connection",
-  tags: ["Plaid"],
-});
-
-// ── Handlers ────────────────────────────────────────────────────────
-
-const updateRouter = new OpenAPIHono<AppEnv>()
-  .openapi(updateLinkTokenRoute, async (c) => {
-    const { plaidItemId, mode } = c.req.valid("json");
+const updateRouter = new OpenAPIHono<AppEnv>().openapi(
+  updateLinkTokenRoute,
+  async (c) => {
+    const { mode, plaidItemId } = c.req.valid("json");
     const userId = c.var.user.id;
+
+    if (mode !== "reauth") {
+      // add-accounts / add-products are detected upfront by /createLinkToken
+      // (Scenario C). Reject other modes here so unsupported paths can't
+      // sneak through.
+      return c.json({ error: `mode '${mode}' not supported` }, 500);
+    }
 
     try {
       const accessToken = await getAccessTokenForItem(userId, plaidItemId);
-      const result = await createLinkTokenForUpdate(accessToken, userId, mode);
-      return c.json(result, 200);
+      const tokenResult = await createLinkTokenForUpdate(
+        accessToken,
+        userId,
+        "reauth"
+      );
+      const hookToken = uuidv7();
+      const run = await start(plaidAddAccountWorkflow, [
+        {
+          hookToken,
+          reauthMode: { accessToken, plaidItemId },
+          userId,
+        },
+      ]);
+      return c.json(
+        {
+          hookToken,
+          link_token: tokenResult.link_token,
+          mode: "reauth" as const,
+          plaidItemId,
+          runId: run.runId,
+        },
+        200
+      );
     } catch (error) {
+      console.error("[/link-token/update] failed", error);
       const message =
         error instanceof Error ? error.message : "Error generating link token";
       if (message.includes("not found") || message.includes("access denied")) {
@@ -93,28 +90,7 @@ const updateRouter = new OpenAPIHono<AppEnv>()
       }
       return c.json({ error: message }, 500);
     }
-  })
-  .openapi(clearReauthRoute, async (c) => {
-    const { plaidItemId } = c.req.valid("json");
-    const userId = c.var.user.id;
-
-    try {
-      await clearItemError(plaidItemId, userId);
-
-      await Promise.all([
-        start(plaidReauthSyncWorkflow, [{ item_id: plaidItemId }]),
-        start(plaidLiabilitiesSyncWorkflow, [plaidItemId]),
-      ]);
-
-      return c.json({ success: true }, 200);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to clear reauth";
-      if (message.includes("not found") || message.includes("access denied")) {
-        return c.json({ error: message }, 404);
-      }
-      return c.json({ error: "Failed to clear reauth" }, 500);
-    }
-  });
+  }
+);
 
 export { updateRouter };

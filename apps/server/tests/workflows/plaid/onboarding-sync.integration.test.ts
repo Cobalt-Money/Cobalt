@@ -30,9 +30,9 @@ import { db } from "@cobalt-web/db";
 import { bankAccount, bankConnection } from "@cobalt-web/db/schema/banking";
 import { eq } from "drizzle-orm";
 import { Products } from "plaid";
-import { getRun, start } from "workflow/api";
+import { getRun, resumeHook, start } from "workflow/api";
 
-import { plaidInitialSyncWorkflow } from "../../../src/workflows/plaid/sync/workflow.js";
+import { plaidAddAccountWorkflow } from "../../../src/workflows/plaid/sync/workflow.js";
 
 const TEST_USER_ID = "00000000-0000-4000-8000-000000000001";
 const WEBHOOK_URL = "http://localhost:4000/api/plaid/webhook";
@@ -122,11 +122,14 @@ describe("plaid onboarding streaming (server-based integration)", () => {
     let itemId = "";
 
     try {
-      // 2. Start the onboarding workflow directly with the public_token. It
-      // exchanges + persists + parks on the deterministic hook internally.
-      const run = await start(plaidInitialSyncWorkflow, [
-        { publicToken, userId: TEST_USER_ID },
+      // 2. Start the add-account workflow with a hook token, then resume it
+      // with the sandbox public token — mirrors the /createLinkToken +
+      // /resolveLink handoff the real client does.
+      const hookToken = `plaid:link:${TEST_USER_ID}:${crypto.randomUUID()}`;
+      const run = await start(plaidAddAccountWorkflow, [
+        { hookToken, userId: TEST_USER_ID },
       ]);
+      await resumeHook(hookToken, { publicToken });
 
       // 3. Collect progress stream in parallel. Resolves when stream closes.
       const progressPromise = collectProgress(run.runId);

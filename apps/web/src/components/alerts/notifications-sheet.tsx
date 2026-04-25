@@ -23,12 +23,20 @@ import {
   RefreshIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import { toast } from "sonner";
 
 import type { UserAlertRow } from "@/hooks/use-user-alerts";
 import { useUserAlerts } from "@/hooks/use-user-alerts";
+
+import { useOnboarding } from "../accounts/onboarding-context";
+
+interface ReauthSession {
+  hookToken: string;
+  runId: string;
+  linkToken: string;
+}
 
 interface NotificationsSheetProps {
   open: boolean;
@@ -75,16 +83,51 @@ export function NotificationsSheet({
   const alerts = previewAlerts ?? live.alerts;
   const [busyId, setBusyId] = useState<string | null>(null);
   const [plaidToken, setPlaidToken] = useState<string | null>(null);
+  const sessionRef = useRef<ReauthSession | null>(null);
+  const { resolveLink, startOnboarding } = useOnboarding();
 
-  const handlePlaidSuccess = useCallback(() => {
+  const handlePlaidSuccess = useCallback(async () => {
     setPlaidToken(null);
-    toast.success("Bank connection updated");
-  }, []);
+    const session = sessionRef.current;
+    sessionRef.current = null;
+    if (!session) {
+      return;
+    }
+    try {
+      await resolveLink({
+        hookToken: session.hookToken,
+        publicToken: "reauth",
+      });
+      startOnboarding(session.runId);
+      toast.success("Bank connection updated");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not refresh connection"
+      );
+    }
+  }, [resolveLink, startOnboarding]);
+
+  const handlePlaidExit = useCallback(() => {
+    setPlaidToken(null);
+    const session = sessionRef.current;
+    sessionRef.current = null;
+    if (!session) {
+      return;
+    }
+    void (async () => {
+      try {
+        await resolveLink({
+          cancelled: true,
+          hookToken: session.hookToken,
+        });
+      } catch {
+        // Best-effort cleanup; server-side timeout is the fallback.
+      }
+    })();
+  }, [resolveLink]);
 
   const { open: openPlaid, ready: plaidReady } = usePlaidLink({
-    onExit: () => {
-      setPlaidToken(null);
-    },
+    onExit: handlePlaidExit,
     onSuccess: handlePlaidSuccess,
     token: plaidToken,
   });
@@ -116,11 +159,18 @@ export function NotificationsSheet({
         );
         const data = (await res.json()) as {
           error?: string;
+          hookToken?: string;
           link_token?: string;
+          runId?: string;
         };
-        if (!res.ok || !data.link_token) {
+        if (!res.ok || !data.link_token || !data.hookToken || !data.runId) {
           throw new Error(data.error ?? "Could not start reconnect");
         }
+        sessionRef.current = {
+          hookToken: data.hookToken,
+          linkToken: data.link_token,
+          runId: data.runId,
+        };
         setPlaidToken(data.link_token);
       } else if (alert.source === "snaptrade") {
         const res = await fetch(

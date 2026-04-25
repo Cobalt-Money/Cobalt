@@ -1,5 +1,5 @@
 import { AddAccountDialog } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-dialog";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import {
   useAccountLauncher,
@@ -19,26 +19,35 @@ export function AddAccountDialogHost({
     open
   );
 
+  // Clear the search query as part of the close event — no need for an effect
+  // reacting to `open` changes.
+  const handleOpenChange = useCallback(
+    (next: boolean) => {
+      if (!next) {
+        setSearchQuery("");
+      }
+      onOpenChange(next);
+    },
+    [onOpenChange]
+  );
+
   const dismiss = useCallback(() => {
-    onOpenChange(false);
-  }, [onOpenChange]);
+    handleOpenChange(false);
+  }, [handleOpenChange]);
 
-  const { handleChoose } = useAccountLauncher(dismiss);
-
-  useEffect(() => {
-    if (!open) {
-      setSearchQuery("");
-    }
-  }, [open]);
+  const { handleChoose, updateModeDialog } = useAccountLauncher(dismiss);
 
   return (
-    <AddAccountDialog
-      onChoose={handleChoose}
-      onOpenChange={onOpenChange}
-      onSearchQueryChange={setSearchQuery}
-      open={open}
-      plaidInstitutions={plaidInstitutions}
-      searchQuery={searchQuery}
-    />
+    <>
+      <AddAccountDialog
+        onChoose={handleChoose}
+        onOpenChange={handleOpenChange}
+        onSearchQueryChange={setSearchQuery}
+        open={open}
+        plaidInstitutions={plaidInstitutions}
+        searchQuery={searchQuery}
+      />
+      {updateModeDialog}
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { db } from "@cobalt-web/db";
-import { bankConnection } from "@cobalt-web/db/schema/banking";
-import { eq } from "drizzle-orm";
+import { bankConnection, institution } from "@cobalt-web/db/schema/banking";
+import { and, eq, isNull } from "drizzle-orm";
 
 import type { DuplicateCheckCandidate } from "./lib.js";
 import { matchesDuplicateAccountMask } from "./lib.js";
@@ -100,4 +100,54 @@ export async function checkForDuplicateAccounts(
     duplicateAccounts,
     isDuplicate: duplicateAccounts.length > 0,
   };
+}
+
+/**
+ * Find a healthy existing bank_connection for this user at the given Plaid
+ * institution. Used to detect Scenario C — re-linking an institution the user
+ * already has a working connection at — so we can mint an update-mode link
+ * token and avoid creating a second Plaid Item (cost leak).
+ *
+ * Skips connections in a Plaid error state or pending disconnect — those
+ * should fall through to a fresh re-link rather than update mode.
+ */
+export async function findExistingHealthyConnection(
+  userId: string,
+  institutionId: string
+): Promise<{
+  id: string;
+  plaidAccessToken: string;
+  plaidItemId: string;
+  institutionName: string | null;
+  institutionLogo: string | null;
+  institutionUrl: string | null;
+} | null> {
+  // Left-join to `institution` because `bank_connection.institutionLogo` is
+  // stored as null during onboarding — the real logo + URL live in the
+  // institution table keyed by `plaid_institution_id`.
+  const [row] = await db
+    .select({
+      id: bankConnection.id,
+      institutionLogo: institution.logo,
+      institutionName: bankConnection.institutionName,
+      institutionUrl: institution.url,
+      plaidAccessToken: bankConnection.plaidAccessToken,
+      plaidItemId: bankConnection.plaidItemId,
+    })
+    .from(bankConnection)
+    .leftJoin(
+      institution,
+      eq(institution.plaidInstitutionId, bankConnection.institutionId)
+    )
+    .where(
+      and(
+        eq(bankConnection.userId, userId),
+        eq(bankConnection.institutionId, institutionId),
+        isNull(bankConnection.error),
+        isNull(bankConnection.pendingDisconnectAt)
+      )
+    )
+    .limit(1);
+
+  return row ?? null;
 }

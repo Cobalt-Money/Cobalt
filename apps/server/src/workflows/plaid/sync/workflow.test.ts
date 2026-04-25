@@ -23,12 +23,15 @@ import {
   triggerPlaidSyncStep,
 } from "./steps.js";
 import {
-  plaidInitialSyncWorkflow,
+  plaidAddAccountWorkflow,
   plaidOnboardingHookToken,
 } from "./workflow.js";
 
+const HOOK_TOKEN = "plaid:link:user-1:test-hook";
+
 vi.mock(import("./steps.js"), () => ({
   backfillHistoricalSnapshotsStep: vi.fn(),
+  clearItemErrorStep: vi.fn(),
   closeOnboardingProgressStep: vi.fn(),
   dispatchSnapshotWorkflowStep: vi.fn(),
   duplicateCheckStep: vi.fn(),
@@ -36,6 +39,7 @@ vi.mock(import("./steps.js"), () => ({
   exchangePublicTokenStep: vi.fn(),
   fetchItemForOnboardingStep: vi.fn(),
   getPlaidItemStep: vi.fn(),
+  persistNewAccountsForItemStep: vi.fn(),
   persistOnboardingItemStep: vi.fn(),
   reconcileOrphanAccountsStep: vi.fn(),
   removeItemStep: vi.fn(),
@@ -80,7 +84,14 @@ vi.mock(import("workflow"), async () => {
   const actual = await vi.importActual<typeof import("workflow")>("workflow");
   return {
     ...actual,
-    createHook: vi.fn(() => {
+    // Shim: the add-account workflow creates two hooks — the link hook
+    // (single-shot, awaited as a thenable) and the sync hook (iterable,
+    // consumed with `for await`). Dispatch on token prefix.
+    createHook: vi.fn((opts: { token: string }) => {
+      if (opts.token.startsWith("plaid:link:")) {
+        const p = Promise.resolve({ publicToken: PUBLIC_TOKEN });
+        return p as unknown as ReturnType<typeof actual.createHook>;
+      }
       const payloads = [...mockHookPayloads.current];
       return {
         [Symbol.asyncIterator]() {
@@ -169,7 +180,7 @@ describe("plaidOnboardingHookToken", () => {
   });
 });
 
-describe("plaidInitialSyncWorkflow", () => {
+describe("plaidAddAccountWorkflow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockHookPayloads.current = [
@@ -217,8 +228,8 @@ describe("plaidInitialSyncWorkflow", () => {
   });
 
   it("exchanges the public token and runs core sync steps on the happy path", async () => {
-    const result = await plaidInitialSyncWorkflow({
-      publicToken: PUBLIC_TOKEN,
+    const result = await plaidAddAccountWorkflow({
+      hookToken: HOOK_TOKEN,
       userId: USER_ID,
     });
 
@@ -233,8 +244,8 @@ describe("plaidInitialSyncWorkflow", () => {
   });
 
   it("emits exchange → validate → persist → waiting_for_plaid → accounts → transactions → historical → done", async () => {
-    await plaidInitialSyncWorkflow({
-      publicToken: PUBLIC_TOKEN,
+    await plaidAddAccountWorkflow({
+      hookToken: HOOK_TOKEN,
       userId: USER_ID,
     });
 
@@ -261,8 +272,8 @@ describe("plaidInitialSyncWorkflow", () => {
       isDuplicate: true,
     });
 
-    const result = await plaidInitialSyncWorkflow({
-      publicToken: PUBLIC_TOKEN,
+    const result = await plaidAddAccountWorkflow({
+      hookToken: HOOK_TOKEN,
       userId: USER_ID,
     });
 
@@ -287,8 +298,8 @@ describe("plaidInitialSyncWorkflow", () => {
       }),
     } as unknown as Awaited<ReturnType<typeof fetchItemForOnboardingStep>>);
 
-    await plaidInitialSyncWorkflow({
-      publicToken: PUBLIC_TOKEN,
+    await plaidAddAccountWorkflow({
+      hookToken: HOOK_TOKEN,
       userId: USER_ID,
     });
 
@@ -309,8 +320,8 @@ describe("plaidInitialSyncWorkflow", () => {
       }),
     } as unknown as Awaited<ReturnType<typeof fetchItemForOnboardingStep>>);
 
-    await plaidInitialSyncWorkflow({
-      publicToken: PUBLIC_TOKEN,
+    await plaidAddAccountWorkflow({
+      hookToken: HOOK_TOKEN,
       userId: USER_ID,
     });
 
@@ -325,8 +336,8 @@ describe("plaidInitialSyncWorkflow", () => {
       { historical_update_complete: false, initial_update_complete: true },
     ];
 
-    await plaidInitialSyncWorkflow({
-      publicToken: PUBLIC_TOKEN,
+    await plaidAddAccountWorkflow({
+      hookToken: HOOK_TOKEN,
       userId: USER_ID,
     });
 
@@ -335,8 +346,8 @@ describe("plaidInitialSyncWorkflow", () => {
   });
 
   it("closes progress stream on success", async () => {
-    await plaidInitialSyncWorkflow({
-      publicToken: PUBLIC_TOKEN,
+    await plaidAddAccountWorkflow({
+      hookToken: HOOK_TOKEN,
       userId: USER_ID,
     });
     expect(mockClose).toHaveBeenCalledOnce();
@@ -345,8 +356,8 @@ describe("plaidInitialSyncWorkflow", () => {
   it("closes progress stream and returns failure on error", async () => {
     mockExchange.mockRejectedValueOnce(new Error("plaid down"));
 
-    const result = await plaidInitialSyncWorkflow({
-      publicToken: PUBLIC_TOKEN,
+    const result = await plaidAddAccountWorkflow({
+      hookToken: HOOK_TOKEN,
       userId: USER_ID,
     });
 
