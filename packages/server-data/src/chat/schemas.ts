@@ -1,4 +1,4 @@
-import { messageVotes } from "@cobalt-web/db/schema/features";
+import { messageVotes } from "@cobalt-web/db/schema/ai/message-votes";
 import { chats, messages } from "@cobalt-web/db/schema/zero-schema";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";

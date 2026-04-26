@@ -30,7 +30,7 @@ export { feedback } from "./features/feedback";
 export { financialEvents, eventArticles } from "./features/financial-events";
 export { financialGoals } from "./features/financial-goals";
 export { kalshiUsers } from "./features/kalshi";
-export { messageVotes } from "./features/message-votes";
+export { messageVotes } from "./ai/message-votes";
 export { rssArticles, rssFeeds } from "./features/rss";
 export { userAlerts } from "./features/user-alerts";
 export { mobileSubscription } from "./subscriptions/mobile";

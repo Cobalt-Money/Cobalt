@@ -26,13 +26,6 @@ export {
 // kalshi
 export { kalshiUsers, type KalshiUser, type KalshiUserInsert } from "./kalshi";
 
-// message-votes
-export {
-  messageVotes,
-  type MessageVote,
-  type MessageVoteInsert,
-} from "./message-votes";
-
 // rss
 export {
   rssArticles,
