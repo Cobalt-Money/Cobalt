@@ -9,10 +9,8 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../../../auth/auth";
-import type {
-  PlaidItemErrorJson,
-  StringArrayJson,
-} from "../../../banking/items/zod";
+import type { StringArrayJson } from "../../../banking/items/zod";
+import type { PlaidItemErrorJson } from "../../../providers/plaid/zod";
 import { appFullAccess, agentSelectOwn } from "../../../rls";
 
 /** @deprecated Use `plaidConnection` from `@cobalt-web/db/schema/providers/plaid/connection`. */

@@ -1,15 +1,11 @@
 import { balance } from "@cobalt-web/db/schema/accounts/balance";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
 import { institution } from "@cobalt-web/db/schema/banking/items/institution";
-import {
-  bankConnectionJsonbSelectRefinements as plaidConnectionJsonbSelectRefinements,
-  institutionJsonbSelectRefinements,
-} from "@cobalt-web/db/schema/banking/items/zod";
-import type {
-  PlaidItemErrorJson,
-  StringArrayJson,
-} from "@cobalt-web/db/schema/banking/items/zod";
+import { institutionJsonbSelectRefinements } from "@cobalt-web/db/schema/banking/items/zod";
+import type { StringArrayJson } from "@cobalt-web/db/schema/banking/items/zod";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { plaidConnectionJsonbSelectRefinements } from "@cobalt-web/db/schema/providers/plaid/zod";
+import type { PlaidItemErrorJson } from "@cobalt-web/db/schema/providers/plaid/zod";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 

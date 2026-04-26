@@ -8,13 +8,11 @@
 
 // items — `institution.ts` (Drizzle) + `zod.ts` (jsonb)
 export {
-  bankConnectionJsonbSelectRefinements,
   institutionJsonbSelectRefinements,
-  plaidItemErrorJsonSchema,
   stringArrayJsonSchema,
 } from "./items/zod";
 export { institution } from "./items/institution";
-export type { PlaidItemErrorJson, StringArrayJson } from "./items/zod";
+export type { StringArrayJson } from "./items/zod";
 export type { Institution, InstitutionSelect } from "./items/institution";
 
 // transactions — `zod.ts` (jsonb) only; tables.ts moved to _deprecated/
