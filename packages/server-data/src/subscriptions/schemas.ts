@@ -1,4 +1,4 @@
-import { mobileSubscription } from "@cobalt-web/db/schema/mobile/subscriptions";
+import { mobileSubscription } from "@cobalt-web/db/schema/subscriptions/mobile";
 import { z } from "@hono/zod-openapi";
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 

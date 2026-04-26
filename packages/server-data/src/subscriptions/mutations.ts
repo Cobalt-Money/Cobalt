@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { mobileSubscription } from "@cobalt-web/db/schema/mobile/subscriptions";
+import { mobileSubscription } from "@cobalt-web/db/schema/subscriptions/mobile";
 import { eq } from "drizzle-orm";
 
 import type {

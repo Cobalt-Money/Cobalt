@@ -2,13 +2,8 @@
 // drizzle-zero requires a single TS file (not a folder) for type resolution.
 
 // Tables (omit oauth* + jwks from auth/auth — server-only; not in Postgres replication publication)
-export {
-  user,
-  session,
-  account,
-  verification,
-  subscription,
-} from "./auth/auth";
+export { user, session, account, verification } from "./auth/auth";
+export { subscription } from "./subscriptions/stripe";
 export { chats, messages, parts } from "./ai/chat";
 export { institution } from "./banking/items/institution";
 
@@ -38,7 +33,7 @@ export { kalshiUsers } from "./features/kalshi";
 export { messageVotes } from "./features/message-votes";
 export { rssArticles, rssFeeds } from "./features/rss";
 export { userAlerts } from "./features/user-alerts";
-export { mobileSubscription } from "./mobile/subscriptions";
+export { mobileSubscription } from "./subscriptions/mobile";
 
 // Legacy v1 `relations()` exports for drizzle-zero code generation only.
 // Runtime DB uses Relational Queries v2 from `./relations`.

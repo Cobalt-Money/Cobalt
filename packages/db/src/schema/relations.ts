@@ -11,7 +11,7 @@ import { recurringStream } from "./accounts/recurring-stream";
 import { snapshot } from "./accounts/snapshot";
 import { transaction } from "./accounts/transaction";
 import { chats, messages, parts } from "./ai/chat";
-import { user, session, account, subscription } from "./auth/auth";
+import { user, session, account } from "./auth/auth";
 import { institution } from "./banking";
 import { feedback } from "./features/feedback";
 import { financialEvents, eventArticles } from "./features/financial-events";
@@ -23,10 +23,11 @@ import { holding } from "./investments/holding";
 import { investmentActivity } from "./investments/investment-activity";
 import { orders } from "./investments/order";
 import { security } from "./investments/security";
-import { mobileSubscription } from "./mobile/subscriptions";
 import { plaidConnection } from "./providers/plaid/connection";
 import { snaptradeAuthorization } from "./providers/snaptrade/authorization";
 import { snaptradeUser } from "./providers/snaptrade/user";
+import { mobileSubscription } from "./subscriptions/mobile";
+import { subscription } from "./subscriptions/stripe";
 
 /** Tables referenced by relational queries — must cover every `r.*` use in `defineRelations`. */
 const schema = {

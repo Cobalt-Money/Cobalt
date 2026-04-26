@@ -13,8 +13,9 @@ import * as kalshiSchema from "./schema/features/kalshi";
 import * as messageVotesSchema from "./schema/features/message-votes";
 import * as rssSchema from "./schema/features/rss";
 import * as userAlertsSchema from "./schema/features/user-alerts";
-import * as mobileSchema from "./schema/mobile/subscriptions";
 import { relations } from "./schema/relations";
+import * as mobileSubscriptionsSchema from "./schema/subscriptions/mobile";
+import * as stripeSubscriptionsSchema from "./schema/subscriptions/stripe";
 
 const pool = new Pool({
   connectionString: env.LOCAL_DATABASE_URL ?? env.DATABASE_URL,
@@ -36,6 +37,7 @@ export const db = drizzle({
     ...messageVotesSchema,
     ...rssSchema,
     ...userAlertsSchema,
-    ...mobileSchema,
+    ...mobileSubscriptionsSchema,
+    ...stripeSubscriptionsSchema,
   },
 });
