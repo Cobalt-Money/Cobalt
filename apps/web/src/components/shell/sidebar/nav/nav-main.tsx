@@ -20,7 +20,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { Link } from "@/components/links";
 
 const navItemClassName =
-  "rounded-md px-2 py-1.5 text-[15px] font-normal text-foreground/60 data-active:text-foreground data-active:font-normal [&_svg]:size-[15px] [&_svg]:shrink-0";
+  "rounded-md px-2 py-1.5 text-[15px] font-normal text-foreground/60 data-active:text-foreground data-active:font-normal [&_svg]:size-[18px] [&_svg]:shrink-0";
 
 const NAV_MAIN_ITEMS = [
   {
