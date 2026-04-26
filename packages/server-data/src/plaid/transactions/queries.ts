@@ -1,6 +1,6 @@
 import { db } from "@cobalt-web/db";
-import { transaction as transactionTable } from "@cobalt-web/db/schema/banking";
-import { and, inArray, isNotNull, or } from "drizzle-orm";
+import { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/transaction";
+import { and, eq, inArray, isNotNull, or } from "drizzle-orm";
 
 export interface UserOverrides {
   userOverrideName: string | null;
@@ -16,14 +16,15 @@ export async function getUserOverrides(
 
   const rows = await db
     .select({
-      plaidTransactionId: transactionTable.plaidTransactionId,
+      externalId: transactionTable.externalId,
       userOverrideCategory: transactionTable.userOverrideCategory,
       userOverrideName: transactionTable.userOverrideName,
     })
     .from(transactionTable)
     .where(
       and(
-        inArray(transactionTable.plaidTransactionId, transactionIds),
+        eq(transactionTable.source, "plaid"),
+        inArray(transactionTable.externalId, transactionIds),
         or(
           isNotNull(transactionTable.userOverrideName),
           isNotNull(transactionTable.userOverrideCategory)
@@ -32,13 +33,18 @@ export async function getUserOverrides(
     );
 
   return new Map(
-    rows.map((row) => [
-      row.plaidTransactionId,
-      {
-        userOverrideCategory:
-          row.userOverrideCategory as UserOverrides["userOverrideCategory"],
-        userOverrideName: row.userOverrideName,
-      },
-    ])
+    rows
+      .filter(
+        (row): row is typeof row & { externalId: string } =>
+          row.externalId !== null
+      )
+      .map((row) => [
+        row.externalId,
+        {
+          userOverrideCategory:
+            row.userOverrideCategory as UserOverrides["userOverrideCategory"],
+          userOverrideName: row.userOverrideName,
+        },
+      ])
   );
 }

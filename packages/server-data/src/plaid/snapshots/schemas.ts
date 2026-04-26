@@ -1,17 +1,10 @@
-import {
-  bankAccount,
-  bankBalanceSnapshot,
-  bankConnection,
-  bankConnectionJsonbSelectRefinements,
-} from "@cobalt-web/db/schema/banking";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 
-const bankBalanceSnapshotRowSchema = createSelectSchema(bankBalanceSnapshot);
-const bankAccountRowSchema = createSelectSchema(bankAccount);
-const bankConnectionRowSchema = createSelectSchema(bankConnection, {
-  ...bankConnectionJsonbSelectRefinements,
-});
+const snapshotRowSchema = createSelectSchema(snapshot);
+const financialAccountRowSchema = createSelectSchema(financialAccount);
 
 export const balanceSnapshotQuerySchema = z.object({
   accountId: z.string().optional(),
@@ -24,24 +17,20 @@ export const errorResponseSchema = z.object({
   error: z.string(),
 });
 
-/** Joined DTO: snapshot columns + account/connection fields + ISO `createdAt` on the wire. */
-const balanceSnapshotSnapshotSlice = bankBalanceSnapshotRowSchema.pick({
-  availableBalance: true,
-  creditLimit: true,
-  currentBalance: true,
-  id: true,
-  plaidAccountId: true,
-  snapshotDate: true,
-  snapshotSource: true,
-});
-
-export const balanceSnapshotSchema = balanceSnapshotSnapshotSlice.extend({
-  accountName: bankAccountRowSchema.shape.name,
-  accountSubtype: bankAccountRowSchema.shape.subtype,
-  accountType: bankAccountRowSchema.shape.type,
-  /** ISO string; overrides timestamp column inference from `bank_balance_snapshot`. */
+export const balanceSnapshotSchema = z.object({
+  accountName: financialAccountRowSchema.shape.name,
+  accountSubtype: financialAccountRowSchema.shape.subtype,
+  accountType: financialAccountRowSchema.shape.type,
+  availableBalance: z.number().nullable(),
+  /** ISO string. */
   createdAt: z.string(),
-  institutionName: bankConnectionRowSchema.shape.institutionName,
+  creditLimit: z.number().nullable(),
+  currentBalance: z.number(),
+  id: snapshotRowSchema.shape.id,
+  institutionName: financialAccountRowSchema.shape.institutionName,
+  /** Provider-external account id. Null for `manual` accounts. */
+  plaidAccountId: z.string().nullable(),
+  snapshotDate: snapshotRowSchema.shape.snapshotDate,
 });
 
 export const balanceSnapshotListResponseSchema = z.object({

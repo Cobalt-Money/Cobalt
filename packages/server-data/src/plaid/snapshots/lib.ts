@@ -1,45 +1,40 @@
 import type { BalanceSnapshot } from "./schemas.js";
 
 /**
- * Minimal row shape for `toBalanceSnapshotDTO` (matches relational `with` load;
- * full `bankAccount` rows are assignable here).
+ * Joined row shape (snapshot ⨝ financial_account) for `toBalanceSnapshotDTO`.
  */
-export interface BalanceSnapshotRelationalRow {
+export interface BalanceSnapshotJoinedRow {
   account: {
-    connection: { institutionName: string | null };
+    externalId: string | null;
+    institutionName: string | null;
     name: string;
     subtype: string | null;
     type: string;
   };
-  availableBalance: number | null;
+  available: string | null;
   createdAt: Date;
-  creditLimit: number | null;
-  currentBalance: number;
+  current: string;
   id: string;
-  plaidAccountId: string;
+  limit: string | null;
   snapshotDate: string;
-  snapshotSource: string;
 }
 
-/** Map a relational balance snapshot row to the HTTP DTO. */
+/** Map a joined snapshot row to the HTTP DTO. */
 export function toBalanceSnapshotDTO(
-  row: BalanceSnapshotRelationalRow
+  row: BalanceSnapshotJoinedRow
 ): BalanceSnapshot {
   const { account } = row;
-  const { connection } = account;
-
   return {
     accountName: account.name,
     accountSubtype: account.subtype,
     accountType: account.type,
-    availableBalance: row.availableBalance,
+    availableBalance: row.available === null ? null : Number(row.available),
     createdAt: row.createdAt.toISOString(),
-    creditLimit: row.creditLimit,
-    currentBalance: row.currentBalance,
+    creditLimit: row.limit === null ? null : Number(row.limit),
+    currentBalance: Number(row.current),
     id: row.id,
-    institutionName: connection.institutionName,
-    plaidAccountId: row.plaidAccountId,
+    institutionName: account.institutionName,
+    plaidAccountId: account.externalId,
     snapshotDate: row.snapshotDate,
-    snapshotSource: row.snapshotSource,
   };
 }

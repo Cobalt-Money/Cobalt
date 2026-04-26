@@ -1,16 +1,67 @@
 import { db } from "@cobalt-web/db";
-import { bankConnection, institution } from "@cobalt-web/db/schema/banking";
-import { and, eq, isNull } from "drizzle-orm";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { institution } from "@cobalt-web/db/schema/banking";
+import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import type { DuplicateCheckCandidate } from "./lib.js";
 import { matchesDuplicateAccountMask } from "./lib.js";
 
-/** Fetch a bankConnection row by Plaid item ID. Throws when not found. */
+export interface AccountRef {
+  id: string;
+  userId: string;
+}
+
+/**
+ * Resolve financial_account rows for a batch of Plaid external account_ids.
+ * Returns a Map keyed by Plaid account_id. Missing entries = orphaned/unsynced.
+ */
+export async function lookupFinancialAccountsByPlaidIds(
+  plaidAccountIds: string[]
+): Promise<Map<string, AccountRef>> {
+  if (plaidAccountIds.length === 0) {
+    return new Map();
+  }
+  const rows = await db
+    .select({
+      externalId: financialAccount.externalId,
+      id: financialAccount.id,
+      userId: financialAccount.userId,
+    })
+    .from(financialAccount)
+    .where(
+      and(
+        eq(financialAccount.source, "plaid"),
+        inArray(financialAccount.externalId, plaidAccountIds)
+      )
+    );
+  const map = new Map<string, AccountRef>();
+  for (const r of rows) {
+    if (r.externalId !== null) {
+      map.set(r.externalId, { id: r.id, userId: r.userId });
+    }
+  }
+  return map;
+}
+
+/** Resolve plaid_connection by Plaid item_id. Returns null if not found. */
+export async function lookupPlaidConnection(
+  plaidItemId: string
+): Promise<{ id: string; userId: string } | null> {
+  const rows = await db
+    .select({ id: plaidConnection.id, userId: plaidConnection.userId })
+    .from(plaidConnection)
+    .where(eq(plaidConnection.plaidItemId, plaidItemId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/** Fetch a plaid_connection row by Plaid item ID. Throws when not found. */
 export async function getBankConnectionByItemId(plaidItemId: string) {
   const [item] = await db
     .select()
-    .from(bankConnection)
-    .where(eq(bankConnection.plaidItemId, plaidItemId))
+    .from(plaidConnection)
+    .where(eq(plaidConnection.plaidItemId, plaidItemId))
     .limit(1);
 
   if (!item) {
@@ -27,18 +78,22 @@ export async function getAccessTokenForItem(
   userId: string,
   plaidItemId: string
 ): Promise<string> {
-  const item = await db.query.bankConnection.findFirst({
-    columns: { plaidAccessToken: true },
-    where: {
-      AND: [{ plaidItemId: { eq: plaidItemId } }, { userId: { eq: userId } }],
-    },
-  });
+  const [row] = await db
+    .select({ plaidAccessToken: plaidConnection.plaidAccessToken })
+    .from(plaidConnection)
+    .where(
+      and(
+        eq(plaidConnection.plaidItemId, plaidItemId),
+        eq(plaidConnection.userId, userId)
+      )
+    )
+    .limit(1);
 
-  if (!item) {
+  if (!row) {
     throw new Error("Item not found or access denied");
   }
 
-  return item.plaidAccessToken;
+  return row.plaidAccessToken;
 }
 
 /**
@@ -60,27 +115,51 @@ export async function checkForDuplicateAccounts(
     return { duplicateAccounts: [], isDuplicate: false };
   }
 
-  const connections = await db.query.bankConnection.findMany({
-    where: {
-      AND: [
-        { userId: { eq: userId } },
-        { institutionId: { eq: institutionId } },
-      ],
-    },
-    with: {
-      accounts: true,
-    },
-  });
+  const connections = await db
+    .select({
+      createdAt: plaidConnection.createdAt,
+      id: plaidConnection.id,
+    })
+    .from(plaidConnection)
+    .where(
+      and(
+        eq(plaidConnection.userId, userId),
+        eq(plaidConnection.institutionId, institutionId)
+      )
+    );
 
-  const existingAccounts = connections.flatMap((c) =>
-    c.accounts.map((a) => ({
-      createdAt: c.createdAt,
-      mask: a.mask,
-      name: a.name,
-      persistentAccountId: a.persistentAccountId,
-      type: a.type,
-    }))
-  );
+  if (connections.length === 0) {
+    return { duplicateAccounts: [], isDuplicate: false };
+  }
+
+  const connectionIds = connections.map((c) => c.id);
+  const createdAtById = new Map(connections.map((c) => [c.id, c.createdAt]));
+
+  const accounts = await db
+    .select({
+      mask: financialAccount.mask,
+      name: financialAccount.name,
+      persistentAccountId: financialAccount.persistentAccountId,
+      plaidConnectionId: financialAccount.plaidConnectionId,
+      type: financialAccount.type,
+    })
+    .from(financialAccount)
+    .where(
+      and(
+        eq(financialAccount.source, "plaid"),
+        inArray(financialAccount.plaidConnectionId, connectionIds)
+      )
+    );
+
+  const existingAccounts = accounts.map((a) => ({
+    createdAt: a.plaidConnectionId
+      ? (createdAtById.get(a.plaidConnectionId) ?? new Date(0))
+      : new Date(0),
+    mask: a.mask,
+    name: a.name,
+    persistentAccountId: a.persistentAccountId,
+    type: a.type,
+  }));
 
   const duplicateAccounts = newAccounts.flatMap((newAccount) => {
     const match = existingAccounts.find((existing) => {
@@ -103,7 +182,7 @@ export async function checkForDuplicateAccounts(
 }
 
 /**
- * Find a healthy existing bank_connection for this user at the given Plaid
+ * Find a healthy existing plaid_connection for this user at the given Plaid
  * institution. Used to detect Scenario C — re-linking an institution the user
  * already has a working connection at — so we can mint an update-mode link
  * token and avoid creating a second Plaid Item (cost leak).
@@ -122,29 +201,29 @@ export async function findExistingHealthyConnection(
   institutionLogo: string | null;
   institutionUrl: string | null;
 } | null> {
-  // Left-join to `institution` because `bank_connection.institutionLogo` is
+  // Left-join to `institution` because `plaid_connection.institutionLogo` is
   // stored as null during onboarding — the real logo + URL live in the
   // institution table keyed by `plaid_institution_id`.
   const [row] = await db
     .select({
-      id: bankConnection.id,
+      id: plaidConnection.id,
       institutionLogo: institution.logo,
-      institutionName: bankConnection.institutionName,
+      institutionName: plaidConnection.institutionName,
       institutionUrl: institution.url,
-      plaidAccessToken: bankConnection.plaidAccessToken,
-      plaidItemId: bankConnection.plaidItemId,
+      plaidAccessToken: plaidConnection.plaidAccessToken,
+      plaidItemId: plaidConnection.plaidItemId,
     })
-    .from(bankConnection)
+    .from(plaidConnection)
     .leftJoin(
       institution,
-      eq(institution.plaidInstitutionId, bankConnection.institutionId)
+      eq(institution.plaidInstitutionId, plaidConnection.institutionId)
     )
     .where(
       and(
-        eq(bankConnection.userId, userId),
-        eq(bankConnection.institutionId, institutionId),
-        isNull(bankConnection.error),
-        isNull(bankConnection.pendingDisconnectAt)
+        eq(plaidConnection.userId, userId),
+        eq(plaidConnection.institutionId, institutionId),
+        isNull(plaidConnection.error),
+        isNull(plaidConnection.pendingDisconnectAt)
       )
     )
     .limit(1);

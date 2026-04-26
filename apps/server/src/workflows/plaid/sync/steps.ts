@@ -1,10 +1,7 @@
 import { db } from "@cobalt-web/db";
-import {
-  bankAccount,
-  bankBalanceSnapshot,
-  bankConnection,
-} from "@cobalt-web/db/schema/banking";
-import { portfolioSnapshots } from "@cobalt-web/db/schema/brokerage";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
+import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import {
   exchangePublicToken,
   fetchAccounts,
@@ -12,7 +9,7 @@ import {
   removeItem,
   triggerPlaidSync,
 } from "@cobalt-web/server-data/plaid/link/actions";
-import { bankAccountInsertFromPlaid } from "@cobalt-web/server-data/plaid/link/lib";
+import { financialAccountInsertFromPlaid } from "@cobalt-web/server-data/plaid/link/lib";
 import {
   applyItemWebhookState,
   clearItemError,
@@ -162,6 +159,20 @@ export async function updateItemStateStep(params: {
     : { success: true, webhook_code: result.webhookCode };
 }
 
+async function resolvePlaidConnection(
+  plaidItemId: string
+): Promise<{ id: string; userId: string }> {
+  const [conn] = await db
+    .select({ id: plaidConnection.id, userId: plaidConnection.userId })
+    .from(plaidConnection)
+    .where(eq(plaidConnection.plaidItemId, plaidItemId))
+    .limit(1);
+  if (!conn) {
+    throw new Error(`plaid_connection not found for item ${plaidItemId}`);
+  }
+  return conn;
+}
+
 export async function syncAccountsAndBalancesStep(
   accessToken: string,
   itemId: string
@@ -170,19 +181,21 @@ export async function syncAccountsAndBalancesStep(
 
   try {
     const accounts = await fetchAccounts(accessToken);
-    const toInsert = bankAccountInsertFromPlaid(itemId);
+    const conn = await resolvePlaidConnection(itemId);
+    const toInsert = financialAccountInsertFromPlaid(conn.id, conn.userId);
 
     await Promise.allSettled(
       accounts.map(async (account) => {
         await db
-          .insert(bankAccount)
+          .insert(financialAccount)
           .values(toInsert(account))
           .onConflictDoUpdate({
             set: {
-              persistentAccountId: sql`coalesce(${bankAccount.persistentAccountId}, excluded.persistent_account_id)`,
+              persistentAccountId: sql`coalesce(${financialAccount.persistentAccountId}, excluded.persistent_account_id)`,
               updatedAt: new Date(),
             },
-            target: bankAccount.plaidAccountId,
+            target: [financialAccount.source, financialAccount.externalId],
+            where: sql`external_id IS NOT NULL`,
           });
 
         await upsertBalanceForPlaidAccount(account);
@@ -207,12 +220,13 @@ export async function reconcileOrphanAccountsStep(
   "use step";
 
   try {
-    const [item] = await db
-      .select({ userId: bankConnection.userId })
-      .from(bankConnection)
-      .where(eq(bankConnection.plaidItemId, itemId))
+    const conn = await db
+      .select({ id: plaidConnection.id, userId: plaidConnection.userId })
+      .from(plaidConnection)
+      .where(eq(plaidConnection.plaidItemId, itemId))
       .limit(1);
 
+    const item = conn.at(0);
     if (!item) {
       return { migrated: 0, reconciled: 0 };
     }
@@ -221,18 +235,24 @@ export async function reconcileOrphanAccountsStep(
     const plaidAccountIds = new Set(plaidAccountsList.map((a) => a.account_id));
     const dbAccounts = await db
       .select({
-        mask: bankAccount.mask,
-        name: bankAccount.name,
-        persistentAccountId: bankAccount.persistentAccountId,
-        plaidAccountId: bankAccount.plaidAccountId,
-        subtype: bankAccount.subtype,
-        type: bankAccount.type,
+        externalId: financialAccount.externalId,
+        id: financialAccount.id,
+        mask: financialAccount.mask,
+        name: financialAccount.name,
+        persistentAccountId: financialAccount.persistentAccountId,
+        subtype: financialAccount.subtype,
+        type: financialAccount.type,
       })
-      .from(bankAccount)
-      .where(eq(bankAccount.plaidItemId, itemId));
+      .from(financialAccount)
+      .where(
+        and(
+          eq(financialAccount.source, "plaid"),
+          eq(financialAccount.plaidConnectionId, item.id)
+        )
+      );
 
     const orphanAccounts = dbAccounts.filter(
-      (a) => !plaidAccountIds.has(a.plaidAccountId)
+      (a) => a.externalId !== null && !plaidAccountIds.has(a.externalId)
     );
 
     if (orphanAccounts.length === 0) {
@@ -242,25 +262,40 @@ export async function reconcileOrphanAccountsStep(
     let migrated = 0;
 
     for (const orphan of orphanAccounts) {
-      const newAccount = findMatchingNewAccount(orphan, plaidAccountsList);
+      const newAccount = findMatchingNewAccount(
+        {
+          externalId: orphan.externalId ?? "",
+          mask: orphan.mask,
+          name: orphan.name,
+          persistentAccountId: orphan.persistentAccountId,
+          subtype: orphan.subtype,
+          type: orphan.type,
+        },
+        plaidAccountsList
+      );
 
       if (newAccount) {
-        await migrateSnapshotsToNewAccount(
-          orphan.plaidAccountId,
-          newAccount.account_id,
-          item.userId
-        );
-        migrated += 1;
+        // Resolve the new financial_account.id by external account_id.
+        const [newRow] = await db
+          .select({ id: financialAccount.id })
+          .from(financialAccount)
+          .where(
+            and(
+              eq(financialAccount.source, "plaid"),
+              eq(financialAccount.externalId, newAccount.account_id)
+            )
+          )
+          .limit(1);
+
+        if (newRow) {
+          await migrateSnapshotsToNewAccount(orphan.id, newRow.id, item.userId);
+          migrated += 1;
+        }
       }
 
       await db
-        .delete(bankAccount)
-        .where(
-          and(
-            eq(bankAccount.plaidItemId, itemId),
-            eq(bankAccount.plaidAccountId, orphan.plaidAccountId)
-          )
-        );
+        .delete(financialAccount)
+        .where(eq(financialAccount.id, orphan.id));
     }
 
     return { migrated, reconciled: orphanAccounts.length };
@@ -274,7 +309,7 @@ export async function reconcileOrphanAccountsStep(
 
 function findMatchingNewAccount(
   orphan: {
-    plaidAccountId: string;
+    externalId: string;
     persistentAccountId: string | null;
     type: string;
     subtype: string | null;
@@ -324,87 +359,47 @@ function findMatchingNewAccount(
   return match ?? byName[0] ?? null;
 }
 
+/**
+ * Re-point snapshot rows from an orphan financial_account to the new one,
+ * skipping any (account, date) pair that already exists on the new account
+ * (the unique index would reject the row anyway).
+ */
 async function migrateSnapshotsToNewAccount(
   orphanId: string,
   newId: string,
   userId: string
 ): Promise<void> {
-  const orphanSnapshots = await db
-    .select({ snapshotDate: portfolioSnapshots.snapshotDate })
-    .from(portfolioSnapshots)
-    .where(
-      and(
-        eq(portfolioSnapshots.userId, userId),
-        eq(portfolioSnapshots.accountId, orphanId)
-      )
-    );
+  const orphanRows = await db
+    .select({ snapshotDate: snapshot.snapshotDate })
+    .from(snapshot)
+    .where(and(eq(snapshot.userId, userId), eq(snapshot.accountId, orphanId)));
 
-  const newSnapshotsRaw = await db
-    .select({ snapshotDate: portfolioSnapshots.snapshotDate })
-    .from(portfolioSnapshots)
-    .where(
-      and(
-        eq(portfolioSnapshots.userId, userId),
-        eq(portfolioSnapshots.accountId, newId)
-      )
-    );
-  const newSnapshotDates = new Set(newSnapshotsRaw.map((r) => r.snapshotDate));
+  const newRows = await db
+    .select({ snapshotDate: snapshot.snapshotDate })
+    .from(snapshot)
+    .where(and(eq(snapshot.userId, userId), eq(snapshot.accountId, newId)));
+  const newDates = new Set(newRows.map((r) => r.snapshotDate));
 
-  for (const row of orphanSnapshots) {
+  for (const row of orphanRows) {
     const date = row.snapshotDate;
-    await (newSnapshotDates.has(date)
+    await (newDates.has(date)
       ? db
-          .delete(portfolioSnapshots)
+          .delete(snapshot)
           .where(
             and(
-              eq(portfolioSnapshots.userId, userId),
-              eq(portfolioSnapshots.accountId, orphanId),
-              eq(portfolioSnapshots.snapshotDate, date)
+              eq(snapshot.userId, userId),
+              eq(snapshot.accountId, orphanId),
+              eq(snapshot.snapshotDate, date)
             )
           )
       : db
-          .update(portfolioSnapshots)
+          .update(snapshot)
           .set({ accountId: newId })
           .where(
             and(
-              eq(portfolioSnapshots.userId, userId),
-              eq(portfolioSnapshots.accountId, orphanId),
-              eq(portfolioSnapshots.snapshotDate, date)
-            )
-          ));
-  }
-
-  const orphanBalanceSnapshots = await db
-    .select({ snapshotDate: bankBalanceSnapshot.snapshotDate })
-    .from(bankBalanceSnapshot)
-    .where(eq(bankBalanceSnapshot.plaidAccountId, orphanId));
-
-  const newBalanceDatesRaw = await db
-    .select({ snapshotDate: bankBalanceSnapshot.snapshotDate })
-    .from(bankBalanceSnapshot)
-    .where(eq(bankBalanceSnapshot.plaidAccountId, newId));
-  const newBalanceDates = new Set(
-    newBalanceDatesRaw.map((r) => r.snapshotDate)
-  );
-
-  for (const row of orphanBalanceSnapshots) {
-    const date = row.snapshotDate;
-    await (newBalanceDates.has(date)
-      ? db
-          .delete(bankBalanceSnapshot)
-          .where(
-            and(
-              eq(bankBalanceSnapshot.plaidAccountId, orphanId),
-              eq(bankBalanceSnapshot.snapshotDate, date)
-            )
-          )
-      : db
-          .update(bankBalanceSnapshot)
-          .set({ plaidAccountId: newId })
-          .where(
-            and(
-              eq(bankBalanceSnapshot.plaidAccountId, orphanId),
-              eq(bankBalanceSnapshot.snapshotDate, date)
+              eq(snapshot.userId, userId),
+              eq(snapshot.accountId, orphanId),
+              eq(snapshot.snapshotDate, date)
             )
           ));
   }

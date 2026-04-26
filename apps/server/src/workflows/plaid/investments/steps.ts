@@ -10,12 +10,7 @@ import {
 import type { Holding, InvestmentTransaction, Security } from "plaid";
 import { RetryableError } from "workflow";
 
-import {
-  INVESTMENT_TRANSACTIONS_PAGE_SIZE,
-  mapHolding,
-  mapInvestmentTransaction,
-  mapSecurity,
-} from "./lib.js";
+import { INVESTMENT_TRANSACTIONS_PAGE_SIZE } from "./lib.js";
 
 const INVESTMENT_SKIP_ERROR_CODES = new Set([
   "NO_INVESTMENT_ACCOUNTS",
@@ -117,7 +112,7 @@ export async function upsertSecuritiesStep(
   if (securities.length === 0) {
     return 0;
   }
-  await upsertInvestmentSecurities(securities.map(mapSecurity));
+  await upsertInvestmentSecurities(securities);
   return securities.length;
 }
 
@@ -130,7 +125,7 @@ export async function upsertPositionsStep(
   if (holdings.length === 0) {
     return 0;
   }
-  await upsertInvestmentPositions(holdings.map(mapHolding));
+  await upsertInvestmentPositions(holdings);
   return holdings.length;
 }
 
@@ -172,6 +167,6 @@ export async function upsertActivitiesStep(
   if (transactions.length === 0) {
     return 0;
   }
-  await upsertInvestmentActivities(transactions.map(mapInvestmentTransaction));
+  await upsertInvestmentActivities(transactions);
   return transactions.length;
 }

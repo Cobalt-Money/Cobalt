@@ -264,6 +264,7 @@ export const jwks = pgTable.withRLS(
 export const subscription = pgTable.withRLS(
   "subscription",
   {
+    billingInterval: text("billing_interval"),
     cancelAtPeriodEnd: boolean("cancel_at_period_end").$defaultFn(() => false),
     id: text("id").primaryKey(),
     periodEnd: timestamp("period_end"),

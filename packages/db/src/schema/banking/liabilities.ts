@@ -12,6 +12,7 @@ import { appFullAccess, agentSelectViaBankAccount } from "../rls";
 import { bankAccount } from "./accounts";
 
 // Credit Card Liabilities
+/** @deprecated Use `creditLiability` from `@cobalt-web/db/schema/accounts/liabilities`. */
 export const creditLiability = pgTable.withRLS(
   "credit_liability",
   {
@@ -38,6 +39,7 @@ export const creditLiability = pgTable.withRLS(
 );
 
 // Mortgage Liabilities
+/** @deprecated Use `mortgageLiability` from `@cobalt-web/db/schema/accounts/liabilities`. */
 export const mortgageLiability = pgTable.withRLS(
   "mortgage_liability",
   {
@@ -75,6 +77,7 @@ export const mortgageLiability = pgTable.withRLS(
 );
 
 // Student Loan Liabilities
+/** @deprecated Use `studentLoanLiability` from `@cobalt-web/db/schema/accounts/liabilities`. */
 export const studentLoanLiability = pgTable.withRLS(
   "student_loan_liability",
   {

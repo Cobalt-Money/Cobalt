@@ -151,8 +151,7 @@ function passivExtrasForLogo(
 
 export function brokerageInstitutionBranding(row: {
   institutionName: string | null | undefined;
-  metaData?: unknown | null;
-  brokerageAuthorization?: {
+  snaptradeAuthorization?: {
     brokerage?: string | null;
     brokerageSlug?: string | null;
     meta?: unknown | null;
@@ -162,8 +161,8 @@ export function brokerageInstitutionBranding(row: {
   institutionLogosExtra: string[];
   institutionUrl: string | null;
 } {
-  const auth = row.brokerageAuthorization;
-  const fromAccount = snapTradeLogoFieldsFromUnknown(row.metaData);
+  const auth = row.snaptradeAuthorization;
+  const fromAccount = snapTradeLogoFieldsFromUnknown(null);
   const fromAuth = snapTradeLogoFieldsFromUnknown(auth?.meta);
 
   const awsS3SquareLogoUrl =

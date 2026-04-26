@@ -20,6 +20,8 @@ import {
   YAxis,
 } from "recharts";
 
+import type { PositionRow } from "./positions-table";
+
 export interface PortfolioSnapshotRow {
   id: string;
   accountId: string;
@@ -27,17 +29,7 @@ export interface PortfolioSnapshotRow {
   totalValue?: number | null;
 }
 
-export interface PlaidPositionRow {
-  id: string;
-  plaidAccountId: string;
-  quantity: number;
-  institutionPrice: number;
-  institutionValue: number;
-  costBasis?: number | null;
-  isoCurrencyCode?: string | null;
-  account?: { name?: string | null } | null;
-  security?: { tickerSymbol?: string | null; name?: string | null } | null;
-}
+export type { PositionRow } from "./positions-table";
 
 interface ChartPoint {
   display: string;
@@ -114,14 +106,14 @@ function ChartHoverSync({
 
 export function BalanceChartCard({
   portfolioSnapshots,
-  plaidPositions,
+  positions,
   scopedAccountIds,
   scopeAccounts,
   brokerageScope,
   onScopeChange,
 }: {
   portfolioSnapshots: readonly PortfolioSnapshotRow[];
-  plaidPositions: readonly PlaidPositionRow[];
+  positions: readonly PositionRow[];
   scopedAccountIds: ReadonlySet<string> | null;
   scopeAccounts: ScopeAccount[];
   brokerageScope: BrokerageScope;
@@ -167,20 +159,24 @@ export function BalanceChartCard({
         }
       }
     }
-    let plaidPart = 0;
-    for (const p of plaidPositions) {
-      if (
-        scopedAccountIds === null ||
-        scopedAccountIds.has(`plaid-inv-${p.plaidAccountId}`)
-      ) {
-        plaidPart += p.institutionValue;
+    let livePart = 0;
+    for (const p of positions) {
+      const acctId = p.accountId ?? p.brokerageAccount?.id ?? null;
+      if (acctId === null) {
+        continue;
+      }
+      if (scopedAccountIds !== null && !scopedAccountIds.has(acctId)) {
+        continue;
+      }
+      if (typeof p.institutionValue === "number") {
+        livePart += p.institutionValue;
       }
     }
-    if (scopedSnaps.length === 0 && plaidPart === 0) {
+    if (scopedSnaps.length === 0 && livePart === 0) {
       return null;
     }
-    return snaptradePart + plaidPart;
-  }, [portfolioSnapshots, plaidPositions, scopedAccountIds]);
+    return snaptradePart + livePart;
+  }, [portfolioSnapshots, positions, scopedAccountIds]);
 
   const chartPoints = useMemo(() => {
     const cutoff = rangeStartEpoch(balanceChartRange);

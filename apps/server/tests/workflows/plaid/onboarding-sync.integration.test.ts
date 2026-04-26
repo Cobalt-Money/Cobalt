@@ -11,7 +11,7 @@
  *
  * Strategy: skip the browser-side Link flow by minting a sandbox public token
  * via Plaid's `/sandbox/public_token/create`, exchange it for an access token,
- * persist a test-user-owned bank_connection row, then start the workflow and
+ * persist a test-user-owned plaid_connection row, then start the workflow and
  * POST our own webhook endpoint directly — no ngrok required, since both the
  * workflow and the "delivered" webhook hit the same spawned Nitro.
  *
@@ -27,7 +27,8 @@ import { setTimeout as delay } from "node:timers/promises";
 
 import { plaidClient } from "@cobalt-web/clients/plaid";
 import { db } from "@cobalt-web/db";
-import { bankAccount, bankConnection } from "@cobalt-web/db/schema/banking";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { eq } from "drizzle-orm";
 import { Products } from "plaid";
 import { getRun, resumeHook, start } from "workflow/api";
@@ -38,7 +39,7 @@ const TEST_USER_ID = "00000000-0000-4000-8000-000000000001";
 const WEBHOOK_URL = "http://localhost:4000/api/plaid/webhook";
 
 async function ensureTestUser(): Promise<void> {
-  // The bank_connection FK requires a user row. We don't care about auth for
+  // The plaid_connection FK requires a user row. We don't care about auth for
   // this test — just enough structural integrity to satisfy the constraint.
   // Using a minimal raw insert via Drizzle; on conflict do nothing so re-runs
   // don't fight each other.
@@ -54,28 +55,30 @@ async function cleanupItem(itemId: string): Promise<void> {
   if (!itemId) {
     return;
   }
-  await db.delete(bankAccount).where(eq(bankAccount.plaidItemId, itemId));
-  await db.delete(bankConnection).where(eq(bankConnection.plaidItemId, itemId));
+  // financial_account rows cascade via plaid_connection FK.
+  await db
+    .delete(plaidConnection)
+    .where(eq(plaidConnection.plaidItemId, itemId));
 }
 
 /**
- * Poll bank_connection until the onboarding workflow's persist step has run
+ * Poll plaid_connection until the onboarding workflow's persist step has run
  * for this user. Bounded retry so a failing workflow doesn't hang the test.
  */
 async function waitForPersist(userId: string): Promise<string> {
   const deadline = Date.now() + 20_000;
   while (Date.now() < deadline) {
     const [row] = await db
-      .select({ plaidItemId: bankConnection.plaidItemId })
-      .from(bankConnection)
-      .where(eq(bankConnection.userId, userId))
+      .select({ plaidItemId: plaidConnection.plaidItemId })
+      .from(plaidConnection)
+      .where(eq(plaidConnection.userId, userId))
       .limit(1);
     if (row?.plaidItemId) {
       return row.plaidItemId;
     }
     await delay(200);
   }
-  throw new Error("Timed out waiting for bank_connection to be persisted");
+  throw new Error("Timed out waiting for plaid_connection to be persisted");
 }
 
 async function collectProgress(
@@ -135,7 +138,7 @@ describe("plaid onboarding streaming (server-based integration)", () => {
       const progressPromise = collectProgress(run.runId);
 
       // 4. Wait for the workflow to exchange + persist before we can look up
-      // the itemId to target the webhook. Poll bank_connection until the row
+      // the itemId to target the webhook. Poll plaid_connection until the row
       // appears or we hit a bounded retry window.
       const persistedItemId = await waitForPersist(TEST_USER_ID);
       itemId = persistedItemId;
@@ -174,10 +177,17 @@ describe("plaid onboarding streaming (server-based integration)", () => {
 
       // Contract: the sync actually wrote data. Plaid's First Platypus sandbox
       // reliably returns at least one account.
-      const accounts = await db
-        .select()
-        .from(bankAccount)
-        .where(eq(bankAccount.plaidItemId, itemId));
+      const [conn] = await db
+        .select({ id: plaidConnection.id })
+        .from(plaidConnection)
+        .where(eq(plaidConnection.plaidItemId, itemId))
+        .limit(1);
+      const accounts = conn
+        ? await db
+            .select()
+            .from(financialAccount)
+            .where(eq(financialAccount.plaidConnectionId, conn.id))
+        : [];
       expect(accounts.length).toBeGreaterThan(0);
     } finally {
       await cleanupItem(itemId);

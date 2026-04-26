@@ -1,25 +1,23 @@
 import { db } from "@cobalt-web/db";
-import {
-  bankAccount,
-  bankBalance,
-  bankConnection,
-} from "@cobalt-web/db/schema/banking";
+import { balance } from "@cobalt-web/db/schema/accounts/balance";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
 import {
   ALERT_SOURCES,
   ALERT_STATUSES,
   userAlerts,
 } from "@cobalt-web/db/schema/features";
-import { and, eq, inArray } from "drizzle-orm";
+import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { AccountBase } from "plaid";
 
 import { upsertInstitutionByPlaidId } from "../../institutions/mutations.js";
 import { getInstitutionById } from "../institutions/actions.js";
 import {
-  bankAccountInsertFromPlaid,
   balanceRowFromPlaidAccount,
+  financialAccountInsertFromPlaid,
 } from "./lib.js";
 
-/** Persist Plaid item metadata to bankConnection. */
+/** Persist Plaid item metadata to plaid_connection. */
 export async function persistItemMetadata(params: {
   accessToken: string;
   availableProducts: string[];
@@ -31,7 +29,7 @@ export async function persistItemMetadata(params: {
   userId: string;
   webhookUrl: string | null;
 }): Promise<void> {
-  await db.insert(bankConnection).values({
+  await db.insert(plaidConnection).values({
     availableProducts: params.availableProducts,
     billedProducts: params.billedProducts,
     institutionId: params.institutionId,
@@ -44,11 +42,6 @@ export async function persistItemMetadata(params: {
   });
 }
 
-/**
- * Onboarding persist: fetch institution details (best-effort), upsert the
- * `institution` row so the mapper has a URL for Brandfetch/Logo.dev, then
- * insert the bankConnection row.
- */
 export async function persistOnboardingItem(params: {
   accessToken: string;
   item: {
@@ -91,10 +84,6 @@ export async function persistOnboardingItem(params: {
   });
 }
 
-/**
- * Apply ITEM webhook state changes to bankConnection. Returns a result so the
- * caller can decide whether to emit telemetry for unhandled codes.
- */
 export async function applyItemWebhookState(params: {
   webhookCode: string;
   plaidItemId: string;
@@ -108,38 +97,38 @@ export async function applyItemWebhookState(params: {
   switch (webhookCode) {
     case "NEW_ACCOUNTS_AVAILABLE": {
       await db
-        .update(bankConnection)
+        .update(plaidConnection)
         .set({ newAccountsAvailable: true, updatedAt: new Date() })
-        .where(eq(bankConnection.plaidItemId, plaidItemId));
+        .where(eq(plaidConnection.plaidItemId, plaidItemId));
       return { success: true, webhookCode };
     }
 
     case "ERROR": {
       await db
-        .update(bankConnection)
+        .update(plaidConnection)
         .set({
           error: (params.error ??
-            null) as (typeof bankConnection.$inferInsert)["error"],
+            null) as (typeof plaidConnection.$inferInsert)["error"],
           updatedAt: new Date(),
         })
-        .where(eq(bankConnection.plaidItemId, plaidItemId));
+        .where(eq(plaidConnection.plaidItemId, plaidItemId));
       return { success: true, webhookCode };
     }
 
     case "PENDING_DISCONNECT": {
       const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       await db
-        .update(bankConnection)
+        .update(plaidConnection)
         .set({ pendingDisconnectAt: sevenDaysFromNow, updatedAt: new Date() })
-        .where(eq(bankConnection.plaidItemId, plaidItemId));
+        .where(eq(plaidConnection.plaidItemId, plaidItemId));
       return { success: true, webhookCode };
     }
 
     case "LOGIN_REPAIRED": {
       await db
-        .update(bankConnection)
+        .update(plaidConnection)
         .set({ error: null, pendingDisconnectAt: null, updatedAt: new Date() })
-        .where(eq(bankConnection.plaidItemId, plaidItemId));
+        .where(eq(plaidConnection.plaidItemId, plaidItemId));
       return { success: true, webhookCode };
     }
 
@@ -149,73 +138,116 @@ export async function applyItemWebhookState(params: {
   }
 }
 
-/** Upsert balance for a single Plaid account. */
+/** Upsert balance for a single Plaid account. Resolves financial_account.id. */
 export async function upsertBalanceForPlaidAccount(
   account: AccountBase
 ): Promise<void> {
-  const existing = await db.query.bankBalance.findFirst({
-    where: { plaidAccountId: { eq: account.account_id } },
-  });
+  const fa = await db
+    .select({ id: financialAccount.id, userId: financialAccount.userId })
+    .from(financialAccount)
+    .where(
+      and(
+        eq(financialAccount.source, "plaid"),
+        eq(financialAccount.externalId, account.account_id)
+      )
+    )
+    .limit(1);
 
-  const balanceData = balanceRowFromPlaidAccount(account);
+  if (fa.length === 0) {
+    return;
+  }
 
-  await (existing
-    ? db
-        .update(bankBalance)
-        .set({ ...balanceData, updatedAt: new Date() })
-        .where(eq(bankBalance.plaidAccountId, account.account_id))
-    : db.insert(bankBalance).values(balanceData));
+  const [accountRow] = fa;
+  if (!accountRow) {
+    return;
+  }
+  const balanceData = balanceRowFromPlaidAccount(
+    account,
+    accountRow.id,
+    accountRow.userId
+  );
+
+  await db
+    .insert(balance)
+    .values(balanceData)
+    .onConflictDoUpdate({
+      set: {
+        available: balanceData.available,
+        current: balanceData.current,
+        isoCurrencyCode: balanceData.isoCurrencyCode,
+        limit: balanceData.limit,
+        unofficialCurrencyCode: balanceData.unofficialCurrencyCode,
+        updatedAt: new Date(),
+      },
+      target: balance.accountId,
+    });
 }
 
-/**
- * Sync new accounts for an item: upsert accounts + balances, clear flag.
- */
 export async function syncNewAccountsForItem(
   plaidItemId: string,
   accounts: AccountBase[]
 ): Promise<void> {
   if (accounts.length > 0) {
-    const toInsert = bankAccountInsertFromPlaid(plaidItemId);
+    const conn = await db
+      .select({ id: plaidConnection.id, userId: plaidConnection.userId })
+      .from(plaidConnection)
+      .where(eq(plaidConnection.plaidItemId, plaidItemId))
+      .limit(1);
+
+    if (conn.length === 0) {
+      throw new Error(`plaid_connection not found for item ${plaidItemId}`);
+    }
+
+    const [first] = conn;
+    if (!first) {
+      throw new Error(`plaid_connection not found for item ${plaidItemId}`);
+    }
+    const { id: connId, userId } = first;
+    const toInsert = financialAccountInsertFromPlaid(connId, userId);
     await db
-      .insert(bankAccount)
+      .insert(financialAccount)
       .values(accounts.map(toInsert))
-      .onConflictDoNothing({ target: bankAccount.plaidAccountId });
+      .onConflictDoNothing({
+        target: [financialAccount.source, financialAccount.externalId],
+        where: sql`external_id IS NOT NULL`,
+      });
 
     await Promise.all(accounts.map(upsertBalanceForPlaidAccount));
   }
 
   await db
-    .update(bankConnection)
+    .update(plaidConnection)
     .set({ newAccountsAvailable: false, updatedAt: new Date() })
-    .where(eq(bankConnection.plaidItemId, plaidItemId));
+    .where(eq(plaidConnection.plaidItemId, plaidItemId));
 }
 
-/**
- * Clear error state after re-authentication and resolve active alerts.
- */
 export async function clearItemError(
   plaidItemId: string,
   userId: string
 ): Promise<void> {
-  const item = await db.query.bankConnection.findFirst({
-    columns: { plaidItemId: true },
-    where: {
-      AND: [{ plaidItemId: { eq: plaidItemId } }, { userId: { eq: userId } }],
-    },
-  });
+  const item = await db
+    .select({ plaidItemId: plaidConnection.plaidItemId })
+    .from(plaidConnection)
+    .where(
+      and(
+        eq(plaidConnection.plaidItemId, plaidItemId),
+        eq(plaidConnection.userId, userId)
+      )
+    )
+    .limit(1);
 
-  if (!item) {
+  if (item.length === 0) {
     throw new Error("Item not found or access denied");
   }
 
   await db
-    .update(bankConnection)
+    .update(plaidConnection)
     .set({
       error: null,
       pendingDisconnectAt: null,
       updatedAt: new Date(),
     })
-    .where(eq(bankConnection.plaidItemId, plaidItemId));
+    .where(eq(plaidConnection.plaidItemId, plaidItemId));
 
   await db
     .update(userAlerts)

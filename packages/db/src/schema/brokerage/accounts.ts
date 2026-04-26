@@ -12,6 +12,7 @@ import { user } from "../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../rls";
 import { brokerageAuthorizations } from "./auth";
 
+/** @deprecated Use `financialAccount` from `@cobalt-web/db/schema/accounts/financial-account`. */
 export const brokerageAccounts = pgTable.withRLS(
   "brokerage_account",
   {
@@ -54,6 +55,7 @@ export const brokerageAccounts = pgTable.withRLS(
   ]
 );
 
+/** @deprecated Merged into `financialAccount` from `@cobalt-web/db/schema/accounts/financial-account`. */
 export const brokerageAccountDetails = pgTable.withRLS(
   "brokerage_account_detail",
   {

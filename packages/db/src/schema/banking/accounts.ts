@@ -18,6 +18,7 @@ import {
 import { bankConnection } from "./items/bank-connection";
 
 // Bank Accounts (individual accounts within a connection)
+/** @deprecated Use `financialAccount` from `@cobalt-web/db/schema/accounts/financial-account`. */
 export const bankAccount = pgTable.withRLS(
   "bank_account",
   {
@@ -49,6 +50,7 @@ export const bankAccount = pgTable.withRLS(
 );
 
 // Bank Balances (latest balances per account)
+/** @deprecated Use `balance` from `@cobalt-web/db/schema/accounts/balance`. */
 export const bankBalance = pgTable.withRLS(
   "bank_balance",
   {
@@ -81,6 +83,7 @@ export const bankBalance = pgTable.withRLS(
 );
 
 // Bank Balance Snapshots (historical daily balance records)
+/** @deprecated Use `snapshot` from `@cobalt-web/db/schema/accounts/snapshot`. */
 export const bankBalanceSnapshot = pgTable.withRLS(
   "bank_balance_snapshot",
   {

@@ -8,15 +8,15 @@ import type { TransactionRowInput } from "@cobalt-web/server-data/transactions/t
  */
 export type ZeroTransactionListRow = Record<string, unknown> & {
   readonly account?: {
-    readonly connection?: {
+    readonly plaidConnection?: {
       readonly institution?: {
         readonly logo?: string | null;
         readonly name?: string | null;
         readonly url?: string | null;
       };
-    };
+    } | null;
     readonly name: string;
-    readonly plaidAccountId: string;
+    readonly externalId: string | null;
     readonly type: string;
   };
 };
@@ -28,16 +28,12 @@ export function mapZeroTransactionListRow(
   if (!account) {
     return null;
   }
-  const { connection } = account;
-  if (!connection) {
-    return null;
-  }
-  const inst = connection.institution;
+  const inst = account.plaidConnection?.institution;
 
   return toTransactionListItem({
     account: {
       name: account.name,
-      plaidAccountId: account.plaidAccountId,
+      plaidAccountId: account.externalId ?? "",
       type: account.type,
     },
     institution: inst

@@ -1,93 +1,70 @@
 import { db } from "@cobalt-web/db";
-import {
-  brokerageAccountDetails,
-  brokerageAccounts,
-} from "@cobalt-web/db/schema/brokerage";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { sql } from "drizzle-orm";
 import type { Account } from "snaptrade-typescript-sdk";
 
-import { serializeJsonb } from "../lib.js";
-import { buildAccountDetailsFields } from "./lib.js";
-import { getBrokerageAccountDbId } from "./queries.js";
+const externalIdNotNullWhere = sql`external_id IS NOT NULL`;
 
 export async function upsertBrokerageAccount(
   accountId: string,
-  brokerageAuthorizationId: string,
+  snaptradeAuthorizationDbId: string,
   appUserId: string,
   accountData: Account
 ): Promise<void> {
   const insertData = {
-    accountId,
     accountNumber: accountData.number || null,
-    accountStatus: accountData.status || "active",
-    accountType: accountData.raw_type || "unknown",
-    balanceData: serializeJsonb(accountData.balance || null),
-    brokerageAuthId: brokerageAuthorizationId,
-    cashRestrictions: serializeJsonb(accountData.cash_restrictions || null),
-    createdDate: accountData.created_date
-      ? new Date(accountData.created_date)
-      : new Date(),
+    externalId: accountId,
     institutionName: accountData.institution_name || "Unknown",
-    lastSync: new Date(),
-    metaData: serializeJsonb(accountData.meta || null),
+    lastSyncAt: new Date(),
     name: accountData.name || "Account",
     portfolioGroup: accountData.portfolio_group || null,
+    providerCreatedAt: accountData.created_date
+      ? new Date(accountData.created_date)
+      : null,
+    snaptradeAuthorizationId: snaptradeAuthorizationDbId,
+    source: "snaptrade" as const,
+    status: accountData.status || "active",
     syncStatus:
       typeof accountData.sync_status === "string"
         ? accountData.sync_status
         : "pending",
+    type: accountData.raw_type || "unknown",
     userId: appUserId,
   };
 
   await db
-    .insert(brokerageAccounts)
+    .insert(financialAccount)
     .values(insertData)
     .onConflictDoUpdate({
       set: {
-        accountNumber: insertData.accountNumber,
-        accountStatus: insertData.accountStatus,
-        accountType: insertData.accountType,
-        balanceData: insertData.balanceData,
-        brokerageAuthId: brokerageAuthorizationId,
-        cashRestrictions: insertData.cashRestrictions,
-        createdDate: insertData.createdDate,
-        institutionName: insertData.institutionName,
-        lastSync: new Date(),
-        metaData: insertData.metaData,
-        name: insertData.name,
-        portfolioGroup: insertData.portfolioGroup,
-        syncStatus: insertData.syncStatus as string,
-        userId: appUserId,
+        accountNumber: sql`excluded.account_number`,
+        institutionName: sql`excluded.institution_name`,
+        lastSyncAt: sql`excluded.last_sync_at`,
+        name: sql`excluded.name`,
+        portfolioGroup: sql`excluded.portfolio_group`,
+        providerCreatedAt: sql`excluded.provider_created_at`,
+        snaptradeAuthorizationId: sql`excluded.snaptrade_authorization_id`,
+        status: sql`excluded.status`,
+        syncStatus: sql`excluded.sync_status`,
+        type: sql`excluded.type`,
+        updatedAt: new Date(),
+        userId: sql`excluded.user_id`,
       },
-      target: brokerageAccounts.accountId,
+      target: [financialAccount.source, financialAccount.externalId],
+      targetWhere: externalIdNotNullWhere,
     });
 }
 
+/**
+ * No-op: per SRI-264 (D1) the brokerage_account_detail table was dropped from
+ * the unified schema. Detail-level fields either live on `financial_account`
+ * or are derivable on read; this adapter intentionally throws those writes
+ * away so existing call sites continue to compile.
+ */
 export async function upsertAccountDetails(
-  snaptradeAccountId: string,
-  appUserId: string,
-  detailsData: Account
+  _snaptradeAccountId: string,
+  _appUserId: string,
+  _detailsData: Account
 ): Promise<void> {
-  const dbAccountId = await getBrokerageAccountDbId(
-    snaptradeAccountId,
-    appUserId
-  );
-  if (!dbAccountId) {
-    throw new Error(
-      `Account not found or access denied: ${snaptradeAccountId} for user ${appUserId}`
-    );
-  }
-
-  const fields = buildAccountDetailsFields(
-    detailsData,
-    appUserId,
-    snaptradeAccountId
-  );
-
-  await db
-    .insert(brokerageAccountDetails)
-    .values({ accountId: dbAccountId, ...fields })
-    .onConflictDoUpdate({
-      set: { accountId: dbAccountId, ...fields },
-      target: brokerageAccountDetails.snapTradeAccountId,
-    });
+  // intentionally empty — see SRI-264 D1
 }

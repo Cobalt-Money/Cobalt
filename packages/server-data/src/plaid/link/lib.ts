@@ -1,27 +1,50 @@
 import type { AccountBase } from "plaid";
 
-/** Curried mapper: Plaid account → `bank_account` insert row (data-first config, data-last account). */
-export const bankAccountInsertFromPlaid =
-  (plaidItemId: string) => (account: AccountBase) => ({
+/**
+ * Curried mapper: Plaid account → `financial_account` insert row.
+ * Caller supplies the resolved plaidConnection.id (uuid) + the connection's
+ * userId. We tag every Plaid-sourced account with `source='plaid'` and store
+ * the Plaid account_id as `externalId`.
+ */
+export const financialAccountInsertFromPlaid =
+  (plaidConnectionId: string, userId: string) => (account: AccountBase) => ({
+    externalId: account.account_id,
     mask: account.mask ?? null,
     name: account.name || account.official_name || "Account",
     officialName: account.official_name ?? null,
     persistentAccountId: account.persistent_account_id ?? null,
-    plaidAccountId: account.account_id,
-    plaidItemId,
+    plaidConnectionId,
+    source: "plaid" as const,
     subtype: account.subtype ?? null,
     type: account.type,
+    userId,
     verificationStatus: account.verification_status ?? null,
   });
 
-/** Pure shape for `bank_balance` upsert from a Plaid account payload. */
-export const balanceRowFromPlaidAccount = (account: AccountBase) => ({
-  available: account.balances.available ?? null,
-  current: account.balances.current ?? 0,
+/**
+ * Pure shape for `balance` upsert from a Plaid account payload. Caller resolves
+ * the new financial_account.id (uuid) before calling — Plaid's account_id is
+ * looked up via (source='plaid', external_id).
+ */
+export const balanceRowFromPlaidAccount = (
+  account: AccountBase,
+  accountId: string,
+  userId: string
+) => ({
+  accountId,
+  available:
+    account.balances.available !== null &&
+    account.balances.available !== undefined
+      ? String(account.balances.available)
+      : null,
+  current: String(account.balances.current ?? 0),
   isoCurrencyCode: account.balances.iso_currency_code ?? null,
-  limit: account.balances.limit ?? null,
-  plaidAccountId: account.account_id,
+  limit:
+    account.balances.limit !== null && account.balances.limit !== undefined
+      ? String(account.balances.limit)
+      : null,
   unofficialCurrencyCode: account.balances.unofficial_currency_code ?? null,
+  userId,
 });
 
 /** Incoming Plaid account payload we want to dedup against existing rows. */
@@ -32,7 +55,7 @@ export interface DuplicateCheckCandidate {
   type: string;
 }
 
-/** Row used when comparing a new Plaid account to existing DB accounts (duplicate check). */
+/** Row used when comparing a new Plaid account to existing DB accounts. */
 export interface ExistingAccountDuplicateRow {
   createdAt: Date;
   mask: string | null;
@@ -51,9 +74,6 @@ export const matchesDuplicateAccountMask = (
   existing.mask !== null &&
   candidate.mask === existing.mask;
 
-/**
- * Custom error class for duplicate account detection.
- */
 export class DuplicateAccountError extends Error {
   readonly code = "DUPLICATE_ACCOUNT" as const;
   readonly duplicateAccounts: { name: string; createdAt: Date }[];
@@ -68,7 +88,6 @@ export class DuplicateAccountError extends Error {
   }
 }
 
-/** Type guard to check if an error is a DuplicateAccountError. */
 export const isDuplicateAccountError = (
   error: unknown
 ): error is DuplicateAccountError =>

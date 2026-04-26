@@ -1,26 +1,29 @@
 import { db } from "@cobalt-web/db";
-import {
-  bankAccount,
-  bankConnection,
-  recurringStream,
-  transaction as transactionTable,
-} from "@cobalt-web/db/schema/banking";
-import { eq, inArray, sql } from "drizzle-orm";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { recurringStream } from "@cobalt-web/db/schema/accounts/recurring-stream";
+import { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/transaction";
+import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Transaction, TransactionStream } from "plaid";
 
+import {
+  lookupFinancialAccountsByPlaidIds,
+  lookupPlaidConnection,
+} from "../link/queries.js";
 import { fetchRecurringStreams } from "./actions.js";
 import { transactionToRecord } from "./lib.js";
 import type { UserOverrides } from "./queries.js";
 
-/** Persist the /transactions/sync cursor so the next page picks up where we left off. */
+const externalIdNotNullWhere = sql`external_id IS NOT NULL`;
+
 export async function setTransactionsCursor(
   plaidItemId: string,
   cursor: string | undefined
 ): Promise<void> {
   await db
-    .update(bankConnection)
+    .update(plaidConnection)
     .set({ transactionsCursor: cursor, updatedAt: new Date() })
-    .where(eq(bankConnection.plaidItemId, plaidItemId));
+    .where(eq(plaidConnection.plaidItemId, plaidItemId));
 }
 
 export async function persistTransactions(
@@ -30,13 +33,29 @@ export async function persistTransactions(
     return;
   }
 
-  const records = transactions.map(transactionToRecord);
+  const plaidAccountIds = [...new Set(transactions.map((t) => t.account_id))];
+  const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
+
+  const records = transactions
+    .map((tx) => {
+      const ref = accountMap.get(tx.account_id);
+      if (!ref) {
+        return null;
+      }
+      return transactionToRecord(tx, ref.id, ref.userId);
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+
+  if (records.length === 0) {
+    return;
+  }
 
   await db
     .insert(transactionTable)
     .values(records)
     .onConflictDoUpdate({
       set: {
+        accountId: sql`excluded.account_id`,
         accountOwner: sql`excluded.account_owner`,
         amount: sql`excluded.amount`,
         authorizedDate: sql`excluded.authorized_date`,
@@ -60,14 +79,14 @@ export async function persistTransactions(
         pendingTransactionId: sql`excluded.pending_transaction_id`,
         personalFinanceCategory: sql`excluded.personal_finance_category`,
         personalFinanceCategoryIconUrl: sql`excluded.personal_finance_category_icon_url`,
-        plaidAccountId: sql`excluded.plaid_account_id`,
         transactionCode: sql`excluded.transaction_code`,
         transactionType: sql`excluded.transaction_type`,
         unofficialCurrencyCode: sql`excluded.unofficial_currency_code`,
         updatedAt: sql`now()`,
         website: sql`excluded.website`,
       },
-      target: [transactionTable.plaidTransactionId],
+      target: [transactionTable.source, transactionTable.externalId],
+      targetWhere: externalIdNotNullWhere,
     });
 }
 
@@ -79,7 +98,12 @@ export async function removeTransactionsByIds(
   }
   await db
     .delete(transactionTable)
-    .where(inArray(transactionTable.plaidTransactionId, transactionIds));
+    .where(
+      and(
+        eq(transactionTable.source, "plaid"),
+        inArray(transactionTable.externalId, transactionIds)
+      )
+    );
 }
 
 export async function applyPendingOverrides(
@@ -93,16 +117,21 @@ export async function applyPendingOverrides(
 
   const postedTxs = await db
     .select({
+      externalId: transactionTable.externalId,
       pendingTransactionId: transactionTable.pendingTransactionId,
-      plaidTransactionId: transactionTable.plaidTransactionId,
     })
     .from(transactionTable)
-    .where(inArray(transactionTable.pendingTransactionId, pendingIds));
+    .where(
+      and(
+        eq(transactionTable.source, "plaid"),
+        inArray(transactionTable.pendingTransactionId, pendingIds)
+      )
+    );
 
   let applied = 0;
   for (const posted of postedTxs) {
     const override = overrides.get(posted.pendingTransactionId ?? "");
-    if (!override) {
+    if (!override || posted.externalId === null) {
       continue;
     }
 
@@ -114,7 +143,10 @@ export async function applyPendingOverrides(
         userOverrideName: override.userOverrideName,
       })
       .where(
-        eq(transactionTable.plaidTransactionId, posted.plaidTransactionId)
+        and(
+          eq(transactionTable.source, "plaid"),
+          eq(transactionTable.externalId, posted.externalId)
+        )
       );
 
     applied += 1;
@@ -131,21 +163,28 @@ function todayDateOnly(): string {
   return new Date().toISOString().split("T").at(0) ?? "";
 }
 
-function mapRecurringStreamBase(s: RecurringStreamRow, today: string) {
+function mapRecurringStreamBase(
+  s: RecurringStreamRow,
+  today: string,
+  accountId: string,
+  userId: string
+) {
   const isActive =
     s.is_active && s.predicted_next_date && s.predicted_next_date < today
       ? false
       : (s.is_active ?? false);
   return {
-    averageAmount: s.average_amount?.amount ?? 0,
+    accountId,
+    averageAmount: String(s.average_amount?.amount ?? 0),
+    externalId: s.stream_id,
     firstDate: s.first_date,
     isActive,
     isUserModified: s.is_user_modified ?? false,
-    lastAmount: s.last_amount?.amount ?? 0,
+    lastAmount: String(s.last_amount?.amount ?? 0),
     lastDate: s.last_date ?? s.first_date,
-    plaidAccountId: s.account_id,
-    streamId: s.stream_id,
+    source: "plaid" as const,
     streamType: s.type,
+    userId,
   };
 }
 
@@ -155,7 +194,9 @@ function mapRecurringStreamMeta(s: RecurringStreamRow) {
     categoryId: s.category_id ?? null,
     description: s.description ?? "",
     frequency: s.frequency ?? "UNKNOWN",
-    lastUserModifiedDatetime: s.last_user_modified_datetime ?? null,
+    lastUserModifiedDatetime: s.last_user_modified_datetime
+      ? new Date(s.last_user_modified_datetime)
+      : null,
     merchantName: s.merchant_name ?? null,
     personalFinanceCategory: s.personal_finance_category
       ? {
@@ -176,10 +217,21 @@ async function upsertRecurringStreams(
 ): Promise<void> {
   const today = todayDateOnly();
 
-  const rows = streams.map((s) => ({
-    ...mapRecurringStreamBase(s, today),
-    ...mapRecurringStreamMeta(s),
-  }));
+  const plaidAccountIds = [...new Set(streams.map((s) => s.account_id))];
+  const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
+
+  const rows = streams
+    .map((s) => {
+      const ref = accountMap.get(s.account_id);
+      if (!ref) {
+        return null;
+      }
+      return {
+        ...mapRecurringStreamBase(s, today, ref.id, ref.userId),
+        ...mapRecurringStreamMeta(s),
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
 
   for (let i = 0; i < rows.length; i += RECURRING_STREAM_BATCH_SIZE) {
     const batch = rows.slice(i, i + RECURRING_STREAM_BATCH_SIZE);
@@ -205,33 +257,44 @@ async function upsertRecurringStreams(
           transactionIds: sql`excluded.transaction_ids`,
           updatedAt: new Date(),
         },
-        target: recurringStream.streamId,
+        target: [recurringStream.source, recurringStream.externalId],
+        targetWhere: externalIdNotNullWhere,
       });
   }
 }
 
-/**
- * Fetch recurring streams from Plaid, reconcile against existing streams for
- * this item (upsert present, delete absent), and record the Plaid
- * `updatedDatetime` on bankConnection. Returns counts for telemetry.
- */
 export async function syncRecurringForItem(
   accessToken: string,
   plaidItemId: string
 ): Promise<{ added: number; modified: number; removed: number }> {
+  const conn = await lookupPlaidConnection(plaidItemId);
+  if (!conn) {
+    throw new Error(`plaid_connection not found for item ${plaidItemId}`);
+  }
+
+  const accountIdsForItem = await db
+    .select({ id: financialAccount.id })
+    .from(financialAccount)
+    .where(
+      and(
+        eq(financialAccount.source, "plaid"),
+        eq(financialAccount.plaidConnectionId, conn.id)
+      )
+    );
+  const accountIdSet = new Set(accountIdsForItem.map((a) => a.id));
+
   const existingStreams = await db
-    .select({ streamId: recurringStream.streamId })
+    .select({
+      accountId: recurringStream.accountId,
+      externalId: recurringStream.externalId,
+    })
     .from(recurringStream)
-    .innerJoin(
-      bankAccount,
-      eq(recurringStream.plaidAccountId, bankAccount.plaidAccountId)
-    )
-    .where(eq(bankAccount.plaidItemId, plaidItemId));
+    .where(eq(recurringStream.source, "plaid"));
 
   const existingStreamIds = new Set(
     existingStreams
-      .map((s) => s.streamId)
-      .filter((id): id is string => id !== null)
+      .filter((s) => accountIdSet.has(s.accountId) && s.externalId !== null)
+      .map((s) => s.externalId as string)
   );
 
   const { inflowStreams, outflowStreams, updatedDatetime } =
@@ -264,16 +327,23 @@ export async function syncRecurringForItem(
     removed = removedStreamIds.length;
     await db
       .delete(recurringStream)
-      .where(inArray(recurringStream.streamId, removedStreamIds));
+      .where(
+        and(
+          eq(recurringStream.source, "plaid"),
+          inArray(recurringStream.externalId, removedStreamIds)
+        )
+      );
   }
 
   await db
-    .update(bankConnection)
+    .update(plaidConnection)
     .set({
-      recurringUpdatedDatetime: updatedDatetime,
+      recurringUpdatedDatetime: updatedDatetime
+        ? new Date(updatedDatetime)
+        : null,
       updatedAt: new Date(),
     })
-    .where(eq(bankConnection.plaidItemId, plaidItemId));
+    .where(eq(plaidConnection.plaidItemId, plaidItemId));
 
   return { added, modified, removed };
 }

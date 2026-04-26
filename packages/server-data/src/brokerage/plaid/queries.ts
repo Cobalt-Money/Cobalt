@@ -1,59 +1,80 @@
 import { db } from "@cobalt-web/db";
+import { balance } from "@cobalt-web/db/schema/accounts/balance";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { holding } from "@cobalt-web/db/schema/accounts/holding";
+import { investmentActivity } from "@cobalt-web/db/schema/accounts/investment-activity";
+import { security } from "@cobalt-web/db/schema/accounts/security";
+import { institution } from "@cobalt-web/db/schema/banking";
+import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { and, desc, eq } from "drizzle-orm";
 
-type BankAccountRelationalWhere = NonNullable<
-  Parameters<typeof db.query.bankAccount.findMany>[0]
->["where"];
-
-type InvestmentPositionRelationalWhere = NonNullable<
-  Parameters<typeof db.query.investmentPosition.findMany>[0]
->["where"];
-
-type InvestmentActivityRelationalWhere = NonNullable<
-  Parameters<typeof db.query.investmentActivity.findMany>[0]
->["where"];
+const num = (v: string | null | undefined): number | null =>
+  v === null || v === undefined ? null : Number(v);
 
 // ── Investment accounts (Plaid) ───────────────────────────────────────
 
 export async function getPlaidInvestmentAccountsByUserId(userId: string) {
-  const rows = await db.query.bankAccount.findMany({
-    where: {
-      connection: { userId: { eq: userId } },
-      type: { eq: "investment" },
-    } satisfies BankAccountRelationalWhere,
-    with: {
-      balances: {
-        limit: 1,
-        orderBy: { updatedAt: "desc" },
+  const rows = await db
+    .select({
+      acct: {
+        externalId: financialAccount.externalId,
+        mask: financialAccount.mask,
+        name: financialAccount.name,
+        subtype: financialAccount.subtype,
+        type: financialAccount.type,
       },
-      connection: {
-        with: {
-          institution: true,
-        },
+      balance: {
+        available: balance.available,
+        current: balance.current,
+        isoCurrencyCode: balance.isoCurrencyCode,
+        unofficialCurrencyCode: balance.unofficialCurrencyCode,
+        updatedAt: balance.updatedAt,
       },
-    },
-  });
+      conn: {
+        institutionId: plaidConnection.institutionId,
+        institutionName: plaidConnection.institutionName,
+        plaidItemId: plaidConnection.plaidItemId,
+      },
+      inst: { logo: institution.logo, url: institution.url },
+    })
+    .from(financialAccount)
+    .innerJoin(
+      plaidConnection,
+      eq(financialAccount.plaidConnectionId, plaidConnection.id)
+    )
+    .leftJoin(balance, eq(balance.accountId, financialAccount.id))
+    .leftJoin(
+      institution,
+      eq(institution.plaidInstitutionId, plaidConnection.institutionId)
+    )
+    .where(
+      and(
+        eq(financialAccount.userId, userId),
+        eq(financialAccount.source, "plaid"),
+        eq(financialAccount.type, "investment")
+      )
+    );
 
   return rows.map((row) => {
-    const [balance] = row.balances;
-    const inst = row.connection.institution;
     const currency =
-      balance?.isoCurrencyCode ?? balance?.unofficialCurrencyCode ?? null;
-
+      row.balance?.isoCurrencyCode ??
+      row.balance?.unofficialCurrencyCode ??
+      null;
     return {
-      accountName: row.name,
-      availableBalance: balance?.available ?? null,
+      accountName: row.acct.name,
+      availableBalance: num(row.balance?.available ?? null),
       currency,
-      currentBalance: balance?.current ?? null,
-      institutionId: row.connection.institutionId,
-      institutionLogo: inst?.logo ?? null,
-      institutionName: row.connection.institutionName,
-      institutionUrl: inst?.url ?? null,
-      itemId: row.plaidItemId,
-      mask: row.mask,
-      plaidAccountId: row.plaidAccountId,
-      subtype: row.subtype,
-      type: row.type,
-      updatedAt: balance?.updatedAt ?? null,
+      currentBalance: num(row.balance?.current ?? null),
+      institutionId: row.conn.institutionId,
+      institutionLogo: row.inst?.logo ?? null,
+      institutionName: row.conn.institutionName,
+      institutionUrl: row.inst?.url ?? null,
+      itemId: row.conn.plaidItemId,
+      mask: row.acct.mask,
+      plaidAccountId: row.acct.externalId ?? "",
+      subtype: row.acct.subtype,
+      type: row.acct.type,
+      updatedAt: row.balance?.updatedAt ?? null,
     };
   });
 }
@@ -64,69 +85,82 @@ export async function getPlaidHoldingsByUserId(
   userId: string,
   accountId?: string
 ) {
-  const parts: InvestmentPositionRelationalWhere[] = [
-    {
-      account: {
-        connection: {
-          userId: { eq: userId },
-        },
-      },
-    },
+  const conditions = [
+    eq(holding.userId, userId),
+    eq(financialAccount.source, "plaid"),
   ];
-
   if (accountId) {
-    parts.push({ plaidAccountId: { eq: accountId } });
+    conditions.push(eq(financialAccount.externalId, accountId));
   }
 
-  const rows = await db.query.investmentPosition.findMany({
-    where: { AND: parts } as InvestmentPositionRelationalWhere,
-    with: {
+  const rows = await db
+    .select({
       account: {
-        with: {
-          connection: true,
-        },
+        externalId: financialAccount.externalId,
+        name: financialAccount.name,
       },
-      security: true,
-    },
-  });
-
-  return rows.flatMap((row) => {
-    if (!row.account || !row.security) {
-      return [];
-    }
-
-    const { account } = row;
-    const sec = row.security;
-    const conn = account.connection;
-
-    return [
-      {
-        accountName: account.name,
-        closePrice: sec.closePrice,
-        closePriceAsOf: sec.closePriceAsOf,
-        costBasis: row.costBasis,
-        holdingUpdatedAt: row.updatedAt,
-        id: row.id,
-        industry: sec.industry,
-        institutionName: conn.institutionName,
-        institutionPrice: row.institutionPrice,
-        institutionPriceAsOf: row.institutionPriceAsOf,
-        institutionValue: row.institutionValue,
-        isCashEquivalent: sec.isCashEquivalent,
-        isoCurrencyCode: row.isoCurrencyCode,
-        plaidAccountId: row.plaidAccountId,
-        quantity: row.quantity,
-        sector: sec.sector,
-        securityId: row.securityId,
-        securityName: sec.name,
-        securitySubtype: sec.subtype,
-        securityType: sec.type,
-        tickerSymbol: sec.tickerSymbol,
-        vestedQuantity: row.vestedQuantity,
-        vestedValue: row.vestedValue,
+      conn: {
+        institutionName: plaidConnection.institutionName,
       },
-    ];
-  });
+      holding: {
+        costBasis: holding.costBasis,
+        id: holding.id,
+        institutionPrice: holding.institutionPrice,
+        institutionPriceAsOf: holding.institutionPriceAsOf,
+        institutionValue: holding.institutionValue,
+        isoCurrencyCode: holding.isoCurrencyCode,
+        quantity: holding.quantity,
+        securityId: holding.securityId,
+        updatedAt: holding.updatedAt,
+        vestedQuantity: holding.vestedQuantity,
+        vestedValue: holding.vestedValue,
+      },
+      sec: {
+        closePrice: security.closePrice,
+        closePriceAsOf: security.closePriceAsOf,
+        industry: security.industry,
+        isCashEquivalent: security.isCashEquivalent,
+        name: security.name,
+        sector: security.sector,
+        subtype: security.subtype,
+        tickerSymbol: security.tickerSymbol,
+        type: security.type,
+      },
+    })
+    .from(holding)
+    .innerJoin(financialAccount, eq(holding.accountId, financialAccount.id))
+    .innerJoin(security, eq(holding.securityId, security.id))
+    .leftJoin(
+      plaidConnection,
+      eq(financialAccount.plaidConnectionId, plaidConnection.id)
+    )
+    .where(and(...conditions));
+
+  return rows.map((row) => ({
+    accountName: row.account.name,
+    closePrice: num(row.sec.closePrice),
+    closePriceAsOf: row.sec.closePriceAsOf,
+    costBasis: num(row.holding.costBasis),
+    holdingUpdatedAt: row.holding.updatedAt,
+    id: row.holding.id,
+    industry: row.sec.industry,
+    institutionName: row.conn?.institutionName ?? null,
+    institutionPrice: num(row.holding.institutionPrice),
+    institutionPriceAsOf: row.holding.institutionPriceAsOf,
+    institutionValue: num(row.holding.institutionValue) ?? 0,
+    isCashEquivalent: row.sec.isCashEquivalent,
+    isoCurrencyCode: row.holding.isoCurrencyCode,
+    plaidAccountId: row.account.externalId ?? "",
+    quantity: Number(row.holding.quantity),
+    sector: row.sec.sector,
+    securityId: row.holding.securityId,
+    securityName: row.sec.name,
+    securitySubtype: row.sec.subtype,
+    securityType: row.sec.type,
+    tickerSymbol: row.sec.tickerSymbol,
+    vestedQuantity: num(row.holding.vestedQuantity),
+    vestedValue: num(row.holding.vestedValue),
+  }));
 }
 
 // ── Investment transactions ───────────────────────────────────────────
@@ -136,64 +170,69 @@ export async function getPlaidInvestmentTransactionsByUserId(
   accountId?: string,
   limit = 50
 ) {
-  const parts: InvestmentActivityRelationalWhere[] = [
-    {
-      account: {
-        connection: {
-          userId: { eq: userId },
-        },
-      },
-    },
+  const conditions = [
+    eq(investmentActivity.userId, userId),
+    eq(financialAccount.source, "plaid"),
   ];
-
   if (accountId) {
-    parts.push({ plaidAccountId: { eq: accountId } });
+    conditions.push(eq(financialAccount.externalId, accountId));
   }
 
-  const rows = await db.query.investmentActivity.findMany({
-    limit,
-    orderBy: { date: "desc" },
-    where: { AND: parts } as InvestmentActivityRelationalWhere,
-    with: {
+  const rows = await db
+    .select({
       account: {
-        with: {
-          connection: true,
-        },
+        externalId: financialAccount.externalId,
+        name: financialAccount.name,
       },
-      security: true,
-    },
-  });
-
-  return rows.flatMap((row) => {
-    if (!row.account) {
-      return [];
-    }
-
-    const { account } = row;
-    const sec = row.security;
-
-    return [
-      {
-        accountName: account.name,
-        amount: row.amount,
-        date: row.date,
-        fees: row.fees,
-        id: row.id,
-        investmentTransactionId: row.investmentTransactionId,
-        isoCurrencyCode: row.isoCurrencyCode,
-        name: row.name,
-        plaidAccountId: row.plaidAccountId,
-        price: row.price,
-        quantity: row.quantity,
-        securityId: row.securityId,
-        securityName: sec?.name ?? null,
-        securityType: sec?.type ?? null,
-        subtype: row.subtype,
-        tickerSymbol: sec?.tickerSymbol ?? null,
-        type: row.type,
+      activity: {
+        amount: investmentActivity.amount,
+        date: investmentActivity.date,
+        externalId: investmentActivity.externalId,
+        fees: investmentActivity.fees,
+        id: investmentActivity.id,
+        isoCurrencyCode: investmentActivity.isoCurrencyCode,
+        name: investmentActivity.name,
+        price: investmentActivity.price,
+        quantity: investmentActivity.quantity,
+        securityId: investmentActivity.securityId,
+        subtype: investmentActivity.subtype,
+        type: investmentActivity.type,
       },
-    ];
-  });
+      sec: {
+        name: security.name,
+        tickerSymbol: security.tickerSymbol,
+        type: security.type,
+      },
+    })
+    .from(investmentActivity)
+    .innerJoin(
+      financialAccount,
+      eq(investmentActivity.accountId, financialAccount.id)
+    )
+    .leftJoin(security, eq(investmentActivity.securityId, security.id))
+    .where(and(...conditions))
+    .orderBy(desc(investmentActivity.date))
+    .limit(limit);
+
+  return rows.map((row) => ({
+    accountName: row.account.name,
+    amount: num(row.activity.amount),
+    date: row.activity.date,
+    fees: num(row.activity.fees),
+    id: row.activity.id,
+    investmentTransactionId: row.activity.externalId,
+    isoCurrencyCode: row.activity.isoCurrencyCode,
+    name: row.activity.name,
+    plaidAccountId: row.account.externalId ?? "",
+    price: num(row.activity.price),
+    quantity: num(row.activity.quantity),
+    securityId: row.activity.securityId,
+    securityName: row.sec?.name ?? null,
+    securityType: row.sec?.type ?? null,
+    subtype: row.activity.subtype ?? "",
+    tickerSymbol: row.sec?.tickerSymbol ?? null,
+    type: row.activity.type,
+  }));
 }
 
 export type PlaidInvestmentAccountRow = Awaited<

@@ -16,6 +16,7 @@ import { user } from "../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../rls";
 
 // Portfolio Snapshots - stores daily account balance snapshots for historical charting
+/** @deprecated Use `snapshot` from `@cobalt-web/db/schema/accounts/snapshot`. */
 export const portfolioSnapshots = pgTable.withRLS(
   "portfolio_snapshot",
   {

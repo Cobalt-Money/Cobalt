@@ -19,6 +19,7 @@ import {
 import { bankAccount } from "./accounts";
 
 // Investment Securities
+/** @deprecated Use `security` from `@cobalt-web/db/schema/accounts/security`. */
 export const investmentSecurity = pgTable.withRLS(
   "investment_security",
   {
@@ -72,6 +73,7 @@ export const investmentSecurity = pgTable.withRLS(
 );
 
 // Investment Holdings
+/** @deprecated Use `holding` from `@cobalt-web/db/schema/accounts/holding`. */
 export const investmentPosition = pgTable.withRLS(
   "investment_position",
   {
@@ -119,6 +121,7 @@ export const investmentPosition = pgTable.withRLS(
 );
 
 // Investment Transactions
+/** @deprecated Use `investmentActivity` from `@cobalt-web/db/schema/accounts/investment-activity`. */
 export const investmentActivity = pgTable.withRLS(
   "investment_activity",
   {

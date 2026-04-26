@@ -1,38 +1,71 @@
 import { db } from "@cobalt-web/db";
-import { brokerageUser } from "@cobalt-web/db/schema/brokerage";
-import type { BrokerageUser } from "@cobalt-web/db/schema/brokerage";
+import { snaptradeAuthorization } from "@cobalt-web/db/schema/providers/snaptrade/authorization";
+import { snaptradeUser } from "@cobalt-web/db/schema/providers/snaptrade/user";
 import { eq } from "drizzle-orm";
 
-/** Look up a brokerage user by our app's userId. */
+/** Resolve snaptrade_authorization by authorization_id. */
+export async function lookupSnaptradeAuthorization(
+  authorizationId: string
+): Promise<{ id: string; userId: string } | null> {
+  const rows = await db
+    .select({
+      id: snaptradeAuthorization.id,
+      userId: snaptradeAuthorization.userId,
+    })
+    .from(snaptradeAuthorization)
+    .where(eq(snaptradeAuthorization.authorizationId, authorizationId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export interface SnapTradeUserCredentials {
+  userId: string;
+  providerUserId: string;
+  providerUserSecret: string;
+}
+
+/** Look up SnapTrade credentials by our app's userId. */
 export async function getBrokerageUserByUserId(
   userId: string
-): Promise<BrokerageUser | undefined> {
-  return await db.query.brokerageUser.findFirst({
-    where: { userId: { eq: userId } },
-  });
+): Promise<SnapTradeUserCredentials | undefined> {
+  const rows = await db
+    .select()
+    .from(snaptradeUser)
+    .where(eq(snaptradeUser.userId, userId))
+    .limit(1);
+  const [row] = rows;
+  if (!row) {
+    return undefined;
+  }
+  return {
+    providerUserId: row.snaptradeUserId,
+    providerUserSecret: row.snaptradeUserSecret,
+    userId: row.userId,
+  };
 }
 
 /** Look up SnapTrade credentials by the provider's userId. */
 export async function getSnapTradeUserCredentials(
-  snaptradeUserId: string
+  snaptradeUserIdValue: string
 ): Promise<{
   appUserId: string;
   providerUserId: string;
   userSecret: string;
 } | null> {
-  const user = await db
+  const rows = await db
     .select()
-    .from(brokerageUser)
-    .where(eq(brokerageUser.providerUserId, snaptradeUserId))
+    .from(snaptradeUser)
+    .where(eq(snaptradeUser.snaptradeUserId, snaptradeUserIdValue))
     .limit(1);
 
-  if (!user[0]) {
+  const [row] = rows;
+  if (!row) {
     return null;
   }
 
   return {
-    appUserId: user[0].userId,
-    providerUserId: user[0].providerUserId,
-    userSecret: user[0].providerUserSecret,
+    appUserId: row.userId,
+    providerUserId: row.snaptradeUserId,
+    userSecret: row.snaptradeUserSecret,
   };
 }

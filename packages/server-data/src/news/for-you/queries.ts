@@ -1,11 +1,7 @@
 import { db } from "@cobalt-web/db";
-import {
-  bankAccount,
-  bankConnection,
-  investmentPosition,
-  investmentSecurity,
-} from "@cobalt-web/db/schema/banking";
-import { and, eq as eqCol, isNotNull } from "drizzle-orm";
+import { holding } from "@cobalt-web/db/schema/accounts/holding";
+import { security } from "@cobalt-web/db/schema/accounts/security";
+import { and, eq, isNotNull } from "drizzle-orm";
 
 import {
   decodeCursorForYou,
@@ -16,52 +12,20 @@ import type { ForYouResult } from "./schemas.js";
 
 // ── Get user stock tickers ─────────────────────────────────────────
 
-/** Distinct tickers from SnapTrade positions and Plaid investment holdings. */
+/** Distinct tickers from all the user's holdings (Plaid + SnapTrade unified). */
 export async function getUserStockTickers(userId: string): Promise<string[]> {
-  const rows = await db.query.brokeragePositions.findMany({
-    columns: { rawSymbol: true, symbol: true },
-    where: {
-      RAW: (t, { sql }) =>
-        sql`${t.userId} = ${userId} AND (${t.symbol} IS NOT NULL OR ${t.rawSymbol} IS NOT NULL)`,
-    },
-  });
+  const rows = await db
+    .selectDistinct({ ticker: security.tickerSymbol })
+    .from(holding)
+    .innerJoin(security, eq(holding.securityId, security.id))
+    .where(and(eq(holding.userId, userId), isNotNull(security.tickerSymbol)));
 
   const tickers = new Set<string>();
   for (const row of rows) {
-    const ticker = row.symbol ?? row.rawSymbol;
-    if (ticker) {
-      tickers.add(ticker);
-    }
-  }
-
-  const plaidRows = await db
-    .selectDistinct({ ticker: investmentSecurity.tickerSymbol })
-    .from(investmentPosition)
-    .innerJoin(
-      investmentSecurity,
-      eqCol(investmentPosition.securityId, investmentSecurity.securityId)
-    )
-    .innerJoin(
-      bankAccount,
-      eqCol(investmentPosition.plaidAccountId, bankAccount.plaidAccountId)
-    )
-    .innerJoin(
-      bankConnection,
-      eqCol(bankAccount.plaidItemId, bankConnection.plaidItemId)
-    )
-    .where(
-      and(
-        eqCol(bankConnection.userId, userId),
-        isNotNull(investmentSecurity.tickerSymbol)
-      )
-    );
-
-  for (const row of plaidRows) {
     if (row.ticker) {
       tickers.add(row.ticker);
     }
   }
-
   return [...tickers];
 }
 
@@ -80,7 +44,7 @@ export async function getFinancialEventsForTickers(
     limit: limit + 1,
     orderBy: { createdAt: "desc", id: "desc" },
     where: {
-      RAW: (t, { sql, lt, eq }) => {
+      RAW: (t, { sql, lt, eq: eqOp }) => {
         const parts = [
           sql`${t.tickers} ?| array[${sql.join(
             tickers.map((ticker) => sql`${ticker}`),
@@ -94,7 +58,7 @@ export async function getFinancialEventsForTickers(
 
         if (decoded) {
           parts.push(
-            sql`(${lt(t.createdAt, new Date(decoded.createdAt))} OR (${eq(t.createdAt, new Date(decoded.createdAt))} AND ${lt(t.id, decoded.id)}))`
+            sql`(${lt(t.createdAt, new Date(decoded.createdAt))} OR (${eqOp(t.createdAt, new Date(decoded.createdAt))} AND ${lt(t.id, decoded.id)}))`
           );
         }
 

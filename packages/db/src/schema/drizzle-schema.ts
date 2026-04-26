@@ -30,3 +30,11 @@ export {
 // server, never synced to Zero clients.
 export { fundamentals } from "./research/fundamentals";
 export { tickers } from "./research/tickers";
+
+// SRI-264 enums — tables themselves are re-exported via ./zero-schema.
+export {
+  accountSource,
+  activitySource,
+  securitySource,
+  transactionSource,
+} from "./accounts/enums";

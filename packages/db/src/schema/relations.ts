@@ -1,35 +1,22 @@
 import { defineRelations } from "drizzle-orm";
 
-import { chats, messages, parts } from "./ai/chat";
-import { user, session, account, subscription } from "./auth/auth";
+import { balance } from "./accounts/balance";
+import { financialAccount } from "./accounts/financial-account";
+import { holding } from "./accounts/holding";
+import { investmentActivity } from "./accounts/investment-activity";
 import {
-  bankConnection,
-  bankAccount,
-  bankBalance,
-  bankBalanceSnapshot,
-  transaction,
-  recurringStream,
   creditLiability,
   mortgageLiability,
   studentLoanLiability,
-  institution,
-} from "./banking";
-import {
-  investmentSecurity,
-  investmentPosition,
-  investmentActivity,
-} from "./banking/investments";
-import {
-  brokerageUser,
-  brokerageAuthorizations,
-  brokerageAccounts,
-  brokerageAccountDetails,
-  brokerageBalances,
-  brokeragePositions,
-  brokerageOrders,
-  brokerageActivities,
-  portfolioSnapshots,
-} from "./brokerage";
+} from "./accounts/liabilities";
+import { orders } from "./accounts/order";
+import { recurringStream } from "./accounts/recurring-stream";
+import { security } from "./accounts/security";
+import { snapshot } from "./accounts/snapshot";
+import { transaction } from "./accounts/transaction";
+import { chats, messages, parts } from "./ai/chat";
+import { user, session, account, subscription } from "./auth/auth";
+import { institution } from "./banking";
 import { feedback } from "./features/feedback";
 import { financialEvents, eventArticles } from "./features/financial-events";
 import { financialGoals } from "./features/financial-goals";
@@ -37,41 +24,38 @@ import { kalshiUsers } from "./features/kalshi";
 import { messageVotes } from "./features/message-votes";
 import { userAlerts } from "./features/user-alerts";
 import { mobileSubscription } from "./mobile/subscriptions";
+import { plaidConnection } from "./providers/plaid/connection";
+import { snaptradeAuthorization } from "./providers/snaptrade/authorization";
+import { snaptradeUser } from "./providers/snaptrade/user";
 
 /** Tables referenced by relational queries — must cover every `r.*` use in `defineRelations`. */
 const schema = {
   account,
-  bankAccount,
-  bankBalance,
-  bankBalanceSnapshot,
-  bankConnection,
-  brokerageAccountDetails,
-  brokerageAccounts,
-  brokerageActivities,
-  brokerageAuthorizations,
-  brokerageBalances,
-  brokerageOrders,
-  brokeragePositions,
-  brokerageUser,
+  balance,
   chats,
   creditLiability,
   eventArticles,
   feedback,
+  financialAccount,
   financialEvents,
   financialGoals,
+  holding,
   institution,
   investmentActivity,
-  investmentPosition,
-  investmentSecurity,
   kalshiUsers,
   messageVotes,
   messages,
   mobileSubscription,
   mortgageLiability,
+  orders,
   parts,
-  portfolioSnapshots,
+  plaidConnection,
   recurringStream,
+  security,
   session,
+  snapshot,
+  snaptradeAuthorization,
+  snaptradeUser,
   studentLoanLiability,
   subscription,
   transaction,
@@ -87,188 +71,14 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
-  bankAccount: {
-    balanceSnapshots: r.many.bankBalanceSnapshot({
-      from: r.bankAccount.plaidAccountId,
-      to: r.bankBalanceSnapshot.plaidAccountId,
-    }),
-    balances: r.many.bankBalance({
-      from: r.bankAccount.plaidAccountId,
-      to: r.bankBalance.plaidAccountId,
-    }),
-    connection: r.one.bankConnection({
-      from: r.bankAccount.plaidItemId,
+  balance: {
+    account: r.one.financialAccount({
+      from: r.balance.accountId,
       optional: false,
-      to: r.bankConnection.plaidItemId,
-    }),
-    creditLiability: r.many.creditLiability({
-      from: r.bankAccount.plaidAccountId,
-      to: r.creditLiability.plaidAccountId,
-    }),
-    investmentActivities: r.many.investmentActivity({
-      from: r.bankAccount.plaidAccountId,
-      to: r.investmentActivity.plaidAccountId,
-    }),
-    investmentPositions: r.many.investmentPosition({
-      from: r.bankAccount.plaidAccountId,
-      to: r.investmentPosition.plaidAccountId,
-    }),
-    mortgageLiability: r.many.mortgageLiability({
-      from: r.bankAccount.plaidAccountId,
-      to: r.mortgageLiability.plaidAccountId,
-    }),
-    recurringStreams: r.many.recurringStream({
-      from: r.bankAccount.plaidAccountId,
-      to: r.recurringStream.plaidAccountId,
-    }),
-    studentLoanLiability: r.many.studentLoanLiability({
-      from: r.bankAccount.plaidAccountId,
-      to: r.studentLoanLiability.plaidAccountId,
-    }),
-    transactions: r.many.transaction({
-      from: r.bankAccount.plaidAccountId,
-      to: r.transaction.plaidAccountId,
-    }),
-  },
-
-  bankBalance: {
-    account: r.one.bankAccount({
-      from: r.bankBalance.plaidAccountId,
-      to: r.bankAccount.plaidAccountId,
-    }),
-  },
-
-  bankBalanceSnapshot: {
-    account: r.one.bankAccount({
-      from: r.bankBalanceSnapshot.plaidAccountId,
-      to: r.bankAccount.plaidAccountId,
-    }),
-  },
-
-  bankConnection: {
-    accounts: r.many.bankAccount({
-      from: r.bankConnection.plaidItemId,
-      to: r.bankAccount.plaidItemId,
-    }),
-    institution: r.one.institution({
-      from: r.bankConnection.institutionId,
-      optional: true,
-      to: r.institution.plaidInstitutionId,
+      to: r.financialAccount.id,
     }),
     user: r.one.user({
-      from: r.bankConnection.userId,
-      to: r.user.id,
-    }),
-  },
-
-  brokerageAccountDetails: {
-    brokerageAccount: r.one.brokerageAccounts({
-      from: r.brokerageAccountDetails.accountId,
-      to: r.brokerageAccounts.id,
-    }),
-    user: r.one.user({
-      from: r.brokerageAccountDetails.userId,
-      to: r.user.id,
-    }),
-  },
-
-  brokerageAccounts: {
-    accountDetails: r.many.brokerageAccountDetails({
-      from: r.brokerageAccounts.id,
-      to: r.brokerageAccountDetails.accountId,
-    }),
-    activities: r.many.brokerageActivities({
-      from: r.brokerageAccounts.id,
-      to: r.brokerageActivities.accountId,
-    }),
-    balances: r.many.brokerageBalances({
-      from: r.brokerageAccounts.id,
-      to: r.brokerageBalances.accountId,
-    }),
-    brokerageAuthorization: r.one.brokerageAuthorizations({
-      from: r.brokerageAccounts.brokerageAuthId,
-      to: r.brokerageAuthorizations.id,
-    }),
-    orders: r.many.brokerageOrders({
-      from: r.brokerageAccounts.id,
-      to: r.brokerageOrders.accountId,
-    }),
-    positions: r.many.brokeragePositions({
-      from: r.brokerageAccounts.id,
-      to: r.brokeragePositions.accountId,
-    }),
-    user: r.one.user({
-      from: r.brokerageAccounts.userId,
-      to: r.user.id,
-    }),
-  },
-
-  brokerageActivities: {
-    brokerageAccount: r.one.brokerageAccounts({
-      from: r.brokerageActivities.accountId,
-      to: r.brokerageAccounts.id,
-    }),
-    user: r.one.user({
-      from: r.brokerageActivities.userId,
-      to: r.user.id,
-    }),
-  },
-
-  brokerageAuthorizations: {
-    brokerageAccounts: r.many.brokerageAccounts({
-      from: r.brokerageAuthorizations.id,
-      to: r.brokerageAccounts.brokerageAuthId,
-    }),
-    brokerageUser: r.one.brokerageUser({
-      from: r.brokerageAuthorizations.userId,
-      to: r.brokerageUser.userId,
-    }),
-    user: r.one.user({
-      from: r.brokerageAuthorizations.userId,
-      to: r.user.id,
-    }),
-  },
-
-  brokerageBalances: {
-    brokerageAccount: r.one.brokerageAccounts({
-      from: r.brokerageBalances.accountId,
-      to: r.brokerageAccounts.id,
-    }),
-    user: r.one.user({
-      from: r.brokerageBalances.userId,
-      to: r.user.id,
-    }),
-  },
-
-  brokerageOrders: {
-    brokerageAccount: r.one.brokerageAccounts({
-      from: r.brokerageOrders.accountId,
-      to: r.brokerageAccounts.id,
-    }),
-    user: r.one.user({
-      from: r.brokerageOrders.userId,
-      to: r.user.id,
-    }),
-  },
-
-  brokeragePositions: {
-    brokerageAccount: r.one.brokerageAccounts({
-      from: r.brokeragePositions.accountId,
-      to: r.brokerageAccounts.id,
-    }),
-    user: r.one.user({
-      from: r.brokeragePositions.userId,
-      to: r.user.id,
-    }),
-  },
-
-  brokerageUser: {
-    brokerageAuthorizations: r.many.brokerageAuthorizations({
-      from: r.brokerageUser.userId,
-      to: r.brokerageAuthorizations.userId,
-    }),
-    user: r.one.user({
-      from: r.brokerageUser.userId,
+      from: r.balance.userId,
       to: r.user.id,
     }),
   },
@@ -285,9 +95,14 @@ export const relations = defineRelations(schema, (r) => ({
   },
 
   creditLiability: {
-    account: r.one.bankAccount({
-      from: r.creditLiability.plaidAccountId,
-      to: r.bankAccount.plaidAccountId,
+    account: r.one.financialAccount({
+      from: r.creditLiability.accountId,
+      optional: false,
+      to: r.financialAccount.id,
+    }),
+    user: r.one.user({
+      from: r.creditLiability.userId,
+      to: r.user.id,
     }),
   },
 
@@ -301,6 +116,67 @@ export const relations = defineRelations(schema, (r) => ({
   feedback: {
     user: r.one.user({
       from: r.feedback.userId,
+      to: r.user.id,
+    }),
+  },
+
+  financialAccount: {
+    balance: r.one.balance({
+      from: r.financialAccount.id,
+      optional: true,
+      to: r.balance.accountId,
+    }),
+    creditLiability: r.one.creditLiability({
+      from: r.financialAccount.id,
+      optional: true,
+      to: r.creditLiability.accountId,
+    }),
+    holdings: r.many.holding({
+      from: r.financialAccount.id,
+      to: r.holding.accountId,
+    }),
+    investmentActivities: r.many.investmentActivity({
+      from: r.financialAccount.id,
+      to: r.investmentActivity.accountId,
+    }),
+    mortgageLiability: r.one.mortgageLiability({
+      from: r.financialAccount.id,
+      optional: true,
+      to: r.mortgageLiability.accountId,
+    }),
+    orders: r.many.orders({
+      from: r.financialAccount.id,
+      to: r.orders.accountId,
+    }),
+    plaidConnection: r.one.plaidConnection({
+      from: r.financialAccount.plaidConnectionId,
+      optional: true,
+      to: r.plaidConnection.id,
+    }),
+    recurringStreams: r.many.recurringStream({
+      from: r.financialAccount.id,
+      to: r.recurringStream.accountId,
+    }),
+    snapshots: r.many.snapshot({
+      from: r.financialAccount.id,
+      to: r.snapshot.accountId,
+    }),
+    snaptradeAuthorization: r.one.snaptradeAuthorization({
+      from: r.financialAccount.snaptradeAuthorizationId,
+      optional: true,
+      to: r.snaptradeAuthorization.id,
+    }),
+    studentLoanLiability: r.one.studentLoanLiability({
+      from: r.financialAccount.id,
+      optional: true,
+      to: r.studentLoanLiability.accountId,
+    }),
+    transactions: r.many.transaction({
+      from: r.financialAccount.id,
+      to: r.transaction.accountId,
+    }),
+    user: r.one.user({
+      from: r.financialAccount.userId,
       to: r.user.id,
     }),
   },
@@ -319,36 +195,37 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
+  holding: {
+    account: r.one.financialAccount({
+      from: r.holding.accountId,
+      optional: false,
+      to: r.financialAccount.id,
+    }),
+    security: r.one.security({
+      from: r.holding.securityId,
+      optional: false,
+      to: r.security.id,
+    }),
+    user: r.one.user({
+      from: r.holding.userId,
+      to: r.user.id,
+    }),
+  },
+
   investmentActivity: {
-    account: r.one.bankAccount({
-      from: r.investmentActivity.plaidAccountId,
-      to: r.bankAccount.plaidAccountId,
+    account: r.one.financialAccount({
+      from: r.investmentActivity.accountId,
+      optional: false,
+      to: r.financialAccount.id,
     }),
-    security: r.one.investmentSecurity({
+    security: r.one.security({
       from: r.investmentActivity.securityId,
-      to: r.investmentSecurity.securityId,
+      optional: true,
+      to: r.security.id,
     }),
-  },
-
-  investmentPosition: {
-    account: r.one.bankAccount({
-      from: r.investmentPosition.plaidAccountId,
-      to: r.bankAccount.plaidAccountId,
-    }),
-    security: r.one.investmentSecurity({
-      from: r.investmentPosition.securityId,
-      to: r.investmentSecurity.securityId,
-    }),
-  },
-
-  investmentSecurity: {
-    activities: r.many.investmentActivity({
-      from: r.investmentSecurity.securityId,
-      to: r.investmentActivity.securityId,
-    }),
-    positions: r.many.investmentPosition({
-      from: r.investmentSecurity.securityId,
-      to: r.investmentPosition.securityId,
+    user: r.one.user({
+      from: r.investmentActivity.userId,
+      to: r.user.id,
     }),
   },
 
@@ -393,9 +270,31 @@ export const relations = defineRelations(schema, (r) => ({
   },
 
   mortgageLiability: {
-    account: r.one.bankAccount({
-      from: r.mortgageLiability.plaidAccountId,
-      to: r.bankAccount.plaidAccountId,
+    account: r.one.financialAccount({
+      from: r.mortgageLiability.accountId,
+      optional: false,
+      to: r.financialAccount.id,
+    }),
+    user: r.one.user({
+      from: r.mortgageLiability.userId,
+      to: r.user.id,
+    }),
+  },
+
+  orders: {
+    account: r.one.financialAccount({
+      from: r.orders.accountId,
+      optional: false,
+      to: r.financialAccount.id,
+    }),
+    security: r.one.security({
+      from: r.orders.securityId,
+      optional: true,
+      to: r.security.id,
+    }),
+    user: r.one.user({
+      from: r.orders.userId,
+      to: r.user.id,
     }),
   },
 
@@ -406,18 +305,46 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
-  portfolioSnapshots: {
+  plaidConnection: {
+    accounts: r.many.financialAccount({
+      from: r.plaidConnection.id,
+      to: r.financialAccount.plaidConnectionId,
+    }),
+    institution: r.one.institution({
+      from: r.plaidConnection.institutionId,
+      optional: true,
+      to: r.institution.plaidInstitutionId,
+    }),
     user: r.one.user({
-      from: r.portfolioSnapshots.userId,
+      from: r.plaidConnection.userId,
       to: r.user.id,
     }),
   },
 
   recurringStream: {
-    account: r.one.bankAccount({
-      from: r.recurringStream.plaidAccountId,
+    account: r.one.financialAccount({
+      from: r.recurringStream.accountId,
       optional: false,
-      to: r.bankAccount.plaidAccountId,
+      to: r.financialAccount.id,
+    }),
+    user: r.one.user({
+      from: r.recurringStream.userId,
+      to: r.user.id,
+    }),
+  },
+
+  security: {
+    holdings: r.many.holding({
+      from: r.security.id,
+      to: r.holding.securityId,
+    }),
+    investmentActivities: r.many.investmentActivity({
+      from: r.security.id,
+      to: r.investmentActivity.securityId,
+    }),
+    orders: r.many.orders({
+      from: r.security.id,
+      to: r.orders.securityId,
     }),
   },
 
@@ -428,10 +355,45 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
+  snapshot: {
+    account: r.one.financialAccount({
+      from: r.snapshot.accountId,
+      optional: false,
+      to: r.financialAccount.id,
+    }),
+    user: r.one.user({
+      from: r.snapshot.userId,
+      to: r.user.id,
+    }),
+  },
+
+  snaptradeAuthorization: {
+    accounts: r.many.financialAccount({
+      from: r.snaptradeAuthorization.id,
+      to: r.financialAccount.snaptradeAuthorizationId,
+    }),
+    user: r.one.user({
+      from: r.snaptradeAuthorization.userId,
+      to: r.user.id,
+    }),
+  },
+
+  snaptradeUser: {
+    user: r.one.user({
+      from: r.snaptradeUser.userId,
+      to: r.user.id,
+    }),
+  },
+
   studentLoanLiability: {
-    account: r.one.bankAccount({
-      from: r.studentLoanLiability.plaidAccountId,
-      to: r.bankAccount.plaidAccountId,
+    account: r.one.financialAccount({
+      from: r.studentLoanLiability.accountId,
+      optional: false,
+      to: r.financialAccount.id,
+    }),
+    user: r.one.user({
+      from: r.studentLoanLiability.userId,
+      to: r.user.id,
     }),
   },
 
@@ -443,10 +405,14 @@ export const relations = defineRelations(schema, (r) => ({
   },
 
   transaction: {
-    account: r.one.bankAccount({
-      from: r.transaction.plaidAccountId,
+    account: r.one.financialAccount({
+      from: r.transaction.accountId,
       optional: false,
-      to: r.bankAccount.plaidAccountId,
+      to: r.financialAccount.id,
+    }),
+    user: r.one.user({
+      from: r.transaction.userId,
+      to: r.user.id,
     }),
   },
 
@@ -455,41 +421,9 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.user.id,
       to: r.account.userId,
     }),
-    bankConnections: r.many.bankConnection({
+    balances: r.many.balance({
       from: r.user.id,
-      to: r.bankConnection.userId,
-    }),
-    brokerageAccountDetails: r.many.brokerageAccountDetails({
-      from: r.user.id,
-      to: r.brokerageAccountDetails.userId,
-    }),
-    brokerageAccounts: r.many.brokerageAccounts({
-      from: r.user.id,
-      to: r.brokerageAccounts.userId,
-    }),
-    brokerageActivities: r.many.brokerageActivities({
-      from: r.user.id,
-      to: r.brokerageActivities.userId,
-    }),
-    brokerageAuthorizations: r.many.brokerageAuthorizations({
-      from: r.user.id,
-      to: r.brokerageAuthorizations.userId,
-    }),
-    brokerageBalances: r.many.brokerageBalances({
-      from: r.user.id,
-      to: r.brokerageBalances.userId,
-    }),
-    brokerageOrders: r.many.brokerageOrders({
-      from: r.user.id,
-      to: r.brokerageOrders.userId,
-    }),
-    brokeragePositions: r.many.brokeragePositions({
-      from: r.user.id,
-      to: r.brokeragePositions.userId,
-    }),
-    brokerageUser: r.one.brokerageUser({
-      from: r.user.id,
-      to: r.brokerageUser.userId,
+      to: r.balance.userId,
     }),
     chats: r.many.chats({
       from: r.user.id,
@@ -499,9 +433,21 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.user.id,
       to: r.feedback.userId,
     }),
+    financialAccounts: r.many.financialAccount({
+      from: r.user.id,
+      to: r.financialAccount.userId,
+    }),
     financialGoals: r.many.financialGoals({
       from: r.user.id,
       to: r.financialGoals.userId,
+    }),
+    holdings: r.many.holding({
+      from: r.user.id,
+      to: r.holding.userId,
+    }),
+    investmentActivities: r.many.investmentActivity({
+      from: r.user.id,
+      to: r.investmentActivity.userId,
     }),
     kalshiUser: r.one.kalshiUsers({
       from: r.user.id,
@@ -515,17 +461,41 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.user.id,
       to: r.mobileSubscription.userId,
     }),
-    portfolioSnapshots: r.many.portfolioSnapshots({
+    orders: r.many.orders({
       from: r.user.id,
-      to: r.portfolioSnapshots.userId,
+      to: r.orders.userId,
+    }),
+    plaidConnections: r.many.plaidConnection({
+      from: r.user.id,
+      to: r.plaidConnection.userId,
+    }),
+    recurringStreams: r.many.recurringStream({
+      from: r.user.id,
+      to: r.recurringStream.userId,
     }),
     sessions: r.many.session({
       from: r.user.id,
       to: r.session.userId,
     }),
+    snapshots: r.many.snapshot({
+      from: r.user.id,
+      to: r.snapshot.userId,
+    }),
+    snaptradeAuthorizations: r.many.snaptradeAuthorization({
+      from: r.user.id,
+      to: r.snaptradeAuthorization.userId,
+    }),
+    snaptradeUser: r.one.snaptradeUser({
+      from: r.user.id,
+      to: r.snaptradeUser.userId,
+    }),
     subscriptions: r.many.subscription({
       from: r.user.id,
       to: r.subscription.referenceId,
+    }),
+    transactions: r.many.transaction({
+      from: r.user.id,
+      to: r.transaction.userId,
     }),
     userAlerts: r.many.userAlerts({
       from: r.user.id,

@@ -3,7 +3,7 @@ import type { TransactionListItem } from "./schemas.js";
 
 export interface TransactionListItemAccountSlice {
   name: string;
-  plaidAccountId: string;
+  plaidAccountId: string | null;
   type: string;
 }
 

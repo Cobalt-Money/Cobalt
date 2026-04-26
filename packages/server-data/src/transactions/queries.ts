@@ -1,16 +1,18 @@
 import { db } from "@cobalt-web/db";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { recurringStream } from "@cobalt-web/db/schema/accounts/recurring-stream";
+import { transaction } from "@cobalt-web/db/schema/accounts/transaction";
+import { institution } from "@cobalt-web/db/schema/banking";
+import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { and, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import type { z } from "zod";
 
 import { toDateString } from "./lib.js";
 import type { transactionListQuerySchema } from "./schemas.js";
 import { toTransactionListItem } from "./to-transaction-list-item.js";
 
-/** Same shape as validated `GET /transactions` query — keep in sync with `transactionListQuerySchema`. */
 export type TransactionListQuery = z.infer<typeof transactionListQuerySchema>;
-
-type TransactionRelationalWhere = NonNullable<
-  Parameters<typeof db.query.transaction.findMany>[0]
->["where"];
 
 // ── Queries ─────────────────────────────────────────────────────────
 
@@ -34,86 +36,102 @@ export async function getUserTransactions(
   const search = searchQuery?.trim();
   const searchPattern = search ? `%${search}%` : undefined;
 
-  const whereParts: TransactionRelationalWhere[] = [
-    {
-      account: {
-        connection: {
-          userId: { eq: userId },
-        },
-      },
-    },
-  ];
-
+  const conditions: SQL[] = [eq(transaction.userId, userId)];
   if (accountType) {
-    whereParts.push({ account: { type: { eq: accountType } } });
+    conditions.push(eq(financialAccount.type, accountType));
   }
   if (pendingFilter !== undefined) {
-    whereParts.push({ pending: { eq: pendingFilter === "true" } });
+    conditions.push(eq(transaction.pending, pendingFilter === "true"));
   }
   if (startDate) {
-    whereParts.push({ date: { gte: startDate } });
+    conditions.push(gte(transaction.date, startDate));
   }
   if (endDate) {
-    whereParts.push({ date: { lte: endDate } });
+    conditions.push(lte(transaction.date, endDate));
   }
   if (minAmount !== undefined) {
-    whereParts.push({ amount: { gte: minAmount } });
+    conditions.push(gte(transaction.amount, String(minAmount)));
   }
   if (maxAmount !== undefined) {
-    whereParts.push({ amount: { lte: maxAmount } });
+    conditions.push(lte(transaction.amount, String(maxAmount)));
   }
   if (primaryCategory) {
-    whereParts.push({
-      RAW: (t, { sql: sqlOp }) =>
-        sqlOp`${t.personalFinanceCategory}->>'primary' = ${primaryCategory}`,
-    });
+    conditions.push(
+      sql`${transaction.personalFinanceCategory}->>'primary' = ${primaryCategory}`
+    );
   }
   if (searchPattern) {
-    whereParts.push({
-      RAW: (t, { sql: sqlOp }) =>
-        sqlOp`(${t.name} ILIKE ${searchPattern} OR ${t.merchantName} ILIKE ${searchPattern} OR ${t.notes}::text ILIKE ${searchPattern})`,
-    });
+    const orClause = or(
+      ilike(transaction.name, searchPattern),
+      ilike(transaction.merchantName, searchPattern),
+      sql`${transaction.notes}::text ILIKE ${searchPattern}`
+    );
+    if (orClause) {
+      conditions.push(orClause);
+    }
   }
 
-  const rows = await db.query.transaction.findMany({
-    limit: pageSize,
-    offset: page * pageSize,
-    orderBy: { date: "desc" },
-    // Mixed column + RAW filters widen past Drizzle's AND tuple inference (see TS2719).
-    where: { AND: whereParts } as TransactionRelationalWhere,
-    with: {
+  const rows = await db
+    .select({
       account: {
-        with: {
-          connection: {
-            with: {
-              institution: true,
-            },
-          },
-        },
+        externalId: financialAccount.externalId,
+        name: financialAccount.name,
+        type: financialAccount.type,
       },
-    },
-  });
+      amount: transaction.amount,
+      authorizedDate: transaction.authorizedDate,
+      counterparties: transaction.counterparties,
+      date: transaction.date,
+      id: transaction.id,
+      institution: {
+        logo: institution.logo,
+        name: institution.name,
+        url: institution.url,
+      },
+      location: transaction.location,
+      logoUrl: transaction.logoUrl,
+      merchantName: transaction.merchantName,
+      name: transaction.name,
+      notes: transaction.notes,
+      pending: transaction.pending,
+      personalFinanceCategory: transaction.personalFinanceCategory,
+      userOverrideCategory: transaction.userOverrideCategory,
+      userOverrideDate: transaction.userOverrideDate,
+      userOverrideLocation: transaction.userOverrideLocation,
+      userOverrideName: transaction.userOverrideName,
+      website: transaction.website,
+    })
+    .from(transaction)
+    .innerJoin(financialAccount, eq(transaction.accountId, financialAccount.id))
+    .leftJoin(
+      plaidConnection,
+      eq(financialAccount.plaidConnectionId, plaidConnection.id)
+    )
+    .leftJoin(
+      institution,
+      eq(institution.plaidInstitutionId, plaidConnection.institutionId)
+    )
+    .where(and(...conditions))
+    .orderBy(desc(transaction.date))
+    .limit(pageSize)
+    .offset(page * pageSize);
 
-  return rows.map((row) => {
-    const { account } = row;
-    const { connection } = account;
-    const inst = connection.institution;
-
-    return toTransactionListItem({
+  return rows.map((row) =>
+    toTransactionListItem({
       account: {
-        name: account.name,
-        plaidAccountId: account.plaidAccountId,
-        type: account.type,
+        name: row.account.name,
+        plaidAccountId: row.account.externalId,
+        type: row.account.type,
       },
-      institution: inst
+      institution: row.institution
         ? {
-            logo: inst.logo ?? null,
-            name: inst.name ?? null,
-            url: inst.url ?? null,
+            logo: row.institution.logo ?? null,
+            name: row.institution.name ?? null,
+            url: row.institution.url ?? null,
           }
         : null,
       transaction: {
-        amount: row.amount,
+        amount: Number(row.amount),
         authorizedDate: row.authorizedDate,
         counterparties: row.counterparties,
         date: row.date,
@@ -131,62 +149,85 @@ export async function getUserTransactions(
         userOverrideName: row.userOverrideName,
         website: row.website,
       },
-    });
-  });
+    })
+  );
 }
 
 export async function getRecurringStreams(userId: string) {
-  const rows = await db.query.recurringStream.findMany({
-    orderBy: { lastDate: "desc" },
-    where: {
+  const rows = await db
+    .select({
       account: {
-        connection: {
-          userId: { eq: userId },
-        },
+        name: financialAccount.name,
+        subtype: financialAccount.subtype,
+        type: financialAccount.type,
       },
-      isActive: { eq: true },
-    },
-    with: {
-      account: {
-        with: {
-          connection: {
-            with: {
-              institution: true,
-            },
-          },
-        },
+      averageAmount: recurringStream.averageAmount,
+      description: recurringStream.description,
+      externalId: recurringStream.externalId,
+      firstDate: recurringStream.firstDate,
+      frequency: recurringStream.frequency,
+      id: recurringStream.id,
+      institution: {
+        logo: institution.logo,
+        name: institution.name,
+        url: institution.url,
       },
-    },
-  });
+      isActive: recurringStream.isActive,
+      lastAmount: recurringStream.lastAmount,
+      lastDate: recurringStream.lastDate,
+      merchantName: recurringStream.merchantName,
+      personalFinanceCategory: recurringStream.personalFinanceCategory,
+      predictedNextDate: recurringStream.predictedNextDate,
+      status: recurringStream.status,
+      streamType: recurringStream.streamType,
+      transactionIds: recurringStream.transactionIds,
+      updatedAt: recurringStream.updatedAt,
+    })
+    .from(recurringStream)
+    .innerJoin(
+      financialAccount,
+      eq(recurringStream.accountId, financialAccount.id)
+    )
+    .leftJoin(
+      plaidConnection,
+      eq(financialAccount.plaidConnectionId, plaidConnection.id)
+    )
+    .leftJoin(
+      institution,
+      eq(institution.plaidInstitutionId, plaidConnection.institutionId)
+    )
+    .where(
+      and(
+        eq(recurringStream.userId, userId),
+        eq(recurringStream.isActive, true)
+      )
+    )
+    .orderBy(desc(recurringStream.lastDate));
 
-  return rows.map((row) => {
-    const { account } = row;
-    const { connection } = account;
-    return {
-      accountName: account.name,
-      accountSubtype: account.subtype,
-      accountType: account.type,
-      averageAmount: row.averageAmount,
-      description: row.description,
-      firstDate: row.firstDate,
-      frequency: row.frequency,
-      id: row.id,
-      institutionLogo: connection.institution?.logo ?? null,
-      institutionName: connection.institution?.name ?? null,
-      institutionUrl: connection.institution?.url ?? null,
-      isActive: row.isActive,
-      lastAmount: row.lastAmount,
-      lastDate: row.lastDate,
-      merchantName: row.merchantName,
-      personalFinanceCategory: row.personalFinanceCategory,
-      predictedNextDate: row.predictedNextDate,
-      status: row.status,
-      streamId: row.streamId,
-      streamType: row.streamType as "inflow" | "outflow",
-      transactionIds: row.transactionIds,
-      updatedAt: row.updatedAt?.toISOString() ?? null,
-    };
-  });
+  return rows.map((row) => ({
+    accountName: row.account.name,
+    accountSubtype: row.account.subtype,
+    accountType: row.account.type,
+    averageAmount: Number(row.averageAmount),
+    description: row.description,
+    firstDate: row.firstDate,
+    frequency: row.frequency,
+    id: row.id,
+    institutionLogo: row.institution?.logo ?? null,
+    institutionName: row.institution?.name ?? null,
+    institutionUrl: row.institution?.url ?? null,
+    isActive: row.isActive,
+    lastAmount: Number(row.lastAmount),
+    lastDate: row.lastDate,
+    merchantName: row.merchantName,
+    personalFinanceCategory: row.personalFinanceCategory,
+    predictedNextDate: row.predictedNextDate,
+    status: row.status,
+    streamId: row.externalId,
+    streamType: row.streamType as "inflow" | "outflow",
+    transactionIds: row.transactionIds,
+    updatedAt: row.updatedAt?.toISOString() ?? null,
+  }));
 }
 
 export async function getCreditSpending(
@@ -205,29 +246,26 @@ export async function getCreditSpending(
   const startDate =
     periodOffsets[period]?.()?.toISOString().split("T")[0] ?? null;
 
-  const whereParts: TransactionRelationalWhere[] = [
-    {
-      account: {
-        connection: {
-          userId: { eq: userId },
-        },
-        type: { eq: "credit" },
-        ...(accountId ? { plaidAccountId: { eq: accountId } } : {}),
-      },
-    },
+  const conditions: SQL[] = [
+    eq(transaction.userId, userId),
+    eq(financialAccount.type, "credit"),
   ];
+  if (accountId) {
+    conditions.push(eq(financialAccount.externalId, accountId));
+  }
   if (startDate) {
-    whereParts.push({ date: { gte: startDate } });
+    conditions.push(gte(transaction.date, startDate));
   }
 
-  const rows = await db.query.transaction.findMany({
-    columns: {
-      amount: true,
-      date: true,
-    },
-    orderBy: { date: "desc" },
-    where: { AND: whereParts } as TransactionRelationalWhere,
-  });
+  const rows = await db
+    .select({
+      amount: transaction.amount,
+      date: transaction.date,
+    })
+    .from(transaction)
+    .innerJoin(financialAccount, eq(transaction.accountId, financialAccount.id))
+    .where(and(...conditions))
+    .orderBy(desc(transaction.date));
 
   const bucketSizeMap: Record<string, "daily" | "weekly" | "monthly"> = {
     "1m": "daily",
@@ -264,7 +302,7 @@ export async function getCreditSpending(
     } else {
       key = d.slice(0, 7);
     }
-    buckets.set(key, (buckets.get(key) ?? 0) + Math.abs(row.amount));
+    buckets.set(key, (buckets.get(key) ?? 0) + Math.abs(Number(row.amount)));
   }
 
   const spending = [...buckets.entries()]

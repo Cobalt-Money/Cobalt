@@ -14,6 +14,7 @@ import { user } from "../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../rls";
 import { brokerageAccounts } from "./accounts";
 
+/** @deprecated Use `balance` from `@cobalt-web/db/schema/accounts/balance`. */
 export const brokerageBalances = pgTable.withRLS(
   "brokerage_balance",
   {
@@ -55,6 +56,7 @@ export const brokerageBalances = pgTable.withRLS(
   ]
 );
 
+/** @deprecated Use `holding` from `@cobalt-web/db/schema/accounts/holding`. */
 export const brokeragePositions = pgTable.withRLS(
   "brokerage_position",
   {

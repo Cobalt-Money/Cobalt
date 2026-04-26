@@ -1,4 +1,4 @@
-import type { transaction as transactionTable } from "@cobalt-web/db/schema/banking";
+import type { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/transaction";
 import type { InferInsertModel } from "drizzle-orm";
 import type { Transaction } from "plaid";
 
@@ -7,7 +7,7 @@ export type TransactionInsert = InferInsertModel<typeof transactionTable>;
 function transactionToRecordCore(tx: Transaction) {
   return {
     accountOwner: tx.account_owner || null,
-    amount: tx.amount,
+    amount: String(tx.amount),
     authorizedDate: tx.authorized_date || null,
     authorizedDatetime: tx.authorized_datetime || null,
     category: tx.category || null,
@@ -18,8 +18,6 @@ function transactionToRecordCore(tx: Transaction) {
     datetime: tx.datetime || null,
     isoCurrencyCode: tx.iso_currency_code || null,
     location: tx.location || null,
-    plaidAccountId: tx.account_id,
-    plaidTransactionId: tx.transaction_id,
   };
 }
 
@@ -44,8 +42,21 @@ function transactionToRecordMeta(tx: Transaction) {
   };
 }
 
-export function transactionToRecord(tx: Transaction): TransactionInsert {
+/**
+ * Map a Plaid Transaction → new `transaction` row.
+ * Caller resolves the new financial_account.id (uuid) + userId via
+ * lookupFinancialAccountsByPlaidIds before calling.
+ */
+export function transactionToRecord(
+  tx: Transaction,
+  accountId: string,
+  userId: string
+): TransactionInsert {
   return {
+    accountId,
+    externalId: tx.transaction_id,
+    source: "plaid" as const,
+    userId,
     ...transactionToRecordCore(tx),
     ...transactionToRecordMeta(tx),
   } as TransactionInsert;

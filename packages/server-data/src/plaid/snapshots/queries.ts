@@ -1,10 +1,10 @@
 import { db } from "@cobalt-web/db";
-import {
-  bankBalanceSnapshot,
-  transaction,
-} from "@cobalt-web/db/schema/banking";
-import { and, desc, eq } from "drizzle-orm";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
+import { transaction } from "@cobalt-web/db/schema/accounts/transaction";
+import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 
+import { lookupFinancialAccountsByPlaidIds } from "../link/queries.js";
 import { toBalanceSnapshotDTO } from "./lib.js";
 import type { BalanceSnapshot, BalanceSnapshotQuery } from "./schemas.js";
 
@@ -15,69 +15,92 @@ import type { BalanceSnapshot, BalanceSnapshotQuery } from "./schemas.js";
 export async function getPostedTransactionsForAccount(
   plaidAccountId: string
 ): Promise<{ amount: number; date: string }[]> {
-  return await db
+  const map = await lookupFinancialAccountsByPlaidIds([plaidAccountId]);
+  const acct = map.get(plaidAccountId);
+  if (!acct) {
+    return [];
+  }
+  const rows = await db
     .select({ amount: transaction.amount, date: transaction.date })
     .from(transaction)
     .where(
-      and(
-        eq(transaction.plaidAccountId, plaidAccountId),
-        eq(transaction.pending, false)
-      )
+      and(eq(transaction.accountId, acct.id), eq(transaction.pending, false))
     )
     .orderBy(desc(transaction.date));
+  return rows.map((r) => ({ amount: Number(r.amount), date: r.date }));
 }
 
 /** Existing snapshot dates for a Plaid account — used to skip already-persisted rows. */
 export async function getSnapshotDatesForAccount(
   plaidAccountId: string
 ): Promise<string[]> {
+  const map = await lookupFinancialAccountsByPlaidIds([plaidAccountId]);
+  const acct = map.get(plaidAccountId);
+  if (!acct) {
+    return [];
+  }
   const rows = await db
-    .select({ date: bankBalanceSnapshot.snapshotDate })
-    .from(bankBalanceSnapshot)
-    .where(eq(bankBalanceSnapshot.plaidAccountId, plaidAccountId));
+    .select({ date: snapshot.snapshotDate })
+    .from(snapshot)
+    .where(eq(snapshot.accountId, acct.id));
   return rows.map((r) => r.date);
 }
 
 /**
- * Get balance snapshots with enriched account metadata.
- * Relational: snapshot → account → connection (user scoping on connection.userId).
+ * Get balance snapshots with enriched account metadata. Joins
+ * `snapshot ⨝ financial_account` and scopes by `snapshot.userId`.
+ *
+ * `filters.accountId` is a provider external id (Plaid account_id).
  */
 export async function getBalanceSnapshotsByUserId(
   userId: string,
   filters: BalanceSnapshotQuery
 ): Promise<BalanceSnapshot[]> {
-  const whereParts = [
-    { account: { connection: { userId: { eq: userId } } } },
-  ] as const;
+  const conditions = [eq(snapshot.userId, userId)];
+  if (filters.accountId) {
+    conditions.push(eq(financialAccount.externalId, filters.accountId));
+  }
+  if (filters.startDate) {
+    conditions.push(gte(snapshot.snapshotDate, filters.startDate));
+  }
+  if (filters.endDate) {
+    conditions.push(lte(snapshot.snapshotDate, filters.endDate));
+  }
 
-  const withFilters = [
-    ...whereParts,
-    ...(filters.accountId
-      ? [{ plaidAccountId: { eq: filters.accountId } } as const]
-      : []),
-    ...(filters.startDate
-      ? [{ snapshotDate: { gte: filters.startDate } } as const]
-      : []),
-    ...(filters.endDate
-      ? [{ snapshotDate: { lte: filters.endDate } } as const]
-      : []),
-  ];
+  const rows = await db
+    .select({
+      available: snapshot.available,
+      createdAt: snapshot.createdAt,
+      current: snapshot.current,
+      externalId: financialAccount.externalId,
+      id: snapshot.id,
+      institutionName: financialAccount.institutionName,
+      limit: snapshot.limit,
+      name: financialAccount.name,
+      snapshotDate: snapshot.snapshotDate,
+      subtype: financialAccount.subtype,
+      type: financialAccount.type,
+    })
+    .from(snapshot)
+    .innerJoin(financialAccount, eq(snapshot.accountId, financialAccount.id))
+    .where(and(...conditions))
+    .orderBy(asc(snapshot.snapshotDate));
 
-  const rows = await db.query.bankBalanceSnapshot.findMany({
-    orderBy: { snapshotDate: "asc" },
-    where: { AND: withFilters },
-    with: {
+  return rows.map((row) =>
+    toBalanceSnapshotDTO({
       account: {
-        with: {
-          connection: true,
-        },
+        externalId: row.externalId,
+        institutionName: row.institutionName,
+        name: row.name,
+        subtype: row.subtype,
+        type: row.type,
       },
-    },
-  });
-
-  return rows.flatMap((row) =>
-    row.account === null
-      ? []
-      : [toBalanceSnapshotDTO({ ...row, account: row.account })]
+      available: row.available,
+      createdAt: row.createdAt,
+      current: row.current,
+      id: row.id,
+      limit: row.limit,
+      snapshotDate: row.snapshotDate,
+    })
   );
 }

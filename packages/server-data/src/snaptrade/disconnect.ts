@@ -1,10 +1,8 @@
 import { db } from "@cobalt-web/db";
-import {
-  brokerageAccounts,
-  brokerageAuthorizations,
-  portfolioSnapshots,
-} from "@cobalt-web/db/schema/brokerage";
-import { and, eq, inArray } from "drizzle-orm";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { snaptradeAuthorization } from "@cobalt-web/db/schema/providers/snaptrade/authorization";
+import { snaptradeUser } from "@cobalt-web/db/schema/providers/snaptrade/user";
+import { eq } from "drizzle-orm";
 
 import { removeBrokerageAuthorization } from "./authorizations/actions.js";
 
@@ -22,11 +20,13 @@ export async function disconnectSnaptradeAuthorizationByUserId(
   success: boolean;
 }> {
   try {
-    const snaptradeUser = await db.query.brokerageUser.findFirst({
-      where: { userId: { eq: userId } },
-    });
+    const [stUser] = await db
+      .select()
+      .from(snaptradeUser)
+      .where(eq(snaptradeUser.userId, userId))
+      .limit(1);
 
-    if (!snaptradeUser) {
+    if (!stUser) {
       return {
         message: "User not found in SnapTrade system",
         success: false,
@@ -35,53 +35,34 @@ export async function disconnectSnaptradeAuthorizationByUserId(
 
     try {
       await removeBrokerageAuthorization(snapTradeAuthorizationId, {
-        providerUserId: snaptradeUser.providerUserId,
-        providerUserSecret: snaptradeUser.providerUserSecret,
+        providerUserId: stUser.snaptradeUserId,
+        providerUserSecret: stUser.snaptradeUserSecret,
       });
     } catch {
       // Continue with DB cleanup if SnapTrade already removed the link
     }
 
-    const associatedAccounts = await db.query.brokerageAccounts.findMany({
-      columns: {
-        accountId: true,
-        id: true,
-        institutionName: true,
-      },
-      where: { brokerageAuthId: { eq: databaseAuthId } },
-    });
+    // Snapshot of accounts before cascade so we can report what was deleted.
+    const associatedAccounts = await db
+      .select({
+        externalId: financialAccount.externalId,
+        institutionName: financialAccount.institutionName,
+      })
+      .from(financialAccount)
+      .where(eq(financialAccount.snaptradeAuthorizationId, databaseAuthId));
 
-    const databaseAccountIds = associatedAccounts.map((a) => a.id);
-
-    if (databaseAccountIds.length > 0) {
-      await db
-        .delete(portfolioSnapshots)
-        .where(
-          and(
-            eq(portfolioSnapshots.userId, userId),
-            inArray(portfolioSnapshots.accountId, databaseAccountIds)
-          )
-        );
-    }
-
-    const deletedAccounts = await db
-      .delete(brokerageAccounts)
-      .where(eq(brokerageAccounts.brokerageAuthId, databaseAuthId))
-      .returning({
-        accountId: brokerageAccounts.accountId,
-        institutionName: brokerageAccounts.institutionName,
-      });
-
+    // Deleting the authorization cascades to financial_account, which cascades
+    // to balance / holding / snapshot / orders / investment_activity / etc.
     await db
-      .delete(brokerageAuthorizations)
-      .where(eq(brokerageAuthorizations.id, databaseAuthId));
+      .delete(snaptradeAuthorization)
+      .where(eq(snaptradeAuthorization.id, databaseAuthId));
 
     return {
-      deletedAccounts: deletedAccounts.map((a) => ({
-        accountId: a.accountId,
+      deletedAccounts: associatedAccounts.map((a) => ({
+        accountId: a.externalId ?? "",
         institutionName: a.institutionName,
       })),
-      message: `Successfully disconnected brokerage connection${deletedAccounts.length > 1 ? "s" : ""}. All associated data including portfolio history has been removed.`,
+      message: `Successfully disconnected brokerage connection${associatedAccounts.length > 1 ? "s" : ""}. All associated data including portfolio history has been removed.`,
       success: true,
     };
   } catch (error) {
@@ -98,14 +79,18 @@ export async function disconnectBrokerageAccountByUserId(
   accountId: string
 ): Promise<{ message: string; success: boolean }> {
   try {
-    const account = await db.query.brokerageAccounts.findFirst({
-      where: { id: { eq: accountId } },
-      with: {
-        brokerageAuthorization: true,
-      },
-    });
+    const [account] = await db
+      .select({
+        id: financialAccount.id,
+        institutionName: financialAccount.institutionName,
+        snaptradeAuthorizationId: financialAccount.snaptradeAuthorizationId,
+        userId: financialAccount.userId,
+      })
+      .from(financialAccount)
+      .where(eq(financialAccount.id, accountId))
+      .limit(1);
 
-    if (account === undefined) {
+    if (!account) {
       return { message: "Account not found", success: false };
     }
 
@@ -113,21 +98,27 @@ export async function disconnectBrokerageAccountByUserId(
       return { message: "Unauthorized", success: false };
     }
 
-    const auth = account.brokerageAuthorization;
-    if (!auth) {
+    if (!account.snaptradeAuthorizationId) {
       return { message: "Invalid account data", success: false };
     }
 
-    const snapTradeAuthorizationId = auth.authorizationId;
-    const databaseAuthId = auth.id;
-    if (!snapTradeAuthorizationId || !databaseAuthId) {
+    const [auth] = await db
+      .select({
+        authorizationId: snaptradeAuthorization.authorizationId,
+        id: snaptradeAuthorization.id,
+      })
+      .from(snaptradeAuthorization)
+      .where(eq(snaptradeAuthorization.id, account.snaptradeAuthorizationId))
+      .limit(1);
+
+    if (!auth) {
       return { message: "Invalid account data", success: false };
     }
 
     const result = await disconnectSnaptradeAuthorizationByUserId(
       userId,
-      snapTradeAuthorizationId,
-      databaseAuthId
+      auth.authorizationId,
+      auth.id
     );
 
     if (result.success) {

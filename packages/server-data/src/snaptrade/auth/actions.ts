@@ -1,6 +1,6 @@
 import { snaptradeClient } from "@cobalt-web/clients/snaptrade";
 import { db } from "@cobalt-web/db";
-import { brokerageUser } from "@cobalt-web/db/schema/brokerage";
+import { snaptradeUser } from "@cobalt-web/db/schema/providers/snaptrade/user";
 import type { AuthenticationApiLoginSnapTradeUserRequest } from "snaptrade-typescript-sdk";
 
 import { getBrokerageUserByUserId } from "./queries.js";
@@ -24,9 +24,9 @@ async function registerSnapTradeUser(
     );
   }
 
-  await db.insert(brokerageUser).values({
-    providerUserId: responseData.userId,
-    providerUserSecret: responseData.userSecret,
+  await db.insert(snaptradeUser).values({
+    snaptradeUserId: responseData.userId,
+    snaptradeUserSecret: responseData.userSecret,
     userId,
   });
 

@@ -25,6 +25,7 @@ import type {
 } from "./zod";
 
 // Transactions (posted and pending)
+/** @deprecated Use `transaction` from `@cobalt-web/db/schema/accounts/transaction`. */
 export const transaction = pgTable.withRLS(
   "transaction",
   {
@@ -90,6 +91,7 @@ export const transaction = pgTable.withRLS(
 );
 
 // Recurring Transactions
+/** @deprecated Use `recurringStream` from `@cobalt-web/db/schema/accounts/recurring-stream`. */
 export const recurringStream = pgTable.withRLS(
   "recurring_stream",
   {

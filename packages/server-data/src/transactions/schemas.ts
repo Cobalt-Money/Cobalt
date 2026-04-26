@@ -1,11 +1,11 @@
+import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { recurringStream } from "@cobalt-web/db/schema/accounts/recurring-stream";
+import { transaction } from "@cobalt-web/db/schema/accounts/transaction";
 import {
-  bankAccount,
   institution,
   locationJsonSchema,
   personalFinanceCategoryJsonSchema,
-  recurringStream,
   recurringStreamJsonbSelectRefinements,
-  transaction,
   transactionJsonbSelectRefinements,
 } from "@cobalt-web/db/schema/banking";
 import type { TransactionNotesJson } from "@cobalt-web/db/schema/banking";
@@ -50,14 +50,14 @@ const transactionListItemRowSchema = createSelectSchema(transaction, {
   ...transactionJsonbSelectRefinements,
 });
 
-/** Joined `bank_account` columns (`account.name` / `account.type` in the mapper). */
-const bankAccountListSlice = createSelectSchema(bankAccount).pick({
+/** Joined `financial_account` columns (`account.name` / `account.type` in the mapper). */
+const bankAccountListSlice = createSelectSchema(financialAccount).pick({
   name: true,
   type: true,
 });
 
-/** Joined `bank_account` for recurring streams (includes `subtype`). */
-const bankAccountRecurringSlice = createSelectSchema(bankAccount).pick({
+/** Joined `financial_account` for recurring streams (includes `subtype`). */
+const bankAccountRecurringSlice = createSelectSchema(financialAccount).pick({
   name: true,
   subtype: true,
   type: true,
@@ -78,7 +78,6 @@ export const successResponse = z.object({
 /** List transaction DTO: picked `transaction` columns + joined account / institution (see `getUserTransactions`). */
 export const transactionListItemSchema = transactionListItemRowSchema
   .pick({
-    amount: true,
     authorizedDate: true,
     counterparties: true,
     date: true,
@@ -89,7 +88,6 @@ export const transactionListItemSchema = transactionListItemRowSchema
     name: true,
     pending: true,
     personalFinanceCategory: true,
-    plaidAccountId: true,
     userOverrideCategory: true,
     userOverrideDate: true,
     userOverrideLocation: true,
@@ -99,10 +97,12 @@ export const transactionListItemSchema = transactionListItemRowSchema
   .extend({
     accountName: bankAccountListSlice.shape.name,
     accountType: bankAccountListSlice.shape.type,
+    amount: z.number(),
     institutionLogo: institutionListSlice.shape.logo,
     institutionName: institutionListSlice.shape.name.nullable(),
     institutionUrl: institutionListSlice.shape.url,
     notes: tiptapDocBaseSchema.nullable(),
+    plaidAccountId: z.string().nullable(),
   });
 
 export type TransactionListItem = z.infer<typeof transactionListItemSchema>;
@@ -114,19 +114,16 @@ const recurringStreamListRowSchema = createSelectSchema(recurringStream, {
 /** Recurring stream DTO: picked `recurring_stream` columns + joined account / institution (see `getRecurringStreams`). */
 export const recurringStreamSchema = recurringStreamListRowSchema
   .pick({
-    averageAmount: true,
     description: true,
     firstDate: true,
     frequency: true,
     id: true,
     isActive: true,
-    lastAmount: true,
     lastDate: true,
     merchantName: true,
     personalFinanceCategory: true,
     predictedNextDate: true,
     status: true,
-    streamId: true,
     streamType: true,
     transactionIds: true,
   })
@@ -134,9 +131,12 @@ export const recurringStreamSchema = recurringStreamListRowSchema
     accountName: bankAccountRecurringSlice.shape.name,
     accountSubtype: bankAccountRecurringSlice.shape.subtype.nullable(),
     accountType: bankAccountRecurringSlice.shape.type,
+    averageAmount: z.number(),
     institutionLogo: institutionListSlice.shape.logo,
     institutionName: institutionListSlice.shape.name.nullable(),
     institutionUrl: institutionListSlice.shape.url,
+    lastAmount: z.number(),
+    streamId: z.string().nullable(),
     updatedAt: z.string().nullable(),
   });
 

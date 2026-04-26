@@ -13,6 +13,7 @@ import { user } from "../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../rls";
 
 // Brokerage authorization - tracks connected brokerage accounts
+/** @deprecated Use `snaptradeAuthorization` from `@cobalt-web/db/schema/providers/snaptrade/authorization`. */
 export const brokerageAuthorizations = pgTable.withRLS(
   "brokerage_authorization",
   {

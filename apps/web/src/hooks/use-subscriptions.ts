@@ -20,8 +20,8 @@ interface RecurringStreamRow {
   description: string;
   lastAmount: number;
   frequency: string;
-  predictedNextDate: string | null | undefined;
-  lastDate: string;
+  predictedNextDate: number | null | undefined;
+  lastDate: number;
 }
 
 export function useSubscriptions() {
@@ -33,11 +33,11 @@ export function useSubscriptions() {
         .filter((row) => row.streamType === "outflow")
         .map((row): Subscription | null => {
           const refDate = row.predictedNextDate ?? row.lastDate;
-          if (!refDate) {
+          if (typeof refDate !== "number") {
             return null;
           }
 
-          const d = new Date(`${refDate}T00:00:00.000Z`);
+          const d = new Date(refDate);
           const billingDay = d.getUTCDate();
           const billingCycle =
             row.frequency === "ANNUALLY" ? "yearly" : "monthly";

@@ -9,6 +9,7 @@ import {
   bankAccountListResponseSchema,
   successResponseSchema,
 } from "@cobalt-web/server-data/accounts/schemas";
+import { removeItem } from "@cobalt-web/server-data/plaid/link/actions";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
@@ -81,6 +82,13 @@ const bankAccountsRouter = new OpenAPIHono<AppEnv>()
   .openapi(disconnect, async (c) => {
     const { id } = c.req.valid("param");
     const result = await disconnectBankConnection(c.var.user.id, id);
+    if (result.success && result.accessToken) {
+      try {
+        await removeItem(result.accessToken);
+      } catch (error) {
+        console.warn("[disconnectBank] Plaid itemRemove failed", error);
+      }
+    }
     return c.json({ message: result.message, success: result.success }, 200);
   });
 

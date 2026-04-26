@@ -12,6 +12,7 @@ import { user } from "../../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../../rls";
 import type { PlaidItemErrorJson, StringArrayJson } from "./zod";
 
+/** @deprecated Use `plaidConnection` from `@cobalt-web/db/schema/providers/plaid/connection`. */
 export const bankConnection = pgTable.withRLS(
   "bank_connection",
   {

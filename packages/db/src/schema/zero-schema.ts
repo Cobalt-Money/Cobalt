@@ -11,32 +11,26 @@ export {
 } from "./auth/auth";
 export { chats, messages, parts } from "./ai/chat";
 export { institution } from "./banking/items/institution";
-export { bankConnection } from "./banking/items/bank-connection";
-export {
-  bankAccount,
-  bankBalance,
-  bankBalanceSnapshot,
-} from "./banking/accounts";
-export { transaction, recurringStream } from "./banking/transactions/tables";
+
+// SRI-264 unified schema
+export { financialAccount } from "./accounts/financial-account";
+export { balance } from "./accounts/balance";
+export { snapshot } from "./accounts/snapshot";
+export { security } from "./accounts/security";
+export { holding } from "./accounts/holding";
+export { orders } from "./accounts/order";
+export { transaction } from "./accounts/transaction";
+export { recurringStream } from "./accounts/recurring-stream";
+export { investmentActivity } from "./accounts/investment-activity";
 export {
   creditLiability,
   mortgageLiability,
   studentLoanLiability,
-} from "./banking/liabilities";
-export {
-  investmentSecurity,
-  investmentPosition,
-  investmentActivity,
-} from "./banking/investments";
-export { brokerageUser } from "./brokerage/users";
-export { brokerageAuthorizations } from "./brokerage/auth";
-export {
-  brokerageAccounts,
-  brokerageAccountDetails,
-} from "./brokerage/accounts";
-export { brokerageBalances, brokeragePositions } from "./brokerage/balances";
-export { brokerageOrders, brokerageActivities } from "./brokerage/trading";
-export { portfolioSnapshots } from "./brokerage/snapshots";
+} from "./accounts/liabilities";
+export { plaidConnection } from "./providers/plaid/connection";
+export { snaptradeAuthorization } from "./providers/snaptrade/authorization";
+export { snaptradeUser } from "./providers/snaptrade/user";
+
 export { feedback } from "./features/feedback";
 export { financialEvents, eventArticles } from "./features/financial-events";
 export { financialGoals } from "./features/financial-goals";
@@ -52,36 +46,31 @@ export {
   userRelations,
   accountRelations,
   sessionRelations,
+  subscriptionRelations,
   chatsRelations,
   messagesRelations,
   partsRelations,
-  bankConnectionRelations,
-  bankAccountRelations,
-  bankBalanceRelations,
-  bankBalanceSnapshotRelations,
+  financialAccountRelations,
+  balanceRelations,
+  snapshotRelations,
+  securityRelations,
+  holdingRelations,
+  ordersRelations,
   transactionRelations,
   recurringStreamRelations,
+  investmentActivityRelations,
   creditLiabilityRelations,
   mortgageLiabilityRelations,
   studentLoanLiabilityRelations,
-  investmentSecurityRelations,
-  investmentPositionRelations,
-  investmentActivityRelations,
-  brokerageUserRelations,
-  brokerageAuthorizationRelations,
-  brokerageAccountRelations,
-  brokerageAccountDetailsRelations,
-  brokerageBalanceRelations,
-  brokeragePositionRelations,
-  brokerageOrderRelations,
-  brokerageActivityRelations,
-  portfolioSnapshotRelations,
+  plaidConnectionRelations,
+  snaptradeAuthorizationRelations,
+  snaptradeUserRelations,
+  institutionRelations,
   financialEventsRelations,
   eventArticlesRelations,
   userAlertsRelations,
   financialGoalsRelations,
   mobileSubscriptionRelations,
-  subscriptionRelations,
   kalshiUserRelations,
   feedbackRelations,
   messageVotesRelations,

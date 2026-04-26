@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { brokerageAuthorizations } from "@cobalt-web/db/schema/brokerage";
+import { snaptradeAuthorization } from "@cobalt-web/db/schema/providers/snaptrade/authorization";
 import {
   getUserAccountDetails,
   listUserAccounts,
@@ -172,13 +172,11 @@ export async function getAuthorizationDisplayNameStep(
 
   const [auth] = await db
     .select({
-      brokerage: brokerageAuthorizations.brokerage,
-      name: brokerageAuthorizations.name,
+      brokerage: snaptradeAuthorization.brokerage,
+      name: snaptradeAuthorization.name,
     })
-    .from(brokerageAuthorizations)
-    .where(
-      eq(brokerageAuthorizations.authorizationId, brokerageAuthorizationId)
-    )
+    .from(snaptradeAuthorization)
+    .where(eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId))
     .limit(1);
 
   return auth?.brokerage ?? auth?.name ?? "Brokerage";

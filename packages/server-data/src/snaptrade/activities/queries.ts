@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { brokerageActivities } from "@cobalt-web/db/schema/brokerage";
+import { investmentActivity } from "@cobalt-web/db/schema/accounts/investment-activity";
 import { desc, eq } from "drizzle-orm";
 
 /** Get the most recent activity sync timestamp for an account. */
@@ -8,13 +8,13 @@ export async function getLastActivitySyncDate(
 ): Promise<Date | null> {
   try {
     const lastActivity = await db
-      .select({ lastSync: brokerageActivities.lastSync })
-      .from(brokerageActivities)
-      .where(eq(brokerageActivities.accountId, accountId))
-      .orderBy(desc(brokerageActivities.lastSync))
+      .select({ updatedAt: investmentActivity.updatedAt })
+      .from(investmentActivity)
+      .where(eq(investmentActivity.accountId, accountId))
+      .orderBy(desc(investmentActivity.updatedAt))
       .limit(1);
 
-    return lastActivity.at(0)?.lastSync ?? null;
+    return lastActivity.at(0)?.updatedAt ?? null;
   } catch (error) {
     console.error(
       `Error getting last activity sync date for account ${accountId}:`,

@@ -4,6 +4,7 @@ import { user } from "../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../rls";
 
 // Brokerage user credentials - one per app user
+/** @deprecated Use `snaptradeUser` from `@cobalt-web/db/schema/providers/snaptrade/user`. */
 export const brokerageUser = pgTable.withRLS(
   "brokerage_user",
   {
