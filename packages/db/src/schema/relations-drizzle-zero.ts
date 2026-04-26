@@ -8,7 +8,7 @@ import {
   mortgageLiability,
   studentLoanLiability,
 } from "./accounts/liabilities";
-import { recurringStream } from "./accounts/recurring-stream";
+import { recurring } from "./accounts/recurring";
 import { snapshot } from "./accounts/snapshot";
 import { transaction } from "./accounts/transaction";
 import { chats, messages, parts } from "./ai/chat";
@@ -45,7 +45,7 @@ export const userRelations = relations(user, ({ one, many }) => ({
   mobileSubscriptions: many(mobileSubscription),
   orders: many(orders),
   plaidConnections: many(plaidConnection),
-  recurringStreams: many(recurringStream),
+  recurringStreams: many(recurring),
   sessions: many(session),
   snapshots: many(snapshot),
   snaptradeAuthorizations: many(snaptradeAuthorization),
@@ -116,7 +116,7 @@ export const financialAccountRelations = relations(
       fields: [financialAccount.plaidConnectionId],
       references: [plaidConnection.id],
     }),
-    recurringStreams: many(recurringStream),
+    recurringStreams: many(recurring),
     snapshots: many(snapshot),
     snaptradeAuthorization: one(snaptradeAuthorization, {
       fields: [financialAccount.snaptradeAuthorizationId],
@@ -200,19 +200,16 @@ export const transactionRelations = relations(transaction, ({ one }) => ({
   }),
 }));
 
-export const recurringStreamRelations = relations(
-  recurringStream,
-  ({ one }) => ({
-    account: one(financialAccount, {
-      fields: [recurringStream.accountId],
-      references: [financialAccount.id],
-    }),
-    user: one(user, {
-      fields: [recurringStream.userId],
-      references: [user.id],
-    }),
-  })
-);
+export const recurringStreamRelations = relations(recurring, ({ one }) => ({
+  account: one(financialAccount, {
+    fields: [recurring.accountId],
+    references: [financialAccount.id],
+  }),
+  user: one(user, {
+    fields: [recurring.userId],
+    references: [user.id],
+  }),
+}));
 
 export const investmentActivityRelations = relations(
   investmentActivity,

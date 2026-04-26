@@ -1,6 +1,6 @@
 import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
-import { recurringStream } from "@cobalt-web/db/schema/accounts/recurring-stream";
+import { recurring } from "@cobalt-web/db/schema/accounts/recurring";
 import { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/transaction";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -236,7 +236,7 @@ async function upsertRecurringStreams(
   for (let i = 0; i < rows.length; i += RECURRING_STREAM_BATCH_SIZE) {
     const batch = rows.slice(i, i + RECURRING_STREAM_BATCH_SIZE);
     await db
-      .insert(recurringStream)
+      .insert(recurring)
       .values(batch)
       .onConflictDoUpdate({
         set: {
@@ -257,7 +257,7 @@ async function upsertRecurringStreams(
           transactionIds: sql`excluded.transaction_ids`,
           updatedAt: new Date(),
         },
-        target: [recurringStream.source, recurringStream.externalId],
+        target: [recurring.source, recurring.externalId],
         targetWhere: externalIdNotNullWhere,
       });
   }
@@ -285,11 +285,11 @@ export async function syncRecurringForItem(
 
   const existingStreams = await db
     .select({
-      accountId: recurringStream.accountId,
-      externalId: recurringStream.externalId,
+      accountId: recurring.accountId,
+      externalId: recurring.externalId,
     })
-    .from(recurringStream)
-    .where(eq(recurringStream.source, "plaid"));
+    .from(recurring)
+    .where(eq(recurring.source, "plaid"));
 
   const existingStreamIds = new Set(
     existingStreams
@@ -326,11 +326,11 @@ export async function syncRecurringForItem(
     const removedStreamIds = [...existingStreamIds];
     removed = removedStreamIds.length;
     await db
-      .delete(recurringStream)
+      .delete(recurring)
       .where(
         and(
-          eq(recurringStream.source, "plaid"),
-          inArray(recurringStream.externalId, removedStreamIds)
+          eq(recurring.source, "plaid"),
+          inArray(recurring.externalId, removedStreamIds)
         )
       );
   }

@@ -1,6 +1,6 @@
 import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
-import { recurringStream } from "@cobalt-web/db/schema/accounts/recurring-stream";
+import { recurring } from "@cobalt-web/db/schema/accounts/recurring";
 import { transaction } from "@cobalt-web/db/schema/accounts/transaction";
 import { institution } from "@cobalt-web/db/schema/banking";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
@@ -161,33 +161,30 @@ export async function getRecurringStreams(userId: string) {
         subtype: financialAccount.subtype,
         type: financialAccount.type,
       },
-      averageAmount: recurringStream.averageAmount,
-      description: recurringStream.description,
-      externalId: recurringStream.externalId,
-      firstDate: recurringStream.firstDate,
-      frequency: recurringStream.frequency,
-      id: recurringStream.id,
+      averageAmount: recurring.averageAmount,
+      description: recurring.description,
+      externalId: recurring.externalId,
+      firstDate: recurring.firstDate,
+      frequency: recurring.frequency,
+      id: recurring.id,
       institution: {
         logo: institution.logo,
         name: institution.name,
         url: institution.url,
       },
-      isActive: recurringStream.isActive,
-      lastAmount: recurringStream.lastAmount,
-      lastDate: recurringStream.lastDate,
-      merchantName: recurringStream.merchantName,
-      personalFinanceCategory: recurringStream.personalFinanceCategory,
-      predictedNextDate: recurringStream.predictedNextDate,
-      status: recurringStream.status,
-      streamType: recurringStream.streamType,
-      transactionIds: recurringStream.transactionIds,
-      updatedAt: recurringStream.updatedAt,
+      isActive: recurring.isActive,
+      lastAmount: recurring.lastAmount,
+      lastDate: recurring.lastDate,
+      merchantName: recurring.merchantName,
+      personalFinanceCategory: recurring.personalFinanceCategory,
+      predictedNextDate: recurring.predictedNextDate,
+      status: recurring.status,
+      streamType: recurring.streamType,
+      transactionIds: recurring.transactionIds,
+      updatedAt: recurring.updatedAt,
     })
-    .from(recurringStream)
-    .innerJoin(
-      financialAccount,
-      eq(recurringStream.accountId, financialAccount.id)
-    )
+    .from(recurring)
+    .innerJoin(financialAccount, eq(recurring.accountId, financialAccount.id))
     .leftJoin(
       plaidConnection,
       eq(financialAccount.plaidConnectionId, plaidConnection.id)
@@ -196,13 +193,8 @@ export async function getRecurringStreams(userId: string) {
       institution,
       eq(institution.plaidInstitutionId, plaidConnection.institutionId)
     )
-    .where(
-      and(
-        eq(recurringStream.userId, userId),
-        eq(recurringStream.isActive, true)
-      )
-    )
-    .orderBy(desc(recurringStream.lastDate));
+    .where(and(eq(recurring.userId, userId), eq(recurring.isActive, true)))
+    .orderBy(desc(recurring.lastDate));
 
   return rows.map((row) => ({
     accountName: row.account.name,

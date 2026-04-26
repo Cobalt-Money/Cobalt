@@ -15,7 +15,7 @@ export { security } from "./investments/security";
 export { holding } from "./investments/holding";
 export { orders } from "./investments/order";
 export { transaction } from "./accounts/transaction";
-export { recurringStream } from "./accounts/recurring-stream";
+export { recurring } from "./accounts/recurring";
 export { investmentActivity } from "./investments/investment-activity";
 export {
   creditLiability,

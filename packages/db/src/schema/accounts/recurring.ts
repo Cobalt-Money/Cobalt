@@ -21,8 +21,8 @@ import type {
 import { financialAccount } from "./financial-account";
 import { transactionSource } from "./transaction";
 
-export const recurringStream = pgTable(
-  "recurring_stream",
+export const recurring = pgTable(
+  "recurring",
   {
     accountId: uuid("account_id")
       .notNull()
@@ -68,18 +68,18 @@ export const recurringStream = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
   },
   (t) => [
-    index("recurring_stream_account_id_idx").on(t.accountId),
-    index("recurring_stream_user_id_idx").on(t.userId),
-    index("recurring_stream_account_date_type_idx").on(
+    index("recurring_account_id_idx").on(t.accountId),
+    index("recurring_user_id_idx").on(t.userId),
+    index("recurring_account_date_type_idx").on(
       t.accountId,
       t.lastDate,
       t.streamType
     ),
-    uniqueIndex("recurring_stream_source_external_id_idx")
+    uniqueIndex("recurring_source_external_id_idx")
       .on(t.source, t.externalId)
       .where(sql`external_id IS NOT NULL`),
   ]
 );
 
-export type RecurringStream = typeof recurringStream.$inferSelect;
-export type RecurringStreamInsert = typeof recurringStream.$inferInsert;
+export type Recurring = typeof recurring.$inferSelect;
+export type RecurringInsert = typeof recurring.$inferInsert;

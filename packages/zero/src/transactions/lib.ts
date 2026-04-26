@@ -109,7 +109,7 @@ export function transactionsForUser(
 }
 
 export function recurringForUser(userId: string) {
-  return zql.recurringStream
+  return zql.recurring
     .where("userId", userId)
     .where("isActive", true)
     .orderBy("lastDate", "desc");

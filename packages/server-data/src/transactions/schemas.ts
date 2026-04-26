@@ -1,5 +1,5 @@
 import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
-import { recurringStream } from "@cobalt-web/db/schema/accounts/recurring-stream";
+import { recurring } from "@cobalt-web/db/schema/accounts/recurring";
 import { transaction } from "@cobalt-web/db/schema/accounts/transaction";
 import {
   institution,
@@ -107,7 +107,7 @@ export const transactionListItemSchema = transactionListItemRowSchema
 
 export type TransactionListItem = z.infer<typeof transactionListItemSchema>;
 
-const recurringStreamListRowSchema = createSelectSchema(recurringStream, {
+const recurringStreamListRowSchema = createSelectSchema(recurring, {
   ...recurringStreamJsonbSelectRefinements,
 });
 

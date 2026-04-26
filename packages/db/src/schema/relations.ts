@@ -7,7 +7,7 @@ import {
   mortgageLiability,
   studentLoanLiability,
 } from "./accounts/liabilities";
-import { recurringStream } from "./accounts/recurring-stream";
+import { recurring } from "./accounts/recurring";
 import { snapshot } from "./accounts/snapshot";
 import { transaction } from "./accounts/transaction";
 import { chats, messages, parts } from "./ai/chat";
@@ -51,7 +51,7 @@ const schema = {
   orders,
   parts,
   plaidConnection,
-  recurringStream,
+  recurring,
   security,
   session,
   snapshot,
@@ -154,9 +154,9 @@ export const relations = defineRelations(schema, (r) => ({
       optional: true,
       to: r.plaidConnection.id,
     }),
-    recurringStreams: r.many.recurringStream({
+    recurringStreams: r.many.recurring({
       from: r.financialAccount.id,
-      to: r.recurringStream.accountId,
+      to: r.recurring.accountId,
     }),
     snapshots: r.many.snapshot({
       from: r.financialAccount.id,
@@ -322,14 +322,14 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
-  recurringStream: {
+  recurring: {
     account: r.one.financialAccount({
-      from: r.recurringStream.accountId,
+      from: r.recurring.accountId,
       optional: false,
       to: r.financialAccount.id,
     }),
     user: r.one.user({
-      from: r.recurringStream.userId,
+      from: r.recurring.userId,
       to: r.user.id,
     }),
   },
@@ -470,9 +470,9 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.user.id,
       to: r.plaidConnection.userId,
     }),
-    recurringStreams: r.many.recurringStream({
+    recurringStreams: r.many.recurring({
       from: r.user.id,
-      to: r.recurringStream.userId,
+      to: r.recurring.userId,
     }),
     sessions: r.many.session({
       from: r.user.id,

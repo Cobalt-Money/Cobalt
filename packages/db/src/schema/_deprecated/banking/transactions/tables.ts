@@ -1,14 +1,14 @@
 import {
+  boolean,
   date,
+  index,
+  jsonb,
   pgTable,
+  real,
   text,
+  timestamp,
   uuid,
   varchar,
-  timestamp,
-  jsonb,
-  real,
-  index,
-  boolean,
 } from "drizzle-orm/pg-core";
 
 import type {
@@ -17,7 +17,6 @@ import type {
   LocationJson,
   PaymentMetaJson,
   PersonalFinanceCategoryJson,
-  RecurringTransactionIdsJson,
   TransactionNotesJson,
   UserOverrideCategoryJson,
 } from "../../../banking/transactions/zod";
@@ -90,63 +89,5 @@ export const transaction = pgTable.withRLS(
   ]
 );
 
-// Recurring Transactions
-/** @deprecated Use `recurringStream` from `@cobalt-web/db/schema/accounts/recurring-stream`. */
-export const recurringStream = pgTable.withRLS(
-  "recurring_stream",
-  {
-    averageAmount: real("average_amount").notNull(),
-    category: jsonb("category").$type<LegacyCategoryArrayJson>(),
-    categoryId: text("category_id"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    description: text("description").notNull(),
-    firstDate: text("first_date").notNull(),
-
-    frequency: varchar("frequency").notNull(),
-    id: uuid("id").defaultRandom().primaryKey(),
-    isActive: boolean("is_active").default(true).notNull(),
-    isUserModified: boolean("is_user_modified").default(false).notNull(),
-
-    lastAmount: real("last_amount").notNull(),
-    lastDate: text("last_date").notNull(),
-    lastUserModifiedDatetime: text("last_user_modified_datetime"),
-
-    merchantName: text("merchant_name"),
-
-    personalFinanceCategory: jsonb(
-      "personal_finance_category"
-    ).$type<PersonalFinanceCategoryJson | null>(),
-    plaidAccountId: text("plaid_account_id")
-      .notNull()
-      .references(() => bankAccount.plaidAccountId, { onDelete: "cascade" }),
-
-    predictedNextDate: text("predicted_next_date"),
-
-    status: varchar("status").notNull(),
-    streamId: text("stream_id").notNull().unique(),
-
-    streamType: varchar("stream_type").notNull(),
-    transactionIds: jsonb("transaction_ids")
-      .$type<RecurringTransactionIdsJson>()
-      .notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .notNull()
-      .$onUpdate(() => new Date()),
-  },
-  (table) => [
-    index("recurring_stream_account_id_idx").on(table.plaidAccountId),
-    index("recurring_stream_account_date_type_idx").on(
-      table.plaidAccountId,
-      table.lastDate,
-      table.streamType
-    ),
-    appFullAccess(),
-    agentSelectViaBankAccount(table.plaidAccountId),
-  ]
-);
-
 export type Transaction = typeof transaction.$inferInsert;
 export type TransactionSelect = typeof transaction.$inferSelect;
-export type RecurringStream = typeof recurringStream.$inferInsert;
-export type RecurringStreamSelect = typeof recurringStream.$inferSelect;

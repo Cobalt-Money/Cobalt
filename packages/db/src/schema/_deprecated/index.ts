@@ -24,10 +24,8 @@ export {
   type BankBalanceSnapshotSelect,
 } from "./banking/accounts";
 
-export { recurringStream, transaction } from "./banking/transactions/tables";
+export { transaction } from "./banking/transactions/tables";
 export type {
-  RecurringStream,
-  RecurringStreamSelect,
   Transaction,
   TransactionSelect,
 } from "./banking/transactions/tables";
