@@ -11,8 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
-import { accountSource } from "./enums";
-import { financialAccount } from "./financial-account";
+import { accountSource, financialAccount } from "./financial-account";
 
 export const snapshot = pgTable(
   "snapshot",

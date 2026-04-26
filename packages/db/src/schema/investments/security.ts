@@ -5,6 +5,7 @@ import {
   index,
   jsonb,
   numeric,
+  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -12,7 +13,11 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { securitySource } from "../accounts/enums";
+export const securitySource = pgEnum("security_source", [
+  "plaid",
+  "snaptrade",
+  "manual",
+]);
 
 export const security = pgTable(
   "security",

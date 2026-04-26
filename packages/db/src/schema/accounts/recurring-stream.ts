@@ -18,8 +18,8 @@ import type {
   PersonalFinanceCategoryJson,
   RecurringTransactionIdsJson,
 } from "../banking/transactions/zod";
-import { transactionSource } from "./enums";
 import { financialAccount } from "./financial-account";
+import { transactionSource } from "./transaction";
 
 export const recurringStream = pgTable(
   "recurring_stream",

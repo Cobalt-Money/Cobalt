@@ -31,10 +31,8 @@ export {
 export { fundamentals } from "./research/fundamentals";
 export { tickers } from "./research/tickers";
 
-// SRI-264 enums — tables themselves are re-exported via ./zero-schema.
-export {
-  accountSource,
-  activitySource,
-  securitySource,
-  transactionSource,
-} from "./accounts/enums";
+// SRI-264 enums — defined alongside their primary table.
+export { accountSource } from "./accounts/financial-account";
+export { transactionSource } from "./accounts/transaction";
+export { activitySource } from "./investments/investment-activity";
+export { securitySource } from "./investments/security";

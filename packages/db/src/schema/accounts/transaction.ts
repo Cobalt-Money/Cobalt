@@ -5,6 +5,7 @@ import {
   index,
   jsonb,
   numeric,
+  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -22,8 +23,12 @@ import type {
   TransactionNotesJson,
   UserOverrideCategoryJson,
 } from "../banking/transactions/zod";
-import { transactionSource } from "./enums";
 import { financialAccount } from "./financial-account";
+
+export const transactionSource = pgEnum("transaction_source", [
+  "plaid",
+  "manual",
+]);
 
 export const transaction = pgTable(
   "transaction",

@@ -3,6 +3,7 @@ import {
   check,
   index,
   numeric,
+  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -13,7 +14,12 @@ import {
 import { user } from "../auth/auth";
 import { plaidConnection } from "../providers/plaid/connection";
 import { snaptradeAuthorization } from "../providers/snaptrade/authorization";
-import { accountSource } from "./enums";
+
+export const accountSource = pgEnum("account_source", [
+  "plaid",
+  "snaptrade",
+  "manual",
+]);
 
 export const financialAccount = pgTable(
   "financial_account",
