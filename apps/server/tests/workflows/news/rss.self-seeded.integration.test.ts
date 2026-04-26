@@ -14,7 +14,7 @@
  */
 
 import { db } from "@cobalt-web/db";
-import { rssArticles, rssFeeds } from "@cobalt-web/db/schema/features";
+import { rssArticles, rssFeeds } from "@cobalt-web/db/schema/news";
 import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { start } from "workflow/api";

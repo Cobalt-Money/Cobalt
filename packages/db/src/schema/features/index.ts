@@ -6,16 +6,6 @@ export {
   type FeedbackInsert,
 } from "./feedback";
 
-// financial-events
-export {
-  financialEvents,
-  eventArticles,
-  type FinancialEvent,
-  type FinancialEventInsert,
-  type EventArticle,
-  type EventArticleInsert,
-} from "./financial-events";
-
 // financial-goals
 export {
   financialGoals,
@@ -25,16 +15,6 @@ export {
 
 // kalshi
 export { kalshiUsers, type KalshiUser, type KalshiUserInsert } from "./kalshi";
-
-// rss
-export {
-  rssArticles,
-  rssFeeds,
-  type RssArticle,
-  type RssArticleInsert,
-  type RssFeed,
-  type RssFeedInsert,
-} from "./rss";
 
 // user-alerts
 export {

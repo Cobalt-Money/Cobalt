@@ -1,7 +1,4 @@
-import type {
-  EventArticle,
-  FinancialEvent,
-} from "@cobalt-web/db/schema/features";
+import type { EventArticle, FinancialEvent } from "@cobalt-web/db/schema/news";
 
 import type { MappedFinancialEvent } from "./events/schemas.js";
 

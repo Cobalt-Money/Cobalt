@@ -1,4 +1,4 @@
-import type { RssFeed } from "@cobalt-web/db/schema/features";
+import type { RssFeed } from "@cobalt-web/db/schema/news";
 import * as rssActions from "@cobalt-web/server-data/news/rss/actions";
 import * as rssMutations from "@cobalt-web/server-data/news/rss/mutations";
 import { describe, it, expect, vi, beforeEach } from "vitest";

@@ -16,6 +16,9 @@
     },
     "./schema/features": {
       "default": "./src/schema/features/index.ts"
+    },
+    "./schema/news": {
+      "default": "./src/schema/news/index.ts"
     }
   },
   "scripts": {

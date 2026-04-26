@@ -1,4 +1,4 @@
-import type { RssFeed } from "@cobalt-web/db/schema/features";
+import type { RssFeed } from "@cobalt-web/db/schema/news";
 import {
   buildItemMetadata,
   fetchRssFeedXml,
