@@ -12,7 +12,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { securitySource } from "./enums";
+import { securitySource } from "../accounts/enums";
 
 export const security = pgTable(
   "security",

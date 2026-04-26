@@ -3,16 +3,12 @@ import { relations } from "drizzle-orm/_relations";
 
 import { balance } from "./accounts/balance";
 import { financialAccount } from "./accounts/financial-account";
-import { holding } from "./accounts/holding";
-import { investmentActivity } from "./accounts/investment-activity";
 import {
   creditLiability,
   mortgageLiability,
   studentLoanLiability,
 } from "./accounts/liabilities";
-import { orders } from "./accounts/order";
 import { recurringStream } from "./accounts/recurring-stream";
-import { security } from "./accounts/security";
 import { snapshot } from "./accounts/snapshot";
 import { transaction } from "./accounts/transaction";
 import { chats, messages, parts } from "./ai/chat";
@@ -24,6 +20,10 @@ import { financialGoals } from "./features/financial-goals";
 import { kalshiUsers } from "./features/kalshi";
 import { messageVotes } from "./features/message-votes";
 import { userAlerts } from "./features/user-alerts";
+import { holding } from "./investments/holding";
+import { investmentActivity } from "./investments/investment-activity";
+import { orders } from "./investments/order";
+import { security } from "./investments/security";
 import { mobileSubscription } from "./mobile/subscriptions";
 import { plaidConnection } from "./providers/plaid/connection";
 import { snaptradeAuthorization } from "./providers/snaptrade/authorization";

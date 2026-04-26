@@ -15,7 +15,7 @@ import { user } from "../../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../../rls";
 import { brokerageAccounts } from "./accounts";
 
-/** @deprecated Use `orders` from `@cobalt-web/db/schema/accounts/order`. */
+/** @deprecated Use `orders` from `@cobalt-web/db/schema/investments/order`. */
 export const brokerageOrders = pgTable.withRLS(
   "brokerage_order",
   {
@@ -106,7 +106,7 @@ export const brokerageOrders = pgTable.withRLS(
   ]
 );
 
-/** @deprecated Use `investmentActivity` from `@cobalt-web/db/schema/accounts/investment-activity`. */
+/** @deprecated Use `investmentActivity` from `@cobalt-web/db/schema/investments/investment-activity`. */
 export const brokerageActivities = pgTable.withRLS(
   "brokerage_activity",
   {

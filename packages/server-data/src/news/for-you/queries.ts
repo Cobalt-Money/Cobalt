@@ -1,6 +1,6 @@
 import { db } from "@cobalt-web/db";
-import { holding } from "@cobalt-web/db/schema/accounts/holding";
-import { security } from "@cobalt-web/db/schema/accounts/security";
+import { holding } from "@cobalt-web/db/schema/investments/holding";
+import { security } from "@cobalt-web/db/schema/investments/security";
 import { and, eq, isNotNull } from "drizzle-orm";
 
 import {

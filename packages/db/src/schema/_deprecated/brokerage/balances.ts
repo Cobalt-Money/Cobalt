@@ -56,7 +56,7 @@ export const brokerageBalances = pgTable.withRLS(
   ]
 );
 
-/** @deprecated Use `holding` from `@cobalt-web/db/schema/accounts/holding`. */
+/** @deprecated Use `holding` from `@cobalt-web/db/schema/investments/holding`. */
 export const brokeragePositions = pgTable.withRLS(
   "brokerage_position",
   {

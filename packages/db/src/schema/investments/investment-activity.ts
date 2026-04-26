@@ -10,9 +10,9 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { activitySource } from "../accounts/enums";
+import { financialAccount } from "../accounts/financial-account";
 import { user } from "../auth/auth";
-import { activitySource } from "./enums";
-import { financialAccount } from "./financial-account";
 import { security } from "./security";
 
 export const investmentActivity = pgTable(

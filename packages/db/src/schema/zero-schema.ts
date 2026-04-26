@@ -16,12 +16,12 @@ export { institution } from "./banking/items/institution";
 export { financialAccount } from "./accounts/financial-account";
 export { balance } from "./accounts/balance";
 export { snapshot } from "./accounts/snapshot";
-export { security } from "./accounts/security";
-export { holding } from "./accounts/holding";
-export { orders } from "./accounts/order";
+export { security } from "./investments/security";
+export { holding } from "./investments/holding";
+export { orders } from "./investments/order";
 export { transaction } from "./accounts/transaction";
 export { recurringStream } from "./accounts/recurring-stream";
-export { investmentActivity } from "./accounts/investment-activity";
+export { investmentActivity } from "./investments/investment-activity";
 export {
   creditLiability,
   mortgageLiability,
