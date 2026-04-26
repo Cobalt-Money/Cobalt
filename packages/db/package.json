@@ -14,9 +14,6 @@
     "./schema/banking": {
       "default": "./src/schema/banking/index.ts"
     },
-    "./schema/brokerage": {
-      "default": "./src/schema/brokerage/index.ts"
-    },
     "./schema/features": {
       "default": "./src/schema/features/index.ts"
     }

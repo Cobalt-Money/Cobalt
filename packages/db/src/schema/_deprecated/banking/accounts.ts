@@ -14,7 +14,7 @@ import {
   appFullAccess,
   agentSelectViaBankAccount,
   agentSelectViaBankConnection,
-} from "../rls";
+} from "../../rls";
 import { bankConnection } from "./items/bank-connection";
 
 // Bank Accounts (individual accounts within a connection)

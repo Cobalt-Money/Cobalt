@@ -10,8 +10,8 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
-import { appFullAccess, agentSelectOwn } from "../rls";
+import { user } from "../../auth/auth";
+import { appFullAccess, agentSelectOwn } from "../../rls";
 import { brokerageAccounts } from "./accounts";
 
 /** @deprecated Use `balance` from `@cobalt-web/db/schema/accounts/balance`. */

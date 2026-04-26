@@ -8,7 +8,7 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
-import { appFullAccess, agentSelectViaBankAccount } from "../rls";
+import { appFullAccess, agentSelectViaBankAccount } from "../../rls";
 import { bankAccount } from "./accounts";
 
 // Credit Card Liabilities

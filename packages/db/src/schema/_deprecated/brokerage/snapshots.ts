@@ -12,8 +12,8 @@ import {
   integer,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
-import { appFullAccess, agentSelectOwn } from "../rls";
+import { user } from "../../auth/auth";
+import { appFullAccess, agentSelectOwn } from "../../rls";
 
 // Portfolio Snapshots - stores daily account balance snapshots for historical charting
 /** @deprecated Use `snapshot` from `@cobalt-web/db/schema/accounts/snapshot`. */

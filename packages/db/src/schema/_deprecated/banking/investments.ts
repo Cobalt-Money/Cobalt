@@ -15,7 +15,7 @@ import {
   appFullAccess,
   agentSelectPublic,
   agentSelectViaBankAccount,
-} from "../rls";
+} from "../../rls";
 import { bankAccount } from "./accounts";
 
 // Investment Securities

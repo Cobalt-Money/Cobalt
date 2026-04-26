@@ -2,10 +2,10 @@ import { env } from "@cobalt-web/env/server";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
+import * as deprecatedSchema from "./schema/_deprecated";
 import * as chatSchema from "./schema/ai/chat";
 import * as authSchema from "./schema/auth/auth";
 import * as bankingSchema from "./schema/banking";
-import * as brokerageSchema from "./schema/brokerage";
 import * as feedbackSchema from "./schema/features/feedback";
 import * as financialEventsSchema from "./schema/features/financial-events";
 import * as financialGoalsSchema from "./schema/features/financial-goals";
@@ -28,7 +28,7 @@ export const db = drizzle({
     ...authSchema,
     ...chatSchema,
     ...bankingSchema,
-    ...brokerageSchema,
+    ...deprecatedSchema,
     ...feedbackSchema,
     ...financialEventsSchema,
     ...financialGoalsSchema,

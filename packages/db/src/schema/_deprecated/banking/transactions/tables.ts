@@ -11,8 +11,6 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
-import { appFullAccess, agentSelectViaBankAccount } from "../../rls";
-import { bankAccount } from "../accounts";
 import type {
   CounterpartiesArrayJson,
   LegacyCategoryArrayJson,
@@ -22,7 +20,9 @@ import type {
   RecurringTransactionIdsJson,
   TransactionNotesJson,
   UserOverrideCategoryJson,
-} from "./zod";
+} from "../../../banking/transactions/zod";
+import { appFullAccess, agentSelectViaBankAccount } from "../../../rls";
+import { bankAccount } from "../accounts";
 
 // Transactions (posted and pending)
 /** @deprecated Use `transaction` from `@cobalt-web/db/schema/accounts/transaction`. */
