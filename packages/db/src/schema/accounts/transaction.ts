@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
+import { financialAccount } from "./financial-account";
 import type {
   CounterpartiesArrayJson,
   LegacyCategoryArrayJson,
@@ -22,8 +23,7 @@ import type {
   PersonalFinanceCategoryJson,
   TransactionNotesJson,
   UserOverrideCategoryJson,
-} from "../banking/transactions/zod";
-import { financialAccount } from "./financial-account";
+} from "./transactions-zod";
 
 export const transactionSource = pgEnum("transaction_source", [
   "plaid",

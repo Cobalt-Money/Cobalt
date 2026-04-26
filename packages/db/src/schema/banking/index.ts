@@ -14,35 +14,3 @@ export {
 export { institution } from "./items/institution";
 export type { StringArrayJson } from "./items/zod";
 export type { Institution, InstitutionSelect } from "./items/institution";
-
-// transactions — `zod.ts` (jsonb) only; tables.ts moved to _deprecated/
-export {
-  counterpartiesArrayJsonSchema,
-  legacyCategoryArrayJsonSchema,
-  locationJsonSchema,
-  numbersIbanNullableJsonSchema,
-  paymentMetaJsonSchema,
-  personalFinanceCategoryJsonSchema,
-  recurringStreamJsonbSelectRefinements,
-  recurringTransactionIdsJsonSchema,
-  transactionCounterpartyJsonSchema,
-  transactionCounterpartyTypeSchema,
-  transactionJsonbSelectRefinements,
-  userOverrideCategoryJsonSchema,
-} from "./transactions/zod";
-export type {
-  CounterpartiesArrayJson,
-  CounterpartyNumbersBacsJson,
-  CounterpartyNumbersInternationalJson,
-  CounterpartyNumbersJson,
-  LegacyCategoryArrayJson,
-  LocationJson,
-  NumbersIbanNullableJson,
-  PaymentMetaJson,
-  PersonalFinanceCategoryJson,
-  RecurringTransactionIdsJson,
-  TransactionCounterpartyJson,
-  TransactionCounterpartyType,
-  TransactionNotesJson,
-  UserOverrideCategoryJson,
-} from "./transactions/zod";

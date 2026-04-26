@@ -13,13 +13,13 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
+import { financialAccount } from "./financial-account";
+import { transactionSource } from "./transaction";
 import type {
   LegacyCategoryArrayJson,
   PersonalFinanceCategoryJson,
   RecurringTransactionIdsJson,
-} from "../banking/transactions/zod";
-import { financialAccount } from "./financial-account";
-import { transactionSource } from "./transaction";
+} from "./transactions-zod";
 
 export const recurring = pgTable(
   "recurring",

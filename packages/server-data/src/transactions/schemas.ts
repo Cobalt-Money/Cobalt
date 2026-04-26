@@ -2,13 +2,13 @@ import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-accou
 import { recurring } from "@cobalt-web/db/schema/accounts/recurring";
 import { transaction } from "@cobalt-web/db/schema/accounts/transaction";
 import {
-  institution,
   locationJsonSchema,
   personalFinanceCategoryJsonSchema,
   recurringStreamJsonbSelectRefinements,
   transactionJsonbSelectRefinements,
-} from "@cobalt-web/db/schema/banking";
-import type { TransactionNotesJson } from "@cobalt-web/db/schema/banking";
+} from "@cobalt-web/db/schema/accounts/transactions-zod";
+import type { TransactionNotesJson } from "@cobalt-web/db/schema/accounts/transactions-zod";
+import { institution } from "@cobalt-web/db/schema/banking";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 
