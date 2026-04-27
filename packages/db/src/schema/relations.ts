@@ -10,11 +10,9 @@ import { holding } from "./banking/investments/holding";
 import { investmentActivity } from "./banking/investments/investment-activity";
 import { orders } from "./banking/investments/order";
 import { security } from "./banking/investments/security";
-import {
-  creditLiability,
-  mortgageLiability,
-  studentLoanLiability,
-} from "./banking/liabilities/liabilities";
+import { creditLiability } from "./banking/liabilities/credit";
+import { mortgageLiability } from "./banking/liabilities/mortgage";
+import { studentLoanLiability } from "./banking/liabilities/student-loan";
 import { recurring } from "./banking/transactions/recurring";
 import { transaction } from "./banking/transactions/transaction";
 import { feedback } from "./features/feedback";

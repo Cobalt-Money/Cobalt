@@ -13,7 +13,9 @@ import * as holdingSchema from "./schema/banking/investments/holding";
 import * as investmentActivitySchema from "./schema/banking/investments/investment-activity";
 import * as orderSchema from "./schema/banking/investments/order";
 import * as securitySchema from "./schema/banking/investments/security";
-import * as liabilitiesSchema from "./schema/banking/liabilities/liabilities";
+import * as creditLiabilitySchema from "./schema/banking/liabilities/credit";
+import * as mortgageLiabilitySchema from "./schema/banking/liabilities/mortgage";
+import * as studentLoanLiabilitySchema from "./schema/banking/liabilities/student-loan";
 import * as recurringSchema from "./schema/banking/transactions/recurring";
 import * as transactionSchema from "./schema/banking/transactions/transaction";
 import * as feedbackSchema from "./schema/features/feedback";
@@ -47,7 +49,9 @@ export const db = drizzle({
     ...snapshotSchema,
     ...transactionSchema,
     ...recurringSchema,
-    ...liabilitiesSchema,
+    ...creditLiabilitySchema,
+    ...mortgageLiabilitySchema,
+    ...studentLoanLiabilitySchema,
     ...securitySchema,
     ...holdingSchema,
     ...orderSchema,

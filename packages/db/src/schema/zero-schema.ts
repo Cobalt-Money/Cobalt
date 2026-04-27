@@ -12,11 +12,9 @@ export { security } from "./banking/investments/security";
 export { holding } from "./banking/investments/holding";
 export { orders } from "./banking/investments/order";
 export { investmentActivity } from "./banking/investments/investment-activity";
-export {
-  creditLiability,
-  mortgageLiability,
-  studentLoanLiability,
-} from "./banking/liabilities/liabilities";
+export { creditLiability } from "./banking/liabilities/credit";
+export { mortgageLiability } from "./banking/liabilities/mortgage";
+export { studentLoanLiability } from "./banking/liabilities/student-loan";
 export { transaction } from "./banking/transactions/transaction";
 export { recurring } from "./banking/transactions/recurring";
 export { feedback } from "./features/feedback";
