@@ -12,23 +12,23 @@ export {
   getPrimaryCategoryLabel,
 } from "@cobalt-web/server-data/transactions/categories";
 
-const BANK_FEES_ICON_SRC = "/assets/vectors/card.svg";
-const FOOD_AND_DRINK_ICON_SRC = "/assets/vectors/cheese.svg";
-const INCOME_ICON_SRC = "/assets/vectors/moneybag.svg";
-const TRAVEL_ICON_SRC = "/assets/vectors/travel.svg";
-const GENERAL_MERCHANDISE_ICON_SRC = "/assets/vectors/shopping.svg";
-const TRANSPORTATION_ICON_SRC = "/assets/vectors/car.svg";
-const ENTERTAINMENT_ICON_SRC = "/assets/vectors/popcorn.svg";
-const TRANSFER_IN_ICON_SRC = "/assets/vectors/transfer-in.svg";
-const TRANSFER_OUT_ICON_SRC = "/assets/vectors/transfer-out.svg";
-const RENT_AND_UTILITIES_ICON_SRC = "/assets/vectors/building.svg";
-const GENERAL_SERVICES_ICON_SRC = "/assets/vectors/settings.svg";
-const MEDICAL_ICON_SRC = "/assets/vectors/hospital.svg";
-const HOME_IMPROVEMENT_ICON_SRC = "/assets/vectors/home.svg";
-const LOAN_PAYMENTS_ICON_SRC = "/assets/vectors/payment.svg";
-const LOAN_PAYMENTS_ICON_SRC_DARK = "/assets/vectors/payment-dark.svg";
-const GOVERNMENT_AND_NON_PROFIT_ICON_SRC = "/assets/vectors/government.svg";
-const PERSONAL_CARE_ICON_SRC = "/assets/vectors/health.svg";
+const V = "?v=2";
+const BANK_FEES_ICON_SRC = `/assets/vectors/card.svg${V}`;
+const FOOD_AND_DRINK_ICON_SRC = `/assets/vectors/cheese.svg${V}`;
+const INCOME_ICON_SRC = `/assets/vectors/moneybag.svg${V}`;
+const TRAVEL_ICON_SRC = `/assets/vectors/travel.svg${V}`;
+const GENERAL_MERCHANDISE_ICON_SRC = `/assets/vectors/shopping.svg${V}`;
+const TRANSPORTATION_ICON_SRC = `/assets/vectors/car.svg${V}`;
+const ENTERTAINMENT_ICON_SRC = `/assets/vectors/popcorn.svg${V}`;
+const TRANSFER_IN_ICON_SRC = `/assets/vectors/transfer-in.svg${V}`;
+const TRANSFER_OUT_ICON_SRC = `/assets/vectors/transfer-out.svg${V}`;
+const RENT_AND_UTILITIES_ICON_SRC = `/assets/vectors/building.svg${V}`;
+const GENERAL_SERVICES_ICON_SRC = `/assets/vectors/settings.svg${V}`;
+const MEDICAL_ICON_SRC = `/assets/vectors/hospital.svg${V}`;
+const HOME_IMPROVEMENT_ICON_SRC = `/assets/vectors/home.svg${V}`;
+const LOAN_PAYMENTS_ICON_SRC = `/assets/vectors/payment.svg${V}`;
+const GOVERNMENT_AND_NON_PROFIT_ICON_SRC = `/assets/vectors/government.svg${V}`;
+const PERSONAL_CARE_ICON_SRC = `/assets/vectors/health.svg${V}`;
 
 /** Hugeicons glyph or static vector under `public/assets/vectors/`. */
 export type CategoryPrimaryGlyph =
@@ -48,11 +48,7 @@ export const PRIMARY_CATEGORY_ICON = {
   },
   HOME_IMPROVEMENT: { kind: "image", src: HOME_IMPROVEMENT_ICON_SRC },
   INCOME: { kind: "image", src: INCOME_ICON_SRC },
-  LOAN_PAYMENTS: {
-    kind: "image",
-    src: LOAN_PAYMENTS_ICON_SRC,
-    srcDark: LOAN_PAYMENTS_ICON_SRC_DARK,
-  },
+  LOAN_PAYMENTS: { kind: "image", src: LOAN_PAYMENTS_ICON_SRC },
   MEDICAL: { kind: "image", src: MEDICAL_ICON_SRC },
   PERSONAL_CARE: { kind: "image", src: PERSONAL_CARE_ICON_SRC },
   RENT_AND_UTILITIES: { kind: "image", src: RENT_AND_UTILITIES_ICON_SRC },
