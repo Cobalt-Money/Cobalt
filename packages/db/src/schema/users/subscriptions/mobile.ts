@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, index } from "drizzle-orm/pg-core";
 
+import { appFullAccess, agentSelectOwn } from "../../rls";
 import { user } from "../auth/auth";
-import { appFullAccess, agentSelectOwn } from "../rls";
 
 export const mobileSubscription = pgTable.withRLS(
   "mobile_subscription",

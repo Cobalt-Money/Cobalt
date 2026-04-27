@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { transaction as transactionTable } from "@cobalt-web/db/schema/banking/transactions/transaction";
+import { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import { and, eq, inArray, isNotNull, or } from "drizzle-orm";
 
 export interface UserOverrides {

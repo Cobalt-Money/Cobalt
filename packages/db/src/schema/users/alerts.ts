@@ -9,8 +9,8 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../rls";
+import { user } from "../users/auth/auth";
 
 // Alert type & source constants
 export const ALERT_TYPES = {

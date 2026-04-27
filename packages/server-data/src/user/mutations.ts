@@ -2,10 +2,10 @@ import { stripeClient } from "@cobalt-web/auth";
 import { plaidClient } from "@cobalt-web/clients/plaid";
 import { snaptradeClient } from "@cobalt-web/clients/snaptrade";
 import { db } from "@cobalt-web/db";
-import { user } from "@cobalt-web/db/schema/auth";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { snaptradeUser } from "@cobalt-web/db/schema/providers/snaptrade/user";
-import { subscription } from "@cobalt-web/db/schema/subscriptions/stripe";
+import { user } from "@cobalt-web/db/schema/users/auth/auth";
+import { subscription } from "@cobalt-web/db/schema/users/subscriptions/stripe";
 import { and, eq, isNotNull } from "drizzle-orm";
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set([

@@ -1,5 +1,5 @@
-import { snapshot } from "@cobalt-web/db/schema/banking/balances/snapshot";
-import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 

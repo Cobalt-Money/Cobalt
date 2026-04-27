@@ -1,7 +1,7 @@
 import { oauthProvider } from "@better-auth/oauth-provider";
 import { stripe } from "@better-auth/stripe";
 import { db } from "@cobalt-web/db";
-import * as schema from "@cobalt-web/db/schema/auth";
+import * as schema from "@cobalt-web/db/schema/users/auth/auth";
 import { env } from "@cobalt-web/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";

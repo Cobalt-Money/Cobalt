@@ -11,9 +11,9 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
 import { plaidConnection } from "../providers/plaid/connection";
 import { snaptradeAuthorization } from "../providers/snaptrade/authorization";
+import { user } from "../users/auth/auth";
 
 export const accountSource = pgEnum("account_source", [
   "plaid",

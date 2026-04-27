@@ -10,8 +10,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../../auth/auth";
-import { accountSource, financialAccount } from "../financial-account";
+import { user } from "../users/auth/auth";
+import { accountSource, financialAccount } from "./account";
 
 export const snapshot = pgTable(
   "snapshot",

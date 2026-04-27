@@ -1,4 +1,4 @@
-import type { LocationJson } from "@cobalt-web/db/schema/banking/transactions/zod";
+import type { LocationJson } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 // Nominatim usage policy requires an identifying User-Agent with contact info.

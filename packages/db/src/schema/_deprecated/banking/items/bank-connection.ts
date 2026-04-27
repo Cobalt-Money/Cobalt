@@ -8,12 +8,12 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../../../auth/auth";
 import type {
   PlaidItemErrorJson,
   StringArrayJson,
 } from "../../../providers/plaid/zod";
 import { appFullAccess, agentSelectOwn } from "../../../rls";
+import { user } from "../../../users/auth/auth";
 
 /** @deprecated Use `plaidConnection` from `@cobalt-web/db/schema/providers/plaid/connection`. */
 export const bankConnection = pgTable.withRLS(

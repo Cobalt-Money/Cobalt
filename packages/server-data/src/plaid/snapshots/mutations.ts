@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { snapshot } from "@cobalt-web/db/schema/banking/balances/snapshot";
+import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
 
 import { lookupFinancialAccountsByPlaidIds } from "../link/queries.js";
 

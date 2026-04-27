@@ -1,32 +1,32 @@
 /** Drizzle v1-style `relations()` for `drizzle-zero` codegen only. DB runtime uses v2 `defineRelations` in `relations.ts`. */
 import { relations } from "drizzle-orm/_relations";
 
+import { financialAccount } from "./accounts/account";
+import { balance } from "./accounts/balance";
+import { creditLiability } from "./accounts/banking/liabilities/credit";
+import { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
+import { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
+import { recurring } from "./accounts/banking/transactions/recurring";
+import { transaction } from "./accounts/banking/transactions/transaction";
+import { holding } from "./accounts/investments/holding";
+import { investmentActivity } from "./accounts/investments/investment-activity";
+import { orders } from "./accounts/investments/order";
+import { security } from "./accounts/investments/security";
+import { kalshiUsers } from "./accounts/prediction-markets/kalshi";
+import { snapshot } from "./accounts/snapshot";
 import { chats, messages, parts } from "./ai/chat";
 import { messageVotes } from "./ai/message-votes";
-import { user, session, account } from "./auth/auth";
-import { balance } from "./banking/balances/balance";
-import { snapshot } from "./banking/balances/snapshot";
-import { financialAccount } from "./banking/financial-account";
-import { holding } from "./banking/investments/holding";
-import { investmentActivity } from "./banking/investments/investment-activity";
-import { orders } from "./banking/investments/order";
-import { security } from "./banking/investments/security";
-import { creditLiability } from "./banking/liabilities/credit";
-import { mortgageLiability } from "./banking/liabilities/mortgage";
-import { studentLoanLiability } from "./banking/liabilities/student-loan";
-import { recurring } from "./banking/transactions/recurring";
-import { transaction } from "./banking/transactions/transaction";
-import { feedback } from "./features/feedback";
-import { financialGoals } from "./features/financial-goals";
-import { kalshiUsers } from "./features/kalshi";
-import { userAlerts } from "./features/user-alerts";
+import { financialGoals } from "./goals/financial-goals";
 import { financialEvents, eventArticles } from "./news/financial-events";
 import { plaidConnection } from "./providers/plaid/connection";
 import { institution } from "./providers/plaid/institution";
 import { snaptradeAuthorization } from "./providers/snaptrade/authorization";
 import { snaptradeUser } from "./providers/snaptrade/user";
-import { mobileSubscription } from "./subscriptions/mobile";
-import { subscription } from "./subscriptions/stripe";
+import { userAlerts } from "./users/alerts";
+import { user, session, account } from "./users/auth/auth";
+import { feedback } from "./users/feedback";
+import { mobileSubscription } from "./users/subscriptions/mobile";
+import { subscription } from "./users/subscriptions/stripe";
 
 // Better Auth relations
 export const userRelations = relations(user, ({ one, many }) => ({

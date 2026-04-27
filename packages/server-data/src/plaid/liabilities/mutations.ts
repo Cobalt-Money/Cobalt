@@ -1,9 +1,9 @@
 import { db } from "@cobalt-web/db";
-import { balance } from "@cobalt-web/db/schema/banking/balances/balance";
-import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
-import { creditLiability } from "@cobalt-web/db/schema/banking/liabilities/credit";
-import { mortgageLiability } from "@cobalt-web/db/schema/banking/liabilities/mortgage";
-import { studentLoanLiability } from "@cobalt-web/db/schema/banking/liabilities/student-loan";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { balance } from "@cobalt-web/db/schema/accounts/balance";
+import { creditLiability } from "@cobalt-web/db/schema/accounts/banking/liabilities/credit";
+import { mortgageLiability } from "@cobalt-web/db/schema/accounts/banking/liabilities/mortgage";
+import { studentLoanLiability } from "@cobalt-web/db/schema/accounts/banking/liabilities/student-loan";
 import { sql } from "drizzle-orm";
 import type {
   AccountBase,

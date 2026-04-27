@@ -9,8 +9,8 @@ import {
   integer,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../../rls";
+import { user } from "../../users/auth/auth";
 
 // Brokerage authorization - tracks connected brokerage accounts
 /** @deprecated Use `snaptradeAuthorization` from `@cobalt-web/db/schema/providers/snaptrade/authorization`. */

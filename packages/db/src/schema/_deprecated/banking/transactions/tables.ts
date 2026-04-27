@@ -19,7 +19,7 @@ import type {
   PersonalFinanceCategoryJson,
   TransactionNotesJson,
   UserOverrideCategoryJson,
-} from "../../../banking/transactions/zod";
+} from "../../../accounts/banking/transactions/zod";
 import { appFullAccess, agentSelectViaBankAccount } from "../../../rls";
 import { bankAccount } from "../accounts";
 

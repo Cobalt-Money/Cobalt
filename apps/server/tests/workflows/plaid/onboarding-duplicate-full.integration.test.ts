@@ -24,7 +24,7 @@ import { setTimeout as delay } from "node:timers/promises";
 
 import { plaidClient } from "@cobalt-web/clients/plaid";
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { and, eq } from "drizzle-orm";
 import { Products } from "plaid";
@@ -242,7 +242,7 @@ describe("plaid onboarding — Scenario A: full overlap duplicate", () => {
       expect(dups.length).toBeGreaterThan(0);
       expect(dups.some((d) => d.name === SEED_ACCOUNT_NAME)).toBeTruthy();
 
-      // Progress contract: workflow did NOT reach persist/accounts/transactions.
+      // Progress contract: workflow did NOT reach persist/accounts/banking/transactions.
       const phases = events.map((e) => e.phase);
       expect(phases).not.toContain("persist");
       expect(phases).not.toContain("accounts");

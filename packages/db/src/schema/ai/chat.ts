@@ -10,8 +10,8 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
 import { appFullAccess } from "../rls";
+import { user } from "../users/auth/auth";
 
 // Chat tables
 export const chats = pgTable.withRLS(

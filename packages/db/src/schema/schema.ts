@@ -7,7 +7,7 @@
 // This is separate from ./zero-schema.ts on purpose:
 //   - ./zero-schema.ts  → drizzle-zero's input; intentionally omits tables
 //     that should not be part of Zero replication (server-only tables).
-//   - ./drizzle-schema.ts → drizzle-kit's input; includes EVERY table.
+//   - ./schema.ts → drizzle-kit's input; includes EVERY table.
 //
 // When adding a new table:
 //   - Always export it from here so migrations pick it up.
@@ -24,7 +24,7 @@ export {
   oauthClient,
   oauthConsent,
   oauthRefreshToken,
-} from "./auth/auth";
+} from "./users/auth/auth";
 
 // Server-only research tables — populated by background jobs, read by the
 // server, never synced to Zero clients.
@@ -32,7 +32,7 @@ export { fundamentals } from "./research/fundamentals";
 export { tickers } from "./research/tickers";
 
 // SRI-264 enums — defined alongside their primary table.
-export { accountSource } from "./banking/financial-account";
-export { transactionSource } from "./banking/transactions/transaction";
-export { activitySource } from "./banking/investments/investment-activity";
-export { securitySource } from "./banking/investments/security";
+export { accountSource } from "./accounts/account";
+export { transactionSource } from "./accounts/banking/transactions/transaction";
+export { activitySource } from "./accounts/investments/investment-activity";
+export { securitySource } from "./accounts/investments/security";

@@ -7,7 +7,7 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 
-import { agentSelectOwn, appFullAccess } from "../rls";
+import { agentSelectOwn, appFullAccess } from "../../rls";
 
 export const subscription = pgTable.withRLS(
   "subscription",

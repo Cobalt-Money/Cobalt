@@ -1,12 +1,9 @@
 import { db } from "@cobalt-web/db";
-import {
-  ALERT_STATUSES,
-  userAlerts,
-} from "@cobalt-web/db/schema/features/user-alerts";
+import { ALERT_STATUSES, userAlerts } from "@cobalt-web/db/schema/users/alerts";
 import type {
   AlertSource,
   AlertType,
-} from "@cobalt-web/db/schema/features/user-alerts";
+} from "@cobalt-web/db/schema/users/alerts";
 import { and, eq, inArray } from "drizzle-orm";
 
 export async function insertAlertStep(params: {

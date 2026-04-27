@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { snaptradeAuthorization } from "@cobalt-web/db/schema/providers/snaptrade/authorization";
 import { snaptradeUser } from "@cobalt-web/db/schema/providers/snaptrade/user";
 import { eq } from "drizzle-orm";

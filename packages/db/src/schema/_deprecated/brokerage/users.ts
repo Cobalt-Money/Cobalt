@@ -1,7 +1,7 @@
 import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
-import { user } from "../../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../../rls";
+import { user } from "../../users/auth/auth";
 
 // Brokerage user credentials - one per app user
 /** @deprecated Use `snaptradeUser` from `@cobalt-web/db/schema/providers/snaptrade/user`. */

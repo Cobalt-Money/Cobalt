@@ -1,5 +1,5 @@
 import type { PartInsert } from "@cobalt-web/db/schema/ai/chat";
-import type { parts } from "@cobalt-web/db/schema/drizzle-schema";
+import type { parts } from "@cobalt-web/db/schema/schema";
 import type { UIMessage } from "ai";
 import type { InferSelectModel } from "drizzle-orm";
 

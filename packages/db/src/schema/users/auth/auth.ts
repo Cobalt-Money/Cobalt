@@ -8,7 +8,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { appFullAccess, agentSelectOwn } from "../rls";
+import { appFullAccess, agentSelectOwn } from "../../rls";
 
 export const user = pgTable.withRLS(
   "user",

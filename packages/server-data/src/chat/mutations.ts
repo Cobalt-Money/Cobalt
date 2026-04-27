@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { chats, messages, parts } from "@cobalt-web/db/schema/drizzle-schema";
+import { chats, messages, parts } from "@cobalt-web/db/schema/schema";
 import type { UIMessage } from "ai";
 import { and, eq } from "drizzle-orm";
 

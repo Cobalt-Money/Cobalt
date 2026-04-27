@@ -8,7 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../../auth/auth";
+import { user } from "../../users/auth/auth";
 import type { PlaidItemErrorJson, StringArrayJson } from "./zod";
 
 export const plaidConnection = pgTable(

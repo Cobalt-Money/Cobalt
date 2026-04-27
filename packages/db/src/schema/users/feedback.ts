@@ -7,8 +7,8 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
 import { appFullAccess } from "../rls";
+import { user } from "../users/auth/auth";
 
 export const feedbackTypeEnum = pgEnum("feedback_type", [
   "general",

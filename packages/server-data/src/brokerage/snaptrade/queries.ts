@@ -1,10 +1,10 @@
 import { db } from "@cobalt-web/db";
-import { balance } from "@cobalt-web/db/schema/banking/balances/balance";
-import { snapshot } from "@cobalt-web/db/schema/banking/balances/snapshot";
-import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
-import { holding } from "@cobalt-web/db/schema/banking/investments/holding";
-import { investmentActivity } from "@cobalt-web/db/schema/banking/investments/investment-activity";
-import { security } from "@cobalt-web/db/schema/banking/investments/security";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { balance } from "@cobalt-web/db/schema/accounts/balance";
+import { holding } from "@cobalt-web/db/schema/accounts/investments/holding";
+import { investmentActivity } from "@cobalt-web/db/schema/accounts/investments/investment-activity";
+import { security } from "@cobalt-web/db/schema/accounts/investments/security";
+import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
 import { and, asc, desc, eq, gte, inArray, isNotNull, lte } from "drizzle-orm";
 import type { z } from "zod";
 

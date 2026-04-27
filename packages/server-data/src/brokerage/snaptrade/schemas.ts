@@ -199,7 +199,7 @@ export const enhancedAccountDetailSchema = z.object({
 });
 
 /**
- * UI account shape. Sourced from `financialAccount` (accounts/financial-account);
+ * UI account shape. Sourced from `financialAccount` (accounts/account);
  * synthetic `id` is still used for Plaid investment accounts (`plaid-inv-*`).
  * `accountStatus`, `accountType`, `balanceData`, `cashRestrictions`,
  * `portfolioGroup` are preserved on the wire even where the new schema folds

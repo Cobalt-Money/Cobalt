@@ -8,8 +8,8 @@ import {
   decimal,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../rls";
+import { user } from "../users/auth/auth";
 
 export const financialGoals = pgTable.withRLS(
   "financial_goals",

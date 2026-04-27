@@ -1,4 +1,4 @@
-import { userAlerts } from "@cobalt-web/db/schema/features/user-alerts";
+import { userAlerts } from "@cobalt-web/db/schema/users/alerts";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 

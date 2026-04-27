@@ -1,5 +1,5 @@
-import { balance } from "@cobalt-web/db/schema/banking/balances/balance";
-import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { balance } from "@cobalt-web/db/schema/accounts/balance";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
 import {

@@ -1,6 +1,6 @@
 import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-import { user } from "../../auth/auth";
+import { user } from "../../users/auth/auth";
 
 export const snaptradeUser = pgTable(
   "snaptrade_user",

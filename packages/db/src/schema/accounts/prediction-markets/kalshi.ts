@@ -1,7 +1,7 @@
 import { index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
-import { appFullAccess } from "../rls";
+import { appFullAccess } from "../../rls";
+import { user } from "../../users/auth/auth";
 
 export const kalshiUsers = pgTable.withRLS(
   "kalshi_users",

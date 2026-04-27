@@ -1,7 +1,7 @@
 import { db } from "@cobalt-web/db";
-import { balance } from "@cobalt-web/db/schema/banking/balances/balance";
-import { snapshot } from "@cobalt-web/db/schema/banking/balances/snapshot";
-import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { balance } from "@cobalt-web/db/schema/accounts/balance";
+import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
 import { and, eq, sql } from "drizzle-orm";
 
 const BATCH_SIZE = 100;

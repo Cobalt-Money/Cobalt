@@ -8,8 +8,8 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../../auth/auth";
 import { appFullAccess, agentSelectOwn } from "../../rls";
+import { user } from "../../users/auth/auth";
 import { brokerageAuthorizations } from "./auth";
 
 /** @deprecated Use `financialAccount` from `@cobalt-web/db/schema/accounts/financial-account`. */
