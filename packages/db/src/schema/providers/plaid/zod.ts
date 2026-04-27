@@ -1,10 +1,13 @@
 /**
- * Zod schemas for `jsonb` columns on `plaid_connection`.
+ * Zod schemas for `jsonb` columns on `plaid_connection` and `institution`.
  * Types are `z.infer` for Drizzle `.$type<>()`; refinements feed `createSelectSchema`.
  */
 import { z } from "zod";
 
-import { stringArrayJsonSchema } from "../../banking/items/zod";
+/** Nullable string array — `institution.routing_numbers`, `plaid_connection.{available_products,billed_products}`. */
+export const stringArrayJsonSchema = z.array(z.string()).nullable();
+
+export type StringArrayJson = z.infer<typeof stringArrayJsonSchema>;
 
 /**
  * Plaid item error — loosely typed since Plaid's `PlaidError` shape varies.
@@ -19,4 +22,9 @@ export const plaidConnectionJsonbSelectRefinements = {
   availableProducts: stringArrayJsonSchema,
   billedProducts: stringArrayJsonSchema,
   error: plaidItemErrorJsonSchema,
+} as const;
+
+/** Refinements for `createSelectSchema(institution, …)`. */
+export const institutionJsonbSelectRefinements = {
+  routingNumbers: stringArrayJsonSchema,
 } as const;

@@ -1,9 +1,9 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
-import { recurring } from "@cobalt-web/db/schema/accounts/recurring";
-import { transaction } from "@cobalt-web/db/schema/accounts/transaction";
-import { institution } from "@cobalt-web/db/schema/banking";
+import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
+import { recurring } from "@cobalt-web/db/schema/banking/transactions/recurring";
+import { transaction } from "@cobalt-web/db/schema/banking/transactions/transaction";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
 import { and, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { z } from "zod";

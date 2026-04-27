@@ -1,7 +1,7 @@
 import {
   locationJsonSchema,
   userOverrideCategoryJsonSchema,
-} from "@cobalt-web/db/schema/accounts/transactions-zod";
+} from "@cobalt-web/db/schema/banking/transactions/zod";
 import { defineMutator } from "@rocicorp/zero";
 import type { ReadonlyJSONObject, Transaction } from "@rocicorp/zero";
 import { z } from "zod";

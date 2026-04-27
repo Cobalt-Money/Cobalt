@@ -1,30 +1,30 @@
 /** Drizzle v1-style `relations()` for `drizzle-zero` codegen only. DB runtime uses v2 `defineRelations` in `relations.ts`. */
 import { relations } from "drizzle-orm/_relations";
 
-import { balance } from "./accounts/balance";
-import { financialAccount } from "./accounts/financial-account";
+import { chats, messages, parts } from "./ai/chat";
+import { messageVotes } from "./ai/message-votes";
+import { user, session, account } from "./auth/auth";
+import { balance } from "./banking/balances/balance";
+import { snapshot } from "./banking/balances/snapshot";
+import { financialAccount } from "./banking/financial-account";
+import { holding } from "./banking/investments/holding";
+import { investmentActivity } from "./banking/investments/investment-activity";
+import { orders } from "./banking/investments/order";
+import { security } from "./banking/investments/security";
 import {
   creditLiability,
   mortgageLiability,
   studentLoanLiability,
-} from "./accounts/liabilities";
-import { recurring } from "./accounts/recurring";
-import { snapshot } from "./accounts/snapshot";
-import { transaction } from "./accounts/transaction";
-import { chats, messages, parts } from "./ai/chat";
-import { messageVotes } from "./ai/message-votes";
-import { user, session, account } from "./auth/auth";
-import { institution } from "./banking/items/institution";
+} from "./banking/liabilities/liabilities";
+import { recurring } from "./banking/transactions/recurring";
+import { transaction } from "./banking/transactions/transaction";
 import { feedback } from "./features/feedback";
 import { financialGoals } from "./features/financial-goals";
 import { kalshiUsers } from "./features/kalshi";
 import { userAlerts } from "./features/user-alerts";
-import { holding } from "./investments/holding";
-import { investmentActivity } from "./investments/investment-activity";
-import { orders } from "./investments/order";
-import { security } from "./investments/security";
 import { financialEvents, eventArticles } from "./news/financial-events";
 import { plaidConnection } from "./providers/plaid/connection";
+import { institution } from "./providers/plaid/institution";
 import { snaptradeAuthorization } from "./providers/snaptrade/authorization";
 import { snaptradeUser } from "./providers/snaptrade/user";
 import { mobileSubscription } from "./subscriptions/mobile";

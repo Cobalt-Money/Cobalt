@@ -1,7 +1,7 @@
 import { db } from "@cobalt-web/db";
-import { holding } from "@cobalt-web/db/schema/investments/holding";
-import { investmentActivity } from "@cobalt-web/db/schema/investments/investment-activity";
-import { security } from "@cobalt-web/db/schema/investments/security";
+import { holding } from "@cobalt-web/db/schema/banking/investments/holding";
+import { investmentActivity } from "@cobalt-web/db/schema/banking/investments/investment-activity";
+import { security } from "@cobalt-web/db/schema/banking/investments/security";
 import { sql } from "drizzle-orm";
 import type {
   Holding as PlaidHolding,

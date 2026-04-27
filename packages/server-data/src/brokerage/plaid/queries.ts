@@ -1,11 +1,11 @@
 import { db } from "@cobalt-web/db";
-import { balance } from "@cobalt-web/db/schema/accounts/balance";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
-import { institution } from "@cobalt-web/db/schema/banking";
-import { holding } from "@cobalt-web/db/schema/investments/holding";
-import { investmentActivity } from "@cobalt-web/db/schema/investments/investment-activity";
-import { security } from "@cobalt-web/db/schema/investments/security";
+import { balance } from "@cobalt-web/db/schema/banking/balances/balance";
+import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
+import { holding } from "@cobalt-web/db/schema/banking/investments/holding";
+import { investmentActivity } from "@cobalt-web/db/schema/banking/investments/investment-activity";
+import { security } from "@cobalt-web/db/schema/banking/investments/security";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
 import { and, desc, eq } from "drizzle-orm";
 
 const num = (v: string | null | undefined): number | null =>

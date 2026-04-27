@@ -1,7 +1,7 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
-import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
-import { transaction } from "@cobalt-web/db/schema/accounts/transaction";
+import { snapshot } from "@cobalt-web/db/schema/banking/balances/snapshot";
+import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
+import { transaction } from "@cobalt-web/db/schema/banking/transactions/transaction";
 import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 
 import { lookupFinancialAccountsByPlaidIds } from "../link/queries.js";

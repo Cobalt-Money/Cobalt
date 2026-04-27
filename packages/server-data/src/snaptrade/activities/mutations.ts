@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { investmentActivity } from "@cobalt-web/db/schema/investments/investment-activity";
+import { investmentActivity } from "@cobalt-web/db/schema/banking/investments/investment-activity";
 import { sql } from "drizzle-orm";
 import type { UniversalActivity } from "snaptrade-typescript-sdk";
 

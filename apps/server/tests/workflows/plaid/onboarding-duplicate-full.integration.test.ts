@@ -24,7 +24,7 @@ import { setTimeout as delay } from "node:timers/promises";
 
 import { plaidClient } from "@cobalt-web/clients/plaid";
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { and, eq } from "drizzle-orm";
 import { Products } from "plaid";

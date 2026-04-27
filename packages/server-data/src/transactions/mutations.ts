@@ -1,6 +1,6 @@
 import { db } from "@cobalt-web/db";
-import type { Transaction } from "@cobalt-web/db/schema/accounts/transaction";
-import { transaction } from "@cobalt-web/db/schema/accounts/transaction";
+import type { Transaction } from "@cobalt-web/db/schema/banking/transactions/transaction";
+import { transaction } from "@cobalt-web/db/schema/banking/transactions/transaction";
 import { eq } from "drizzle-orm";
 
 /**

@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { balance } from "@cobalt-web/db/schema/accounts/balance";
+import { balance } from "@cobalt-web/db/schema/banking/balances/balance";
 import { sql } from "drizzle-orm";
 import type { Balance } from "snaptrade-typescript-sdk";
 

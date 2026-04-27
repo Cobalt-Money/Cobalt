@@ -1,6 +1,6 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
-import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
+import { snapshot } from "@cobalt-web/db/schema/banking/balances/snapshot";
+import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import {
   exchangePublicToken,

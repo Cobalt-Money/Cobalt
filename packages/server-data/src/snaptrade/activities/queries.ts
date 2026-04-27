@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { investmentActivity } from "@cobalt-web/db/schema/investments/investment-activity";
+import { investmentActivity } from "@cobalt-web/db/schema/banking/investments/investment-activity";
 import { desc, eq } from "drizzle-orm";
 
 /** Get the most recent activity sync timestamp for an account. */

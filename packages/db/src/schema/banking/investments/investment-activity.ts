@@ -11,8 +11,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { financialAccount } from "../accounts/financial-account";
-import { user } from "../auth/auth";
+import { user } from "../../auth/auth";
+import { financialAccount } from "../financial-account";
 import { security } from "./security";
 
 export const activitySource = pgEnum("activity_source", [

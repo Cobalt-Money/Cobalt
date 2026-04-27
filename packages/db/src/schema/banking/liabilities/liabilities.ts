@@ -10,8 +10,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
-import { financialAccount } from "./financial-account";
+import { user } from "../../auth/auth";
+import { financialAccount } from "../financial-account";
 
 export const creditLiability = pgTable(
   "credit_liability",

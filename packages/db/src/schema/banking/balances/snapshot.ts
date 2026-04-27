@@ -1,5 +1,7 @@
 import {
+  date,
   index,
+  integer,
   numeric,
   pgTable,
   text,
@@ -8,11 +10,11 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
-import { financialAccount } from "./financial-account";
+import { user } from "../../auth/auth";
+import { accountSource, financialAccount } from "../financial-account";
 
-export const balance = pgTable(
-  "balance",
+export const snapshot = pgTable(
+  "snapshot",
   {
     accountId: uuid("account_id")
       .notNull()
@@ -25,27 +27,22 @@ export const balance = pgTable(
     current: numeric("current", { precision: 19, scale: 4 }).notNull(),
     id: uuid("id").defaultRandom().primaryKey(),
     isoCurrencyCode: text("iso_currency_code"),
-    lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
     limit: numeric("limit", { precision: 19, scale: 4 }),
-    unofficialCurrencyCode: text("unofficial_currency_code"),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .defaultNow()
-      .notNull()
-      .$onUpdate(() => new Date()),
+    positionsCount: integer("positions_count"),
+    positionsValue: numeric("positions_value", { precision: 19, scale: 4 }),
+    snapshotDate: date("snapshot_date").notNull(),
+    source: accountSource("source"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    userOverrideCreditLimit: numeric("user_override_credit_limit", {
-      precision: 19,
-      scale: 4,
-    }),
   },
   (t) => [
-    uniqueIndex("balance_account_id_unique").on(t.accountId),
-    index("balance_user_id_idx").on(t.userId),
-    index("balance_account_updated_idx").on(t.accountId, t.updatedAt),
+    index("snapshot_account_id_idx").on(t.accountId),
+    index("snapshot_user_id_idx").on(t.userId),
+    index("snapshot_date_idx").on(t.snapshotDate),
+    uniqueIndex("snapshot_account_date_idx").on(t.accountId, t.snapshotDate),
   ]
 );
 
-export type Balance = typeof balance.$inferSelect;
-export type BalanceInsert = typeof balance.$inferInsert;
+export type Snapshot = typeof snapshot.$inferSelect;
+export type SnapshotInsert = typeof snapshot.$inferInsert;

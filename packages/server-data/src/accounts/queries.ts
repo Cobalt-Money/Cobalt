@@ -1,8 +1,8 @@
 import { db } from "@cobalt-web/db";
-import { balance } from "@cobalt-web/db/schema/accounts/balance";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
-import { institution } from "@cobalt-web/db/schema/banking/items/institution";
+import { balance } from "@cobalt-web/db/schema/banking/balances/balance";
+import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
 import { and, eq, isNotNull, or } from "drizzle-orm";
 
 import {

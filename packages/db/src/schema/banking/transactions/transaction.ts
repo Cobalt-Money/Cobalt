@@ -13,8 +13,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import { user } from "../auth/auth";
-import { financialAccount } from "./financial-account";
+import { user } from "../../auth/auth";
+import { financialAccount } from "../financial-account";
 import type {
   CounterpartiesArrayJson,
   LegacyCategoryArrayJson,
@@ -23,7 +23,7 @@ import type {
   PersonalFinanceCategoryJson,
   TransactionNotesJson,
   UserOverrideCategoryJson,
-} from "./transactions-zod";
+} from "./zod";
 
 export const transactionSource = pgEnum("transaction_source", [
   "plaid",

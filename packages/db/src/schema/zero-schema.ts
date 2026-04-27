@@ -2,71 +2,68 @@
 // drizzle-zero requires a single TS file (not a folder) for type resolution.
 
 // Tables (omit oauth* + jwks from auth/auth — server-only; not in Postgres replication publication)
-export { user, session, account, verification } from "./auth/auth";
-export { subscription } from "./subscriptions/stripe";
+export { account, session, user, verification } from "./auth/auth";
 export { chats, messages, parts } from "./ai/chat";
-export { institution } from "./banking/items/institution";
-
-// SRI-264 unified schema
-export { financialAccount } from "./accounts/financial-account";
-export { balance } from "./accounts/balance";
-export { snapshot } from "./accounts/snapshot";
-export { security } from "./investments/security";
-export { holding } from "./investments/holding";
-export { orders } from "./investments/order";
-export { transaction } from "./accounts/transaction";
-export { recurring } from "./accounts/recurring";
-export { investmentActivity } from "./investments/investment-activity";
+export { messageVotes } from "./ai/message-votes";
+export { financialAccount } from "./banking/financial-account";
+export { balance } from "./banking/balances/balance";
+export { snapshot } from "./banking/balances/snapshot";
+export { security } from "./banking/investments/security";
+export { holding } from "./banking/investments/holding";
+export { orders } from "./banking/investments/order";
+export { investmentActivity } from "./banking/investments/investment-activity";
 export {
   creditLiability,
   mortgageLiability,
   studentLoanLiability,
-} from "./accounts/liabilities";
-export { plaidConnection } from "./providers/plaid/connection";
-export { snaptradeAuthorization } from "./providers/snaptrade/authorization";
-export { snaptradeUser } from "./providers/snaptrade/user";
-
+} from "./banking/liabilities/liabilities";
+export { transaction } from "./banking/transactions/transaction";
+export { recurring } from "./banking/transactions/recurring";
 export { feedback } from "./features/feedback";
-export { financialEvents, eventArticles } from "./news/financial-events";
 export { financialGoals } from "./features/financial-goals";
 export { kalshiUsers } from "./features/kalshi";
-export { messageVotes } from "./ai/message-votes";
-export { rssArticles, rssFeeds } from "./news/rss";
 export { userAlerts } from "./features/user-alerts";
+export { eventArticles, financialEvents } from "./news/financial-events";
+export { rssArticles, rssFeeds } from "./news/rss";
+export { plaidConnection } from "./providers/plaid/connection";
+export { institution } from "./providers/plaid/institution";
+export { snaptradeAuthorization } from "./providers/snaptrade/authorization";
+export { snaptradeUser } from "./providers/snaptrade/user";
 export { mobileSubscription } from "./subscriptions/mobile";
+export { subscription } from "./subscriptions/stripe";
 
 // Legacy v1 `relations()` exports for drizzle-zero code generation only.
 // Runtime DB uses Relational Queries v2 from `./relations`.
 export {
-  userRelations,
   accountRelations,
-  sessionRelations,
-  subscriptionRelations,
-  chatsRelations,
-  messagesRelations,
-  partsRelations,
-  financialAccountRelations,
   balanceRelations,
-  snapshotRelations,
-  securityRelations,
-  holdingRelations,
-  ordersRelations,
-  transactionRelations,
-  recurringStreamRelations,
-  investmentActivityRelations,
+  chatsRelations,
   creditLiabilityRelations,
+  eventArticlesRelations,
+  feedbackRelations,
+  financialAccountRelations,
+  financialEventsRelations,
+  financialGoalsRelations,
+  holdingRelations,
+  institutionRelations,
+  investmentActivityRelations,
+  kalshiUserRelations,
+  messageVotesRelations,
+  messagesRelations,
+  mobileSubscriptionRelations,
   mortgageLiabilityRelations,
-  studentLoanLiabilityRelations,
+  ordersRelations,
+  partsRelations,
   plaidConnectionRelations,
+  recurringStreamRelations,
+  securityRelations,
+  sessionRelations,
+  snapshotRelations,
   snaptradeAuthorizationRelations,
   snaptradeUserRelations,
-  institutionRelations,
-  financialEventsRelations,
-  eventArticlesRelations,
+  studentLoanLiabilityRelations,
+  subscriptionRelations,
+  transactionRelations,
   userAlertsRelations,
-  financialGoalsRelations,
-  mobileSubscriptionRelations,
-  kalshiUserRelations,
-  feedbackRelations,
-  messageVotesRelations,
+  userRelations,
 } from "./relations-drizzle-zero";

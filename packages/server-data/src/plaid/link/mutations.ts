@@ -1,6 +1,6 @@
 import { db } from "@cobalt-web/db";
-import { balance } from "@cobalt-web/db/schema/accounts/balance";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { balance } from "@cobalt-web/db/schema/banking/balances/balance";
+import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
 import {
   ALERT_SOURCES,
   ALERT_STATUSES,

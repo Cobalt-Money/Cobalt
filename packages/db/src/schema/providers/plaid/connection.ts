@@ -9,8 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "../../auth/auth";
-import type { StringArrayJson } from "../../banking/items/zod";
-import type { PlaidItemErrorJson } from "./zod";
+import type { PlaidItemErrorJson, StringArrayJson } from "./zod";
 
 export const plaidConnection = pgTable(
   "plaid_connection",

@@ -11,9 +11,6 @@
     "./*": {
       "default": "./src/*.ts"
     },
-    "./schema/banking": {
-      "default": "./src/schema/banking/index.ts"
-    },
     "./schema/features": {
       "default": "./src/schema/features/index.ts"
     },

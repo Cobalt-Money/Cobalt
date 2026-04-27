@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { orders } from "@cobalt-web/db/schema/investments/order";
+import { orders } from "@cobalt-web/db/schema/banking/investments/order";
 import { sql } from "drizzle-orm";
 import type { AccountOrderRecord } from "snaptrade-typescript-sdk";
 

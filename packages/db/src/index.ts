@@ -6,13 +6,26 @@ import * as deprecatedSchema from "./schema/_deprecated";
 import * as chatSchema from "./schema/ai/chat";
 import * as messageVotesSchema from "./schema/ai/message-votes";
 import * as authSchema from "./schema/auth/auth";
-import * as bankingSchema from "./schema/banking";
+import * as balanceSchema from "./schema/banking/balances/balance";
+import * as snapshotSchema from "./schema/banking/balances/snapshot";
+import * as financialAccountSchema from "./schema/banking/financial-account";
+import * as holdingSchema from "./schema/banking/investments/holding";
+import * as investmentActivitySchema from "./schema/banking/investments/investment-activity";
+import * as orderSchema from "./schema/banking/investments/order";
+import * as securitySchema from "./schema/banking/investments/security";
+import * as liabilitiesSchema from "./schema/banking/liabilities/liabilities";
+import * as recurringSchema from "./schema/banking/transactions/recurring";
+import * as transactionSchema from "./schema/banking/transactions/transaction";
 import * as feedbackSchema from "./schema/features/feedback";
 import * as financialGoalsSchema from "./schema/features/financial-goals";
 import * as kalshiSchema from "./schema/features/kalshi";
 import * as userAlertsSchema from "./schema/features/user-alerts";
 import * as financialEventsSchema from "./schema/news/financial-events";
 import * as rssSchema from "./schema/news/rss";
+import * as plaidConnectionSchema from "./schema/providers/plaid/connection";
+import * as institutionSchema from "./schema/providers/plaid/institution";
+import * as snaptradeAuthorizationSchema from "./schema/providers/snaptrade/authorization";
+import * as snaptradeUserSchema from "./schema/providers/snaptrade/user";
 import { relations } from "./schema/relations";
 import * as mobileSubscriptionsSchema from "./schema/subscriptions/mobile";
 import * as stripeSubscriptionsSchema from "./schema/subscriptions/stripe";
@@ -28,13 +41,26 @@ export const db = drizzle({
   schema: {
     ...authSchema,
     ...chatSchema,
-    ...bankingSchema,
+    ...messageVotesSchema,
+    ...financialAccountSchema,
+    ...balanceSchema,
+    ...snapshotSchema,
+    ...transactionSchema,
+    ...recurringSchema,
+    ...liabilitiesSchema,
+    ...securitySchema,
+    ...holdingSchema,
+    ...orderSchema,
+    ...investmentActivitySchema,
+    ...institutionSchema,
+    ...plaidConnectionSchema,
+    ...snaptradeAuthorizationSchema,
+    ...snaptradeUserSchema,
     ...deprecatedSchema,
     ...feedbackSchema,
     ...financialEventsSchema,
     ...financialGoalsSchema,
     ...kalshiSchema,
-    ...messageVotesSchema,
     ...rssSchema,
     ...userAlertsSchema,
     ...mobileSubscriptionsSchema,

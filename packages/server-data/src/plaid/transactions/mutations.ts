@@ -1,7 +1,7 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
-import { recurring } from "@cobalt-web/db/schema/accounts/recurring";
-import { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/transaction";
+import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
+import { recurring } from "@cobalt-web/db/schema/banking/transactions/recurring";
+import { transaction as transactionTable } from "@cobalt-web/db/schema/banking/transactions/transaction";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Transaction, TransactionStream } from "plaid";

@@ -17,7 +17,7 @@
  */
 
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/financial-account";
+import { financialAccount } from "@cobalt-web/db/schema/banking/financial-account";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { checkForDuplicateAccounts } from "@cobalt-web/server-data/plaid/link/queries";
 import { eq } from "drizzle-orm";

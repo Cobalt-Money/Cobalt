@@ -1,7 +1,5 @@
-import {
-  institution,
-  institutionJsonbSelectRefinements,
-} from "@cobalt-web/db/schema/banking";
+import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
+import { institutionJsonbSelectRefinements } from "@cobalt-web/db/schema/providers/plaid/zod";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 

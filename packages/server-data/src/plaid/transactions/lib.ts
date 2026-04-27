@@ -1,4 +1,4 @@
-import type { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/transaction";
+import type { transaction as transactionTable } from "@cobalt-web/db/schema/banking/transactions/transaction";
 import type { InferInsertModel } from "drizzle-orm";
 import type { Transaction } from "plaid";
 
