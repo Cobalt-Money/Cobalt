@@ -26,7 +26,6 @@ const GENERAL_SERVICES_ICON_SRC = "/assets/vectors/settings.svg";
 const MEDICAL_ICON_SRC = "/assets/vectors/hospital.svg";
 const HOME_IMPROVEMENT_ICON_SRC = "/assets/vectors/home.svg";
 const LOAN_PAYMENTS_ICON_SRC = "/assets/vectors/payment.svg";
-const LOAN_PAYMENTS_ICON_SRC_DARK = "/assets/vectors/payment-dark.svg";
 const GOVERNMENT_AND_NON_PROFIT_ICON_SRC = "/assets/vectors/government.svg";
 const PERSONAL_CARE_ICON_SRC = "/assets/vectors/health.svg";
 
@@ -48,11 +47,7 @@ export const PRIMARY_CATEGORY_ICON = {
   },
   HOME_IMPROVEMENT: { kind: "image", src: HOME_IMPROVEMENT_ICON_SRC },
   INCOME: { kind: "image", src: INCOME_ICON_SRC },
-  LOAN_PAYMENTS: {
-    kind: "image",
-    src: LOAN_PAYMENTS_ICON_SRC,
-    srcDark: LOAN_PAYMENTS_ICON_SRC_DARK,
-  },
+  LOAN_PAYMENTS: { kind: "image", src: LOAN_PAYMENTS_ICON_SRC },
   MEDICAL: { kind: "image", src: MEDICAL_ICON_SRC },
   PERSONAL_CARE: { kind: "image", src: PERSONAL_CARE_ICON_SRC },
   RENT_AND_UTILITIES: { kind: "image", src: RENT_AND_UTILITIES_ICON_SRC },
