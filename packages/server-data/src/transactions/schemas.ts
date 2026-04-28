@@ -36,6 +36,11 @@ const tiptapDocBaseSchema: z.ZodType<TiptapDoc> = z.lazy(() =>
     })
     .passthrough()
 );
+// Register a refId so @asteasolutions/zod-to-openapi generates $ref for recursive
+// references instead of recursing infinitely (Zod v4 + zod-to-openapi v8 issue).
+(tiptapDocBaseSchema as unknown as { openapi(name: string): void }).openapi(
+  "TiptapNode"
+);
 
 export const tiptapDocSchema = tiptapDocBaseSchema.refine(
   (doc) => JSON.stringify(doc).length <= NOTES_MAX_SERIALIZED_BYTES,
