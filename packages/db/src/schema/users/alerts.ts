@@ -9,7 +9,6 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-import { appFullAccess, agentSelectOwn } from "../rls";
 import { user } from "../users/auth/auth";
 
 // Alert type & source constants
@@ -38,7 +37,7 @@ export const ALERT_STATUSES = {
 
 export type AlertStatus = (typeof ALERT_STATUSES)[keyof typeof ALERT_STATUSES];
 
-export const userAlerts = pgTable.withRLS(
+export const userAlerts = pgTable(
   "user_alerts",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -61,8 +60,6 @@ export const userAlerts = pgTable.withRLS(
     uniqueIndex("user_alerts_active_dedup_idx")
       .on(table.source, table.sourceId, table.type)
       .where(sql`status NOT IN ('resolved', 'dismissed')`),
-    appFullAccess(),
-    agentSelectOwn("user_id"),
   ]
 );
 

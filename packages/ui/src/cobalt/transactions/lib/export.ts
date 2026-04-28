@@ -25,10 +25,14 @@ interface ExportRow {
 }
 
 function toExportRow(item: TransactionListItem): ExportRow {
-  const category = item.personalFinanceCategory;
-  const primary = category ? getCategoryDisplayConfig(category).label : "";
-  const detailed = category?.detailed
-    ? getDetailedCategoryDisplayName(category.detailed)
+  const primary = item.category
+    ? getCategoryDisplayConfig({
+        detailed: item.categoryDetail ?? "",
+        primary: item.category,
+      }).label
+    : "";
+  const detailed = item.categoryDetail
+    ? getDetailedCategoryDisplayName(item.categoryDetail)
     : "";
 
   return {

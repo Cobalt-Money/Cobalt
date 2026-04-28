@@ -62,14 +62,13 @@ const bankAccountDetailPickedSchema = financialAccountRowSchema
   })
   .extend(
     balanceRowSchema.pick({
-      isoCurrencyCode: true,
-      unofficialCurrencyCode: true,
+      currency: true,
     }).shape
   )
   .extend({
     available: z.number().nullable(),
+    creditLimit: z.number().nullable(),
     current: z.number().nullable(),
-    limit: z.number().nullable(),
     updatedAt: z.string().nullable(),
     userOverrideCreditLimit: z.number().nullable(),
   })
@@ -91,7 +90,7 @@ const bankAccountDetailPickedSchema = financialAccountRowSchema
 
 /** Full bank account DTO returned by getAllAccountsWithInstitutions. */
 export const bankAccountSchema = bankAccountDetailPickedSchema.extend({
-  /** Coalesced from `isoCurrencyCode` / `unofficialCurrencyCode` for convenience. */
+  /** Currency code (ISO 4217). */
   currency: z.string().nullable(),
   hasInvestmentAccounts: z.boolean(),
   /** ISO string on the wire. */
@@ -112,13 +111,11 @@ const bankAccountListPickedSchema = financialAccountRowSchema
   })
   .extend(
     balanceRowSchema.pick({
-      isoCurrencyCode: true,
-      unofficialCurrencyCode: true,
+      currency: true,
     }).shape
   )
   .extend({
     current: z.number().nullable(),
-    limit: z.number().nullable(),
     updatedAt: z.string().nullable(),
     userOverrideCreditLimit: z.number().nullable(),
   })
@@ -133,7 +130,7 @@ const bankAccountListPickedSchema = financialAccountRowSchema
 /** Lightweight list item for the accounts page. */
 export const bankAccountListItemSchema = bankAccountListPickedSchema.extend({
   canAddInvestments: z.boolean(),
-  /** Effective limit: `userOverrideCreditLimit ?? limit` (not a single DB column). */
+  /** Effective: `userOverrideCreditLimit ?? balance.creditLimit`. */
   creditLimit: z.number().nullable(),
   currency: z.string().nullable(),
   hasInvestments: z.boolean(),
@@ -181,7 +178,6 @@ export const plaidAccountForItemSchema = financialAccountRowSchema
     officialName: true,
     subtype: true,
     type: true,
-    verificationStatus: true,
   })
   .extend({
     createdAt: z.string(),

@@ -6,10 +6,9 @@ export interface BankAccountJoinedRow {
   siblingAccountTypes: string[];
   balance: {
     available: string | null;
+    creditLimit: string | null;
     current: string | null;
-    isoCurrencyCode: string | null;
-    limit: string | null;
-    unofficialCurrencyCode: string | null;
+    currency: string | null;
     updatedAt: Date | null;
     userOverrideCreditLimit: string | null;
   } | null;
@@ -59,10 +58,9 @@ const numOrNull = (v: string | null): number | null =>
 function extractBalance(b: BankAccountJoinedRow["balance"]) {
   return {
     available: numOrNull(b?.available ?? null),
+    creditLimit: numOrNull(b?.creditLimit ?? null),
+    currency: b?.currency ?? null,
     current: numOrNull(b?.current ?? null),
-    isoCurrencyCode: b?.isoCurrencyCode ?? null,
-    limit: numOrNull(b?.limit ?? null),
-    unofficialCurrencyCode: b?.unofficialCurrencyCode ?? null,
     updatedAt: b?.updatedAt?.toISOString() ?? null,
     userOverrideCreditLimit: numOrNull(b?.userOverrideCreditLimit ?? null),
   };
@@ -76,10 +74,7 @@ export function toBankAccountDTO(row: BankAccountJoinedRow): BankAccountDTO {
   const hasInvestmentAccounts = row.siblingAccountTypes.some(
     (t) => t === "investment"
   );
-  const currency =
-    balanceFields.isoCurrencyCode ??
-    balanceFields.unofficialCurrencyCode ??
-    null;
+  const currency = balanceFields.currency ?? null;
 
   return {
     ...balanceFields,
@@ -114,7 +109,8 @@ export function toBankAccountListItem(
   const needsReauth = account.error !== null;
   const newAccountsAvailable = account.newAccountsAvailable ?? false;
   const { pendingDisconnectAt } = account;
-  const creditLimit = account.userOverrideCreditLimit ?? account.limit ?? null;
+  const creditLimit =
+    account.userOverrideCreditLimit ?? account.creditLimit ?? null;
 
   return {
     canAddInvestments,
@@ -124,8 +120,6 @@ export function toBankAccountListItem(
     hasInvestments,
     hasLiabilities,
     institutionName: account.institutionName,
-    isoCurrencyCode: account.isoCurrencyCode,
-    limit: account.limit,
     logo: account.logo,
     mask: account.mask,
     name: account.name,
@@ -136,7 +130,6 @@ export function toBankAccountListItem(
     plaidItemId: account.plaidItemId,
     subtype: account.subtype,
     type: account.type,
-    unofficialCurrencyCode: account.unofficialCurrencyCode,
     updatedAt: account.updatedAt,
     userOverrideCreditLimit: account.userOverrideCreditLimit,
   };

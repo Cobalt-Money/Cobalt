@@ -69,9 +69,9 @@ const CATEGORY_COLORS = {
 } as const;
 
 interface BankSnapshotRow {
-  plaidAccountId: string;
+  accountId: string;
   snapshotDate: number;
-  currentBalance?: number | null;
+  current?: number | null;
   account?: {
     type?: string | null;
     subtype?: string | null;
@@ -89,10 +89,9 @@ interface BankSnapshotRow {
 }
 
 interface PortfolioSnapshotRow {
-  snapTradeAccountId?: string | null;
   accountId?: string | null;
   snapshotDate: number;
-  totalValue?: number | null;
+  current?: number | null;
   accountName?: string | null;
   institutionName?: string | null;
 }
@@ -239,10 +238,10 @@ function buildBankBuckets(
       byBucket.set(key, new Map());
     }
     const accMap = byBucket.get(key);
-    const existing = accMap?.get(snap.plaidAccountId);
+    const existing = accMap?.get(snap.accountId);
     if (!existing || snap.snapshotDate > existing.date) {
-      accMap?.set(snap.plaidAccountId, {
-        balance: snap.currentBalance ?? 0,
+      accMap?.set(snap.accountId, {
+        balance: snap.current ?? 0,
         date: snap.snapshotDate,
         type: snap.account?.type ?? "depository",
       });
@@ -258,7 +257,7 @@ function buildPortfolioBuckets(
   const byBucket: PortfolioBucketMap = new Map();
   for (const snap of snapshots) {
     const key = getBucketKey(snap.snapshotDate, range);
-    const accountKey = snap.snapTradeAccountId ?? snap.accountId ?? "unknown";
+    const accountKey = snap.accountId ?? "unknown";
     if (!byBucket.has(key)) {
       byBucket.set(key, new Map());
     }
@@ -267,7 +266,7 @@ function buildPortfolioBuckets(
     if (!existing || snap.snapshotDate > existing.date) {
       accMap?.set(accountKey, {
         date: snap.snapshotDate,
-        totalValue: snap.totalValue ?? 0,
+        totalValue: snap.current ?? 0,
       });
     }
   }
@@ -569,7 +568,7 @@ function bankEntryFromSnapshot(s: BankSnapshotRow): BankAccountEntry | null {
   return {
     ...institutionFieldsFromConnection(s.account.connection),
     name: s.account.name,
-    plaidAccountId: s.plaidAccountId,
+    plaidAccountId: s.accountId,
     subtype: s.account.subtype,
     type: s.account.type ?? "depository",
   };
@@ -603,10 +602,10 @@ export function NetWorthSection() {
   const bankAccountEntries = useMemo((): BankAccountEntry[] => {
     const seen = new Map<string, BankAccountEntry>();
     for (const s of allBankSnapshots) {
-      if (!seen.has(s.plaidAccountId)) {
+      if (!seen.has(s.accountId)) {
         const entry = bankEntryFromSnapshot(s);
         if (entry) {
-          seen.set(s.plaidAccountId, entry);
+          seen.set(s.accountId, entry);
         }
       }
     }
@@ -616,7 +615,7 @@ export function NetWorthSection() {
   const portfolioAccountEntries = useMemo((): PortfolioAccountEntry[] => {
     const seen = new Map<string, PortfolioAccountEntry>();
     for (const s of allPortfolioSnapshots) {
-      const key = s.snapTradeAccountId ?? s.accountId ?? null;
+      const key = s.accountId ?? null;
       if (key && !seen.has(key)) {
         const branding = brokerageInstitutionBranding({
           institutionName: s.institutionName ?? null,
@@ -642,7 +641,7 @@ export function NetWorthSection() {
     }
     if (scope.type === "bank") {
       return allBankSnapshots.filter(
-        (s) => s.plaidAccountId === scope.plaidAccountId
+        (s) => s.accountId === scope.plaidAccountId
       );
     }
     if (scope.type === "group") {
@@ -677,7 +676,7 @@ export function NetWorthSection() {
     }
     if (scope.type === "portfolio") {
       return allPortfolioSnapshots.filter(
-        (s) => (s.snapTradeAccountId ?? s.accountId) === scope.accountKey
+        (s) => s.accountId === scope.accountKey
       );
     }
     if (scope.type === "group" && scope.group === "investments") {
@@ -715,7 +714,7 @@ export function NetWorthSection() {
           (s) =>
             s.account?.type === "depository" && s.account.subtype !== "savings"
         )
-        .reduce((sum, s) => sum + (s.currentBalance ?? 0), 0),
+        .reduce((sum, s) => sum + (s.current ?? 0), 0),
     [latestBankSnapshots]
   );
 
@@ -726,7 +725,7 @@ export function NetWorthSection() {
           (s) =>
             s.account?.type === "depository" && s.account.subtype === "savings"
         )
-        .reduce((sum, s) => sum + (s.currentBalance ?? 0), 0),
+        .reduce((sum, s) => sum + (s.current ?? 0), 0),
     [latestBankSnapshots]
   );
 
@@ -736,7 +735,7 @@ export function NetWorthSection() {
     () =>
       latestBankSnapshots
         .filter((s) => s.account?.type === "credit")
-        .reduce((sum, s) => sum + (s.currentBalance ?? 0), 0),
+        .reduce((sum, s) => sum + (s.current ?? 0), 0),
     [latestBankSnapshots]
   );
 
@@ -744,13 +743,13 @@ export function NetWorthSection() {
     () =>
       latestBankSnapshots
         .filter((s) => s.account?.type === "loan")
-        .reduce((sum, s) => sum + (s.currentBalance ?? 0), 0),
+        .reduce((sum, s) => sum + (s.current ?? 0), 0),
     [latestBankSnapshots]
   );
 
   const investmentTotal = useMemo(
     () =>
-      latestPortfolioSnapshots.reduce((sum, s) => sum + (s.totalValue ?? 0), 0),
+      latestPortfolioSnapshots.reduce((sum, s) => sum + (s.current ?? 0), 0),
     [latestPortfolioSnapshots]
   );
 

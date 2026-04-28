@@ -1,11 +1,11 @@
-import { fetchLiabilities } from "@cobalt-web/server-data/plaid/liabilities/actions";
+import { fetchLiabilities } from "@cobalt-web/server-data/providers/plaid/liabilities/actions";
 import {
   insertBankAccountsOnConflictDoNothing,
   upsertBankBalancesForPlaidAccounts,
   upsertCreditLiabilities,
   upsertMortgageLiabilities,
   upsertStudentLoanLiabilities,
-} from "@cobalt-web/server-data/plaid/liabilities/mutations";
+} from "@cobalt-web/server-data/providers/plaid/liabilities/mutations";
 import type {
   AccountBase,
   CreditCardLiability,

@@ -1,12 +1,12 @@
 import {
   fetchHoldings,
   fetchInvestmentTransactionsPage,
-} from "@cobalt-web/server-data/plaid/investments/actions";
+} from "@cobalt-web/server-data/providers/plaid/investments/actions";
 import {
   upsertInvestmentActivities,
   upsertInvestmentPositions,
   upsertInvestmentSecurities,
-} from "@cobalt-web/server-data/plaid/investments/mutations";
+} from "@cobalt-web/server-data/providers/plaid/investments/mutations";
 import type { Holding, InvestmentTransaction, Security } from "plaid";
 import { RetryableError } from "workflow";
 

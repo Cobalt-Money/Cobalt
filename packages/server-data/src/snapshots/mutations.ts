@@ -27,9 +27,9 @@ async function upsertDailySnapshotsForSource(
       accountId: financialAccount.id,
       available: balance.available,
       buyingPower: balance.buyingPower,
+      creditLimit: balance.creditLimit,
+      currency: balance.currency,
       current: balance.current,
-      isoCurrencyCode: balance.isoCurrencyCode,
-      limit: balance.limit,
     })
     .from(financialAccount)
     .innerJoin(balance, eq(balance.accountId, financialAccount.id))
@@ -48,9 +48,9 @@ async function upsertDailySnapshotsForSource(
     accountId: r.accountId,
     available: r.available,
     buyingPower: r.buyingPower,
+    creditLimit: r.creditLimit,
+    currency: r.currency,
     current: r.current,
-    isoCurrencyCode: r.isoCurrencyCode,
-    limit: r.limit,
     snapshotDate,
     source,
     userId,
@@ -65,9 +65,9 @@ async function upsertDailySnapshotsForSource(
         set: {
           available: sql`excluded.available`,
           buyingPower: sql`excluded.buying_power`,
+          creditLimit: sql`excluded.credit_limit`,
+          currency: sql`excluded.currency`,
           current: sql`excluded.current`,
-          isoCurrencyCode: sql`excluded.iso_currency_code`,
-          limit: sql`excluded.limit`,
         },
         target: [snapshot.accountId, snapshot.snapshotDate],
       });

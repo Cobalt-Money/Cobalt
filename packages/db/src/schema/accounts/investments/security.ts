@@ -27,22 +27,38 @@ export const security = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    currency: text("currency"),
+    // cusip/isin/sedol: cross-broker security IDs. Currently always null —
+    // Plaid gates these behind a CUSIP Global Services license (null by
+    // default for new customers since 2024-03-12); SnapTrade doesn't send
+    // them at all. Kept for future use if we ever license CUSIP. Today,
+    // figi_code (SnapTrade) + ticker_symbol are the only populated IDs.
     cusip: text("cusip"),
     exchangeCode: text("exchange_code"),
     exchangeName: text("exchange_name"),
     externalId: text("external_id"),
     figiCode: text("figi_code"),
+    // fixed_income / option_contract: type-specific Plaid jsonb. Only
+    // populated for bond and option securities respectively; null for
+    // stocks/ETFs (the bulk of holdings).
     fixedIncome: jsonb("fixed_income"),
     id: uuid("id").defaultRandom().primaryKey(),
     industry: text("industry"),
+    // institution_id / institution_security_id: a pair from Plaid. Set when
+    // the broker has its own internal security ID and Plaid relays it; most
+    // retail brokers don't, so usually null.
     institutionId: text("institution_id"),
     institutionSecurityId: text("institution_security_id"),
+    // True for money-market funds, sweep accounts, T-bills — securities that
+    // act like cash for holdings/balance views.
     isCashEquivalent: boolean("is_cash_equivalent"),
     isin: text("isin"),
-    isoCurrencyCode: text("iso_currency_code"),
     marketIdentifierCode: text("market_identifier_code"),
     name: text("name"),
     optionContract: jsonb("option_contract"),
+    // Plaid only: ID of a similar security used as a stand-in when the
+    // original is thinly traded or private (e.g., a private startup share
+    // proxied by a comparable public ETF). Rare.
     proxySecurityId: text("proxy_security_id"),
     sector: text("sector"),
     sedol: text("sedol"),
@@ -50,8 +66,6 @@ export const security = pgTable(
     subtype: text("subtype"),
     tickerSymbol: text("ticker_symbol"),
     type: text("type"),
-    unofficialCurrencyCode: text("unofficial_currency_code"),
-    updateDatetime: timestamp("update_datetime", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull()

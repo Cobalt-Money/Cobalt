@@ -22,12 +22,11 @@ export const balance = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    creditLimit: numeric("credit_limit", { precision: 19, scale: 4 }),
+    currency: text("currency"),
     current: numeric("current", { precision: 19, scale: 4 }).notNull(),
     id: uuid("id").defaultRandom().primaryKey(),
-    isoCurrencyCode: text("iso_currency_code"),
     lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
-    limit: numeric("limit", { precision: 19, scale: 4 }),
-    unofficialCurrencyCode: text("unofficial_currency_code"),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull()

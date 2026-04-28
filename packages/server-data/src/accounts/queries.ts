@@ -43,10 +43,9 @@ export async function getAllAccountsWithInstitutions(
       },
       balance: {
         available: balance.available,
+        creditLimit: balance.creditLimit,
+        currency: balance.currency,
         current: balance.current,
-        isoCurrencyCode: balance.isoCurrencyCode,
-        limit: balance.limit,
-        unofficialCurrencyCode: balance.unofficialCurrencyCode,
         updatedAt: balance.updatedAt,
         userOverrideCreditLimit: balance.userOverrideCreditLimit,
       },
@@ -202,7 +201,6 @@ export async function getPlaidAccountsForItem(
       subtype: financialAccount.subtype,
       type: financialAccount.type,
       updatedAt: financialAccount.updatedAt,
-      verificationStatus: financialAccount.verificationStatus,
     })
     .from(financialAccount)
     .innerJoin(
@@ -228,7 +226,6 @@ export async function getPlaidAccountsForItem(
     subtype: a.subtype,
     type: a.type,
     updatedAt: a.updatedAt.toISOString(),
-    verificationStatus: a.verificationStatus,
   }));
 }
 

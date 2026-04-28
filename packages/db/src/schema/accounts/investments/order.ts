@@ -32,6 +32,7 @@ export const orders = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    currency: text("currency"),
     executionPrice: numeric("execution_price", { precision: 28, scale: 10 }),
     expirationDate: timestamp("expiration_date", { withTimezone: true }),
     expiryDate: timestamp("expiry_date", { withTimezone: true }),
@@ -39,7 +40,6 @@ export const orders = pgTable(
     filledQuantity: numeric("filled_quantity", { precision: 28, scale: 10 }),
     id: uuid("id").defaultRandom().primaryKey(),
     isMiniOption: boolean("is_mini_option"),
-    isoCurrencyCode: text("iso_currency_code"),
     limitPrice: numeric("limit_price", { precision: 28, scale: 10 }),
     openQuantity: numeric("open_quantity", { precision: 28, scale: 10 }),
     optionSymbol: jsonb("option_symbol"),

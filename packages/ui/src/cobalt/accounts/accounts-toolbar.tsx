@@ -9,7 +9,6 @@ const FILTERS: { value: AccountsFilter; label: string }[] = [
   { label: "Banking", value: "banking" },
   { label: "Investments", value: "brokerage" },
   { label: "Credit", value: "credit" },
-  { label: "Crypto", value: "crypto" },
 ];
 
 export function AccountsToolbar({

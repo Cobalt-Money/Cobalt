@@ -15,11 +15,7 @@ import {
 import { user } from "../../../users/auth/auth";
 import { financialAccount } from "../../account";
 import { transactionSource } from "./transaction";
-import type {
-  LegacyCategoryArrayJson,
-  PersonalFinanceCategoryJson,
-  RecurringTransactionIdsJson,
-} from "./zod";
+import type { RecurringTransactionIdsJson } from "./zod";
 
 export const recurring = pgTable(
   "recurring",
@@ -31,8 +27,9 @@ export const recurring = pgTable(
       precision: 19,
       scale: 4,
     }).notNull(),
-    category: jsonb("category").$type<LegacyCategoryArrayJson>(),
-    categoryId: text("category_id"),
+    category: text("category"),
+    categoryConfidence: text("category_confidence"),
+    categoryDetail: text("category_detail"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -42,20 +39,13 @@ export const recurring = pgTable(
     frequency: text("frequency").notNull(),
     id: uuid("id").defaultRandom().primaryKey(),
     isActive: boolean("is_active").default(true).notNull(),
-    isUserModified: boolean("is_user_modified").default(false).notNull(),
     lastAmount: numeric("last_amount", { precision: 19, scale: 4 }).notNull(),
     lastDate: date("last_date").notNull(),
-    lastUserModifiedDatetime: timestamp("last_user_modified_datetime", {
-      withTimezone: true,
-    }),
     merchantName: text("merchant_name"),
-    personalFinanceCategory: jsonb(
-      "personal_finance_category"
-    ).$type<PersonalFinanceCategoryJson | null>(),
     predictedNextDate: date("predicted_next_date"),
-    source: transactionSource("source").notNull(),
+    source: transactionSource("source").notNull(), //plaid or snaptrade
     status: text("status").notNull(),
-    streamType: text("stream_type").notNull(),
+    streamType: text("stream_type").notNull(), //what is this?
     transactionIds: jsonb("transaction_ids")
       .$type<RecurringTransactionIdsJson>()
       .notNull(),

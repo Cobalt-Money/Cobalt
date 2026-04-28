@@ -8,10 +8,9 @@ import {
   decimal,
 } from "drizzle-orm/pg-core";
 
-import { appFullAccess, agentSelectOwn } from "../rls";
 import { user } from "../users/auth/auth";
 
-export const financialGoals = pgTable.withRLS(
+export const financialGoals = pgTable(
   "financial_goals",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -34,8 +33,6 @@ export const financialGoals = pgTable.withRLS(
   (table) => [
     index("financial_goals_user_id_idx").on(table.userId),
     index("financial_goals_created_at_idx").on(table.createdAt),
-    appFullAccess(),
-    agentSelectOwn("user_id"),
   ]
 );
 

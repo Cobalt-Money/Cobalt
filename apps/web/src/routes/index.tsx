@@ -248,7 +248,7 @@ function FeatureShowcase() {
             visual={<ChatVisual />}
           />
           <Showcase
-            description="Banks, brokerages, cards, crypto. Connect in minutes and Cobalt keeps everything fresh — so every answer uses every account."
+            description="Banks, brokerages, cards. Connect in minutes and Cobalt keeps everything fresh — so every answer uses every account."
             eyebrow="Every account"
             flip
             title="One brain for all your money."
@@ -516,7 +516,7 @@ const GPT_SCRIPTED: Omit<GPTEntry, "id" | "prompt">[] = [
     response:
       "Your net worth across all connected accounts is **$146,422**, up **2.3%** this month. Your Fidelity brokerage drove most of the gain (+$2,840).",
     tool: {
-      args: '{ "include": ["cash", "investments", "crypto"] }',
+      args: '{ "include": ["cash", "investments"] }',
       name: "cobalt.net_worth",
       result: "{ total: 146422, delta_30d: 3287, delta_pct: 2.3 }",
     },
@@ -563,7 +563,7 @@ function ChatGPTVisual() {
         response:
           "Your net worth across all connected accounts is **$146,422**, up **2.3%** this month. Your Fidelity brokerage drove most of the gain (+$2,840).",
         tool: {
-          args: '{ "include": ["cash", "investments", "crypto"] }',
+          args: '{ "include": ["cash", "investments"] }',
           name: "cobalt.net_worth",
           result: "{ total: 146422, delta_30d: 3287, delta_pct: 2.3 }",
         },

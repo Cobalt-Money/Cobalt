@@ -9,7 +9,7 @@ import {
   bankAccountListResponseSchema,
   successResponseSchema,
 } from "@cobalt-web/server-data/accounts/schemas";
-import { removeItem } from "@cobalt-web/server-data/plaid/link/actions";
+import { removeItem } from "@cobalt-web/server-data/providers/plaid/link/actions";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 

@@ -28,17 +28,17 @@ export const investmentActivity = pgTable(
       .notNull()
       .references(() => financialAccount.id, { onDelete: "cascade" }),
     amount: numeric("amount", { precision: 19, scale: 4 }).notNull(),
-    cancelTransactionId: text("cancel_transaction_id"),
+    cancelTransactionId: text("cancel_transaction_id"), //what is this
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    currency: text("currency"),
     date: date("date").notNull(),
     externalId: text("external_id"),
     externalReferenceId: text("external_reference_id"),
     fees: numeric("fees", { precision: 19, scale: 4 }),
     fxRate: numeric("fx_rate", { precision: 19, scale: 8 }),
     id: uuid("id").defaultRandom().primaryKey(),
-    isoCurrencyCode: text("iso_currency_code"),
     name: text("name").notNull(),
     optionSymbol: text("option_symbol"),
     optionType: text("option_type"),
@@ -51,7 +51,6 @@ export const investmentActivity = pgTable(
     source: activitySource("source").notNull(),
     subtype: text("subtype"),
     type: text("type").notNull(),
-    unofficialCurrencyCode: text("unofficial_currency_code"),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull()

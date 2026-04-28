@@ -2,7 +2,6 @@ import { sql } from "drizzle-orm";
 import {
   check,
   index,
-  numeric,
   pgEnum,
   pgTable,
   text,
@@ -24,32 +23,44 @@ export const accountSource = pgEnum("account_source", [
 export const financialAccount = pgTable(
   "financial_account",
   {
+    /** Full account number; rarely populated by providers. */
     accountNumber: text("account_number"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    /** Provider's account ID (Plaid account_id / SnapTrade account id). */
     externalId: text("external_id"),
     id: uuid("id").defaultRandom().primaryKey(),
+    /** Bank/brokerage display name (denormalized from institution). */
     institutionName: text("institution_name"),
-    lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
+    /** Last 4 digits of the account number. */
     mask: text("mask"),
+    /** Short user-facing name (e.g. "Sapphire Reserve"). */
     name: text("name").notNull(),
+    /** Verbose marketing name (e.g. "Chase Sapphire Reserve Visa Signature"). */
     officialName: text("official_name"),
+    /** Plaid stable cross-Item ID for this account. */
     persistentAccountId: text("persistent_account_id"),
     plaidConnectionId: uuid("plaid_connection_id").references(
       () => plaidConnection.id,
       { onDelete: "cascade" }
     ),
+    /**
+     * SnapTrade portfolio grouping label.
+     * @deprecated Field deprecated upstream by SnapTrade; kept for read compatibility.
+     */
     portfolioGroup: text("portfolio_group"),
-    providerCreatedAt: timestamp("provider_created_at", { withTimezone: true }),
     snaptradeAuthorizationId: uuid("snaptrade_authorization_id").references(
       () => snaptradeAuthorization.id,
       { onDelete: "cascade" }
     ),
+    /** Provider: plaid | snaptrade | manual. */
     source: accountSource("source").notNull(),
+    /** SnapTrade account status string (e.g. "active"). */
     status: text("status"),
+    /** Granular type: checking, roth_ira, mortgage, etc. */
     subtype: text("subtype"),
-    syncStatus: text("sync_status"),
+    /** High-level: depository | credit | investment | loan. */
     type: text("type").notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
@@ -58,11 +69,6 @@ export const financialAccount = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    userOverrideCreditLimit: numeric("user_override_credit_limit", {
-      precision: 19,
-      scale: 4,
-    }),
-    verificationStatus: text("verification_status"),
   },
   (t) => [
     index("financial_account_user_id_idx").on(t.userId),

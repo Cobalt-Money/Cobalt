@@ -9,10 +9,8 @@ import {
   integer,
 } from "drizzle-orm/pg-core";
 
-import { appFullAccess, agentSelectPublic } from "../rls";
-
 // Financial Events table - stores events from Stock News API
-export const financialEvents = pgTable.withRLS(
+export const financialEvents = pgTable(
   "financial_events",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -43,13 +41,11 @@ export const financialEvents = pgTable.withRLS(
     index("financial_events_date_id_idx").on(table.date, table.id),
     index("financial_events_created_at_id_idx").on(table.createdAt, table.id),
     index("financial_events_tickers_idx").using("gin", table.tickers),
-    appFullAccess(),
-    agentSelectPublic(),
   ]
 );
 
 // Event Articles table
-export const eventArticles = pgTable.withRLS(
+export const eventArticles = pgTable(
   "event_articles",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -77,8 +73,6 @@ export const eventArticles = pgTable.withRLS(
     index("event_articles_news_url_idx").on(table.newsUrl),
     index("event_articles_source_name_idx").on(table.sourceName),
     index("event_articles_date_idx").on(table.date),
-    appFullAccess(),
-    agentSelectPublic(),
   ]
 );
 

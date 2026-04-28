@@ -13,15 +13,30 @@ import {
 
 import type {
   CounterpartiesArrayJson,
-  LegacyCategoryArrayJson,
   LocationJson,
-  PaymentMetaJson,
-  PersonalFinanceCategoryJson,
   TransactionNotesJson,
   UserOverrideCategoryJson,
 } from "../../../accounts/banking/transactions/zod";
 import { appFullAccess, agentSelectViaBankAccount } from "../../../rls";
 import { bankAccount } from "../accounts";
+
+export type LegacyCategoryArrayJson = string[] | null;
+export interface PersonalFinanceCategoryJson {
+  primary: string;
+  detailed: string;
+  confidence_level?: string;
+  version?: "v1" | "v2";
+}
+export interface PaymentMetaJson {
+  by_order_of: string | null;
+  payee: string | null;
+  payer: string | null;
+  payment_method: string | null;
+  payment_processor: string | null;
+  ppd_id: string | null;
+  reason: string | null;
+  reference_number: string | null;
+}
 
 // Transactions (posted and pending)
 /** @deprecated Use `transaction` from `@cobalt-web/db/schema/accounts/transaction`. */

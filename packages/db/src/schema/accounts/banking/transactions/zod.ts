@@ -4,18 +4,6 @@
  */
 import { z } from "zod";
 
-/** Plaid `personal_finance_category` on transactions & recurring streams. */
-export const personalFinanceCategoryJsonSchema = z.object({
-  confidence_level: z.string().optional(),
-  detailed: z.string(),
-  primary: z.string(),
-  version: z.enum(["v1", "v2"]).optional(),
-});
-
-export type PersonalFinanceCategoryJson = z.infer<
-  typeof personalFinanceCategoryJsonSchema
->;
-
 /** User-edited category override (`user_override_category`). */
 export const userOverrideCategoryJsonSchema = z.object({
   detailed: z.string(),
@@ -48,27 +36,6 @@ export const locationJsonSchema = z.object({
 });
 
 export type LocationJson = z.infer<typeof locationJsonSchema>;
-
-/** Plaid legacy `category` array (string labels). */
-export const legacyCategoryArrayJsonSchema = z.array(z.string()).nullable();
-
-export type LegacyCategoryArrayJson = z.infer<
-  typeof legacyCategoryArrayJsonSchema
->;
-
-/** Plaid `payment_meta` (ACH/wire-style metadata; often all-null). */
-export const paymentMetaJsonSchema = z.object({
-  by_order_of: z.string().nullable(),
-  payee: z.string().nullable(),
-  payer: z.string().nullable(),
-  payment_method: z.string().nullable(),
-  payment_processor: z.string().nullable(),
-  ppd_id: z.string().nullable(),
-  reason: z.string().nullable(),
-  reference_number: z.string().nullable(),
-});
-
-export type PaymentMetaJson = z.infer<typeof paymentMetaJsonSchema>;
 
 /** Plaid counterparty `type` enum values. */
 export const transactionCounterpartyTypeSchema = z.enum([
@@ -152,19 +119,13 @@ export type RecurringTransactionIdsJson = z.infer<
 
 /** Refinements for `createSelectSchema(transaction, …)`. */
 export const transactionJsonbSelectRefinements = {
-  category: legacyCategoryArrayJsonSchema,
   counterparties: counterpartiesArrayJsonSchema,
-  location: locationJsonSchema.nullable(),
-  paymentMeta: paymentMetaJsonSchema.nullable(),
-  personalFinanceCategory: personalFinanceCategoryJsonSchema.nullable(),
   userOverrideCategory: userOverrideCategoryJsonSchema.nullable(),
   userOverrideLocation: locationJsonSchema.nullable(),
 } as const;
 
 /** Refinements for `createSelectSchema(recurringStream, …)`. */
 export const recurringStreamJsonbSelectRefinements = {
-  category: legacyCategoryArrayJsonSchema,
-  personalFinanceCategory: personalFinanceCategoryJsonSchema.nullable(),
   streamType: z.enum(["inflow", "outflow"]),
   transactionIds: recurringTransactionIdsJsonSchema,
 } as const;

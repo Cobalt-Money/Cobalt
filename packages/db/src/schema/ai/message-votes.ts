@@ -8,11 +8,10 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { appFullAccess } from "../rls";
 import { user } from "../users/auth/auth";
 import { messages } from "./chat";
 
-export const messageVotes = pgTable.withRLS(
+export const messageVotes = pgTable(
   "message_votes",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -36,7 +35,6 @@ export const messageVotes = pgTable.withRLS(
     ),
     index("message_votes_user_id_idx").on(table.userId),
     index("message_votes_message_id_idx").on(table.messageId),
-    appFullAccess(),
   ]
 );
 

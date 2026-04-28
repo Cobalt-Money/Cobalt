@@ -7,9 +7,7 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 
-import { agentSelectOwn, appFullAccess } from "../../rls";
-
-export const subscription = pgTable.withRLS(
+export const subscription = pgTable(
   "subscription",
   {
     billingInterval: text("billing_interval"),
@@ -34,8 +32,6 @@ export const subscription = pgTable.withRLS(
     index("subscription_stripe_subscription_id_idx").on(
       table.stripeSubscriptionId
     ),
-    appFullAccess(),
-    agentSelectOwn("reference_id"),
   ]
 );
 

@@ -1,15 +1,15 @@
 import {
   createLinkToken,
   createLinkTokenForUpdate,
-} from "@cobalt-web/server-data/plaid/link/actions";
-import { findExistingHealthyConnection } from "@cobalt-web/server-data/plaid/link/queries";
+} from "@cobalt-web/server-data/providers/plaid/link/actions";
+import { findExistingHealthyConnection } from "@cobalt-web/server-data/providers/plaid/link/queries";
 import {
   createLinkTokenBodySchema,
   errorResponseSchema,
   linkTokenResponseSchema,
   resolveLinkBodySchema,
   successResponseSchema,
-} from "@cobalt-web/server-data/plaid/link/schemas";
+} from "@cobalt-web/server-data/providers/plaid/link/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { v7 as uuidv7 } from "uuid";

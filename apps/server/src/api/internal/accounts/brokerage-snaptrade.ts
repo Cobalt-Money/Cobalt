@@ -1,12 +1,12 @@
-import { toBrokerageAccountListItem } from "@cobalt-web/server-data/brokerage/snaptrade/lib";
-import { getSnaptradeBrokerageAccountsByUserId } from "@cobalt-web/server-data/brokerage/snaptrade/queries";
+import { toBrokerageAccountListItem } from "@cobalt-web/server-data/brokerage/lib";
+import { getBrokerageAccountsByUserId } from "@cobalt-web/server-data/brokerage/queries";
 import {
   brokerageAccountIdParamSchema,
   disconnectBrokerageAccountResponseSchema,
   errorResponseSchema,
-  snaptradeBrokerageAccountsListResponseSchema,
-} from "@cobalt-web/server-data/brokerage/snaptrade/schemas";
-import { disconnectBrokerageAccountByUserId } from "@cobalt-web/server-data/snaptrade/disconnect";
+  brokerageAccountsListResponseSchema,
+} from "@cobalt-web/server-data/brokerage/schemas";
+import { disconnectBrokerageAccountByUserId } from "@cobalt-web/server-data/providers/snaptrade/disconnect";
 import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
@@ -23,7 +23,7 @@ const listRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: snaptradeBrokerageAccountsListResponseSchema,
+          schema: brokerageAccountsListResponseSchema,
         },
       },
       description: "Brokerage accounts",
@@ -75,9 +75,7 @@ const deleteRoute = createRoute({
 export const brokerageSnaptradeRouter = new OpenAPIHono<AppEnv>()
   .openapi(listRoute, async (c) => {
     try {
-      const accounts = await getSnaptradeBrokerageAccountsByUserId(
-        c.var.user.id
-      );
+      const accounts = await getBrokerageAccountsByUserId(c.var.user.id);
       const items = accounts.map(toBrokerageAccountListItem);
       c.header("Cache-Control", "private, max-age=60");
       return c.json({ accounts: items }, 200);

@@ -1,6 +1,6 @@
 import { brokerageInstitutionBranding } from "../../logos/brokerage-institution-branding";
 
-export type AccountCategory = "banking" | "brokerage" | "credit" | "crypto";
+export type AccountCategory = "banking" | "brokerage" | "credit";
 
 export interface AccountCardViewModel {
   id: string;
@@ -91,7 +91,6 @@ export interface BrokerageRowWithRelations {
   subtype: string | null;
   type: string;
   name: string | null;
-  portfolioGroup: string | null;
   snaptradeAuthorization?: {
     authorizationId?: string | null;
     brokerage?: string | null;
@@ -166,7 +165,7 @@ export function brokerageRowToCard(
   return {
     accountTypeLabel: typeLabel,
     category: "brokerage",
-    description: row.name?.trim() ?? row.portfolioGroup ?? "Investment account",
+    description: row.name?.trim() ?? "Investment account",
     id: row.id,
     institution,
     institutionLogo,

@@ -3,26 +3,26 @@ import { snaptradeAuthorization } from "@cobalt-web/db/schema/providers/snaptrad
 import {
   getUserAccountDetails,
   listUserAccounts,
-} from "@cobalt-web/server-data/snaptrade/accounts/actions";
+} from "@cobalt-web/server-data/providers/snaptrade/accounts/actions";
 import {
   upsertAccountDetails,
   upsertBrokerageAccount,
-} from "@cobalt-web/server-data/snaptrade/accounts/mutations";
-import { getAccountActivities } from "@cobalt-web/server-data/snaptrade/activities/actions";
-import { upsertAccountActivities } from "@cobalt-web/server-data/snaptrade/activities/mutations";
-import { getLastActivitySyncDate } from "@cobalt-web/server-data/snaptrade/activities/queries";
-import { getSnapTradeUserCredentials } from "@cobalt-web/server-data/snaptrade/auth/queries";
+} from "@cobalt-web/server-data/providers/snaptrade/accounts/mutations";
+import { getAccountActivities } from "@cobalt-web/server-data/providers/snaptrade/activities/actions";
+import { upsertAccountActivities } from "@cobalt-web/server-data/providers/snaptrade/activities/mutations";
+import { getLastActivitySyncDate } from "@cobalt-web/server-data/providers/snaptrade/activities/queries";
+import { getSnapTradeUserCredentials } from "@cobalt-web/server-data/providers/snaptrade/auth/queries";
 import {
   deleteSnaptradeAuthorization,
   updateSnaptradeAuthorizationStatus,
   upsertSnaptradeAuthorization,
-} from "@cobalt-web/server-data/snaptrade/authorizations/mutations";
-import { getUserAccountBalance } from "@cobalt-web/server-data/snaptrade/balances/actions";
-import { upsertAccountBalances } from "@cobalt-web/server-data/snaptrade/balances/mutations";
-import { getUserHoldings } from "@cobalt-web/server-data/snaptrade/holdings/actions";
-import { upsertAccountPositions } from "@cobalt-web/server-data/snaptrade/holdings/mutations";
-import { getUserAccountOrders } from "@cobalt-web/server-data/snaptrade/orders/actions";
-import { upsertAccountOrders } from "@cobalt-web/server-data/snaptrade/orders/mutations";
+} from "@cobalt-web/server-data/providers/snaptrade/authorizations/mutations";
+import { getUserAccountBalance } from "@cobalt-web/server-data/providers/snaptrade/balances/actions";
+import { upsertAccountBalances } from "@cobalt-web/server-data/providers/snaptrade/balances/mutations";
+import { getUserHoldings } from "@cobalt-web/server-data/providers/snaptrade/holdings/actions";
+import { upsertAccountPositions } from "@cobalt-web/server-data/providers/snaptrade/holdings/mutations";
+import { getUserAccountOrders } from "@cobalt-web/server-data/providers/snaptrade/orders/actions";
+import { upsertAccountOrders } from "@cobalt-web/server-data/providers/snaptrade/orders/mutations";
 import { eq } from "drizzle-orm";
 import type {
   Account,

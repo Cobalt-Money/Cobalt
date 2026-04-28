@@ -30,7 +30,6 @@ export interface InvestmentAccountRow {
   institutionName?: string | null;
   type?: string | null;
   subtype?: string | null;
-  portfolioGroup?: string | null;
   externalId?: string | null;
   plaidConnection?: {
     institutionLogo?: string | null;
@@ -88,7 +87,6 @@ export function useBrokerage() {
         id: a.id,
         institutionName: a.institutionName ?? null,
         name: a.name ?? null,
-        portfolioGroup: a.portfolioGroup ?? null,
         snaptradeAuthorization: a.snaptradeAuthorization ?? null,
         source: "snaptrade",
         subtype: a.subtype ?? null,

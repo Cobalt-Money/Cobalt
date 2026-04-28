@@ -2,7 +2,7 @@ import {
   holdingsNewsQuerySchema,
   holdingsNewsResponseSchema,
 } from "@cobalt-web/server-data/brokerage/merged-schemas";
-import { errorResponseSchema } from "@cobalt-web/server-data/brokerage/snaptrade/schemas";
+import { errorResponseSchema } from "@cobalt-web/server-data/brokerage/schemas";
 import {
   getFinancialEventsForTickers,
   getUserStockTickers,

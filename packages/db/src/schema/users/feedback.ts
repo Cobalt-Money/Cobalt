@@ -7,7 +7,6 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core";
 
-import { appFullAccess } from "../rls";
 import { user } from "../users/auth/auth";
 
 export const feedbackTypeEnum = pgEnum("feedback_type", [
@@ -16,7 +15,7 @@ export const feedbackTypeEnum = pgEnum("feedback_type", [
   "feature",
 ]);
 
-export const feedback = pgTable.withRLS(
+export const feedback = pgTable(
   "feedback",
   {
     contactEmail: text("contact_email"),
@@ -34,7 +33,6 @@ export const feedback = pgTable.withRLS(
     index("feedback_user_id_idx").on(table.userId),
     index("feedback_type_idx").on(table.type),
     index("feedback_created_at_idx").on(table.createdAt),
-    appFullAccess(),
   ]
 );
 

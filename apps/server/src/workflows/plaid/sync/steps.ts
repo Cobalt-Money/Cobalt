@@ -8,34 +8,34 @@ import {
   fetchItemAndAccounts,
   removeItem,
   triggerPlaidSync,
-} from "@cobalt-web/server-data/plaid/link/actions";
-import { financialAccountInsertFromPlaid } from "@cobalt-web/server-data/plaid/link/lib";
+} from "@cobalt-web/server-data/providers/plaid/link/actions";
+import { financialAccountInsertFromPlaid } from "@cobalt-web/server-data/providers/plaid/link/lib";
 import {
   applyItemWebhookState,
   clearItemError,
   persistOnboardingItem,
   syncNewAccountsForItem,
   upsertBalanceForPlaidAccount,
-} from "@cobalt-web/server-data/plaid/link/mutations";
+} from "@cobalt-web/server-data/providers/plaid/link/mutations";
 import {
   checkForDuplicateAccounts,
   getBankConnectionByItemId,
-} from "@cobalt-web/server-data/plaid/link/queries";
-import { insertBalanceSnapshots } from "@cobalt-web/server-data/plaid/snapshots/mutations";
+} from "@cobalt-web/server-data/providers/plaid/link/queries";
+import { insertBalanceSnapshots } from "@cobalt-web/server-data/providers/plaid/snapshots/mutations";
 import {
   getPostedTransactionsForAccount,
   getSnapshotDatesForAccount,
-} from "@cobalt-web/server-data/plaid/snapshots/queries";
-import { syncTransactionsPage } from "@cobalt-web/server-data/plaid/transactions/actions";
+} from "@cobalt-web/server-data/providers/plaid/snapshots/queries";
+import { syncTransactionsPage } from "@cobalt-web/server-data/providers/plaid/transactions/actions";
 import {
   applyPendingOverrides,
   persistTransactions,
   removeTransactionsByIds,
   setTransactionsCursor,
   syncRecurringForItem,
-} from "@cobalt-web/server-data/plaid/transactions/mutations";
-import { getUserOverrides } from "@cobalt-web/server-data/plaid/transactions/queries";
-import type { UserOverrides } from "@cobalt-web/server-data/plaid/transactions/queries";
+} from "@cobalt-web/server-data/providers/plaid/transactions/mutations";
+import { getUserOverrides } from "@cobalt-web/server-data/providers/plaid/transactions/queries";
+import type { UserOverrides } from "@cobalt-web/server-data/providers/plaid/transactions/queries";
 import { and, eq, sql } from "drizzle-orm";
 import type { AccountBase } from "plaid";
 import { FatalError, RetryableError, getWritable } from "workflow";

@@ -24,10 +24,10 @@ export const snapshot = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    creditLimit: numeric("credit_limit", { precision: 19, scale: 4 }),
+    currency: text("currency"),
     current: numeric("current", { precision: 19, scale: 4 }).notNull(),
     id: uuid("id").defaultRandom().primaryKey(),
-    isoCurrencyCode: text("iso_currency_code"),
-    limit: numeric("limit", { precision: 19, scale: 4 }),
     positionsCount: integer("positions_count"),
     positionsValue: numeric("positions_value", { precision: 19, scale: 4 }),
     snapshotDate: date("snapshot_date").notNull(),

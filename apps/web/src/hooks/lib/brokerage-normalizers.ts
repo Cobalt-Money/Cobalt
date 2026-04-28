@@ -13,7 +13,7 @@ export interface RawHolding {
   institutionPrice?: number | null;
   institutionValue?: number | null;
   openPnl?: number | null;
-  isoCurrencyCode?: string | null;
+  currency?: string | null;
   lastSyncAt?: number | null;
   account?: { id?: string; name?: string | null } | null;
   security?: { tickerSymbol?: string | null; name?: string | null } | null;
@@ -38,7 +38,7 @@ export interface RawSnapshot {
   id: string;
   accountId: string;
   snapshotDate: number;
-  totalValue?: number | null;
+  current?: number | null;
 }
 
 /**
@@ -64,7 +64,7 @@ export function holdingToPositionRow(h: RawHolding): PositionRow {
     accountId: h.accountId,
     averagePurchasePrice: h.averagePrice ?? avgFromCostBasis,
     brokerageAccount: { id: h.accountId, name: h.account?.name ?? null },
-    currencyCode: h.isoCurrencyCode ?? null,
+    currencyCode: h.currency ?? null,
     id: h.id,
     institutionValue: h.institutionValue ?? null,
     openPnl: computedOpenPnl,
@@ -101,6 +101,6 @@ export function snapshotToRow(s: RawSnapshot): PortfolioSnapshotRow {
     accountId: s.accountId,
     id: s.id,
     snapshotDate: s.snapshotDate,
-    totalValue: s.totalValue ?? null,
+    totalValue: s.current ?? null,
   };
 }

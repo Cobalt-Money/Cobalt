@@ -65,8 +65,7 @@ type ChatThreadId =
   | "emergency"
   | "year-end"
   | "roth-vs-traditional"
-  | "budget"
-  | "crypto";
+  | "budget";
 
 // ---------------------------------------------------------------------------
 // Mock data — Transactions
@@ -80,6 +79,9 @@ function makeTx(
     accountName: "Chase Checking",
     accountType: "depository",
     authorizedDate: null,
+    category: null,
+    categoryConfidence: null,
+    categoryDetail: null,
     counterparties: null,
     institutionLogo: null,
     institutionName: "Chase",
@@ -89,7 +91,6 @@ function makeTx(
     merchantName: null,
     notes: null,
     pending: false,
-    personalFinanceCategory: null,
     plaidAccountId: "plaid-acc-1",
     userOverrideCategory: null,
     userOverrideDate: null,
@@ -162,6 +163,9 @@ function noteWithBullets(
 const TRANSACTIONS: TransactionListItem[] = [
   makeTx({
     amount: -4.5,
+    category: "FOOD_AND_DRINK",
+    categoryConfidence: null,
+    categoryDetail: "FOOD_AND_DRINK_COFFEE",
     date: "2026-04-11",
     id: "tx-1",
     location: loc(
@@ -174,38 +178,38 @@ const TRANSACTIONS: TransactionListItem[] = [
     ),
     name: "Blue Bottle Coffee",
     notes: note("Morning oat milk latte before standup."),
-    personalFinanceCategory: {
-      detailed: "FOOD_AND_DRINK_COFFEE",
-      primary: "FOOD_AND_DRINK",
-    },
     website: "bluebottlecoffee.com",
   }),
   makeTx({
     amount: -12.99,
+    category: "ENTERTAINMENT",
+    categoryConfidence: null,
+    categoryDetail: "ENTERTAINMENT_MUSIC_AND_AUDIO",
     date: "2026-04-11",
     id: "tx-2",
     institutionName: "Fidelity",
     institutionUrl: "fidelity.com",
     name: "Spotify",
     notes: note("Premium family plan — split with Alex."),
-    personalFinanceCategory: {
-      detailed: "ENTERTAINMENT_MUSIC_AND_AUDIO",
-      primary: "ENTERTAINMENT",
-    },
     website: "spotify.com",
   }),
   makeTx({
     amount: 3240,
+    category: "INCOME",
+    categoryConfidence: null,
+    categoryDetail: "INCOME_WAGES",
     date: "2026-04-10",
     id: "tx-3",
     institutionName: "Chase",
     institutionUrl: "chase.com",
     name: "Payroll",
     notes: note("Bi-weekly direct deposit from employer."),
-    personalFinanceCategory: { detailed: "INCOME_WAGES", primary: "INCOME" },
   }),
   makeTx({
     amount: -89,
+    category: "GENERAL_MERCHANDISE",
+    categoryConfidence: null,
+    categoryDetail: "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES",
     date: "2026-04-10",
     id: "tx-4",
     institutionName: "Apple",
@@ -218,28 +222,26 @@ const TRANSACTIONS: TransactionListItem[] = [
       "Logitech MX Master 3S mouse",
       "Rain-X windshield washer fluid",
     ]),
-    personalFinanceCategory: {
-      detailed: "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES",
-      primary: "GENERAL_MERCHANDISE",
-    },
     website: "amazon.com",
   }),
   makeTx({
     amount: -156.23,
+    category: "HOME_IMPROVEMENT",
+    categoryConfidence: null,
+    categoryDetail: "HOME_IMPROVEMENT_UTILITIES",
     date: "2026-04-09",
     id: "tx-5",
     institutionName: "Wells Fargo",
     institutionUrl: "wellsfargo.com",
     name: "PG&E",
     notes: note("April electric + gas bill. Higher than March — space heater."),
-    personalFinanceCategory: {
-      detailed: "HOME_IMPROVEMENT_UTILITIES",
-      primary: "HOME_IMPROVEMENT",
-    },
     website: "pge.com",
   }),
   makeTx({
     amount: -14.99,
+    category: "ENTERTAINMENT",
+    categoryConfidence: null,
+    categoryDetail: "ENTERTAINMENT_TV_AND_MOVIES",
     date: "2026-04-09",
     id: "tx-6",
     institutionName: "Chase",
@@ -248,28 +250,26 @@ const TRANSACTIONS: TransactionListItem[] = [
     notes: note(
       "Standard plan. Consider downgrading — barely watched in March."
     ),
-    personalFinanceCategory: {
-      detailed: "ENTERTAINMENT_TV_AND_MOVIES",
-      primary: "ENTERTAINMENT",
-    },
     website: "netflix.com",
   }),
   makeTx({
     amount: -9.99,
+    category: "GENERAL_SERVICES",
+    categoryConfidence: null,
+    categoryDetail: "GENERAL_SERVICES_SUBSCRIPTION",
     date: "2026-04-08",
     id: "tx-7",
     institutionName: "Apple",
     institutionUrl: "apple.com",
     name: "iCloud",
     notes: note("200GB tier — photo library keeps growing."),
-    personalFinanceCategory: {
-      detailed: "GENERAL_SERVICES_SUBSCRIPTION",
-      primary: "GENERAL_SERVICES",
-    },
     website: "apple.com",
   }),
   makeTx({
     amount: -55,
+    category: "FOOD_AND_DRINK",
+    categoryConfidence: null,
+    categoryDetail: "FOOD_AND_DRINK_RESTAURANTS",
     date: "2026-04-07",
     id: "tx-8",
     institutionName: "Chase",
@@ -277,14 +277,13 @@ const TRANSACTIONS: TransactionListItem[] = [
     location: loc("19 W 57th St", "New York", "NY", "10019", 40.7638, -73.9737),
     name: "Nobu",
     notes: note("Birthday dinner with Priya. Black cod was worth it."),
-    personalFinanceCategory: {
-      detailed: "FOOD_AND_DRINK_RESTAURANTS",
-      primary: "FOOD_AND_DRINK",
-    },
     website: "noburestaurants.com",
   }),
   makeTx({
     amount: -2400,
+    category: "RENT_AND_UTILITIES",
+    categoryConfidence: null,
+    categoryDetail: "RENT_AND_UTILITIES_RENT",
     date: "2026-03-31",
     id: "tx-9",
     institutionName: "Bank of America",
@@ -299,13 +298,12 @@ const TRANSACTIONS: TransactionListItem[] = [
     ),
     name: "March Rent",
     notes: note("Monthly rent — autopay. Lease renewal in June."),
-    personalFinanceCategory: {
-      detailed: "RENT_AND_UTILITIES_RENT",
-      primary: "RENT_AND_UTILITIES",
-    },
   }),
   makeTx({
     amount: -42.5,
+    category: "FOOD_AND_DRINK",
+    categoryConfidence: null,
+    categoryDetail: "FOOD_AND_DRINK_GROCERIES",
     date: "2026-03-28",
     id: "tx-10",
     institutionName: "Chase",
@@ -320,14 +318,13 @@ const TRANSACTIONS: TransactionListItem[] = [
     ),
     name: "Trader Joe's",
     notes: note("Weekly groceries + flowers."),
-    personalFinanceCategory: {
-      detailed: "FOOD_AND_DRINK_GROCERIES",
-      primary: "FOOD_AND_DRINK",
-    },
     website: "traderjoes.com",
   }),
   makeTx({
     amount: -8.75,
+    category: "TRANSPORTATION",
+    categoryConfidence: null,
+    categoryDetail: "TRANSPORTATION_TAXI_AND_RIDESHARE",
     date: "2026-03-27",
     id: "tx-11",
     institutionName: "Wells Fargo",
@@ -342,14 +339,13 @@ const TRANSACTIONS: TransactionListItem[] = [
     ),
     name: "Uber",
     notes: note("Ride home after the company offsite dinner."),
-    personalFinanceCategory: {
-      detailed: "TRANSPORTATION_TAXI_AND_RIDESHARE",
-      primary: "TRANSPORTATION",
-    },
     website: "uber.com",
   }),
   makeTx({
     amount: -65,
+    category: "FOOD_AND_DRINK",
+    categoryConfidence: null,
+    categoryDetail: "FOOD_AND_DRINK_GROCERIES",
     date: "2026-03-26",
     id: "tx-12",
     institutionName: "Chase",
@@ -364,14 +360,13 @@ const TRANSACTIONS: TransactionListItem[] = [
     ),
     name: "Whole Foods Market",
     notes: note("Restocked pantry — olive oil, coffee beans, snacks."),
-    personalFinanceCategory: {
-      detailed: "FOOD_AND_DRINK_GROCERIES",
-      primary: "FOOD_AND_DRINK",
-    },
     website: "wholefoodsmarket.com",
   }),
   makeTx({
     amount: -29.99,
+    category: "GENERAL_SERVICES",
+    categoryConfidence: null,
+    categoryDetail: "GENERAL_SERVICES_SUBSCRIPTION",
     date: "2026-03-25",
     id: "tx-13",
     institutionName: "Wells Fargo",
@@ -386,14 +381,13 @@ const TRANSACTIONS: TransactionListItem[] = [
     ),
     name: "Equinox Fitness",
     notes: note("Monthly membership. Goal: hit classes 3x/week."),
-    personalFinanceCategory: {
-      detailed: "GENERAL_SERVICES_SUBSCRIPTION",
-      primary: "GENERAL_SERVICES",
-    },
     website: "equinox.com",
   }),
   makeTx({
     amount: -18.5,
+    category: "ENTERTAINMENT",
+    categoryConfidence: null,
+    categoryDetail: "ENTERTAINMENT_MOVIES_AND_THEATER",
     date: "2026-03-24",
     id: "tx-14",
     institutionName: "Chase",
@@ -408,28 +402,26 @@ const TRANSACTIONS: TransactionListItem[] = [
     ),
     name: "AMC Theaters",
     notes: note("Saw Dune: Part Two finally. Worth the IMAX upcharge."),
-    personalFinanceCategory: {
-      detailed: "ENTERTAINMENT_MOVIES_AND_THEATER",
-      primary: "ENTERTAINMENT",
-    },
     website: "amctheatres.com",
   }),
   makeTx({
     amount: -52.34,
+    category: "FOOD_AND_DRINK",
+    categoryConfidence: null,
+    categoryDetail: "FOOD_AND_DRINK_RESTAURANTS",
     date: "2026-03-23",
     id: "tx-15",
     institutionName: "Apple",
     institutionUrl: "apple.com",
     name: "DoorDash",
     notes: note("Late-night Thai from Lers Ros. Tip was 20%."),
-    personalFinanceCategory: {
-      detailed: "FOOD_AND_DRINK_RESTAURANTS",
-      primary: "FOOD_AND_DRINK",
-    },
     website: "doordash.com",
   }),
   makeTx({
     amount: -45.67,
+    category: "TRANSPORTATION",
+    categoryConfidence: null,
+    categoryDetail: "TRANSPORTATION_GAS_STATIONS",
     date: "2026-03-22",
     id: "tx-16",
     institutionName: "Chase",
@@ -444,14 +436,13 @@ const TRANSACTIONS: TransactionListItem[] = [
     ),
     name: "Shell Gas Station",
     notes: note("Full tank before the Tahoe drive."),
-    personalFinanceCategory: {
-      detailed: "TRANSPORTATION_GAS_STATIONS",
-      primary: "TRANSPORTATION",
-    },
     website: "shell.com",
   }),
   makeTx({
     amount: -11.32,
+    category: "TRANSPORTATION",
+    categoryConfidence: null,
+    categoryDetail: "TRANSPORTATION_TAXI_AND_RIDESHARE",
     date: "2026-03-21",
     id: "tx-17",
     institutionName: "Wells Fargo",
@@ -466,10 +457,6 @@ const TRANSACTIONS: TransactionListItem[] = [
     ),
     name: "Lyft",
     notes: note("Quick ride to the dentist appointment."),
-    personalFinanceCategory: {
-      detailed: "TRANSPORTATION_TAXI_AND_RIDESHARE",
-      primary: "TRANSPORTATION",
-    },
     website: "lyft.com",
   }),
 ];
@@ -683,21 +670,6 @@ const CHAT_THREADS: Record<
       },
     ],
     title: "Budget optimization",
-  },
-  crypto: {
-    messages: [
-      {
-        id: "1",
-        role: "user" as const,
-        text: "Analyze my crypto",
-      },
-      {
-        id: "2",
-        role: "assistant" as const,
-        text: "Crypto is 8% of portfolio ($38K). BTC and ETH only. Down 12% YTD. Consider rebalancing to your 5% target.",
-      },
-    ],
-    title: "Crypto portfolio analysis",
   },
   emergency: {
     messages: [
@@ -1101,16 +1073,6 @@ function MiniSidebar({
             }}
           >
             Budget optimization
-          </button>
-          <button
-            className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
-            type="button"
-            onClick={() => {
-              onNav("ai-chat");
-              onChatThread("crypto");
-            }}
-          >
-            Crypto portfolio analysis
           </button>
           <button
             className="w-full truncate rounded-md px-2 py-1 text-left text-xs text-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"

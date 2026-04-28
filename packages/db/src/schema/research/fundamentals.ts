@@ -8,10 +8,9 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 
-import { agentSelectPublic, appFullAccess } from "../rls";
 import { tickers } from "./tickers";
 
-export const fundamentals = pgTable.withRLS(
+export const fundamentals = pgTable(
   "fundamentals",
   {
     // Analyst consensus (FMP grades-consensus, 2x daily)
@@ -63,7 +62,7 @@ export const fundamentals = pgTable.withRLS(
     totalLiabilities: bigint("total_liabilities", { mode: "bigint" }),
     website: text("website"),
   },
-  () => [appFullAccess(), agentSelectPublic()]
+  () => []
 );
 
 export type Fundamentals = typeof fundamentals.$inferSelect;
