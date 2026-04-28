@@ -29,6 +29,7 @@ export interface TransactionRowInput {
   postalCode: string | null | undefined;
   country: string | null | undefined;
   lat: number | null | undefined;
+  lockedFields?: string[] | null;
   lon: number | null | undefined;
   storeNumber: string | null | undefined;
   logoUrl: string | null | undefined;
@@ -36,10 +37,7 @@ export interface TransactionRowInput {
   name: string;
   notes: TransactionListItem["notes"];
   pending: boolean | null | undefined;
-  userOverrideCategory: TransactionListItem["userOverrideCategory"];
-  userOverrideDate: string | Date | number | null | undefined;
   userOverrideLocation: TransactionListItem["location"];
-  userOverrideName: string | null | undefined;
   website: string | null | undefined;
 }
 
@@ -70,22 +68,10 @@ function synthesizeLocation(
   };
 }
 
-function resolveEffectiveCategory(row: TransactionRowInput): {
-  category: string | null;
-  detail: string | null;
-  confidence: string | null;
-} {
-  const override = row.userOverrideCategory;
-  return {
-    category: override?.primary ?? row.category ?? null,
-    confidence: override ? null : (row.categoryConfidence ?? null),
-    detail: override?.detailed ?? row.categoryDetail ?? null,
-  };
-}
-
 /**
  * Maps joined banking rows to the transaction list DTO (REST + Zero).
- * `date` / `authorizedDate` / `userOverrideDate` may be Drizzle date strings or Zero epoch ms.
+ * `date` / `authorizedDate` may be Drizzle date strings or Zero epoch ms.
+ * `name`, `category`, `date` are the source of truth — no override fallback needed.
  */
 export function toTransactionListItem(input: {
   account: TransactionListItemAccountSlice;
@@ -95,12 +81,6 @@ export function toTransactionListItem(input: {
   const { account, institution: inst, transaction: row } = input;
 
   const normalizedDate = normalizeDateForTransactionList(row.date) ?? "";
-  const normalizedOverrideDate = normalizeDateForTransactionList(
-    row.userOverrideDate
-  );
-
-  const effective = resolveEffectiveCategory(row);
-
   const synthesizedLocation = synthesizeLocation(row);
 
   return {
@@ -108,26 +88,24 @@ export function toTransactionListItem(input: {
     accountType: account.type,
     amount: row.amount,
     authorizedDate: normalizeDateForTransactionList(row.authorizedDate),
-    category: effective.category,
-    categoryConfidence: effective.confidence,
-    categoryDetail: effective.detail,
+    category: row.category ?? null,
+    categoryConfidence: row.categoryConfidence ?? null,
+    categoryDetail: row.categoryDetail ?? null,
     counterparties: row.counterparties,
-    date: normalizedOverrideDate ?? normalizedDate,
+    date: normalizedDate,
     id: row.id,
     institutionLogo: inst?.logo ?? null,
     institutionName: inst?.name ?? null,
     institutionUrl: inst?.url ?? null,
     location: row.userOverrideLocation ?? synthesizedLocation,
+    lockedFields: row.lockedFields ?? [],
     logoUrl: row.logoUrl ?? null,
     merchantName: row.merchantName ?? null,
     name: row.name,
     notes: row.notes ?? null,
     pending: row.pending ?? false,
     plaidAccountId: account.plaidAccountId,
-    userOverrideCategory: row.userOverrideCategory,
-    userOverrideDate: normalizedOverrideDate,
     userOverrideLocation: row.userOverrideLocation ?? null,
-    userOverrideName: row.userOverrideName ?? null,
     website: row.website ?? null,
   };
 }

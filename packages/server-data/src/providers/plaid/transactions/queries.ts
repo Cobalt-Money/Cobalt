@@ -1,12 +1,20 @@
 import { db } from "@cobalt-web/db";
 import { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
-import { and, eq, inArray, isNotNull, or } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
+/** Fields carried forward from a pending → posted row during sync. */
 export interface UserOverrides {
-  userOverrideName: string | null;
-  userOverrideCategory: { primary: string; detailed: string } | null;
+  category: string | null;
+  categoryDetail: string | null;
+  lockedFields: string[];
+  name: string;
 }
 
+/**
+ * Returns user-edited overrides for pending transactions that are about to be
+ * replaced by posted rows. Only returns rows where the user has locked at least
+ * one of: name, category, date.
+ */
 export async function getUserOverrides(
   transactionIds: string[]
 ): Promise<Map<string, UserOverrides>> {
@@ -16,19 +24,18 @@ export async function getUserOverrides(
 
   const rows = await db
     .select({
+      category: transactionTable.category,
+      categoryDetail: transactionTable.categoryDetail,
       externalId: transactionTable.externalId,
-      userOverrideCategory: transactionTable.userOverrideCategory,
-      userOverrideName: transactionTable.userOverrideName,
+      lockedFields: transactionTable.lockedFields,
+      name: transactionTable.name,
     })
     .from(transactionTable)
     .where(
       and(
         eq(transactionTable.source, "plaid"),
         inArray(transactionTable.externalId, transactionIds),
-        or(
-          isNotNull(transactionTable.userOverrideName),
-          isNotNull(transactionTable.userOverrideCategory)
-        )
+        sql`jsonb_array_length(${transactionTable.lockedFields}) > 0`
       )
     );
 
@@ -41,9 +48,10 @@ export async function getUserOverrides(
       .map((row) => [
         row.externalId,
         {
-          userOverrideCategory:
-            row.userOverrideCategory as UserOverrides["userOverrideCategory"],
-          userOverrideName: row.userOverrideName,
+          category: row.category,
+          categoryDetail: row.categoryDetail,
+          lockedFields: row.lockedFields,
+          name: row.name,
         },
       ])
   );

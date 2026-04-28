@@ -14,14 +14,42 @@ export type UserOverrideCategoryJson = z.infer<
   typeof userOverrideCategoryJsonSchema
 >;
 
-/** User-authored rich-text note (`notes`). ProseMirror/Tiptap JSON — structural shape. */
-export interface TransactionNotesJson {
+/** Structural JSON value — mutable arrays/records so Tiptap editor APIs accept it; assigns to ReadonlyJSONValue. */
+export type JsonValue =
+  | null
+  | string
+  | boolean
+  | number
+  | JsonArray
+  | JsonObject;
+export type JsonArray = JsonValue[];
+// Must be `type` not `interface`: interfaces are open (declaration merging) and
+// not assignable to index-signature types like Zero's `ReadonlyJSONObject`.
+// See SRI-181 — Zero's `defineMutator` constraint on `notes` arg.
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type JsonObject = {
+  [key: string]: JsonValue | undefined;
+};
+
+/** User-authored rich-text note (`notes`). ProseMirror/Tiptap JSON. */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type TransactionNotesJson = {
   type?: string;
-  attrs?: Record<string, unknown>;
+  attrs?: JsonObject;
   content?: TransactionNotesJson[];
-  marks?: { type: string; attrs?: Record<string, unknown> }[];
+  marks?: TransactionNotesMark[];
   text?: string;
-}
+};
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type TransactionNotesMark = {
+  type: string;
+  attrs?: JsonObject;
+};
+
+/** Runtime: accept any object shape; compile-time: typed as TransactionNotesJson on both input + output. */
+export const transactionNotesJsonSchema = z.custom<TransactionNotesJson>(
+  (val) => typeof val === "object" && val !== null && !Array.isArray(val)
+);
 
 /** Plaid `location` on a transaction (physical merchants; often all-null for online). */
 export const locationJsonSchema = z.object({
@@ -120,7 +148,6 @@ export type RecurringTransactionIdsJson = z.infer<
 /** Refinements for `createSelectSchema(transaction, …)`. */
 export const transactionJsonbSelectRefinements = {
   counterparties: counterpartiesArrayJsonSchema,
-  userOverrideCategory: userOverrideCategoryJsonSchema.nullable(),
   userOverrideLocation: locationJsonSchema.nullable(),
 } as const;
 

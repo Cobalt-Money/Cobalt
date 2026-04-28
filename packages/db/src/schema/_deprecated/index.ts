@@ -1,3 +1,4 @@
+/* eslint-disable oxc/no-barrel-file */
 // Pre-SRI-264 / pre-SRI-248 schema. Kept on disk only so drizzle-kit and the
 // Drizzle runtime client still see the tables in production until callers
 // finish migrating. Do NOT import from here in application code — every

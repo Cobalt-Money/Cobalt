@@ -12,30 +12,15 @@ import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 
-/** ProseMirror / Tiptap document — re-exported from db to keep a single source of truth. */
+// Tiptap doc kept opaque (`z.unknown()`) at API boundary. The recursive
+// structural type would otherwise leak into Hono's RPC schema accumulator
+// and trip TS2589 once enough sub-routers are chained. Cheap workaround
+// since we're migrating from Tiptap → Milkdown soon; revisit then.
 export type TiptapDoc = TransactionNotesJson;
 
 const NOTES_MAX_SERIALIZED_BYTES = 100_000;
 
-/** Base recursive schema for a Tiptap doc. Use `tiptapDocSchema` for size-capped validation. */
-const tiptapDocBaseSchema: z.ZodType<TiptapDoc> = z.lazy(() =>
-  z
-    .object({
-      attrs: z.record(z.string(), z.any()).optional(),
-      content: z.array(tiptapDocBaseSchema).optional(),
-      marks: z
-        .array(
-          z.object({
-            attrs: z.record(z.string(), z.any()).optional(),
-            type: z.string(),
-          })
-        )
-        .optional(),
-      text: z.string().optional(),
-      type: z.string().optional(),
-    })
-    .passthrough()
-);
+const tiptapDocBaseSchema = z.unknown();
 
 export const tiptapDocSchema = tiptapDocBaseSchema.refine(
   (doc) => JSON.stringify(doc).length <= NOTES_MAX_SERIALIZED_BYTES,
@@ -82,14 +67,12 @@ export const transactionListItemSchema = transactionListItemRowSchema
     counterparties: true,
     date: true,
     id: true,
+    lockedFields: true,
     logoUrl: true,
     merchantName: true,
     name: true,
     pending: true,
-    userOverrideCategory: true,
-    userOverrideDate: true,
     userOverrideLocation: true,
-    userOverrideName: true,
     website: true,
   })
   .extend({
@@ -179,20 +162,23 @@ export const creditSpendingQuerySchema = z.object({
 });
 
 /**
- * Sparse partial update for a transaction. Any field omitted is left unchanged;
- * `null` clears the override (RFC 7396 semantics).
+ * Sparse partial update for a transaction (RFC 7396 semantics):
+ * - Omit a field → unchanged.
+ * - Non-null value → update column, add to lockedFields, append transaction_edit row.
+ * - `null` → restore original (from transaction_edit old_value), remove from lockedFields.
+ * Location is still an override-only field (not tracked in transaction_edit).
  */
 export const transactionPatchBodySchema = z
   .object({
-    notes: tiptapDocSchema.nullable().optional(),
-    userOverrideCategory: userOverrideCategoryJsonSchema.nullable().optional(),
-    userOverrideDate: z
+    category: userOverrideCategoryJsonSchema.nullable().optional(),
+    date: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .nullable()
       .optional(),
+    name: z.string().min(1).nullable().optional(),
+    notes: tiptapDocSchema.nullable().optional(),
     userOverrideLocation: locationJsonSchema.nullable().optional(),
-    userOverrideName: z.string().min(1).nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, {
     message: "At least one field is required",
@@ -211,3 +197,22 @@ export const geocodeSearchResponseSchema = z.object({
 export const geocodeSearchQuerySchema = z.object({
   q: z.string().min(2).max(200),
 });
+
+/** Single row from `transaction_edit`. */
+export const transactionActivityItemSchema = z.object({
+  actor: z.enum(["user", "system"]),
+  createdAt: z.string(),
+  field: z.enum(["amount", "category", "date", "location", "name", "notes"]),
+  id: z.string(),
+  /** Native value, type discriminated by `field`: name/date=string, amount=number, category={primary,detailed,confidence?}, notes=Tiptap doc. */
+  newValue: z.unknown().nullable(),
+  oldValue: z.unknown().nullable(),
+});
+
+export const transactionActivityResponseSchema = z.object({
+  events: z.array(transactionActivityItemSchema),
+});
+
+export type TransactionActivityItem = z.infer<
+  typeof transactionActivityItemSchema
+>;

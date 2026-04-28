@@ -2,9 +2,10 @@ import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { recurring } from "@cobalt-web/db/schema/accounts/banking/transactions/recurring";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
+import { transactionEdit } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction-edit";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
-import { and, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { z } from "zod";
 
@@ -93,6 +94,7 @@ export async function getUserTransactions(
         url: institution.url,
       },
       lat: transaction.lat,
+      lockedFields: transaction.lockedFields,
       logoUrl: transaction.logoUrl,
       lon: transaction.lon,
       merchantName: transaction.merchantName,
@@ -102,10 +104,7 @@ export async function getUserTransactions(
       postalCode: transaction.postalCode,
       region: transaction.region,
       storeNumber: transaction.storeNumber,
-      userOverrideCategory: transaction.userOverrideCategory,
-      userOverrideDate: transaction.userOverrideDate,
       userOverrideLocation: transaction.userOverrideLocation,
-      userOverrideName: transaction.userOverrideName,
       website: transaction.website,
     })
     .from(transaction)
@@ -150,6 +149,7 @@ export async function getUserTransactions(
         date: row.date,
         id: row.id,
         lat: row.lat,
+        lockedFields: row.lockedFields,
         logoUrl: row.logoUrl,
         lon: row.lon,
         merchantName: row.merchantName,
@@ -159,10 +159,7 @@ export async function getUserTransactions(
         postalCode: row.postalCode,
         region: row.region,
         storeNumber: row.storeNumber,
-        userOverrideCategory: row.userOverrideCategory,
-        userOverrideDate: row.userOverrideDate,
         userOverrideLocation: row.userOverrideLocation,
-        userOverrideName: row.userOverrideName,
         website: row.website,
       },
     })
@@ -328,4 +325,28 @@ export async function getCreditSpending(
     spending.length > 0 ? totalSpending / spending.length : 0;
 
   return { averageLabel, averageSpending, spending, totalSpending };
+}
+
+export async function getTransactionActivity(transactionId: string) {
+  const rows = await db
+    .select({
+      actor: transactionEdit.actor,
+      createdAt: transactionEdit.createdAt,
+      field: transactionEdit.field,
+      id: transactionEdit.id,
+      newValue: transactionEdit.newValue,
+      oldValue: transactionEdit.oldValue,
+    })
+    .from(transactionEdit)
+    .where(eq(transactionEdit.transactionId, transactionId))
+    .orderBy(asc(transactionEdit.createdAt));
+
+  return rows.map((r) => ({
+    actor: r.actor,
+    createdAt: r.createdAt.toISOString(),
+    field: r.field,
+    id: r.id,
+    newValue: r.newValue,
+    oldValue: r.oldValue,
+  }));
 }

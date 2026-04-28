@@ -76,11 +76,7 @@ const buildSearchQuery = (trimmedSearch: string) => {
   const pattern = ILIKE_WILDCARD(trimmedSearch);
   return zql.transaction
     .where(({ cmp, or }) =>
-      or(
-        cmp("name", "ILIKE", pattern),
-        cmp("merchantName", "ILIKE", pattern),
-        cmp("userOverrideName", "ILIKE", pattern)
-      )
+      or(cmp("name", "ILIKE", pattern), cmp("merchantName", "ILIKE", pattern))
     )
     .related("account", (q) =>
       q.related("plaidConnection", (c) => c.related("institution"))

@@ -20,7 +20,6 @@ import type {
   CounterpartiesArrayJson,
   LocationJson,
   TransactionNotesJson,
-  UserOverrideCategoryJson,
 } from "./zod";
 
 export const transactionSource = pgEnum("transaction_source", [
@@ -69,6 +68,10 @@ export const transaction = pgTable(
     /** Merchant latitude (degrees). */
     lat: doublePrecision("lat"),
     /** Plaid merchant logo URL. */
+    lockedFields: jsonb("locked_fields")
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     logoUrl: text("logo_url"),
     /** Merchant longitude (degrees). */
     lon: doublePrecision("lon"),
@@ -103,20 +106,13 @@ export const transaction = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    /** User-set category override {primary, detailed}; wins over `category`. */
-    userOverrideCategory: jsonb(
-      "user_override_category"
-    ).$type<UserOverrideCategoryJson | null>(),
-    /** User-edited effective date; wins over Plaid `date`. */
-    userOverrideDate: date("user_override_date"),
-    /** User-edited location override. */
+    /** User-edited location override; wins over flat lat/lon/address columns. */
     userOverrideLocation: jsonb(
       "user_override_location"
     ).$type<LocationJson | null>(),
-    /** User-renamed display name; wins over `name`. */
-    userOverrideName: text("user_override_name"),
     /** Plaid merchant website. */
     website: text("website"),
+    /** Fields the user has explicitly edited; Plaid sync skips these on upsert. */
   },
   (t) => [
     index("transaction_account_id_idx").on(t.accountId),

@@ -1,7 +1,6 @@
 import type { TransactionDetailEditHandlers } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
 import { TransactionDetailView } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
 import { mutators, queries } from "@cobalt-web/zero";
-import type { ReadonlyJSONObject } from "@rocicorp/zero";
 import { useZero } from "@rocicorp/zero/react";
 import {
   createFileRoute,
@@ -13,7 +12,7 @@ import { toast } from "sonner";
 
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 import { useGeocodeSearch } from "@/hooks/use-geocode-search";
-import { useTransactions } from "@/hooks/use-transactions";
+import { useHistory, useTransactions } from "@/hooks/use-transactions";
 
 const transactionDetailRouteApi = getRouteApi(
   "/_auth/transactions/$transactionId"
@@ -21,8 +20,11 @@ const transactionDetailRouteApi = getRouteApi(
 
 export const Route = createFileRoute("/_auth/transactions/$transactionId")({
   component: TransactionDetailRoute,
-  loader: ({ context }) => {
+  loader: ({ context, params }) => {
     context.zero.run(queries.transactions.list());
+    context.zero.run(
+      queries.transactions.activity({ transactionId: params.transactionId })
+    );
   },
   staticData: { title: "Transaction" },
 });
@@ -48,13 +50,15 @@ function TransactionDetailRoute() {
   const { data: locationResults = [], isFetching: locationLoading } =
     useGeocodeSearch(locationQuery);
 
+  const editEvents = useHistory(transactionId);
+
   const edit = useMemo<TransactionDetailEditHandlers>(() => {
-    function reportFailure(label: string) {
-      return (err: unknown) => {
-        console.error(`Failed to update transaction ${label}`, err);
-        toast.error(`Couldn't save ${label}. Please try again.`);
-      };
-    }
+    const id = transactionId;
+
+    const onError = (label: string) => (err: unknown) => {
+      console.error(`Failed to update transaction ${label}`, err);
+      toast.error(`Couldn't save ${label}. Please try again.`);
+    };
 
     return {
       locationSearch: {
@@ -64,62 +68,92 @@ function TransactionDetailRoute() {
       },
       onResetCategory: () => {
         void zero
-          .mutate(mutators.transaction.resetCategory({ id: transactionId }))
-          .server.catch(reportFailure("category"));
+          .mutate(
+            mutators.transaction.resetCategory({
+              editId: crypto.randomUUID(),
+              id,
+            })
+          )
+          .server.catch(onError("category"));
       },
       onResetDate: () => {
         void zero
-          .mutate(mutators.transaction.resetDate({ id: transactionId }))
-          .server.catch(reportFailure("date"));
+          .mutate(
+            mutators.transaction.resetDate({ editId: crypto.randomUUID(), id })
+          )
+          .server.catch(onError("date"));
       },
       onResetLocation: () => {
         void zero
-          .mutate(mutators.transaction.resetLocation({ id: transactionId }))
-          .server.catch(reportFailure("location"));
+          .mutate(
+            mutators.transaction.resetLocation({
+              editId: crypto.randomUUID(),
+              id,
+            })
+          )
+          .server.catch(onError("location"));
       },
       onResetNotes: () => {
         void zero
-          .mutate(mutators.transaction.resetNotes({ id: transactionId }))
-          .server.catch(reportFailure("notes"));
+          .mutate(
+            mutators.transaction.resetNotes({ editId: crypto.randomUUID(), id })
+          )
+          .server.catch(onError("notes"));
       },
       onUpdateCategory: (category) => {
         void zero
           .mutate(
             mutators.transaction.updateCategory({
+              editId: crypto.randomUUID(),
+              id,
               category,
-              id: transactionId,
             })
           )
-          .server.catch(reportFailure("category"));
+          .server.catch(onError("category"));
+      },
+      onUpdateDate: (date) => {
+        void zero
+          .mutate(
+            mutators.transaction.updateDate({
+              editId: crypto.randomUUID(),
+              id,
+              date,
+            })
+          )
+          .server.catch(onError("date"));
       },
       onUpdateLocation: (location) => {
         void zero
           .mutate(
-            mutators.transaction.updateLocation({ id: transactionId, location })
+            mutators.transaction.updateLocation({
+              editId: crypto.randomUUID(),
+              id,
+              location,
+            })
           )
-          .server.catch(reportFailure("location"));
-      },
-      onUpdateDate: (date) => {
-        void zero
-          .mutate(mutators.transaction.updateDate({ date, id: transactionId }))
-          .server.catch(reportFailure("date"));
+          .server.catch(onError("location"));
       },
       onUpdateName: (name) => {
         void zero
-          .mutate(mutators.transaction.updateName({ id: transactionId, name }))
-          .server.catch(reportFailure("name"));
+          .mutate(
+            mutators.transaction.updateName({
+              editId: crypto.randomUUID(),
+              id,
+              name,
+            })
+          )
+          .server.catch(onError("name"));
       },
       onUpdateNotes: (notes) => {
         void zero
           .mutate(
             mutators.transaction.updateNotes({
-              id: transactionId,
-              // Tiptap's typed JSON doc is structurally a JSON object; Zero's
-              // column type requires `ReadonlyJSONObject` (index-signatured).
-              notes: notes as ReadonlyJSONObject,
+              editId: crypto.randomUUID(),
+              id,
+              notes,
             })
           )
-          .server.catch(reportFailure("notes"));
+          .server.catch(onError("notes"));
       },
     };
   }, [transactionId, zero, locationLoading, locationResults]);
@@ -128,7 +162,11 @@ function TransactionDetailRoute() {
     <SidebarShellLayout flushBottom>
       <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">
         {transaction ? (
-          <TransactionDetailView edit={edit} transaction={transaction} />
+          <TransactionDetailView
+            edit={edit}
+            editEvents={editEvents}
+            transaction={transaction}
+          />
         ) : (
           <div className="mx-auto flex min-h-48 w-full max-w-2xl items-center justify-center text-muted-foreground text-sm">
             Loading…

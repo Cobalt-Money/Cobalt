@@ -10,11 +10,11 @@ How to run **PostgreSQL locally** (Docker), keep **Drizzle** migrations aligned 
 | **Zero client schema (generated)** | `drizzle-zero` → `packages/zero/src/zero-schema.gen.ts` (see [workflow](./workflow.md#drizzle-zero-schema-generation))      |
 | **Env**                            | Zod-validated in `packages/env` — server vars from `apps/server/.env` (`packages/env/src/server.ts`)                        |
 | **Local DB**                       | Docker Compose `docker-compose.local-db.yml` — Postgres 18 on host port **5433**                                            |
-| **Postgres roles**                 | PlanetScale-style group roles + RLS — [`packages/db/planetscale/README.md`](../../packages/db/planetscale/README.md)        |
+| **Postgres bootstrap**             | [`packages/db/planetscale/README.md`](../../packages/db/planetscale/README.md)                                              |
 
 ## Quick start
 
-1. [Workflow](./workflow.md) — first-time setup (init → migrate → grants), **Drizzle + Zero regeneration**, optional prod migration order
+1. [Workflow](./workflow.md) — first-time setup (init → migrate), **Drizzle + Zero regeneration**, optional prod migration order
 2. [Troubleshooting](./troubleshooting.md) — Docker, connections, migrations, **Zero / zero-cache**
 
 ## Scripts (repo root)
@@ -24,8 +24,7 @@ How to run **PostgreSQL locally** (Docker), keep **Drizzle** migrations aligned 
 | `bun db:local:up`      | Start local Postgres (Docker)                                             |
 | `bun db:local:down`    | Stop local Postgres (keeps data volume)                                   |
 | `bun db:local:reset`   | Stop, **delete volume**, start fresh empty DB                             |
-| `bun db:local:init`    | Create `pg_read_all_data` / `pg_write_all_data` (**before** migrate)      |
-| `bun db:local:grants`  | Table grants + `app_local` / `agent_local` (**after** migrate)            |
+| `bun db:local:init`    | Postgres bootstrap (**before** migrate)                                   |
 | `bun db:migrate`       | Apply migrations (see `packages/db/drizzle.config.ts` URL order)          |
 | `bun db:migrate:local` | Same as migrate, forces Docker superuser URL on port **5433**             |
 | `bun db:push`          | Push schema (dev; bypasses migration files)                               |
@@ -52,7 +51,7 @@ To use that single Postgres from every checkout:
 ## Conventions
 
 1. **Docker** — required for `bun db:local:*` (Docker Desktop or compatible engine).
-2. **Roles + RLS** — not Supabase SDK auth; **Postgres** roles and policies. Run **`db:local:init` → `db:migrate` → `db:local:grants`** when working against the migrated schema (see [`packages/db/planetscale/`](../../packages/db/planetscale/README.md)).
+2. **Local bootstrap** — Run **`db:local:init` → `db:migrate`** for first-time setup (see [`packages/db/planetscale/`](../../packages/db/planetscale/README.md)). RLS removed; everything runs as `postgres` superuser locally.
 3. **Optional `MIGRATION_URI`** — if set, Drizzle Kit uses it instead of `DATABASE_URL` for CLI (`drizzle.config.ts`).
 4. **Drizzle and Zero** — after **any** Drizzle schema change that should appear in Zero, run **`bun zero:generate`** from the repo root (see [workflow](./workflow.md#drizzle-zero-schema-generation)). Skipping this causes client/replication drift (e.g. `SchemaVersionNotSupported` in zero-cache).
 
