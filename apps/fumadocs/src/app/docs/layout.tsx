@@ -1,6 +1,7 @@
+import { BubbleChatIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { buttonVariants } from "fumadocs-ui/components/ui/button";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import { MessageCircleIcon } from "lucide-react";
 
 import {
   AISearch,
@@ -25,7 +26,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             })
           )}
         >
-          <MessageCircleIcon className="size-4.5" />
+          <HugeiconsIcon icon={BubbleChatIcon} className="size-4.5" />
           Ask AI
         </AISearchTrigger>
       </AISearch>

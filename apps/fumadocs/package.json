@@ -14,6 +14,8 @@
     "@ai-sdk/gateway": "^3.0.84",
     "@ai-sdk/react": "^3.0.136",
     "@cobalt-web/env": "workspace:*",
+    "@hugeicons/core-free-icons": "^4.0.0",
+    "@hugeicons/react": "^1.1.6",
     "@radix-ui/react-presence": "^1.1.5",
     "@takumi-rs/image-response": "^0.73.1",
     "ai": "^6.0.134",

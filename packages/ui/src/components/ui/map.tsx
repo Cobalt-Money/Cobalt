@@ -1,7 +1,15 @@
 import { cn } from "@cobalt-web/ui/lib/utils";
 
 import "maplibre-gl/dist/maplibre-gl.css";
-import { X, Minus, Plus, Locate, Maximize, Loader2 } from "lucide-react";
+import {
+  Cancel01Icon,
+  Loading03Icon,
+  Location01Icon,
+  Maximize01Icon,
+  MinusSignIcon,
+  PlusSignIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import MapLibreGL from "maplibre-gl";
 import type { PopupOptions, MarkerOptions } from "maplibre-gl";
 import {
@@ -616,7 +624,7 @@ function MarkerPopup({
           className="ring-offset-background focus:ring-ring absolute top-1 right-1 z-10 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none"
           aria-label="Close popup"
         >
-          <X className="h-4 w-4" />
+          <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </button>
       )}
@@ -868,10 +876,10 @@ function MapControls({
       {showZoom && (
         <ControlGroup>
           <ControlButton onClick={handleZoomIn} label="Zoom in">
-            <Plus className="size-4" />
+            <HugeiconsIcon icon={PlusSignIcon} className="size-4" />
           </ControlButton>
           <ControlButton onClick={handleZoomOut} label="Zoom out">
-            <Minus className="size-4" />
+            <HugeiconsIcon icon={MinusSignIcon} className="size-4" />
           </ControlButton>
         </ControlGroup>
       )}
@@ -888,9 +896,12 @@ function MapControls({
             disabled={waitingForLocation}
           >
             {waitingForLocation ? (
-              <Loader2 className="size-4 animate-spin" />
+              <HugeiconsIcon
+                icon={Loading03Icon}
+                className="size-4 animate-spin"
+              />
             ) : (
-              <Locate className="size-4" />
+              <HugeiconsIcon icon={Location01Icon} className="size-4" />
             )}
           </ControlButton>
         </ControlGroup>
@@ -898,7 +909,7 @@ function MapControls({
       {showFullscreen && (
         <ControlGroup>
           <ControlButton onClick={handleFullscreen} label="Toggle fullscreen">
-            <Maximize className="size-4" />
+            <HugeiconsIcon icon={Maximize01Icon} className="size-4" />
           </ControlButton>
         </ControlGroup>
       )}
@@ -1051,7 +1062,7 @@ function MapPopup({
           className="ring-offset-background focus:ring-ring absolute top-1 right-1 z-10 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none"
           aria-label="Close popup"
         >
-          <X className="h-4 w-4" />
+          <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </button>
       )}

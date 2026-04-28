@@ -2,12 +2,13 @@ import { Queue } from "@cobalt-web/ui/components/ai-elements/queue";
 import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  CircleHelpIcon,
-  PencilLineIcon,
-  SendIcon,
-} from "lucide-react";
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  HelpCircleIcon,
+  PencilEdit01Icon,
+  SentIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useRef, useState } from "react";
 
 import { useChat } from "@/components/ai-chat/state/chat-context";
@@ -95,7 +96,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
     <Queue className="mx-auto w-3/4 rounded-3xl rounded-b-none border-0 shadow-none">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2 font-medium text-muted-foreground text-sm">
-          <CircleHelpIcon className="size-4" />
+          <HugeiconsIcon icon={HelpCircleIcon} className="size-4" />
           <span>Questions</span>
         </div>
         <div className="flex items-center gap-2">
@@ -107,7 +108,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
                 onClick={() => setCurrentIndex((i) => i - 1)}
                 type="button"
               >
-                <ChevronUpIcon className="size-3.5" />
+                <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
               </button>
               <span>
                 {safeIndex + 1} of {questions.length}
@@ -118,7 +119,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
                 onClick={() => setCurrentIndex((i) => i + 1)}
                 type="button"
               >
-                <ChevronDownIcon className="size-3.5" />
+                <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
               </button>
             </div>
           )}
@@ -129,7 +130,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
             size="sm"
             variant="ghost"
           >
-            <SendIcon className="size-3" />
+            <HugeiconsIcon icon={SentIcon} className="size-3" />
             Submit
           </Button>
         </div>
@@ -191,7 +192,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
         {isOtherSelected ? (
           <div className="flex items-center gap-2.5 rounded-md bg-primary/10 px-2 py-1.5 text-left text-sm">
             <span className="flex size-5 shrink-0 items-center justify-center rounded bg-primary font-semibold text-primary-foreground text-xs">
-              <PencilLineIcon className="size-3" />
+              <HugeiconsIcon icon={PencilEdit01Icon} className="size-3" />
             </span>
             <input
               className="min-w-0 flex-1 bg-transparent text-foreground text-sm outline-none placeholder:text-muted-foreground/60"
@@ -223,7 +224,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
             type="button"
           >
             <span className="flex size-5 shrink-0 items-center justify-center rounded bg-muted-foreground/15 font-semibold text-muted-foreground text-xs">
-              <PencilLineIcon className="size-3" />
+              <HugeiconsIcon icon={PencilEdit01Icon} className="size-3" />
             </span>
             <span className="text-muted-foreground">Other...</span>
           </button>

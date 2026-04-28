@@ -1,5 +1,6 @@
+import { Tick02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Check } from "lucide-react";
 import { useState } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -101,7 +102,8 @@ function PricingPage() {
             <ul className="mt-8 space-y-4">
               {sharedFeatures.map((label) => (
                 <li className="flex items-center gap-3 text-sm" key={label}>
-                  <Check
+                  <HugeiconsIcon
+                    icon={Tick02Icon}
                     className="size-4 flex-shrink-0 text-foreground"
                     strokeWidth={2.5}
                   />
@@ -153,7 +155,8 @@ function PricingPage() {
 
             <ul className="mt-8 space-y-4">
               <li className="flex items-center gap-3 text-sm">
-                <Check
+                <HugeiconsIcon
+                  icon={Tick02Icon}
                   className="size-4 flex-shrink-0 text-foreground"
                   strokeWidth={2.5}
                 />
@@ -161,7 +164,8 @@ function PricingPage() {
               </li>
               {sharedFeatures.map((label) => (
                 <li className="flex items-center gap-3 text-sm" key={label}>
-                  <Check
+                  <HugeiconsIcon
+                    icon={Tick02Icon}
                     className="size-4 flex-shrink-0 text-foreground"
                     strokeWidth={2.5}
                   />
