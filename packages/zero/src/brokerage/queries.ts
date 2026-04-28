@@ -8,22 +8,22 @@ const RECENT_ACTIVITY_LIMIT = 50;
 const RECENT_ORDER_LIMIT = 50;
 
 /**
- * Brokerage domain — `queries.brokerage.*` (SnapTrade-synced `brokerage_*` tables).
- * Shapes align with `@cobalt-web/server-data/brokerage/merged` payloads (accounts, positions, activities, orders).
+ * Brokerage domain — `queries.brokerage.*`. Backed by the unified schema
+ * (financialAccount with source='snaptrade', plus holding/orders/investmentActivity/snapshot).
  */
 export const brokerageQueries = {
-  /** Linked brokerage accounts with balances, positions, per-account details, and institution metadata. */
+  /** Linked SnapTrade brokerage accounts with balance, holdings, and authorization metadata. */
   accounts: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
-      return zql.brokerageAccounts.where("id", NO_MATCH_ID);
+      return zql.financialAccount.where("id", NO_MATCH_ID);
     }
-    return zql.brokerageAccounts
+    return zql.financialAccount
       .where("userId", userId)
-      .related("balances")
-      .related("positions")
-      .related("accountDetails")
-      .related("brokerageAuthorization");
+      .where("source", "snaptrade")
+      .related("balance")
+      .related("holdings")
+      .related("snaptradeAuthorization");
   }),
 
   /** Plaid investment transaction feed, newest first. */
@@ -33,92 +33,95 @@ export const brokerageQueries = {
       return zql.investmentActivity.where("id", NO_MATCH_ID);
     }
     return zql.investmentActivity
-      .whereExists("account", (acc) =>
-        acc.whereExists("connection", (conn) => conn.where("userId", userId))
-      )
+      .where("userId", userId)
+      .whereExists("account", (acc) => acc.where("source", "plaid"))
       .related("account")
       .related("security")
       .orderBy("date", "desc")
       .limit(RECENT_ACTIVITY_LIMIT);
   }),
 
-  /** Plaid bank accounts filtered to type = "investment". */
+  /** Plaid investment-type accounts. */
   plaidInvestmentAccounts: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
-      return zql.bankAccount.where("id", NO_MATCH_ID);
+      return zql.financialAccount.where("id", NO_MATCH_ID);
     }
-    return zql.bankAccount
+    return zql.financialAccount
+      .where("userId", userId)
+      .where("source", "plaid")
       .where("type", "investment")
-      .whereExists("connection", (conn) => conn.where("userId", userId))
-      .related("connection", (q) => q.related("institution"));
+      .related("plaidConnection", (q) => q.related("institution"))
+      .related("balance");
   }),
 
-  /** Plaid investment holdings across all linked investment accounts. */
+  /** Plaid investment holdings across all linked Plaid investment accounts. */
   plaidPositions: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
-      return zql.investmentPosition.where("id", NO_MATCH_ID);
+      return zql.holding.where("id", NO_MATCH_ID);
     }
-    return zql.investmentPosition
-      .whereExists("account", (acc) =>
-        acc.whereExists("connection", (conn) => conn.where("userId", userId))
-      )
+    return zql.holding
+      .where("userId", userId)
+      .whereExists("account", (acc) => acc.where("source", "plaid"))
       .related("account")
       .related("security");
   }),
 
   /**
-   * Historical portfolio snapshots (SnapTrade) for the signed-in user.
-   * Each row is one brokerage account snapshot — use `totalValue` per `snapTradeAccountId`
-   * aggregated by month for the net-worth chart.
-   * Ordered newest-first so the limit truncates old history, not the latest snapshots.
+   * Historical SnapTrade portfolio snapshots for the signed-in user.
+   * One row per brokerage account per day; aggregate for the net-worth chart.
    */
   portfolioSnapshots: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
-      return zql.portfolioSnapshots.where("id", NO_MATCH_ID);
+      return zql.snapshot.where("id", NO_MATCH_ID);
     }
-    return zql.portfolioSnapshots
+    return zql.snapshot
       .where("userId", userId)
+      .whereExists("account", (acc) => acc.where("source", "snaptrade"))
       .orderBy("snapshotDate", "desc")
       .limit(1000);
   }),
 
-  /** Flat holdings list across accounts (convenience for tables sorted by symbol). */
+  /** Flat SnapTrade holdings list across accounts (sorted by symbol). */
   positions: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
-      return zql.brokeragePositions.where("id", NO_MATCH_ID);
+      return zql.holding.where("id", NO_MATCH_ID);
     }
-    return zql.brokeragePositions
+    return zql.holding
       .where("userId", userId)
-      .related("brokerageAccount")
-      .orderBy("symbol", "asc");
+      .whereExists("account", (acc) => acc.where("source", "snaptrade"))
+      .related("account")
+      .related("security");
   }),
 
-  /** Cross-account activity feed, newest trade date first. */
+  /** Cross-account SnapTrade activity feed, newest trade date first. */
   recentActivities: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
-      return zql.brokerageActivities.where("id", NO_MATCH_ID);
+      return zql.investmentActivity.where("id", NO_MATCH_ID);
     }
-    return zql.brokerageActivities
+    return zql.investmentActivity
       .where("userId", userId)
-      .related("brokerageAccount")
-      .orderBy("tradeDate", "desc")
+      .whereExists("account", (acc) => acc.where("source", "snaptrade"))
+      .related("account")
+      .related("security")
+      .orderBy("date", "desc")
       .limit(RECENT_ACTIVITY_LIMIT);
   }),
 
-  /** Recent orders across linked accounts, newest placement time first. */
+  /** Recent SnapTrade orders across linked accounts, newest placement time first. */
   recentOrders: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
-      return zql.brokerageOrders.where("id", NO_MATCH_ID);
+      return zql.orders.where("id", NO_MATCH_ID);
     }
-    return zql.brokerageOrders
+    return zql.orders
       .where("userId", userId)
-      .related("brokerageAccount")
+      .related("account")
+      .related("security")
       .orderBy("timePlaced", "desc")
       .limit(RECENT_ORDER_LIMIT);
   }),

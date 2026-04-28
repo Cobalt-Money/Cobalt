@@ -3,7 +3,7 @@ import type { TransactionListItem } from "./schemas.js";
 
 export interface TransactionListItemAccountSlice {
   name: string;
-  plaidAccountId: string;
+  plaidAccountId: string | null;
   type: string;
 }
 
@@ -17,21 +17,70 @@ export type TransactionListItemInstitutionSlice = {
 export interface TransactionRowInput {
   amount: number;
   authorizedDate: string | Date | number | null | undefined;
+  category: string | null | undefined;
+  categoryConfidence: string | null | undefined;
+  categoryDetail: string | null | undefined;
   counterparties: TransactionListItem["counterparties"];
   date: string | Date | number;
   id: string;
-  location: TransactionListItem["location"];
+  address: string | null | undefined;
+  city: string | null | undefined;
+  region: string | null | undefined;
+  postalCode: string | null | undefined;
+  country: string | null | undefined;
+  lat: number | null | undefined;
+  lon: number | null | undefined;
+  storeNumber: string | null | undefined;
   logoUrl: string | null | undefined;
   merchantName: string | null | undefined;
   name: string;
   notes: TransactionListItem["notes"];
   pending: boolean | null | undefined;
-  personalFinanceCategory: TransactionListItem["personalFinanceCategory"];
   userOverrideCategory: TransactionListItem["userOverrideCategory"];
   userOverrideDate: string | Date | number | null | undefined;
   userOverrideLocation: TransactionListItem["location"];
   userOverrideName: string | null | undefined;
   website: string | null | undefined;
+}
+
+function synthesizeLocation(
+  row: TransactionRowInput
+): TransactionListItem["location"] {
+  const hasAny =
+    row.address ||
+    row.city ||
+    row.region ||
+    row.postalCode ||
+    row.country ||
+    row.storeNumber ||
+    (row.lat !== null && row.lat !== undefined) ||
+    (row.lon !== null && row.lon !== undefined);
+  if (!hasAny) {
+    return null;
+  }
+  return {
+    address: row.address ?? null,
+    city: row.city ?? null,
+    country: row.country ?? null,
+    lat: row.lat ?? null,
+    lon: row.lon ?? null,
+    postal_code: row.postalCode ?? null,
+    region: row.region ?? null,
+    store_number: row.storeNumber ?? null,
+  };
+}
+
+function resolveEffectiveCategory(row: TransactionRowInput): {
+  category: string | null;
+  detail: string | null;
+  confidence: string | null;
+} {
+  const override = row.userOverrideCategory;
+  return {
+    category: override?.primary ?? row.category ?? null,
+    confidence: override ? null : (row.categoryConfidence ?? null),
+    detail: override?.detailed ?? row.categoryDetail ?? null,
+  };
 }
 
 /**
@@ -50,25 +99,30 @@ export function toTransactionListItem(input: {
     row.userOverrideDate
   );
 
+  const effective = resolveEffectiveCategory(row);
+
+  const synthesizedLocation = synthesizeLocation(row);
+
   return {
     accountName: account.name,
     accountType: account.type,
     amount: row.amount,
     authorizedDate: normalizeDateForTransactionList(row.authorizedDate),
+    category: effective.category,
+    categoryConfidence: effective.confidence,
+    categoryDetail: effective.detail,
     counterparties: row.counterparties,
     date: normalizedOverrideDate ?? normalizedDate,
     id: row.id,
     institutionLogo: inst?.logo ?? null,
     institutionName: inst?.name ?? null,
     institutionUrl: inst?.url ?? null,
-    location: row.userOverrideLocation ?? row.location,
+    location: row.userOverrideLocation ?? synthesizedLocation,
     logoUrl: row.logoUrl ?? null,
     merchantName: row.merchantName ?? null,
     name: row.name,
     notes: row.notes ?? null,
     pending: row.pending ?? false,
-    personalFinanceCategory:
-      row.userOverrideCategory ?? row.personalFinanceCategory,
     plaidAccountId: account.plaidAccountId,
     userOverrideCategory: row.userOverrideCategory,
     userOverrideDate: normalizedOverrideDate,

@@ -1,5 +1,5 @@
 import type { StockNewsArticle } from "@cobalt-web/clients/stock-news";
-import { eventArticles } from "@cobalt-web/db/schema/features";
+import { eventArticles } from "@cobalt-web/db/schema/news";
 import { createInsertSchema } from "drizzle-orm/zod";
 
 import type { ProcessedArticle } from "./lib.js";

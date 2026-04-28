@@ -1,5 +1,5 @@
 import type { StockNewsArticle } from "@cobalt-web/clients/stock-news";
-import type { EventArticleInsert } from "@cobalt-web/db/schema/features";
+import type { EventArticleInsert } from "@cobalt-web/db/schema/news";
 
 // ---------------------------------------------------------------------------
 // Domain types — shared across actions + workflow steps

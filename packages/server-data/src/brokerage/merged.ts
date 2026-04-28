@@ -3,29 +3,19 @@ import {
   getFinancialEventsForTickers,
   getUserStockTickers,
 } from "../news/for-you/queries.js";
-import {
-  adaptPlaidHoldingsToPositions,
-  adaptPlaidInvestmentAccountsToBrokerage,
-  adaptPlaidInvestmentTransactionsToActivities,
-} from "./plaid/lib.js";
 import type {
   EnhancedBrokerageAccount,
   MergedBrokerageActivity,
   MergedBrokeragePosition,
-} from "./plaid/lib.js";
-import {
-  getPlaidHoldingsByUserId,
-  getPlaidInvestmentAccountsByUserId,
-  getPlaidInvestmentTransactionsByUserId,
-} from "./plaid/queries.js";
+} from "./lib.js";
 import {
   getActivitiesByUserId,
   getBalancesByUserId,
+  getBrokerageAccountsByUserId,
   getPortfolioSnapshotsByUserId,
   getPositionsByUserId,
-  getSnaptradeBrokerageAccountsByUserId,
   getUserBrokeragesByUserId,
-} from "./snaptrade/queries.js";
+} from "./queries.js";
 
 export interface GetMergedBrokerageDataOptions {
   activitiesLimit?: number;
@@ -50,7 +40,8 @@ export interface BrokerageDataResponse {
 }
 
 /**
- * SnapTrade + Plaid investment data in one payload (matches legacy merged brokerage API).
+ * Brokerage data (SnapTrade + Plaid investment accounts, unified) in one
+ * payload, matching the legacy merged brokerage API.
  */
 export async function getMergedBrokerageDataByUserId(
   userId: string,
@@ -64,87 +55,22 @@ export async function getMergedBrokerageDataByUserId(
   } = options;
 
   const [
-    snapTradeAccounts,
+    accounts,
     balancesResult,
-    userBrokerageNames,
+    userBrokerages,
     userTickers,
-    allPortfolioSnapshots,
-    snapTradePositionsResult,
-    snapTradeActivitiesResult,
-    plaidInvestmentAccounts,
-    plaidHoldings,
-    plaidInvestmentTransactions,
+    portfolioSnapshots,
+    positionsResult,
+    activitiesResult,
   ] = await Promise.all([
-    getSnaptradeBrokerageAccountsByUserId(userId),
+    getBrokerageAccountsByUserId(userId),
     getBalancesByUserId(userId),
     getUserBrokeragesByUserId(userId),
     getUserStockTickers(userId),
     getPortfolioSnapshotsByUserId(userId, { endDate, startDate }),
     getPositionsByUserId(userId, { limit: positionsLimit }),
     getActivitiesByUserId(userId, { limit: activitiesLimit }),
-    getPlaidInvestmentAccountsByUserId(userId),
-    getPlaidHoldingsByUserId(userId),
-    getPlaidInvestmentTransactionsByUserId(userId, undefined, activitiesLimit),
   ]);
-
-  const stPositions =
-    snapTradePositionsResult.positions as unknown as MergedBrokeragePosition[];
-  const stActivities =
-    snapTradeActivitiesResult.activities as unknown as MergedBrokerageActivity[];
-
-  const plaidPositions = adaptPlaidHoldingsToPositions(plaidHoldings, userId);
-  const plaidActivities = adaptPlaidInvestmentTransactionsToActivities(
-    plaidInvestmentTransactions,
-    userId
-  );
-  const plaidAccounts = adaptPlaidInvestmentAccountsToBrokerage(
-    plaidInvestmentAccounts,
-    userId
-  );
-
-  const mergedAccounts: EnhancedBrokerageAccount[] = [
-    ...snapTradeAccounts,
-    ...plaidAccounts,
-  ];
-  const mergedPositions = [...stPositions, ...plaidPositions];
-  const mergedActivities = [...stActivities, ...plaidActivities];
-
-  const mergedPositionsByAccount: Record<string, MergedBrokeragePosition[]> = {
-    ...(snapTradePositionsResult.positionsByAccount as Record<
-      string,
-      MergedBrokeragePosition[]
-    >),
-  };
-  for (const pos of plaidPositions) {
-    const key = pos.accountId;
-    if (!mergedPositionsByAccount[key]) {
-      mergedPositionsByAccount[key] = [];
-    }
-    mergedPositionsByAccount[key].push(pos);
-  }
-
-  const mergedActivitiesByAccount: Record<string, MergedBrokerageActivity[]> = {
-    ...(snapTradeActivitiesResult.activitiesByAccount as Record<
-      string,
-      MergedBrokerageActivity[]
-    >),
-  };
-  for (const act of plaidActivities) {
-    const key = act.accountId;
-    if (!mergedActivitiesByAccount[key]) {
-      mergedActivitiesByAccount[key] = [];
-    }
-    mergedActivitiesByAccount[key].push(act);
-  }
-
-  const plaidBrokerageNames = [
-    ...new Set(
-      plaidInvestmentAccounts
-        .map((a) => a.institutionName)
-        .filter((name): name is string => !!name)
-    ),
-  ];
-  const mergedBrokerages = [...userBrokerageNames, ...plaidBrokerageNames];
 
   let holdingsNews: MappedFinancialEvent[] = [];
   try {
@@ -157,15 +83,15 @@ export async function getMergedBrokerageDataByUserId(
   }
 
   return {
-    accounts: mergedAccounts,
-    activities: mergedActivities,
-    activitiesByAccount: mergedActivitiesByAccount,
+    accounts,
+    activities: activitiesResult.activities,
+    activitiesByAccount: activitiesResult.activitiesByAccount,
     balances: balancesResult.balances,
     balancesByAccount: balancesResult.balancesByAccount,
     holdingsNews,
-    portfolioSnapshots: allPortfolioSnapshots,
-    positions: mergedPositions,
-    positionsByAccount: mergedPositionsByAccount,
-    userBrokerages: mergedBrokerages,
+    portfolioSnapshots,
+    positions: positionsResult.positions,
+    positionsByAccount: positionsResult.positionsByAccount,
+    userBrokerages,
   };
 }

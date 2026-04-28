@@ -5,49 +5,57 @@ import { zql } from "../schema.js";
 import { NO_MATCH_ID } from "../transactions/lib.js";
 
 const BANK_SNAPSHOT_LIMIT = 3000;
+const PLAID_ACCOUNT_TYPES = [
+  "depository",
+  "credit",
+  "loan",
+  "investment",
+] as const;
 
 /** Accounts domain — `queries.accounts.*` (bank + brokerage lists). */
 export const accountsQueries = {
-  /**
-   * Historical bank balance snapshots for the signed-in user's accounts.
-   * Includes the joined `account` row so callers can read `type` (depository vs credit).
-   * Ordered newest-first so the limit truncates old history, not the latest snapshots.
-   */
+  /** Plaid accounts (depository / credit / loan / investment) for the signed-in user. */
   bankAccounts: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
-      return zql.bankAccount.where("id", NO_MATCH_ID);
+      return zql.financialAccount.where("id", NO_MATCH_ID);
     }
-    return zql.bankAccount
-      .whereExists("connection", (conn) => conn.where("userId", userId))
-      .related("connection", (q) => q.related("institution"))
-      .related("balances");
+    return zql.financialAccount
+      .where("userId", userId)
+      .where("source", "plaid")
+      .where("type", "IN", PLAID_ACCOUNT_TYPES)
+      .related("plaidConnection", (q) => q.related("institution"))
+      .related("balance");
   }),
 
+  /** Historical balance snapshots for the user's Plaid bank-style accounts. */
   bankBalanceSnapshots: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
-      return zql.bankBalanceSnapshot.where("id", NO_MATCH_ID);
+      return zql.snapshot.where("id", NO_MATCH_ID);
     }
-    return zql.bankBalanceSnapshot
+    return zql.snapshot
+      .where("userId", userId)
       .whereExists("account", (acc) =>
-        acc.whereExists("connection", (conn) => conn.where("userId", userId))
+        acc.where("source", "plaid").where("type", "IN", PLAID_ACCOUNT_TYPES)
       )
       .related("account", (q) =>
-        q.related("connection", (c) => c.related("institution"))
+        q.related("plaidConnection", (c) => c.related("institution"))
       )
       .orderBy("snapshotDate", "desc")
       .limit(BANK_SNAPSHOT_LIMIT);
   }),
 
+  /** SnapTrade-linked brokerage accounts. */
   brokerageAccounts: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
-      return zql.brokerageAccounts.where("id", NO_MATCH_ID);
+      return zql.financialAccount.where("id", NO_MATCH_ID);
     }
-    return zql.brokerageAccounts
+    return zql.financialAccount
       .where("userId", userId)
-      .related("balances")
-      .related("brokerageAuthorization");
+      .where("source", "snaptrade")
+      .related("balance")
+      .related("snaptradeAuthorization");
   }),
 };

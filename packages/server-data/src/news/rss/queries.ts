@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { rssArticles, rssFeeds } from "@cobalt-web/db/schema/features";
+import { rssArticles, rssFeeds } from "@cobalt-web/db/schema/news";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
 import type { RssArticleDTO, RssQueryResult } from "./schemas.js";

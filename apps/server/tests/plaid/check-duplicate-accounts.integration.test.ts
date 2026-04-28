@@ -17,8 +17,9 @@
  */
 
 import { db } from "@cobalt-web/db";
-import { bankAccount, bankConnection } from "@cobalt-web/db/schema/banking";
-import { checkForDuplicateAccounts } from "@cobalt-web/server-data/plaid/link/queries";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { checkForDuplicateAccounts } from "@cobalt-web/server-data/providers/plaid/link/queries";
 import { eq } from "drizzle-orm";
 
 const TEST_USER_ID = "00000000-0000-4000-8000-000000000003";
@@ -37,30 +38,37 @@ async function ensureTestUser(): Promise<void> {
 }
 
 async function seed(): Promise<void> {
-  await db.insert(bankConnection).values({
-    institutionId: INSTITUTION_ID,
-    plaidAccessToken: `seed-token-${SEED_ITEM_ID}`,
-    plaidItemId: SEED_ITEM_ID,
-    userId: TEST_USER_ID,
-  });
-  await db.insert(bankAccount).values({
+  const [conn] = await db
+    .insert(plaidConnection)
+    .values({
+      institutionId: INSTITUTION_ID,
+      plaidAccessToken: `seed-token-${SEED_ITEM_ID}`,
+      plaidItemId: SEED_ITEM_ID,
+      userId: TEST_USER_ID,
+    })
+    .returning({ id: plaidConnection.id });
+  if (!conn) {
+    throw new Error("Failed to seed plaidConnection");
+  }
+  await db.insert(financialAccount).values({
+    externalId: SEED_ACCOUNT_ID,
     mask: "0000",
     name: SEED_ACCOUNT_NAME,
-    plaidAccountId: SEED_ACCOUNT_ID,
-    plaidItemId: SEED_ITEM_ID,
+    plaidConnectionId: conn.id,
+    source: "plaid",
     subtype: "checking",
     type: "depository",
+    userId: TEST_USER_ID,
   });
 }
 
 async function cleanup(): Promise<void> {
-  await db.delete(bankAccount).where(eq(bankAccount.plaidItemId, SEED_ITEM_ID));
   await db
-    .delete(bankConnection)
-    .where(eq(bankConnection.plaidItemId, SEED_ITEM_ID));
+    .delete(plaidConnection)
+    .where(eq(plaidConnection.plaidItemId, SEED_ITEM_ID));
   await db
-    .delete(bankConnection)
-    .where(eq(bankConnection.userId, TEST_USER_ID));
+    .delete(plaidConnection)
+    .where(eq(plaidConnection.userId, TEST_USER_ID));
   await db.execute(`DELETE FROM "user" WHERE id = '${TEST_USER_ID}'`);
 }
 

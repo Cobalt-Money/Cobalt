@@ -46,7 +46,7 @@ export const transactionsQueries = {
   recurring: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
-      return zql.recurringStream.where("id", NO_MATCH_ID);
+      return zql.recurring.where("id", NO_MATCH_ID);
     }
     return recurringForUser(userId);
   }),

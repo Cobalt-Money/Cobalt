@@ -1,4 +1,4 @@
-import { financialEvents } from "@cobalt-web/db/schema/features";
+import { financialEvents } from "@cobalt-web/db/schema/news";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 

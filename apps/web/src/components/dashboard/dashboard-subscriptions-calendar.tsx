@@ -21,8 +21,8 @@ const formatMonthTotal = (amount: number) =>
 interface RecurringRow {
   streamType: string;
   lastAmount: number;
-  lastDate?: string | null;
-  predictedNextDate?: string | null;
+  lastDate?: number | null;
+  predictedNextDate?: number | null;
 }
 
 export function DashboardSubscriptionsCalendar() {
@@ -50,13 +50,13 @@ export function DashboardSubscriptionsCalendar() {
     const seen = new Set<string>();
     const dates: Date[] = [];
 
-    const addDate = (dateStr: string) => {
-      const [yearStr, monthStr, dayStr] = dateStr.split("-");
-      const year = Number(yearStr);
-      const month = Number(monthStr) - 1;
-      const day = Number(dayStr);
+    const addDate = (epochMs: number) => {
+      const d = new Date(epochMs);
+      const year = d.getUTCFullYear();
+      const month = d.getUTCMonth();
+      const day = d.getUTCDate();
       if (year === currentYear && month === currentMonth) {
-        const key = dateStr;
+        const key = `${String(year)}-${String(month)}-${String(day)}`;
         if (!seen.has(key)) {
           seen.add(key);
           dates.push(new Date(year, month, day));
@@ -65,10 +65,10 @@ export function DashboardSubscriptionsCalendar() {
     };
 
     for (const s of outflows) {
-      if (s.lastDate) {
+      if (typeof s.lastDate === "number") {
         addDate(s.lastDate);
       }
-      if (s.predictedNextDate) {
+      if (typeof s.predictedNextDate === "number") {
         addDate(s.predictedNextDate);
       }
     }

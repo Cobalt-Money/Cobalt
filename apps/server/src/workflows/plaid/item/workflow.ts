@@ -1,7 +1,4 @@
-import {
-  ALERT_SOURCES,
-  ALERT_TYPES,
-} from "@cobalt-web/db/schema/features/user-alerts";
+import { ALERT_SOURCES, ALERT_TYPES } from "@cobalt-web/db/schema/users/alerts";
 import type {
   ItemErrorWebhook,
   ItemLoginRepairedWebhook,

@@ -1,5 +1,5 @@
-import type { Subscription } from "@cobalt-web/db/schema/auth";
-import type { MobileSubscription } from "@cobalt-web/db/schema/mobile/subscriptions";
+import type { MobileSubscription } from "@cobalt-web/db/schema/users/subscriptions/mobile";
+import type { Subscription } from "@cobalt-web/db/schema/users/subscriptions/stripe";
 
 /**
  * Stripe/Better Auth subscription statuses that grant access to paid features.

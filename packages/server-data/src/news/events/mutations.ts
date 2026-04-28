@@ -1,6 +1,6 @@
 import { db } from "@cobalt-web/db";
-import { eventArticles, financialEvents } from "@cobalt-web/db/schema/features";
-import type { FinancialEventInsert } from "@cobalt-web/db/schema/features";
+import { eventArticles, financialEvents } from "@cobalt-web/db/schema/news";
+import type { FinancialEventInsert } from "@cobalt-web/db/schema/news";
 import { eq, sql } from "drizzle-orm";
 
 import { toEventArticleInsertRow } from "./lib.js";

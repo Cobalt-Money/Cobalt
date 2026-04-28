@@ -8,15 +8,6 @@ import { DashboardInvestmentPerformanceCardSkeleton } from "@/components/dashboa
 import { ConnectAccountEmpty } from "@/components/empty/connect-account-empty";
 import { useBrokerage } from "@/hooks/use-brokerage";
 
-interface PositionRow {
-  id: string;
-  symbol?: string | null;
-  symbolDescription?: string | null;
-  units?: number | null;
-  averagePurchasePrice?: number | null;
-  openPnl?: number | null;
-}
-
 const formatPct = (pct: number) => {
   const sign = pct > 0 ? "+" : "";
   return `${sign}${pct.toFixed(2)}%`;
@@ -24,11 +15,10 @@ const formatPct = (pct: number) => {
 
 export function DashboardInvestmentPerformanceCard() {
   const { positions, positionsComplete } = useBrokerage();
-  const typedPositions = positions as unknown as PositionRow[];
 
   const topHoldings = useMemo(
     () =>
-      typedPositions
+      positions
         .map((pos) => {
           const costBasis = (pos.averagePurchasePrice ?? 0) * (pos.units ?? 0);
           const pct =
@@ -37,10 +27,10 @@ export function DashboardInvestmentPerformanceCard() {
         })
         .toSorted((a, b) => Math.abs(b.pct) - Math.abs(a.pct))
         .slice(0, 6),
-    [typedPositions]
+    [positions]
   );
 
-  if (!positionsComplete && typedPositions.length === 0) {
+  if (!positionsComplete && positions.length === 0) {
     return <DashboardInvestmentPerformanceCardSkeleton />;
   }
 

@@ -1,8 +1,6 @@
 import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-import { agentSelectPublic, appFullAccess } from "../rls";
-
-export const tickers = pgTable.withRLS(
+export const tickers = pgTable(
   "tickers",
   {
     cik: text("cik"),
@@ -21,8 +19,6 @@ export const tickers = pgTable.withRLS(
     index("tickers_exchange_idx").on(table.exchange),
     index("tickers_cik_idx").on(table.cik),
     index("tickers_is_active_idx").on(table.isActive),
-    appFullAccess(),
-    agentSelectPublic(),
   ]
 );
 

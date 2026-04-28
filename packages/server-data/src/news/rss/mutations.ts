@@ -1,6 +1,6 @@
 import { db } from "@cobalt-web/db";
-import { rssArticles, rssFeeds } from "@cobalt-web/db/schema/features";
-import type { RssFeed } from "@cobalt-web/db/schema/features";
+import { rssArticles, rssFeeds } from "@cobalt-web/db/schema/news";
+import type { RssFeed } from "@cobalt-web/db/schema/news";
 import { eq } from "drizzle-orm";
 
 export interface ProcessRssItemInput {

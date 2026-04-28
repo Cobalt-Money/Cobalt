@@ -1,10 +1,10 @@
-import { createLinkTokenForUpdate } from "@cobalt-web/server-data/plaid/link/actions";
-import { getAccessTokenForItem } from "@cobalt-web/server-data/plaid/link/queries";
+import { createLinkTokenForUpdate } from "@cobalt-web/server-data/providers/plaid/link/actions";
+import { getAccessTokenForItem } from "@cobalt-web/server-data/providers/plaid/link/queries";
 import {
   errorResponseSchema,
   linkTokenResponseSchema,
   updateLinkTokenBodySchema,
-} from "@cobalt-web/server-data/plaid/link/schemas";
+} from "@cobalt-web/server-data/providers/plaid/link/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { v7 as uuidv7 } from "uuid";

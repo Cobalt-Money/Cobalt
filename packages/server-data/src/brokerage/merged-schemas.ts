@@ -11,11 +11,11 @@ import {
   portfolioSnapshotItemSchema,
   portfolioSnapshotsQuerySchema,
   positionsResponseSchema,
-} from "./snaptrade/schemas.js";
+} from "./schemas.js";
 
 const mappedFinancialEventsList = eventsResponseSchema.shape.events;
 
-// ── Merged SnapTrade + Plaid bundle ─────────────────────────────────
+// ── Merged brokerage bundle (SnapTrade tables + adapted Plaid data) ─
 
 export const mergedBrokerageQuerySchema = portfolioSnapshotsQuerySchema
   .pick({

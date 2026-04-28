@@ -69,7 +69,13 @@ export function TransactionDetailSummary({
     ? "text-red-600 dark:text-red-500"
     : "text-green-550";
 
-  const category = transaction.personalFinanceCategory;
+  const category = transaction.category
+    ? {
+        confidence_level: transaction.categoryConfidence ?? undefined,
+        detailed: transaction.categoryDetail ?? "",
+        primary: transaction.category,
+      }
+    : null;
   const showLocation = shouldShowLocationSection(transaction.location);
   const displayName =
     getTransactionDisplayName(transaction) || transaction.name;
@@ -195,7 +201,11 @@ export function TransactionDetailSummary({
 function ReadOnlyCategoryRow({
   category,
 }: {
-  category: TransactionListItem["personalFinanceCategory"];
+  category: {
+    primary: string;
+    detailed: string;
+    confidence_level?: string;
+  } | null;
 }) {
   if (!category) {
     return null;

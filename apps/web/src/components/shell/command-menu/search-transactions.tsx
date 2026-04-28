@@ -59,7 +59,7 @@ const formatDate = (date: unknown): string => {
 const buildRecentQuery = () =>
   zql.transaction
     .related("account", (q) =>
-      q.related("connection", (c) => c.related("institution"))
+      q.related("plaidConnection", (c) => c.related("institution"))
     )
     .orderBy("date", "desc")
     .limit(30);
@@ -67,7 +67,7 @@ const buildRecentQuery = () =>
 const buildPrefetchQuery = () =>
   zql.transaction
     .related("account", (q) =>
-      q.related("connection", (c) => c.related("institution"))
+      q.related("plaidConnection", (c) => c.related("institution"))
     )
     .orderBy("date", "desc")
     .limit(300);
@@ -83,7 +83,7 @@ const buildSearchQuery = (trimmedSearch: string) => {
       )
     )
     .related("account", (q) =>
-      q.related("connection", (c) => c.related("institution"))
+      q.related("plaidConnection", (c) => c.related("institution"))
     )
     .orderBy("date", "desc")
     .limit(50);

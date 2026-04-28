@@ -1,11 +1,11 @@
 /**
  * Scenario A — full overlap duplicate detection.
  *
- * Seed: a prior bank_connection + one bank_account for TEST_USER at ins_109508
- * with a mask/type that matches what sandbox will return. Then run the
- * onboarding workflow with a fresh sandbox public_token for the same
- * institution. The dup check (currently: `length > 0`) should short-circuit
- * the workflow before persist:
+ * Seed: a prior plaid_connection + one financial_account for TEST_USER at
+ * ins_109508 with a mask/type that matches what sandbox will return. Then
+ * run the onboarding workflow with a fresh sandbox public_token for the
+ * same institution. The dup check (currently: `length > 0`) should
+ * short-circuit the workflow before persist:
  *
  *   exchange → validate (dup found) → removeItem → emit "duplicate" → close
  *
@@ -13,7 +13,7 @@
  *   - workflow returns { success: false, error: "DUPLICATE_ACCOUNT" }
  *   - progress stream contains a terminal "duplicate" phase whose detail
  *     lists the seeded account
- *   - no new bank_connection row is persisted for the new itemId
+ *   - no new plaid_connection row is persisted for the new itemId
  *   - the seeded connection is untouched
  *
  * Prerequisites: same as onboarding-sync.integration.test.ts
@@ -24,7 +24,8 @@ import { setTimeout as delay } from "node:timers/promises";
 
 import { plaidClient } from "@cobalt-web/clients/plaid";
 import { db } from "@cobalt-web/db";
-import { bankAccount, bankConnection } from "@cobalt-web/db/schema/banking";
+import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { and, eq } from "drizzle-orm";
 import { Products } from "plaid";
 import { getRun, resumeHook, start } from "workflow/api";
@@ -56,30 +57,37 @@ async function ensureTestUser(): Promise<void> {
 }
 
 async function seedPriorConnection(): Promise<void> {
-  await db.insert(bankConnection).values({
-    institutionId: INSTITUTION_ID,
-    plaidAccessToken: SEED_ACCESS_TOKEN,
-    plaidItemId: SEED_ITEM_ID,
-    userId: TEST_USER_ID,
-  });
-  await db.insert(bankAccount).values({
+  const [conn] = await db
+    .insert(plaidConnection)
+    .values({
+      institutionId: INSTITUTION_ID,
+      plaidAccessToken: SEED_ACCESS_TOKEN,
+      plaidItemId: SEED_ITEM_ID,
+      userId: TEST_USER_ID,
+    })
+    .returning({ id: plaidConnection.id });
+  if (!conn) {
+    throw new Error("Failed to seed plaidConnection");
+  }
+  await db.insert(financialAccount).values({
+    externalId: SEED_ACCOUNT_ID,
     mask: SEED_MASK,
     name: SEED_ACCOUNT_NAME,
-    plaidAccountId: SEED_ACCOUNT_ID,
-    plaidItemId: SEED_ITEM_ID,
+    plaidConnectionId: conn.id,
+    source: "plaid",
     subtype: SEED_SUBTYPE,
     type: SEED_TYPE,
+    userId: TEST_USER_ID,
   });
 }
 
 /**
  * Comprehensive teardown. Removes:
- *   1. Any bank_account rows tied to the new Plaid itemId (should be none —
- *      dup short-circuits before persist — but defensive against partial runs).
- *   2. Any bank_connection row tied to the new Plaid itemId (same).
- *   3. The seeded bank_account + bank_connection (unconditional).
- *   4. Every remaining bank_account / bank_connection for TEST_USER_ID (belt
- *      and suspenders, keeps the test user slot clean for re-runs).
+ *   1. Any plaid_connection row tied to the new Plaid itemId (financial_account
+ *      rows cascade via FK).
+ *   2. The seeded plaid_connection (unconditional).
+ *   3. Every remaining plaid_connection for TEST_USER_ID (belt and suspenders,
+ *      keeps the test user slot clean for re-runs).
  *
  * The Plaid-side item created by the workflow is removed by removeItemStep
  * inside the workflow itself when it hits the duplicate branch, so no Plaid
@@ -87,19 +95,17 @@ async function seedPriorConnection(): Promise<void> {
  */
 async function cleanup(newItemId: string | null): Promise<void> {
   if (newItemId) {
-    await db.delete(bankAccount).where(eq(bankAccount.plaidItemId, newItemId));
     await db
-      .delete(bankConnection)
-      .where(eq(bankConnection.plaidItemId, newItemId));
+      .delete(plaidConnection)
+      .where(eq(plaidConnection.plaidItemId, newItemId));
   }
-  await db.delete(bankAccount).where(eq(bankAccount.plaidItemId, SEED_ITEM_ID));
   await db
-    .delete(bankConnection)
-    .where(eq(bankConnection.plaidItemId, SEED_ITEM_ID));
+    .delete(plaidConnection)
+    .where(eq(plaidConnection.plaidItemId, SEED_ITEM_ID));
   // Belt-and-suspenders sweep.
   await db
-    .delete(bankConnection)
-    .where(eq(bankConnection.userId, TEST_USER_ID));
+    .delete(plaidConnection)
+    .where(eq(plaidConnection.userId, TEST_USER_ID));
 }
 
 interface ProgressEvent {
@@ -236,21 +242,21 @@ describe("plaid onboarding — Scenario A: full overlap duplicate", () => {
       expect(dups.length).toBeGreaterThan(0);
       expect(dups.some((d) => d.name === SEED_ACCOUNT_NAME)).toBeTruthy();
 
-      // Progress contract: workflow did NOT reach persist/accounts/transactions.
+      // Progress contract: workflow did NOT reach persist/accounts/banking/transactions.
       const phases = events.map((e) => e.phase);
       expect(phases).not.toContain("persist");
       expect(phases).not.toContain("accounts");
       expect(phases).not.toContain("transactions");
       expect(phases).not.toContain("done");
 
-      // DB contract: no bank_connection for the new itemId. Guarded because
+      // DB contract: no plaid_connection for the new itemId. Guarded because
       // we may not have learned newItemId before the dup branch fired.
       // biome-ignore lint/nursery/noConditionalTests: integration-test guard
       const [leakedConn] = newItemId
         ? await db
             .select()
-            .from(bankConnection)
-            .where(eq(bankConnection.plaidItemId, newItemId))
+            .from(plaidConnection)
+            .where(eq(plaidConnection.plaidItemId, newItemId))
             .limit(1)
         : [undefined];
       expect(leakedConn).toBeUndefined();
@@ -258,22 +264,24 @@ describe("plaid onboarding — Scenario A: full overlap duplicate", () => {
       // DB contract: seeded connection + account still intact.
       const [seedConn] = await db
         .select()
-        .from(bankConnection)
+        .from(plaidConnection)
         .where(
           and(
-            eq(bankConnection.plaidItemId, SEED_ITEM_ID),
-            eq(bankConnection.userId, TEST_USER_ID)
+            eq(plaidConnection.plaidItemId, SEED_ITEM_ID),
+            eq(plaidConnection.userId, TEST_USER_ID)
           )
         )
         .limit(1);
       expect(seedConn).toBeDefined();
 
-      const seedAccts = await db
-        .select()
-        .from(bankAccount)
-        .where(eq(bankAccount.plaidItemId, SEED_ITEM_ID));
+      const seedAccts = seedConn
+        ? await db
+            .select()
+            .from(financialAccount)
+            .where(eq(financialAccount.plaidConnectionId, seedConn.id))
+        : [];
       expect(seedAccts).toHaveLength(1);
-      expect(seedAccts[0]?.plaidAccountId).toBe(SEED_ACCOUNT_ID);
+      expect(seedAccts[0]?.externalId).toBe(SEED_ACCOUNT_ID);
     } finally {
       await cleanup(newItemId);
     }

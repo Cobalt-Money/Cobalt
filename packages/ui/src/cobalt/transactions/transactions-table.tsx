@@ -199,24 +199,28 @@ const columns: ColumnDef<TransactionListItem>[] = [
   },
   {
     accessorFn: (row) => {
-      const c = row.personalFinanceCategory;
-      if (!c) {
+      if (!row.category) {
         return "";
       }
-      const primary = getCategoryDisplayConfig(c).label;
-      const detailed = c.detailed
-        ? getDetailedCategoryDisplayName(c.detailed)
+      const primary = getCategoryDisplayConfig({
+        detailed: row.categoryDetail ?? "",
+        primary: row.category,
+      }).label;
+      const detailed = row.categoryDetail
+        ? getDetailedCategoryDisplayName(row.categoryDetail)
         : "";
       return detailed ? `${primary} ${detailed}` : primary;
     },
     cell: ({ row }) => {
-      const category = row.original.personalFinanceCategory;
-      if (!category) {
+      if (!row.original.category) {
         return <div className={cellRow}>—</div>;
       }
-      const config = getCategoryDisplayConfig(category);
-      const detailed = category.detailed
-        ? getDetailedCategoryDisplayName(category.detailed)
+      const config = getCategoryDisplayConfig({
+        detailed: row.original.categoryDetail ?? "",
+        primary: row.original.category,
+      });
+      const detailed = row.original.categoryDetail
+        ? getDetailedCategoryDisplayName(row.original.categoryDetail)
         : null;
       const title = detailed ? `${config.label} › ${detailed}` : config.label;
 

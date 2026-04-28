@@ -1,6 +1,6 @@
 import { brokerageInstitutionBranding } from "../../logos/brokerage-institution-branding";
 
-export type AccountCategory = "banking" | "brokerage" | "credit" | "crypto";
+export type AccountCategory = "banking" | "brokerage" | "credit";
 
 export interface AccountCardViewModel {
   id: string;
@@ -45,17 +45,10 @@ function categoryFromPlaidType(type: string): AccountCategory {
   return "banking";
 }
 
-function latestBankSyncMsFromBalances(
-  balances: { updatedAt?: number | null }[]
+function syncMsFromBalance(
+  balance: { updatedAt?: number | null } | null | undefined
 ): number | null {
-  let best: number | null = null;
-  for (const b of balances) {
-    const t = b.updatedAt ?? null;
-    if (t !== null && (best === null || t > best)) {
-      best = t;
-    }
-  }
-  return best;
+  return balance?.updatedAt ?? null;
 }
 
 function maskDigits(mask: string | null | undefined, fallback: string): string {
@@ -64,17 +57,17 @@ function maskDigits(mask: string | null | undefined, fallback: string): string {
   return last4.length >= 4 ? last4 : last4.padStart(4, "0");
 }
 
-/** Shape returned by `queries.accounts.bankAccounts()` (related connection + balances). */
+/** Shape returned by `queries.accounts.bankAccounts()` (financialAccount with plaidConnection→institution + balance). */
 export interface BankAccountRowWithRelations {
   id: string;
   name: string;
   officialName: string | null;
   mask: string | null;
-  plaidItemId: string;
+  externalId: string | null;
   type: string;
   subtype: string | null;
-  plaidAccountId: string;
-  connection?: {
+  plaidConnection?: {
+    plaidItemId?: string | null;
     institutionLogo?: string | null;
     institutionName?: string | null;
     institution?: {
@@ -84,38 +77,34 @@ export interface BankAccountRowWithRelations {
     } | null;
   } | null;
   updatedAt?: number | null;
-  balances?: {
+  balance?: {
     updatedAt?: number | null;
-  }[];
+  } | null;
 }
 
-/** Shape returned by `queries.accounts.brokerageAccounts()` (related balances). */
+/** Shape returned by `queries.accounts.brokerageAccounts()` (financialAccount source='snaptrade' with balance + snaptradeAuthorization). */
 export interface BrokerageRowWithRelations {
   id: string;
-  accountId: string;
+  externalId: string | null;
   accountNumber: string | null;
   institutionName: string | null;
-  accountType: string | null;
+  subtype: string | null;
+  type: string;
   name: string | null;
-  portfolioGroup: string | null;
-  /** SnapTrade account-level JSON; may mirror brokerage reference fields. */
-  metaData?: unknown | null;
-  brokerageAuthorization?: {
-    authorizationId: string;
-    /** SnapTrade brokerage id when not a UUID — sometimes usable like `brokerageSlug`. */
+  snaptradeAuthorization?: {
+    authorizationId?: string | null;
     brokerage?: string | null;
     brokerageSlug?: string | null;
     name?: string | null;
     meta?: unknown | null;
   } | null;
-  balances?: {
-    lastSync?: number | null;
+  balance?: {
     updatedAt?: number | null;
-  }[];
+  } | null;
 }
 
 function institutionFieldsFromBankConnection(
-  conn: BankAccountRowWithRelations["connection"]
+  conn: BankAccountRowWithRelations["plaidConnection"]
 ): {
   institution: string;
   institutionLogo: string | null;
@@ -130,29 +119,12 @@ function institutionFieldsFromBankConnection(
   };
 }
 
-function latestBrokerageSyncMs(
-  rows: {
-    lastSync?: number | null;
-    updatedAt?: number | null;
-  }[]
-): number | null {
-  let best: number | null = null;
-  for (const r of rows) {
-    const t = r.lastSync ?? r.updatedAt ?? null;
-    if (t !== null && (best === null || t > best)) {
-      best = t;
-    }
-  }
-  return best;
-}
-
 export function bankAccountRowToCard(
   row: BankAccountRowWithRelations
 ): AccountCardViewModel {
   const { institution, institutionLogo, institutionUrl } =
-    institutionFieldsFromBankConnection(row.connection);
-  const lastSyncedAt =
-    latestBankSyncMsFromBalances(row.balances ?? []) ?? row.updatedAt ?? null;
+    institutionFieldsFromBankConnection(row.plaidConnection);
+  const lastSyncedAt = syncMsFromBalance(row.balance) ?? row.updatedAt ?? null;
   const { type } = row;
   const category = categoryFromPlaidType(type);
   const subtypeLabel = row.subtype
@@ -170,9 +142,9 @@ export function bankAccountRowToCard(
     institutionUrl,
     kind: "bank",
     lastSyncedAt,
-    mask: maskDigits(row.mask, row.plaidAccountId),
-    plaidAccountId: row.plaidAccountId,
-    plaidItemId: row.plaidItemId,
+    mask: maskDigits(row.mask, row.externalId ?? ""),
+    plaidAccountId: row.externalId,
+    plaidItemId: row.plaidConnection?.plaidItemId ?? null,
     snaptradeAuthorizationId: null,
   };
 }
@@ -183,16 +155,17 @@ export function brokerageRowToCard(
   const institution = row.institutionName?.trim() ?? "Brokerage";
   const { institutionLogo, institutionLogosExtra, institutionUrl } =
     brokerageInstitutionBranding(row);
-  const typeLabel = row.accountType
-    ? titleCaseWords(row.accountType.replaceAll("_", " "))
+  const accountTypeRaw = row.subtype ?? row.type ?? null;
+  const typeLabel = accountTypeRaw
+    ? titleCaseWords(accountTypeRaw.replaceAll("_", " "))
     : "Brokerage";
-  const snapAuth = row.brokerageAuthorization?.authorizationId?.trim() ?? null;
-  const lastSyncedAt = latestBrokerageSyncMs(row.balances ?? []);
+  const snapAuth = row.snaptradeAuthorization?.authorizationId?.trim() ?? null;
+  const lastSyncedAt = syncMsFromBalance(row.balance);
 
   return {
     accountTypeLabel: typeLabel,
     category: "brokerage",
-    description: row.name?.trim() ?? row.portfolioGroup ?? "Investment account",
+    description: row.name?.trim() ?? "Investment account",
     id: row.id,
     institution,
     institutionLogo,
@@ -201,7 +174,7 @@ export function brokerageRowToCard(
     institutionUrl,
     kind: "brokerage",
     lastSyncedAt,
-    mask: maskDigits(row.accountNumber, row.accountId),
+    mask: maskDigits(row.accountNumber, row.externalId ?? ""),
     plaidAccountId: null,
     plaidItemId: null,
     snaptradeAuthorizationId: snapAuth,

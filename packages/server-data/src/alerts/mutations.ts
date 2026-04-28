@@ -1,8 +1,5 @@
 import { db } from "@cobalt-web/db";
-import {
-  ALERT_STATUSES,
-  userAlerts,
-} from "@cobalt-web/db/schema/features/user-alerts";
+import { ALERT_STATUSES, userAlerts } from "@cobalt-web/db/schema/users/alerts";
 import { and, eq } from "drizzle-orm";
 
 /**

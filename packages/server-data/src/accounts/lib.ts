@@ -1,15 +1,18 @@
-import type {
-  BankAccountSelect,
-  BankBalanceSelect,
-} from "@cobalt-web/db/schema/banking";
-
 import type { BankAccountDTO, BankAccountListItem } from "./schemas.js";
 
-/** Relational row shape from bankAccount.findMany with connection + balances. */
-export interface BankAccountRelationalRow {
-  balances: BankBalanceSelect[];
+/** Joined row shape used by `toBankAccountDTO`. */
+export interface BankAccountJoinedRow {
+  /** Sibling account types under the same plaid_connection — feeds `hasInvestmentAccounts`. */
+  siblingAccountTypes: string[];
+  balance: {
+    available: string | null;
+    creditLimit: string | null;
+    current: string | null;
+    currency: string | null;
+    updatedAt: Date | null;
+    userOverrideCreditLimit: string | null;
+  } | null;
   connection: {
-    accounts: { type: string }[];
     billedProducts: string[] | null;
     error: unknown;
     institution: {
@@ -20,20 +23,19 @@ export interface BankAccountRelationalRow {
     institutionName: string | null;
     newAccountsAvailable: boolean;
     pendingDisconnectAt: Date | null;
+    plaidItemId: string;
   };
-  mask: BankAccountSelect["mask"];
-  name: BankAccountSelect["name"];
-  plaidAccountId: BankAccountSelect["plaidAccountId"];
-  plaidItemId: BankAccountSelect["plaidItemId"];
-  subtype: BankAccountSelect["subtype"];
-  type: BankAccountSelect["type"];
+  externalId: string | null;
+  mask: string | null;
+  name: string;
+  subtype: string | null;
+  type: string;
 }
 
 export type { BankAccountDTO, BankAccountListItem };
 
 // ── Predicates (pure; easy to unit-test) ────────────────────────────
 
-/** General “bank accounts” list: depository-style, not credit or investment products. */
 export function isBankAccountListType(
   account: Pick<BankAccountDTO, "type">
 ): boolean {
@@ -50,34 +52,29 @@ export const matchesPlaidAccountId =
   (plaidAccountId: string) => (account: BankAccountDTO) =>
     account.plaidAccountId === plaidAccountId;
 
-/** Extract balance fields from the latest balance row (Drizzle column names). */
-function extractBalance(balances: BankBalanceSelect[]) {
-  const balance = balances[0] ?? null;
+const numOrNull = (v: string | null): number | null =>
+  v === null ? null : Number(v);
+
+function extractBalance(b: BankAccountJoinedRow["balance"]) {
   return {
-    available: balance?.available ?? null,
-    current: balance?.current ?? null,
-    isoCurrencyCode: balance?.isoCurrencyCode ?? null,
-    limit: balance?.limit ?? null,
-    unofficialCurrencyCode: balance?.unofficialCurrencyCode ?? null,
-    updatedAt: balance?.updatedAt?.toISOString() ?? null,
-    userOverrideCreditLimit: balance?.userOverrideCreditLimit ?? null,
+    available: numOrNull(b?.available ?? null),
+    creditLimit: numOrNull(b?.creditLimit ?? null),
+    currency: b?.currency ?? null,
+    current: numOrNull(b?.current ?? null),
+    updatedAt: b?.updatedAt?.toISOString() ?? null,
+    userOverrideCreditLimit: numOrNull(b?.userOverrideCreditLimit ?? null),
   };
 }
 
-/** Convert a relational query row into the serialisable BankAccount DTO. */
-export function toBankAccountDTO(
-  row: BankAccountRelationalRow
-): BankAccountDTO {
+/** Convert a joined query row into the serialisable BankAccount DTO. */
+export function toBankAccountDTO(row: BankAccountJoinedRow): BankAccountDTO {
   const { connection } = row;
   const inst = connection.institution;
-  const balanceFields = extractBalance(row.balances);
-  const hasInvestmentAccounts = connection.accounts.some(
-    (a) => a.type === "investment"
+  const balanceFields = extractBalance(row.balance);
+  const hasInvestmentAccounts = row.siblingAccountTypes.some(
+    (t) => t === "investment"
   );
-  const currency =
-    balanceFields.isoCurrencyCode ??
-    balanceFields.unofficialCurrencyCode ??
-    null;
+  const currency = balanceFields.currency ?? null;
 
   return {
     ...balanceFields,
@@ -92,8 +89,8 @@ export function toBankAccountDTO(
     name: row.name,
     newAccountsAvailable: connection.newAccountsAvailable,
     pendingDisconnectAt: connection.pendingDisconnectAt?.toISOString() ?? null,
-    plaidAccountId: row.plaidAccountId,
-    plaidItemId: row.plaidItemId,
+    plaidAccountId: row.externalId,
+    plaidItemId: connection.plaidItemId,
     subtype: row.subtype,
     type: row.type,
     url: inst?.url ?? null,
@@ -112,7 +109,8 @@ export function toBankAccountListItem(
   const needsReauth = account.error !== null;
   const newAccountsAvailable = account.newAccountsAvailable ?? false;
   const { pendingDisconnectAt } = account;
-  const creditLimit = account.userOverrideCreditLimit ?? account.limit ?? null;
+  const creditLimit =
+    account.userOverrideCreditLimit ?? account.creditLimit ?? null;
 
   return {
     canAddInvestments,
@@ -122,8 +120,6 @@ export function toBankAccountListItem(
     hasInvestments,
     hasLiabilities,
     institutionName: account.institutionName,
-    isoCurrencyCode: account.isoCurrencyCode,
-    limit: account.limit,
     logo: account.logo,
     mask: account.mask,
     name: account.name,
@@ -134,7 +130,6 @@ export function toBankAccountListItem(
     plaidItemId: account.plaidItemId,
     subtype: account.subtype,
     type: account.type,
-    unofficialCurrencyCode: account.unofficialCurrencyCode,
     updatedAt: account.updatedAt,
     userOverrideCreditLimit: account.userOverrideCreditLimit,
   };

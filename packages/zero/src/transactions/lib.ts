@@ -55,18 +55,18 @@ export function transactionsForUser(
   const hasMax = typeof amountMax === "number";
 
   let q = zql.transaction
-    .whereExists("account", (acc) =>
-      acc.whereExists("connection", (conn) => {
-        let c = conn.where("userId", userId);
-        if (bankIds) {
-          c = c.where("institutionId", "IN", bankIds);
-        }
-        return c;
-      })
-    )
+    .where("userId", userId)
     .related("account", (q2) =>
-      q2.related("connection", (conn) => conn.related("institution"))
+      q2.related("plaidConnection", (conn) => conn.related("institution"))
     );
+
+  if (bankIds) {
+    q = q.whereExists("account", (acc) =>
+      acc.whereExists("plaidConnection", (conn) =>
+        conn.where("institutionId", "IN", bankIds)
+      )
+    );
+  }
 
   // Plaid convention: positive amount = outflow (expense), negative = inflow (income).
   // Filter signed bounds per selected type; for "all" apply |amount| in [min,max]
@@ -109,10 +109,8 @@ export function transactionsForUser(
 }
 
 export function recurringForUser(userId: string) {
-  return zql.recurringStream
-    .whereExists("account", (acc) =>
-      acc.whereExists("connection", (conn) => conn.where("userId", userId))
-    )
+  return zql.recurring
+    .where("userId", userId)
     .where("isActive", true)
     .orderBy("lastDate", "desc");
 }
@@ -122,11 +120,9 @@ export function creditTransactionsForUser(
   period: "1w" | "1m" | "3m" | "6m" | "1y" | "all"
 ) {
   const start = periodStartIso(period);
-  let q = zql.transaction.whereExists("account", (acc) =>
-    acc
-      .where("type", "credit")
-      .whereExists("connection", (conn) => conn.where("userId", userId))
-  );
+  let q = zql.transaction
+    .where("userId", userId)
+    .whereExists("account", (acc) => acc.where("type", "credit"));
   if (start) {
     q = q.where("date", ">=", isoDateToZeroDate(start));
   }

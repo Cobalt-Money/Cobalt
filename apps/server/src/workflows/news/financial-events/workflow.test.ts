@@ -1,5 +1,5 @@
 import type { StockNewsArticle } from "@cobalt-web/clients/stock-news";
-import { financialEvents } from "@cobalt-web/db/schema/features";
+import { financialEvents } from "@cobalt-web/db/schema/news";
 import {
   fetchArticleContent,
   fetchArticlesForEvent,

@@ -1,20 +1,24 @@
+import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { balance } from "@cobalt-web/db/schema/accounts/balance";
+import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
 import {
-  bankAccount,
-  bankBalance,
-  bankConnection,
-  bankConnectionJsonbSelectRefinements,
-  institution,
   institutionJsonbSelectRefinements,
-} from "@cobalt-web/db/schema/banking";
+  plaidConnectionJsonbSelectRefinements,
+} from "@cobalt-web/db/schema/providers/plaid/zod";
+import type {
+  PlaidItemErrorJson,
+  StringArrayJson,
+} from "@cobalt-web/db/schema/providers/plaid/zod";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 
 // ── Row schemas from DB (with JSONB refinements) ────────────────────
 
-const bankAccountRowSchema = createSelectSchema(bankAccount);
-const bankBalanceRowSchema = createSelectSchema(bankBalance);
-const bankConnectionRowSchema = createSelectSchema(bankConnection, {
-  ...bankConnectionJsonbSelectRefinements,
+const financialAccountRowSchema = createSelectSchema(financialAccount);
+const balanceRowSchema = createSelectSchema(balance);
+const plaidConnectionRowSchema = createSelectSchema(plaidConnection, {
+  ...plaidConnectionJsonbSelectRefinements,
 });
 const institutionRowSchema = createSelectSchema(institution, {
   ...institutionJsonbSelectRefinements,
@@ -43,34 +47,38 @@ export const successResponseSchema = z.object({
 });
 
 /** Picked column shapes (Drizzle camelCase = API names). Merged with computed fields below. */
-const bankAccountDetailPickedSchema = bankAccountRowSchema
+const bankAccountDetailPickedSchema = financialAccountRowSchema
   .pick({
     mask: true,
     name: true,
-    plaidAccountId: true,
-    plaidItemId: true,
     subtype: true,
     type: true,
   })
+  .extend({
+    /** Provider-external id (Plaid account_id). */
+    plaidAccountId: z.string().nullable(),
+    /** Plaid item id resolved from plaid_connection. */
+    plaidItemId: z.string(),
+  })
   .extend(
-    bankBalanceRowSchema.pick({
-      available: true,
-      current: true,
-      isoCurrencyCode: true,
-      limit: true,
-      unofficialCurrencyCode: true,
-      updatedAt: true,
-      userOverrideCreditLimit: true,
+    balanceRowSchema.pick({
+      currency: true,
     }).shape
   )
+  .extend({
+    available: z.number().nullable(),
+    creditLimit: z.number().nullable(),
+    current: z.number().nullable(),
+    updatedAt: z.string().nullable(),
+    userOverrideCreditLimit: z.number().nullable(),
+  })
   .extend(
-    bankConnectionRowSchema.pick({
+    plaidConnectionRowSchema.pick({
       billedProducts: true,
       error: true,
       institutionId: true,
       institutionName: true,
       newAccountsAvailable: true,
-      pendingDisconnectAt: true,
     }).shape
   )
   .extend(
@@ -82,38 +90,37 @@ const bankAccountDetailPickedSchema = bankAccountRowSchema
 
 /** Full bank account DTO returned by getAllAccountsWithInstitutions. */
 export const bankAccountSchema = bankAccountDetailPickedSchema.extend({
-  /** Coalesced from `isoCurrencyCode` / `unofficialCurrencyCode` for convenience. */
+  /** Currency code (ISO 4217). */
   currency: z.string().nullable(),
-  /** Balance row may be missing; overrides Drizzle `notNull` on the column. */
-  current: z.number().nullable(),
   hasInvestmentAccounts: z.boolean(),
-  /** ISO strings on the wire; overrides Drizzle `Date` inference from timestamps. */
+  /** ISO string on the wire. */
   pendingDisconnectAt: z.string().nullable(),
-  updatedAt: z.string().nullable(),
 });
 
 /** Subset of columns for list views; list-only computed flags in `extend`. */
-const bankAccountListPickedSchema = bankAccountRowSchema
+const bankAccountListPickedSchema = financialAccountRowSchema
   .pick({
     mask: true,
     name: true,
-    plaidAccountId: true,
-    plaidItemId: true,
     subtype: true,
     type: true,
   })
+  .extend({
+    plaidAccountId: z.string().nullable(),
+    plaidItemId: z.string(),
+  })
   .extend(
-    bankBalanceRowSchema.pick({
-      current: true,
-      isoCurrencyCode: true,
-      limit: true,
-      unofficialCurrencyCode: true,
-      updatedAt: true,
-      userOverrideCreditLimit: true,
+    balanceRowSchema.pick({
+      currency: true,
     }).shape
   )
+  .extend({
+    current: z.number().nullable(),
+    updatedAt: z.string().nullable(),
+    userOverrideCreditLimit: z.number().nullable(),
+  })
   .extend(
-    bankConnectionRowSchema.pick({
+    plaidConnectionRowSchema.pick({
       institutionName: true,
       newAccountsAvailable: true,
     }).shape
@@ -123,20 +130,17 @@ const bankAccountListPickedSchema = bankAccountRowSchema
 /** Lightweight list item for the accounts page. */
 export const bankAccountListItemSchema = bankAccountListPickedSchema.extend({
   canAddInvestments: z.boolean(),
-  /** Effective limit: `userOverrideCreditLimit ?? limit` (not a single DB column). */
+  /** Effective: `userOverrideCreditLimit ?? balance.creditLimit`. */
   creditLimit: z.number().nullable(),
   currency: z.string().nullable(),
-  /** Balance row may be missing; overrides Drizzle `notNull` on the column. */
-  current: z.number().nullable(),
   hasInvestments: z.boolean(),
   hasLiabilities: z.boolean(),
   needsReauth: z.boolean(),
   pendingDisconnectAt: z.string().nullable(),
-  updatedAt: z.string().nullable(),
 });
 
 /** Plaid item (bank connection) DTO. */
-export const plaidItemSchema = bankConnectionRowSchema
+export const plaidItemSchema = plaidConnectionRowSchema
   .pick({
     availableProducts: true,
     billedProducts: true,
@@ -166,20 +170,19 @@ export const plaidItemAlertSchema = z.object({
 });
 
 /** Account info for a specific Plaid item. */
-export const plaidAccountForItemSchema = bankAccountRowSchema
+export const plaidAccountForItemSchema = financialAccountRowSchema
   .pick({
     id: true,
     mask: true,
     name: true,
     officialName: true,
-    plaidAccountId: true,
-    plaidItemId: true,
     subtype: true,
     type: true,
-    verificationStatus: true,
   })
   .extend({
     createdAt: z.string(),
+    plaidAccountId: z.string().nullable(),
+    plaidItemId: z.string(),
     updatedAt: z.string(),
   });
 
@@ -207,14 +210,12 @@ export const plaidAccountsForItemResponseSchema = z.object({
   accounts: z.array(plaidAccountForItemSchema),
 });
 
-// ── Inferred DTOs (single source of truth with OpenAPI) ─────────────
+// ── Inferred DTOs ───────────────────────────────────────────────────
 
-/** Full bank account detail — matches `bankAccountSchema` / `bankAccountDetailResponseSchema`. */
 export type BankAccountDTO = z.infer<typeof bankAccountSchema>;
-
-/** List row — matches `bankAccountListItemSchema`. */
 export type BankAccountListItem = z.infer<typeof bankAccountListItemSchema>;
-
 export type PlaidItemDTO = z.infer<typeof plaidItemSchema>;
 export type PlaidItemAlertDTO = z.infer<typeof plaidItemAlertSchema>;
 export type PlaidAccountForItemDTO = z.infer<typeof plaidAccountForItemSchema>;
+
+export type { PlaidItemErrorJson, StringArrayJson };

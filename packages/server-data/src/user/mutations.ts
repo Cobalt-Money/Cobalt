@@ -2,8 +2,10 @@ import { stripeClient } from "@cobalt-web/auth";
 import { plaidClient } from "@cobalt-web/clients/plaid";
 import { snaptradeClient } from "@cobalt-web/clients/snaptrade";
 import { db } from "@cobalt-web/db";
-import { subscription, user } from "@cobalt-web/db/schema/auth";
-import { bankConnection } from "@cobalt-web/db/schema/banking";
+import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
+import { snaptradeUser } from "@cobalt-web/db/schema/providers/snaptrade/user";
+import { user } from "@cobalt-web/db/schema/users/auth/auth";
+import { subscription } from "@cobalt-web/db/schema/users/subscriptions/stripe";
 import { and, eq, isNotNull } from "drizzle-orm";
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
@@ -35,7 +37,7 @@ export async function updateLastSeen(userId: string) {
  *    KEPT so we can detect free-trial abuse if the user signs up again — trial
  *    eligibility is checked against Stripe customer history at checkout)
  * 4. Subscription rows — no FK to user, must delete explicitly
- * 5. User row — cascades to session, account, oauth*, bankConnection,
+ * 5. User row — cascades to session, account, oauth*, plaidConnection,
  *    brokerage*, portfolioSnapshots, kalshiUsers, financialGoals, feedback,
  *    chats/messages, and every other table with `onDelete: "cascade"` on user.id
  */
@@ -52,10 +54,11 @@ export async function deleteUserAccount(userId: string) {
 
 async function revokeSnapTradeAuthorizations(userId: string) {
   try {
-    const creds = await db.query.brokerageUser.findFirst({
-      columns: { providerUserId: true },
-      where: { userId: { eq: userId } },
-    });
+    const [creds] = await db
+      .select({ snaptradeUserId: snaptradeUser.snaptradeUserId })
+      .from(snaptradeUser)
+      .where(eq(snaptradeUser.userId, userId))
+      .limit(1);
     if (!creds) {
       return;
     }
@@ -63,7 +66,7 @@ async function revokeSnapTradeAuthorizations(userId: string) {
     // Single admin call deletes the SnapTrade user and revokes every
     // authorization on their side — replaces an N+1 loop over auths.
     await snaptradeClient.authentication.deleteSnapTradeUser({
-      userId: creds.providerUserId,
+      userId: creds.snaptradeUserId,
     });
   } catch (error) {
     console.warn("[deleteUserAccount] SnapTrade user delete failed", error);
@@ -74,9 +77,9 @@ async function revokeSnapTradeAuthorizations(userId: string) {
 async function revokePlaidItems(userId: string) {
   try {
     const items = await db
-      .select({ plaidAccessToken: bankConnection.plaidAccessToken })
-      .from(bankConnection)
-      .where(eq(bankConnection.userId, userId));
+      .select({ plaidAccessToken: plaidConnection.plaidAccessToken })
+      .from(plaidConnection)
+      .where(eq(plaidConnection.userId, userId));
 
     for (const item of items) {
       if (!item.plaidAccessToken) {
@@ -91,7 +94,7 @@ async function revokePlaidItems(userId: string) {
   } catch (error) {
     console.error("[deleteUserAccount] Plaid cleanup error", error);
   }
-  // bankConnection rows (and cascading bank accounts/balances/transactions)
+  // plaidConnection rows (and cascading bank accounts/balances/transactions)
   // fall to the user cascade
 }
 

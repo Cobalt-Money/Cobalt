@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { financialEvents } from "@cobalt-web/db/schema/features";
+import { financialEvents } from "@cobalt-web/db/schema/news";
 import { eq as drizzleEq, inArray } from "drizzle-orm";
 
 import {

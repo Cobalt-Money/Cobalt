@@ -4,10 +4,7 @@ import type {
   ScopeAccount,
 } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
 
-import type {
-  PlaidPositionRow,
-  PortfolioSnapshotRow,
-} from "./balance-chart-card";
+import type { PortfolioSnapshotRow } from "./balance-chart-card";
 import { BalanceChartCard } from "./balance-chart-card";
 import type { PositionRow } from "./positions-table";
 import { PositionsTable } from "./positions-table";
@@ -47,18 +44,6 @@ const FIXTURE_PORTFOLIO_SNAPSHOTS: PortfolioSnapshotRow[] = Array.from(
     totalValue: 120_000 + Math.sin(i / 6) * 8000 + i * 320,
   })
 );
-
-const FIXTURE_PLAID_POSITIONS: PlaidPositionRow[] = [
-  {
-    costBasis: 18_000,
-    id: "plaid-pos-1",
-    institutionPrice: 215.3,
-    institutionValue: 21_530,
-    isoCurrencyCode: "USD",
-    plaidAccountId: "fixture-account-1",
-    quantity: 100,
-  },
-];
 
 const FIXTURE_POSITIONS: PositionRow[] = [
   {
@@ -156,8 +141,8 @@ export function BalanceChartCardFixture() {
     <BalanceChartCard
       brokerageScope={FIXTURE_SCOPE}
       onScopeChange={NOOP}
-      plaidPositions={FIXTURE_PLAID_POSITIONS}
       portfolioSnapshots={FIXTURE_PORTFOLIO_SNAPSHOTS}
+      positions={FIXTURE_POSITIONS}
       scopedAccountIds={null}
       scopeAccounts={FIXTURE_SCOPE_ACCOUNTS}
     />

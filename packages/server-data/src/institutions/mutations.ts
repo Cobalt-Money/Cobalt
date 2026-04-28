@@ -1,5 +1,5 @@
 import { db } from "@cobalt-web/db";
-import { institution } from "@cobalt-web/db/schema/banking";
+import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
 
 export interface InstitutionUpsertInput {
   logo: string | null;

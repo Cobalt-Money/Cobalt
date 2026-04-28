@@ -1,11 +1,11 @@
-import { fetchLiabilities } from "@cobalt-web/server-data/plaid/liabilities/actions";
+import { fetchLiabilities } from "@cobalt-web/server-data/providers/plaid/liabilities/actions";
 import {
   insertBankAccountsOnConflictDoNothing,
   upsertBankBalancesForPlaidAccounts,
   upsertCreditLiabilities,
   upsertMortgageLiabilities,
   upsertStudentLoanLiabilities,
-} from "@cobalt-web/server-data/plaid/liabilities/mutations";
+} from "@cobalt-web/server-data/providers/plaid/liabilities/mutations";
 import type {
   AccountBase,
   CreditCardLiability,
@@ -14,14 +14,6 @@ import type {
   StudentLoan,
 } from "plaid";
 import { RetryableError } from "workflow";
-
-import {
-  mapCreditLiability,
-  mapMortgageLiability,
-  mapPlaidLiabilityBankAccount,
-  mapPlaidLiabilityBankBalance,
-  mapStudentLoan,
-} from "./lib.js";
 
 export type FetchPlaidLiabilitiesResult =
   | { skipped: true }
@@ -124,10 +116,7 @@ export async function persistPlaidLiabilityBankAccountsStep(
 ): Promise<number> {
   "use step";
 
-  const rows = accounts.map((a) =>
-    mapPlaidLiabilityBankAccount(a, plaidItemId)
-  );
-  return await insertBankAccountsOnConflictDoNothing(rows);
+  return await insertBankAccountsOnConflictDoNothing(accounts, plaidItemId);
 }
 
 export async function persistPlaidLiabilityBankBalancesStep(
@@ -135,8 +124,7 @@ export async function persistPlaidLiabilityBankBalancesStep(
 ): Promise<void> {
   "use step";
 
-  const rows = accounts.map(mapPlaidLiabilityBankBalance);
-  await upsertBankBalancesForPlaidAccounts(rows);
+  await upsertBankBalancesForPlaidAccounts(accounts);
 }
 
 export async function persistPlaidCreditLiabilitiesStep(
@@ -144,13 +132,7 @@ export async function persistPlaidCreditLiabilitiesStep(
 ): Promise<void> {
   "use step";
 
-  const rows = (credit ?? [])
-    .filter(
-      (l): l is CreditCardLiability & { account_id: string } =>
-        typeof l.account_id === "string"
-    )
-    .map(mapCreditLiability);
-  await upsertCreditLiabilities(rows);
+  await upsertCreditLiabilities(credit ?? []);
 }
 
 export async function persistPlaidMortgageLiabilitiesStep(
@@ -158,13 +140,7 @@ export async function persistPlaidMortgageLiabilitiesStep(
 ): Promise<void> {
   "use step";
 
-  const rows = (mortgage ?? [])
-    .filter(
-      (l): l is MortgageLiability & { account_id: string } =>
-        typeof l.account_id === "string"
-    )
-    .map(mapMortgageLiability);
-  await upsertMortgageLiabilities(rows);
+  await upsertMortgageLiabilities(mortgage ?? []);
 }
 
 export async function persistPlaidStudentLoanLiabilitiesStep(
@@ -172,11 +148,5 @@ export async function persistPlaidStudentLoanLiabilitiesStep(
 ): Promise<void> {
   "use step";
 
-  const rows = (student ?? [])
-    .filter(
-      (l): l is StudentLoan & { account_id: string } =>
-        typeof l.account_id === "string"
-    )
-    .map(mapStudentLoan);
-  await upsertStudentLoanLiabilities(rows);
+  await upsertStudentLoanLiabilities(student ?? []);
 }

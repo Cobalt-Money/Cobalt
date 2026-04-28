@@ -11,14 +11,11 @@
     "./*": {
       "default": "./src/*.ts"
     },
-    "./schema/banking": {
-      "default": "./src/schema/banking/index.ts"
-    },
-    "./schema/brokerage": {
-      "default": "./src/schema/brokerage/index.ts"
-    },
     "./schema/features": {
       "default": "./src/schema/features/index.ts"
+    },
+    "./schema/news": {
+      "default": "./src/schema/news/index.ts"
     }
   },
   "scripts": {
@@ -26,7 +23,8 @@
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate",
-    "migrate:debug": "bun run ./scripts/migrate-debug.ts"
+    "migrate:debug": "bun run ./scripts/migrate-debug.ts",
+    "check:unification-parity": "bun run ./scripts/check-unification-parity.ts"
   },
   "dependencies": {
     "@cobalt-web/env": "workspace:*",

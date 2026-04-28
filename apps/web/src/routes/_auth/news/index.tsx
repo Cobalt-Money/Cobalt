@@ -30,8 +30,10 @@ function NewsIndexPage() {
 
   const holdingSymbols = useMemo(() => {
     const s = new Set<string>();
-    for (const p of positions) {
-      const raw = p.symbol;
+    for (const p of positions as readonly {
+      security?: { symbol?: string | null } | null;
+    }[]) {
+      const raw = p.security?.symbol;
       const sym = typeof raw === "string" ? raw.trim().toUpperCase() : "";
       if (sym) {
         s.add(sym);

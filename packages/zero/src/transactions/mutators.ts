@@ -1,7 +1,7 @@
 import {
   locationJsonSchema,
   userOverrideCategoryJsonSchema,
-} from "@cobalt-web/db/schema/banking";
+} from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { defineMutator } from "@rocicorp/zero";
 import type { ReadonlyJSONObject, Transaction } from "@rocicorp/zero";
 import { z } from "zod";
@@ -55,13 +55,8 @@ async function assertOwnsTransaction(
   if (!userId) {
     throw new Error("Unauthorized");
   }
-  const row = await tx.run(
-    zql.transaction
-      .where("id", transactionId)
-      .related("account", (acc) => acc.related("connection"))
-      .one()
-  );
-  const ownerId = row?.account?.connection?.userId;
+  const row = await tx.run(zql.transaction.where("id", transactionId).one());
+  const ownerId = row?.userId;
   if (!ownerId || ownerId !== userId) {
     throw new Error("Transaction not found");
   }

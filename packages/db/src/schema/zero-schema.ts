@@ -2,87 +2,66 @@
 // drizzle-zero requires a single TS file (not a folder) for type resolution.
 
 // Tables (omit oauth* + jwks from auth/auth — server-only; not in Postgres replication publication)
-export {
-  user,
-  session,
-  account,
-  verification,
-  subscription,
-} from "./auth/auth";
+export { account, session, user, verification } from "./users/auth/auth";
 export { chats, messages, parts } from "./ai/chat";
-export { institution } from "./banking/items/institution";
-export { bankConnection } from "./banking/items/bank-connection";
-export {
-  bankAccount,
-  bankBalance,
-  bankBalanceSnapshot,
-} from "./banking/accounts";
-export { transaction, recurringStream } from "./banking/transactions/tables";
-export {
-  creditLiability,
-  mortgageLiability,
-  studentLoanLiability,
-} from "./banking/liabilities";
-export {
-  investmentSecurity,
-  investmentPosition,
-  investmentActivity,
-} from "./banking/investments";
-export { brokerageUser } from "./brokerage/users";
-export { brokerageAuthorizations } from "./brokerage/auth";
-export {
-  brokerageAccounts,
-  brokerageAccountDetails,
-} from "./brokerage/accounts";
-export { brokerageBalances, brokeragePositions } from "./brokerage/balances";
-export { brokerageOrders, brokerageActivities } from "./brokerage/trading";
-export { portfolioSnapshots } from "./brokerage/snapshots";
-export { feedback } from "./features/feedback";
-export { financialEvents, eventArticles } from "./features/financial-events";
-export { financialGoals } from "./features/financial-goals";
-export { kalshiUsers } from "./features/kalshi";
-export { messageVotes } from "./features/message-votes";
-export { rssArticles, rssFeeds } from "./features/rss";
-export { userAlerts } from "./features/user-alerts";
-export { mobileSubscription } from "./mobile/subscriptions";
+export { messageVotes } from "./ai/message-votes";
+export { financialAccount } from "./accounts/account";
+export { balance } from "./accounts/balance";
+export { snapshot } from "./accounts/snapshot";
+export { security } from "./accounts/investments/security";
+export { holding } from "./accounts/investments/holding";
+export { orders } from "./accounts/investments/order";
+export { investmentActivity } from "./accounts/investments/investment-activity";
+export { creditLiability } from "./accounts/banking/liabilities/credit";
+export { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
+export { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
+export { transaction } from "./accounts/banking/transactions/transaction";
+export { recurring } from "./accounts/banking/transactions/recurring";
+export { feedback } from "./users/feedback";
+export { financialGoals } from "./goals/financial-goals";
+export { kalshiUsers } from "./accounts/prediction-markets/kalshi";
+export { userAlerts } from "./users/alerts";
+export { eventArticles, financialEvents } from "./news/financial-events";
+export { rssArticles, rssFeeds } from "./news/rss";
+export { plaidConnection } from "./providers/plaid/connection";
+export { institution } from "./providers/plaid/institution";
+export { snaptradeAuthorization } from "./providers/snaptrade/authorization";
+export { snaptradeUser } from "./providers/snaptrade/user";
+export { mobileSubscription } from "./users/subscriptions/mobile";
+export { subscription } from "./users/subscriptions/stripe";
 
 // Legacy v1 `relations()` exports for drizzle-zero code generation only.
 // Runtime DB uses Relational Queries v2 from `./relations`.
 export {
-  userRelations,
   accountRelations,
-  sessionRelations,
+  balanceRelations,
   chatsRelations,
-  messagesRelations,
-  partsRelations,
-  bankConnectionRelations,
-  bankAccountRelations,
-  bankBalanceRelations,
-  bankBalanceSnapshotRelations,
-  transactionRelations,
-  recurringStreamRelations,
   creditLiabilityRelations,
-  mortgageLiabilityRelations,
-  studentLoanLiabilityRelations,
-  investmentSecurityRelations,
-  investmentPositionRelations,
-  investmentActivityRelations,
-  brokerageUserRelations,
-  brokerageAuthorizationRelations,
-  brokerageAccountRelations,
-  brokerageAccountDetailsRelations,
-  brokerageBalanceRelations,
-  brokeragePositionRelations,
-  brokerageOrderRelations,
-  brokerageActivityRelations,
-  portfolioSnapshotRelations,
-  financialEventsRelations,
   eventArticlesRelations,
-  userAlertsRelations,
-  financialGoalsRelations,
-  mobileSubscriptionRelations,
-  subscriptionRelations,
-  kalshiUserRelations,
   feedbackRelations,
+  financialAccountRelations,
+  financialEventsRelations,
+  financialGoalsRelations,
+  holdingRelations,
+  institutionRelations,
+  investmentActivityRelations,
+  kalshiUserRelations,
   messageVotesRelations,
-} from "./relations-drizzle-zero";
+  messagesRelations,
+  mobileSubscriptionRelations,
+  mortgageLiabilityRelations,
+  ordersRelations,
+  partsRelations,
+  plaidConnectionRelations,
+  recurringStreamRelations,
+  securityRelations,
+  sessionRelations,
+  snapshotRelations,
+  snaptradeAuthorizationRelations,
+  snaptradeUserRelations,
+  studentLoanLiabilityRelations,
+  subscriptionRelations,
+  transactionRelations,
+  userAlertsRelations,
+  userRelations,
+} from "./zero-relations";

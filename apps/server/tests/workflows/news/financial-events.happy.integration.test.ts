@@ -13,7 +13,7 @@
  */
 
 import { db } from "@cobalt-web/db";
-import { eventArticles, financialEvents } from "@cobalt-web/db/schema/features";
+import { eventArticles, financialEvents } from "@cobalt-web/db/schema/news";
 import { fetchRecentEvents } from "@cobalt-web/server-data/news/events/actions";
 import { eq } from "drizzle-orm";
 import { start } from "workflow/api";

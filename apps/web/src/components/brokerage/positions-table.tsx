@@ -6,13 +6,19 @@ import { useMemo } from "react";
 
 export interface PositionRow {
   id: string;
+  /** Unified financialAccount.id — used for scope filtering in the chart. */
+  accountId?: string | null;
   symbol?: string | null;
   symbolDescription?: string | null;
   securityTypeDescription?: string | null;
+  /** Raw shares; same as `units` — kept for parity with the holding row. */
+  quantity?: number | null;
   units?: number | null;
   averagePurchasePrice?: number | null;
   price?: number | null;
   openPnl?: number | null;
+  /** Plaid populates this directly; SnapTrade leaves it null. */
+  institutionValue?: number | null;
   currencyCode?: string | null;
   lastSync?: number | null;
   brokerageAccount?: { id: string; name?: string | null } | null;
