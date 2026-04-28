@@ -16,7 +16,7 @@ export function useBankOptions(): BankOption[] {
   return useMemo(() => {
     const byId = new Map<string, BankOption>();
     for (const row of rows as readonly {
-      connection?: {
+      plaidConnection?: {
         institutionId?: string | null;
         institution?: {
           logo?: string | null;
@@ -25,11 +25,11 @@ export function useBankOptions(): BankOption[] {
         } | null;
       } | null;
     }[]) {
-      const id = row.connection?.institutionId;
+      const id = row.plaidConnection?.institutionId;
       if (!id || byId.has(id)) {
         continue;
       }
-      const institution = row.connection?.institution;
+      const institution = row.plaidConnection?.institution;
       byId.set(id, {
         id,
         logo: institution?.logo ?? null,
