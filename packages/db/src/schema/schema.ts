@@ -36,3 +36,10 @@ export { accountSource } from "./accounts/account";
 export { transactionSource } from "./accounts/banking/transactions/transaction";
 export { activitySource } from "./accounts/investments/investment-activity";
 export { securitySource } from "./accounts/investments/security";
+
+// SRI-181 — server-only, not replicated to Zero clients.
+export {
+  transactionEdit,
+  transactionEditActor,
+  transactionEditField,
+} from "./accounts/banking/transactions/transaction-edit";

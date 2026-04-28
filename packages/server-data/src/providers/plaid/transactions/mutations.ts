@@ -60,21 +60,22 @@ export async function persistTransactions(
         address: sql`excluded.address`,
         amount: sql`excluded.amount`,
         authorizedDate: sql`excluded.authorized_date`,
-        category: sql`excluded.category`,
-        categoryConfidence: sql`excluded.category_confidence`,
-        categoryDetail: sql`excluded.category_detail`,
+        // Respect lockedFields: only overwrite if user has not locked the field.
+        category: sql`CASE WHEN ${transactionTable.lockedFields} ? 'category' THEN ${transactionTable.category} ELSE excluded.category END`,
+        categoryConfidence: sql`CASE WHEN ${transactionTable.lockedFields} ? 'category' THEN ${transactionTable.categoryConfidence} ELSE excluded.category_confidence END`,
+        categoryDetail: sql`CASE WHEN ${transactionTable.lockedFields} ? 'category' THEN ${transactionTable.categoryDetail} ELSE excluded.category_detail END`,
         checkNumber: sql`excluded.check_number`,
         city: sql`excluded.city`,
         counterparties: sql`excluded.counterparties`,
         country: sql`excluded.country`,
         currency: sql`excluded.currency`,
-        date: sql`excluded.date`,
+        date: sql`CASE WHEN ${transactionTable.lockedFields} ? 'date' THEN ${transactionTable.date} ELSE excluded.date END`,
         lat: sql`excluded.lat`,
         logoUrl: sql`excluded.logo_url`,
         lon: sql`excluded.lon`,
         merchantEntityId: sql`excluded.merchant_entity_id`,
         merchantName: sql`excluded.merchant_name`,
-        name: sql`excluded.name`,
+        name: sql`CASE WHEN ${transactionTable.lockedFields} ? 'name' THEN ${transactionTable.name} ELSE excluded.name END`,
         paymentChannel: sql`excluded.payment_channel`,
         pending: sql`excluded.pending`,
         pendingTransactionId: sql`excluded.pending_transaction_id`,
@@ -138,9 +139,17 @@ export async function applyPendingOverrides(
     await db
       .update(transactionTable)
       .set({
+        category: override.lockedFields.includes("category")
+          ? override.category
+          : undefined,
+        categoryDetail: override.lockedFields.includes("category")
+          ? override.categoryDetail
+          : undefined,
+        lockedFields: override.lockedFields,
+        name: override.lockedFields.includes("name")
+          ? override.name
+          : undefined,
         updatedAt: new Date(),
-        userOverrideCategory: override.userOverrideCategory,
-        userOverrideName: override.userOverrideName,
       })
       .where(
         and(

@@ -1,0 +1,1 @@
+ALTER TYPE "transaction_edit_field" ADD VALUE 'location' BEFORE 'name';

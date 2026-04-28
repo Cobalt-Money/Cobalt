@@ -87,15 +87,13 @@ function makeTx(
     institutionName: "Chase",
     institutionUrl: "chase.com",
     location: null,
+    lockedFields: [],
     logoUrl: null,
     merchantName: null,
     notes: null,
     pending: false,
     plaidAccountId: "plaid-acc-1",
-    userOverrideCategory: null,
-    userOverrideDate: null,
     userOverrideLocation: null,
-    userOverrideName: null,
     website: null,
     ...overrides,
   };
@@ -1265,7 +1263,7 @@ function TransactionsView() {
           <TransactionDetailSummary transaction={selectedTx} />
           {selectedTx.notes ? <NotesRenderer doc={selectedTx.notes} /> : null}
           <Separator />
-          <TransactionDetailActivity transaction={selectedTx} />
+          <TransactionDetailActivity editEvents={[]} transaction={selectedTx} />
         </div>
       </BackableScreen>
     );

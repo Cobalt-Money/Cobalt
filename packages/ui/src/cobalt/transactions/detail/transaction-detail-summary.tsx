@@ -161,7 +161,7 @@ export function TransactionDetailSummary({
         {edit ? (
           <EditableDate
             dateIso={transaction.date}
-            isOverridden={Boolean(transaction.userOverrideDate)}
+            isOverridden={false}
             onReset={edit.onResetDate}
             onSubmit={edit.onUpdateDate}
           />
@@ -170,7 +170,7 @@ export function TransactionDetailSummary({
         {edit ? (
           <EditableCategory
             category={category}
-            isOverridden={Boolean(transaction.userOverrideCategory)}
+            isOverridden={false}
             onReset={edit.onResetCategory}
             onSubmit={edit.onUpdateCategory}
           />
@@ -180,7 +180,7 @@ export function TransactionDetailSummary({
 
         {edit ? (
           <EditableLocation
-            isOverridden={Boolean(transaction.userOverrideLocation)}
+            isOverridden={false}
             loading={edit.locationSearch.loading}
             location={transaction.location}
             onQueryChange={edit.locationSearch.onQueryChange}

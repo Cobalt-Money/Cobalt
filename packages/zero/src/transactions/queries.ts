@@ -22,6 +22,20 @@ const listArgsSchema = z
 
 /** Transaction-related named queries (`queries.transactions.*`). Composed in root `queries.ts`. */
 export const transactionsQueries = {
+  activity: defineQuery(
+    z.object({ transactionId: z.string() }),
+    ({ ctx, args }) => {
+      const userId = ctx?.userId;
+      if (!userId) {
+        return zql.transactionEdit.where("id", NO_MATCH_ID);
+      }
+      return zql.transactionEdit
+        .where("transactionId", args.transactionId)
+        .where("userId", userId)
+        .orderBy("createdAt", "asc");
+    }
+  ),
+
   creditSpending: defineQuery(
     z.object({
       period: z.enum(["1w", "1m", "3m", "6m", "1y", "all"]),

@@ -55,7 +55,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: z.string().min(1),
     GOOGLE_IOS_CLIENT_ID: z.string().min(1),
     LOCAL_DATABASE_URL: z.string().min(1).optional(),
-    /** Drizzle Kit DDL: use postgres/superuser URL locally (not `app_local`). See `db:migrate:local`. */
+    /** Drizzle Kit DDL: superuser URL locally. See `db:migrate:local`. */
     MIGRATION_URI: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "production", "test"])

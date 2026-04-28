@@ -38,7 +38,11 @@ const zeroRouter = new OpenAPIHono<AppEnv>()
         dbProvider,
         (transact) =>
           transact((tx, name, args) =>
-            mustGetMutator(mutators, name).fn({ args, ctx: zeroContext, tx })
+            mustGetMutator(mutators, name).fn({
+              args,
+              ctx: zeroContext,
+              tx,
+            })
           ),
         c.req.raw
       );

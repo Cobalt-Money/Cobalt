@@ -21,22 +21,14 @@ LOCAL_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/cobalt
 Notes:
 
 - **Drizzle Kit never reads `DATABASE_URL`.** You must set either `LOCAL_DATABASE_URL` (preferred) or `MIGRATION_URI`, otherwise `bun db:generate` / `bun db:migrate` throws `Either LOCAL_DATABASE_URL or MIGRATION_URI must be set`.
-- Using the `postgres` superuser for both is the simplest setup while migrating. If you later switch `DATABASE_URL` to `app_local:app_local_secret@…` (after `db:local:grants`) to test realistic RLS, keep `LOCAL_DATABASE_URL` pointed at the superuser so Drizzle Kit can still run DDL.
+- Use the `postgres` superuser for both `DATABASE_URL` and `LOCAL_DATABASE_URL` locally. RLS removed; no separate login users.
 - `bun db:migrate:local` forces the Docker superuser URL on port **5433** without needing `LOCAL_DATABASE_URL` in your env.
-
-After **`bun db:local:grants`**, you can use PlanetScale-style login users (see [`packages/db/planetscale/README.md`](../../packages/db/planetscale/README.md)):
-
-```bash
-DATABASE_URL=postgresql://app_local:app_local_secret@127.0.0.1:5433/cobalt
-```
 
 For hosted dev/staging databases, use the connection string from your provider and keep SSL/query params as required.
 
 ---
 
-## First-time: local Docker Postgres (roles + migrations)
-
-This repo is **migrating** from a stack that uses **native Postgres roles** (`pg_read_all_data`, `pg_write_all_data`) and **RLS**—not a hosted “Supabase client” model. Local Docker must create those roles **before** migrations that reference them in `CREATE POLICY … TO pg_read_all_data`, etc.
+## First-time: local Docker Postgres
 
 ### 1. Start Postgres
 
@@ -46,7 +38,7 @@ bun db:local:up
 
 Postgres **18**, database **`cobalt`**, superuser `postgres` / `postgres`, host port **5433**.
 
-### 2. Create group roles (before migrations)
+### 2. Bootstrap (before migrations)
 
 ```bash
 bun db:local:init
@@ -60,7 +52,7 @@ Runs [`packages/db/planetscale/local-bootstrap.sql`](../../packages/db/planetsca
 bun db:migrate
 ```
 
-Uses `DATABASE_URL` / `MIGRATION_URI` from env (superuser URL is fine for CLI).
+Uses `LOCAL_DATABASE_URL` / `MIGRATION_URI` from env.
 
 **Schema push** (quick dev only; skips migration files):
 
@@ -68,15 +60,7 @@ Uses `DATABASE_URL` / `MIGRATION_URI` from env (superuser URL is fine for CLI).
 bun db:push
 ```
 
-### 4. Table grants + login users (after migrations)
-
-```bash
-bun db:local:grants
-```
-
-Runs [`packages/db/planetscale/local-grants.sql`](../../packages/db/planetscale/local-grants.sql). Needed once tables exist so `GRANT … ON ALL TABLES` applies and `app_local` / `agent_local` exist.
-
-### 5. Run the stack
+### 4. Run the stack
 
 ```bash
 bun dev
@@ -99,11 +83,9 @@ bun dev
    bun db:migrate
    ```
 
-4. If new tables need the same role grants, **`bun db:local:grants`** is safe to re-run (idempotent grants + default privileges for future tables created as `postgres`).
+4. **Regenerate the Zero schema** (see [Drizzle Zero schema generation](#drizzle-zero-schema-generation) below).
 
-5. **Regenerate the Zero schema** (see [Drizzle Zero schema generation](#drizzle-zero-schema-generation) below).
-
-6. Run `bun check` and test with `bun dev`.
+5. Run `bun check` and test with `bun dev`.
 
 ---
 
@@ -129,7 +111,7 @@ Commit the updated **`zero-schema.gen.ts`** with the same change set as your Dri
 
 ### Local order (typical)
 
-1. `bun db:generate` → `bun db:migrate` (and `bun db:local:grants` if needed).
+1. `bun db:generate` → `bun db:migrate`.
 2. `bun zero:generate`
 3. `bun check` → `bun dev` (and restart **zero-cache** if it was running—see [troubleshooting](./troubleshooting.md#zero--zero-cache)).
 
@@ -165,10 +147,9 @@ Always test restores against a **throwaway** local DB (`bun db:local:reset` firs
 bun db:local:reset
 ```
 
-Then repeat **init → migrate → grants** (and set `DATABASE_URL` again):
+Then repeat **init → migrate**:
 
 ```bash
 bun db:local:init
 bun db:migrate
-bun db:local:grants
 ```

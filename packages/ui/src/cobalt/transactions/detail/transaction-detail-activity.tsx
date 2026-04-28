@@ -1,39 +1,49 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type {
+  TransactionActivityItem,
+  TransactionListItem,
+} from "@cobalt-web/server-data/transactions/schemas";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import {
+  Calendar03Icon,
+  Coins01Icon,
+  Location01Icon,
+  Note01Icon,
+  PencilEdit01Icon,
+  Shield01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { IconSvgElement } from "@hugeicons/react";
 
+import { CategoryIcon, getCategoryDisplayConfig } from "../categories";
 import { formatDateStringShort } from "../lib/helpers";
 
-type ActivityEventType =
-  | "authorized"
-  | "override_category"
-  | "override_date"
-  | "override_name"
-  | "pending"
-  | "posted";
+type BuiltinEventType = "authorized" | "pending" | "posted";
+type EditEventType = `edit_${TransactionActivityItem["field"]}`;
+type ActivityEventType = BuiltinEventType | EditEventType;
 
 interface ActivityEvent {
+  actor?: "user" | "system";
   date: string | null;
   description: string;
   id: string;
   type: ActivityEventType;
 }
 
-/** Sort key for chronological order: newer first (top), older last (bottom). */
 function getEventSortTime(event: ActivityEvent): number {
-  if (event.date) {
-    const day = String(event.date).split("T")[0] ?? String(event.date);
-    const t = new Date(`${day}T12:00:00.000Z`).getTime();
-    return Number.isNaN(t) ? 0 : t;
+  if (!event.date) {
+    return Number.POSITIVE_INFINITY;
   }
-  // Overrides without a server timestamp: treat as most recent (typical case).
-  return Number.POSITIVE_INFINITY;
+  const t = new Date(event.date).getTime();
+  return Number.isNaN(t) ? 0 : t;
 }
 
-/** When two events share the same calendar day, prefer this narrative order (newer types first). */
 const TYPE_ORDER_NEWER_FIRST: ActivityEventType[] = [
-  "override_date",
-  "override_category",
-  "override_name",
+  "edit_name",
+  "edit_category",
+  "edit_date",
+  "edit_location",
+  "edit_notes",
+  "edit_amount",
   "posted",
   "pending",
   "authorized",
@@ -61,8 +71,45 @@ function sortActivityEventsNewestFirst(
   });
 }
 
+function describeEditEvent(item: TransactionActivityItem): string {
+  switch (item.field) {
+    case "name": {
+      return typeof item.newValue === "string"
+        ? `Name changed to "${item.newValue}"`
+        : "Name restored";
+    }
+    case "category": {
+      const v = item.newValue as { primary?: string } | null;
+      if (!v?.primary) {
+        return "Category restored";
+      }
+      return `Category changed to ${v.primary.replaceAll("_", " ").toLowerCase()}`;
+    }
+    case "date": {
+      return typeof item.newValue === "string"
+        ? `Date changed to ${formatDateStringShort(item.newValue)}`
+        : "Date restored";
+    }
+    case "notes": {
+      return item.newValue ? "Notes updated" : "Notes cleared";
+    }
+    case "amount": {
+      return typeof item.newValue === "number"
+        ? `Amount changed to ${item.newValue}`
+        : "Amount updated";
+    }
+    case "location": {
+      return item.newValue ? "Location updated" : "Location cleared";
+    }
+    default: {
+      return "Updated";
+    }
+  }
+}
+
 function buildActivityEvents(
-  transaction: TransactionListItem
+  transaction: TransactionListItem,
+  editEvents: TransactionActivityItem[]
 ): ActivityEvent[] {
   const events: ActivityEvent[] = [];
 
@@ -91,74 +138,156 @@ function buildActivityEvents(
     });
   }
 
-  if (
-    transaction.userOverrideName &&
-    transaction.userOverrideName !== transaction.name
-  ) {
+  for (const item of editEvents) {
+    if (item.field === "notes") {
+      continue;
+    }
     events.push({
-      date: null,
-      description: `Name changed to "${transaction.userOverrideName}"`,
-      id: "override_name",
-      type: "override_name",
-    });
-  }
-
-  if (transaction.userOverrideCategory) {
-    events.push({
-      date: null,
-      description: "Category updated",
-      id: "override_category",
-      type: "override_category",
-    });
-  }
-
-  if (transaction.userOverrideDate) {
-    events.push({
-      date: null,
-      description: `Date changed to ${formatDateStringShort(transaction.userOverrideDate)}`,
-      id: "override_date",
-      type: "override_date",
+      actor: item.actor,
+      date: item.createdAt,
+      description: describeEditEvent(item),
+      id: item.id,
+      type: `edit_${item.field}`,
     });
   }
 
   return sortActivityEventsNewestFirst(events);
 }
 
-const eventDotColor: Record<ActivityEventType, string> = {
-  authorized: "bg-blue-500",
-  override_category: "bg-violet-500",
-  override_date: "bg-violet-500",
-  override_name: "bg-violet-500",
-  pending: "bg-yellow-500",
-  posted: "bg-green-600 dark:bg-green-500",
+const eventMarkerTone: Record<ActivityEventType, string> = {
+  authorized: "text-muted-foreground",
+  edit_amount: "text-muted-foreground",
+  edit_category: "text-muted-foreground",
+  edit_date: "text-muted-foreground",
+  edit_location: "text-muted-foreground",
+  edit_name: "text-muted-foreground",
+  edit_notes: "text-muted-foreground",
+  pending: "text-muted-foreground",
+  posted: "text-muted-foreground",
 };
+
+const STATUS_PENDING_ICON = "/assets/vectors/pending.svg";
+const STATUS_POSTED_ICON = "/assets/vectors/posted.svg";
+
+function EventMarker({
+  event,
+  rawItem,
+  transaction,
+}: {
+  event: ActivityEvent;
+  rawItem?: TransactionActivityItem;
+  transaction: TransactionListItem;
+}) {
+  const tone = eventMarkerTone[event.type] ?? "text-muted-foreground";
+
+  if (event.type === "edit_category" && rawItem?.field === "category") {
+    const value = rawItem.newValue as {
+      primary?: string;
+      detailed?: string;
+    } | null;
+    const fallback = transaction.category
+      ? {
+          detailed: transaction.categoryDetail ?? "",
+          primary: transaction.category,
+        }
+      : null;
+    const config = getCategoryDisplayConfig(
+      value?.primary
+        ? { detailed: value.detailed ?? "", primary: value.primary }
+        : fallback
+    );
+    return (
+      <span
+        className={cn(
+          "inline-flex size-4 shrink-0 items-center justify-center",
+          tone
+        )}
+      >
+        <CategoryIcon icon={config.icon} />
+      </span>
+    );
+  }
+
+  if (event.type === "pending" || event.type === "posted") {
+    return (
+      <img
+        alt=""
+        aria-hidden
+        className="size-4 shrink-0 object-contain"
+        decoding="async"
+        height={16}
+        src={
+          event.type === "pending" ? STATUS_PENDING_ICON : STATUS_POSTED_ICON
+        }
+        width={16}
+      />
+    );
+  }
+
+  const iconByType: Partial<Record<ActivityEventType, IconSvgElement>> = {
+    authorized: Shield01Icon as IconSvgElement,
+    edit_amount: Coins01Icon as IconSvgElement,
+    edit_date: Calendar03Icon as IconSvgElement,
+    edit_location: Location01Icon as IconSvgElement,
+    edit_name: PencilEdit01Icon as IconSvgElement,
+    edit_notes: Note01Icon as IconSvgElement,
+  };
+
+  const icon = iconByType[event.type];
+  if (!icon) {
+    return (
+      <span
+        className={cn("size-2.5 rounded-full", tone.replace("text-", "bg-"))}
+      />
+    );
+  }
+
+  return (
+    <HugeiconsIcon
+      aria-hidden
+      className={cn("size-4 shrink-0", tone)}
+      icon={icon}
+      strokeWidth={2}
+    />
+  );
+}
 
 function ActivityEventRow({
   event,
   isLast,
+  rawItem,
+  transaction,
 }: {
   event: ActivityEvent;
   isLast: boolean;
+  rawItem?: TransactionActivityItem;
+  transaction: TransactionListItem;
 }) {
   return (
-    <div className="relative flex gap-3 pb-6 last:pb-0">
-      {/* Vertical connector line */}
+    <div className="relative flex items-start gap-3 pb-6 last:pb-0">
       {isLast ? null : (
-        <div className="absolute top-3 bottom-0 left-[7px] w-px bg-border" />
+        <div className="absolute top-5 bottom-0 left-[7px] w-px bg-border" />
       )}
 
-      {/* Dot */}
-      <div className="relative z-10 flex size-[15px] shrink-0 items-center justify-center pt-0.5">
-        <span
-          className={cn("size-2.5 rounded-full", eventDotColor[event.type])}
+      <div className="relative z-10 flex h-5 w-4 shrink-0 items-center justify-center">
+        <EventMarker
+          event={event}
+          rawItem={rawItem}
+          transaction={transaction}
         />
       </div>
 
-      {/* Content */}
-      <div className="flex min-w-0 flex-1 items-start justify-between gap-4 pt-px">
-        <p className="text-foreground text-sm">{event.description}</p>
+      <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <p className="text-muted-foreground text-sm leading-5">
+            {event.description}
+          </p>
+          {event.actor === "system" ? (
+            <p className="text-muted-foreground text-xs">Automatic</p>
+          ) : null}
+        </div>
         {event.date ? (
-          <time className="shrink-0 text-muted-foreground text-xs tabular-nums">
+          <time className="shrink-0 text-muted-foreground text-xs leading-5 tabular-nums">
             {formatDateStringShort(event.date)}
           </time>
         ) : null}
@@ -168,11 +297,13 @@ function ActivityEventRow({
 }
 
 export function TransactionDetailActivity({
+  editEvents,
   transaction,
 }: {
+  editEvents: TransactionActivityItem[];
   transaction: TransactionListItem;
 }) {
-  const events = buildActivityEvents(transaction);
+  const events = buildActivityEvents(transaction, editEvents);
 
   if (events.length === 0) {
     return null;
@@ -189,6 +320,8 @@ export function TransactionDetailActivity({
             event={event}
             isLast={i === events.length - 1}
             key={event.id}
+            rawItem={editEvents.find((e) => e.id === event.id)}
+            transaction={transaction}
           />
         ))}
       </div>

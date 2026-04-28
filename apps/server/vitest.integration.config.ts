@@ -9,8 +9,7 @@
  * Prerequisites before running `bun run test:integration`:
  *   1. `bun run db:local:up` — start local Postgres in docker
  *   2. `bun run db:migrate:local` — apply migrations to local PG
- *   3. (optional) `bun run db:local:grants` — role grants if you haven't yet
- *   4. Real `STOCK_NEWS_API_KEY` in apps/server/.env (read by the spawned Nitro)
+ *   3. Real `STOCK_NEWS_API_KEY` in apps/server/.env (read by the spawned Nitro)
  *
  * The spawn file waits for Nitro's "listening" output before letting tests
  * start, and terminates the server on teardown.

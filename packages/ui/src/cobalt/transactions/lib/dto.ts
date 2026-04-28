@@ -1,6 +1,31 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type {
+  TransactionActivityItem,
+  TransactionListItem,
+} from "@cobalt-web/server-data/transactions/schemas";
 import { toTransactionListItem } from "@cobalt-web/server-data/transactions/to-transaction-list-item";
 import type { TransactionRowInput } from "@cobalt-web/server-data/transactions/to-transaction-list-item";
+
+/** Zero `useQuery` row for `transactions.activity` — `createdAt` is epoch ms. */
+export type ZeroTransactionEditRow = Record<string, unknown> & {
+  readonly id: string;
+  readonly createdAt: number | string;
+};
+
+export function mapZeroTransactionEditRow(
+  row: ZeroTransactionEditRow
+): TransactionActivityItem {
+  return {
+    actor: row.actor as TransactionActivityItem["actor"],
+    createdAt:
+      typeof row.createdAt === "number"
+        ? new Date(row.createdAt).toISOString()
+        : String(row.createdAt),
+    field: row.field as TransactionActivityItem["field"],
+    id: row.id,
+    newValue: row.newValue ?? null,
+    oldValue: row.oldValue ?? null,
+  };
+}
 
 /**
  * Zero `useQuery` rows for `transactions.list` — named-query typings omit `related()` fields;

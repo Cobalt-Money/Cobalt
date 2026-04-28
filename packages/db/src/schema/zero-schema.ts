@@ -16,6 +16,7 @@ export { creditLiability } from "./accounts/banking/liabilities/credit";
 export { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
 export { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
 export { transaction } from "./accounts/banking/transactions/transaction";
+export { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
 export { recurring } from "./accounts/banking/transactions/recurring";
 export { feedback } from "./users/feedback";
 export { financialGoals } from "./goals/financial-goals";
@@ -61,6 +62,7 @@ export {
   snaptradeUserRelations,
   studentLoanLiabilityRelations,
   subscriptionRelations,
+  transactionEditRelations,
   transactionRelations,
   userAlertsRelations,
   userRelations,

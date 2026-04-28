@@ -26,7 +26,6 @@ bun db:local:up
 bun db:local:reset
 bun db:local:init
 bun db:migrate
-bun db:local:grants
 ```
 
 ---
@@ -46,21 +45,7 @@ psql "postgresql://postgres:postgres@127.0.0.1:5433/cobalt" -c "SELECT 1"
 
 ## Migrations
 
-### Role `pg_read_all_data` / `pg_write_all_data` does not exist (policy / migration fails)
-
-**Cause:** Migrations reference **RLS policies** on those roles, but **`bun db:local:init`** was not run first.
-
-**Fix:**
-
-```bash
-bun db:local:init
-bun db:migrate
-bun db:local:grants
-```
-
-See [`packages/db/planetscale/README.md`](../../packages/db/planetscale/README.md).
-
-### “Relation does not exist” / empty database
+### "Relation does not exist" / empty database
 
 **Cause:** Migrations were not applied.
 

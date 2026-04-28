@@ -8,6 +8,7 @@ import { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
 import { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
 import { recurring } from "./accounts/banking/transactions/recurring";
 import { transaction } from "./accounts/banking/transactions/transaction";
+import { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
 import { holding } from "./accounts/investments/holding";
 import { investmentActivity } from "./accounts/investments/investment-activity";
 import { orders } from "./accounts/investments/order";
@@ -187,16 +188,27 @@ export const ordersRelations = relations(orders, ({ one }) => ({
   }),
 }));
 
-export const transactionRelations = relations(transaction, ({ one }) => ({
+export const transactionRelations = relations(transaction, ({ many, one }) => ({
   account: one(financialAccount, {
     fields: [transaction.accountId],
     references: [financialAccount.id],
   }),
+  edits: many(transactionEdit),
   user: one(user, {
     fields: [transaction.userId],
     references: [user.id],
   }),
 }));
+
+export const transactionEditRelations = relations(
+  transactionEdit,
+  ({ one }) => ({
+    transaction: one(transaction, {
+      fields: [transactionEdit.transactionId],
+      references: [transaction.id],
+    }),
+  })
+);
 
 export const recurringStreamRelations = relations(recurring, ({ one }) => ({
   account: one(financialAccount, {

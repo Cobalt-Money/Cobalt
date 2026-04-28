@@ -14,19 +14,18 @@ export function getTransactionDisplayDateString(
 }
 
 /**
- * Name shown anywhere in the app: user override first, then Plaid's merchant,
- * finally the raw transaction name. Trim fallbacks so whitespace-only overrides
- * (or merchant names) don't win.
+ * Name shown anywhere in the app. When the user locks `name` (edited it),
+ * prefer the column value. Otherwise fall back to the friendlier
+ * `merchantName` from Plaid for unedited rows.
  */
 export function getTransactionDisplayName(
-  row: Pick<TransactionListItem, "merchantName" | "name" | "userOverrideName">
+  row: Pick<TransactionListItem, "lockedFields" | "merchantName" | "name">
 ): string {
-  return (
-    row.userOverrideName?.trim() ||
-    row.merchantName?.trim() ||
-    row.name?.trim() ||
-    ""
-  );
+  const locked = (row.lockedFields ?? []) as string[];
+  if (locked.includes("name")) {
+    return row.name?.trim() || row.merchantName?.trim() || "";
+  }
+  return row.merchantName?.trim() || row.name?.trim() || "";
 }
 
 /** Sort key for date column — same hierarchy as horizon (`authorizedDate` || `date`). */

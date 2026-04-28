@@ -1,4 +1,7 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type {
+  TransactionActivityItem,
+  TransactionListItem,
+} from "@cobalt-web/server-data/transactions/schemas";
 import { Separator } from "@cobalt-web/ui/components/separator";
 
 import { TransactionDetailActivity } from "./transaction-detail-activity";
@@ -10,9 +13,11 @@ export type { TransactionDetailEditHandlers } from "./transaction-detail-summary
 
 export function TransactionDetailView({
   edit,
+  editEvents = [],
   transaction,
 }: {
   edit?: TransactionDetailEditHandlers;
+  editEvents?: TransactionActivityItem[];
   transaction: TransactionListItem;
 }) {
   return (
@@ -26,7 +31,10 @@ export function TransactionDetailView({
         />
       ) : null}
       <Separator />
-      <TransactionDetailActivity transaction={transaction} />
+      <TransactionDetailActivity
+        editEvents={editEvents}
+        transaction={transaction}
+      />
     </div>
   );
 }

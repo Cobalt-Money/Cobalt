@@ -11,7 +11,7 @@ import { requirePaidUser } from "../middleware.js";
 
 const patchTransactionRoute = createRoute({
   description:
-    "Sparse partial update — only fields present in the body are written. Pass `null` to clear an override (RFC 7396 JSON Merge Patch).",
+    "Sparse partial update — only fields present in the body are written. Pass `null` to restore the original value (RFC 7396 semantics). Writes to transaction_edit for auditing.",
   method: "patch",
   middleware: [requirePaidUser] as const,
   path: "/{transactionId}",
@@ -40,7 +40,7 @@ export const overridesRouter = new OpenAPIHono<AppEnv>().openapi(
   async (c) => {
     const { transactionId } = c.req.valid("param");
     const body = c.req.valid("json");
-    await patchTransaction(transactionId, body);
+    await patchTransaction(transactionId, c.var.user.id, body);
     return c.json({ success: true }, 200);
   }
 );

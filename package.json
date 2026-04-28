@@ -40,7 +40,6 @@
     "db:local:down": "docker compose -f docker-compose.local-db.yml down",
     "db:local:reset": "docker compose -f docker-compose.local-db.yml down -v && docker compose -f docker-compose.local-db.yml up -d",
     "db:local:init": "cat packages/db/planetscale/local-bootstrap.sql | docker compose -f docker-compose.local-db.yml exec -T postgres psql -U postgres -d cobalt",
-    "db:local:grants": "cat packages/db/planetscale/local-grants.sql | docker compose -f docker-compose.local-db.yml exec -T postgres psql -U postgres -d cobalt",
     "dev:zero": "zero-cache-dev",
     "zero:up": "bun run --cwd apps/zero-cache compose:up",
     "zero:down": "bun run --cwd apps/zero-cache compose:down",
