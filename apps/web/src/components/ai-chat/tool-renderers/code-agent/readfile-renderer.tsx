@@ -1,4 +1,5 @@
-import { FileTextIcon } from "lucide-react";
+import { File01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 import type { ToolRendererContext } from "../types";
 import { toolRendererKey } from "../types";
@@ -33,7 +34,10 @@ export function ReadFileToolRenderer({
   return (
     <div key={toolRendererKey(context, "readfile")} className="pb-2">
       <div className="flex items-center gap-2 py-1">
-        <FileTextIcon className="size-3.5 text-muted-foreground shrink-0" />
+        <HugeiconsIcon
+          icon={File01Icon}
+          className="size-3.5 text-muted-foreground shrink-0"
+        />
         <span className="text-sm text-foreground truncate">
           {filename || path || "File"}
         </span>

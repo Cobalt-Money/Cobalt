@@ -1,4 +1,5 @@
-import { SearchIcon } from "lucide-react";
+import { Search01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 import type { ToolRendererContext } from "../types";
 import { toolRendererKey } from "../types";
@@ -26,7 +27,10 @@ export function BashToolRenderer({
       className="flex items-center gap-2 py-1"
       key={toolRendererKey(context, "bash")}
     >
-      <SearchIcon className="size-3.5 text-muted-foreground shrink-0" />
+      <HugeiconsIcon
+        icon={Search01Icon}
+        className="size-3.5 text-muted-foreground shrink-0"
+      />
       <code className="text-sm font-mono text-foreground truncate">
         $ {command}
       </code>

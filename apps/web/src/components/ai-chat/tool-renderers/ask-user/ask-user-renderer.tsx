@@ -1,5 +1,6 @@
 import { Shimmer } from "@cobalt-web/ui/components/ai-elements/shimmer";
-import { CheckIcon, CircleHelpIcon } from "lucide-react";
+import { HelpCircleIcon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 import type { ToolRendererContext } from "../types";
 import { toolRendererKey } from "../types";
@@ -37,7 +38,7 @@ export function AskUserToolRenderer({
         key={toolRendererKey(context, "ask-user-pending")}
         className="py-2 flex items-center gap-2 text-sm text-muted-foreground"
       >
-        <CircleHelpIcon className="size-3.5" />
+        <HugeiconsIcon icon={HelpCircleIcon} className="size-3.5" />
         <span>Waiting for your answer below...</span>
       </div>
     );
@@ -54,7 +55,7 @@ export function AskUserToolRenderer({
         key={toolRendererKey(context, "ask-user-done")}
         className="py-2 flex items-center gap-2 text-sm text-muted-foreground"
       >
-        <CheckIcon className="size-3.5 text-primary" />
+        <HugeiconsIcon icon={Tick02Icon} className="size-3.5 text-primary" />
         <span>
           {part.input?.question}
           {selected && (

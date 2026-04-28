@@ -1,5 +1,6 @@
 import { Queue } from "@cobalt-web/ui/components/ai-elements/queue";
-import { PencilIcon, XIcon } from "lucide-react";
+import { Cancel01Icon, PencilEdit01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 
 import type { QueuedMessage } from "@/components/ai-chat/state/chat-context";
@@ -107,7 +108,7 @@ function QueueRow({ item, onRemove, onUpdate }: QueueRowProps) {
           onClick={() => setEditing(true)}
           type="button"
         >
-          <PencilIcon className="size-3" />
+          <HugeiconsIcon icon={PencilEdit01Icon} className="size-3" />
         </button>
         <button
           aria-label="Remove queued message"
@@ -115,7 +116,7 @@ function QueueRow({ item, onRemove, onUpdate }: QueueRowProps) {
           onClick={onRemove}
           type="button"
         >
-          <XIcon className="size-3" />
+          <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
         </button>
       </div>
     </li>
