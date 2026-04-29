@@ -41,5 +41,4 @@ export { securitySource } from "./accounts/investments/security";
 export {
   transactionEdit,
   transactionEditActor,
-  transactionEditField,
 } from "./accounts/banking/transactions/transaction-edit";

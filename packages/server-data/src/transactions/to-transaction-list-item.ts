@@ -17,6 +17,7 @@ export type TransactionListItemInstitutionSlice = {
 export interface TransactionRowInput {
   amount: number;
   authorizedDate: string | Date | number | null | undefined;
+  source: "plaid" | "manual";
   category: string | null | undefined;
   categoryConfidence: string | null | undefined;
   categoryDetail: string | null | undefined;
@@ -105,6 +106,7 @@ export function toTransactionListItem(input: {
     notes: row.notes ?? null,
     pending: row.pending ?? false,
     plaidAccountId: account.plaidAccountId,
+    source: row.source,
     userOverrideLocation: row.userOverrideLocation ?? null,
     website: row.website ?? null,
   };

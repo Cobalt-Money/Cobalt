@@ -2,17 +2,18 @@
 
 import { useChat } from "@ai-sdk/react";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import {
+  BubbleChatIcon,
+  Cancel01Icon,
+  Loading03Icon,
+  ReloadIcon,
+  Search01Icon,
+  SentIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Presence } from "@radix-ui/react-presence";
 import { DefaultChatTransport } from "ai";
 import type { Tool, UIToolInvocation } from "ai";
-import {
-  Loader2,
-  MessageCircleIcon,
-  RefreshCw,
-  SearchIcon,
-  Send,
-  X,
-} from "lucide-react";
 import {
   createContext,
   use,
@@ -68,7 +69,7 @@ export function AISearchPanelHeader({
         )}
         onClick={() => setOpen(false)}
       >
-        <X />
+        <HugeiconsIcon icon={Cancel01Icon} />
       </button>
     </div>
   );
@@ -96,7 +97,7 @@ export function AISearchInputActions() {
           )}
           onClick={() => regenerate()}
         >
-          <RefreshCw className="size-4" />
+          <HugeiconsIcon icon={ReloadIcon} className="size-4" />
           Retry
         </button>
       )}
@@ -190,7 +191,10 @@ export function AISearchInput(props: ComponentProps<"form">) {
           )}
           onClick={stop}
         >
-          <Loader2 className="size-4 animate-spin text-fd-muted-foreground" />
+          <HugeiconsIcon
+            icon={Loading03Icon}
+            className="size-4 animate-spin text-fd-muted-foreground"
+          />
           Abort Answer
         </button>
       ) : (
@@ -205,7 +209,7 @@ export function AISearchInput(props: ComponentProps<"form">) {
           )}
           disabled={input.length === 0}
         >
-          <Send className="size-4" />
+          <HugeiconsIcon icon={SentIcon} className="size-4" />
         </button>
       )}
     </form>
@@ -328,7 +332,7 @@ function Message({
           key={call.toolCallId}
           className="flex flex-row gap-2 items-center mt-3 rounded-lg border bg-fd-secondary text-fd-muted-foreground text-xs p-2"
         >
-          <SearchIcon className="size-4" />
+          <HugeiconsIcon icon={Search01Icon} className="size-4" />
           {call.state === "output-error" || call.state === "output-denied" ? (
             <p className="text-fd-error">
               {call.errorText ?? "Failed to search"}
@@ -466,7 +470,7 @@ export function AISearchPanelList({
     >
       {messages.length === 0 ? (
         <div className="text-sm text-fd-muted-foreground/80 size-full flex flex-col items-center justify-center text-center gap-2">
-          <MessageCircleIcon fill="currentColor" stroke="none" />
+          <HugeiconsIcon icon={BubbleChatIcon} />
           <p onClick={(e) => e.stopPropagation()}>Start a new chat below.</p>
         </div>
       ) : (

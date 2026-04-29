@@ -50,7 +50,6 @@
     "hono": "^4.12.8",
     "katex": "^0.16.44",
     "lightweight-charts": "^5.1.0",
-    "lucide-react": "^1.7.0",
     "motion": "^12.38.0",
     "next-themes": "catalog:",
     "nitro": "^3.0.260311-beta",

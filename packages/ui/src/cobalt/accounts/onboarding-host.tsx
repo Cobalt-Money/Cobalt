@@ -23,6 +23,12 @@ export interface OnboardingHost {
     publicToken?: string;
     cancelled?: boolean;
   }) => Promise<void>;
+  /**
+   * Delete a manual (`source='manual'`) financial_account. Wired to a Zero
+   * mutator by the host so `packages/ui` doesn't need to import Zero
+   * directly.
+   */
+  deleteManualAccount?: (accountId: string) => Promise<void>;
 }
 
 export const OnboardingHostContext = createContext<OnboardingHost | null>(null);

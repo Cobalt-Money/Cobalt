@@ -16,12 +16,20 @@ const transactionIdSchema = z.object({
   id: z.string(),
 });
 
+/** Used by the manual create/delete flow — no edit-history coupling. */
+const transactionIdOnlySchema = z.object({ id: z.string() });
+
 const updateLocationSchema = transactionIdSchema.extend({
   location: locationJsonSchema,
 });
 
 const updateNameSchema = transactionIdSchema.extend({
   name: z.string().min(1),
+});
+
+const updateMerchantSchema = transactionIdSchema.extend({
+  merchantName: z.string().max(255).nullable(),
+  website: z.string().max(2048).nullable().optional(),
 });
 
 const updateDateSchema = transactionIdSchema.extend({
@@ -36,6 +44,20 @@ const updateNotesSchema = transactionIdSchema.extend({
   notes: transactionNotesMarkdownSchema,
 });
 
+const createTransactionSchema = z.object({
+  accountId: z.string().uuid(),
+  amount: z.number(),
+  category: userOverrideCategoryJsonSchema.optional(),
+  currency: z.string().length(3).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  /** Plain-text description; persisted as markdown on `notes`. */
+  description: z.string().max(2000).optional(),
+  location: locationJsonSchema.optional(),
+  merchantName: z.string().min(1).max(255).optional(),
+  name: z.string().min(1).max(255),
+  website: z.string().min(1).max(2048).optional(),
+});
+
 async function getOwned(tx: Transaction<Schema>, ctx: Context, id: string) {
   const userId = ctx?.userId;
   if (!userId) {
@@ -46,6 +68,37 @@ async function getOwned(tx: Transaction<Schema>, ctx: Context, id: string) {
     throw new Error("Transaction not found");
   }
   return { row, userId };
+}
+
+async function assertOwnsManualTransaction(
+  tx: Transaction<Schema>,
+  ctx: Context,
+  transactionId: string
+): Promise<void> {
+  const { row } = await getOwned(tx, ctx, transactionId);
+  if (row.source !== "manual") {
+    throw new Error("Only manual transactions can be deleted");
+  }
+}
+
+async function assertOwnsManualAccountForInsert(
+  tx: Transaction<Schema>,
+  ctx: Context,
+  accountId: string
+): Promise<void> {
+  const userId = ctx?.userId;
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+  const account = await tx.run(
+    zql.financialAccount.where("id", accountId).one()
+  );
+  if (!account || account.userId !== userId) {
+    throw new Error("Account not found");
+  }
+  if (account.source !== "manual") {
+    throw new Error("Transactions can only be added to manual accounts");
+  }
 }
 
 function addLocked(current: unknown, field: string): string[] {
@@ -59,7 +112,14 @@ function removeLocked(current: unknown, field: string): string[] {
   );
 }
 
-type EditField = "amount" | "category" | "date" | "location" | "name" | "notes";
+type EditField =
+  | "amount"
+  | "category"
+  | "date"
+  | "location"
+  | "merchantName"
+  | "name"
+  | "notes";
 
 async function appendEdit(
   tx: Transaction<Schema>,
@@ -84,7 +144,47 @@ async function appendEdit(
   });
 }
 
+function isoDateToEpochMs(iso: string): number {
+  return new Date(`${iso}T00:00:00.000Z`).getTime();
+}
+
 export const transactionMutators = {
+  createTransaction: defineMutator(
+    createTransactionSchema,
+    async ({ args, ctx, tx }) => {
+      await assertOwnsManualAccountForInsert(tx, ctx, args.accountId);
+      if (!ctx?.userId) {
+        throw new Error("Unauthorized");
+      }
+      const trimmedDesc = args.description?.trim();
+      await tx.mutate.transaction.insert({
+        accountId: args.accountId,
+        amount: args.amount,
+        category: args.category?.primary ?? null,
+        categoryDetail: args.category?.detailed ?? null,
+        currency: args.currency ?? "USD",
+        date: isoDateToEpochMs(args.date),
+        id: crypto.randomUUID(),
+        merchantName: args.merchantName?.trim() ?? null,
+        name: args.name.trim(),
+        notes: trimmedDesc && trimmedDesc.length > 0 ? trimmedDesc : null,
+        pending: false,
+        source: "manual",
+        userId: ctx.userId,
+        userOverrideLocation: args.location ?? null,
+        website: args.website?.trim() ?? null,
+      });
+    }
+  ),
+
+  deleteTransaction: defineMutator(
+    transactionIdOnlySchema,
+    async ({ args, ctx, tx }) => {
+      await assertOwnsManualTransaction(tx, ctx, args.id);
+      await tx.mutate.transaction.delete({ id: args.id });
+    }
+  ),
+
   resetCategory: defineMutator(
     transactionIdSchema,
     async ({ args, ctx, tx }) => {
@@ -244,6 +344,35 @@ export const transactionMutators = {
           field: "location",
           newValue: args.location,
           oldValue: row.userOverrideLocation ?? null,
+          transactionId: args.id,
+          userId,
+        }),
+      ]);
+    }
+  ),
+
+  updateMerchant: defineMutator(
+    updateMerchantSchema,
+    async ({ args, ctx, tx }) => {
+      const { row, userId } = await getOwned(tx, ctx, args.id);
+      const trimmedName = args.merchantName?.trim() ?? null;
+      const nextName =
+        trimmedName && trimmedName.length > 0 ? trimmedName : null;
+      const trimmedSite = args.website?.trim() ?? null;
+      const nextSite =
+        trimmedSite && trimmedSite.length > 0 ? trimmedSite : null;
+      await Promise.all([
+        tx.mutate.transaction.update({
+          id: args.id,
+          lockedFields: addLocked(row.lockedFields, "merchantName"),
+          merchantName: nextName,
+          website: nextSite,
+        }),
+        appendEdit(tx, {
+          editId: args.editId,
+          field: "merchantName",
+          newValue: nextName,
+          oldValue: row.merchantName ?? null,
           transactionId: args.id,
           userId,
         }),

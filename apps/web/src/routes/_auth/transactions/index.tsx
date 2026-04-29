@@ -9,6 +9,7 @@ import { useCallback, useState } from "react";
 
 import { useAddAccount } from "@/components/accounts/add-account-provider";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
+import { useAddTransaction } from "@/components/transactions/add-transaction-provider";
 import { useBankOptions } from "@/hooks/use-bank-options";
 import { useTransactions } from "@/hooks/use-transactions";
 
@@ -35,6 +36,7 @@ function TransactionsListPage() {
   const navigate = useNavigate();
   const bankOptions = useBankOptions();
   const { openAddAccount } = useAddAccount();
+  const { openAddTransaction } = useAddTransaction();
   const { isComplete, items } = useTransactions({
     amount: search.amount,
     amountMax: search.amountMax,
@@ -67,6 +69,7 @@ function TransactionsListPage() {
         <TransactionsToolbar
           bankOptions={bankOptions}
           filters={search}
+          onAddTransaction={openAddTransaction}
           onExport={handleExport}
           selectedCount={selectedCount}
           onFiltersChange={(next) => {

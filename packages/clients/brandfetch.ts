@@ -11,6 +11,66 @@
  */
 
 const BRANDFETCH_CDN_ORIGIN = "https://cdn.brandfetch.io" as const;
+const BRANDFETCH_API_ORIGIN = "https://api.brandfetch.io" as const;
+
+export interface BrandfetchSearchResult {
+  brandId: string;
+  claimed: boolean;
+  domain: string | null;
+  icon: string | null;
+  name: string;
+}
+
+/**
+ * Brand Search API (free tier with `clientId`).
+ * Typeahead lookup by brand name or domain.
+ * @see https://docs.brandfetch.com/reference/searchbrands
+ */
+export async function brandfetchSearch(
+  query: string,
+  clientId: string,
+  options?: { signal?: AbortSignal }
+): Promise<BrandfetchSearchResult[]> {
+  const q = query.trim();
+  if (!q) {
+    return [];
+  }
+  const url = new URL(
+    `${BRANDFETCH_API_ORIGIN}/v2/search/${encodeURIComponent(q)}`
+  );
+  url.searchParams.set("c", clientId);
+  const res = await fetch(url.toString(), {
+    headers: { Accept: "application/json" },
+    signal: options?.signal,
+  });
+  if (!res.ok) {
+    return [];
+  }
+  const raw = (await res.json()) as {
+    brandId?: unknown;
+    claimed?: unknown;
+    domain?: unknown;
+    icon?: unknown;
+    name?: unknown;
+  }[];
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw.flatMap((r): BrandfetchSearchResult[] => {
+    if (typeof r.name !== "string" || typeof r.brandId !== "string") {
+      return [];
+    }
+    return [
+      {
+        brandId: r.brandId,
+        claimed: typeof r.claimed === "boolean" ? r.claimed : false,
+        domain: typeof r.domain === "string" ? r.domain : null,
+        icon: typeof r.icon === "string" ? r.icon : null,
+        name: r.name,
+      },
+    ];
+  });
+}
 
 function normalizeDomainInput(domain: string): string {
   const trimmed = domain.trim();

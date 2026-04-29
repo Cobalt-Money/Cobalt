@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { PrivateAmount } from "../../../components/privacy";
 import { InstitutionLogo } from "../../logos/institution-logo";
 import { MerchantLogo } from "../../logos/merchant-logo";
+import type { MerchantSearchState } from "../add-transaction-dialog";
 import {
   CategoryIcon,
   getCategoryDisplayConfig,
@@ -15,6 +16,7 @@ import { getTransactionDisplayName } from "../lib/helpers";
 import { EditableCategory } from "./editable-category";
 import { EditableDate } from "./editable-date";
 import { EditableLocation } from "./editable-location";
+import { EditableMerchantLogo } from "./editable-merchant-logo";
 import { EditableName } from "./editable-name";
 import {
   shouldShowLocationSection,
@@ -50,8 +52,16 @@ export interface TransactionDetailEditHandlers {
   onUpdateCategory: (value: { detailed: string; primary: string }) => void;
   onUpdateDate: (dateIso: string) => void;
   onUpdateLocation: (location: LocationJson) => void;
+  onUpdateMerchant: (args: {
+    merchantName: string | null;
+    website: string | null;
+  }) => void;
+  /** Brandfetch typeahead for merchant editing. */
+  merchantSearch: MerchantSearchState;
   onUpdateName: (name: string) => void;
   onUpdateNotes: (markdown: string) => void;
+  /** Only set for manual transactions; absence hides the delete affordance. */
+  onDelete?: () => void;
 }
 
 export function TransactionDetailSummary({
@@ -98,7 +108,13 @@ export function TransactionDetailSummary({
               )}
           </div>
         )}
-        <div className="flex flex-col items-end gap-2">
+        {edit ? (
+          <EditableMerchantLogo
+            merchantSearch={edit.merchantSearch}
+            onSubmit={edit.onUpdateMerchant}
+            transaction={transaction}
+          />
+        ) : (
           <MerchantLogo
             className="size-12 shrink-0"
             counterparties={transaction.counterparties}
@@ -107,7 +123,7 @@ export function TransactionDetailSummary({
             merchantName={transaction.merchantName}
             website={transaction.website}
           />
-        </div>
+        )}
       </div>
       <p
         className={cn(
@@ -145,13 +161,14 @@ export function TransactionDetailSummary({
               institutionLogo={transaction.institutionLogo}
               institutionName={transaction.institutionName}
               institutionUrl={transaction.institutionUrl}
+              source={transaction.source}
             />
           </span>
           <span className="min-w-0 truncate text-foreground">
             {transaction.accountName}
           </span>
           <span className="text-muted-foreground">
-            {transaction.accountType}
+            {transaction.source === "manual" ? "Cash" : transaction.accountType}
           </span>
         </div>
 

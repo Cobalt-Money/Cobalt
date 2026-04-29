@@ -39,6 +39,7 @@ function getEventSortTime(event: ActivityEvent): number {
 
 const TYPE_ORDER_NEWER_FIRST: ActivityEventType[] = [
   "edit_name",
+  "edit_merchantName",
   "edit_category",
   "edit_date",
   "edit_location",
@@ -77,6 +78,12 @@ function describeEditEvent(item: TransactionActivityItem): string {
       return typeof item.newValue === "string"
         ? `Name changed to "${item.newValue}"`
         : "Name restored";
+    }
+    case "merchantName": {
+      if (typeof item.newValue !== "string" || item.newValue.length === 0) {
+        return "Merchant cleared";
+      }
+      return `Merchant changed to "${item.newValue}"`;
     }
     case "category": {
       const v = item.newValue as { primary?: string } | null;
@@ -160,6 +167,7 @@ const eventMarkerTone: Record<ActivityEventType, string> = {
   edit_category: "text-muted-foreground",
   edit_date: "text-muted-foreground",
   edit_location: "text-muted-foreground",
+  edit_merchantName: "text-muted-foreground",
   edit_name: "text-muted-foreground",
   edit_notes: "text-muted-foreground",
   pending: "text-muted-foreground",

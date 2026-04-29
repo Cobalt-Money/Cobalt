@@ -36,6 +36,7 @@ function createMockTransaction(
     notes: null,
     pending: false,
     plaidAccountId: "plaid-acc-1",
+    source: "plaid",
     userOverrideLocation: null,
     website: null,
     ...overrides,

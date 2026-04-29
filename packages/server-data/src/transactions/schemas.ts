@@ -59,6 +59,7 @@ export const transactionListItemSchema = transactionListItemRowSchema
     merchantName: true,
     name: true,
     pending: true,
+    source: true,
     userOverrideLocation: true,
     website: true,
   })
@@ -189,7 +190,15 @@ export const geocodeSearchQuerySchema = z.object({
 export const transactionActivityItemSchema = z.object({
   actor: z.enum(["user", "system"]),
   createdAt: z.string(),
-  field: z.enum(["amount", "category", "date", "location", "name", "notes"]),
+  field: z.enum([
+    "amount",
+    "category",
+    "date",
+    "location",
+    "merchantName",
+    "name",
+    "notes",
+  ]),
   id: z.string(),
   /** Native value, type discriminated by `field`: name/date=string, amount=number, category={primary,detailed,confidence?}, notes=markdown string (historical rows may still hold Tiptap JSON). */
   newValue: z.unknown().nullable(),

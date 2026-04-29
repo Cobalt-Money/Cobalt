@@ -29,6 +29,7 @@ export interface TransactionsToolbarProps {
   bankOptions: readonly BankOption[];
   onFiltersChange: (next: TransactionsToolbarFilters) => void;
   onExport?: (format: ExportFormat) => void;
+  onAddTransaction?: () => void;
   selectedCount?: number;
 }
 
@@ -37,6 +38,7 @@ export function TransactionsToolbar({
   bankOptions,
   onFiltersChange,
   onExport,
+  onAddTransaction,
   selectedCount = 0,
 }: TransactionsToolbarProps) {
   const label = selectedCount > 0 ? `Export (${selectedCount})` : "Export all";
@@ -72,36 +74,49 @@ export function TransactionsToolbar({
           value={filters.bank ?? []}
         />
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              className="shrink-0"
-              size="sm"
-              type="button"
-              variant="outline"
+      <div className="flex shrink-0 items-center gap-2">
+        {onAddTransaction ? (
+          <Button
+            className="shrink-0"
+            onClick={onAddTransaction}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            + Add
+          </Button>
+        ) : null}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                className="shrink-0"
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                {label}
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                onExport?.("csv");
+              }}
             >
-              {label}
-            </Button>
-          }
-        />
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={() => {
-              onExport?.("csv");
-            }}
-          >
-            Export as CSV
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              onExport?.("xlsx");
-            }}
-          >
-            Export as Excel (.xlsx)
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+              Export as CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                onExport?.("xlsx");
+              }}
+            >
+              Export as Excel (.xlsx)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 }

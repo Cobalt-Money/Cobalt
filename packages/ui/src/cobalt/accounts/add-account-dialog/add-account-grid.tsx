@@ -3,18 +3,20 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 import { useDeferredValue, useMemo, useState } from "react";
 
 import {
+  MANUAL_CASH_OPTION,
   PLAID_DEFAULT_BANKS,
   PLAID_DEFAULT_CREDIT,
   SNAPTRADE_INSTITUTIONS,
 } from "./institution-registry";
 import type { AddAccountCategory, AddAccountInstitution } from "./types";
 
-type Filter = "all" | "bank" | "brokerage";
+type Filter = "all" | "bank" | "brokerage" | "cash";
 
 const FILTERS: readonly { id: Filter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "bank", label: "Banks" },
   { id: "brokerage", label: "Brokerage" },
+  { id: "cash", label: "Cash" },
 ];
 
 export interface AddAccountGridProps {
@@ -52,6 +54,9 @@ function emptyNoun(filter: Filter): string {
   }
   if (filter === "brokerage") {
     return "brokerages";
+  }
+  if (filter === "cash") {
+    return "cash accounts";
   }
   return "institutions";
 }
@@ -93,6 +98,7 @@ export function AddAccountGrid({
     let pool: AddAccountInstitution[];
     if (activeFilter === "all") {
       pool = [
+        MANUAL_CASH_OPTION,
         ...SNAPTRADE_INSTITUTIONS,
         ...PLAID_DEFAULT_BANKS,
         ...PLAID_DEFAULT_CREDIT,
@@ -100,6 +106,8 @@ export function AddAccountGrid({
       ];
     } else if (activeFilter === "bank") {
       pool = [...PLAID_DEFAULT_BANKS, ...PLAID_DEFAULT_CREDIT, ...plaidMapped];
+    } else if (activeFilter === "cash") {
+      pool = [MANUAL_CASH_OPTION];
     } else {
       pool = [...SNAPTRADE_INSTITUTIONS];
     }
@@ -187,15 +195,31 @@ export function AddAccountGrid({
                 }}
                 type="button"
               >
-                <InstitutionLogo
-                  className={cn(
-                    "overflow-hidden rounded-2xl transition-transform group-hover:scale-105",
-                    compact ? "size-14" : "size-16"
-                  )}
-                  institutionLogo={inst.logo}
-                  institutionName={inst.name}
-                  institutionUrl={inst.url}
-                />
+                {inst.provider === "manual" ? (
+                  <div
+                    className={cn(
+                      "flex items-center justify-center overflow-hidden rounded-2xl bg-amber-50 transition-transform group-hover:scale-105",
+                      compact ? "size-14" : "size-16"
+                    )}
+                  >
+                    <img
+                      alt=""
+                      aria-hidden
+                      className="size-10"
+                      src="/assets/vectors/cash.svg"
+                    />
+                  </div>
+                ) : (
+                  <InstitutionLogo
+                    className={cn(
+                      "overflow-hidden rounded-2xl transition-transform group-hover:scale-105",
+                      compact ? "size-14" : "size-16"
+                    )}
+                    institutionLogo={inst.logo}
+                    institutionName={inst.name}
+                    institutionUrl={inst.url}
+                  />
+                )}
                 <span className="line-clamp-2 text-center font-medium text-foreground text-xs leading-tight">
                   {inst.name}
                 </span>

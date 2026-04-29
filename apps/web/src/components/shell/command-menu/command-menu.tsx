@@ -1,9 +1,12 @@
 import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-grid";
+import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/types";
+import { AddCashAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-cash-account-dialog";
 import {
   CobaltCommandDialog,
   CobaltCommandInput,
   CobaltCommandPaletteRoot,
 } from "@cobalt-web/ui/cobalt/command-palette";
+import { AddTransactionForm } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
 import {
   CommandEmpty,
   CommandGroup,
@@ -23,11 +26,13 @@ import {
   File02Icon,
   Home04Icon,
   Logout01Icon,
+  Money01Icon,
   Moon02Icon,
   Search02Icon,
   SearchDollarIcon,
   Settings01Icon,
   Sun01Icon,
+  Wallet01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
@@ -42,12 +47,14 @@ import {
 } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 
+import { useAddCashAccount } from "@/components/accounts/add-cash-account-host";
 import {
   useAccountLauncher,
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
 import { SettingsGrid } from "@/components/settings/settings-grid";
 import type { SettingsSection } from "@/components/settings/settings-grid";
+import { useAddTransaction } from "@/components/transactions/add-transaction-provider";
 import { logout } from "@/lib/zero-logout";
 
 import { ChatSearchResults, useChatSearch } from "./search-chats";
@@ -166,6 +173,11 @@ function getPlaceholder(activePage: string | undefined): string {
   return "Type a command or search…";
 }
 
+/** Pages that render their own form body and hide the cmdk input + list. */
+function isFormPage(activePage: string | undefined): boolean {
+  return activePage === "add-cash-account" || activePage === "add-transaction";
+}
+
 // ── Sub-page helpers ──────────────────────────────────────────────────────────
 
 /** True when the palette is in a mode that manages its own item filtering. */
@@ -206,6 +218,7 @@ export function useCommandMenu(): CommandMenuContextValue {
 
 // ── Dialog ────────────────────────────────────────────────────────────────────
 
+// eslint-disable-next-line complexity
 function CommandMenuDialog({
   open,
   onOpenChange,
@@ -228,6 +241,9 @@ function CommandMenuDialog({
   const inAddAccount = activePage === "add-account";
   const inSearchTickers = activePage === "search-tickers";
   const inSettings = activePage === "settings";
+  const inAddCashAccount = activePage === "add-cash-account";
+  const inAddTransaction = activePage === "add-transaction";
+  const inFormPage = isFormPage(activePage);
   const trimmedSearch = search.trim();
 
   // ── Search hooks ────────────────────────────────────────────────────────────
@@ -253,8 +269,17 @@ function CommandMenuDialog({
     inAddAccount
   );
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
-  const { handleChoose: handleChooseInstitution, updateModeDialog } =
+  const { handleChoose: handleChooseConnect, updateModeDialog } =
     useAccountLauncher(dismiss);
+  const { submitAddCashAccount, submittingAddCashAccount } =
+    useAddCashAccount();
+  const {
+    locationSearch: addTxLocationSearch,
+    manualAccounts,
+    merchantSearch: addTxMerchantSearch,
+    submitAddTransaction,
+    submittingAddTransaction,
+  } = useAddTransaction();
 
   // ── Theme ───────────────────────────────────────────────────────────────────
 
@@ -308,6 +333,40 @@ function CommandMenuDialog({
     setSearch("");
     setPages((p) => [...p, "add-account"]);
   }, []);
+
+  const enterAddTransaction = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "add-transaction"]);
+  }, []);
+
+  const popPage = useCallback(() => {
+    setPages((p) => p.slice(0, -1));
+    setSearch("");
+    // Sub-page input is unmounting; cmdk's input remount races with body
+    // grabbing focus. Double-rAF after state commit, then focus the input.
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const el = document.querySelector<HTMLInputElement>(
+          '[data-slot="command-input"]'
+        );
+        el?.focus();
+      });
+    });
+  }, []);
+
+  const handleChooseInstitution = useCallback(
+    (institution: AddAccountInstitution) => {
+      if (institution.provider === "manual") {
+        // Replace add-account page with add-cash-account — same dialog,
+        // same morph in/out as other sub-pages.
+        setSearch("");
+        setPages((p) => [...p.slice(0, -1), "add-cash-account"]);
+        return;
+      }
+      handleChooseConnect(institution);
+    },
+    [handleChooseConnect]
+  );
 
   const enterSettings = useCallback((section: SettingsSection) => {
     setSearch("");
@@ -392,7 +451,7 @@ function CommandMenuDialog({
       label: "Search Transactions",
     },
     {
-      handleSelect: () => go("/transactions"),
+      handleSelect: enterAddTransaction,
       icon: Edit02Icon,
       keywords: ["create", "new", "add", "manual"],
       label: "Add Manual Transaction",
@@ -472,7 +531,9 @@ function CommandMenuDialog({
       <CobaltCommandDialog
         className={cn(
           inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
-          inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl"
+          inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl",
+          inAddTransaction && "sm:max-w-3xl",
+          inAddCashAccount && "sm:max-w-3xl"
         )}
         description="Search for a page or action"
         onOpenChange={handleOpenChange}
@@ -484,7 +545,7 @@ function CommandMenuDialog({
           onValueChange={handleChatHighlight}
           shouldFilter={!isClientFilteredPage(activePage)}
         >
-          {inSettings ? null : (
+          {inSettings || inFormPage ? null : (
             <CobaltCommandInput
               onKeyDown={handleInputKeyDown}
               onValueChange={setSearch}
@@ -499,7 +560,66 @@ function CommandMenuDialog({
               onSectionChange={setSettingsSection}
             />
           )}
-          {!inSettings && inAddAccount && (
+          {inAddCashAccount && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-foreground text-lg leading-none">
+                <HugeiconsIcon
+                  className="size-6 shrink-0"
+                  icon={Wallet01Icon}
+                  strokeWidth={2}
+                />
+                New Cash Account
+              </h2>
+              <AddCashAccountForm
+                onBackspaceWhenEmpty={popPage}
+                onSubmit={(values) => {
+                  void (async () => {
+                    try {
+                      await submitAddCashAccount(values);
+                      handleOpenChange(false);
+                    } catch {
+                      // Toast already shown by provider.
+                    }
+                  })();
+                }}
+                submitting={submittingAddCashAccount}
+              />
+            </div>
+          )}
+          {inAddTransaction && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
+                <HugeiconsIcon
+                  className="size-6 shrink-0"
+                  icon={Money01Icon}
+                  strokeWidth={2}
+                />
+                New Transaction
+              </h2>
+              <AddTransactionForm
+                accounts={manualAccounts}
+                locationSearch={addTxLocationSearch}
+                merchantSearch={addTxMerchantSearch}
+                onBackspaceWhenEmpty={popPage}
+                onCreateCashAccount={() => {
+                  setSearch("");
+                  setPages((p) => [...p.slice(0, -1), "add-cash-account"]);
+                }}
+                onSubmit={(values) => {
+                  void (async () => {
+                    try {
+                      await submitAddTransaction(values);
+                      handleOpenChange(false);
+                    } catch {
+                      // Toast already shown by provider.
+                    }
+                  })();
+                }}
+                submitting={submittingAddTransaction}
+              />
+            </div>
+          )}
+          {!inSettings && !inFormPage && inAddAccount && (
             <AddAccountGrid
               compact
               onChoose={handleChooseInstitution}
@@ -507,7 +627,7 @@ function CommandMenuDialog({
               searchQuery={search}
             />
           )}
-          {!(inSettings || inAddAccount) && (
+          {!(inSettings || inAddAccount || inFormPage) && (
             <CommandList>
               {inSearchChats && (
                 <ChatSearchResults
