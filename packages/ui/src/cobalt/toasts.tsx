@@ -9,6 +9,14 @@ interface AccountToastInstitution {
   institutionUrl: string | null;
 }
 
+const POSTED_ICON = (
+  <img alt="" className="size-4" src="/assets/vectors/posted.svg" />
+);
+
+const PENDING_ICON = (
+  <img alt="" className="size-4" src="/assets/vectors/pending.svg" />
+);
+
 export const cobaltToast = {
   accountDisconnected(account: AccountToastInstitution) {
     return toast("Successfully deleted account", {
@@ -24,7 +32,7 @@ export const cobaltToast = {
           <span>{account.institution}</span>
         </span>
       ),
-      icon: <img alt="" className="size-4" src="/assets/vectors/posted.svg" />,
+      icon: POSTED_ICON,
     });
   },
 
@@ -42,7 +50,37 @@ export const cobaltToast = {
           <span>{account.institution}</span>
         </span>
       ),
-      icon: <img alt="" className="size-4" src="/assets/vectors/posted.svg" />,
+      icon: POSTED_ICON,
+    });
+  },
+
+  /** Generic failure toast — use when a mutation rejects. */
+  error(message: string) {
+    return toast(message, {
+      icon: PENDING_ICON,
+    });
+  },
+
+  /** Manual cash/credit/loan account created (no Plaid). */
+  manualAccountCreated(name: string) {
+    return toast("Account added", {
+      description: name,
+      icon: POSTED_ICON,
+    });
+  },
+
+  /** Manual transaction created. */
+  transactionAdded(name: string) {
+    return toast("Transaction added", {
+      description: name,
+      icon: POSTED_ICON,
+    });
+  },
+
+  /** Manual transaction deleted. */
+  transactionDeleted() {
+    return toast("Transaction deleted", {
+      icon: POSTED_ICON,
     });
   },
 };

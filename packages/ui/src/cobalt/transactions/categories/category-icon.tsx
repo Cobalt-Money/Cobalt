@@ -14,10 +14,18 @@ function isImageGlyph(
   );
 }
 
-const imageGlyphClass = "size-6 shrink-0 object-contain opacity-80";
+const baseImageGlyphClass = "shrink-0 object-contain opacity-80";
 
 /** Primary category glyph (Hugeicons or static vector) — muted, no colored tile. */
-export function CategoryIcon({ icon }: { icon: CategoryPrimaryGlyph }) {
+export function CategoryIcon({
+  icon,
+  sizeClassName = "size-6",
+}: {
+  icon: CategoryPrimaryGlyph;
+  /** Override Tailwind size class (default `size-6`). */
+  sizeClassName?: string;
+}) {
+  const imageGlyphClass = `${sizeClassName} ${baseImageGlyphClass}`;
   if (isImageGlyph(icon)) {
     if (icon.srcDark) {
       return (
@@ -27,18 +35,14 @@ export function CategoryIcon({ icon }: { icon: CategoryPrimaryGlyph }) {
             aria-hidden
             className={`${imageGlyphClass} dark:hidden`}
             decoding="async"
-            height={24}
             src={icon.src}
-            width={24}
           />
           <img
             alt=""
             aria-hidden
             className={`${imageGlyphClass} hidden dark:block`}
             decoding="async"
-            height={24}
             src={icon.srcDark}
-            width={24}
           />
         </span>
       );
@@ -50,9 +54,7 @@ export function CategoryIcon({ icon }: { icon: CategoryPrimaryGlyph }) {
         aria-hidden
         className={imageGlyphClass}
         decoding="async"
-        height={24}
         src={icon.src}
-        width={24}
       />
     );
   }
@@ -60,7 +62,7 @@ export function CategoryIcon({ icon }: { icon: CategoryPrimaryGlyph }) {
   return (
     <HugeiconsIcon
       aria-hidden
-      className="text-muted-foreground size-6 shrink-0 [&_svg]:block"
+      className={`text-muted-foreground shrink-0 ${sizeClassName} [&_svg]:block`}
       icon={icon as IconSvgElement}
       strokeWidth={2}
     />

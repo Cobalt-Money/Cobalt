@@ -16,14 +16,22 @@ export const transactionEditActor = pgEnum("transaction_edit_actor", [
   "user",
 ]);
 
-export const transactionEditField = pgEnum("transaction_edit_field", [
+/**
+ * Field name being edited. Stored as plain `text` (not enum) because the set of
+ * editable fields evolves with the schema and pg enum migrations are painful
+ * (`ALTER TYPE ... ADD VALUE` cannot run inside a transaction). Validation lives
+ * in the Zod schema for `transactionActivityItemSchema`.
+ */
+export const TRANSACTION_EDIT_FIELDS = [
   "amount",
   "category",
   "date",
   "location",
+  "merchantName",
   "name",
   "notes",
-]);
+] as const;
+export type TransactionEditFieldName = (typeof TRANSACTION_EDIT_FIELDS)[number];
 
 export const transactionEdit = pgTable(
   "transaction_edit",
@@ -32,7 +40,7 @@ export const transactionEdit = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
-    field: transactionEditField("field").notNull(),
+    field: text("field").$type<TransactionEditFieldName>().notNull(),
     id: uuid("id").primaryKey().defaultRandom(),
     /** Native value of the field, typed by `field`: name=string, notes=Tiptap doc, date=YYYY-MM-DD string, amount=number, category={primary,detailed,confidence?}. Null on first-ever edit if Plaid value unknown. */
     newValue: jsonb("new_value").$type<unknown>(),

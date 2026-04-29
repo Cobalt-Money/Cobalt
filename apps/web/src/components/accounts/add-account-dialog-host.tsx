@@ -1,6 +1,8 @@
 import { AddAccountDialog } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-dialog";
+import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/types";
 import { useCallback, useState } from "react";
 
+import { useAddCashAccount } from "./add-cash-account-host";
 import {
   useAccountLauncher,
   useInstitutionSearch,
@@ -14,13 +16,12 @@ export function AddAccountDialogHost({
   onOpenChange: (open: boolean) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const { openAddCashAccount } = useAddCashAccount();
   const { data: plaidInstitutions = [] } = useInstitutionSearch(
     searchQuery,
     open
   );
 
-  // Clear the search query as part of the close event — no need for an effect
-  // reacting to `open` changes.
   const handleOpenChange = useCallback(
     (next: boolean) => {
       if (!next) {
@@ -35,7 +36,20 @@ export function AddAccountDialogHost({
     handleOpenChange(false);
   }, [handleOpenChange]);
 
-  const { handleChoose, updateModeDialog } = useAccountLauncher(dismiss);
+  const { handleChoose: handleConnectChoose, updateModeDialog } =
+    useAccountLauncher(dismiss);
+
+  const handleChoose = useCallback(
+    (institution: AddAccountInstitution) => {
+      if (institution.provider === "manual") {
+        handleOpenChange(false);
+        openAddCashAccount();
+        return;
+      }
+      handleConnectChoose(institution);
+    },
+    [handleConnectChoose, handleOpenChange, openAddCashAccount]
+  );
 
   return (
     <>

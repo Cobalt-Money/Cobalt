@@ -147,8 +147,13 @@ const columns: ColumnDef<TransactionListItem>[] = [
   {
     accessorFn: (row) => row.institutionName ?? row.accountName ?? "",
     cell: ({ row }) => {
-      const { accountName, institutionLogo, institutionName, institutionUrl } =
-        row.original;
+      const {
+        accountName,
+        institutionLogo,
+        institutionName,
+        institutionUrl,
+        source,
+      } = row.original;
 
       return (
         <div className={cellRow} title={institutionName?.trim() || accountName}>
@@ -156,6 +161,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
             institutionLogo={institutionLogo}
             institutionName={institutionName}
             institutionUrl={institutionUrl}
+            source={source}
           />
         </div>
       );
