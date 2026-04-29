@@ -6,6 +6,11 @@
  * [data-sd-animate] selector. Loaded so the `animated` prop on MessageResponse
  * works out of the box if we want to re-enable per-word fade/blur later. */
 @import "streamdown/styles.css";
+@import "@milkdown/crepe/theme/common/prosemirror.css";
+@import "@milkdown/crepe/theme/common/cursor.css";
+@import "@milkdown/crepe/theme/common/placeholder.css";
+@import "@milkdown/crepe/theme/common/list-item.css";
+@import "@milkdown/crepe/theme/common/table.css";
 @source "../../../apps/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
 @source "../../node_modules/streamdown/dist/*.js";
@@ -227,13 +232,13 @@
   @apply mt-0;
 }
 .ProseMirror h1 {
-  @apply mt-6 mb-2 font-semibold text-2xl tracking-tight;
+  @apply mt-6 mb-2 font-normal text-2xl;
 }
 .ProseMirror h2 {
-  @apply mt-5 mb-2 font-semibold text-xl tracking-tight;
+  @apply mt-5 mb-2 font-normal text-xl;
 }
 .ProseMirror h3 {
-  @apply mt-4 mb-2 font-semibold text-lg tracking-tight;
+  @apply mt-4 mb-2 font-normal text-lg;
 }
 .ProseMirror p {
   @apply my-2 leading-relaxed;
@@ -289,4 +294,21 @@
 }
 .ProseMirror .tableWrapper {
   @apply my-3 overflow-x-auto;
+}
+
+.milkdown {
+  --crepe-color-outline: var(--color-foreground);
+}
+.milkdown .ProseMirror {
+  caret-color: var(--color-foreground);
+  outline: none;
+}
+.milkdown .ProseMirror-focused {
+  outline: none;
+}
+.milkdown .crepe-placeholder::before {
+  color: var(--color-muted-foreground);
+}
+[data-transaction-notes-slash][data-show="false"] {
+  display: none;
 }
