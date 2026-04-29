@@ -42,7 +42,7 @@ export const transactionEdit = pgTable(
       .notNull(),
     field: text("field").$type<TransactionEditFieldName>().notNull(),
     id: uuid("id").primaryKey().defaultRandom(),
-    /** Native value of the field, typed by `field`: name=string, notes=Tiptap doc, date=YYYY-MM-DD string, amount=number, category={primary,detailed,confidence?}. Null on first-ever edit if Plaid value unknown. */
+    /** Native value of the field, typed by `field`: name=string, notes=markdown string (historical rows may still hold Tiptap JSON), date=YYYY-MM-DD string, amount=number, category={primary,detailed,confidence?}. Null on first-ever edit if Plaid value unknown. */
     newValue: jsonb("new_value").$type<unknown>(),
     oldValue: jsonb("old_value").$type<unknown>(),
     transactionId: uuid("transaction_id")

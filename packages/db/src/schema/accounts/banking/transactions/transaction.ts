@@ -16,11 +16,7 @@ import {
 
 import { user } from "../../../users/auth/auth";
 import { financialAccount } from "../../account";
-import type {
-  CounterpartiesArrayJson,
-  LocationJson,
-  TransactionNotesJson,
-} from "./zod";
+import type { CounterpartiesArrayJson, LocationJson } from "./zod";
 
 export const transactionSource = pgEnum("transaction_source", [
   "plaid",
@@ -81,8 +77,8 @@ export const transaction = pgTable(
     merchantName: text("merchant_name"),
     /** Raw bank description (e.g. "STARBUCKS #1234"). */
     name: text("name").notNull(),
-    /** User-authored Tiptap rich-text notes. */
-    notes: jsonb("notes").$type<TransactionNotesJson | null>(),
+    /** User-authored markdown notes (Milkdown). */
+    notes: text("notes"),
     /** online | in_store | other. */
     paymentChannel: text("payment_channel"),
     /** True if not yet settled. */

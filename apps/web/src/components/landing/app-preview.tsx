@@ -121,42 +121,14 @@ function loc(
 }
 
 function note(text: string): NonNullable<TransactionListItem["notes"]> {
-  return {
-    content: [
-      {
-        content: [{ text, type: "text" }],
-        type: "paragraph",
-      },
-    ],
-    type: "doc",
-  };
+  return text;
 }
 
 function noteWithBullets(
   intro: string,
   items: string[]
 ): NonNullable<TransactionListItem["notes"]> {
-  return {
-    content: [
-      {
-        content: [{ text: intro, type: "text" }],
-        type: "paragraph",
-      },
-      {
-        content: items.map((item) => ({
-          content: [
-            {
-              content: [{ text: item, type: "text" }],
-              type: "paragraph",
-            },
-          ],
-          type: "listItem",
-        })),
-        type: "bulletList",
-      },
-    ],
-    type: "doc",
-  };
+  return [intro, ...items.map((item) => `- ${item}`)].join("\n");
 }
 
 const TRANSACTIONS: TransactionListItem[] = [
@@ -1208,46 +1180,48 @@ function BackableScreen({
   );
 }
 
-interface NotesNode {
-  type?: string;
-  text?: string;
-  content?: NotesNode[];
-}
-
-function nodeText(node: NotesNode): string {
-  if (typeof node.text === "string") {
-    return node.text;
+function NotesRenderer({ markdown }: { markdown: string }) {
+  const lines = markdown.split("\n");
+  const blocks: (
+    | { type: "p"; text: string }
+    | { type: "ul"; items: string[] }
+  )[] = [];
+  let bullets: string[] = [];
+  for (const line of lines) {
+    if (line.startsWith("- ")) {
+      bullets.push(line.slice(2));
+    } else {
+      if (bullets.length > 0) {
+        blocks.push({ items: bullets, type: "ul" });
+        bullets = [];
+      }
+      if (line.trim()) {
+        blocks.push({ text: line, type: "p" });
+      }
+    }
   }
-  if (!Array.isArray(node.content)) {
-    return "";
+  if (bullets.length > 0) {
+    blocks.push({ items: bullets, type: "ul" });
   }
-  return node.content.map(nodeText).join("");
-}
 
-function NotesRenderer({ doc }: { doc: NotesNode }) {
-  const children = Array.isArray(doc.content) ? doc.content : [];
   return (
     <div className="flex flex-col gap-2 text-left text-sm text-foreground">
-      {children.map((node, i) => {
-        if (node.type === "bulletList") {
-          const items = Array.isArray(node.content) ? node.content : [];
-          return (
-            // eslint-disable-next-line react/no-array-index-key
-            <ul className="list-disc space-y-1 pl-5" key={i}>
-              {items.map((item, j) => (
-                // eslint-disable-next-line react/no-array-index-key
-                <li key={j}>{nodeText(item)}</li>
-              ))}
-            </ul>
-          );
-        }
-        return (
+      {blocks.map((block, i) =>
+        block.type === "ul" ? (
+          // eslint-disable-next-line react/no-array-index-key
+          <ul className="list-disc space-y-1 pl-5" key={i}>
+            {block.items.map((item, j) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <li key={j}>{item}</li>
+            ))}
+          </ul>
+        ) : (
           // eslint-disable-next-line react/no-array-index-key
           <p className="whitespace-pre-wrap" key={i}>
-            {nodeText(node)}
+            {block.text}
           </p>
-        );
-      })}
+        )
+      )}
     </div>
   );
 }
@@ -1262,7 +1236,9 @@ function TransactionsView() {
       <BackableScreen onBack={() => setSelectedTx(null)} label="Transactions">
         <div className="mx-auto flex w-full min-w-0 max-w-2xl flex-col gap-8 pt-[10vh] pb-8">
           <TransactionDetailSummary transaction={selectedTx} />
-          {selectedTx.notes ? <NotesRenderer doc={selectedTx.notes} /> : null}
+          {selectedTx.notes ? (
+            <NotesRenderer markdown={selectedTx.notes} />
+          ) : null}
           <Separator />
           <TransactionDetailActivity editEvents={[]} transaction={selectedTx} />
         </div>

@@ -1,7 +1,4 @@
-import type {
-  TiptapDoc,
-  TransactionListItem,
-} from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -62,7 +59,7 @@ export interface TransactionDetailEditHandlers {
   /** Brandfetch typeahead for merchant editing. */
   merchantSearch: MerchantSearchState;
   onUpdateName: (name: string) => void;
-  onUpdateNotes: (doc: TiptapDoc) => void;
+  onUpdateNotes: (markdown: string) => void;
   /** Only set for manual transactions; absence hides the delete affordance. */
   onDelete?: () => void;
 }

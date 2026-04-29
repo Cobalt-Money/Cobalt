@@ -1,10 +1,10 @@
 import {
   locationJsonSchema,
-  transactionNotesJsonSchema,
+  transactionNotesMarkdownSchema,
   userOverrideCategoryJsonSchema,
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { defineMutator } from "@rocicorp/zero";
-import type { ReadonlyJSONObject, Transaction } from "@rocicorp/zero";
+import type { Transaction } from "@rocicorp/zero";
 import { z } from "zod";
 
 import type { Context } from "../auth.js";
@@ -41,7 +41,7 @@ const updateCategorySchema = transactionIdSchema.extend({
 });
 
 const updateNotesSchema = transactionIdSchema.extend({
-  notes: transactionNotesJsonSchema,
+  notes: transactionNotesMarkdownSchema,
 });
 
 const createTransactionSchema = z.object({
@@ -50,7 +50,7 @@ const createTransactionSchema = z.object({
   category: userOverrideCategoryJsonSchema.optional(),
   currency: z.string().length(3).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  /** Plain-text description; persisted as a minimal Tiptap doc on `notes`. */
+  /** Plain-text description; persisted as markdown on `notes`. */
   description: z.string().max(2000).optional(),
   location: locationJsonSchema.optional(),
   merchantName: z.string().min(1).max(255).optional(),
@@ -148,19 +148,6 @@ function isoDateToEpochMs(iso: string): number {
   return new Date(`${iso}T00:00:00.000Z`).getTime();
 }
 
-/** Wraps a plain-text string in a minimal Tiptap doc — matches the editor shape. */
-function plainTextToTiptapDoc(text: string): ReadonlyJSONObject {
-  return {
-    content: [
-      {
-        content: [{ text, type: "text" }],
-        type: "paragraph",
-      },
-    ],
-    type: "doc",
-  };
-}
-
 export const transactionMutators = {
   createTransaction: defineMutator(
     createTransactionSchema,
@@ -180,10 +167,7 @@ export const transactionMutators = {
         id: crypto.randomUUID(),
         merchantName: args.merchantName?.trim() ?? null,
         name: args.name.trim(),
-        notes:
-          trimmedDesc && trimmedDesc.length > 0
-            ? plainTextToTiptapDoc(trimmedDesc)
-            : null,
+        notes: trimmedDesc && trimmedDesc.length > 0 ? trimmedDesc : null,
         pending: false,
         source: "manual",
         userId: ctx.userId,

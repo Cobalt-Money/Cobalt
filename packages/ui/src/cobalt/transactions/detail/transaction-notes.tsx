@@ -1,43 +1,41 @@
-import type { TiptapDoc } from "@cobalt-web/server-data/transactions/schemas";
-import { Placeholder } from "@tiptap/extension-placeholder";
-import { TableKit } from "@tiptap/extension-table";
-import { EditorContent, useEditor } from "@tiptap/react";
-import { StarterKit } from "@tiptap/starter-kit";
+import { Crepe } from "@milkdown/crepe";
+import { editorViewCtx } from "@milkdown/kit/core";
+import { replaceAll } from "@milkdown/kit/utils";
+import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
 import { useCallback, useEffect, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
-import { SlashExtension } from "./transaction-notes-slash";
+import { createSlashBundle } from "./transaction-notes-slash";
 
 const AUTOSAVE_DEBOUNCE_MS = 800;
 
-function stableStringify(doc: TiptapDoc | null): string {
-  return doc === null ? "" : JSON.stringify(doc);
-}
-
 export interface TransactionNotesProps {
-  notes: TiptapDoc | null;
+  notes: string | null;
   onReset: () => void;
-  onUpdate: (doc: TiptapDoc) => void;
+  onUpdate: (markdown: string) => void;
 }
 
-export function TransactionNotes({
+function TransactionNotesEditor({
   notes,
   onReset,
   onUpdate,
 }: TransactionNotesProps) {
-  const lastCommittedRef = useRef<string>(stableStringify(notes));
+  const crepeRef = useRef<Crepe | null>(null);
+  const lastCommittedRef = useRef<string>(notes ?? "");
 
   const commit = useCallback(
-    (nextDoc: TiptapDoc | null, empty: boolean) => {
-      const nextKey = stableStringify(empty ? null : nextDoc);
-      if (nextKey === lastCommittedRef.current) {
+    (md: string) => {
+      const trimmed = md.trim();
+      const empty = trimmed === "";
+      const next = empty ? "" : md;
+      if (next === lastCommittedRef.current) {
         return;
       }
-      lastCommittedRef.current = nextKey;
-      if (empty || nextDoc === null) {
+      lastCommittedRef.current = next;
+      if (empty) {
         onReset();
       } else {
-        onUpdate(nextDoc);
+        onUpdate(md);
       }
     },
     [onReset, onUpdate]
@@ -45,49 +43,58 @@ export function TransactionNotes({
 
   const debouncedCommit = useDebouncedCallback(commit, AUTOSAVE_DEBOUNCE_MS);
 
-  const editor = useEditor({
-    content: notes ?? undefined,
-    editorProps: {
-      attributes: {
-        "aria-label": "Transaction notes",
-        "aria-multiline": "true",
-        class: "min-h-[3rem] outline-none focus:outline-none",
-        role: "textbox",
+  const commitRef = useRef(commit);
+  commitRef.current = commit;
+  const debouncedCommitRef = useRef(debouncedCommit);
+  debouncedCommitRef.current = debouncedCommit;
+
+  useEditor((root) => {
+    const crepe = new Crepe({
+      defaultValue: notes ?? "",
+      featureConfigs: {
+        [Crepe.Feature.Placeholder]: { mode: "block", text: "Add a note…" },
       },
-    },
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
-      Placeholder.configure({
-        placeholder: "Add a note…",
-      }),
-      TableKit.configure({
-        table: { resizable: true },
-      }),
-      SlashExtension,
-    ],
-    immediatelyRender: false,
-    onBlur: ({ editor: e }) => {
-      debouncedCommit.cancel();
-      commit(e.isEmpty ? null : (e.getJSON() as TiptapDoc), e.isEmpty);
-    },
-    onUpdate: ({ editor: e }) => {
-      debouncedCommit(e.isEmpty ? null : (e.getJSON() as TiptapDoc), e.isEmpty);
-    },
-  });
+      features: {
+        [Crepe.Feature.BlockEdit]: false,
+        [Crepe.Feature.CodeMirror]: false,
+        [Crepe.Feature.ImageBlock]: false,
+        [Crepe.Feature.Latex]: false,
+        [Crepe.Feature.LinkTooltip]: false,
+        [Crepe.Feature.Toolbar]: false,
+      },
+      root,
+    });
+    createSlashBundle().apply(crepe.editor);
+    crepe.on((listener) => {
+      listener.markdownUpdated((_ctx, markdown) => {
+        debouncedCommitRef.current(markdown);
+      });
+      listener.blur(() => {
+        debouncedCommitRef.current.cancel();
+        commitRef.current(crepe.getMarkdown());
+      });
+    });
+    crepeRef.current = crepe;
+    return crepe;
+  }, []);
 
   useEffect(() => {
-    if (!editor) {
+    const crepe = crepeRef.current;
+    if (!crepe) {
       return;
     }
-    const current = editor.getJSON() as TiptapDoc;
-    const incoming = notes ?? { content: [{ type: "paragraph" }], type: "doc" };
-    if (JSON.stringify(current) !== JSON.stringify(incoming)) {
-      editor.commands.setContent(incoming, { emitUpdate: false });
-      lastCommittedRef.current = stableStringify(notes);
+    const incoming = notes ?? "";
+    if (incoming === lastCommittedRef.current) {
+      return;
     }
-  }, [editor, notes]);
+    const current = crepe.getMarkdown();
+    if (current === incoming) {
+      lastCommittedRef.current = incoming;
+      return;
+    }
+    crepe.editor.action(replaceAll(incoming));
+    lastCommittedRef.current = incoming;
+  }, [notes]);
 
   useEffect(
     () => () => {
@@ -99,15 +106,16 @@ export function TransactionNotes({
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
-      if (!editor) {
+      const crepe = crepeRef.current;
+      if (!crepe) {
         return;
       }
       debouncedCommit.cancel();
-      commit(
-        editor.isEmpty ? null : (editor.getJSON() as TiptapDoc),
-        editor.isEmpty
-      );
-      editor.commands.blur();
+      commit(crepe.getMarkdown());
+      crepe.editor.action((ctx) => {
+        const view = ctx.get(editorViewCtx);
+        (view.dom as HTMLElement).blur();
+      });
     }
   }
 
@@ -117,8 +125,16 @@ export function TransactionNotes({
       onKeyDown={handleKeyDown}
       role="presentation"
     >
-      <EditorContent editor={editor} />
+      <Milkdown />
     </div>
+  );
+}
+
+export function TransactionNotes(props: TransactionNotesProps) {
+  return (
+    <MilkdownProvider>
+      <TransactionNotesEditor {...props} />
+    </MilkdownProvider>
   );
 }
 

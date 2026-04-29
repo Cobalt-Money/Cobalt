@@ -5,27 +5,14 @@ import {
   locationJsonSchema,
   recurringStreamJsonbSelectRefinements,
   transactionJsonbSelectRefinements,
+  transactionNotesMarkdownSchema,
   userOverrideCategoryJsonSchema,
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
-import type { TransactionNotesJson } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 
-// Tiptap doc kept opaque (`z.unknown()`) at API boundary. The recursive
-// structural type would otherwise leak into Hono's RPC schema accumulator
-// and trip TS2589 once enough sub-routers are chained. Cheap workaround
-// since we're migrating from Tiptap → Milkdown soon; revisit then.
-export type TiptapDoc = TransactionNotesJson;
-
-const NOTES_MAX_SERIALIZED_BYTES = 100_000;
-
-const tiptapDocBaseSchema = z.unknown();
-
-export const tiptapDocSchema = tiptapDocBaseSchema.refine(
-  (doc) => JSON.stringify(doc).length <= NOTES_MAX_SERIALIZED_BYTES,
-  { message: `Note exceeds ${NOTES_MAX_SERIALIZED_BYTES} serialized bytes` }
-);
+const notesMarkdownSchema = transactionNotesMarkdownSchema;
 
 /** `transaction` row fields exposed on the list (see `getUserTransactions`). */
 const transactionListItemRowSchema = createSelectSchema(transaction, {
@@ -84,7 +71,7 @@ export const transactionListItemSchema = transactionListItemRowSchema
     institutionName: institutionListSlice.shape.name.nullable(),
     institutionUrl: institutionListSlice.shape.url,
     location: locationJsonSchema.nullable(),
-    notes: tiptapDocBaseSchema.nullable(),
+    notes: notesMarkdownSchema.nullable(),
     plaidAccountId: z.string().nullable(),
   });
 
@@ -178,7 +165,7 @@ export const transactionPatchBodySchema = z
       .nullable()
       .optional(),
     name: z.string().min(1).nullable().optional(),
-    notes: tiptapDocSchema.nullable().optional(),
+    notes: notesMarkdownSchema.nullable().optional(),
     userOverrideLocation: locationJsonSchema.nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, {
@@ -213,7 +200,7 @@ export const transactionActivityItemSchema = z.object({
     "notes",
   ]),
   id: z.string(),
-  /** Native value, type discriminated by `field`: name/date=string, amount=number, category={primary,detailed,confidence?}, notes=Tiptap doc. */
+  /** Native value, type discriminated by `field`: name/date=string, amount=number, category={primary,detailed,confidence?}, notes=markdown string (historical rows may still hold Tiptap JSON). */
   newValue: z.unknown().nullable(),
   oldValue: z.unknown().nullable(),
 });

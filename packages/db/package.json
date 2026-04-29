@@ -22,8 +22,8 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "db:migrate": "drizzle-kit migrate",
-    "migrate:debug": "bun run ./scripts/migrate-debug.ts",
+    "db:migrate": "bun run ./scripts/migrate-debug.ts --prod",
+    "db:migrate:local": "bun run ./scripts/migrate-debug.ts --local",
     "check:unification-parity": "bun run ./scripts/check-unification-parity.ts"
   },
   "dependencies": {
