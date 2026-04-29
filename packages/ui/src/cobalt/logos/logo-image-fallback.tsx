@@ -12,6 +12,10 @@ interface LogoImageWithFallbackProps {
    * @see https://docs.brandfetch.com/guides/customize-logo-api-fallback
    */
   fallbackText?: string;
+  /** Image fallback (preferred over `fallbackText` when set). E.g. cash.svg for manual. */
+  fallbackImageSrc?: string;
+  /** Tailwind bg class for `fallbackImageSrc` tile. Default `bg-amber-50`. */
+  fallbackImageBgClassName?: string;
   /** Wrapper — default `size-5` for transaction table cells. */
   className?: string;
   /**
@@ -71,6 +75,8 @@ export function LogoImageWithFallback({
   candidates,
   imgClassName,
   fallbackText,
+  fallbackImageSrc,
+  fallbackImageBgClassName = "bg-amber-50",
   className,
   deferUntilVisible = true,
 }: LogoImageWithFallbackProps) {
@@ -126,6 +132,26 @@ export function LogoImageWithFallback({
   const exhausted = candidates.length === 0 || index >= candidates.length;
 
   if (exhausted) {
+    if (fallbackImageSrc) {
+      return (
+        <div
+          aria-label={alt.trim() || "Logo"}
+          className={cn(
+            "flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full",
+            fallbackImageBgClassName,
+            className
+          )}
+          role="img"
+        >
+          <img
+            alt=""
+            aria-hidden
+            className="size-[70%] object-contain"
+            src={fallbackImageSrc}
+          />
+        </div>
+      );
+    }
     if (fallbackText?.trim()) {
       const letter = firstInitial(fallbackText);
       return (

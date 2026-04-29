@@ -1,6 +1,6 @@
-export type AddAccountProvider = "plaid" | "snaptrade";
+export type AddAccountProvider = "plaid" | "snaptrade" | "manual";
 
-export type AddAccountCategory = "bank" | "credit" | "brokerage";
+export type AddAccountCategory = "bank" | "credit" | "brokerage" | "cash";
 
 export interface AddAccountInstitution {
   id: string;

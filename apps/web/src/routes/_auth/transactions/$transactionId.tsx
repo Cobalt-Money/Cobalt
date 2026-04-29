@@ -1,3 +1,4 @@
+import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import type { TransactionDetailEditHandlers } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
 import { TransactionDetailView } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
 import { mutators, queries } from "@cobalt-web/zero";
@@ -8,10 +9,10 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 import { useGeocodeSearch } from "@/hooks/use-geocode-search";
+import { useMerchantSearch } from "@/hooks/use-merchant-search";
 import { useHistory, useTransactions } from "@/hooks/use-transactions";
 
 const transactionDetailRouteApi = getRouteApi(
@@ -49,6 +50,9 @@ function TransactionDetailRoute() {
   const [locationQuery, setLocationQuery] = useState("");
   const { data: locationResults = [], isFetching: locationLoading } =
     useGeocodeSearch(locationQuery);
+  const [merchantQuery, setMerchantQuery] = useState("");
+  const { data: merchantResults = [], isFetching: merchantLoading } =
+    useMerchantSearch(merchantQuery);
 
   const editEvents = useHistory(transactionId);
 
@@ -57,7 +61,7 @@ function TransactionDetailRoute() {
 
     const onError = (label: string) => (err: unknown) => {
       console.error(`Failed to update transaction ${label}`, err);
-      toast.error(`Couldn't save ${label}. Please try again.`);
+      cobaltToast.error(`Couldn't save ${label}. Please try again.`);
     };
 
     return {
@@ -133,6 +137,28 @@ function TransactionDetailRoute() {
           )
           .server.catch(onError("location"));
       },
+      merchantSearch: {
+        loading: merchantLoading,
+        onQueryChange: setMerchantQuery,
+        results: merchantResults.map((r) => ({
+          brandId: r.brandId,
+          domain: r.domain,
+          icon: r.icon,
+          name: r.name,
+        })),
+      },
+      onUpdateMerchant: ({ merchantName, website }) => {
+        void zero
+          .mutate(
+            mutators.transaction.updateMerchant({
+              editId: crypto.randomUUID(),
+              id,
+              merchantName,
+              website,
+            })
+          )
+          .server.catch(onError("merchant"));
+      },
       onUpdateName: (name) => {
         void zero
           .mutate(
@@ -155,8 +181,30 @@ function TransactionDetailRoute() {
           )
           .server.catch(onError("notes"));
       },
+      onDelete:
+        transaction?.source === "manual"
+          ? () => {
+              // Fire-and-forget: navigate immediately; server runs in
+              // background. See `.agents/skills/cobalt/mutations/SKILL.md`.
+              const { server } = zero.mutate(
+                mutators.transaction.deleteTransaction({ id })
+              );
+              cobaltToast.transactionDeleted();
+              navigate({ replace: true, to: "/transactions" });
+              void server.catch(onError("deletion"));
+            }
+          : undefined,
     };
-  }, [transactionId, zero, locationLoading, locationResults]);
+  }, [
+    transactionId,
+    zero,
+    locationLoading,
+    locationResults,
+    merchantLoading,
+    merchantResults,
+    transaction?.source,
+    navigate,
+  ]);
 
   return (
     <SidebarShellLayout flushBottom>

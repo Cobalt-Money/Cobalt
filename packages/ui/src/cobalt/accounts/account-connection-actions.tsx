@@ -30,6 +30,7 @@ interface AccountConnectionActionsProps {
     | "plaidAccountId"
     | "plaidItemId"
     | "snaptradeAuthorizationId"
+    | "source"
   >;
 }
 
@@ -207,7 +208,14 @@ export function AccountConnectionActions({
   const performDisconnect = async () => {
     setBusy("disconnect");
     try {
-      if (account.kind === "bank") {
+      if (account.source === "manual") {
+        const deleteFn = onboardingHost?.deleteManualAccount;
+        if (!deleteFn) {
+          throw new Error("Manual delete handler not wired");
+        }
+        await deleteFn(account.id);
+        cobaltToast.accountDisconnected(account);
+      } else if (account.kind === "bank") {
         if (!account.plaidAccountId) {
           throw new Error("Missing account id");
         }

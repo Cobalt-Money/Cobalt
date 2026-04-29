@@ -14,18 +14,14 @@ export function getTransactionDisplayDateString(
 }
 
 /**
- * Name shown anywhere in the app. When the user locks `name` (edited it),
- * prefer the column value. Otherwise fall back to the friendlier
- * `merchantName` from Plaid for unedited rows.
+ * Name shown anywhere in the app. Always prefer the row's `name`
+ * (Plaid raw description or user-edited value); fall back to `merchantName`
+ * only when name is empty.
  */
 export function getTransactionDisplayName(
-  row: Pick<TransactionListItem, "lockedFields" | "merchantName" | "name">
+  row: Pick<TransactionListItem, "merchantName" | "name">
 ): string {
-  const locked = (row.lockedFields ?? []) as string[];
-  if (locked.includes("name")) {
-    return row.name?.trim() || row.merchantName?.trim() || "";
-  }
-  return row.merchantName?.trim() || row.name?.trim() || "";
+  return row.name?.trim() || row.merchantName?.trim() || "";
 }
 
 /** Sort key for date column — same hierarchy as horizon (`authorizedDate` || `date`). */

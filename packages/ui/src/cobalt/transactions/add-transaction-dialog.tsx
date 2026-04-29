@@ -1,0 +1,772 @@
+import { CATEGORY_MAPPING } from "@cobalt-web/server-data/transactions/categories";
+import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import { Button } from "@cobalt-web/ui/components/button";
+import { Calendar } from "@cobalt-web/ui/components/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@cobalt-web/ui/components/popover";
+import { cn } from "@cobalt-web/ui/lib/utils";
+import {
+  Calendar03Icon,
+  Folder02Icon,
+  Location01Icon,
+  Money01Icon,
+  Store01Icon,
+  Tag01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { CobaltDialog } from "../cobalt-dialog";
+import { CobaltSelectPopover } from "../select-popover";
+import { CategoryIcon, PRIMARY_CATEGORY_ICON } from "./categories";
+
+type PrimaryCategory = keyof typeof CATEGORY_MAPPING;
+
+const PRIMARY_CATEGORIES = Object.keys(CATEGORY_MAPPING) as PrimaryCategory[];
+
+interface CategoryItem {
+  value: PrimaryCategory;
+  label: string;
+}
+
+const CATEGORY_ITEMS: readonly CategoryItem[] = PRIMARY_CATEGORIES.map(
+  (value) => ({
+    label: CATEGORY_MAPPING[value].label,
+    value,
+  })
+);
+
+/** Categories that represent inflow (negative amount per Plaid sign convention). */
+const INFLOW_CATEGORIES: ReadonlySet<PrimaryCategory> = new Set([
+  "INCOME",
+  "TRANSFER_IN",
+]);
+
+type LocationJson = NonNullable<TransactionListItem["location"]>;
+
+export interface GeocodeSearchResult {
+  displayName: string;
+  location: LocationJson;
+}
+
+export interface GeocodeSearchState {
+  loading: boolean;
+  results: readonly GeocodeSearchResult[];
+  onQueryChange: (query: string) => void;
+}
+
+function summarizeLocation(loc: LocationJson | null): string {
+  if (!loc) {
+    return "";
+  }
+  return [loc.address, loc.city, loc.region].filter(Boolean).join(", ");
+}
+
+function renderLocationResults({
+  loading,
+  query,
+  results,
+  onPick,
+}: {
+  loading: boolean;
+  query: string;
+  results: readonly GeocodeSearchResult[];
+  onPick: (r: GeocodeSearchResult) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
+        Searching…
+      </div>
+    );
+  }
+  if (query.trim() === "") {
+    return (
+      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
+        Type to search
+      </div>
+    );
+  }
+  if (results.length === 0) {
+    return (
+      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
+        No results
+      </div>
+    );
+  }
+  return results.map((r) => (
+    <button
+      className="flex w-full items-start gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+      key={r.displayName}
+      onClick={() => {
+        onPick(r);
+      }}
+      type="button"
+    >
+      {r.displayName}
+    </button>
+  ));
+}
+
+function renderMerchantPickerResults({
+  merchantSearch,
+  query,
+  hasMerchant,
+  onClear,
+  onPick,
+  onUseTyped,
+}: {
+  merchantSearch: MerchantSearchState;
+  query: string;
+  hasMerchant: boolean;
+  onClear: () => void;
+  onPick: (r: MerchantSuggestionItem) => void;
+  onUseTyped: () => void;
+}) {
+  if (merchantSearch.loading && merchantSearch.results.length === 0) {
+    return (
+      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
+        Searching…
+      </div>
+    );
+  }
+  if (query.trim().length < 2) {
+    if (hasMerchant) {
+      return (
+        <button
+          className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+          onClick={onClear}
+          type="button"
+        >
+          Clear merchant
+        </button>
+      );
+    }
+    return (
+      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
+        Type to search
+      </div>
+    );
+  }
+  if (merchantSearch.results.length === 0) {
+    return (
+      <button
+        className="flex w-full items-start gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+        onClick={onUseTyped}
+        type="button"
+      >
+        Use "{query.trim()}"
+      </button>
+    );
+  }
+  return merchantSearch.results.slice(0, 8).map((r) => (
+    <button
+      className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+      key={r.brandId}
+      onClick={() => onPick(r)}
+      type="button"
+    >
+      {r.icon ? (
+        <img
+          alt=""
+          className="size-5 shrink-0 rounded-sm bg-foreground/5 object-contain"
+          src={r.icon}
+        />
+      ) : (
+        <div className="size-5 shrink-0 rounded-sm bg-foreground/5" />
+      )}
+      <span className="min-w-0 flex-1 truncate text-foreground">{r.name}</span>
+      {r.domain ? (
+        <span className="shrink-0 text-muted-foreground text-xs">
+          {r.domain}
+        </span>
+      ) : null}
+    </button>
+  ));
+}
+
+export interface AddTransactionAccountOption {
+  id: string;
+  name: string;
+}
+
+export interface MerchantSuggestionItem {
+  brandId: string;
+  name: string;
+  domain: string | null;
+  icon: string | null;
+}
+
+export interface MerchantSearchState {
+  loading: boolean;
+  results: readonly MerchantSuggestionItem[];
+  onQueryChange: (query: string) => void;
+}
+
+export interface AddTransactionFormValues {
+  accountId: string;
+  name: string;
+  /** Plaid sign convention: positive = expense, negative = income. */
+  amount: number;
+  /** ISO YYYY-MM-DD. */
+  date: string;
+  merchantName: string | null;
+  /** Brandfetch domain when picked from typeahead, else null. */
+  merchantWebsite: string | null;
+  description: string | null;
+  /** Plaid PFC primary category, or null. */
+  category: PrimaryCategory | null;
+  /** Geocoded location, or null. */
+  location: LocationJson | null;
+}
+
+export interface AddTransactionFormProps {
+  onSubmit: (values: AddTransactionFormValues) => void;
+  accounts: readonly AddTransactionAccountOption[];
+  submitting?: boolean;
+  /** Fires when user hits Backspace with empty name input. Used by command palette to "morph back". */
+  onBackspaceWhenEmpty?: () => void;
+  submitLabel?: string;
+  autoFocus?: boolean;
+  /** Geocode search wiring; omit to hide the location pill. */
+  locationSearch?: GeocodeSearchState;
+  /** Brandfetch merchant typeahead wiring; omit to disable suggestions. */
+  merchantSearch?: MerchantSearchState;
+  /** Empty-state CTA — host opens cash dialog or morphs to the sub-page. */
+  onCreateCashAccount?: () => void;
+}
+
+export interface AddTransactionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (values: AddTransactionFormValues) => void;
+  accounts: readonly AddTransactionAccountOption[];
+  submitting?: boolean;
+  /** Fires when user hits Backspace with empty name input. Used by command palette to "morph back". */
+  onBackspaceWhenEmpty?: () => void;
+  locationSearch?: GeocodeSearchState;
+  merchantSearch?: MerchantSearchState;
+  onCreateCashAccount?: () => void;
+}
+
+function todayIso(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function isoToDate(iso: string): Date {
+  return new Date(`${iso}T00:00:00`);
+}
+
+function dateToIso(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatDateLabel(iso: string): string {
+  if (iso === todayIso()) {
+    return "Today";
+  }
+  return isoToDate(iso).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+// eslint-disable-next-line complexity
+export function AddTransactionForm({
+  onSubmit,
+  accounts,
+  submitting = false,
+  onBackspaceWhenEmpty,
+  submitLabel = "Create transaction",
+  autoFocus = true,
+  locationSearch,
+  merchantSearch,
+  onCreateCashAccount,
+}: AddTransactionFormProps) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState<PrimaryCategory | null>(null);
+  const [date, setDate] = useState(todayIso());
+  const [merchant, setMerchant] = useState("");
+  const [merchantDomain, setMerchantDomain] = useState<string | null>(null);
+  const [merchantIcon, setMerchantIcon] = useState<string | null>(null);
+  const [merchantQuery, setMerchantQuery] = useState("");
+  const [accountId, setAccountId] = useState<string>(accounts[0]?.id ?? "");
+  const [location, setLocation] = useState<LocationJson | null>(null);
+  const [locationQuery, setLocationQuery] = useState("");
+  const titleRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setName("");
+    setDescription("");
+    setAmount("");
+    setCategory(null);
+    setDate(todayIso());
+    setMerchant("");
+    setMerchantDomain(null);
+    setMerchantIcon(null);
+    setMerchantQuery("");
+    setAccountId(accounts[0]?.id ?? "");
+    setLocation(null);
+    setLocationQuery("");
+    if (!autoFocus) {
+      return;
+    }
+    // Double-RAF ensures cmdk's own focus management has settled before we
+    // grab focus for the title input (cmdk Command root focuses its input on
+    // mount; without the second frame we'd lose focus when embedded as a
+    // command-palette sub-page).
+    let secondId = 0;
+    const firstId = window.requestAnimationFrame(() => {
+      secondId = window.requestAnimationFrame(() => {
+        titleRef.current?.focus();
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(firstId);
+      if (secondId) {
+        window.cancelAnimationFrame(secondId);
+      }
+    };
+  }, [accounts, autoFocus]);
+
+  const noAccounts = accounts.length === 0;
+  const parsedAmount = Number(amount);
+  const validAmount =
+    amount.trim() !== "" && Number.isFinite(parsedAmount) && parsedAmount > 0;
+  const canSubmit =
+    !submitting &&
+    !noAccounts &&
+    accountId !== "" &&
+    name.trim().length > 0 &&
+    validAmount;
+
+  const handleSubmit = () => {
+    if (!canSubmit) {
+      return;
+    }
+    const isInflow = category !== null && INFLOW_CATEGORIES.has(category);
+    const signed = isInflow ? -parsedAmount : parsedAmount;
+    onSubmit({
+      accountId,
+      amount: signed,
+      category,
+      date,
+      description: description.trim() === "" ? null : description.trim(),
+      location,
+      merchantName: merchant.trim() === "" ? null : merchant.trim(),
+      merchantWebsite: merchantDomain,
+      name: name.trim(),
+    });
+  };
+
+  const accountLabel =
+    accounts.find((a) => a.id === accountId)?.name ?? "Account";
+
+  const selectedDate = useMemo(() => isoToDate(date), [date]);
+
+  if (noAccounts) {
+    return (
+      <div className="flex min-h-32 flex-col items-center justify-center gap-3 text-center">
+        <p className="text-muted-foreground text-sm">
+          Create a cash account first to add manual transactions.
+        </p>
+        {onCreateCashAccount ? (
+          <Button onClick={onCreateCashAccount} size="sm" type="button">
+            Create cash account
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-baseline gap-3">
+        <input
+          aria-label="Transaction name"
+          className="min-w-0 flex-1 cursor-text bg-transparent font-medium text-2xl text-foreground leading-tight tracking-tight outline-none placeholder:text-muted-foreground/50"
+          maxLength={255}
+          onChange={(e) => {
+            setName(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Backspace" && name === "" && onBackspaceWhenEmpty) {
+              e.preventDefault();
+              onBackspaceWhenEmpty();
+            }
+          }}
+          placeholder="Name"
+          ref={titleRef}
+          value={name}
+        />
+        <Popover>
+          <PopoverTrigger
+            render={
+              <button
+                className="-mx-1 flex shrink-0 items-center gap-2 rounded-md px-1 py-1 text-base text-foreground transition-colors hover:bg-input/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                type="button"
+              >
+                <HugeiconsIcon
+                  className="size-4 text-muted-foreground"
+                  icon={Calendar03Icon}
+                  strokeWidth={2}
+                />
+                {formatDateLabel(date)}
+              </button>
+            }
+          />
+          <PopoverContent align="end" className="w-auto p-2">
+            <Calendar
+              mode="single"
+              onSelect={(d) => {
+                if (d) {
+                  setDate(dateToIso(d));
+                }
+              }}
+              selected={selectedDate}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      <div className="flex items-baseline gap-0.5">
+        <span
+          className={cn(
+            "text-lg tabular-nums",
+            amount.trim() === ""
+              ? "text-muted-foreground/50"
+              : "text-foreground"
+          )}
+        >
+          $
+        </span>
+        <input
+          aria-label="Amount"
+          className="min-w-0 flex-1 cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50"
+          inputMode="decimal"
+          min={0}
+          onChange={(e) => {
+            setAmount(e.target.value);
+          }}
+          placeholder="0.00"
+          step="0.01"
+          type="number"
+          value={amount}
+        />
+      </div>
+
+      <textarea
+        aria-label="Description"
+        className="block min-h-20 w-full resize-none bg-transparent text-base text-foreground leading-normal outline-none placeholder:text-muted-foreground/50"
+        maxLength={2000}
+        onChange={(e) => {
+          setDescription(e.target.value);
+        }}
+        placeholder="Add a note..."
+        value={description}
+      />
+
+      <div className="flex flex-wrap items-center gap-1.5 pt-2">
+        <CobaltSelectPopover
+          emptyText="No categories"
+          itemKey={(item: CategoryItem) => item.value}
+          itemMatch={(item: CategoryItem, q) =>
+            item.label.toLowerCase().includes(q)
+          }
+          items={CATEGORY_ITEMS}
+          onSelect={(item: CategoryItem) => {
+            setCategory(item.value);
+          }}
+          renderIcon={(item: CategoryItem) => (
+            <CategoryIcon icon={PRIMARY_CATEGORY_ICON[item.value]} />
+          )}
+          renderLabel={(item: CategoryItem) => item.label}
+          searchPlaceholder="Search categories…"
+          selectedKey={category}
+          trigger={
+            <button
+              className={cn(
+                "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs transition-colors",
+                category
+                  ? "border-foreground/15 bg-input/40 text-foreground"
+                  : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10"
+              )}
+              type="button"
+            >
+              <span className="flex size-[1.125rem] shrink-0 items-center justify-center">
+                {category ? (
+                  <CategoryIcon
+                    icon={PRIMARY_CATEGORY_ICON[category]}
+                    sizeClassName="size-[1.125rem]"
+                  />
+                ) : (
+                  <HugeiconsIcon
+                    className="size-[1.125rem]"
+                    icon={Folder02Icon}
+                    strokeWidth={2}
+                  />
+                )}
+              </span>
+              {category ? CATEGORY_MAPPING[category].label : "Category"}
+            </button>
+          }
+        />
+
+        <CobaltSelectPopover
+          emptyText="No accounts"
+          itemKey={(acc: AddTransactionAccountOption) => acc.id}
+          itemMatch={(acc: AddTransactionAccountOption, q) =>
+            acc.name.toLowerCase().includes(q)
+          }
+          items={accounts}
+          onSelect={(acc: AddTransactionAccountOption) => {
+            setAccountId(acc.id);
+          }}
+          renderLabel={(acc: AddTransactionAccountOption) => acc.name}
+          searchPlaceholder="Search accounts…"
+          selectedKey={accountId}
+          trigger={
+            <button
+              className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-input/40 px-2 text-foreground text-xs transition-colors"
+              type="button"
+            >
+              <img
+                alt=""
+                aria-hidden
+                className="size-5 shrink-0 object-contain"
+                src="/assets/vectors/cash.svg"
+              />
+              {accountLabel}
+            </button>
+          }
+        />
+
+        <CobaltSelectPopover
+          emptyText="No tags yet"
+          itemKey={(tag: string) => tag}
+          itemMatch={(tag: string, q) => tag.toLowerCase().includes(q)}
+          items={[] as readonly string[]}
+          onSelect={() => {
+            // Wire to tag state once tags backend lands.
+          }}
+          renderLabel={(tag: string) => tag}
+          searchPlaceholder="Search tags…"
+          trigger={
+            <button
+              className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 text-muted-foreground text-xs transition-colors hover:bg-foreground/10"
+              type="button"
+            >
+              <HugeiconsIcon
+                className="size-3.5 shrink-0"
+                icon={Tag01Icon}
+                strokeWidth={2}
+              />
+              Tags
+            </button>
+          }
+        />
+
+        {merchantSearch ? (
+          <Popover
+            onOpenChange={(o) => {
+              if (!o) {
+                setMerchantQuery("");
+                merchantSearch.onQueryChange("");
+              }
+            }}
+          >
+            <PopoverTrigger
+              render={
+                <button
+                  className={cn(
+                    "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs transition-colors",
+                    merchant
+                      ? "border-foreground/15 bg-input/40 text-foreground"
+                      : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10"
+                  )}
+                  type="button"
+                >
+                  {merchant && merchantIcon ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      alt=""
+                      className="size-3.5 shrink-0 rounded-sm object-contain"
+                      src={merchantIcon}
+                    />
+                  ) : (
+                    <HugeiconsIcon
+                      className="size-3.5 shrink-0"
+                      icon={Store01Icon}
+                      strokeWidth={2}
+                    />
+                  )}
+                  {merchant || "Merchant"}
+                </button>
+              }
+            />
+            <PopoverContent
+              align="start"
+              className="w-72 gap-0 bg-[oklch(0.949_0_0)] p-1 dark:bg-[oklch(0.29_0_0)]"
+            >
+              <div className="flex items-center px-2.5 py-1.5">
+                <input
+                  autoFocus
+                  className="min-w-0 flex-1 cursor-text bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                  maxLength={255}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setMerchantQuery(v);
+                    merchantSearch.onQueryChange(v);
+                  }}
+                  placeholder="Search merchant…"
+                  value={merchantQuery}
+                />
+              </div>
+              <div className="scrollbar-thin max-h-72 overflow-y-auto">
+                {renderMerchantPickerResults({
+                  hasMerchant: Boolean(merchant),
+                  merchantSearch,
+                  onClear: () => {
+                    setMerchant("");
+                    setMerchantDomain(null);
+                    setMerchantIcon(null);
+                    setMerchantQuery("");
+                    merchantSearch.onQueryChange("");
+                  },
+                  onPick: (r) => {
+                    setMerchant(r.name);
+                    setMerchantDomain(r.domain);
+                    setMerchantIcon(r.icon);
+                    setMerchantQuery("");
+                    merchantSearch.onQueryChange("");
+                  },
+                  onUseTyped: () => {
+                    setMerchant(merchantQuery.trim());
+                    setMerchantDomain(null);
+                    setMerchantIcon(null);
+                    setMerchantQuery("");
+                    merchantSearch.onQueryChange("");
+                  },
+                  query: merchantQuery,
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : null}
+
+        {locationSearch ? (
+          <Popover
+            onOpenChange={(o) => {
+              if (!o) {
+                setLocationQuery("");
+                locationSearch.onQueryChange("");
+              }
+            }}
+          >
+            <PopoverTrigger
+              render={
+                <button
+                  className={cn(
+                    "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs transition-colors",
+                    location
+                      ? "border-foreground/15 bg-input/40 text-foreground"
+                      : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10"
+                  )}
+                  type="button"
+                >
+                  <HugeiconsIcon
+                    className="size-3.5 shrink-0"
+                    icon={Location01Icon}
+                    strokeWidth={2}
+                  />
+                  {location ? summarizeLocation(location) : "Location"}
+                </button>
+              }
+            />
+            <PopoverContent
+              align="start"
+              className="gap-0 bg-[oklch(0.949_0_0)] p-1 dark:bg-[oklch(0.29_0_0)] w-72"
+            >
+              <div className="flex items-center px-2.5 py-1.5">
+                <input
+                  autoFocus
+                  className="min-w-0 flex-1 cursor-text bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                  onChange={(e) => {
+                    setLocationQuery(e.target.value);
+                    locationSearch.onQueryChange(e.target.value);
+                  }}
+                  placeholder="Search address…"
+                  value={locationQuery}
+                />
+              </div>
+              <div className="scrollbar-thin max-h-72 overflow-y-auto">
+                {renderLocationResults({
+                  loading: locationSearch.loading,
+                  onPick: (r) => {
+                    setLocation(r.location);
+                    setLocationQuery("");
+                    locationSearch.onQueryChange("");
+                  },
+                  query: locationQuery,
+                  results: locationSearch.results,
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : null}
+      </div>
+
+      <div className="flex justify-end pt-2">
+        <Button disabled={!canSubmit} onClick={handleSubmit} type="button">
+          {submitting ? "Creating…" : submitLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function AddTransactionDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+  accounts,
+  submitting = false,
+  onBackspaceWhenEmpty,
+  locationSearch,
+  merchantSearch,
+  onCreateCashAccount,
+}: AddTransactionDialogProps) {
+  return (
+    <CobaltDialog
+      className="w-[720px] sm:max-w-3xl"
+      onOpenChange={onOpenChange}
+      open={open}
+      title="New Transaction"
+      titleClassName="text-muted-foreground"
+      titleIcon={Money01Icon}
+    >
+      <AddTransactionForm
+        accounts={accounts}
+        locationSearch={locationSearch}
+        merchantSearch={merchantSearch}
+        onBackspaceWhenEmpty={onBackspaceWhenEmpty}
+        onCreateCashAccount={onCreateCashAccount}
+        onSubmit={onSubmit}
+        submitting={submitting}
+      />
+    </CobaltDialog>
+  );
+}

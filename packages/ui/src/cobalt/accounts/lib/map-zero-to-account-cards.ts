@@ -25,6 +25,8 @@ export interface AccountCardViewModel {
   snaptradeAuthorizationId: string | null;
   /** Unix ms — latest sync time when available. */
   lastSyncedAt: number | null;
+  /** Underlying provider — `manual` accounts disconnect via Zero mutator instead of REST. */
+  source: "plaid" | "snaptrade" | "manual";
 }
 
 function titleCaseWords(s: string): string {
@@ -66,6 +68,7 @@ export interface BankAccountRowWithRelations {
   externalId: string | null;
   type: string;
   subtype: string | null;
+  source: "plaid" | "snaptrade" | "manual";
   plaidConnection?: {
     plaidItemId?: string | null;
     institutionLogo?: string | null;
@@ -119,17 +122,32 @@ function institutionFieldsFromBankConnection(
   };
 }
 
+function pickSubtypeLabel(
+  isManual: boolean,
+  subtype: string | null,
+  type: string
+): string {
+  if (isManual) {
+    return "Cash";
+  }
+  if (subtype) {
+    return titleCaseWords(subtype.replaceAll("_", " "));
+  }
+  return titleCaseWords(type);
+}
+
 export function bankAccountRowToCard(
   row: BankAccountRowWithRelations
 ): AccountCardViewModel {
-  const { institution, institutionLogo, institutionUrl } =
-    institutionFieldsFromBankConnection(row.plaidConnection);
+  const isManual = row.source === "manual";
+  const fromConn = institutionFieldsFromBankConnection(row.plaidConnection);
+  const institution = isManual ? "Cash" : fromConn.institution;
+  const institutionLogo = isManual ? null : fromConn.institutionLogo;
+  const institutionUrl = isManual ? null : fromConn.institutionUrl;
   const lastSyncedAt = syncMsFromBalance(row.balance) ?? row.updatedAt ?? null;
   const { type } = row;
   const category = categoryFromPlaidType(type);
-  const subtypeLabel = row.subtype
-    ? titleCaseWords(row.subtype.replaceAll("_", " "))
-    : titleCaseWords(type);
+  const subtypeLabel = pickSubtypeLabel(isManual, row.subtype, type);
   const description = row.officialName?.trim() || row.name;
 
   return {
@@ -146,6 +164,7 @@ export function bankAccountRowToCard(
     plaidAccountId: row.externalId,
     plaidItemId: row.plaidConnection?.plaidItemId ?? null,
     snaptradeAuthorizationId: null,
+    source: row.source,
   };
 }
 
@@ -178,6 +197,7 @@ export function brokerageRowToCard(
     plaidAccountId: null,
     plaidItemId: null,
     snaptradeAuthorizationId: snapAuth,
+    source: "snaptrade",
   };
 }
 

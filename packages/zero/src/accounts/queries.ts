@@ -11,10 +11,11 @@ const PLAID_ACCOUNT_TYPES = [
   "loan",
   "investment",
 ] as const;
+const BANK_ACCOUNT_SOURCES = ["plaid", "manual"] as const;
 
 /** Accounts domain — `queries.accounts.*` (bank + brokerage lists). */
 export const accountsQueries = {
-  /** Plaid accounts (depository / credit / loan / investment) for the signed-in user. */
+  /** Bank-style accounts (Plaid + manual) for the signed-in user. */
   bankAccounts: defineQuery(({ ctx }: { ctx: Context }) => {
     const userId = ctx?.userId;
     if (!userId) {
@@ -22,7 +23,7 @@ export const accountsQueries = {
     }
     return zql.financialAccount
       .where("userId", userId)
-      .where("source", "plaid")
+      .where("source", "IN", BANK_ACCOUNT_SOURCES)
       .where("type", "IN", PLAID_ACCOUNT_TYPES)
       .related("plaidConnection", (q) => q.related("institution"))
       .related("balance");

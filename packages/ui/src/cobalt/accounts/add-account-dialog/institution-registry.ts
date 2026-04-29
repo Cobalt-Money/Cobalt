@@ -407,3 +407,18 @@ export const PLAID_DEFAULT_CREDIT: readonly AddAccountInstitution[] =
     provider: "plaid",
     url: s.domain,
   }));
+
+/**
+ * Manual cash account option — appears in the Add Account grid alongside
+ * Plaid/SnapTrade institutions. Selecting this opens the cash-account form
+ * instead of launching an external connect flow. Multiple cash accounts are
+ * allowed; the tile stays available even after the user has created one.
+ */
+export const MANUAL_CASH_OPTION: AddAccountInstitution = {
+  categories: ["cash", "bank"],
+  id: "manual:cash",
+  logo: null,
+  name: "Cash",
+  provider: "manual",
+  url: null,
+};

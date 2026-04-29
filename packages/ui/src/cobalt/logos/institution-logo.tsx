@@ -114,6 +114,17 @@ export function firstInstitutionLogoImageUrlForSampling(
   return first ?? null;
 }
 
+function pickFallbackText(
+  institutionName: string | null | undefined,
+  isManual: boolean
+): string | undefined {
+  const trimmed = institutionName?.trim();
+  if (trimmed) {
+    return trimmed.slice(0, 1).toUpperCase();
+  }
+  return isManual ? undefined : "?";
+}
+
 /**
  * Bank column glyph: optional Plaid `institutionLogo`, then Brandfetch icon chain
  * (`type=icon` → lettermark), Logo.dev by host, then letter initial.
@@ -124,6 +135,8 @@ export function InstitutionLogo(
     /** Plaid / institution CDN logo; tried before Brandfetch when HTTP(S). */
     institutionLogo?: string | null;
     institutionLogosExtra?: readonly string[] | null;
+    /** When `"manual"`, falls back to cash.svg instead of letter glyph. */
+    source?: "plaid" | "snaptrade" | "manual";
   }
 ) {
   const {
@@ -132,6 +145,7 @@ export function InstitutionLogo(
     institutionLogosExtra,
     institutionName,
     institutionUrl,
+    source,
   } = props;
   const candidates = useMemo(
     () =>
@@ -143,19 +157,16 @@ export function InstitutionLogo(
     [institutionLogo, institutionLogosExtra, institutionUrl]
   );
   const alt = institutionName?.trim() ? `${institutionName} logo` : "Bank logo";
-  const fallbackText = (() => {
-    const t = institutionName?.trim();
-    if (!t) {
-      return "?";
-    }
-    return t.slice(0, 1).toUpperCase();
-  })();
+  const isManual = source === "manual";
+  const fallbackText = pickFallbackText(institutionName, isManual);
+  const fallbackImageSrc = isManual ? "/assets/vectors/cash.svg" : undefined;
 
   return (
     <LogoImageWithFallback
       alt={alt}
       candidates={candidates}
       className={className}
+      fallbackImageSrc={fallbackImageSrc}
       fallbackText={fallbackText}
       imgClassName="object-cover"
     />
