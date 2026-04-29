@@ -1,7 +1,4 @@
-import type {
-  TiptapDoc,
-  TransactionListItem,
-} from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -54,7 +51,7 @@ export interface TransactionDetailEditHandlers {
   onUpdateDate: (dateIso: string) => void;
   onUpdateLocation: (location: LocationJson) => void;
   onUpdateName: (name: string) => void;
-  onUpdateNotes: (doc: TiptapDoc) => void;
+  onUpdateNotes: (markdown: string) => void;
 }
 
 export function TransactionDetailSummary({

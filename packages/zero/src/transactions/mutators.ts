@@ -1,6 +1,6 @@
 import {
   locationJsonSchema,
-  transactionNotesJsonSchema,
+  transactionNotesMarkdownSchema,
   userOverrideCategoryJsonSchema,
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { defineMutator } from "@rocicorp/zero";
@@ -33,7 +33,7 @@ const updateCategorySchema = transactionIdSchema.extend({
 });
 
 const updateNotesSchema = transactionIdSchema.extend({
-  notes: transactionNotesJsonSchema,
+  notes: transactionNotesMarkdownSchema,
 });
 
 async function getOwned(tx: Transaction<Schema>, ctx: Context, id: string) {

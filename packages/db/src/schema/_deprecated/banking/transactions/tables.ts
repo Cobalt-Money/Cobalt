@@ -14,7 +14,6 @@ import {
 import type {
   CounterpartiesArrayJson,
   LocationJson,
-  TransactionNotesJson,
   UserOverrideCategoryJson,
 } from "../../../accounts/banking/transactions/zod";
 import { appFullAccess, agentSelectViaBankAccount } from "../../../rls";
@@ -62,7 +61,7 @@ export const transaction = pgTable.withRLS(
     merchantEntityId: text("merchant_entity_id"),
     merchantName: text("merchant_name"),
     name: text("name").notNull(),
-    notes: jsonb("notes").$type<TransactionNotesJson | null>(),
+    notes: text("notes"),
     originalDescription: text("original_description"),
     paymentChannel: varchar("payment_channel"),
     paymentMeta: jsonb("payment_meta").$type<PaymentMetaJson | null>(),
