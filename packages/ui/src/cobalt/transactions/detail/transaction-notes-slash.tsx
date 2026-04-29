@@ -1,5 +1,6 @@
+import { cn } from "@cobalt-web/ui/lib/utils";
 import {
-  CodeSquareIcon,
+  CheckListIcon,
   GridTableIcon,
   Heading01Icon,
   Heading02Icon,
@@ -11,11 +12,10 @@ import {
 } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import type { CmdKey, CommandManager, Editor } from "@milkdown/kit/core";
+import type { CmdKey, Editor } from "@milkdown/kit/core";
 import { commandsCtx, editorViewCtx } from "@milkdown/kit/core";
 import type { Ctx } from "@milkdown/kit/ctx";
 import {
-  createCodeBlockCommand,
   insertHrCommand,
   wrapInBlockquoteCommand,
   wrapInBulletListCommand,
@@ -24,6 +24,7 @@ import {
 } from "@milkdown/kit/preset/commonmark";
 import { insertTableCommand } from "@milkdown/kit/preset/gfm";
 import { Plugin } from "@milkdown/kit/prose/state";
+import { Decoration, DecorationSet } from "@milkdown/kit/prose/view";
 import type { EditorView } from "@milkdown/kit/prose/view";
 import { $prose } from "@milkdown/kit/utils";
 import { SlashProvider, slashFactory } from "@milkdown/plugin-slash";
@@ -32,68 +33,103 @@ import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 
 export interface SlashItem {
+  group: string;
   icon: IconSvgElement;
-  run: (commands: CommandManager) => void;
+  run: (ctx: Ctx) => void;
   searchTerms: string[];
   title: string;
 }
 
+function callCmd<T = undefined>(ctx: Ctx, key: CmdKey<T>, payload?: T): void {
+  ctx.get(commandsCtx).call(key, payload as T);
+}
+
+function insertTaskList(ctx: Ctx): void {
+  callCmd(ctx, wrapInBulletListCommand.key);
+  const view = ctx.get(editorViewCtx);
+  const { state, dispatch } = view;
+  const { $from } = state.selection;
+  for (let { depth } = $from; depth > 0; depth -= 1) {
+    const node = $from.node(depth);
+    if (node.type.name === "list_item") {
+      const pos = $from.before(depth);
+      dispatch(
+        state.tr.setNodeMarkup(pos, undefined, {
+          ...node.attrs,
+          checked: false,
+        })
+      );
+      break;
+    }
+  }
+}
+
 export const SLASH_ITEMS: SlashItem[] = [
   {
+    group: "headings",
     icon: Heading01Icon,
-    run: (c) => c.call(wrapInHeadingCommand.key as CmdKey<number>, 1),
+    run: (ctx) => callCmd(ctx, wrapInHeadingCommand.key as CmdKey<number>, 1),
     searchTerms: ["h1", "heading", "title"],
     title: "Heading 1",
   },
   {
+    group: "headings",
     icon: Heading02Icon,
-    run: (c) => c.call(wrapInHeadingCommand.key as CmdKey<number>, 2),
+    run: (ctx) => callCmd(ctx, wrapInHeadingCommand.key as CmdKey<number>, 2),
     searchTerms: ["h2", "heading"],
     title: "Heading 2",
   },
   {
+    group: "headings",
     icon: Heading03Icon,
-    run: (c) => c.call(wrapInHeadingCommand.key as CmdKey<number>, 3),
+    run: (ctx) => callCmd(ctx, wrapInHeadingCommand.key as CmdKey<number>, 3),
     searchTerms: ["h3", "heading", "subheading"],
     title: "Heading 3",
   },
   {
+    group: "lists",
     icon: LeftToRightListBulletIcon,
-    run: (c) => c.call(wrapInBulletListCommand.key),
+    run: (ctx) => callCmd(ctx, wrapInBulletListCommand.key),
     searchTerms: ["bullet", "list", "unordered"],
     title: "Bulleted list",
   },
   {
+    group: "lists",
     icon: LeftToRightListNumberIcon,
-    run: (c) => c.call(wrapInOrderedListCommand.key),
+    run: (ctx) => callCmd(ctx, wrapInOrderedListCommand.key),
     searchTerms: ["numbered", "ordered", "list"],
     title: "Numbered list",
   },
   {
-    icon: CodeSquareIcon,
-    run: (c) => c.call(createCodeBlockCommand.key),
-    searchTerms: ["code", "codeblock", "pre"],
-    title: "Code block",
+    group: "lists",
+    icon: CheckListIcon,
+    run: insertTaskList,
+    searchTerms: ["todo", "task", "checkbox", "check"],
+    title: "To-do list",
   },
   {
+    group: "blocks",
     icon: QuoteDownIcon,
-    run: (c) => c.call(wrapInBlockquoteCommand.key),
+    run: (ctx) => callCmd(ctx, wrapInBlockquoteCommand.key),
     searchTerms: ["quote", "blockquote"],
     title: "Quote",
   },
   {
+    group: "inserts",
     icon: MinusSignIcon,
-    run: (c) => c.call(insertHrCommand.key),
+    run: (ctx) => callCmd(ctx, insertHrCommand.key),
     searchTerms: ["hr", "divider", "line"],
     title: "Divider",
   },
   {
+    group: "inserts",
     icon: GridTableIcon,
-    run: (c) =>
-      c.call(insertTableCommand.key as CmdKey<{ row?: number; col?: number }>, {
-        col: 3,
-        row: 3,
-      }),
+    run: (ctx) =>
+      callCmd(
+        ctx,
+        insertTableCommand.key as CmdKey<{ row?: number; col?: number }>,
+        { col: 3, row: 3 }
+      ),
     searchTerms: ["table", "grid"],
     title: "Table",
   },
@@ -137,31 +173,39 @@ export const SlashMenu = forwardRef<SlashMenuRef, SlashMenuProps>(
 
     if (items.length === 0) {
       return (
-        <div className="z-50 w-60 rounded-md border border-border bg-popover p-2 text-muted-foreground text-sm shadow-md">
+        <div className="w-60 px-2.5 py-2 text-center text-muted-foreground text-sm">
           No matches
         </div>
       );
     }
 
     return (
-      <div className="z-50 max-h-80 w-60 overflow-auto rounded-md border border-border bg-popover p-1 shadow-md">
+      <div className="scrollbar-thin max-h-96 w-64 overflow-y-auto">
         {items.map((item, i) => (
-          <button
-            className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm ${
-              i === selectedIndex ? "bg-accent" : ""
-            }`}
-            key={item.title}
-            onClick={() => onSelect(item)}
-            onMouseDown={(e) => e.preventDefault()}
-            type="button"
-          >
-            <HugeiconsIcon
-              className="shrink-0 text-muted-foreground"
-              icon={item.icon}
-              size={16}
-            />
-            <span>{item.title}</span>
-          </button>
+          <div key={item.title}>
+            {i > 0 && items[i - 1]?.group !== item.group ? (
+              <div className="my-1 h-px bg-border" />
+            ) : null}
+            <button
+              className={cn(
+                "flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40",
+                i === selectedIndex && "bg-input/30 font-medium"
+              )}
+              onClick={() => onSelect(item)}
+              onMouseDown={(e) => e.preventDefault()}
+              type="button"
+            >
+              <span className="flex size-5 shrink-0 items-center justify-center">
+                <HugeiconsIcon
+                  className="text-muted-foreground"
+                  icon={item.icon}
+                  size={18}
+                  strokeWidth={2}
+                />
+              </span>
+              <span>{item.title}</span>
+            </button>
+          </div>
         ))}
       </div>
     );
@@ -198,12 +242,17 @@ function MenuRoot({
 function buildSlashView(ctx: Ctx, state: SharedSlashState) {
   return (view: EditorView) => {
     const content = document.createElement("div");
+    content.dataset.transactionNotesSlash = "";
+    content.dataset.show = "false";
+    content.className =
+      "absolute z-50 rounded-2xl bg-[oklch(0.949_0_0)] p-1 shadow-2xl ring-1 ring-foreground/5 dark:bg-[oklch(0.29_0_0)]";
     const root: Root = createRoot(content);
 
     const providerRef: { current: SlashProvider | null } = { current: null };
     const provider = new SlashProvider({
       content,
       offset: 8,
+      root: document.body,
       shouldShow: (v) => {
         const text = providerRef.current?.getContent(v);
         return text?.startsWith("/") ?? false;
@@ -229,10 +278,9 @@ function buildSlashView(ctx: Ctx, state: SharedSlashState) {
         const triggerLen = text.length - slashIdx;
         dispatch(editorState.tr.delete(from - triggerLen, from));
       }
-      const commandManager = ctx.get(commandsCtx);
-      item.run(commandManager);
       provider.hide();
       v.focus();
+      item.run(ctx);
     }
 
     function setRef(r: SlashMenuRef | null) {
@@ -287,6 +335,45 @@ export function createSlashBundle(): SlashBundle {
     () =>
       new Plugin({
         props: {
+          decorations: (editorState) => {
+            if (!state.visible) {
+              return null;
+            }
+            const { from, $from } = editorState.selection;
+            const paragraphStart = $from.start();
+            const textBefore = $from.parent.textBetween(
+              0,
+              $from.parentOffset,
+              undefined,
+              "￼"
+            );
+            const slashIdx = textBefore.lastIndexOf("/");
+            if (slashIdx === -1) {
+              return null;
+            }
+            const start = paragraphStart + slashIdx;
+            const decorations: Decoration[] = [
+              Decoration.inline(start, from, {
+                class: "rounded-md bg-input/40 px-2 py-1 text-muted-foreground",
+              }),
+            ];
+            if (start + 1 === from) {
+              decorations.push(
+                Decoration.widget(
+                  from,
+                  () => {
+                    const span = document.createElement("span");
+                    span.className =
+                      "pointer-events-none rounded-md bg-input/40 pr-1 text-muted-foreground";
+                    span.textContent = "Type to search";
+                    return span;
+                  },
+                  { side: 1 }
+                )
+              );
+            }
+            return DecorationSet.create(editorState.doc, decorations);
+          },
           handleKeyDown: (_view, event) => {
             if (!state.visible) {
               return false;

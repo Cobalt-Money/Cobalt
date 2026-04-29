@@ -14,7 +14,7 @@ import { useEffect } from "react";
 import { AppSessionProvider } from "../lib/providers/app-session";
 import type { RouterContext } from "../router";
 import "../bones/registry";
-import appCss from "../index.css?url";
+import appCss from "@cobalt-web/ui/globals.css?url";
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootDocument,
