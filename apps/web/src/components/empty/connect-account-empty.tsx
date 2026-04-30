@@ -1,7 +1,7 @@
 import { ConnectAccountEmpty as ConnectAccountEmptyPresentational } from "@cobalt-web/ui/cobalt/empty/connect-account-empty";
 import type { ConnectAccountEmptyProps } from "@cobalt-web/ui/cobalt/empty/connect-account-empty";
 
-import { useAddAccount } from "@/components/accounts/add-account-provider";
+import { useCommandMenu } from "@/components/shell/command-menu";
 
 /**
  * App-level wrapper that wires the `Empty` CTA to the Plaid add-account flow.
@@ -10,7 +10,7 @@ import { useAddAccount } from "@/components/accounts/add-account-provider";
 export function ConnectAccountEmpty(
   props: Omit<ConnectAccountEmptyProps, "onConnect">
 ) {
-  const { openAddAccount } = useAddAccount();
+  const { openAddAccount } = useCommandMenu();
   return (
     <ConnectAccountEmptyPresentational {...props} onConnect={openAddAccount} />
   );

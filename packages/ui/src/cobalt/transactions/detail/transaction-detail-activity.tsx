@@ -10,12 +10,22 @@ import {
   Note01Icon,
   PencilEdit01Icon,
   Shield01Icon,
+  Tag01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
+import type { ReactNode } from "react";
 
+import type { TagColor } from "../../tags/palette";
+import { TagChip } from "../../tags/tag-chip";
 import { CategoryIcon, getCategoryDisplayConfig } from "../categories";
 import { formatDateStringShort } from "../lib/helpers";
+
+export interface ActivityTagInfo {
+  name: string;
+  color: TagColor;
+}
+export type ActivityTagMap = Map<string, ActivityTagInfo>;
 
 type BuiltinEventType = "authorized" | "pending" | "posted";
 type EditEventType = `edit_${TransactionActivityItem["field"]}`;
@@ -24,7 +34,7 @@ type ActivityEventType = BuiltinEventType | EditEventType;
 interface ActivityEvent {
   actor?: "user" | "system";
   date: string | null;
-  description: string;
+  description: ReactNode;
   id: string;
   type: ActivityEventType;
 }
@@ -72,7 +82,74 @@ function sortActivityEventsNewestFirst(
   });
 }
 
-function describeEditEvent(item: TransactionActivityItem): string {
+function renderTagChips(
+  ids: string[],
+  tagsById: ActivityTagMap | undefined
+): ReactNode {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1 align-middle">
+      {ids.map((id) => {
+        const meta = tagsById?.get(id);
+        if (meta) {
+          return (
+            <TagChip color={meta.color} key={id} name={meta.name} size="sm" />
+          );
+        }
+        return (
+          <span
+            className="inline-flex h-5 items-center rounded-full border border-foreground/15 bg-foreground/5 px-1.5 text-muted-foreground text-xs"
+            key={id}
+          >
+            deleted tag
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+function describeTagsEdit(
+  item: TransactionActivityItem,
+  tagsById: ActivityTagMap | undefined
+): ReactNode {
+  const oldArr = (
+    Array.isArray(item.oldValue) ? item.oldValue : []
+  ) as string[];
+  const newArr = (
+    Array.isArray(item.newValue) ? item.newValue : []
+  ) as string[];
+  const added = newArr.filter((id) => !oldArr.includes(id));
+  const removed = oldArr.filter((id) => !newArr.includes(id));
+
+  if (added.length === 0 && removed.length === 0) {
+    return "Tags updated";
+  }
+
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+      {added.length > 0 ? (
+        <>
+          <span>Added</span>
+          {renderTagChips(added, tagsById)}
+        </>
+      ) : null}
+      {added.length > 0 && removed.length > 0 ? (
+        <span className="text-muted-foreground">·</span>
+      ) : null}
+      {removed.length > 0 ? (
+        <>
+          <span>Removed</span>
+          {renderTagChips(removed, tagsById)}
+        </>
+      ) : null}
+    </span>
+  );
+}
+
+function describeEditEvent(
+  item: TransactionActivityItem,
+  tagsById: ActivityTagMap | undefined
+): ReactNode {
   switch (item.field) {
     case "name": {
       return typeof item.newValue === "string"
@@ -108,6 +185,9 @@ function describeEditEvent(item: TransactionActivityItem): string {
     case "location": {
       return item.newValue ? "Location updated" : "Location cleared";
     }
+    case "tags": {
+      return describeTagsEdit(item, tagsById);
+    }
     default: {
       return "Updated";
     }
@@ -116,7 +196,8 @@ function describeEditEvent(item: TransactionActivityItem): string {
 
 function buildActivityEvents(
   transaction: TransactionListItem,
-  editEvents: TransactionActivityItem[]
+  editEvents: TransactionActivityItem[],
+  tagsById: ActivityTagMap | undefined
 ): ActivityEvent[] {
   const events: ActivityEvent[] = [];
 
@@ -152,7 +233,7 @@ function buildActivityEvents(
     events.push({
       actor: item.actor,
       date: item.createdAt,
-      description: describeEditEvent(item),
+      description: describeEditEvent(item, tagsById),
       id: item.id,
       type: `edit_${item.field}`,
     });
@@ -170,6 +251,7 @@ const eventMarkerTone: Record<ActivityEventType, string> = {
   edit_merchantName: "text-muted-foreground",
   edit_name: "text-muted-foreground",
   edit_notes: "text-muted-foreground",
+  edit_tags: "text-muted-foreground",
   pending: "text-muted-foreground",
   posted: "text-muted-foreground",
 };
@@ -239,6 +321,7 @@ function EventMarker({
     edit_location: Location01Icon as IconSvgElement,
     edit_name: PencilEdit01Icon as IconSvgElement,
     edit_notes: Note01Icon as IconSvgElement,
+    edit_tags: Tag01Icon as IconSvgElement,
   };
 
   const icon = iconByType[event.type];
@@ -306,12 +389,14 @@ function ActivityEventRow({
 
 export function TransactionDetailActivity({
   editEvents,
+  tagsById,
   transaction,
 }: {
   editEvents: TransactionActivityItem[];
+  tagsById?: ActivityTagMap;
   transaction: TransactionListItem;
 }) {
-  const events = buildActivityEvents(transaction, editEvents);
+  const events = buildActivityEvents(transaction, editEvents, tagsById);
 
   if (events.length === 0) {
     return null;

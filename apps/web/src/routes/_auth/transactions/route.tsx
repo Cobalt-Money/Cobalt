@@ -5,6 +5,7 @@ const amountSchema = z.enum(["all", "income", "expense"]).optional();
 const statusSchema = z.enum(["all", "pending", "posted"]).optional();
 const bankSchema = z.array(z.string()).optional();
 const amountBoundSchema = z.number().nonnegative().optional();
+const tagIdsSchema = z.array(z.uuid()).optional();
 
 const transactionsSearchSchema = z.object({
   amount: amountSchema,
@@ -12,6 +13,7 @@ const transactionsSearchSchema = z.object({
   amountMin: amountBoundSchema,
   bank: bankSchema,
   status: statusSchema,
+  tagIds: tagIdsSchema,
 });
 
 export type TransactionsSearch = z.infer<typeof transactionsSearchSchema>;

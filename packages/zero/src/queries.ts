@@ -5,6 +5,7 @@ import { alertsQueries } from "./alerts/queries.js";
 import { brokerageQueries } from "./brokerage/queries.js";
 import { chatsQueries } from "./chats/queries.js";
 import { newsQueries } from "./news/queries.js";
+import { tagsQueries } from "./tags/queries.js";
 import { transactionsQueries } from "./transactions/queries.js";
 
 /** Root query registry — add domain modules alongside `transactions`. */
@@ -14,5 +15,6 @@ export const queries = defineQueries({
   brokerage: brokerageQueries,
   chats: chatsQueries,
   news: newsQueries,
+  tags: tagsQueries,
   transactions: transactionsQueries,
 });

@@ -314,6 +314,7 @@
         "@base-ui/react": "^1.3.0",
         "@cobalt-web/clients": "workspace:*",
         "@cobalt-web/color-thief": "workspace:*",
+        "@cobalt-web/db": "workspace:*",
         "@cobalt-web/env": "workspace:*",
         "@cobalt-web/server-data": "workspace:*",
         "@cobalt-web/zero": "workspace:*",

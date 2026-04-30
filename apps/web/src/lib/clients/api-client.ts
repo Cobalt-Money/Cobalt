@@ -12,6 +12,7 @@ import type {
   ResearchRouter,
   SnaptradeRouter,
   SubscriptionsRouter,
+  TagsRouter,
   TransactionsRouter,
   UserRouter,
 } from "server/index.ts";
@@ -49,6 +50,7 @@ export const subscriptionsApi = hc<SubscriptionsRouter>(
   `${url}/api/subscriptions`,
   init
 );
+export const tagsApi = hc<TagsRouter>(`${url}/api/tags`, init);
 export const transactionsApi = hc<TransactionsRouter>(
   `${url}/api/transactions`,
   init

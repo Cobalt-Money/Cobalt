@@ -6,7 +6,9 @@ import { creditLiability } from "./accounts/banking/liabilities/credit";
 import { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
 import { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
 import { recurring } from "./accounts/banking/transactions/recurring";
+import { tag } from "./accounts/banking/transactions/tag";
 import { transaction } from "./accounts/banking/transactions/transaction";
+import { transactionTag } from "./accounts/banking/transactions/transaction-tag";
 import { holding } from "./accounts/investments/holding";
 import { investmentActivity } from "./accounts/investments/investment-activity";
 import { orders } from "./accounts/investments/order";
@@ -57,7 +59,9 @@ const schema = {
   snaptradeUser,
   studentLoanLiability,
   subscription,
+  tag,
   transaction,
+  transactionTag,
   user,
   userAlerts,
 } as const;
@@ -403,15 +407,43 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
+  tag: {
+    transactionTags: r.many.transactionTag({
+      from: r.tag.id,
+      to: r.transactionTag.tagId,
+    }),
+    user: r.one.user({
+      from: r.tag.userId,
+      to: r.user.id,
+    }),
+  },
+
   transaction: {
     account: r.one.financialAccount({
       from: r.transaction.accountId,
       optional: false,
       to: r.financialAccount.id,
     }),
+    transactionTags: r.many.transactionTag({
+      from: r.transaction.id,
+      to: r.transactionTag.transactionId,
+    }),
     user: r.one.user({
       from: r.transaction.userId,
       to: r.user.id,
+    }),
+  },
+
+  transactionTag: {
+    tag: r.one.tag({
+      from: r.transactionTag.tagId,
+      optional: false,
+      to: r.tag.id,
+    }),
+    transaction: r.one.transaction({
+      from: r.transactionTag.transactionId,
+      optional: false,
+      to: r.transaction.id,
     }),
   },
 
@@ -491,6 +523,10 @@ export const relations = defineRelations(schema, (r) => ({
     subscriptions: r.many.subscription({
       from: r.user.id,
       to: r.subscription.referenceId,
+    }),
+    tags: r.many.tag({
+      from: r.user.id,
+      to: r.tag.userId,
     }),
     transactions: r.many.transaction({
       from: r.user.id,

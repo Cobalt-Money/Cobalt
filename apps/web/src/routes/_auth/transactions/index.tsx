@@ -7,10 +7,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { useCallback, useState } from "react";
 
-import { useAddAccount } from "@/components/accounts/add-account-provider";
+import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
-import { useAddTransaction } from "@/components/transactions/add-transaction-provider";
 import { useBankOptions } from "@/hooks/use-bank-options";
+import { useTagOptions } from "@/hooks/use-tags";
 import { useTransactions } from "@/hooks/use-transactions";
 
 import type { TransactionsSearch } from "./route";
@@ -20,6 +20,7 @@ export const Route = createFileRoute("/_auth/transactions/")({
   loader: ({ context, deps }) => {
     context.zero.run(queries.accounts.bankAccounts());
     context.zero.run(queries.transactions.list(deps));
+    context.zero.run(queries.tags.list());
   },
   loaderDeps: ({ search }): TransactionsSearch => ({
     amount: search.amount,
@@ -35,8 +36,7 @@ function TransactionsListPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const bankOptions = useBankOptions();
-  const { openAddAccount } = useAddAccount();
-  const { openAddTransaction } = useAddTransaction();
+  const { options: tagOptions } = useTagOptions();
   const { isComplete, items } = useTransactions({
     amount: search.amount,
     amountMax: search.amountMax,
@@ -47,6 +47,8 @@ function TransactionsListPage() {
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const selectedCount = Object.keys(rowSelection).length;
+  const { openAddAccount, openAddTransaction, openManageTags } =
+    useCommandMenu();
 
   const handleExport = useCallback(
     (format: ExportFormat) => {
@@ -71,7 +73,9 @@ function TransactionsListPage() {
           filters={search}
           onAddTransaction={openAddTransaction}
           onExport={handleExport}
+          onManageTags={openManageTags}
           selectedCount={selectedCount}
+          tagOptions={tagOptions}
           onFiltersChange={(next) => {
             navigate({
               replace: true,
@@ -95,6 +99,10 @@ function TransactionsListPage() {
                 status:
                   next.status && next.status !== "all"
                     ? next.status
+                    : undefined,
+                tagIds:
+                  next.tagIds && next.tagIds.length > 0
+                    ? [...next.tagIds]
                     : undefined,
               },
               to: "/transactions",

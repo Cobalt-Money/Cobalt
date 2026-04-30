@@ -6,7 +6,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 
-import { useAddAccount } from "@/components/accounts/add-account-provider";
+import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 
 import {
@@ -30,7 +30,7 @@ function AccountsLayoutInner() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isAccountsList = pathname === "/accounts" || pathname === "/accounts/";
   const { activeFilter, setActiveFilter } = useAccountsLayout();
-  const { openAddAccount } = useAddAccount();
+  const { openAddAccount } = useCommandMenu();
 
   return (
     <SidebarShellLayout

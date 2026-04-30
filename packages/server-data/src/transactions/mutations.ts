@@ -4,6 +4,7 @@ import { transactionEdit } from "@cobalt-web/db/schema/accounts/banking/transact
 import { and, asc, eq } from "drizzle-orm";
 import type { z } from "zod";
 
+import { setTransactionTags } from "../tags/mutations.js";
 import type { transactionPatchBodySchema } from "./schemas.js";
 
 export type TransactionPatchBody = z.infer<typeof transactionPatchBodySchema>;
@@ -56,7 +57,7 @@ export async function patchTransaction(
   userId: string,
   patch: TransactionPatchBody
 ): Promise<void> {
-  const { category, date, name, notes, userOverrideLocation } = patch;
+  const { category, date, name, notes, tags, userOverrideLocation } = patch;
 
   await db.transaction(async (tx) => {
     // Fetch current row once for old_value capture.
@@ -209,4 +210,10 @@ export async function patchTransaction(
       await tx.insert(transactionEdit).values(editRows);
     }
   });
+
+  // Tag membership replace runs in its own transaction (cross-table writes
+  // + ownership validation already handled in setTransactionTags).
+  if (tags !== undefined) {
+    await setTransactionTags(userId, transactionId, tags);
+  }
 }

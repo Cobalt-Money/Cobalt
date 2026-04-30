@@ -30,6 +30,7 @@ export const TRANSACTION_EDIT_FIELDS = [
   "merchantName",
   "name",
   "notes",
+  "tags",
 ] as const;
 export type TransactionEditFieldName = (typeof TRANSACTION_EDIT_FIELDS)[number];
 

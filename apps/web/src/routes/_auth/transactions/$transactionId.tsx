@@ -1,3 +1,5 @@
+import type { TagColor } from "@cobalt-web/ui/cobalt/tags/palette";
+import { isTagColor } from "@cobalt-web/ui/cobalt/tags/palette";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import type { TransactionDetailEditHandlers } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
 import { TransactionDetailView } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
@@ -10,9 +12,16 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
+import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 import { useGeocodeSearch } from "@/hooks/use-geocode-search";
 import { useMerchantSearch } from "@/hooks/use-merchant-search";
+import {
+  useSetTransactionTags,
+  useTagOptions,
+  useTags,
+  useTransactionTagIds,
+} from "@/hooks/use-tags";
 import { useHistory, useTransactions } from "@/hooks/use-transactions";
 
 const transactionDetailRouteApi = getRouteApi(
@@ -25,6 +34,10 @@ export const Route = createFileRoute("/_auth/transactions/$transactionId")({
     context.zero.run(queries.transactions.list());
     context.zero.run(
       queries.transactions.activity({ transactionId: params.transactionId })
+    );
+    context.zero.run(queries.tags.list());
+    context.zero.run(
+      queries.tags.forTransaction({ transactionId: params.transactionId })
     );
   },
   staticData: { title: "Transaction" },
@@ -56,6 +69,21 @@ function TransactionDetailRoute() {
 
   const editEvents = useHistory(transactionId);
 
+  const { options: availableTags } = useTagOptions();
+  const { data: allTags = [] } = useTags();
+  const { openAddTag } = useCommandMenu();
+  const setTransactionTags = useSetTransactionTags();
+  const { data: currentTagIds = [] } = useTransactionTagIds(transactionId);
+  const tagsById = useMemo(() => {
+    const map = new Map<string, { name: string; color: TagColor }>();
+    for (const t of allTags) {
+      if (isTagColor(t.color)) {
+        map.set(t.id, { color: t.color, name: t.name });
+      }
+    }
+    return map;
+  }, [allTags]);
+
   const edit = useMemo<TransactionDetailEditHandlers>(() => {
     const id = transactionId;
 
@@ -65,6 +93,19 @@ function TransactionDetailRoute() {
     };
 
     return {
+      availableTags,
+      onRequestCreateTag: (initialName: string) => {
+        openAddTag({ initialName });
+      },
+      onUpdateTags: (tagIds: string[]) => {
+        setTransactionTags.mutate(
+          { tagIds, transactionId: id },
+          {
+            onError: onError("tags"),
+          }
+        );
+      },
+      tagIds: currentTagIds,
       locationSearch: {
         loading: locationLoading,
         onQueryChange: setLocationQuery,
@@ -100,7 +141,10 @@ function TransactionDetailRoute() {
       onResetNotes: () => {
         void zero
           .mutate(
-            mutators.transaction.resetNotes({ editId: crypto.randomUUID(), id })
+            mutators.transaction.resetNotes({
+              editId: crypto.randomUUID(),
+              id,
+            })
           )
           .server.catch(onError("notes"));
       },
@@ -204,6 +248,10 @@ function TransactionDetailRoute() {
     merchantResults,
     transaction?.source,
     navigate,
+    availableTags,
+    openAddTag,
+    setTransactionTags,
+    currentTagIds,
   ]);
 
   return (
@@ -213,6 +261,7 @@ function TransactionDetailRoute() {
           <TransactionDetailView
             edit={edit}
             editEvents={editEvents}
+            tagsById={tagsById}
             transaction={transaction}
           />
         ) : (

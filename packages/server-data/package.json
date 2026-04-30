@@ -19,6 +19,7 @@
     "./news/rss/*": "./src/news/rss/*.ts",
     "./research/*": "./src/research/*.ts",
     "./tickers/*": "./src/tickers/*.ts",
+    "./tags/*": "./src/tags/*.ts",
     "./transactions/*": "./src/transactions/*.ts",
     "./types": "./src/types.ts",
     "./user": "./src/user/index.ts",
