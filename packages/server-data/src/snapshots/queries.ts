@@ -1,7 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
-import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
-import { and, asc, eq, gte, lte } from "drizzle-orm";
 
 import { toBalanceSnapshotDTO } from "./lib.js";
 import type { BalanceSnapshot, BalanceSnapshotQuery } from "./schemas.js";
@@ -16,44 +13,42 @@ export async function getBalanceSnapshotsByUserId(
   userId: string,
   filters: BalanceSnapshotQuery
 ): Promise<BalanceSnapshot[]> {
-  const conditions = [eq(snapshot.userId, userId)];
-  if (filters.accountId) {
-    conditions.push(eq(financialAccount.externalId, filters.accountId));
-  }
-  if (filters.startDate) {
-    conditions.push(gte(snapshot.snapshotDate, filters.startDate));
-  }
-  if (filters.endDate) {
-    conditions.push(lte(snapshot.snapshotDate, filters.endDate));
-  }
-
-  const rows = await db
-    .select({
-      available: snapshot.available,
-      createdAt: snapshot.createdAt,
-      creditLimit: snapshot.creditLimit,
-      current: snapshot.current,
-      externalId: financialAccount.externalId,
-      id: snapshot.id,
-      institutionName: financialAccount.institutionName,
-      name: financialAccount.name,
-      snapshotDate: snapshot.snapshotDate,
-      subtype: financialAccount.subtype,
-      type: financialAccount.type,
-    })
-    .from(snapshot)
-    .innerJoin(financialAccount, eq(snapshot.accountId, financialAccount.id))
-    .where(and(...conditions))
-    .orderBy(asc(snapshot.snapshotDate));
+  const dateConstraint = {
+    ...(filters.startDate ? { gte: filters.startDate } : {}),
+    ...(filters.endDate ? { lte: filters.endDate } : {}),
+  };
+  const rows = await db.query.snapshot.findMany({
+    orderBy: { snapshotDate: "asc" },
+    where: {
+      userId: { eq: userId },
+      ...(Object.keys(dateConstraint).length > 0 && {
+        snapshotDate: dateConstraint,
+      }),
+      ...(filters.accountId && {
+        account: { externalId: { eq: filters.accountId } },
+      }),
+    },
+    with: {
+      account: {
+        columns: {
+          externalId: true,
+          institutionName: true,
+          name: true,
+          subtype: true,
+          type: true,
+        },
+      },
+    },
+  });
 
   return rows.map((row) =>
     toBalanceSnapshotDTO({
       account: {
-        externalId: row.externalId,
-        institutionName: row.institutionName,
-        name: row.name,
-        subtype: row.subtype,
-        type: row.type,
+        externalId: row.account.externalId,
+        institutionName: row.account.institutionName,
+        name: row.account.name,
+        subtype: row.account.subtype,
+        type: row.account.type,
       },
       available: row.available,
       createdAt: row.createdAt,

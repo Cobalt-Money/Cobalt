@@ -2,23 +2,17 @@ import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { balance } from "@cobalt-web/db/schema/accounts/balance";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 /** Look up the owner of a Plaid account. */
 export async function getAccountOwner(plaidAccountId: string) {
-  const [row] = await db
-    .select({
-      externalId: financialAccount.externalId,
-      userId: financialAccount.userId,
-    })
-    .from(financialAccount)
-    .where(
-      and(
-        eq(financialAccount.source, "plaid"),
-        eq(financialAccount.externalId, plaidAccountId)
-      )
-    )
-    .limit(1);
+  const row = await db.query.financialAccount.findFirst({
+    columns: { externalId: true, userId: true },
+    where: {
+      externalId: { eq: plaidAccountId },
+      source: { eq: "plaid" },
+    },
+  });
 
   if (!row?.externalId) {
     return null;
@@ -31,16 +25,13 @@ export async function setCreditLimitOverride(
   plaidAccountId: string,
   creditLimit: number
 ) {
-  const [acct] = await db
-    .select({ id: financialAccount.id })
-    .from(financialAccount)
-    .where(
-      and(
-        eq(financialAccount.source, "plaid"),
-        eq(financialAccount.externalId, plaidAccountId)
-      )
-    )
-    .limit(1);
+  const acct = await db.query.financialAccount.findFirst({
+    columns: { id: true },
+    where: {
+      externalId: { eq: plaidAccountId },
+      source: { eq: "plaid" },
+    },
+  });
   if (!acct) {
     return;
   }
@@ -52,16 +43,13 @@ export async function setCreditLimitOverride(
 
 /** Clear the user-override credit limit (revert to Plaid's value). */
 export async function clearCreditLimitOverride(plaidAccountId: string) {
-  const [acct] = await db
-    .select({ id: financialAccount.id })
-    .from(financialAccount)
-    .where(
-      and(
-        eq(financialAccount.source, "plaid"),
-        eq(financialAccount.externalId, plaidAccountId)
-      )
-    )
-    .limit(1);
+  const acct = await db.query.financialAccount.findFirst({
+    columns: { id: true },
+    where: {
+      externalId: { eq: plaidAccountId },
+      source: { eq: "plaid" },
+    },
+  });
   if (!acct) {
     return;
   }
@@ -85,37 +73,36 @@ export async function disconnectBankConnection(
   userId: string,
   accountId: string
 ) {
-  const [row] = await db
-    .select({
-      financialAccountId: financialAccount.id,
-      institutionName: plaidConnection.institutionName,
-      ownerUserId: plaidConnection.userId,
-      plaidAccessToken: plaidConnection.plaidAccessToken,
-      plaidConnectionId: plaidConnection.id,
-      plaidItemId: plaidConnection.plaidItemId,
-    })
-    .from(financialAccount)
-    .innerJoin(
-      plaidConnection,
-      eq(financialAccount.plaidConnectionId, plaidConnection.id)
-    )
-    .where(
-      and(
-        eq(financialAccount.source, "plaid"),
-        eq(financialAccount.externalId, accountId)
-      )
-    )
-    .limit(1);
+  const row = await db.query.financialAccount.findFirst({
+    columns: { id: true },
+    where: {
+      externalId: { eq: accountId },
+      source: { eq: "plaid" },
+    },
+    with: {
+      plaidConnection: {
+        columns: {
+          id: true,
+          institutionName: true,
+          plaidAccessToken: true,
+          plaidItemId: true,
+          userId: true,
+        },
+      },
+    },
+  });
 
-  if (!row) {
+  if (!row || !row.plaidConnection) {
     return { accessToken: null, message: "Account not found", success: false };
   }
 
-  if (row.ownerUserId !== userId) {
+  const conn = row.plaidConnection;
+
+  if (conn.userId !== userId) {
     return { accessToken: null, message: "Unauthorized", success: false };
   }
 
-  if (!row.plaidItemId || !row.plaidAccessToken) {
+  if (!conn.plaidItemId || !conn.plaidAccessToken) {
     return {
       accessToken: null,
       message: "Invalid account data",
@@ -123,26 +110,21 @@ export async function disconnectBankConnection(
     };
   }
 
-  await db
-    .delete(financialAccount)
-    .where(eq(financialAccount.id, row.financialAccountId));
+  await db.delete(financialAccount).where(eq(financialAccount.id, row.id));
 
-  const remaining = await db
-    .select({ id: financialAccount.id })
-    .from(financialAccount)
-    .where(eq(financialAccount.plaidConnectionId, row.plaidConnectionId))
-    .limit(1);
+  const remaining = await db.query.financialAccount.findFirst({
+    columns: { id: true },
+    where: { plaidConnectionId: { eq: conn.id } },
+  });
 
-  const itemDrained = remaining.length === 0;
+  const itemDrained = !remaining;
   if (itemDrained) {
-    await db
-      .delete(plaidConnection)
-      .where(eq(plaidConnection.id, row.plaidConnectionId));
+    await db.delete(plaidConnection).where(eq(plaidConnection.id, conn.id));
   }
 
   return {
-    accessToken: itemDrained ? row.plaidAccessToken : null,
-    message: `Successfully disconnected ${row.institutionName ?? "bank account"}`,
+    accessToken: itemDrained ? conn.plaidAccessToken : null,
+    message: `Successfully disconnected ${conn.institutionName ?? "bank account"}`,
     success: true,
   };
 }

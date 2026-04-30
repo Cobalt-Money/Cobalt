@@ -1,6 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
-import { snaptradeUser } from "@cobalt-web/db/schema/providers/snaptrade/user";
 
 /** Number of hours before financial updates should be shown again. */
 const UPDATE_THRESHOLD_HOURS = 24;
@@ -12,8 +10,8 @@ const UPDATE_THRESHOLD_HOURS = 24;
  */
 export async function getUserIdsWithConnectedAccounts(): Promise<string[]> {
   const [bankUsers, brokerageUsers] = await Promise.all([
-    db.selectDistinct({ userId: plaidConnection.userId }).from(plaidConnection),
-    db.selectDistinct({ userId: snaptradeUser.userId }).from(snaptradeUser),
+    db.query.plaidConnection.findMany({ columns: { userId: true } }),
+    db.query.snaptradeUser.findMany({ columns: { userId: true } }),
   ]);
 
   const ids = new Set<string>();

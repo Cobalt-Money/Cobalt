@@ -1,6 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { financialEvents } from "@cobalt-web/db/schema/news";
-import { eq as drizzleEq, inArray } from "drizzle-orm";
 
 import {
   decodeCursor,
@@ -66,14 +64,14 @@ export async function listProcessedEventIds(
   if (eventIds.length === 0) {
     return new Set<string>();
   }
-  const rows = await db
-    .select({
-      eventId: financialEvents.eventId,
-      scrapedArticlesCount: financialEvents.scrapedArticlesCount,
-      summary: financialEvents.summary,
-    })
-    .from(financialEvents)
-    .where(inArray(financialEvents.eventId, eventIds));
+  const rows = await db.query.financialEvents.findMany({
+    columns: {
+      eventId: true,
+      scrapedArticlesCount: true,
+      summary: true,
+    },
+    where: { eventId: { in: eventIds } },
+  });
 
   return new Set(
     rows
@@ -83,13 +81,9 @@ export async function listProcessedEventIds(
 }
 
 export async function isEventProcessed(eventId: string): Promise<boolean> {
-  const [row] = await db
-    .select({
-      scrapedArticlesCount: financialEvents.scrapedArticlesCount,
-      summary: financialEvents.summary,
-    })
-    .from(financialEvents)
-    .where(drizzleEq(financialEvents.eventId, eventId))
-    .limit(1);
+  const row = await db.query.financialEvents.findFirst({
+    columns: { scrapedArticlesCount: true, summary: true },
+    where: { eventId: { eq: eventId } },
+  });
   return Boolean(row?.summary && row.scrapedArticlesCount > 0);
 }

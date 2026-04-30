@@ -1,5 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { recurring } from "@cobalt-web/db/schema/accounts/banking/transactions/recurring";
 import { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
@@ -116,18 +115,13 @@ export async function applyPendingOverrides(
 
   const pendingIds = [...overrides.keys()];
 
-  const postedTxs = await db
-    .select({
-      externalId: transactionTable.externalId,
-      pendingTransactionId: transactionTable.pendingTransactionId,
-    })
-    .from(transactionTable)
-    .where(
-      and(
-        eq(transactionTable.source, "plaid"),
-        inArray(transactionTable.pendingTransactionId, pendingIds)
-      )
-    );
+  const postedTxs = await db.query.transaction.findMany({
+    columns: { externalId: true, pendingTransactionId: true },
+    where: {
+      pendingTransactionId: { in: pendingIds },
+      source: { eq: "plaid" },
+    },
+  });
 
   let applied = 0;
   for (const posted of postedTxs) {
@@ -269,24 +263,19 @@ export async function syncRecurringForItem(
     throw new Error(`plaid_connection not found for item ${plaidItemId}`);
   }
 
-  const accountIdsForItem = await db
-    .select({ id: financialAccount.id })
-    .from(financialAccount)
-    .where(
-      and(
-        eq(financialAccount.source, "plaid"),
-        eq(financialAccount.plaidConnectionId, conn.id)
-      )
-    );
+  const accountIdsForItem = await db.query.financialAccount.findMany({
+    columns: { id: true },
+    where: {
+      plaidConnectionId: { eq: conn.id },
+      source: { eq: "plaid" },
+    },
+  });
   const accountIdSet = new Set(accountIdsForItem.map((a) => a.id));
 
-  const existingStreams = await db
-    .select({
-      accountId: recurring.accountId,
-      externalId: recurring.externalId,
-    })
-    .from(recurring)
-    .where(eq(recurring.source, "plaid"));
+  const existingStreams = await db.query.recurring.findMany({
+    columns: { accountId: true, externalId: true },
+    where: { source: { eq: "plaid" } },
+  });
 
   const existingStreamIds = new Set(
     existingStreams

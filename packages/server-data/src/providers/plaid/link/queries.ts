@@ -1,8 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
-import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
-import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
-import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import type { DuplicateCheckCandidate } from "./lib.js";
 import { matchesDuplicateAccountMask } from "./lib.js";
@@ -22,19 +18,13 @@ export async function lookupFinancialAccountsByPlaidIds(
   if (plaidAccountIds.length === 0) {
     return new Map();
   }
-  const rows = await db
-    .select({
-      externalId: financialAccount.externalId,
-      id: financialAccount.id,
-      userId: financialAccount.userId,
-    })
-    .from(financialAccount)
-    .where(
-      and(
-        eq(financialAccount.source, "plaid"),
-        inArray(financialAccount.externalId, plaidAccountIds)
-      )
-    );
+  const rows = await db.query.financialAccount.findMany({
+    columns: { externalId: true, id: true, userId: true },
+    where: {
+      externalId: { in: plaidAccountIds },
+      source: { eq: "plaid" },
+    },
+  });
   const map = new Map<string, AccountRef>();
   for (const r of rows) {
     if (r.externalId !== null) {
@@ -48,21 +38,18 @@ export async function lookupFinancialAccountsByPlaidIds(
 export async function lookupPlaidConnection(
   plaidItemId: string
 ): Promise<{ id: string; userId: string } | null> {
-  const rows = await db
-    .select({ id: plaidConnection.id, userId: plaidConnection.userId })
-    .from(plaidConnection)
-    .where(eq(plaidConnection.plaidItemId, plaidItemId))
-    .limit(1);
-  return rows[0] ?? null;
+  const row = await db.query.plaidConnection.findFirst({
+    columns: { id: true, userId: true },
+    where: { plaidItemId: { eq: plaidItemId } },
+  });
+  return row ?? null;
 }
 
 /** Fetch a plaid_connection row by Plaid item ID. Throws when not found. */
 export async function getBankConnectionByItemId(plaidItemId: string) {
-  const [item] = await db
-    .select()
-    .from(plaidConnection)
-    .where(eq(plaidConnection.plaidItemId, plaidItemId))
-    .limit(1);
+  const item = await db.query.plaidConnection.findFirst({
+    where: { plaidItemId: { eq: plaidItemId } },
+  });
 
   if (!item) {
     throw new Error(`Plaid item not found: ${plaidItemId}`);
@@ -78,16 +65,13 @@ export async function getAccessTokenForItem(
   userId: string,
   plaidItemId: string
 ): Promise<string> {
-  const [row] = await db
-    .select({ plaidAccessToken: plaidConnection.plaidAccessToken })
-    .from(plaidConnection)
-    .where(
-      and(
-        eq(plaidConnection.plaidItemId, plaidItemId),
-        eq(plaidConnection.userId, userId)
-      )
-    )
-    .limit(1);
+  const row = await db.query.plaidConnection.findFirst({
+    columns: { plaidAccessToken: true },
+    where: {
+      plaidItemId: { eq: plaidItemId },
+      userId: { eq: userId },
+    },
+  });
 
   if (!row) {
     throw new Error("Item not found or access denied");
@@ -115,18 +99,13 @@ export async function checkForDuplicateAccounts(
     return { duplicateAccounts: [], isDuplicate: false };
   }
 
-  const connections = await db
-    .select({
-      createdAt: plaidConnection.createdAt,
-      id: plaidConnection.id,
-    })
-    .from(plaidConnection)
-    .where(
-      and(
-        eq(plaidConnection.userId, userId),
-        eq(plaidConnection.institutionId, institutionId)
-      )
-    );
+  const connections = await db.query.plaidConnection.findMany({
+    columns: { createdAt: true, id: true },
+    where: {
+      institutionId: { eq: institutionId },
+      userId: { eq: userId },
+    },
+  });
 
   if (connections.length === 0) {
     return { duplicateAccounts: [], isDuplicate: false };
@@ -135,21 +114,19 @@ export async function checkForDuplicateAccounts(
   const connectionIds = connections.map((c) => c.id);
   const createdAtById = new Map(connections.map((c) => [c.id, c.createdAt]));
 
-  const accounts = await db
-    .select({
-      mask: financialAccount.mask,
-      name: financialAccount.name,
-      persistentAccountId: financialAccount.persistentAccountId,
-      plaidConnectionId: financialAccount.plaidConnectionId,
-      type: financialAccount.type,
-    })
-    .from(financialAccount)
-    .where(
-      and(
-        eq(financialAccount.source, "plaid"),
-        inArray(financialAccount.plaidConnectionId, connectionIds)
-      )
-    );
+  const accounts = await db.query.financialAccount.findMany({
+    columns: {
+      mask: true,
+      name: true,
+      persistentAccountId: true,
+      plaidConnectionId: true,
+      type: true,
+    },
+    where: {
+      plaidConnectionId: { in: connectionIds },
+      source: { eq: "plaid" },
+    },
+  });
 
   const existingAccounts = accounts.map((a) => ({
     createdAt: a.plaidConnectionId
@@ -204,29 +181,36 @@ export async function findExistingHealthyConnection(
   // Left-join to `institution` because `plaid_connection.institutionLogo` is
   // stored as null during onboarding — the real logo + URL live in the
   // institution table keyed by `plaid_institution_id`.
-  const [row] = await db
-    .select({
-      id: plaidConnection.id,
-      institutionLogo: institution.logo,
-      institutionName: plaidConnection.institutionName,
-      institutionUrl: institution.url,
-      plaidAccessToken: plaidConnection.plaidAccessToken,
-      plaidItemId: plaidConnection.plaidItemId,
-    })
-    .from(plaidConnection)
-    .leftJoin(
-      institution,
-      eq(institution.plaidInstitutionId, plaidConnection.institutionId)
-    )
-    .where(
-      and(
-        eq(plaidConnection.userId, userId),
-        eq(plaidConnection.institutionId, institutionId),
-        isNull(plaidConnection.error),
-        isNull(plaidConnection.pendingDisconnectAt)
-      )
-    )
-    .limit(1);
+  const row = await db.query.plaidConnection.findFirst({
+    columns: {
+      id: true,
+      institutionName: true,
+      plaidAccessToken: true,
+      plaidItemId: true,
+    },
+    where: {
+      error: { isNull: true },
+      institutionId: { eq: institutionId },
+      pendingDisconnectAt: { isNull: true },
+      userId: { eq: userId },
+    },
+    with: {
+      institution: {
+        columns: { logo: true, url: true },
+      },
+    },
+  });
 
-  return row ?? null;
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    institutionLogo: row.institution?.logo ?? null,
+    institutionName: row.institutionName,
+    institutionUrl: row.institution?.url ?? null,
+    plaidAccessToken: row.plaidAccessToken,
+    plaidItemId: row.plaidItemId,
+  };
 }
