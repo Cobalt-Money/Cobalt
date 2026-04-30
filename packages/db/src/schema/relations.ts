@@ -8,6 +8,7 @@ import { studentLoanLiability } from "./accounts/banking/liabilities/student-loa
 import { recurring } from "./accounts/banking/transactions/recurring";
 import { tag } from "./accounts/banking/transactions/tag";
 import { transaction } from "./accounts/banking/transactions/transaction";
+import { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
 import { transactionTag } from "./accounts/banking/transactions/transaction-tag";
 import { holding } from "./accounts/investments/holding";
 import { investmentActivity } from "./accounts/investments/investment-activity";
@@ -19,10 +20,13 @@ import { chats, messages, parts } from "./ai/chat";
 import { messageVotes } from "./ai/message-votes";
 import { financialGoals } from "./goals/financial-goals";
 import { financialEvents, eventArticles } from "./news/financial-events";
+import { rssArticles, rssFeeds } from "./news/rss";
 import { plaidConnection } from "./providers/plaid/connection";
 import { institution } from "./providers/plaid/institution";
 import { snaptradeAuthorization } from "./providers/snaptrade/authorization";
 import { snaptradeUser } from "./providers/snaptrade/user";
+import { fundamentals } from "./research/fundamentals";
+import { tickers } from "./research/tickers";
 import { userAlerts } from "./users/alerts";
 import { user, session, account } from "./users/auth/auth";
 import { feedback } from "./users/feedback";
@@ -40,6 +44,7 @@ const schema = {
   financialAccount,
   financialEvents,
   financialGoals,
+  fundamentals,
   holding,
   institution,
   investmentActivity,
@@ -52,6 +57,8 @@ const schema = {
   parts,
   plaidConnection,
   recurring,
+  rssArticles,
+  rssFeeds,
   security,
   session,
   snapshot,
@@ -60,7 +67,9 @@ const schema = {
   studentLoanLiability,
   subscription,
   tag,
+  tickers,
   transaction,
+  transactionEdit,
   transactionTag,
   user,
   userAlerts,
@@ -195,6 +204,14 @@ export const relations = defineRelations(schema, (r) => ({
     user: r.one.user({
       from: r.financialGoals.userId,
       to: r.user.id,
+    }),
+  },
+
+  fundamentals: {
+    ticker: r.one.tickers({
+      from: r.fundamentals.symbol,
+      optional: false,
+      to: r.tickers.symbol,
     }),
   },
 
@@ -336,6 +353,10 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
+  rssArticles: {},
+
+  rssFeeds: {},
+
   security: {
     holdings: r.many.holding({
       from: r.security.id,
@@ -399,7 +420,6 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.user.id,
     }),
   },
-
   subscription: {
     user: r.one.user({
       from: r.subscription.referenceId,
@@ -418,11 +438,22 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
+  tickers: {
+    fundamentals: r.many.fundamentals({
+      from: r.tickers.symbol,
+      to: r.fundamentals.symbol,
+    }),
+  },
+
   transaction: {
     account: r.one.financialAccount({
       from: r.transaction.accountId,
       optional: false,
       to: r.financialAccount.id,
+    }),
+    edits: r.many.transactionEdit({
+      from: r.transaction.id,
+      to: r.transactionEdit.transactionId,
     }),
     transactionTags: r.many.transactionTag({
       from: r.transaction.id,
@@ -430,6 +461,18 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     user: r.one.user({
       from: r.transaction.userId,
+      to: r.user.id,
+    }),
+  },
+
+  transactionEdit: {
+    transaction: r.one.transaction({
+      from: r.transactionEdit.transactionId,
+      optional: false,
+      to: r.transaction.id,
+    }),
+    user: r.one.user({
+      from: r.transactionEdit.userId,
       to: r.user.id,
     }),
   },

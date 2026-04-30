@@ -22,11 +22,10 @@ export interface ProcessRssItemResult {
 export async function upsertRssArticleForFeed(
   input: ProcessRssItemInput
 ): Promise<ProcessRssItemResult> {
-  const [existing] = await db
-    .select({ feedIds: rssArticles.feedIds, id: rssArticles.id })
-    .from(rssArticles)
-    .where(eq(rssArticles.link, input.link))
-    .limit(1);
+  const existing = await db.query.rssArticles.findFirst({
+    columns: { feedIds: true, id: true },
+    where: { link: { eq: input.link } },
+  });
 
   if (existing) {
     const currentIds = (existing.feedIds as string[] | null) ?? [];
@@ -56,7 +55,9 @@ export async function upsertRssArticleForFeed(
 }
 
 export function listActiveRssFeeds(): Promise<RssFeed[]> {
-  return db.select().from(rssFeeds).where(eq(rssFeeds.isActive, true));
+  return db.query.rssFeeds.findMany({
+    where: { isActive: { eq: true } },
+  });
 }
 
 export async function markFeedFetched(feedId: string): Promise<void> {

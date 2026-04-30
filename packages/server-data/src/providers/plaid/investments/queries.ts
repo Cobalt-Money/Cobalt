@@ -1,6 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { security } from "@cobalt-web/db/schema/accounts/investments/security";
-import { and, eq, inArray } from "drizzle-orm";
 
 /**
  * Resolve security rows for a batch of Plaid security_ids. Returns Map keyed
@@ -12,15 +10,13 @@ export async function lookupSecuritiesByPlaidIds(
   if (securityIds.length === 0) {
     return new Map();
   }
-  const rows = await db
-    .select({ externalId: security.externalId, id: security.id })
-    .from(security)
-    .where(
-      and(
-        eq(security.source, "plaid"),
-        inArray(security.externalId, securityIds)
-      )
-    );
+  const rows = await db.query.security.findMany({
+    columns: { externalId: true, id: true },
+    where: {
+      externalId: { in: securityIds },
+      source: { eq: "plaid" },
+    },
+  });
   const map = new Map<string, string>();
   for (const r of rows) {
     if (r.externalId !== null) {

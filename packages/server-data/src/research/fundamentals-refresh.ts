@@ -10,7 +10,7 @@ import { fmpStableGet } from "@cobalt-web/clients/fmp";
 import { db } from "@cobalt-web/db";
 import { fundamentals } from "@cobalt-web/db/schema/research/fundamentals";
 import type { FundamentalsInsert } from "@cobalt-web/db/schema/research/fundamentals";
-import { and, inArray, isNotNull, lt, or, sql } from "drizzle-orm";
+import { and, isNotNull, lt, or, sql } from "drizzle-orm";
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
@@ -164,10 +164,10 @@ export async function intersectWithFundamentals(
   if (symbols.length === 0) {
     return [];
   }
-  const rows = await db
-    .select({ symbol: fundamentals.symbol })
-    .from(fundamentals)
-    .where(inArray(fundamentals.symbol, symbols));
+  const rows = await db.query.fundamentals.findMany({
+    columns: { symbol: true },
+    where: { symbol: { in: symbols } },
+  });
   return rows.map((r) => r.symbol);
 }
 

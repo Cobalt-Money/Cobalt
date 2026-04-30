@@ -1,11 +1,9 @@
 import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
-import { recurring } from "@cobalt-web/db/schema/accounts/banking/transactions/recurring";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
-import { transactionEdit } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction-edit";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
-import { and, asc, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { z } from "zod";
 
@@ -169,76 +167,58 @@ export async function getUserTransactions(
 }
 
 export async function getRecurringStreams(userId: string) {
-  const rows = await db
-    .select({
+  const rows = await db.query.recurring.findMany({
+    orderBy: { lastDate: "desc" },
+    where: {
+      isActive: { eq: true },
+      userId: { eq: userId },
+    },
+    with: {
       account: {
-        name: financialAccount.name,
-        subtype: financialAccount.subtype,
-        type: financialAccount.type,
+        columns: { name: true, subtype: true, type: true },
+        with: {
+          plaidConnection: {
+            columns: {},
+            with: {
+              institution: {
+                columns: { logo: true, name: true, url: true },
+              },
+            },
+          },
+        },
       },
-      averageAmount: recurring.averageAmount,
-      category: recurring.category,
-      categoryConfidence: recurring.categoryConfidence,
-      categoryDetail: recurring.categoryDetail,
-      description: recurring.description,
-      externalId: recurring.externalId,
-      firstDate: recurring.firstDate,
-      frequency: recurring.frequency,
-      id: recurring.id,
-      institution: {
-        logo: institution.logo,
-        name: institution.name,
-        url: institution.url,
-      },
-      isActive: recurring.isActive,
-      lastAmount: recurring.lastAmount,
-      lastDate: recurring.lastDate,
-      merchantName: recurring.merchantName,
-      predictedNextDate: recurring.predictedNextDate,
-      status: recurring.status,
-      streamType: recurring.streamType,
-      transactionIds: recurring.transactionIds,
-      updatedAt: recurring.updatedAt,
-    })
-    .from(recurring)
-    .innerJoin(financialAccount, eq(recurring.accountId, financialAccount.id))
-    .leftJoin(
-      plaidConnection,
-      eq(financialAccount.plaidConnectionId, plaidConnection.id)
-    )
-    .leftJoin(
-      institution,
-      eq(institution.plaidInstitutionId, plaidConnection.institutionId)
-    )
-    .where(and(eq(recurring.userId, userId), eq(recurring.isActive, true)))
-    .orderBy(desc(recurring.lastDate));
+    },
+  });
 
-  return rows.map((row) => ({
-    accountName: row.account.name,
-    accountSubtype: row.account.subtype,
-    accountType: row.account.type,
-    averageAmount: Number(row.averageAmount),
-    category: row.category,
-    categoryConfidence: row.categoryConfidence,
-    categoryDetail: row.categoryDetail,
-    description: row.description,
-    firstDate: row.firstDate,
-    frequency: row.frequency,
-    id: row.id,
-    institutionLogo: row.institution?.logo ?? null,
-    institutionName: row.institution?.name ?? null,
-    institutionUrl: row.institution?.url ?? null,
-    isActive: row.isActive,
-    lastAmount: Number(row.lastAmount),
-    lastDate: row.lastDate,
-    merchantName: row.merchantName,
-    predictedNextDate: row.predictedNextDate,
-    status: row.status,
-    streamId: row.externalId,
-    streamType: row.streamType as "inflow" | "outflow",
-    transactionIds: row.transactionIds,
-    updatedAt: row.updatedAt?.toISOString() ?? null,
-  }));
+  return rows.map((row) => {
+    const inst = row.account.plaidConnection?.institution ?? null;
+    return {
+      accountName: row.account.name,
+      accountSubtype: row.account.subtype,
+      accountType: row.account.type,
+      averageAmount: Number(row.averageAmount),
+      category: row.category,
+      categoryConfidence: row.categoryConfidence,
+      categoryDetail: row.categoryDetail,
+      description: row.description,
+      firstDate: row.firstDate,
+      frequency: row.frequency,
+      id: row.id,
+      institutionLogo: inst?.logo ?? null,
+      institutionName: inst?.name ?? null,
+      institutionUrl: inst?.url ?? null,
+      isActive: row.isActive,
+      lastAmount: Number(row.lastAmount),
+      lastDate: row.lastDate,
+      merchantName: row.merchantName,
+      predictedNextDate: row.predictedNextDate,
+      status: row.status,
+      streamId: row.externalId,
+      streamType: row.streamType as "inflow" | "outflow",
+      transactionIds: row.transactionIds,
+      updatedAt: row.updatedAt?.toISOString() ?? null,
+    };
+  });
 }
 
 export async function getCreditSpending(
@@ -330,18 +310,18 @@ export async function getCreditSpending(
 }
 
 export async function getTransactionActivity(transactionId: string) {
-  const rows = await db
-    .select({
-      actor: transactionEdit.actor,
-      createdAt: transactionEdit.createdAt,
-      field: transactionEdit.field,
-      id: transactionEdit.id,
-      newValue: transactionEdit.newValue,
-      oldValue: transactionEdit.oldValue,
-    })
-    .from(transactionEdit)
-    .where(eq(transactionEdit.transactionId, transactionId))
-    .orderBy(asc(transactionEdit.createdAt));
+  const rows = await db.query.transactionEdit.findMany({
+    columns: {
+      actor: true,
+      createdAt: true,
+      field: true,
+      id: true,
+      newValue: true,
+      oldValue: true,
+    },
+    orderBy: { createdAt: "asc" },
+    where: { transactionId: { eq: transactionId } },
+  });
 
   return rows.map((r) => ({
     actor: r.actor,

@@ -10,13 +10,12 @@ export async function upsertSnaptradeAuthorization(
   name: string,
   type = "read"
 ): Promise<string> {
-  const existing = await db
-    .select({ id: snaptradeAuthorization.id })
-    .from(snaptradeAuthorization)
-    .where(eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId))
-    .limit(1);
+  const existing = await db.query.snaptradeAuthorization.findFirst({
+    columns: { id: true },
+    where: { authorizationId: { eq: brokerageAuthorizationId } },
+  });
 
-  if (existing.length > 0) {
+  if (existing) {
     await db
       .update(snaptradeAuthorization)
       .set({
@@ -32,7 +31,7 @@ export async function upsertSnaptradeAuthorization(
         eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId)
       );
 
-    return existing.at(0)?.id ?? "";
+    return existing.id;
   }
 
   const [inserted] = await db

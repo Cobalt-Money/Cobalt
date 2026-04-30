@@ -2,11 +2,9 @@ import { stripeClient } from "@cobalt-web/auth";
 import { plaidClient } from "@cobalt-web/clients/plaid";
 import { snaptradeClient } from "@cobalt-web/clients/snaptrade";
 import { db } from "@cobalt-web/db";
-import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
-import { snaptradeUser } from "@cobalt-web/db/schema/providers/snaptrade/user";
 import { user } from "@cobalt-web/db/schema/users/auth/auth";
 import { subscription } from "@cobalt-web/db/schema/users/subscriptions/stripe";
-import { and, eq, isNotNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
   "active",
@@ -54,11 +52,10 @@ export async function deleteUserAccount(userId: string) {
 
 async function revokeSnapTradeAuthorizations(userId: string) {
   try {
-    const [creds] = await db
-      .select({ snaptradeUserId: snaptradeUser.snaptradeUserId })
-      .from(snaptradeUser)
-      .where(eq(snaptradeUser.userId, userId))
-      .limit(1);
+    const creds = await db.query.snaptradeUser.findFirst({
+      columns: { snaptradeUserId: true },
+      where: { userId: { eq: userId } },
+    });
     if (!creds) {
       return;
     }
@@ -76,10 +73,10 @@ async function revokeSnapTradeAuthorizations(userId: string) {
 
 async function revokePlaidItems(userId: string) {
   try {
-    const items = await db
-      .select({ plaidAccessToken: plaidConnection.plaidAccessToken })
-      .from(plaidConnection)
-      .where(eq(plaidConnection.userId, userId));
+    const items = await db.query.plaidConnection.findMany({
+      columns: { plaidAccessToken: true },
+      where: { userId: { eq: userId } },
+    });
 
     for (const item of items) {
       if (!item.plaidAccessToken) {
@@ -100,18 +97,13 @@ async function revokePlaidItems(userId: string) {
 
 async function cancelActiveStripeSubscriptions(userId: string) {
   try {
-    const subs = await db
-      .select({
-        status: subscription.status,
-        stripeSubscriptionId: subscription.stripeSubscriptionId,
-      })
-      .from(subscription)
-      .where(
-        and(
-          eq(subscription.referenceId, userId),
-          isNotNull(subscription.stripeSubscriptionId)
-        )
-      );
+    const subs = await db.query.subscription.findMany({
+      columns: { status: true, stripeSubscriptionId: true },
+      where: {
+        referenceId: { eq: userId },
+        stripeSubscriptionId: { isNotNull: true },
+      },
+    });
 
     for (const sub of subs) {
       if (

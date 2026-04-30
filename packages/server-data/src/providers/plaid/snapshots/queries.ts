@@ -1,7 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
-import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
-import { and, desc, eq } from "drizzle-orm";
 
 import { lookupFinancialAccountsByPlaidIds } from "../link/queries.js";
 
@@ -17,13 +14,14 @@ export async function getPostedTransactionsForAccount(
   if (!acct) {
     return [];
   }
-  const rows = await db
-    .select({ amount: transaction.amount, date: transaction.date })
-    .from(transaction)
-    .where(
-      and(eq(transaction.accountId, acct.id), eq(transaction.pending, false))
-    )
-    .orderBy(desc(transaction.date));
+  const rows = await db.query.transaction.findMany({
+    columns: { amount: true, date: true },
+    orderBy: { date: "desc" },
+    where: {
+      accountId: { eq: acct.id },
+      pending: { eq: false },
+    },
+  });
   return rows.map((r) => ({ amount: Number(r.amount), date: r.date }));
 }
 
@@ -36,9 +34,9 @@ export async function getSnapshotDatesForAccount(
   if (!acct) {
     return [];
   }
-  const rows = await db
-    .select({ date: snapshot.snapshotDate })
-    .from(snapshot)
-    .where(eq(snapshot.accountId, acct.id));
-  return rows.map((r) => r.date);
+  const rows = await db.query.snapshot.findMany({
+    columns: { snapshotDate: true },
+    where: { accountId: { eq: acct.id } },
+  });
+  return rows.map((r) => r.snapshotDate);
 }

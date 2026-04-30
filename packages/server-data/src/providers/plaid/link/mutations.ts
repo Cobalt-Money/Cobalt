@@ -142,22 +142,14 @@ export async function applyItemWebhookState(params: {
 export async function upsertBalanceForPlaidAccount(
   account: AccountBase
 ): Promise<void> {
-  const fa = await db
-    .select({ id: financialAccount.id, userId: financialAccount.userId })
-    .from(financialAccount)
-    .where(
-      and(
-        eq(financialAccount.source, "plaid"),
-        eq(financialAccount.externalId, account.account_id)
-      )
-    )
-    .limit(1);
+  const accountRow = await db.query.financialAccount.findFirst({
+    columns: { id: true, userId: true },
+    where: {
+      externalId: { eq: account.account_id },
+      source: { eq: "plaid" },
+    },
+  });
 
-  if (fa.length === 0) {
-    return;
-  }
-
-  const [accountRow] = fa;
   if (!accountRow) {
     return;
   }
@@ -187,21 +179,16 @@ export async function syncNewAccountsForItem(
   accounts: AccountBase[]
 ): Promise<void> {
   if (accounts.length > 0) {
-    const conn = await db
-      .select({ id: plaidConnection.id, userId: plaidConnection.userId })
-      .from(plaidConnection)
-      .where(eq(plaidConnection.plaidItemId, plaidItemId))
-      .limit(1);
+    const conn = await db.query.plaidConnection.findFirst({
+      columns: { id: true, userId: true },
+      where: { plaidItemId: { eq: plaidItemId } },
+    });
 
-    if (conn.length === 0) {
+    if (!conn) {
       throw new Error(`plaid_connection not found for item ${plaidItemId}`);
     }
 
-    const [first] = conn;
-    if (!first) {
-      throw new Error(`plaid_connection not found for item ${plaidItemId}`);
-    }
-    const { id: connId, userId } = first;
+    const { id: connId, userId } = conn;
     const toInsert = financialAccountInsertFromPlaid(connId, userId);
     await db
       .insert(financialAccount)
@@ -224,18 +211,15 @@ export async function clearItemError(
   plaidItemId: string,
   userId: string
 ): Promise<void> {
-  const item = await db
-    .select({ plaidItemId: plaidConnection.plaidItemId })
-    .from(plaidConnection)
-    .where(
-      and(
-        eq(plaidConnection.plaidItemId, plaidItemId),
-        eq(plaidConnection.userId, userId)
-      )
-    )
-    .limit(1);
+  const item = await db.query.plaidConnection.findFirst({
+    columns: { plaidItemId: true },
+    where: {
+      plaidItemId: { eq: plaidItemId },
+      userId: { eq: userId },
+    },
+  });
 
-  if (item.length === 0) {
+  if (!item) {
     throw new Error("Item not found or access denied");
   }
 

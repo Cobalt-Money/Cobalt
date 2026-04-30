@@ -1,6 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { security } from "@cobalt-web/db/schema/accounts/investments/security";
-import { and, eq, inArray } from "drizzle-orm";
 
 /**
  * Resolve security rows for a batch of SnapTrade symbol_ids. Returns Map keyed
@@ -12,15 +10,13 @@ export async function lookupSecuritiesBySnaptradeSymbolIds(
   if (symbolIds.length === 0) {
     return new Map();
   }
-  const rows = await db
-    .select({ externalId: security.externalId, id: security.id })
-    .from(security)
-    .where(
-      and(
-        eq(security.source, "snaptrade"),
-        inArray(security.externalId, symbolIds)
-      )
-    );
+  const rows = await db.query.security.findMany({
+    columns: { externalId: true, id: true },
+    where: {
+      externalId: { in: symbolIds },
+      source: { eq: "snaptrade" },
+    },
+  });
   const map = new Map<string, string>();
   for (const r of rows) {
     if (r.externalId !== null) {

@@ -1,7 +1,7 @@
 import { db } from "@cobalt-web/db";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import { transactionEdit } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction-edit";
-import { and, asc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { z } from "zod";
 
 import { setTransactionTags } from "../tags/mutations.js";
@@ -32,18 +32,15 @@ async function restoreOriginalValue(
   transactionId: string,
   field: EditableField
 ): Promise<unknown> {
-  const rows = await tx
-    .select({ oldValue: transactionEdit.oldValue })
-    .from(transactionEdit)
-    .where(
-      and(
-        eq(transactionEdit.transactionId, transactionId),
-        eq(transactionEdit.field, field)
-      )
-    )
-    .orderBy(asc(transactionEdit.createdAt))
-    .limit(1);
-  return rows[0]?.oldValue ?? null;
+  const row = await tx.query.transactionEdit.findFirst({
+    columns: { oldValue: true },
+    orderBy: { createdAt: "asc" },
+    where: {
+      field: { eq: field },
+      transactionId: { eq: transactionId },
+    },
+  });
+  return row?.oldValue ?? null;
 }
 
 /**
@@ -61,19 +58,18 @@ export async function patchTransaction(
 
   await db.transaction(async (tx) => {
     // Fetch current row once for old_value capture.
-    const [current] = await tx
-      .select({
-        category: transaction.category,
-        categoryConfidence: transaction.categoryConfidence,
-        categoryDetail: transaction.categoryDetail,
-        date: transaction.date,
-        lockedFields: transaction.lockedFields,
-        name: transaction.name,
-        notes: transaction.notes,
-      })
-      .from(transaction)
-      .where(eq(transaction.id, transactionId))
-      .limit(1);
+    const current = await tx.query.transaction.findFirst({
+      columns: {
+        category: true,
+        categoryConfidence: true,
+        categoryDetail: true,
+        date: true,
+        lockedFields: true,
+        name: true,
+        notes: true,
+      },
+      where: { id: { eq: transactionId } },
+    });
 
     if (!current) {
       return;
