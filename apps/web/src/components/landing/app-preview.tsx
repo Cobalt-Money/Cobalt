@@ -1427,7 +1427,7 @@ function ActiveView({
 // ---------------------------------------------------------------------------
 
 export function AppPreview() {
-  const [active, setActive] = useState<NavId>("dashboard");
+  const [active, setActive] = useState<NavId>("transactions");
   const [chatThread, setChatThread] = useState<ChatThreadId>("new");
 
   return (

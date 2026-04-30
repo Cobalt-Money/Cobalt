@@ -2,7 +2,6 @@ import { LogoCDN } from "@cobalt-web/ui/cobalt/logos/logo-cdn";
 import { Sun02Icon, MoonIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
 
@@ -66,7 +65,6 @@ function LandingPage() {
       <main className="flex h-svh flex-col overflow-auto no-scrollbar">
         <Nav />
         <Hero />
-        <WorksWith />
         <FeatureShowcase />
         <FinalCTA />
         <Footer />
@@ -129,19 +127,6 @@ function Nav() {
   );
 }
 
-const AGENTS = [
-  { icon: "/landing/agents/openai.svg", name: "ChatGPT" },
-  { icon: "/landing/agents/Claude_AI_symbol.svg", name: "Claude" },
-  {
-    icon: "/landing/agents/cursor-logo-icon-freelogovectors.net_.png",
-    name: "Cursor",
-  },
-  {
-    icon: "/landing/agents/gemini-google-icon-symbol-logo-free-png.webp",
-    name: "Gemini",
-  },
-];
-
 function Hero() {
   return (
     <section className="py-20">
@@ -170,37 +155,6 @@ function Hero() {
           <AppPreview />
         </CursorProvider>
       </Container>
-    </section>
-  );
-}
-
-function WorksWith() {
-  const items = [...AGENTS, ...AGENTS];
-
-  return (
-    <section className="border-y py-10 overflow-hidden">
-      <div className="flex">
-        <motion.div
-          className="flex shrink-0 items-center gap-12 pr-12"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{ duration: 20, ease: "linear", repeat: Infinity }}
-        >
-          {items.map((agent, i) => (
-            <div key={i} className="flex items-center gap-3 shrink-0">
-              <div className="flex size-10 items-center justify-center rounded-xl border bg-background shadow-sm">
-                <img
-                  alt={agent.name}
-                  className="size-6 object-contain"
-                  src={agent.icon}
-                />
-              </div>
-              <span className="text-base font-medium text-foreground/60 whitespace-nowrap">
-                {agent.name}
-              </span>
-            </div>
-          ))}
-        </motion.div>
-      </div>
     </section>
   );
 }
