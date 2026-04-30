@@ -1,22 +1,8 @@
 import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
-import { balance } from "@cobalt-web/db/schema/accounts/balance";
 import { holding } from "@cobalt-web/db/schema/accounts/investments/holding";
-import { investmentActivity } from "@cobalt-web/db/schema/accounts/investments/investment-activity";
 import { security } from "@cobalt-web/db/schema/accounts/investments/security";
-import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
-import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-  lte,
-  or,
-} from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import type { z } from "zod";
 
 import type { EnhancedBrokerageAccount } from "./lib.js";
@@ -117,35 +103,36 @@ function normalizeActivityType(
 // ── Balances ────────────────────────────────────────────────────────
 
 export async function getBalancesByUserId(userId: string) {
-  const rows = await db
-    .select({
-      accountExternalId: financialAccount.externalId,
-      bal: {
-        buyingPower: balance.buyingPower,
-        createdAt: balance.createdAt,
-        currency: balance.currency,
-        current: balance.current,
-        id: balance.id,
-        lastSyncAt: balance.lastSyncAt,
-        updatedAt: balance.updatedAt,
+  const rows = await db.query.balance.findMany({
+    columns: {
+      buyingPower: true,
+      createdAt: true,
+      currency: true,
+      current: true,
+      id: true,
+      lastSyncAt: true,
+      updatedAt: true,
+    },
+    orderBy: { currency: "asc" },
+    where: { userId: { eq: userId } },
+    with: {
+      account: {
+        columns: { externalId: true },
       },
-    })
-    .from(balance)
-    .innerJoin(financialAccount, eq(balance.accountId, financialAccount.id))
-    .where(eq(balance.userId, userId))
-    .orderBy(asc(balance.currency));
+    },
+  });
 
   const balances = rows.map((r) => ({
-    accountId: r.accountExternalId ?? "",
-    buyingPower: numStr(r.bal.buyingPower),
-    cash: numStr(r.bal.current),
-    createdAt: toISOString(r.bal.createdAt),
-    currencyCode: r.bal.currency ?? "USD",
+    accountId: r.account.externalId ?? "",
+    buyingPower: numStr(r.buyingPower),
+    cash: numStr(r.current),
+    createdAt: toISOString(r.createdAt),
+    currencyCode: r.currency ?? "USD",
     currencyName: "US Dollar",
-    id: r.bal.id,
-    lastSync: toISOString(r.bal.lastSyncAt ?? r.bal.updatedAt),
-    snapTradeAccountId: r.accountExternalId ?? "",
-    updatedAt: toISOString(r.bal.updatedAt),
+    id: r.id,
+    lastSync: toISOString(r.lastSyncAt ?? r.updatedAt),
+    snapTradeAccountId: r.account.externalId ?? "",
+    updatedAt: toISOString(r.updatedAt),
     userId,
   }));
 
@@ -372,66 +359,81 @@ export async function getActivitiesByUserId(
 ) {
   const { accountId, limit, offset } = params;
 
-  const conditions = [eq(investmentActivity.userId, userId)];
-  if (accountId) {
-    conditions.push(eq(financialAccount.externalId, accountId));
-  }
+  const rows = await db.query.investmentActivity.findMany({
+    columns: {
+      amount: true,
+      createdAt: true,
+      currency: true,
+      date: true,
+      externalId: true,
+      externalReferenceId: true,
+      fees: true,
+      id: true,
+      name: true,
+      optionSymbol: true,
+      optionType: true,
+      price: true,
+      quantity: true,
+      settlementDate: true,
+      source: true,
+      subtype: true,
+      type: true,
+      updatedAt: true,
+    },
+    ...(limit === undefined ? {} : { limit }),
+    ...(offset === undefined ? {} : { offset }),
+    orderBy: { date: "desc" },
+    where: {
+      userId: { eq: userId },
+      ...(accountId ? { account: { externalId: { eq: accountId } } } : {}),
+    },
+    with: {
+      account: { columns: { externalId: true } },
+      security: {
+        columns: {
+          exchangeCode: true,
+          exchangeName: true,
+          externalId: true,
+          figiCode: true,
+          marketIdentifierCode: true,
+          name: true,
+          subtype: true,
+          tickerSymbol: true,
+          type: true,
+        },
+      },
+    },
+  });
 
-  let q = db
-    .select({
-      acct: { externalId: financialAccount.externalId },
-      activity: {
-        amount: investmentActivity.amount,
-        createdAt: investmentActivity.createdAt,
-        currency: investmentActivity.currency,
-        date: investmentActivity.date,
-        externalId: investmentActivity.externalId,
-        externalReferenceId: investmentActivity.externalReferenceId,
-        fees: investmentActivity.fees,
-        id: investmentActivity.id,
-        name: investmentActivity.name,
-        optionSymbol: investmentActivity.optionSymbol,
-        optionType: investmentActivity.optionType,
-        price: investmentActivity.price,
-        quantity: investmentActivity.quantity,
-        settlementDate: investmentActivity.settlementDate,
-        source: investmentActivity.source,
-        subtype: investmentActivity.subtype,
-        type: investmentActivity.type,
-        updatedAt: investmentActivity.updatedAt,
+  const activities = rows.map((r) =>
+    mapActivityRow(
+      {
+        acct: { externalId: r.account.externalId },
+        activity: {
+          amount: r.amount,
+          createdAt: r.createdAt,
+          currency: r.currency,
+          date: r.date,
+          externalId: r.externalId,
+          externalReferenceId: r.externalReferenceId,
+          fees: r.fees,
+          id: r.id,
+          name: r.name,
+          optionSymbol: r.optionSymbol,
+          optionType: r.optionType,
+          price: r.price,
+          quantity: r.quantity,
+          settlementDate: r.settlementDate,
+          source: r.source,
+          subtype: r.subtype,
+          type: r.type,
+          updatedAt: r.updatedAt,
+        },
+        sec: r.security,
       },
-      sec: {
-        exchangeCode: security.exchangeCode,
-        exchangeName: security.exchangeName,
-        externalId: security.externalId,
-        figiCode: security.figiCode,
-        marketIdentifierCode: security.marketIdentifierCode,
-        name: security.name,
-        subtype: security.subtype,
-        tickerSymbol: security.tickerSymbol,
-        type: security.type,
-      },
-    })
-    .from(investmentActivity)
-    .innerJoin(
-      financialAccount,
-      eq(investmentActivity.accountId, financialAccount.id)
+      userId
     )
-    .leftJoin(security, eq(investmentActivity.securityId, security.id))
-    .where(and(...conditions))
-    .orderBy(desc(investmentActivity.date))
-    .$dynamic();
-
-  if (limit !== undefined) {
-    q = q.limit(limit);
-  }
-  if (offset !== undefined) {
-    q = q.offset(offset);
-  }
-
-  const rows = await q;
-
-  const activities = rows.map((r) => mapActivityRow(r, userId));
+  );
 
   return {
     activities,
@@ -451,12 +453,6 @@ export async function getPortfolioSnapshotsByUserId(
     endDate: endDateParam,
   } = params;
 
-  const conditions = [eq(snapshot.userId, userId)];
-
-  if (accountId && accountId !== "all-accounts") {
-    conditions.push(eq(snapshot.accountId, accountId));
-  }
-
   const now = new Date();
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(now.getMonth() - 6);
@@ -465,19 +461,22 @@ export async function getPortfolioSnapshotsByUserId(
     startDateParam ?? sixMonthsAgo.toISOString().split("T")[0] ?? "";
   const endDate = endDateParam ?? now.toISOString().split("T")[0] ?? "";
 
-  conditions.push(gte(snapshot.snapshotDate, startDate));
-  conditions.push(lte(snapshot.snapshotDate, endDate));
-
-  const rows = await db
-    .select({
-      accountId: snapshot.accountId,
-      current: snapshot.current,
-      positionsValue: snapshot.positionsValue,
-      snapshotDate: snapshot.snapshotDate,
-    })
-    .from(snapshot)
-    .where(and(...conditions))
-    .orderBy(asc(snapshot.snapshotDate));
+  const rows = await db.query.snapshot.findMany({
+    columns: {
+      accountId: true,
+      current: true,
+      positionsValue: true,
+      snapshotDate: true,
+    },
+    orderBy: { snapshotDate: "asc" },
+    where: {
+      snapshotDate: { gte: startDate, lte: endDate },
+      userId: { eq: userId },
+      ...(accountId && accountId !== "all-accounts"
+        ? { accountId: { eq: accountId } }
+        : {}),
+    },
+  });
 
   return rows
     .map((s) => {
@@ -502,27 +501,25 @@ export async function getPortfolioSnapshotsByUserId(
 // ── User brokerages (institution names across all sources) ──────────
 
 export async function getUserBrokeragesByUserId(userId: string) {
-  const rows = await db
-    .select({
-      faInstitutionName: financialAccount.institutionName,
-      pcInstitutionName: plaidConnection.institutionName,
-      source: financialAccount.source,
-      type: financialAccount.type,
-    })
-    .from(financialAccount)
-    .leftJoin(
-      plaidConnection,
-      eq(financialAccount.plaidConnectionId, plaidConnection.id)
-    )
-    .where(
-      and(
-        eq(financialAccount.userId, userId),
-        or(
-          isNotNull(financialAccount.institutionName),
-          isNotNull(plaidConnection.institutionName)
-        )
-      )
-    );
+  const rows = await db.query.financialAccount.findMany({
+    columns: {
+      institutionName: true,
+      source: true,
+      type: true,
+    },
+    where: {
+      OR: [
+        { institutionName: { isNotNull: true } },
+        { plaidConnection: { institutionName: { isNotNull: true } } },
+      ],
+      userId: { eq: userId },
+    },
+    with: {
+      plaidConnection: {
+        columns: { institutionName: true },
+      },
+    },
+  });
 
   const names = rows
     .map((r) => {
@@ -530,7 +527,7 @@ export async function getUserBrokeragesByUserId(userId: string) {
       if (r.source === "plaid" && r.type !== "investment") {
         return null;
       }
-      return r.faInstitutionName ?? r.pcInstitutionName ?? null;
+      return r.institutionName ?? r.plaidConnection?.institutionName ?? null;
     })
     .filter((n): n is string => typeof n === "string" && n !== "");
   return [...new Set(names)].toSorted((a, b) => a.localeCompare(b));
@@ -539,14 +536,19 @@ export async function getUserBrokeragesByUserId(userId: string) {
 // ── User tickers ────────────────────────────────────────────────────
 
 export async function getUserTickersByUserId(userId: string) {
-  const rows = await db
-    .selectDistinct({ ticker: security.tickerSymbol })
-    .from(holding)
-    .innerJoin(security, eq(holding.securityId, security.id))
-    .where(and(eq(holding.userId, userId), isNotNull(security.tickerSymbol)));
+  const rows = await db.query.holding.findMany({
+    columns: {},
+    where: {
+      security: { tickerSymbol: { isNotNull: true } },
+      userId: { eq: userId },
+    },
+    with: {
+      security: { columns: { tickerSymbol: true } },
+    },
+  });
 
   const symbols = rows
-    .map((r) => r.ticker)
+    .map((r) => r.security.tickerSymbol)
     .filter((s): s is string => typeof s === "string" && s !== "");
   return [...new Set(symbols)].toSorted((a, b) => a.localeCompare(b));
 }
@@ -561,82 +563,72 @@ export async function getUserTickersByUserId(userId: string) {
 export async function getBrokerageAccountsByUserId(
   userId: string
 ): Promise<EnhancedBrokerageAccount[]> {
-  const accounts = await db
-    .select({
-      createdAt: financialAccount.createdAt,
-      externalId: financialAccount.externalId,
-      faInstitutionName: financialAccount.institutionName,
-      id: financialAccount.id,
-      name: financialAccount.name,
-      pcInstitutionName: plaidConnection.institutionName,
-      status: financialAccount.status,
-      subtype: financialAccount.subtype,
-      type: financialAccount.type,
-    })
-    .from(financialAccount)
-    .leftJoin(
-      plaidConnection,
-      eq(financialAccount.plaidConnectionId, plaidConnection.id)
-    )
-    .where(
-      and(
-        eq(financialAccount.userId, userId),
-        or(
-          eq(financialAccount.source, "snaptrade"),
-          and(
-            eq(financialAccount.source, "plaid"),
-            eq(financialAccount.type, "investment")
-          )
-        )
-      )
-    )
-    .orderBy(asc(financialAccount.createdAt));
+  const accounts = await db.query.financialAccount.findMany({
+    columns: {
+      createdAt: true,
+      externalId: true,
+      id: true,
+      institutionName: true,
+      name: true,
+      status: true,
+      subtype: true,
+      type: true,
+    },
+    orderBy: { createdAt: "asc" },
+    where: {
+      OR: [
+        { source: { eq: "snaptrade" } },
+        { source: { eq: "plaid" }, type: { eq: "investment" } },
+      ],
+      userId: { eq: userId },
+    },
+    with: {
+      balance: {
+        columns: {
+          buyingPower: true,
+          currency: true,
+          current: true,
+          id: true,
+          lastSyncAt: true,
+          updatedAt: true,
+        },
+      },
+      plaidConnection: {
+        columns: { institutionName: true },
+      },
+    },
+  });
 
   if (accounts.length === 0) {
     return [];
   }
 
-  const accountIds = accounts.map((a) => a.id);
-  const balances = await db
-    .select({
-      accountId: balance.accountId,
-      buyingPower: balance.buyingPower,
-      currency: balance.currency,
-      current: balance.current,
-      id: balance.id,
-      lastSyncAt: balance.lastSyncAt,
-      updatedAt: balance.updatedAt,
-    })
-    .from(balance)
-    .where(inArray(balance.accountId, accountIds));
-
-  const balancesByAccount = new Map<string, typeof balances>();
-  for (const b of balances) {
-    const list = balancesByAccount.get(b.accountId) ?? [];
-    list.push(b);
-    balancesByAccount.set(b.accountId, list);
-  }
-
   return accounts.map((account): EnhancedBrokerageAccount => {
-    const accountBalances = balancesByAccount.get(account.id) ?? [];
+    const b = account.balance;
     return {
       accountDetails: null,
       accountStatus: account.status ?? "",
       accountType: account.subtype ?? account.type ?? "",
       balanceData: null,
-      balances: accountBalances.map((b) => ({
-        buyingPower: b.buyingPower,
-        cash: b.current,
-        currencyCode: b.currency ?? "USD",
-        currencyName: "US Dollar",
-        id: b.id,
-        lastSync: (b.lastSyncAt ?? b.updatedAt).toISOString(),
-      })),
+      balances: b
+        ? [
+            {
+              buyingPower: b.buyingPower,
+              cash: b.current,
+              currencyCode: b.currency ?? "USD",
+              currencyName: "US Dollar",
+              id: b.id,
+              lastSync: (b.lastSyncAt ?? b.updatedAt).toISOString(),
+            },
+          ]
+        : [],
       cashRestrictions: null,
       createdDate: account.createdAt.toISOString(),
       id: account.externalId ?? account.id,
       institutionName:
-        account.faInstitutionName ?? account.pcInstitutionName ?? "",
+        account.institutionName ??
+        account.plaidConnection?.institutionName ??
+        "",
       name: account.name ?? "",
       userId,
     };

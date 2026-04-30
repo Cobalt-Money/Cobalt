@@ -1,6 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { snaptradeUser } from "@cobalt-web/db/schema/providers/snaptrade/user";
-import { eq } from "drizzle-orm";
 
 export interface SnapTradeUserCredentials {
   userId: string;
@@ -12,12 +10,9 @@ export interface SnapTradeUserCredentials {
 export async function getBrokerageUserByUserId(
   userId: string
 ): Promise<SnapTradeUserCredentials | undefined> {
-  const rows = await db
-    .select()
-    .from(snaptradeUser)
-    .where(eq(snaptradeUser.userId, userId))
-    .limit(1);
-  const [row] = rows;
+  const row = await db.query.snaptradeUser.findFirst({
+    where: { userId: { eq: userId } },
+  });
   if (!row) {
     return undefined;
   }
@@ -36,17 +31,12 @@ export async function getSnapTradeUserCredentials(
   providerUserId: string;
   userSecret: string;
 } | null> {
-  const rows = await db
-    .select()
-    .from(snaptradeUser)
-    .where(eq(snaptradeUser.snaptradeUserId, snaptradeUserIdValue))
-    .limit(1);
-
-  const [row] = rows;
+  const row = await db.query.snaptradeUser.findFirst({
+    where: { snaptradeUserId: { eq: snaptradeUserIdValue } },
+  });
   if (!row) {
     return null;
   }
-
   return {
     appUserId: row.userId,
     providerUserId: row.snaptradeUserId,

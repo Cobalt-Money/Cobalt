@@ -1,6 +1,6 @@
 import { db } from "@cobalt-web/db";
 import { rssArticles, rssFeeds } from "@cobalt-web/db/schema/news";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 import type { RssArticleDTO, RssQueryResult } from "./schemas.js";
 
@@ -62,16 +62,16 @@ export async function getRssArticles(
 
     const feeds =
       feedIds.length > 0
-        ? await db
-            .select({
-              category: rssFeeds.category,
-              company: rssFeeds.company,
-              description: rssFeeds.description,
-              id: rssFeeds.id,
-              name: rssFeeds.name,
-            })
-            .from(rssFeeds)
-            .where(inArray(rssFeeds.id, feedIds))
+        ? await db.query.rssFeeds.findMany({
+            columns: {
+              category: true,
+              company: true,
+              description: true,
+              id: true,
+              name: true,
+            },
+            where: { id: { in: feedIds } },
+          })
         : [];
 
     articles.push({
@@ -88,13 +88,10 @@ export async function getRssArticles(
   }
 
   // Fetch unique companies and categories from active feeds
-  const activeFeeds = await db
-    .select({
-      category: rssFeeds.category,
-      company: rssFeeds.company,
-    })
-    .from(rssFeeds)
-    .where(eq(rssFeeds.isActive, true));
+  const activeFeeds = await db.query.rssFeeds.findMany({
+    columns: { category: true, company: true },
+    where: { isActive: { eq: true } },
+  });
 
   const companies = [...new Set(activeFeeds.map((f) => f.company))].toSorted();
   const categories = [

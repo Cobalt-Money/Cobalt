@@ -1,6 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
-import { and, eq, inArray } from "drizzle-orm";
 
 export interface AccountRef {
   id: string;
@@ -17,19 +15,13 @@ export async function lookupFinancialAccountsBySnaptradeIds(
   if (snaptradeAccountIds.length === 0) {
     return new Map();
   }
-  const rows = await db
-    .select({
-      externalId: financialAccount.externalId,
-      id: financialAccount.id,
-      userId: financialAccount.userId,
-    })
-    .from(financialAccount)
-    .where(
-      and(
-        eq(financialAccount.source, "snaptrade"),
-        inArray(financialAccount.externalId, snaptradeAccountIds)
-      )
-    );
+  const rows = await db.query.financialAccount.findMany({
+    columns: { externalId: true, id: true, userId: true },
+    where: {
+      externalId: { in: snaptradeAccountIds },
+      source: { eq: "snaptrade" },
+    },
+  });
   const map = new Map<string, AccountRef>();
   for (const r of rows) {
     if (r.externalId !== null) {

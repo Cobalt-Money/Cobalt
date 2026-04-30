@@ -1,6 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { fundamentals } from "@cobalt-web/db/schema/research/fundamentals";
-import { inArray } from "drizzle-orm";
 
 function rowSymbolUpper(row: Record<string, unknown>): string {
   const s = row.symbol ?? row.ticker;
@@ -19,14 +17,10 @@ export async function enrichScreenerRowsWithRevenueAndRating(
     return rows;
   }
 
-  const fundRows = await db
-    .select({
-      eps: fundamentals.eps,
-      revenue: fundamentals.revenue,
-      symbol: fundamentals.symbol,
-    })
-    .from(fundamentals)
-    .where(inArray(fundamentals.symbol, symbols));
+  const fundRows = await db.query.fundamentals.findMany({
+    columns: { eps: true, revenue: true, symbol: true },
+    where: { symbol: { in: symbols } },
+  });
 
   const bySymbol = new Map(fundRows.map((r) => [r.symbol, r]));
 

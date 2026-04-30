@@ -1,9 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
-import { balance } from "@cobalt-web/db/schema/accounts/balance";
-import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
-import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
-import { and, eq, isNotNull, or } from "drizzle-orm";
 
 import {
   isBankAccountListType,
@@ -31,106 +26,102 @@ import type {
 export async function getAllAccountsWithInstitutions(
   userId: string
 ): Promise<BankAccountDTO[]> {
-  const rows = await db
-    .select({
-      acct: {
-        externalId: financialAccount.externalId,
-        mask: financialAccount.mask,
-        name: financialAccount.name,
-        plaidConnectionId: financialAccount.plaidConnectionId,
-        subtype: financialAccount.subtype,
-        type: financialAccount.type,
-      },
+  const rows = await db.query.financialAccount.findMany({
+    columns: {
+      externalId: true,
+      mask: true,
+      name: true,
+      plaidConnectionId: true,
+      subtype: true,
+      type: true,
+    },
+    where: {
+      plaidConnectionId: { isNotNull: true },
+      source: { eq: "plaid" },
+      userId: { eq: userId },
+    },
+    with: {
       balance: {
-        available: balance.available,
-        creditLimit: balance.creditLimit,
-        currency: balance.currency,
-        current: balance.current,
-        updatedAt: balance.updatedAt,
-        userOverrideCreditLimit: balance.userOverrideCreditLimit,
+        columns: {
+          available: true,
+          creditLimit: true,
+          currency: true,
+          current: true,
+          updatedAt: true,
+          userOverrideCreditLimit: true,
+        },
       },
-      conn: {
-        billedProducts: plaidConnection.billedProducts,
-        error: plaidConnection.error,
-        institutionId: plaidConnection.institutionId,
-        institutionName: plaidConnection.institutionName,
-        newAccountsAvailable: plaidConnection.newAccountsAvailable,
-        pendingDisconnectAt: plaidConnection.pendingDisconnectAt,
-        plaidItemId: plaidConnection.plaidItemId,
+      plaidConnection: {
+        columns: {
+          billedProducts: true,
+          error: true,
+          institutionId: true,
+          institutionName: true,
+          newAccountsAvailable: true,
+          pendingDisconnectAt: true,
+          plaidItemId: true,
+        },
+        with: {
+          institution: {
+            columns: { logo: true, url: true },
+          },
+        },
       },
-      inst: {
-        logo: institution.logo,
-        url: institution.url,
-      },
-    })
-    .from(financialAccount)
-    .innerJoin(
-      plaidConnection,
-      eq(financialAccount.plaidConnectionId, plaidConnection.id)
-    )
-    .leftJoin(balance, eq(balance.accountId, financialAccount.id))
-    .leftJoin(
-      institution,
-      eq(institution.plaidInstitutionId, plaidConnection.institutionId)
-    )
-    .where(
-      and(
-        eq(financialAccount.userId, userId),
-        eq(financialAccount.source, "plaid")
-      )
-    );
+    },
+  });
 
   // Sibling-types per connection (for hasInvestmentAccounts).
   const connectionIds = [
-    ...new Set(rows.map((r) => r.acct.plaidConnectionId).filter(Boolean)),
+    ...new Set(rows.map((r) => r.plaidConnectionId).filter(Boolean)),
   ] as string[];
   const siblingsByConn = new Map<string, string[]>();
   if (connectionIds.length > 0) {
-    const sibs = await db
-      .select({
-        connectionId: financialAccount.plaidConnectionId,
-        type: financialAccount.type,
-      })
-      .from(financialAccount)
-      .where(
-        and(
-          eq(financialAccount.source, "plaid"),
-          isNotNull(financialAccount.plaidConnectionId)
-        )
-      );
+    const sibs = await db.query.financialAccount.findMany({
+      columns: { plaidConnectionId: true, type: true },
+      where: {
+        plaidConnectionId: { isNotNull: true },
+        source: { eq: "plaid" },
+      },
+    });
     for (const s of sibs) {
-      if (!s.connectionId) {
+      if (!s.plaidConnectionId) {
         continue;
       }
-      const list = siblingsByConn.get(s.connectionId) ?? [];
+      const list = siblingsByConn.get(s.plaidConnectionId) ?? [];
       list.push(s.type);
-      siblingsByConn.set(s.connectionId, list);
+      siblingsByConn.set(s.plaidConnectionId, list);
     }
   }
 
-  return rows.map((r): BankAccountDTO => {
+  return rows.flatMap((r): BankAccountDTO[] => {
+    const conn = r.plaidConnection;
+    if (!conn) {
+      return [];
+    }
     const joined: BankAccountJoinedRow = {
       balance: r.balance,
       connection: {
-        billedProducts: r.conn.billedProducts ?? null,
-        error: r.conn.error,
-        institution: r.inst,
-        institutionId: r.conn.institutionId,
-        institutionName: r.conn.institutionName,
-        newAccountsAvailable: r.conn.newAccountsAvailable,
-        pendingDisconnectAt: r.conn.pendingDisconnectAt,
-        plaidItemId: r.conn.plaidItemId,
+        billedProducts: conn.billedProducts ?? null,
+        error: conn.error,
+        institution: conn.institution
+          ? { logo: conn.institution.logo, url: conn.institution.url }
+          : { logo: null, url: null },
+        institutionId: conn.institutionId,
+        institutionName: conn.institutionName,
+        newAccountsAvailable: conn.newAccountsAvailable,
+        pendingDisconnectAt: conn.pendingDisconnectAt,
+        plaidItemId: conn.plaidItemId,
       },
-      externalId: r.acct.externalId,
-      mask: r.acct.mask,
-      name: r.acct.name,
-      siblingAccountTypes: r.acct.plaidConnectionId
-        ? (siblingsByConn.get(r.acct.plaidConnectionId) ?? [])
+      externalId: r.externalId,
+      mask: r.mask,
+      name: r.name,
+      siblingAccountTypes: r.plaidConnectionId
+        ? (siblingsByConn.get(r.plaidConnectionId) ?? [])
         : [],
-      subtype: r.acct.subtype,
-      type: r.acct.type,
+      subtype: r.subtype,
+      type: r.type,
     };
-    return toBankAccountDTO(joined);
+    return [toBankAccountDTO(joined)];
   });
 }
 
@@ -163,10 +154,9 @@ export async function getBankAccountById(
 export async function getUserPlaidItems(
   userId: string
 ): Promise<PlaidItemDTO[]> {
-  const items = await db
-    .select()
-    .from(plaidConnection)
-    .where(eq(plaidConnection.userId, userId));
+  const items = await db.query.plaidConnection.findMany({
+    where: { userId: { eq: userId } },
+  });
 
   return items.map((item) => ({
     availableProducts: item.availableProducts ?? null,
@@ -189,68 +179,74 @@ export async function getPlaidAccountsForItem(
   userId: string,
   plaidItemId: string
 ): Promise<PlaidAccountForItemDTO[]> {
-  const accounts = await db
-    .select({
-      createdAt: financialAccount.createdAt,
-      externalId: financialAccount.externalId,
-      id: financialAccount.id,
-      mask: financialAccount.mask,
-      name: financialAccount.name,
-      officialName: financialAccount.officialName,
-      plaidItemId: plaidConnection.plaidItemId,
-      subtype: financialAccount.subtype,
-      type: financialAccount.type,
-      updatedAt: financialAccount.updatedAt,
-    })
-    .from(financialAccount)
-    .innerJoin(
-      plaidConnection,
-      eq(financialAccount.plaidConnectionId, plaidConnection.id)
-    )
-    .where(
-      and(
-        eq(financialAccount.source, "plaid"),
-        eq(plaidConnection.plaidItemId, plaidItemId),
-        eq(plaidConnection.userId, userId)
-      )
-    );
+  const accounts = await db.query.financialAccount.findMany({
+    columns: {
+      createdAt: true,
+      externalId: true,
+      id: true,
+      mask: true,
+      name: true,
+      officialName: true,
+      subtype: true,
+      type: true,
+      updatedAt: true,
+    },
+    where: {
+      plaidConnection: {
+        plaidItemId: { eq: plaidItemId },
+        userId: { eq: userId },
+      },
+      source: { eq: "plaid" },
+    },
+    with: {
+      plaidConnection: {
+        columns: { plaidItemId: true },
+      },
+    },
+  });
 
-  return accounts.map((a) => ({
-    createdAt: a.createdAt.toISOString(),
-    id: a.id,
-    mask: a.mask,
-    name: a.name,
-    officialName: a.officialName,
-    plaidAccountId: a.externalId,
-    plaidItemId: a.plaidItemId,
-    subtype: a.subtype,
-    type: a.type,
-    updatedAt: a.updatedAt.toISOString(),
-  }));
+  return accounts.flatMap((a) => {
+    const conn = a.plaidConnection;
+    if (!conn) {
+      return [];
+    }
+    return [
+      {
+        createdAt: a.createdAt.toISOString(),
+        id: a.id,
+        mask: a.mask,
+        name: a.name,
+        officialName: a.officialName,
+        plaidAccountId: a.externalId,
+        plaidItemId: conn.plaidItemId,
+        subtype: a.subtype,
+        type: a.type,
+        updatedAt: a.updatedAt.toISOString(),
+      },
+    ];
+  });
 }
 
 export async function getPlaidItemsWithAlerts(
   userId: string
 ): Promise<PlaidItemAlertDTO[]> {
-  const items = await db
-    .select({
-      error: plaidConnection.error,
-      institutionLogo: plaidConnection.institutionLogo,
-      institutionName: plaidConnection.institutionName,
-      newAccountsAvailable: plaidConnection.newAccountsAvailable,
-      pendingDisconnectAt: plaidConnection.pendingDisconnectAt,
-      plaidItemId: plaidConnection.plaidItemId,
-    })
-    .from(plaidConnection)
-    .where(
-      and(
-        eq(plaidConnection.userId, userId),
-        or(
-          isNotNull(plaidConnection.error),
-          isNotNull(plaidConnection.pendingDisconnectAt)
-        )
-      )
-    );
+  const items = await db.query.plaidConnection.findMany({
+    columns: {
+      error: true,
+      institutionLogo: true,
+      institutionName: true,
+      newAccountsAvailable: true,
+      pendingDisconnectAt: true,
+      plaidItemId: true,
+    },
+    where: {
+      OR: [
+        { error: { isNotNull: true } },
+        { pendingDisconnectAt: { isNotNull: true } },
+      ],
+      userId: { eq: userId },
+    },
+  });
 
   return items.map((item) => ({
     institutionLogo: item.institutionLogo ?? null,

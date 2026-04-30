@@ -1,8 +1,6 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
-import { balance } from "@cobalt-web/db/schema/accounts/balance";
 import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
-import { and, eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 const BATCH_SIZE = 100;
 
@@ -22,23 +20,40 @@ async function upsertDailySnapshotsForSource(
 ): Promise<{ upserted: number }> {
   const snapshotDate = todayIso();
 
-  const rows = await db
-    .select({
-      accountId: financialAccount.id,
-      available: balance.available,
-      buyingPower: balance.buyingPower,
-      creditLimit: balance.creditLimit,
-      currency: balance.currency,
-      current: balance.current,
-    })
-    .from(financialAccount)
-    .innerJoin(balance, eq(balance.accountId, financialAccount.id))
-    .where(
-      and(
-        eq(financialAccount.userId, userId),
-        eq(financialAccount.source, source)
-      )
-    );
+  const accounts = await db.query.financialAccount.findMany({
+    columns: { id: true },
+    where: {
+      source: { eq: source },
+      userId: { eq: userId },
+    },
+    with: {
+      balance: {
+        columns: {
+          available: true,
+          buyingPower: true,
+          creditLimit: true,
+          currency: true,
+          current: true,
+        },
+      },
+    },
+  });
+  const rows = accounts.flatMap((a) => {
+    const b = a.balance;
+    if (!b) {
+      return [];
+    }
+    return [
+      {
+        accountId: a.id,
+        available: b.available,
+        buyingPower: b.buyingPower,
+        creditLimit: b.creditLimit,
+        currency: b.currency,
+        current: b.current,
+      },
+    ];
+  });
 
   if (rows.length === 0) {
     return { upserted: 0 };

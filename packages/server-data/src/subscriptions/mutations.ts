@@ -33,15 +33,9 @@ export async function syncAppStoreSubscription(
   const latestTransactionId =
     input.latestTransactionId ?? input.originalTransactionId;
 
-  const existing = await db
-    .select()
-    .from(mobileSubscription)
-    .where(
-      eq(mobileSubscription.originalTransactionId, input.originalTransactionId)
-    )
-    .limit(1);
-
-  const [existingRecord] = existing;
+  const existingRecord = await db.query.mobileSubscription.findFirst({
+    where: { originalTransactionId: { eq: input.originalTransactionId } },
+  });
   if (existingRecord) {
     await db
       .update(mobileSubscription)
@@ -126,13 +120,9 @@ export async function applyAppStoreNotification(
     productId,
   } = input;
 
-  const existing = await db
-    .select()
-    .from(mobileSubscription)
-    .where(eq(mobileSubscription.originalTransactionId, originalTransactionId))
-    .limit(1);
-
-  const [record] = existing;
+  const record = await db.query.mobileSubscription.findFirst({
+    where: { originalTransactionId: { eq: originalTransactionId } },
+  });
   if (!record) {
     return { action: "skipped", reason: "subscription_not_found" };
   }
