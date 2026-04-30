@@ -7,8 +7,10 @@ import { creditLiability } from "./accounts/banking/liabilities/credit";
 import { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
 import { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
 import { recurring } from "./accounts/banking/transactions/recurring";
+import { tag } from "./accounts/banking/transactions/tag";
 import { transaction } from "./accounts/banking/transactions/transaction";
 import { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
+import { transactionTag } from "./accounts/banking/transactions/transaction-tag";
 import { holding } from "./accounts/investments/holding";
 import { investmentActivity } from "./accounts/investments/investment-activity";
 import { orders } from "./accounts/investments/order";
@@ -50,6 +52,7 @@ export const userRelations = relations(user, ({ one, many }) => ({
   snaptradeAuthorizations: many(snaptradeAuthorization),
   snaptradeUser: one(snaptradeUser),
   subscriptions: many(subscription),
+  tags: many(tag),
   transactions: many(transaction),
   userAlerts: many(userAlerts),
 }));
@@ -194,9 +197,29 @@ export const transactionRelations = relations(transaction, ({ many, one }) => ({
     references: [financialAccount.id],
   }),
   edits: many(transactionEdit),
+  transactionTags: many(transactionTag),
   user: one(user, {
     fields: [transaction.userId],
     references: [user.id],
+  }),
+}));
+
+export const tagRelations = relations(tag, ({ many, one }) => ({
+  transactionTags: many(transactionTag),
+  user: one(user, {
+    fields: [tag.userId],
+    references: [user.id],
+  }),
+}));
+
+export const transactionTagRelations = relations(transactionTag, ({ one }) => ({
+  tag: one(tag, {
+    fields: [transactionTag.tagId],
+    references: [tag.id],
+  }),
+  transaction: one(transaction, {
+    fields: [transactionTag.transactionId],
+    references: [transaction.id],
   }),
 }));
 

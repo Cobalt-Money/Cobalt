@@ -6,12 +6,14 @@ import {
   DropdownMenuTrigger,
 } from "@cobalt-web/ui/components/dropdown-menu";
 
+import type { TagOption } from "../tags/tag-picker";
 import { AmountFilter } from "./filters/amount-filter";
 import type { AmountFilterType } from "./filters/amount-filter";
 import { BankFilter } from "./filters/bank-filter";
 import type { BankOption } from "./filters/bank-filter";
 import { StatusFilter } from "./filters/status-filter";
 import type { StatusFilterValue } from "./filters/status-filter";
+import { TagFilter } from "./filters/tag-filter";
 import type { ExportFormat } from "./lib/export";
 
 export type { BankOption } from "./filters/bank-filter";
@@ -22,23 +24,29 @@ export interface TransactionsToolbarFilters {
   amountMax?: number;
   status?: StatusFilterValue;
   bank?: readonly string[];
+  tagIds?: readonly string[];
 }
 
 export interface TransactionsToolbarProps {
   filters: TransactionsToolbarFilters;
   bankOptions: readonly BankOption[];
+  /** Active tags for the filter pill; omit to hide. */
+  tagOptions?: readonly TagOption[];
   onFiltersChange: (next: TransactionsToolbarFilters) => void;
   onExport?: (format: ExportFormat) => void;
   onAddTransaction?: () => void;
+  onManageTags?: () => void;
   selectedCount?: number;
 }
 
 export function TransactionsToolbar({
   filters,
   bankOptions,
+  tagOptions,
   onFiltersChange,
   onExport,
   onAddTransaction,
+  onManageTags,
   selectedCount = 0,
 }: TransactionsToolbarProps) {
   const label = selectedCount > 0 ? `Export (${selectedCount})` : "Export all";
@@ -73,6 +81,16 @@ export function TransactionsToolbar({
           options={bankOptions}
           value={filters.bank ?? []}
         />
+        {tagOptions && tagOptions.length > 0 ? (
+          <TagFilter
+            onChange={(tagIds) => {
+              onFiltersChange({ ...filters, tagIds });
+            }}
+            onManage={onManageTags}
+            options={tagOptions}
+            selectedIds={filters.tagIds ?? []}
+          />
+        ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {onAddTransaction ? (

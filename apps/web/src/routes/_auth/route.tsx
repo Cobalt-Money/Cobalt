@@ -2,13 +2,12 @@ import { PrivacyProvider } from "@cobalt-web/ui/components/privacy";
 import { SidebarProvider } from "@cobalt-web/ui/components/sidebar";
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 
-import { AddAccountProvider } from "@/components/accounts/add-account-provider";
-import { AddCashAccountProvider } from "@/components/accounts/add-cash-account-host";
+import { OnboardingProgressProvider } from "@/components/accounts/onboarding-context";
+import { OnboardingProgress } from "@/components/accounts/onboarding-progress";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
 import { AppSidebar } from "@/components/shell/sidebar/app-sidebar";
 import { SettingsDialogProvider } from "@/components/shell/sidebar/nav/settings-dialog-provider";
-import { AddTransactionProvider } from "@/components/transactions/add-transaction-provider";
 import { useAppSession } from "@/lib/providers/app-session";
 import { ZeroProvider } from "@/lib/providers/zero-client";
 
@@ -27,24 +26,21 @@ export const Route = createFileRoute("/_auth")({
 function AuthShellWithOutlet() {
   return (
     <ZeroProvider>
-      <AddCashAccountProvider>
-        <AddAccountProvider>
-          <AddTransactionProvider>
-            <PrivacyProvider>
-              <SettingsDialogProvider>
-                <CommandMenuProvider>
-                  <SidebarProvider className="min-h-0 flex-1">
-                    <AppSidebar />
-                    <AmbientInsetProvider>
-                      <Outlet />
-                    </AmbientInsetProvider>
-                  </SidebarProvider>
-                </CommandMenuProvider>
-              </SettingsDialogProvider>
-            </PrivacyProvider>
-          </AddTransactionProvider>
-        </AddAccountProvider>
-      </AddCashAccountProvider>
+      <OnboardingProgressProvider>
+        <PrivacyProvider>
+          <SettingsDialogProvider>
+            <CommandMenuProvider>
+              <SidebarProvider className="min-h-0 flex-1">
+                <AppSidebar />
+                <AmbientInsetProvider>
+                  <Outlet />
+                </AmbientInsetProvider>
+              </SidebarProvider>
+            </CommandMenuProvider>
+          </SettingsDialogProvider>
+        </PrivacyProvider>
+        <OnboardingProgress />
+      </OnboardingProgressProvider>
     </ZeroProvider>
   );
 }

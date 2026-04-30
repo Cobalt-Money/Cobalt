@@ -21,6 +21,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CobaltDialog } from "../cobalt-dialog";
 import { CobaltSelectPopover } from "../select-popover";
+import type { TagOption } from "../tags/tag-picker";
+import { TagPicker } from "../tags/tag-picker";
 import { CategoryIcon, PRIMARY_CATEGORY_ICON } from "./categories";
 
 type PrimaryCategory = keyof typeof CATEGORY_MAPPING;
@@ -221,6 +223,8 @@ export interface AddTransactionFormValues {
   category: PrimaryCategory | null;
   /** Geocoded location, or null. */
   location: LocationJson | null;
+  /** Tag ids selected by the user. */
+  tagIds: string[];
 }
 
 export interface AddTransactionFormProps {
@@ -237,6 +241,10 @@ export interface AddTransactionFormProps {
   merchantSearch?: MerchantSearchState;
   /** Empty-state CTA — host opens cash dialog or morphs to the sub-page. */
   onCreateCashAccount?: () => void;
+  /** Available active tags for the picker; omit to hide the tag pill. */
+  availableTags?: readonly TagOption[];
+  /** Fires when user picks "Create <name> tag" — host opens add-tag dialog/sub-page. */
+  onRequestCreateTag?: (initialName: string) => void;
 }
 
 export interface AddTransactionDialogProps {
@@ -250,6 +258,8 @@ export interface AddTransactionDialogProps {
   locationSearch?: GeocodeSearchState;
   merchantSearch?: MerchantSearchState;
   onCreateCashAccount?: () => void;
+  availableTags?: readonly TagOption[];
+  onRequestCreateTag?: (initialName: string) => void;
 }
 
 function todayIso(): string {
@@ -293,6 +303,8 @@ export function AddTransactionForm({
   locationSearch,
   merchantSearch,
   onCreateCashAccount,
+  availableTags,
+  onRequestCreateTag,
 }: AddTransactionFormProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -306,6 +318,7 @@ export function AddTransactionForm({
   const [accountId, setAccountId] = useState<string>(accounts[0]?.id ?? "");
   const [location, setLocation] = useState<LocationJson | null>(null);
   const [locationQuery, setLocationQuery] = useState("");
+  const [tagIds, setTagIds] = useState<string[]>([]);
   const titleRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -321,6 +334,7 @@ export function AddTransactionForm({
     setAccountId(accounts[0]?.id ?? "");
     setLocation(null);
     setLocationQuery("");
+    setTagIds([]);
     if (!autoFocus) {
       return;
     }
@@ -369,6 +383,7 @@ export function AddTransactionForm({
       merchantName: merchant.trim() === "" ? null : merchant.trim(),
       merchantWebsite: merchantDomain,
       name: name.trim(),
+      tagIds,
     });
   };
 
@@ -554,30 +569,27 @@ export function AddTransactionForm({
           }
         />
 
-        <CobaltSelectPopover
-          emptyText="No tags yet"
-          itemKey={(tag: string) => tag}
-          itemMatch={(tag: string, q) => tag.toLowerCase().includes(q)}
-          items={[] as readonly string[]}
-          onSelect={() => {
-            // Wire to tag state once tags backend lands.
-          }}
-          renderLabel={(tag: string) => tag}
-          searchPlaceholder="Search tags…"
-          trigger={
-            <button
-              className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 text-muted-foreground text-xs transition-colors hover:bg-foreground/10"
-              type="button"
-            >
-              <HugeiconsIcon
-                className="size-3.5 shrink-0"
-                icon={Tag01Icon}
-                strokeWidth={2}
-              />
-              Tags
-            </button>
-          }
-        />
+        {availableTags ? (
+          <TagPicker
+            onChange={setTagIds}
+            onRequestCreate={onRequestCreateTag}
+            options={[...availableTags]}
+            selectedIds={tagIds}
+            trigger={
+              <button
+                className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 text-muted-foreground text-xs transition-colors hover:bg-foreground/10"
+                type="button"
+              >
+                <HugeiconsIcon
+                  className="size-3.5 shrink-0"
+                  icon={Tag01Icon}
+                  strokeWidth={2}
+                />
+                {tagIds.length > 0 ? `Tags · ${tagIds.length}` : "Tags"}
+              </button>
+            }
+          />
+        ) : null}
 
         {merchantSearch ? (
           <Popover
@@ -748,6 +760,8 @@ export function AddTransactionDialog({
   locationSearch,
   merchantSearch,
   onCreateCashAccount,
+  availableTags,
+  onRequestCreateTag,
 }: AddTransactionDialogProps) {
   return (
     <CobaltDialog
@@ -760,10 +774,12 @@ export function AddTransactionDialog({
     >
       <AddTransactionForm
         accounts={accounts}
+        availableTags={availableTags}
         locationSearch={locationSearch}
         merchantSearch={merchantSearch}
         onBackspaceWhenEmpty={onBackspaceWhenEmpty}
         onCreateCashAccount={onCreateCashAccount}
+        onRequestCreateTag={onRequestCreateTag}
         onSubmit={onSubmit}
         submitting={submitting}
       />

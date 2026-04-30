@@ -29,6 +29,8 @@ export interface CobaltDialogProps {
   titleClassName?: string;
   /** Optional icon rendered before the title (Hugeicons SVG object). */
   titleIcon?: ComponentProps<typeof HugeiconsIcon>["icon"];
+  /** Tailwind override for the title icon size/class. Defaults to `"size-6 shrink-0"`. */
+  titleIconClassName?: string;
   description?: string;
   /** Tailwind width override (e.g. `"sm:max-w-md"`). Defaults to a 440px form-sized panel. */
   className?: string;
@@ -48,6 +50,7 @@ export function CobaltDialog({
   title,
   titleClassName,
   titleIcon,
+  titleIconClassName,
   description,
   className,
   children,
@@ -65,7 +68,7 @@ export function CobaltDialog({
           >
             {titleIcon ? (
               <HugeiconsIcon
-                className="size-6 shrink-0"
+                className={cn("size-6 shrink-0", titleIconClassName)}
                 icon={titleIcon}
                 strokeWidth={2}
               />

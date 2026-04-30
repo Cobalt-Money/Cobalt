@@ -6,6 +6,9 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { PrivateAmount } from "../../../components/privacy";
 import { InstitutionLogo } from "../../logos/institution-logo";
 import { MerchantLogo } from "../../logos/merchant-logo";
+import { TagChip } from "../../tags/tag-chip";
+import type { TagOption } from "../../tags/tag-picker";
+import { TagPicker } from "../../tags/tag-picker";
 import type { MerchantSearchState } from "../add-transaction-dialog";
 import {
   CategoryIcon,
@@ -62,8 +65,17 @@ export interface TransactionDetailEditHandlers {
   onUpdateNotes: (markdown: string) => void;
   /** Only set for manual transactions; absence hides the delete affordance. */
   onDelete?: () => void;
+  /** Currently attached tag ids; null = unknown/loading, [] = none. */
+  tagIds?: readonly string[] | null;
+  /** Active tags available for selection. Omit to hide tag section. */
+  availableTags?: readonly TagOption[];
+  /** Replace tag set on this transaction. */
+  onUpdateTags?: (next: string[]) => void;
+  /** Fires when user picks "Create <name> tag" — host opens add-tag dialog/sub-page. */
+  onRequestCreateTag?: (initialName: string) => void;
 }
 
+// eslint-disable-next-line complexity
 export function TransactionDetailSummary({
   edit,
   transaction,
@@ -203,11 +215,56 @@ export function TransactionDetailSummary({
             results={edit.locationSearch.results}
           />
         ) : null}
+
+        {edit?.availableTags && edit.onUpdateTags ? (
+          <TagsRow
+            availableTags={edit.availableTags}
+            onRequestCreate={edit.onRequestCreateTag}
+            onUpdate={edit.onUpdateTags}
+            selectedIds={edit.tagIds ?? []}
+          />
+        ) : null}
       </div>
 
       {showLocation ? (
         <TransactionDetailLocationCard location={transaction.location} />
       ) : null}
+    </div>
+  );
+}
+
+function TagsRow({
+  availableTags,
+  onRequestCreate,
+  onUpdate,
+  selectedIds,
+}: {
+  availableTags: readonly TagOption[];
+  onRequestCreate?: (initialName: string) => void;
+  onUpdate: (next: string[]) => void;
+  selectedIds: readonly string[];
+}) {
+  const byId = new Map(availableTags.map((t) => [t.id, t] as const));
+  const selected = selectedIds
+    .map((id) => byId.get(id))
+    .filter(Boolean) as TagOption[];
+
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-base leading-6">
+      {selected.map((t) => (
+        <TagChip
+          color={t.color}
+          key={t.id}
+          name={t.name}
+          onRemove={() => onUpdate(selectedIds.filter((id) => id !== t.id))}
+        />
+      ))}
+      <TagPicker
+        onChange={(next) => onUpdate(next)}
+        onRequestCreate={onRequestCreate}
+        options={[...availableTags]}
+        selectedIds={[...selectedIds]}
+      />
     </div>
   );
 }

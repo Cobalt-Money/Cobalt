@@ -6,7 +6,7 @@ import type {
 import { brokerageInstitutionBranding } from "@cobalt-web/ui/cobalt/logos/brokerage-institution-branding";
 import { useMemo, useState } from "react";
 
-import { useAddAccount } from "@/components/accounts/add-account-provider";
+import { useCommandMenu } from "@/components/shell/command-menu";
 import { useBrokerage } from "@/hooks/use-brokerage";
 
 import { BalanceChartCard } from "./balance-chart-card";
@@ -63,7 +63,7 @@ function accountToScope(a: BrokerageAccount): ScopeAccount {
 }
 
 export function Overview() {
-  const { openAddAccount } = useAddAccount();
+  const { openAddAccount } = useCommandMenu();
   const {
     accounts,
     accountsComplete,

@@ -3,8 +3,8 @@ import { queries } from "@cobalt-web/zero";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 
-import { useAddAccount } from "@/components/accounts/add-account-provider";
 import { Link } from "@/components/links";
+import { useCommandMenu } from "@/components/shell/command-menu";
 import { useBrokerage } from "@/hooks/use-brokerage";
 import { useFinancialEvents } from "@/hooks/use-financial-events";
 import { useNewsRssSidebar } from "@/hooks/use-news-rss";
@@ -25,7 +25,7 @@ function NewsIndexPage() {
   const { events } = useFinancialEvents();
   const { items: rssItems } = useNewsRssSidebar();
   const { positions } = useBrokerage();
-  const { openAddAccount } = useAddAccount();
+  const { openAddAccount } = useCommandMenu();
   const { activeTab } = useNewsLayout();
 
   const holdingSymbols = useMemo(() => {

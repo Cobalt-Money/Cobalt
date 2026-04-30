@@ -52,6 +52,8 @@ const createTransactionSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   /** Plain-text description; persisted as markdown on `notes`. */
   description: z.string().max(2000).optional(),
+  /** Caller-supplied id; client generates so it can attach tags via REST after Zero commits. */
+  id: z.uuid().optional(),
   location: locationJsonSchema.optional(),
   merchantName: z.string().min(1).max(255).optional(),
   name: z.string().min(1).max(255),
@@ -164,7 +166,7 @@ export const transactionMutators = {
         categoryDetail: args.category?.detailed ?? null,
         currency: args.currency ?? "USD",
         date: isoDateToEpochMs(args.date),
-        id: crypto.randomUUID(),
+        id: args.id ?? crypto.randomUUID(),
         merchantName: args.merchantName?.trim() ?? null,
         name: args.name.trim(),
         notes: trimmedDesc && trimmedDesc.length > 0 ? trimmedDesc : null,

@@ -6,6 +6,10 @@ import {
   CobaltCommandInput,
   CobaltCommandPaletteRoot,
 } from "@cobalt-web/ui/cobalt/command-palette";
+import { AddTagForm } from "@cobalt-web/ui/cobalt/tags/add-tag-dialog";
+import { ManageTagsForm } from "@cobalt-web/ui/cobalt/tags/manage-tags-dialog";
+import type { TagColor } from "@cobalt-web/ui/cobalt/tags/palette";
+import { isTagColor } from "@cobalt-web/ui/cobalt/tags/palette";
 import { AddTransactionForm } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
 import {
   CommandEmpty,
@@ -27,6 +31,7 @@ import {
   Home04Icon,
   Logout01Icon,
   Money01Icon,
+  Tag01Icon,
   Moon02Icon,
   Search02Icon,
   SearchDollarIcon,
@@ -47,14 +52,16 @@ import {
 } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 
-import { useAddCashAccount } from "@/components/accounts/add-cash-account-host";
 import {
   useAccountLauncher,
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
 import { SettingsGrid } from "@/components/settings/settings-grid";
 import type { SettingsSection } from "@/components/settings/settings-grid";
-import { useAddTransaction } from "@/components/transactions/add-transaction-provider";
+import { useAddCashAccountSubmit } from "@/hooks/use-add-cash-account-submit";
+import { useAddTagSubmit } from "@/hooks/use-add-tag-submit";
+import { useAddTransactionData } from "@/hooks/use-add-transaction-data";
+import { useDeleteTag, useTags, useUpdateTag } from "@/hooks/use-tags";
 import { logout } from "@/lib/zero-logout";
 
 import { ChatSearchResults, useChatSearch } from "./search-chats";
@@ -175,7 +182,12 @@ function getPlaceholder(activePage: string | undefined): string {
 
 /** Pages that render their own form body and hide the cmdk input + list. */
 function isFormPage(activePage: string | undefined): boolean {
-  return activePage === "add-cash-account" || activePage === "add-transaction";
+  return (
+    activePage === "add-cash-account" ||
+    activePage === "add-transaction" ||
+    activePage === "add-tag" ||
+    activePage === "manage-tags"
+  );
 }
 
 // ── Sub-page helpers ──────────────────────────────────────────────────────────
@@ -204,6 +216,16 @@ function isDefaultCommandView(activePage: string | undefined): boolean {
 interface CommandMenuContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
+  /** Open palette directly to the manage-tags sub-page. */
+  openManageTags: () => void;
+  /** Open palette to the add-account sub-page. */
+  openAddAccount: () => void;
+  /** Open palette to the add-cash-account sub-page. */
+  openAddCashAccount: () => void;
+  /** Open palette to the add-transaction sub-page. */
+  openAddTransaction: () => void;
+  /** Open palette to the add-tag sub-page, optionally seeded with a name. */
+  openAddTag: (opts?: { initialName?: string }) => void;
 }
 
 const CommandMenuContext = createContext<CommandMenuContextValue | null>(null);
@@ -222,16 +244,26 @@ export function useCommandMenu(): CommandMenuContextValue {
 function CommandMenuDialog({
   open,
   onOpenChange,
+  pages,
+  setPages,
+  search,
+  setSearch,
+  addTagInitialName,
+  setAddTagInitialName,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  pages: string[];
+  setPages: React.Dispatch<React.SetStateAction<string[]>>;
+  search: string;
+  setSearch: React.Dispatch<React.SetStateAction<string>>;
+  addTagInitialName: string;
+  setAddTagInitialName: React.Dispatch<React.SetStateAction<string>>;
 }) {
   const navigate = useNavigate();
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
-  const [pages, setPages] = useState<string[]>([]);
-  const [search, setSearch] = useState("");
   const [settingsSection, setSettingsSection] =
     useState<SettingsSection>("profile");
 
@@ -243,6 +275,8 @@ function CommandMenuDialog({
   const inSettings = activePage === "settings";
   const inAddCashAccount = activePage === "add-cash-account";
   const inAddTransaction = activePage === "add-transaction";
+  const inAddTag = activePage === "add-tag";
+  const inManageTags = activePage === "manage-tags";
   const inFormPage = isFormPage(activePage);
   const trimmedSearch = search.trim();
 
@@ -271,15 +305,44 @@ function CommandMenuDialog({
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
   const { handleChoose: handleChooseConnect, updateModeDialog } =
     useAccountLauncher(dismiss);
-  const { submitAddCashAccount, submittingAddCashAccount } =
-    useAddCashAccount();
+  const { submit: submitAddCashAccount } = useAddCashAccountSubmit();
   const {
+    availableTags: addTxAvailableTags,
     locationSearch: addTxLocationSearch,
     manualAccounts,
     merchantSearch: addTxMerchantSearch,
-    submitAddTransaction,
-    submittingAddTransaction,
-  } = useAddTransaction();
+    submit: submitAddTransaction,
+  } = useAddTransactionData();
+  const { isPending: submittingAddTag, submit: submitAddTagInner } =
+    useAddTagSubmit();
+  const submitAddTag = useCallback(
+    async (values: Parameters<typeof submitAddTagInner>[0]) => {
+      try {
+        await submitAddTagInner(values);
+      } catch {
+        // Toast already shown.
+      }
+    },
+    [submitAddTagInner]
+  );
+
+  // ── Manage-tags data ────────────────────────────────────────────────────────
+
+  const { data: allTags } = useTags();
+  const updateTag = useUpdateTag();
+  const deleteTag = useDeleteTag();
+  const manageTagsList = useMemo(
+    () =>
+      allTags
+        .filter((t) => t.archivedAt === null && isTagColor(t.color))
+        .map((t) => ({
+          color: t.color as TagColor,
+          count: t.transactionTags?.length ?? 0,
+          id: t.id,
+          name: t.name,
+        })),
+    [allTags]
+  );
 
   // ── Theme ───────────────────────────────────────────────────────────────────
 
@@ -316,28 +379,49 @@ function CommandMenuDialog({
     prefetchTransactions();
     setSearch("");
     setPages((p) => [...p, "search-transactions"]);
-  }, [prefetchTransactions]);
+  }, [prefetchTransactions, setPages, setSearch]);
 
   const enterSearchChats = useCallback(() => {
     prefetchChats();
     setSearch("");
     setPages((p) => [...p, "search-chats"]);
-  }, [prefetchChats]);
+  }, [prefetchChats, setPages, setSearch]);
 
   const enterSearchTickers = useCallback(() => {
     setSearch("");
     setPages((p) => [...p, "search-tickers"]);
-  }, []);
+  }, [setPages, setSearch]);
 
   const enterAddAccount = useCallback(() => {
     setSearch("");
     setPages((p) => [...p, "add-account"]);
-  }, []);
+  }, [setPages, setSearch]);
 
   const enterAddTransaction = useCallback(() => {
     setSearch("");
     setPages((p) => [...p, "add-transaction"]);
-  }, []);
+  }, [setPages, setSearch]);
+
+  const enterAddTag = useCallback(
+    (initialName?: string) => {
+      setAddTagInitialName(initialName ?? "");
+      setSearch("");
+      setPages((p) => [...p, "add-tag"]);
+    },
+    [setAddTagInitialName, setPages, setSearch]
+  );
+
+  const addTxOnRequestCreateTag = useCallback(
+    (initialName: string) => {
+      enterAddTag(initialName);
+    },
+    [enterAddTag]
+  );
+
+  const enterManageTags = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "manage-tags"]);
+  }, [setPages, setSearch]);
 
   const popPage = useCallback(() => {
     setPages((p) => p.slice(0, -1));
@@ -352,7 +436,7 @@ function CommandMenuDialog({
         el?.focus();
       });
     });
-  }, []);
+  }, [setPages, setSearch]);
 
   const handleChooseInstitution = useCallback(
     (institution: AddAccountInstitution) => {
@@ -365,14 +449,17 @@ function CommandMenuDialog({
       }
       handleChooseConnect(institution);
     },
-    [handleChooseConnect]
+    [handleChooseConnect, setPages, setSearch]
   );
 
-  const enterSettings = useCallback((section: SettingsSection) => {
-    setSearch("");
-    setSettingsSection(section);
-    setPages((p) => [...p, "settings"]);
-  }, []);
+  const enterSettings = useCallback(
+    (section: SettingsSection) => {
+      setSearch("");
+      setSettingsSection(section);
+      setPages((p) => [...p, "settings"]);
+    },
+    [setPages, setSearch]
+  );
 
   // ── Navigation handlers ─────────────────────────────────────────────────────
 
@@ -423,7 +510,7 @@ function CommandMenuDialog({
         setSearch("");
       }
     },
-    [pages.length, search.length]
+    [pages.length, search.length, setPages, setSearch]
   );
 
   // ── Action groups ───────────────────────────────────────────────────────────
@@ -455,6 +542,18 @@ function CommandMenuDialog({
       icon: Edit02Icon,
       keywords: ["create", "new", "add", "manual"],
       label: "Add Manual Transaction",
+    },
+    {
+      handleSelect: enterAddTag,
+      icon: Edit02Icon,
+      keywords: ["tag", "label", "category", "create"],
+      label: "Add Tag",
+    },
+    {
+      handleSelect: enterManageTags,
+      icon: Tag01Icon,
+      keywords: ["tag", "label", "edit", "rename", "delete", "manage"],
+      label: "Manage Tags",
     },
     {
       handleSelect: () => go("/transactions"),
@@ -533,7 +632,9 @@ function CommandMenuDialog({
           inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
           inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl",
           inAddTransaction && "sm:max-w-3xl",
-          inAddCashAccount && "sm:max-w-3xl"
+          inAddCashAccount && "sm:max-w-3xl",
+          inAddTag && "sm:max-w-lg",
+          inManageTags && "sm:max-w-md"
         )}
         description="Search for a page or action"
         onOpenChange={handleOpenChange}
@@ -582,7 +683,7 @@ function CommandMenuDialog({
                     }
                   })();
                 }}
-                submitting={submittingAddCashAccount}
+                submitting={false}
               />
             </div>
           )}
@@ -598,9 +699,11 @@ function CommandMenuDialog({
               </h2>
               <AddTransactionForm
                 accounts={manualAccounts}
+                availableTags={addTxAvailableTags}
                 locationSearch={addTxLocationSearch}
                 merchantSearch={addTxMerchantSearch}
                 onBackspaceWhenEmpty={popPage}
+                onRequestCreateTag={addTxOnRequestCreateTag}
                 onCreateCashAccount={() => {
                   setSearch("");
                   setPages((p) => [...p.slice(0, -1), "add-cash-account"]);
@@ -615,7 +718,65 @@ function CommandMenuDialog({
                     }
                   })();
                 }}
-                submitting={submittingAddTransaction}
+                submitting={false}
+              />
+            </div>
+          )}
+          {inAddTag && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
+                <HugeiconsIcon
+                  className="size-5 shrink-0"
+                  icon={Tag01Icon}
+                  strokeWidth={2}
+                />
+                New Tag
+              </h2>
+              <AddTagForm
+                initialName={addTagInitialName}
+                onBackspaceWhenEmpty={popPage}
+                onSubmit={(values) => {
+                  void (async () => {
+                    try {
+                      await submitAddTag(values);
+                      // Morph back to the previous sub-page (e.g. manage-tags)
+                      // when there is one; otherwise close the palette.
+                      if (pages.length > 1) {
+                        popPage();
+                      } else {
+                        handleOpenChange(false);
+                      }
+                    } catch {
+                      // Toast already shown by provider.
+                    }
+                  })();
+                }}
+                submitting={submittingAddTag}
+              />
+            </div>
+          )}
+          {inManageTags && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
+                <HugeiconsIcon
+                  className="size-5 shrink-0"
+                  icon={Tag01Icon}
+                  strokeWidth={2}
+                />
+                Manage tags
+              </h2>
+              <ManageTagsForm
+                onDelete={(tagId) => {
+                  deleteTag.mutate(tagId);
+                }}
+                onRecolor={(tagId, color) => {
+                  updateTag.mutate({ body: { color }, tagId });
+                }}
+                onRename={(tagId, name) => {
+                  updateTag.mutate({ body: { name }, tagId });
+                }}
+                onRequestCreate={enterAddTag}
+                tags={manageTagsList}
               />
             </div>
           )}
@@ -735,25 +896,101 @@ function CommandMenuDialog({
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function CommandMenuProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(false);
+  const [pages, setPages] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+  const [addTagInitialName, setAddTagInitialName] = useState("");
+
+  const setOpen = useCallback((nextOpen: boolean) => {
+    setOpenState(nextOpen);
+    if (!nextOpen) {
+      // Defer reset until after dialog exit animation so the active sub-page
+      // stays visible while closing instead of flashing the default palette.
+      window.setTimeout(() => {
+        setPages([]);
+        setSearch("");
+      }, 200);
+    }
+  }, []);
+
+  const openAt = useCallback((page: string) => {
+    setPages([page]);
+    setSearch("");
+    setOpenState(true);
+  }, []);
+
+  const openManageTags = useCallback(() => openAt("manage-tags"), [openAt]);
+  const openAddAccount = useCallback(() => openAt("add-account"), [openAt]);
+  const openAddCashAccount = useCallback(
+    () => openAt("add-cash-account"),
+    [openAt]
+  );
+  const openAddTransaction = useCallback(
+    () => openAt("add-transaction"),
+    [openAt]
+  );
+  const openAddTag = useCallback(
+    (opts?: { initialName?: string }) => {
+      setAddTagInitialName(opts?.initialName ?? "");
+      openAt("add-tag");
+    },
+    [openAt]
+  );
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((wasOpen) => !wasOpen);
+        setOpenState((wasOpen) => {
+          const next = !wasOpen;
+          if (!next) {
+            window.setTimeout(() => {
+              setPages([]);
+              setSearch("");
+            }, 200);
+          }
+          return next;
+        });
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const value = useMemo(() => ({ open, setOpen }), [open]);
+  const value = useMemo(
+    () => ({
+      open,
+      openAddAccount,
+      openAddCashAccount,
+      openAddTag,
+      openAddTransaction,
+      openManageTags,
+      setOpen,
+    }),
+    [
+      open,
+      openAddAccount,
+      openAddCashAccount,
+      openAddTag,
+      openAddTransaction,
+      openManageTags,
+      setOpen,
+    ]
+  );
 
   return (
     <CommandMenuContext.Provider value={value}>
       {children}
-      <CommandMenuDialog onOpenChange={setOpen} open={open} />
+      <CommandMenuDialog
+        addTagInitialName={addTagInitialName}
+        onOpenChange={setOpen}
+        open={open}
+        pages={pages}
+        search={search}
+        setAddTagInitialName={setAddTagInitialName}
+        setPages={setPages}
+        setSearch={setSearch}
+      />
     </CommandMenuContext.Provider>
   );
 }

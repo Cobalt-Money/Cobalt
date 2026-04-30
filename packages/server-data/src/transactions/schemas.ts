@@ -166,6 +166,8 @@ export const transactionPatchBodySchema = z
       .optional(),
     name: z.string().min(1).nullable().optional(),
     notes: notesMarkdownSchema.nullable().optional(),
+    /** Full id-array replace of tags on the transaction. Pass `[]` to clear. */
+    tags: z.array(z.uuid()).optional(),
     userOverrideLocation: locationJsonSchema.nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, {
@@ -198,6 +200,7 @@ export const transactionActivityItemSchema = z.object({
     "merchantName",
     "name",
     "notes",
+    "tags",
   ]),
   id: z.string(),
   /** Native value, type discriminated by `field`: name/date=string, amount=number, category={primary,detailed,confidence?}, notes=markdown string (historical rows may still hold Tiptap JSON). */
