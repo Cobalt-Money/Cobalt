@@ -1,8 +1,3 @@
-export const MAX_ROWS = 500;
-export const DEFAULT_ROWS = 100;
-export const QUERY_TIMEOUT_MS = 10_000;
-export const CHARACTER_LIMIT = 25_000;
-
 export const ALLOWED_TABLES: Record<string, string> = {
   bank_account: "Individual bank accounts within connections",
   bank_balance: "Latest balance for each bank account",

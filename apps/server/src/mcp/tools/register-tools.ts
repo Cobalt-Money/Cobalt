@@ -1,8 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { ALLOWED_TABLES, MAX_ROWS } from "../constants.js";
-import { runQuery } from "./query.js";
+import { ALLOWED_TABLES } from "../constants.js";
+import { executeCode } from "./execute-code.js";
 import { describeTable, getRelationships, listTables } from "./schema.js";
 
 const allowedTableNames = Object.keys(ALLOWED_TABLES);
@@ -29,7 +29,7 @@ export function registerMcpTools(server: McpServer, userId: string): void {
     {
       annotations: { destructiveHint: false, readOnlyHint: true },
       description:
-        "List all available database tables and their descriptions. Call this first to discover what data is available.",
+        "List Cobalt's data domains (tables). Use this first to discover what data is available before writing code.",
       inputSchema: z.object({}),
       title: "List tables",
     },
@@ -41,7 +41,7 @@ export function registerMcpTools(server: McpServer, userId: string): void {
     {
       annotations: { destructiveHint: false, readOnlyHint: true },
       description:
-        "Get column names, data types, and nullability for a specific table. Use after cobalt_list_tables to understand table structure before writing queries.",
+        "Get column names, data types, and nullability for a specific table. Useful context when writing code that calls Cobalt APIs.",
       inputSchema: z.object({
         table: z
           .enum(allowedTableNames as [string, ...string[]])
@@ -57,7 +57,7 @@ export function registerMcpTools(server: McpServer, userId: string): void {
     {
       annotations: { destructiveHint: false, readOnlyHint: true },
       description:
-        "Get foreign key relationships between tables. Useful for understanding how to JOIN tables in queries.",
+        "Get foreign key relationships between tables. Useful for reasoning about how Cobalt APIs link entities.",
       inputSchema: z.object({}),
       title: "Get relationships",
     },
@@ -65,25 +65,47 @@ export function registerMcpTools(server: McpServer, userId: string): void {
   );
 
   server.registerTool(
-    "cobalt_query",
+    "cobalt_execute_code",
     {
-      annotations: { destructiveHint: false, readOnlyHint: true },
-      description:
-        "Execute a read-only SQL query (SELECT or WITH) against the user's financial data. Results are automatically scoped to the authenticated user via row-level security. Use cobalt_list_tables and cobalt_describe_table first to understand the schema.",
+      annotations: { destructiveHint: false, readOnlyHint: false },
+      description: [
+        "Run JavaScript/TypeScript inside an ephemeral sandbox with access to the Cobalt SDK as a `cobalt` global.",
+        "Available APIs:",
+        "  Accounts (user-scoped):",
+        "    - cobalt.accounts.listAll() / listBank() / listCreditCards() / getById({ accountId })",
+        "  Brokerage (user-scoped):",
+        "    - cobalt.brokerage.balances() / accounts() / userBrokerages() / userTickers()",
+        "    - cobalt.brokerage.positions({ accountId?, limit?, offset? })",
+        "    - cobalt.brokerage.activities({ accountId?, limit?, offset? })",
+        "    - cobalt.brokerage.portfolioSnapshots({ accountId?, startDate?, endDate? })",
+        "  Snapshots (user-scoped):",
+        "    - cobalt.snapshots.balances({ accountId?, startDate?, endDate? })",
+        "  Tags (user-scoped):",
+        "    - cobalt.tags.list() / get({ tagId })",
+        "    - cobalt.tags.forTransaction({ transactionId }) — current tagIds on a transaction",
+        "    - cobalt.tags.addToTransaction({ transactionId, tagIds }) — merge (preserves existing)",
+        "    - cobalt.tags.removeFromTransaction({ transactionId, tagIds })",
+        "    - cobalt.tags.setOnTransaction({ transactionId, tagIds }) — full replace; pass [] to clear",
+        "  Transactions (user-scoped):",
+        "    - cobalt.transactions.list({ startDate?, endDate?, primaryCategory?, accountType?, minAmount?, maxAmount?, searchQuery?, pendingFilter?, page?, pageSize? })",
+        "    - cobalt.transactions.update({ transactionId, patch: { name?, date?, notes?, category?, tags?, userOverrideLocation? } }) — patch only, cannot create. patch.tags is a FULL REPLACE of the tag set; to add or remove a single tag use cobalt.tags.addToTransaction / removeFromTransaction instead.",
+        "  Research (global market data):",
+        "    - cobalt.research.quote({ symbol }) / overview / earningsHistory / earningsEstimates / incomeStatement / balanceSheet / news",
+        "    - cobalt.research.timeSeries({ symbol, interval?, outputsize? })",
+        "    - cobalt.research.intraday({ symbol, interval, extended_hours?, outputsize? })",
+        "User-scoped calls are automatically restricted to the authenticated user. Use `console.log` to return data; the script's stdout is what you receive.",
+        "The sandbox is ephemeral and limited to a 3-minute wall-clock budget. Most APIs are read-only; transactions.update is the only mutator and patches existing rows owned by the user.",
+      ].join("\n"),
       inputSchema: z.object({
-        limit: z
-          .number()
-          .int()
+        code: z
+          .string()
           .min(1)
-          .max(MAX_ROWS)
-          .optional()
           .describe(
-            `Max rows to return (default 100, max ${String(MAX_ROWS)})`
+            "TypeScript/JavaScript source. Top-level await is supported. `cobalt.*` is preinjected — do not import it."
           ),
-        query: z.string().describe("SQL query (SELECT or WITH only)"),
       }),
-      title: "Query data",
+      title: "Execute code",
     },
-    ({ query, limit }) => runQuery(userId, query, limit)
+    ({ code }) => executeCode(userId, code)
   );
 }

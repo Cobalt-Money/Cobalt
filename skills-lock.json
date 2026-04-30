@@ -86,6 +86,17 @@
       "sourceType": "github",
       "computedHash": "558620322d10e9cb9b50132d2a943b49a61d3284c46cea42a4a926282282f4ce"
     },
+    "sandbox": {
+      "source": "vercel/sandbox",
+      "sourceType": "github",
+      "skillPath": "skills/sandbox/SKILL.md",
+      "computedHash": "2ad9d47902e26dc238e78ce7e731a69581312ed99837635fa06b04e6fe1f68dd"
+    },
+    "streamdown": {
+      "source": "vercel/streamdown",
+      "sourceType": "github",
+      "computedHash": "c842552c75b80abb74ef8f92481d34684c709884dd2df22c2ab3b183aee582fe"
+    },
     "stripe-best-practices": {
       "source": "docs.stripe.com",
       "sourceType": "well-known",
@@ -95,11 +106,6 @@
       "source": "docs.stripe.com",
       "sourceType": "well-known",
       "computedHash": "74b5f9e1e24d7662000c28d6572e438ac71847d60ea0a8704b088441355e3371"
-    },
-    "streamdown": {
-      "source": "vercel/streamdown",
-      "sourceType": "github",
-      "computedHash": "c842552c75b80abb74ef8f92481d34684c709884dd2df22c2ab3b183aee582fe"
     },
     "tailwind-design-system": {
       "source": "wshobson/agents",
