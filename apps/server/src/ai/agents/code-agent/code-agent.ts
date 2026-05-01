@@ -1,3 +1,4 @@
+import { extractTool, searchTool } from "@parallel-web/ai-sdk-tools";
 import type { InferAgentUIMessage, ToolSet } from "ai";
 import { ToolLoopAgent, stepCountIs } from "ai";
 import { createBashTool } from "bash-tool";
@@ -18,7 +19,6 @@ import { renderChartTool } from "./tools/chart-tools.js";
 import { mathComputationTool } from "./tools/computation-tools.js";
 import { renderDocumentTool } from "./tools/document-tools.js";
 import { createExecuteCodeTool } from "./tools/execute-code-tool.js";
-import { webExtractTool, webSearchTool } from "./tools/web-search-tools.js";
 
 const DEFAULT_MODEL = "anthropic/claude-opus-4.7";
 const WORKSPACE = "/workspace";
@@ -195,8 +195,8 @@ WORKFLOW: optionally discover schema/knowledge (bash: ls/cat/grep) → write pla
       executeCode: executeCodeTool,
       renderChart: renderChartTool,
       renderDocument: renderDocumentTool,
-      webExtract: webExtractTool,
-      webSearch: webSearchTool,
+      webExtract: extractTool,
+      webSearch: searchTool,
     } as unknown as ToolSet,
   });
 
