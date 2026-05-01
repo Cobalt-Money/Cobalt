@@ -1,4 +1,4 @@
-import { cpSync, realpathSync } from "node:fs";
+import { cpSync, readdirSync, realpathSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,27 +7,41 @@ import { defineConfig } from "nitro";
 const here = dirname(fileURLToPath(import.meta.url));
 
 /**
- * Copy a node_modules package into the Nitro server output's node_modules
- * directory, dereferencing bun's symlinked store so the package files (incl.
- * native .node binaries) physically live in the deployed function bundle.
+ * Copy a node_modules package — and all of its transitive deps that bun's
+ * isolated install grouped into the same store entry — into the Nitro
+ * server output's node_modules directory, with all symlinks dereferenced.
  *
- * Vercel's `includeFiles` glob is unreliable for this case:
+ * Vercel's `includeFiles` glob is unreliable here:
  *  - The glob is resolved from the project's filesystem root (= repo root in
  *    our monorepo, since no `rootDirectory` is set), so a glob like
  *    `node_modules/isolated-vm/**` finds nothing — the package only exists
  *    under `apps/server/node_modules/isolated-vm`, which is a bun symlink
- *    pointing into `node_modules/.bun/<pkg>@<ver>/...`.
+ *    pointing into `node_modules/.bun/<pkg>@<ver>/node_modules/<pkg>`.
  *  - Even when matched, Vercel doesn't follow bun's isolated-install symlinks
  *    consistently, so the function ships a dangling link and ESM resolution
- *    fails with `ERR_MODULE_NOT_FOUND: Cannot find package 'isolated-vm'`.
- * Copying the real files into `.output/server/node_modules/<pkg>` during the
- * Nitro `close` hook deposits them in the function bundle directly.
+ *    fails with `ERR_MODULE_NOT_FOUND`.
+ *
+ * bun's isolated store layout: each package gets a directory at
+ * `node_modules/.bun/<pkg>@<ver>/node_modules/`, and that directory contains
+ * the package itself plus symlinks to its direct runtime deps. Resolving the
+ * symlink at `apps/server/node_modules/<name>` gives us the package's real
+ * path; its parent directory is the store entry, where all the package's
+ * runtime deps also live as siblings. Copying that whole parent dereferences
+ * everything the package needs at runtime.
  */
-function copyRealPkg(name: string, outputDir: string) {
-  const srcSymlink = resolve(here, "node_modules", name);
-  const real = realpathSync(srcSymlink);
-  const dest = resolve(outputDir, "node_modules", name);
-  cpSync(real, dest, { dereference: true, recursive: true });
+function copyPkgWithDeps(name: string, outputDir: string) {
+  const symlink = resolve(here, "node_modules", name);
+  const realPkgPath = realpathSync(symlink);
+  // realPkgPath = .../node_modules/.bun/<pkg>@<ver>/node_modules/<name>
+  // parent     = .../node_modules/.bun/<pkg>@<ver>/node_modules
+  const storeNodeModules = dirname(realPkgPath);
+  const destNodeModules = resolve(outputDir, "node_modules");
+  for (const entry of readdirSync(storeNodeModules)) {
+    cpSync(resolve(storeNodeModules, entry), resolve(destNodeModules, entry), {
+      dereference: true,
+      recursive: true,
+    });
+  }
 }
 
 export default defineConfig({
@@ -38,8 +52,8 @@ export default defineConfig({
     // packages into the function bundle.
     close: () => {
       const out = resolve(here, ".vercel/output/functions/__server.func");
-      copyRealPkg("isolated-vm", out);
-      copyRealPkg("typescript", out);
+      copyPkgWithDeps("isolated-vm", out);
+      copyPkgWithDeps("typescript", out);
     },
   },
   modules: ["workflow/nitro"],
