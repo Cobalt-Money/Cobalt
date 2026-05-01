@@ -91,7 +91,7 @@ function route<S extends z.ZodTypeAny>(spec: RouteSpec<S>): RouteSpec<S> {
 
 /**
  * One entry per allowed call. Names use `<group>_<method>` so they survive
- * QuickJS global injection (no dots). The runtime wraps these into a
+ * Isolate global injection (no dots). The runtime wraps these into a
  * `cobalt.<group>.<method>` namespace inside the isolate.
  *
  * `userId` is captured in closure on `buildBindings` — sandbox code cannot
