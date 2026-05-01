@@ -87,6 +87,7 @@
         "@hono/zod-openapi": "^1.2.2",
         "@json-render/core": "^0.4.4",
         "@modelcontextprotocol/sdk": "^1.12.0",
+        "@parallel-web/ai-sdk-tools": "^0.2.1",
         "@rocicorp/zero": "catalog:",
         "@scalar/hono-api-reference": "^0.10.4",
         "@vercel/queue": "^0.1.6",
@@ -99,7 +100,6 @@
         "hono": "^4.8.2",
         "jose": "^6.1.0",
         "mathjs": "^15.1.0",
-        "parallel-web": "^0.3.1",
         "pg": "^8.16.3",
         "snaptrade-typescript-sdk": "^9.0.160",
         "uuid": "^14.0.0",
@@ -1452,6 +1452,8 @@
     "@oxlint/binding-win32-ia32-msvc": ["@oxlint/binding-win32-ia32-msvc@1.55.0", "", { "os": "win32", "cpu": "ia32" }, "sha512-gzkk4zE2zsE+WmRxFOiAZHpCpUNDFytEakqNXoNHW+PnYEOTPKDdW6nrzgSeTbGKVPXNAKQnRnMgrh7+n3Xueg=="],
 
     "@oxlint/binding-win32-x64-msvc": ["@oxlint/binding-win32-x64-msvc@1.55.0", "", { "os": "win32", "cpu": "x64" }, "sha512-ZFALNow2/og75gvYzNP7qe+rREQ5xunktwA+lgykoozHZ6hw9bqg4fn5j2UvG4gIn1FXqrZHkOAXuPf5+GOYTQ=="],
+
+    "@parallel-web/ai-sdk-tools": ["@parallel-web/ai-sdk-tools@0.2.1", "", { "dependencies": { "parallel-web": "^0.3.1", "zod": "^4.3.6" }, "peerDependencies": { "ai": "^5.0.0" } }, "sha512-eDlL2XO58EWspgLgpP9FomaaqLTjICvlOZV2wBLRsTkUQXwq2pSqysbAqz6NVJWXjoojHZp3J+n5Lk7jZH3exQ=="],
 
     "@pinojs/redact": ["@pinojs/redact@0.4.0", "", {}, "sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg=="],
 
