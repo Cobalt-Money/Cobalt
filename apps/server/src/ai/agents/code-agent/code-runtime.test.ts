@@ -10,7 +10,7 @@ const fakeAccountsBinding = (rows: unknown): Binding => ({
   name: "accounts_listAll",
 });
 
-describe("code-runtime (TanStack QuickJS)", () => {
+describe("code-runtime (TanStack V8 isolate)", () => {
   it("invokes a binding through the cobalt.* shim and returns logs + value", async () => {
     const bindings = [
       fakeAccountsBinding([
@@ -30,6 +30,24 @@ describe("code-runtime (TanStack QuickJS)", () => {
     expect(result.stdout).toContain("count=2");
     expect(result.stdout).toContain("Checking");
     expect(result.stdout).toContain("Savings");
+  });
+
+  it("strips TS types so TS syntax runs in the isolate", async () => {
+    const bindings = [
+      fakeAccountsBinding([{ balance: 100, id: "a1", name: "Checking" }]),
+    ];
+
+    const code = `
+      interface Acct { id: string; name: string; balance: number }
+      const res = await cobalt.accounts.listAll() as { accounts: Acct[] };
+      const names: string[] = res.accounts.map((a: Acct) => a.name);
+      console.log("first=" + names[0]);
+      return names;
+    `;
+
+    const result = await runUserCode(bindings, code);
+    expect(result.ok).toBeTruthy();
+    expect(result.stdout).toContain("first=Checking");
   });
 
   it("propagates binding errors", async () => {

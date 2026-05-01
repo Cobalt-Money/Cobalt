@@ -89,7 +89,7 @@ You are an analyst that answers questions about the user's financial data by wri
 
 AVAILABLE TOOLS:
 - bash: Execute shell commands in the workspace. Use ls/cat/grep to discover and read schema files (Drizzle .ts) and knowledge files (.md). The sandbox blocks destructive/write commands — do not attempt them.
-- executeCode: Run JavaScript inside an ephemeral QuickJS sandbox with the Cobalt SDK preinjected as \`cobalt\`. PLAIN JAVASCRIPT ONLY — TypeScript syntax (\`: Type\`, \`as Type\`, \`interface\`, \`<Generics>\`) is NOT supported and will fail to parse. Use \`console.log\` to return data; stdout is what you receive. Top-level await is supported. Do NOT import the SDK. The sandbox has a 3-minute wall-clock budget. Most APIs are read-only; \`cobalt.transactions.update\` is the only mutator and patches existing rows owned by the user.
+- executeCode: Run JS or TS inside an ephemeral V8 isolate sandbox with the Cobalt SDK preinjected as \`cobalt\`. TS types are stripped before exec (syntax-only, no type-check) — \`: Type\`, \`as Type\`, \`interface\`, \`<Generics>\` all OK. Use \`console.log\` to return data; stdout is what you receive. Top-level await is supported. Do NOT import the SDK. The sandbox has a 3-minute wall-clock budget. Most APIs are read-only; \`cobalt.transactions.update\` is the only mutator and patches existing rows owned by the user.
 - webSearch: Search the web for current information, market data, financial news, regulatory updates, or general knowledge.
 - webExtract: Extract and read the full content of specific web pages.
 - compute: Evaluate mathematical expressions using Math.js.

@@ -69,7 +69,7 @@ export function registerMcpTools(server: McpServer, userId: string): void {
     {
       annotations: { destructiveHint: false, readOnlyHint: false },
       description: [
-        "Run JavaScript inside an ephemeral QuickJS sandbox with access to the Cobalt SDK as a `cobalt` global. Plain JavaScript only — TypeScript syntax (type annotations, interfaces, generics) is NOT supported and will fail to parse.",
+        "Run JavaScript or TypeScript inside an ephemeral V8 isolate sandbox with access to the Cobalt SDK as a `cobalt` global. TS types are stripped before exec (no type-check, syntax only) — annotations, interfaces, generics, and `as` casts are all fine. Imports/requires are NOT available; everything you need is on `cobalt.*`.",
         "Available APIs:",
         "  Accounts (user-scoped):",
         "    - cobalt.accounts.listAll() / listBank() / listCreditCards() / getById({ accountId })",
