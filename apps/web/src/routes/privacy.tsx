@@ -390,11 +390,105 @@ function PrivacyPolicy() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold font-manrope mb-4">
-              5. DATA SECURITY
+              5. DEVELOPMENT SANDBOXES
             </h2>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              5.1 Security Measures
+              5.1 Sandbox Environments
+            </h3>
+            <p className="text-gray-300 mb-4">
+              To develop, test, and improve our Services, we operate isolated
+              development and testing sandbox environments that may contain
+              copies of production data:
+            </p>
+            <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
+              <li>
+                <strong>Purpose:</strong> Sandboxes are used exclusively for
+                engineering development, quality assurance testing, debugging,
+                and feature validation before deployment to production
+              </li>
+              <li>
+                <strong>Access Restrictions:</strong> Access to sandbox
+                environments is strictly limited to authorized Cobalt
+                engineering and operations personnel on a need-to-know basis
+              </li>
+              <li>
+                <strong>Security Controls:</strong> Sandbox environments are
+                protected by the same or greater security controls as
+                production systems, including encryption, access logging, and
+                network isolation
+              </li>
+            </ul>
+
+            <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
+              5.2 Data in Sandboxes
+            </h3>
+            <p className="text-gray-300 mb-4">
+              When your data is present in sandbox environments:
+            </p>
+            <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
+              <li>
+                It is used solely for internal testing and development purposes
+              </li>
+              <li>
+                It is subject to the same confidentiality, security, and
+                privacy protections as production data
+              </li>
+              <li>
+                It is periodically refreshed or purged to ensure data freshness
+                and minimize retention
+              </li>
+              <li>
+                It is never shared with third parties, used for marketing
+                purposes, or processed for any use case outside of development
+                and testing
+              </li>
+            </ul>
+
+            <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
+              5.3 Zero Data Retention (ZDR)
+            </h3>
+            <p className="text-gray-300 mb-4">
+              For certain third-party services, particularly AI model providers
+              (as detailed in Section 4.3), we utilize Zero Data Retention
+              (ZDR) agreements and infrastructure:
+            </p>
+            <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
+              <li>
+                <strong>Real-Time Processing Only:</strong> Your data is sent
+                to these providers only for immediate processing of your
+                specific request
+              </li>
+              <li>
+                <strong>No Persistence:</strong> Your data is not stored,
+                logged, cached, or retained by these providers after your
+                request is completed
+              </li>
+              <li>
+                <strong>No Training Use:</strong> Your data is not used to
+                train, fine-tune, evaluate, or improve the third-party
+                provider's models or services
+              </li>
+              <li>
+                <strong>Contractual Guarantees:</strong> All ZDR provisions are
+                contractually enforced through our agreements with these
+                third-party providers
+              </li>
+              <li>
+                <strong>Encrypted Transit:</strong> All data transmitted to ZDR
+                providers is encrypted in transit using industry-standard
+                protocols (TLS 1.2 or higher)
+              </li>
+            </ul>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold font-manrope mb-4">
+              6. DATA SECURITY
+            </h2>
+
+            <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
+              6.1 Security Measures
             </h3>
             <p className="text-gray-300 mb-4">
               Cobalt implements comprehensive administrative, technical, and
@@ -432,7 +526,7 @@ function PrivacyPolicy() {
             </ul>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              5.2 Third-Party Security
+              6.2 Third-Party Security
             </h3>
             <p className="text-gray-300 mb-4">
               We carefully select third-party service providers and require them
@@ -441,7 +535,7 @@ function PrivacyPolicy() {
             </p>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              5.3 Your Responsibility
+              6.3 Your Responsibility
             </h3>
             <p className="text-gray-300 mb-4">
               While we implement robust security measures, the security of your
@@ -460,7 +554,7 @@ function PrivacyPolicy() {
             </ul>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              5.4 No Guarantee
+              6.4 No Guarantee
             </h3>
             <p className="text-gray-300 mb-4">
               Despite our security efforts, no system is completely secure. We
@@ -471,11 +565,11 @@ function PrivacyPolicy() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold font-manrope mb-4">
-              6. DATA RETENTION
+              7. DATA RETENTION
             </h2>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              6.1 Active Account Data
+              7.1 Active Account Data
             </h3>
             <p className="text-gray-300 mb-4">
               While your account remains active, we retain the following
@@ -510,7 +604,7 @@ function PrivacyPolicy() {
             </ul>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              6.2 Account Deletion
+              7.2 Account Deletion
             </h3>
             <p className="text-gray-300 mb-4">
               Upon your request to delete your account:
@@ -529,7 +623,7 @@ function PrivacyPolicy() {
             </ul>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              6.3 Legal and Compliance Retention
+              7.3 Legal and Compliance Retention
             </h3>
             <p className="text-gray-300 mb-4">
               Notwithstanding the above, we may retain certain categories of
@@ -559,11 +653,11 @@ function PrivacyPolicy() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold font-manrope mb-4">
-              7. THIRD-PARTY SERVICES AND DATA SHARING
+              8. THIRD-PARTY SERVICES AND DATA SHARING
             </h2>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              7.1 Financial Account Connection Services
+              8.1 Financial Account Connection Services
             </h3>
             <p className="text-gray-300 mb-4">
               To enable you to connect your financial accounts to our platform,
@@ -603,7 +697,7 @@ function PrivacyPolicy() {
             </ul>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              7.2 Service Providers
+              8.2 Service Providers
             </h3>
             <p className="text-gray-300 mb-4">
               We may share your information with trusted third-party service
@@ -629,7 +723,7 @@ function PrivacyPolicy() {
             </ul>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              7.3 Business Transfers
+              8.3 Business Transfers
             </h3>
             <p className="text-gray-300 mb-4">
               In the event of a merger, acquisition, reorganization, bankruptcy,
@@ -640,7 +734,7 @@ function PrivacyPolicy() {
             </p>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              7.4 Legal Requirements
+              8.4 Legal Requirements
             </h3>
             <p className="text-gray-300 mb-4">
               We may disclose your information when we believe in good faith
@@ -662,7 +756,7 @@ function PrivacyPolicy() {
             </ul>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              7.5 With Your Consent
+              8.5 With Your Consent
             </h3>
             <p className="text-gray-300 mb-4">
               We may share your information with third parties when you
@@ -670,7 +764,7 @@ function PrivacyPolicy() {
             </p>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              7.6 No Sale of Personal Information
+              8.6 No Sale of Personal Information
             </h3>
             <p className="text-gray-300 mb-4">
               Cobalt does not sell, rent, or trade your personal information to
@@ -680,11 +774,11 @@ function PrivacyPolicy() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold font-manrope mb-4">
-              8. YOUR PRIVACY RIGHTS
+              9. YOUR PRIVACY RIGHTS
             </h2>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              8.1 Access and Portability
+              9.1 Access and Portability
             </h3>
             <p className="text-gray-300 mb-4">You have the right to:</p>
             <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
@@ -700,7 +794,7 @@ function PrivacyPolicy() {
             </ul>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              8.2 Correction and Updating
+              9.2 Correction and Updating
             </h3>
             <p className="text-gray-300 mb-4">You have the right to:</p>
             <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
@@ -712,7 +806,7 @@ function PrivacyPolicy() {
             </ul>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              8.3 Deletion
+              9.3 Deletion
             </h3>
             <p className="text-gray-300 mb-4">You have the right to:</p>
             <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
@@ -731,7 +825,7 @@ function PrivacyPolicy() {
             </ul>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              8.4 Objection and Restriction
+              9.4 Objection and Restriction
             </h3>
             <p className="text-gray-300 mb-4">You have the right to:</p>
             <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
@@ -745,7 +839,7 @@ function PrivacyPolicy() {
             </ul>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              8.5 Exercising Your Rights
+              9.5 Exercising Your Rights
             </h3>
             <p className="text-gray-300 mb-4">
               To exercise any of these rights, please:
@@ -762,7 +856,7 @@ function PrivacyPolicy() {
             </p>
 
             <h3 className="text-xl font-semibold font-manrope mb-3 mt-6">
-              8.6 Verification
+              9.6 Verification
             </h3>
             <p className="text-gray-300 mb-4">
               For your security, we may require verification of your identity
@@ -773,7 +867,7 @@ function PrivacyPolicy() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold font-manrope mb-4">
-              9. INTERNATIONAL DATA TRANSFERS
+              10. INTERNATIONAL DATA TRANSFERS
             </h2>
             <p className="text-gray-300 mb-4">
               Cobalt operates in the United States. If you access our Services
@@ -792,7 +886,7 @@ function PrivacyPolicy() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold font-manrope mb-4">
-              10. CHILDREN'S PRIVACY
+              11. CHILDREN'S PRIVACY
             </h2>
             <p className="text-gray-300 mb-4">
               Our Services are not intended for individuals under the age of
@@ -810,7 +904,7 @@ function PrivacyPolicy() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold font-manrope mb-4">
-              11. CHANGES TO THIS PRIVACY POLICY
+              12. CHANGES TO THIS PRIVACY POLICY
             </h2>
             <p className="text-gray-300 mb-4">
               We may update this Privacy Policy from time to time to reflect
@@ -836,7 +930,7 @@ function PrivacyPolicy() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold font-manrope mb-4">
-              12. CONTACT INFORMATION
+              13. CONTACT INFORMATION
             </h2>
             <p className="text-gray-300 mb-4">
               If you have any questions, concerns, or requests regarding this
