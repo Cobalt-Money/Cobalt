@@ -13,7 +13,7 @@ import { notFound } from "next/navigation";
 import { APIPage } from "@/components/api-page";
 import { getMDXComponents } from "@/components/mdx";
 import { gitConfig } from "@/lib/layout.shared";
-import { getPageImage, source } from "@/lib/source";
+import { getPageImage, source, type DocsPageData } from "@/lib/source";
 
 export default async function Page(props: {
   params: Promise<{ slug?: string[] }>;
@@ -37,7 +37,7 @@ export default async function Page(props: {
   }
 
   // Regular MDX pages
-  const { data } = page;
+  const data = page.data as unknown as DocsPageData;
   const MDX = data.body;
 
   return (
