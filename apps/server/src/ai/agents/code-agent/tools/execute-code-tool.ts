@@ -1,10 +1,10 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-import { executeCode } from "../../../../mcp/tools/execute-code.js";
+import { runCobaltCode } from "../code-runtime.js";
 
 const description = [
-  "Run JavaScript/TypeScript inside an ephemeral sandbox with access to the Cobalt SDK as a `cobalt` global.",
+  "Run JavaScript inside an ephemeral QuickJS sandbox with access to the Cobalt SDK as a `cobalt` global. Plain JavaScript only — TypeScript syntax (type annotations, interfaces, generics) is NOT supported and will fail to parse.",
   "Available APIs:",
   "  Accounts (user-scoped):",
   "    - cobalt.accounts.listAll() / listBank() / listCreditCards() / getById({ accountId })",
@@ -28,20 +28,30 @@ const description = [
   "    - cobalt.research.quote({ symbol }) / overview / earningsHistory / earningsEstimates / incomeStatement / balanceSheet / news",
   "    - cobalt.research.timeSeries({ symbol, interval?, outputsize? })",
   "    - cobalt.research.intraday({ symbol, interval, extended_hours?, outputsize? })",
-  "User-scoped calls are automatically restricted to the authenticated user. Use `console.log` to return data; the script's stdout is what you receive.",
+  "User-scoped calls are automatically restricted to the authenticated user. Use `console.log` to surface data and/or `return` a value from the script.",
   "The sandbox is ephemeral and limited to a 3-minute wall-clock budget. Most APIs are read-only; transactions.update is the only mutator and patches existing rows owned by the user.",
 ].join("\n");
 
 export const createExecuteCodeTool = (userId: string) =>
   tool({
     description,
-    execute: async ({ code }) => await executeCode(userId, code),
+    execute: async ({ code }) => {
+      const result = await runCobaltCode(userId, code);
+      if (!result.ok) {
+        return {
+          error: result.error ?? { message: "code failed", name: "Error" },
+          ok: false,
+          stdout: result.stdout,
+        };
+      }
+      return { ok: true, stdout: result.stdout };
+    },
     inputSchema: z.object({
       code: z
         .string()
         .min(1)
         .describe(
-          "TypeScript/JavaScript source. Top-level await is supported. `cobalt.*` is preinjected — do not import it."
+          "JavaScript source (no TypeScript syntax). Top-level await is supported. `cobalt.*` is preinjected — do not import it."
         ),
     }),
   });

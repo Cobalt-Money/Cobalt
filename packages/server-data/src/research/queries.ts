@@ -4,6 +4,7 @@ import type { StockNewsArticle } from "@cobalt-web/clients/stock-news";
 
 import type { AlphaVantageQuoteResponse } from "./lib.js";
 import { normalizeTickerForAlphaVantage } from "./lib.js";
+import type { IntradayQuery, TimeSeriesQuery } from "./schemas.js";
 
 // ── Quote ──────────────────────────────────────────────────────────
 
@@ -25,11 +26,7 @@ export function getCompanyOverview(symbol: string) {
 
 // ── Time series (daily) ────────────────────────────────────────────
 
-export function getTimeSeriesData(params: {
-  symbol: string;
-  interval?: "daily" | "weekly" | "monthly";
-  outputsize?: "compact" | "full";
-}) {
+export function getTimeSeriesData(params: TimeSeriesQuery) {
   const interval = params.interval ?? "daily";
   const outputsize = params.outputsize ?? "compact";
   const functionMap = {
@@ -47,12 +44,7 @@ export function getTimeSeriesData(params: {
 
 // ── Intraday ───────────────────────────────────────────────────────
 
-export function getIntradayData(params: {
-  symbol: string;
-  interval: "1min" | "5min" | "15min" | "30min" | "60min";
-  extended_hours?: boolean;
-  outputsize?: "compact" | "full";
-}) {
+export function getIntradayData(params: IntradayQuery) {
   return alphaVantageRequest({
     extended_hours: (params.extended_hours ?? false).toString(),
     function: "TIME_SERIES_INTRADAY",

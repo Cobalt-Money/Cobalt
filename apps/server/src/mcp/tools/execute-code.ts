@@ -1,19 +1,10 @@
-import { runUserCode } from "../services/sandbox-runner.js";
-
-const MAX_OUTPUT_CHARS = 25_000;
-
-function truncate(s: string): string {
-  if (s.length <= MAX_OUTPUT_CHARS) {
-    return s;
-  }
-  return `${s.slice(0, MAX_OUTPUT_CHARS)}\n…[truncated ${String(s.length - MAX_OUTPUT_CHARS)} chars]`;
-}
+import { runCobaltCode } from "../../ai/agents/code-agent/code-runtime.js";
 
 export async function executeCode(
   userId: string,
   code: string
 ): Promise<{ content: { text: string; type: "text" }[]; isError?: boolean }> {
-  const result = await runUserCode(userId, code);
+  const result = await runCobaltCode(userId, code);
 
   if (!result.ok) {
     return {
@@ -21,9 +12,8 @@ export async function executeCode(
         {
           text: JSON.stringify(
             {
-              error: result.error ?? "code failed",
-              exitCode: result.exitCode,
-              stdout: truncate(result.stdout),
+              error: result.error ?? { message: "code failed", name: "Error" },
+              stdout: result.stdout,
             },
             null,
             2
@@ -36,6 +26,6 @@ export async function executeCode(
   }
 
   return {
-    content: [{ text: truncate(result.stdout), type: "text" as const }],
+    content: [{ text: result.stdout, type: "text" as const }],
   };
 }
