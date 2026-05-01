@@ -69,7 +69,7 @@ export function registerMcpTools(server: McpServer, userId: string): void {
     {
       annotations: { destructiveHint: false, readOnlyHint: false },
       description: [
-        "Run JavaScript/TypeScript inside an ephemeral sandbox with access to the Cobalt SDK as a `cobalt` global.",
+        "Run JavaScript inside an ephemeral QuickJS sandbox with access to the Cobalt SDK as a `cobalt` global. Plain JavaScript only — TypeScript syntax (type annotations, interfaces, generics) is NOT supported and will fail to parse.",
         "Available APIs:",
         "  Accounts (user-scoped):",
         "    - cobalt.accounts.listAll() / listBank() / listCreditCards() / getById({ accountId })",
@@ -101,7 +101,7 @@ export function registerMcpTools(server: McpServer, userId: string): void {
           .string()
           .min(1)
           .describe(
-            "TypeScript/JavaScript source. Top-level await is supported. `cobalt.*` is preinjected — do not import it."
+            "JavaScript source (no TypeScript syntax). Top-level await is supported. `cobalt.*` is preinjected — do not import it."
           ),
       }),
       title: "Execute code",

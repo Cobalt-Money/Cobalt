@@ -414,9 +414,9 @@ function PrivacyPolicy() {
               </li>
               <li>
                 <strong>Security Controls:</strong> Sandbox environments are
-                protected by the same or greater security controls as
-                production systems, including encryption, access logging, and
-                network isolation
+                protected by the same or greater security controls as production
+                systems, including encryption, access logging, and network
+                isolation
               </li>
             </ul>
 
@@ -431,8 +431,8 @@ function PrivacyPolicy() {
                 It is used solely for internal testing and development purposes
               </li>
               <li>
-                It is subject to the same confidentiality, security, and
-                privacy protections as production data
+                It is subject to the same confidentiality, security, and privacy
+                protections as production data
               </li>
               <li>
                 It is periodically refreshed or purged to ensure data freshness
@@ -450,14 +450,14 @@ function PrivacyPolicy() {
             </h3>
             <p className="text-gray-300 mb-4">
               For certain third-party services, particularly AI model providers
-              (as detailed in Section 4.3), we utilize Zero Data Retention
-              (ZDR) agreements and infrastructure:
+              (as detailed in Section 4.3), we utilize Zero Data Retention (ZDR)
+              agreements and infrastructure:
             </p>
             <ul className="list-disc list-inside text-gray-300 mb-4 space-y-1">
               <li>
-                <strong>Real-Time Processing Only:</strong> Your data is sent
-                to these providers only for immediate processing of your
-                specific request
+                <strong>Real-Time Processing Only:</strong> Your data is sent to
+                these providers only for immediate processing of your specific
+                request
               </li>
               <li>
                 <strong>No Persistence:</strong> Your data is not stored,

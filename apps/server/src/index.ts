@@ -10,8 +10,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
+import { agentBridgeRouter } from "./_legacy/api/internal/agent-bridge/exec.js";
 import { accountsRouter } from "./api/internal/accounts/index.js";
-import { agentBridgeRouter } from "./api/internal/agent-bridge/exec.js";
 import { alertsRouter } from "./api/internal/alerts/index.js";
 import { appstoreRouter } from "./api/internal/appstore.js";
 import { authRouter } from "./api/internal/auth.js";
