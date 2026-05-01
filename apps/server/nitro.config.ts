@@ -7,8 +7,10 @@ export default defineConfig({
   noExternals: true,
   // isolated-vm is a native node addon (.node binary). Cannot be bundled —
   // mark it external at the rollup layer so Nitro emits a runtime require,
-  // then ship the prebuilds dir w/ the function (vercel.functions.includeFiles).
-  // node-gyp-build picks the right ABI at dlopen (abi127=node22, abi137=node24).
+  // then ship the whole package via vercel.functions.includeFiles below
+  // (JS shim + package.json + prebuild binary; missing any of these breaks
+  // ESM resolution at runtime). node-gyp-build picks the right ABI at dlopen
+  // (abi127=node22, abi137=node24).
   // ts-blank-space depends on `typescript`. typescript's prebuilt bundle uses
   // both require() and top-level await, which Node can't disambiguate when
   // re-bundled into our ESM chunk (ERR_AMBIGUOUS_MODULE_SYNTAX). Keep it
@@ -28,7 +30,10 @@ export default defineConfig({
   vercel: {
     functions: {
       includeFiles: [
-        "node_modules/isolated-vm/prebuilds/linux-x64/**/*.node",
+        // Ship the whole isolated-vm package: JS shim + package.json + the
+        // linux-x64 prebuild binary. Without the shim/package.json, `import`
+        // can't resolve the package even though the .node file is present.
+        "node_modules/isolated-vm/**",
         // typescript is external (rollupConfig.external above) — ship the
         // package so `import ts from "typescript"` (via ts-blank-space)
         // resolves at runtime in the Vercel function.
