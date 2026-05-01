@@ -6,7 +6,7 @@ import { Document } from "flexsearch";
 import type { DocumentData } from "flexsearch";
 import { z } from "zod";
 
-import { source } from "@/lib/source";
+import { source, type DocsPageData } from "@/lib/source";
 
 interface CustomDocument extends DocumentData {
   url: string;
@@ -41,8 +41,9 @@ async function createSearchServer() {
         return null;
       }
 
+      const data = page.data as unknown as DocsPageData;
       return {
-        content: await page.data.getText("raw"),
+        content: await data.getText("raw"),
         description: page.data.description,
         title: page.data.title,
         url: page.url,
