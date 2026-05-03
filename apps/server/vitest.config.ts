@@ -9,5 +9,14 @@ export default defineConfig({
       "src/**/*.{test,spec}.{ts,tsx}",
       "tests/**/*.{test,spec}.{ts,tsx}",
     ],
+    server: {
+      // @tanstack/ai-isolate-cloudflare 0.1.8 ships extensionless ESM imports
+      // that Node's loader rejects under vitest. Inline-bundle through Vite so
+      // its resolver patches the missing extensions. Production build uses
+      // nitro w/ `noExternals: true` which already does this via rollup.
+      deps: {
+        inline: [/@tanstack\/ai-isolate-cloudflare/],
+      },
+    },
   },
 });

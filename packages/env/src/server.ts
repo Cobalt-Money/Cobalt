@@ -74,6 +74,10 @@ export const env = createEnv({
     PLAID_WEBHOOK_URL: z.url().optional(),
     /** Sandbox runtime backend for MCP execute_code. Default: vercel. */
     SANDBOX_RUNTIME: z.enum(["vercel", "daytona"]).default("vercel"),
+    /** Authorization token sent in the `Authorization` header to the sandbox CF Worker. Must match the Worker's `AUTH_TOKEN` secret. */
+    SANDBOX_WORKER_AUTH_TOKEN: z.string().min(32).optional(),
+    /** URL of the deployed sandbox Cloudflare Worker (e.g. https://cobalt-sandbox.workers.dev). When unset, sandbox runs are disabled. */
+    SANDBOX_WORKER_URL: z.url().optional(),
     SNAPTRADE_CLIENT_ID: z.string().min(1),
     SNAPTRADE_CONSUMER_KEY: z.string().min(1),
     STOCK_NEWS_API_KEY: z.string().min(1),
