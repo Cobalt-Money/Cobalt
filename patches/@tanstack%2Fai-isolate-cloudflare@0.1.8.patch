@@ -1,0 +1,189 @@
+diff --git a/node_modules/@tanstack/ai-isolate-cloudflare/.bun-tag-78426f73c09c6674 b/.bun-tag-78426f73c09c6674
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/@tanstack/ai-isolate-cloudflare/.bun-tag-7a8a45177600998 b/.bun-tag-7a8a45177600998
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/dist/esm/isolate-driver.js b/dist/esm/isolate-driver.js
+index 9b082cc4836db187c48918626716cbc0c686f294..3b783fba14390c6b5b0961b49dd598cdde5911ab 100644
+--- a/dist/esm/isolate-driver.js
++++ b/dist/esm/isolate-driver.js
+@@ -108,8 +108,12 @@ class CloudflareIsolateContext {
+                 // status === 'need_tools'
+                 // Collect logs from this round
+                 allLogs = [...allLogs, ...result.logs];
+-                // Execute tool calls locally
+-                toolResults = {};
++                // Execute tool calls locally. Accumulate across rounds so
++                // earlier-round results stay cached when re-executing user
++                // code (wrap-code uses sequential tc_<idx> ids that are
++                // re-derived every round; wiping the map causes infinite
++                // loop on multi-tool programs -> MaxRoundsExceeded).
++                toolResults = { ...(toolResults ?? {}) };
+                 for (const toolCall of result.toolCalls) {
+                     const binding = this.bindings[toolCall.name];
+                     if (!binding) {
+diff --git a/dist/esm/worker/index.d.ts b/dist/esm/worker/index.d.ts
+index a26bb8c6d800b856261c9ba98f0690ecb651f8d3..6443c7d0d7a74cf85177b5f7eb9a0d6aecf4acfe 100644
+--- a/dist/esm/worker/index.d.ts
++++ b/dist/esm/worker/index.d.ts
+@@ -1,36 +1,30 @@
+ /**
+- * Cloudflare Worker for Code Mode execution
++ * Cloudflare Worker for Code Mode execution.
+  *
+- * This Worker executes JavaScript code in a V8 isolate on Cloudflare's edge network.
+- * Tool calls are handled via a request/response loop with the driver.
+- *
+- * Flow:
+- * 1. Receive code + tool schemas
+- * 2. Execute code, collecting any tool calls
+- * 3. If tool calls are needed, return them to the driver
+- * 4. Driver executes tools locally, sends results back
+- * 5. Re-execute with tool results injected
+- * 6. Return final result
+- */
+-/**
+- * UnsafeEval binding type.
+- *
+- * Provides dynamic-code execution against the Worker's V8 isolate. Available
+- * locally (via wrangler dev) and in production deployments where the
+- * `unsafe_eval` binding has been enabled on the Cloudflare account.
++ * Patched (SRI-312): driver targets the `worker_loader` (Dynamic Workers)
++ * binding instead of the gated `unsafe_eval` binding.
+  */
+-interface UnsafeEval {
+-    eval: (code: string) => unknown;
++interface WorkerLoaderEntrypoint {
++    fetch(request: Request): Promise<Response>;
++}
++interface LoadedWorker {
++    getEntrypoint(name?: string): WorkerLoaderEntrypoint;
++}
++interface WorkerLoader {
++    load(options: {
++        compatibilityDate: string;
++        mainModule: string;
++        modules: Record<string, string>;
++        globalOutbound?: unknown;
++        env?: Record<string, unknown>;
++    }): LoadedWorker;
+ }
+ interface Env {
+     /**
+-     * UnsafeEval binding. Configured in wrangler.toml as an unsafe binding.
++     * worker_loader binding. Configured in wrangler.toml under [[worker_loaders]].
+      */
+-    UNSAFE_EVAL?: UnsafeEval;
++    LOADER?: WorkerLoader;
+ }
+-/**
+- * Main Worker fetch handler
+- */
+ declare const _default: {
+     fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response>;
+ };
+diff --git a/dist/esm/worker/index.js b/dist/esm/worker/index.js
+index fc7ae7bfb70a45f986492546dd1870191369d4dc..e2a2c34d24d40354687a8a2764e9addd449a5f59 100644
+--- a/dist/esm/worker/index.js
++++ b/dist/esm/worker/index.js
+@@ -11,36 +11,66 @@
+  * 4. Driver executes tools locally, sends results back
+  * 5. Re-execute with tool results injected
+  * 6. Return final result
++ *
++ * Patched (SRI-312): swapped `env.UNSAFE_EVAL.eval(code)` for the
++ * `worker_loader` (Dynamic Workers) binding. `unsafe_eval` is gated by
++ * Cloudflare for all customer prod deploys; `worker_loader` is the supported
++ * replacement (GA-beta 2026-03-24, Workers Paid plan).
+  */
+ import { wrapCode } from './wrap-code';
+-/**
+- * Execute code in the Worker's V8 isolate
+- */
++const SANDBOX_COMPAT_DATE = '2026-05-01';
++function buildSandboxModule(wrappedCode) {
++    return `
++export default {
++  async fetch() {
++    const __result = await ${wrappedCode};
++    return new Response(JSON.stringify(__result), {
++      headers: { 'Content-Type': 'application/json' },
++    });
++  }
++};
++`;
++}
+ async function executeCode(request, env) {
+     const { code, tools, toolResults, timeout = 30000 } = request;
+-    // Check if UNSAFE_EVAL binding is available
+-    if (!env.UNSAFE_EVAL) {
++    if (!env.LOADER) {
+         return {
+             status: 'error',
+             error: {
+-                name: 'UnsafeEvalNotAvailable',
+-                message: 'UNSAFE_EVAL binding is not available. ' +
+-                    'This Worker requires the unsafe_eval binding. ' +
+-                    'Declare it in wrangler.toml under [[unsafe.bindings]] ' +
+-                    '(works for local development and production where the ' +
+-                    'account has unsafe_eval enabled).',
++                name: 'WorkerLoaderNotAvailable',
++                message: 'LOADER binding is not available. ' +
++                    'This Worker requires the worker_loader (Dynamic Workers) binding. ' +
++                    'Declare it in wrangler.toml under [[worker_loaders]] with binding = "LOADER".',
+             },
+         };
+     }
+     try {
+         const wrappedCode = wrapCode(code, tools, toolResults);
+-        // Execute with timeout
++        const moduleSource = buildSandboxModule(wrappedCode);
++        // AbortController propagates into the loaded Worker via Request.signal so
++        // a timeout actually cancels the in-flight fetch instead of leaking the
++        // child isolate. Promise.race remains as a belt-and-suspenders guard.
+         const controller = new AbortController();
+-        const timeoutId = setTimeout(() => controller.abort(), timeout);
++        let timeoutId;
++        const timeoutPromise = new Promise((_resolve, reject) => {
++            timeoutId = setTimeout(() => {
++                controller.abort();
++                reject(new Error('__SANDBOX_TIMEOUT__'));
++            }, timeout);
++        });
+         try {
+-            // Execute the wrapped code through the UNSAFE_EVAL binding.
+-            const result = (await env.UNSAFE_EVAL.eval(wrappedCode));
++            const loaded = env.LOADER.load({
++                compatibilityDate: SANDBOX_COMPAT_DATE,
++                mainModule: 'main.js',
++                modules: { 'main.js': moduleSource },
++                globalOutbound: null,
++                env: {},
++            });
++            const entrypoint = loaded.getEntrypoint();
++            const fetchPromise = entrypoint.fetch(new Request('https://sandbox.invalid/', { signal: controller.signal }));
++            const response = await Promise.race([fetchPromise, timeoutPromise]);
+             clearTimeout(timeoutId);
++            const result = (await response.json());
+             if (result.status === 'need_tools') {
+                 return {
+                     status: 'need_tools',
+@@ -59,7 +89,8 @@ async function executeCode(request, env) {
+         }
+         catch (evalError) {
+             clearTimeout(timeoutId);
+-            if (controller.signal.aborted) {
++            const error = evalError;
++            if (error?.message === '__SANDBOX_TIMEOUT__' || controller.signal.aborted) {
+                 return {
+                     status: 'error',
+                     error: {
+@@ -68,7 +99,6 @@ async function executeCode(request, env) {
+                     },
+                 };
+             }
+-            const error = evalError;
+             return {
+                 status: 'done',
+                 success: false,
