@@ -7,7 +7,6 @@ import { RenderChartToolRenderer } from "./charts/render-chart";
 import { BashToolRenderer } from "./code-agent/bash-renderer";
 import { ReadFileToolRenderer } from "./code-agent/readfile-renderer";
 import { SqlToolRenderer } from "./code-agent/sql-renderer";
-import { MathComputationToolRenderer } from "./computation/math-computation";
 import { RenderDocumentToolRenderer } from "./documents/render-document";
 import type { ToolRendererContext } from "./types";
 import { toolRendererKey } from "./types";
@@ -90,15 +89,6 @@ export const ToolPartRenderer = memo(function ToolPartRenderer({
     }
     return (
       <RenderDocumentToolRenderer
-        context={context}
-        invocation={part as never}
-      />
-    );
-  }
-
-  if (part.type === "tool-compute") {
-    return (
-      <MathComputationToolRenderer
         context={context}
         invocation={part as never}
       />
