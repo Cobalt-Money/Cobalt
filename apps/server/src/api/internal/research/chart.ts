@@ -1,5 +1,5 @@
 import { fmpGetChart } from "@cobalt-web/server-data/research/fmp-ticker";
-import type { TimePeriod } from "@cobalt-web/server-data/research/lib";
+import type { TimePeriod } from "@cobalt-web/server-data/research/fmp-ticker";
 import {
   chartQuerySchema,
   chartResponseSchema,

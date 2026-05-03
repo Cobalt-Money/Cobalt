@@ -200,7 +200,15 @@ export async function fmpGetProfile(symbol: string): Promise<FmpProfile> {
 
 // ── Historical Chart ──────────────────────────────────────────────
 
-type TimePeriod = "1D" | "1W" | "1M" | "3M" | "6M" | "YTD" | "1Y" | "All";
+export type TimePeriod =
+  | "1D"
+  | "1W"
+  | "1M"
+  | "3M"
+  | "6M"
+  | "YTD"
+  | "1Y"
+  | "All";
 
 function chartPathAndParams(
   symbol: string,

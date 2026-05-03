@@ -22,21 +22,11 @@ import {
   positionsQuerySchema,
 } from "@cobalt-web/server-data/brokerage/schemas";
 import {
-  getBalanceSheet,
-  getCompanyOverview,
-  getEarningsEstimates,
-  getEarningsHistory,
-  getIncomeStatement,
-  getIntradayData,
-  getQuoteData,
-  getResearchNews,
-  getTimeSeriesData,
-} from "@cobalt-web/server-data/research/queries";
-import {
-  intradayQuerySchema,
-  symbolQuerySchema,
-  timeSeriesQuerySchema,
-} from "@cobalt-web/server-data/research/schemas";
+  fmpGetProfile,
+  fmpGetQuote,
+} from "@cobalt-web/server-data/research/fmp-ticker";
+import { getResearchNews } from "@cobalt-web/server-data/research/queries";
+import { symbolQuerySchema } from "@cobalt-web/server-data/research/schemas";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
 import { balanceSnapshotQuerySchema } from "@cobalt-web/server-data/snapshots/schemas";
 import { setTransactionTags } from "@cobalt-web/server-data/tags/mutations";
@@ -159,58 +149,22 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
     schema: emptySchema,
   }),
   route({
-    description: "Public market data: balance sheet for a symbol.",
-    handler: async (_userId, { symbol }) => await getBalanceSheet(symbol),
-    name: "research_balanceSheet",
-    schema: symbolQuerySchema,
-  }),
-  route({
-    description: "Public market data: earnings estimates for a symbol.",
-    handler: async (_userId, { symbol }) => await getEarningsEstimates(symbol),
-    name: "research_earningsEstimates",
-    schema: symbolQuerySchema,
-  }),
-  route({
-    description: "Public market data: earnings history for a symbol.",
-    handler: async (_userId, { symbol }) => await getEarningsHistory(symbol),
-    name: "research_earningsHistory",
-    schema: symbolQuerySchema,
-  }),
-  route({
-    description: "Public market data: income statement for a symbol.",
-    handler: async (_userId, { symbol }) => await getIncomeStatement(symbol),
-    name: "research_incomeStatement",
-    schema: symbolQuerySchema,
-  }),
-  route({
-    description: "Public market data: intraday OHLCV bars for a symbol.",
-    handler: async (_userId, args) => await getIntradayData(args),
-    name: "research_intraday",
-    schema: intradayQuerySchema,
-  }),
-  route({
     description: "Public market data: news articles for a symbol.",
     handler: async (_userId, { symbol }) => await getResearchNews(symbol),
     name: "research_news",
     schema: symbolQuerySchema,
   }),
   route({
-    description: "Public market data: company overview for a symbol.",
-    handler: async (_userId, { symbol }) => await getCompanyOverview(symbol),
+    description: "Public market data: normalized company profile (FMP).",
+    handler: async (_userId, { symbol }) => await fmpGetProfile(symbol),
     name: "research_overview",
     schema: symbolQuerySchema,
   }),
   route({
-    description: "Public market data: latest quote for a symbol.",
-    handler: async (_userId, { symbol }) => await getQuoteData(symbol),
+    description: "Public market data: latest quote for a symbol (FMP).",
+    handler: async (_userId, { symbol }) => await fmpGetQuote(symbol),
     name: "research_quote",
     schema: symbolQuerySchema,
-  }),
-  route({
-    description: "Public market data: daily/weekly/monthly OHLCV time series.",
-    handler: async (_userId, args) => await getTimeSeriesData(args),
-    name: "research_timeSeries",
-    schema: timeSeriesQuerySchema,
   }),
   route({
     description: "Daily balance snapshots for the user's accounts.",

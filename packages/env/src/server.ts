@@ -29,7 +29,6 @@ export const env = createEnv({
     AI_GATEWAY_API_KEY: z.string().min(1).optional(),
     /** Vercel AI Gateway model slug (e.g. anthropic/claude-haiku-4.5). */
     AI_GATEWAY_MODEL: z.string().default("anthropic/claude-haiku-4.5"),
-    ALPHA_VANTAGE_API_KEY: z.string().min(1),
     APPLE_APP_BUNDLE_IDENTIFIER: z.string().min(1),
     /** Numeric App Apple ID from App Store Connect. Required for Production App Store webhooks; ignored in Sandbox. */
     APPLE_APP_ID: z.coerce.number().int().positive().optional(),

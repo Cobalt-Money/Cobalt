@@ -84,15 +84,6 @@ const COBALT_SDK = {
     /** Global market data — not user-scoped. @param args { symbol } */
     quote: (args) => __cobaltCall("research.quote", args),
     overview: (args) => __cobaltCall("research.overview", args),
-    /** @param args { symbol, interval?, outputsize? } */
-    timeSeries: (args) => __cobaltCall("research.timeSeries", args),
-    /** @param args { symbol, interval, extended_hours?, outputsize? } */
-    intraday: (args) => __cobaltCall("research.intraday", args),
-    earningsHistory: (args) => __cobaltCall("research.earningsHistory", args),
-    earningsEstimates: (args) =>
-      __cobaltCall("research.earningsEstimates", args),
-    incomeStatement: (args) => __cobaltCall("research.incomeStatement", args),
-    balanceSheet: (args) => __cobaltCall("research.balanceSheet", args),
     news: (args) => __cobaltCall("research.news", args),
   },
   transactions: {

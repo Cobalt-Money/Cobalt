@@ -6,21 +6,6 @@ export const symbolQuerySchema = z.object({
   symbol: z.string().min(1).openapi({ example: "AAPL" }),
 });
 
-export const timeSeriesQuerySchema = z.object({
-  interval: z.enum(["daily", "weekly", "monthly"]).optional(),
-  outputsize: z.enum(["compact", "full"]).optional(),
-  symbol: z.string().min(1).openapi({ example: "AAPL" }),
-});
-export type TimeSeriesQuery = z.infer<typeof timeSeriesQuerySchema>;
-
-export const intradayQuerySchema = z.object({
-  extended_hours: z.boolean().optional(),
-  interval: z.enum(["1min", "5min", "15min", "30min", "60min"]),
-  outputsize: z.enum(["compact", "full"]).optional(),
-  symbol: z.string().min(1).openapi({ example: "AAPL" }),
-});
-export type IntradayQuery = z.infer<typeof intradayQuerySchema>;
-
 export const errorResponseSchema = z.object({
   error: z.string(),
 });
@@ -93,29 +78,6 @@ const priceDataSchema = z.object({
 export const chartResponseSchema = z.object({
   data: z.array(priceDataSchema),
 });
-
-// ── Earnings ───────────────────────────────────────────────────────
-
-export const earningsResponseSchema = z.object({
-  earningsEstimates: z.unknown(),
-  earningsHistory: z.unknown(),
-});
-
-// ── Income statement ───────────────────────────────────────────────
-
-export const incomeStatementResponseSchema = z
-  .record(z.string(), z.unknown())
-  .openapi({
-    description: "Alpha Vantage income statement (all fields returned as-is)",
-  });
-
-// ── Balance sheet ──────────────────────────────────────────────────
-
-export const balanceSheetResponseSchema = z
-  .record(z.string(), z.unknown())
-  .openapi({
-    description: "Alpha Vantage balance sheet (all fields returned as-is)",
-  });
 
 // ── News ───────────────────────────────────────────────────────────
 
