@@ -18,6 +18,7 @@
     "@ai-sdk/gateway": "^3.0.84",
     "@better-auth/oauth-provider": "1.5.6",
     "@cobalt-web/auth": "workspace:*",
+    "@cobalt-web/bindings": "workspace:*",
     "@cobalt-web/clients": "workspace:*",
     "@cobalt-web/db": "workspace:*",
     "@cobalt-web/env": "workspace:*",

@@ -1,3 +1,5 @@
+import { bindRoutes, route } from "@cobalt-web/bindings";
+import type { Binding, RouteSpec } from "@cobalt-web/bindings";
 import { db } from "@cobalt-web/db";
 import {
   getAllAccountsWithInstitutions,
@@ -51,15 +53,7 @@ import {
 } from "@cobalt-web/server-data/transactions/schemas";
 import { z } from "zod";
 
-export interface Binding {
-  name: string;
-  description: string;
-  inputSchema: Record<string, unknown>;
-  handler: (args: unknown) => Promise<unknown>;
-}
-
-const toJsonSchema = (s: z.ZodTypeAny): Record<string, unknown> =>
-  z.toJSONSchema(s, { target: "draft-7" }) as Record<string, unknown>;
+export type { Binding };
 
 const emptySchema = z.object({});
 const accountIdSchema = z.object({ accountId: z.string().min(1) });
@@ -77,17 +71,6 @@ const transactionPatchSchema = z.object({
   patch: transactionPatchBodySchema,
   transactionId: z.string().min(1),
 });
-
-interface RouteSpec<S extends z.ZodTypeAny> {
-  name: string;
-  description: string;
-  schema: S;
-  handler: (userId: string, args: z.infer<S>) => Promise<unknown>;
-}
-
-function route<S extends z.ZodTypeAny>(spec: RouteSpec<S>): RouteSpec<S> {
-  return spec;
-}
 
 /**
  * One entry per allowed call. Names use `<group>_<method>` so they survive
@@ -319,13 +302,5 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
 ];
 
 export function buildBindings(userId: string): Binding[] {
-  return ROUTES.map((r) => ({
-    description: r.description,
-    handler: async (args: unknown) => {
-      const parsed = r.schema.parse(args ?? {});
-      return await r.handler(userId, parsed);
-    },
-    inputSchema: toJsonSchema(r.schema),
-    name: r.name,
-  }));
+  return bindRoutes(userId, ROUTES);
 }
