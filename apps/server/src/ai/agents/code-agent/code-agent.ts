@@ -16,7 +16,6 @@ import type { ReasoningEffort } from "../../model-provider.js";
 import { loadSchemaFiles } from "./schema-context.js";
 import { askUserTool } from "./tools/ask-user-tools.js";
 import { renderChartTool } from "./tools/chart-tools.js";
-import { mathComputationTool } from "./tools/computation-tools.js";
 import { renderDocumentTool } from "./tools/document-tools.js";
 import { createExecuteCodeTool } from "./tools/execute-code-tool.js";
 
@@ -92,7 +91,6 @@ AVAILABLE TOOLS:
 - executeCode: Run JS or TS inside an ephemeral V8 isolate sandbox with the Cobalt SDK preinjected as \`cobalt\`. TS types are stripped before exec (syntax-only, no type-check) — \`: Type\`, \`as Type\`, \`interface\`, \`<Generics>\` all OK. Use \`console.log\` to return data; stdout is what you receive. Top-level await is supported. Do NOT import the SDK. The sandbox has a 3-minute wall-clock budget. Most APIs are read-only; \`cobalt.transactions.update\` is the only mutator and patches existing rows owned by the user.
 - webSearch: Search the web for current information, market data, financial news, regulatory updates, or general knowledge.
 - webExtract: Extract and read the full content of specific web pages.
-- compute: Evaluate mathematical expressions using Math.js.
 - renderChart: Create interactive charts (LineChart, BarChart, PieChart, AreaChart) from data you've fetched.
 - renderDocument: Create downloadable PDF documents. Use PDFPage as root, PDFHeader for titles, PDFTable for data, PDFMetricRow for KPIs.
 - askUser: Ask the user a multiple-choice clarifying question when their request is ambiguous.
@@ -114,11 +112,10 @@ CRITICAL RULES:
 1. NEVER fabricate data or make estimates. All answers must come from actual sandbox results.
 2. Use the typed \`cobalt.*\` SDK methods listed in the executeCode tool description — do not invent methods.
 3. Use \`console.log(JSON.stringify(...))\` to surface structured data; stdout is your only return channel.
-4. Use the compute tool for ALL mathematical operations — always render the expression in a \`\`\`math block before calling compute.
-5. For complex questions, break work into multiple executeCode calls with focused intermediate logs rather than one monolithic script.
-6. Present results as clear summaries — do not dump raw rows unless asked.
-7. CHART GENERATION: Use renderChart after fetching data. LineChart for trends, BarChart for categories, PieChart for proportions, AreaChart for cumulative.
-8. DOCUMENT GENERATION: Use renderDocument for reports/exports. Root must be PDFPage; always include PDFHeader.
+4. For complex questions, break work into multiple executeCode calls with focused intermediate logs rather than one monolithic script.
+5. Present results as clear summaries — do not dump raw rows unless asked.
+6. CHART GENERATION: Use renderChart after fetching data. LineChart for trends, BarChart for categories, PieChart for proportions, AreaChart for cumulative.
+7. DOCUMENT GENERATION: Use renderDocument for reports/exports. Root must be PDFPage; always include PDFHeader.
 
 WEB SEARCH CITATIONS:
 When using webSearch results, cite sources inline: <cite url="https://example.com" title="Title" excerpt="Key excerpt">example.com</cite>`,
@@ -178,7 +175,6 @@ OUTPUT FORMATTING:
 - Format responses in markdown. Use tables for structured data and code blocks for SQL.
 - Be concise — summarize insights rather than narrating every step.
 ${emojiInstruction}- Use **bold** for emphasis and important numbers.
-- Use \`\`\`math blocks for mathematical expressions before calling compute.
 - Use > blockquotes for important notes or warnings.
 - WEB SEARCH CITATIONS: cite sources inline with <cite url="..." title="..." excerpt="...">domain</cite>
 
@@ -191,7 +187,6 @@ WORKFLOW: optionally discover schema/knowledge (bash: ls/cat/grep) → write pla
     tools: {
       askUser: askUserTool,
       bash,
-      compute: mathComputationTool,
       executeCode: executeCodeTool,
       renderChart: renderChartTool,
       renderDocument: renderDocumentTool,

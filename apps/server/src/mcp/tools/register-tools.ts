@@ -1,11 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { ALLOWED_TABLES } from "../constants.js";
 import { executeCode } from "./execute-code.js";
-import { describeTable, getRelationships, listTables } from "./schema.js";
-
-const allowedTableNames = Object.keys(ALLOWED_TABLES);
 
 export function registerMcpTools(server: McpServer, userId: string): void {
   server.registerTool(
@@ -22,46 +18,6 @@ export function registerMcpTools(server: McpServer, userId: string): void {
         { text: JSON.stringify({ sub: userId }), type: "text" as const },
       ],
     })
-  );
-
-  server.registerTool(
-    "cobalt_list_tables",
-    {
-      annotations: { destructiveHint: false, readOnlyHint: true },
-      description:
-        "List Cobalt's data domains (tables). Use this first to discover what data is available before writing code.",
-      inputSchema: z.object({}),
-      title: "List tables",
-    },
-    () => listTables()
-  );
-
-  server.registerTool(
-    "cobalt_describe_table",
-    {
-      annotations: { destructiveHint: false, readOnlyHint: true },
-      description:
-        "Get column names, data types, and nullability for a specific table. Useful context when writing code that calls Cobalt APIs.",
-      inputSchema: z.object({
-        table: z
-          .enum(allowedTableNames as [string, ...string[]])
-          .describe("Table name from cobalt_list_tables"),
-      }),
-      title: "Describe table",
-    },
-    ({ table }) => describeTable(table)
-  );
-
-  server.registerTool(
-    "cobalt_get_relationships",
-    {
-      annotations: { destructiveHint: false, readOnlyHint: true },
-      description:
-        "Get foreign key relationships between tables. Useful for reasoning about how Cobalt APIs link entities.",
-      inputSchema: z.object({}),
-      title: "Get relationships",
-    },
-    () => getRelationships()
   );
 
   server.registerTool(
