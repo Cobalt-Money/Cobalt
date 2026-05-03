@@ -47,7 +47,7 @@ export const fundamentals = pgTable(
     // Per-category sync timestamps (for staleness detection + resumability)
     profileSyncedAt: timestamp("profile_synced_at", { withTimezone: true }),
 
-    // Financials (SEC EDGAR companyfacts, weekly)
+    // Financials (FMP income/balance/cash-flow statements, refreshed daily on earnings reporters)
     revenue: bigint("revenue", { mode: "bigint" }),
     sector: text("sector"),
     sharesOutstandingDiluted: bigint("shares_outstanding_diluted", {

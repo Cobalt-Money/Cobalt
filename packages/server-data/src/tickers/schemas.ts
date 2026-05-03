@@ -21,15 +21,3 @@ export const tickerSearchResponseSchema = z.object({
   count: z.number(),
   tickers: z.array(tickerSearchItemSchema),
 });
-
-// ── Price ──────────────────────────────────────────────────────────
-
-export const symbolParamSchema = z.object({
-  symbol: z.string().min(1).openapi({ example: "AAPL" }),
-});
-
-export const tickerPriceResponseSchema = z.object({
-  price: z.number(),
-  symbol: z.string(),
-  timestamp: z.string(),
-});

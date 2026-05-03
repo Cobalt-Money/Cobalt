@@ -20,16 +20,10 @@ import {
   positionsQuerySchema,
 } from "@cobalt-web/server-data/brokerage/schemas";
 import {
-  getBalanceSheet,
-  getCompanyOverview,
-  getEarningsEstimates,
-  getEarningsHistory,
-  getIncomeStatement,
-  getIntradayData,
-  getQuoteData,
-  getResearchNews,
-  getTimeSeriesData,
-} from "@cobalt-web/server-data/research/queries";
+  fmpGetProfile,
+  fmpGetQuote,
+} from "@cobalt-web/server-data/research/fmp-ticker";
+import { getResearchNews } from "@cobalt-web/server-data/research/queries";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
 import { balanceSnapshotQuerySchema } from "@cobalt-web/server-data/snapshots/schemas";
 import { setTransactionTags } from "@cobalt-web/server-data/tags/mutations";
@@ -70,17 +64,6 @@ const transactionPatchSchema = z.object({
   transactionId: z.string().min(1),
 });
 const symbolSchema = z.object({ symbol: z.string().min(1) });
-const timeSeriesSchema = z.object({
-  interval: z.enum(["daily", "weekly", "monthly"]).optional(),
-  outputsize: z.enum(["compact", "full"]).optional(),
-  symbol: z.string().min(1),
-});
-const intradaySchema = z.object({
-  extended_hours: z.boolean().optional(),
-  interval: z.enum(["1min", "5min", "15min", "30min", "60min"]),
-  outputsize: z.enum(["compact", "full"]).optional(),
-  symbol: z.string().min(1),
-});
 
 /**
  * Registry of routes the sandbox is allowed to call through the bridge.
@@ -147,41 +130,17 @@ export const BRIDGE_ROUTES = {
     }),
     schema: emptySchema,
   }),
-  "research.balanceSheet": defineRoute({
-    handler: async (_userId, { symbol }) => await getBalanceSheet(symbol),
-    schema: symbolSchema,
-  }),
-  "research.earningsEstimates": defineRoute({
-    handler: async (_userId, { symbol }) => await getEarningsEstimates(symbol),
-    schema: symbolSchema,
-  }),
-  "research.earningsHistory": defineRoute({
-    handler: async (_userId, { symbol }) => await getEarningsHistory(symbol),
-    schema: symbolSchema,
-  }),
-  "research.incomeStatement": defineRoute({
-    handler: async (_userId, { symbol }) => await getIncomeStatement(symbol),
-    schema: symbolSchema,
-  }),
-  "research.intraday": defineRoute({
-    handler: async (_userId, args) => await getIntradayData(args),
-    schema: intradaySchema,
-  }),
   "research.news": defineRoute({
     handler: async (_userId, { symbol }) => await getResearchNews(symbol),
     schema: symbolSchema,
   }),
   "research.overview": defineRoute({
-    handler: async (_userId, { symbol }) => await getCompanyOverview(symbol),
+    handler: async (_userId, { symbol }) => await fmpGetProfile(symbol),
     schema: symbolSchema,
   }),
   "research.quote": defineRoute({
-    handler: async (_userId, { symbol }) => await getQuoteData(symbol),
+    handler: async (_userId, { symbol }) => await fmpGetQuote(symbol),
     schema: symbolSchema,
-  }),
-  "research.timeSeries": defineRoute({
-    handler: async (_userId, args) => await getTimeSeriesData(args),
-    schema: timeSeriesSchema,
   }),
   "snapshots.balances": defineRoute({
     handler: async (userId, args) => ({

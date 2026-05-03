@@ -3,7 +3,6 @@
 // t3-env schema. Tests never hit a real database / provider — actions and
 // mutations are mocked at the network / DB boundary.
 const REQUIRED_ENV: Record<string, string> = {
-  ALPHA_VANTAGE_API_KEY: "test-alpha-vantage",
   APPLE_APP_BUNDLE_IDENTIFIER: "test.bundle.id",
   APPLE_KEY_ID: "test-key-id",
   APPLE_PRIVATE_KEY: "test-private-key",
