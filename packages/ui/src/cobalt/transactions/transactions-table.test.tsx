@@ -25,8 +25,6 @@ function createMockTransaction(
     amount: -12.34,
     authorizedDate: null,
     category: null,
-    categoryConfidence: null,
-    categoryDetail: null,
     counterparties: null,
     date: "2025-01-15",
     id: "550e8400-e29b-41d4-a716-446655440001",

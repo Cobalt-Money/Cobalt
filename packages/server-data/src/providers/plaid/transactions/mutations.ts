@@ -5,6 +5,9 @@ import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connectio
 import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Transaction, TransactionStream } from "plaid";
 
+import { lookupCategoryIdsBySystemKey } from "../../../transactions/categories/lookup.js";
+import { pfcDetailedToSystemKey } from "../../../transactions/categories/map.js";
+import type { CategorySystemKey } from "../../../transactions/categories/system-keys.js";
 import {
   lookupFinancialAccountsByPlaidIds,
   lookupPlaidConnection,
@@ -25,6 +28,37 @@ export async function setTransactionsCursor(
     .where(eq(plaidConnection.plaidItemId, plaidItemId));
 }
 
+/**
+ * For a set of (userId, systemKey) pairs, batch-resolve to categoryId per user.
+ * Always includes `uncategorized` in the per-user fetch so we have a fallback.
+ * Returns: Map<userId, Map<systemKey, categoryId>>.
+ */
+async function resolveCategoryIdsForUsers(
+  needs: Map<string, Set<CategorySystemKey>>
+): Promise<Map<string, Map<CategorySystemKey, string>>> {
+  const out = new Map<string, Map<CategorySystemKey, string>>();
+  await Promise.all(
+    [...needs.entries()].map(async ([userId, keys]) => {
+      keys.add("uncategorized");
+      const map = await lookupCategoryIdsBySystemKey(userId, [...keys]);
+      out.set(userId, map);
+    })
+  );
+  return out;
+}
+
+function pickCategoryId(
+  resolved: Map<string, Map<CategorySystemKey, string>>,
+  userId: string,
+  systemKey: CategorySystemKey
+): string | null {
+  const userMap = resolved.get(userId);
+  if (!userMap) {
+    return null;
+  }
+  return userMap.get(systemKey) ?? userMap.get("uncategorized") ?? null;
+}
+
 export async function persistTransactions(
   transactions: Transaction[]
 ): Promise<void> {
@@ -35,13 +69,37 @@ export async function persistTransactions(
   const plaidAccountIds = [...new Set(transactions.map((t) => t.account_id))];
   const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
 
+  const needs = new Map<string, Set<CategorySystemKey>>();
+  for (const tx of transactions) {
+    const ref = accountMap.get(tx.account_id);
+    if (!ref) {
+      continue;
+    }
+    const key = pfcDetailedToSystemKey(tx.personal_finance_category?.detailed);
+    let set = needs.get(ref.userId);
+    if (!set) {
+      set = new Set();
+      needs.set(ref.userId, set);
+    }
+    set.add(key);
+  }
+  const resolved = await resolveCategoryIdsForUsers(needs);
+
   const records = transactions
     .map((tx) => {
       const ref = accountMap.get(tx.account_id);
       if (!ref) {
         return null;
       }
-      return transactionToRecord(tx, ref.id, ref.userId);
+      const systemKey = pfcDetailedToSystemKey(
+        tx.personal_finance_category?.detailed
+      );
+      const categoryId = pickCategoryId(resolved, ref.userId, systemKey);
+      if (!categoryId) {
+        // User missing seed (signup hook failure); skip until backfill.
+        return null;
+      }
+      return transactionToRecord(tx, ref.id, ref.userId, categoryId);
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
@@ -60,9 +118,7 @@ export async function persistTransactions(
         amount: sql`excluded.amount`,
         authorizedDate: sql`excluded.authorized_date`,
         // Respect lockedFields: only overwrite if user has not locked the field.
-        category: sql`CASE WHEN ${transactionTable.lockedFields} ? 'category' THEN ${transactionTable.category} ELSE excluded.category END`,
-        categoryConfidence: sql`CASE WHEN ${transactionTable.lockedFields} ? 'category' THEN ${transactionTable.categoryConfidence} ELSE excluded.category_confidence END`,
-        categoryDetail: sql`CASE WHEN ${transactionTable.lockedFields} ? 'category' THEN ${transactionTable.categoryDetail} ELSE excluded.category_detail END`,
+        categoryId: sql`CASE WHEN ${transactionTable.lockedFields} ? 'category' THEN ${transactionTable.categoryId} ELSE excluded.category_id END`,
         checkNumber: sql`excluded.check_number`,
         city: sql`excluded.city`,
         counterparties: sql`excluded.counterparties`,
@@ -133,11 +189,8 @@ export async function applyPendingOverrides(
     await db
       .update(transactionTable)
       .set({
-        category: override.lockedFields.includes("category")
-          ? override.category
-          : undefined,
-        categoryDetail: override.lockedFields.includes("category")
-          ? override.categoryDetail
+        categoryId: override.lockedFields.includes("category")
+          ? (override.categoryId ?? undefined)
           : undefined,
         lockedFields: override.lockedFields,
         name: override.lockedFields.includes("name")
@@ -191,11 +244,7 @@ function mapRecurringStreamBase(
 }
 
 function mapRecurringStreamMeta(s: RecurringStreamRow) {
-  const pfc = s.personal_finance_category;
   return {
-    category: pfc?.primary ?? null,
-    categoryConfidence: pfc?.confidence_level ?? null,
-    categoryDetail: pfc?.detailed ?? null,
     description: s.description ?? "",
     frequency: s.frequency ?? "UNKNOWN",
     merchantName: s.merchant_name ?? null,
@@ -213,15 +262,39 @@ async function upsertRecurringStreams(
   const plaidAccountIds = [...new Set(streams.map((s) => s.account_id))];
   const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
 
+  const needs = new Map<string, Set<CategorySystemKey>>();
+  for (const s of streams) {
+    const ref = accountMap.get(s.account_id);
+    if (!ref) {
+      continue;
+    }
+    const key = pfcDetailedToSystemKey(s.personal_finance_category?.detailed);
+    let set = needs.get(ref.userId);
+    if (!set) {
+      set = new Set();
+      needs.set(ref.userId, set);
+    }
+    set.add(key);
+  }
+  const resolved = await resolveCategoryIdsForUsers(needs);
+
   const rows = streams
     .map((s) => {
       const ref = accountMap.get(s.account_id);
       if (!ref) {
         return null;
       }
+      const systemKey = pfcDetailedToSystemKey(
+        s.personal_finance_category?.detailed
+      );
+      const categoryId = pickCategoryId(resolved, ref.userId, systemKey);
+      if (!categoryId) {
+        return null;
+      }
       return {
         ...mapRecurringStreamBase(s, today, ref.id, ref.userId),
         ...mapRecurringStreamMeta(s),
+        categoryId,
       };
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
@@ -234,9 +307,7 @@ async function upsertRecurringStreams(
       .onConflictDoUpdate({
         set: {
           averageAmount: sql`excluded.average_amount`,
-          category: sql`excluded.category`,
-          categoryConfidence: sql`excluded.category_confidence`,
-          categoryDetail: sql`excluded.category_detail`,
+          categoryId: sql`excluded.category_id`,
           description: sql`excluded.description`,
           frequency: sql`excluded.frequency`,
           isActive: sql`excluded.is_active`,

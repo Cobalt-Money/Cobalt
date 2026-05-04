@@ -14,6 +14,7 @@ import {
 
 import { user } from "../../../users/auth/auth";
 import { financialAccount } from "../../account";
+import { category } from "../categories/category";
 import { transactionSource } from "./transaction";
 import type { RecurringTransactionIdsJson } from "./zod";
 
@@ -27,9 +28,10 @@ export const recurring = pgTable(
       precision: 19,
       scale: 4,
     }).notNull(),
-    category: text("category"),
-    categoryConfidence: text("category_confidence"),
-    categoryDetail: text("category_detail"),
+    /** SRI-311: FK to user's category row. */
+    categoryId: uuid("category_id").references(() => category.id, {
+      onDelete: "restrict",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -59,6 +61,7 @@ export const recurring = pgTable(
   },
   (t) => [
     index("recurring_account_id_idx").on(t.accountId),
+    index("recurring_category_id_idx").on(t.categoryId),
     index("recurring_user_id_idx").on(t.userId),
     index("recurring_account_date_type_idx").on(
       t.accountId,

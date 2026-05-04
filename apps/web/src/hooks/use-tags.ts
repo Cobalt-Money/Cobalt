@@ -1,7 +1,7 @@
-import type { TagColor } from "@cobalt-web/ui/cobalt/tags/palette";
-import { isTagColor } from "@cobalt-web/ui/cobalt/tags/palette";
-import type { TagOption } from "@cobalt-web/ui/cobalt/tags/tag-picker";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
+import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
+import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
+import type { TagOption } from "@cobalt-web/ui/cobalt/transactions/tags/tag-picker";
 import { mutators, queries } from "@cobalt-web/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import { useCallback, useMemo } from "react";

@@ -14,6 +14,17 @@ function isImageGlyph(
   );
 }
 
+function isEmojiGlyph(
+  icon: CategoryPrimaryGlyph
+): icon is { kind: "emoji"; char: string } {
+  return (
+    typeof icon === "object" &&
+    icon !== null &&
+    "kind" in icon &&
+    icon.kind === "emoji"
+  );
+}
+
 const baseImageGlyphClass = "shrink-0 object-contain opacity-80";
 
 /** Primary category glyph (Hugeicons or static vector) — muted, no colored tile. */
@@ -26,6 +37,16 @@ export function CategoryIcon({
   sizeClassName?: string;
 }) {
   const imageGlyphClass = `${sizeClassName} ${baseImageGlyphClass}`;
+  if (isEmojiGlyph(icon)) {
+    return (
+      <span
+        aria-hidden
+        className={`${sizeClassName} inline-flex shrink-0 items-center justify-center leading-none`}
+      >
+        {icon.char}
+      </span>
+    );
+  }
   if (isImageGlyph(icon)) {
     if (icon.srcDark) {
       return (

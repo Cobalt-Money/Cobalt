@@ -4,28 +4,12 @@ import { transactionEdit } from "@cobalt-web/db/schema/accounts/banking/transact
 import { eq } from "drizzle-orm";
 import type { z } from "zod";
 
-import { setTransactionTags } from "../tags/mutations.js";
 import type { transactionPatchBodySchema } from "./schemas.js";
+import { setTransactionTags } from "./tags/mutations.js";
 
 export type TransactionPatchBody = z.infer<typeof transactionPatchBodySchema>;
 
 type EditableField = "category" | "date" | "name" | "notes";
-
-function captureOldCategory(
-  row: Pick<
-    typeof transaction.$inferSelect,
-    "category" | "categoryDetail" | "categoryConfidence"
-  >
-): unknown {
-  if (!row.category) {
-    return null;
-  }
-  return {
-    confidence: row.categoryConfidence,
-    detailed: row.categoryDetail,
-    primary: row.category,
-  };
-}
 
 async function restoreOriginalValue(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
@@ -54,15 +38,13 @@ export async function patchTransaction(
   userId: string,
   patch: TransactionPatchBody
 ): Promise<void> {
-  const { category, date, name, notes, tags, userOverrideLocation } = patch;
+  const { categoryId, date, name, notes, tags, userOverrideLocation } = patch;
 
   await db.transaction(async (tx) => {
     // Fetch current row once for old_value capture.
     const current = await tx.query.transaction.findFirst({
       columns: {
-        category: true,
-        categoryConfidence: true,
-        categoryDetail: true,
+        categoryId: true,
         date: true,
         lockedFields: true,
         name: true,
@@ -125,34 +107,28 @@ export async function patchTransaction(
     }
 
     // ── category ──────────────────────────────────────────────────────────
-    if (category !== undefined) {
-      if (category === null) {
+    if (categoryId !== undefined) {
+      if (categoryId === null) {
         const original = await restoreOriginalValue(
           tx,
           transactionId,
           "category"
         );
         if (original && typeof original === "object") {
-          const parsed = original as {
-            confidence: string | null;
-            detailed: string | null;
-            primary: string;
-          };
-          columnUpdates.category = parsed.primary;
-          columnUpdates.categoryDetail = parsed.detailed;
-          columnUpdates.categoryConfidence = parsed.confidence;
+          const parsed = original as { categoryId: string | null };
+          if (parsed.categoryId) {
+            columnUpdates.categoryId = parsed.categoryId;
+          }
         }
         removeFromLocked.push("category");
       } else {
-        columnUpdates.category = category.primary;
-        columnUpdates.categoryDetail = category.detailed;
-        columnUpdates.categoryConfidence = null;
+        columnUpdates.categoryId = categoryId;
         addToLocked.push("category");
         editRows.push({
           actor: "user",
           field: "category",
-          newValue: { detailed: category.detailed, primary: category.primary },
-          oldValue: captureOldCategory(current),
+          newValue: { categoryId },
+          oldValue: { categoryId: current.categoryId },
           transactionId,
           userId,
         });

@@ -6,11 +6,11 @@ import {
   CobaltCommandInput,
   CobaltCommandPaletteRoot,
 } from "@cobalt-web/ui/cobalt/command-palette";
-import { AddTagForm } from "@cobalt-web/ui/cobalt/tags/add-tag-dialog";
-import { ManageTagsForm } from "@cobalt-web/ui/cobalt/tags/manage-tags-dialog";
-import type { TagColor } from "@cobalt-web/ui/cobalt/tags/palette";
-import { isTagColor } from "@cobalt-web/ui/cobalt/tags/palette";
 import { AddTransactionForm } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
+import { AddTagForm } from "@cobalt-web/ui/cobalt/transactions/tags/add-tag-dialog";
+import { ManageTagsForm } from "@cobalt-web/ui/cobalt/transactions/tags/manage-tags-dialog";
+import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
+import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import {
   CommandEmpty,
   CommandGroup,
@@ -308,6 +308,7 @@ function CommandMenuDialog({
   const { submit: submitAddCashAccount } = useAddCashAccountSubmit();
   const {
     availableTags: addTxAvailableTags,
+    categoryOptions: addTxCategoryOptions,
     locationSearch: addTxLocationSearch,
     manualAccounts,
     merchantSearch: addTxMerchantSearch,
@@ -700,6 +701,7 @@ function CommandMenuDialog({
               <AddTransactionForm
                 accounts={manualAccounts}
                 availableTags={addTxAvailableTags}
+                categoryOptions={addTxCategoryOptions}
                 locationSearch={addTxLocationSearch}
                 merchantSearch={addTxMerchantSearch}
                 onBackspaceWhenEmpty={popPage}

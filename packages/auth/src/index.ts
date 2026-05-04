@@ -11,6 +11,7 @@ import { bearer } from "better-auth/plugins/bearer";
 import { Stripe } from "stripe";
 
 import { getAppleClientSecret } from "./apple-secret.js";
+import { seedUserCategories } from "./seed-user-categories.js";
 
 const schema = { ...authSchema, ...stripeSchema };
 
@@ -64,6 +65,22 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          try {
+            await seedUserCategories(db, user.id);
+          } catch (error) {
+            console.error(
+              `[auth] failed to seed categories for user ${user.id}:`,
+              error
+            );
+          }
+        },
+      },
+    },
+  },
   disabledPaths: ["/token"],
   emailAndPassword: {
     enabled: false,

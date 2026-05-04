@@ -3,6 +3,7 @@ import { defineQueries } from "@rocicorp/zero";
 import { accountsQueries } from "./accounts/queries.js";
 import { alertsQueries } from "./alerts/queries.js";
 import { brokerageQueries } from "./brokerage/queries.js";
+import { categoriesQueries } from "./categories/queries.js";
 import { chatsQueries } from "./chats/queries.js";
 import { newsQueries } from "./news/queries.js";
 import { tagsQueries } from "./tags/queries.js";
@@ -13,6 +14,7 @@ export const queries = defineQueries({
   accounts: accountsQueries,
   alerts: alertsQueries,
   brokerage: brokerageQueries,
+  categories: categoriesQueries,
   chats: chatsQueries,
   news: newsQueries,
   tags: tagsQueries,

@@ -6,17 +6,18 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { PrivateAmount } from "../../../components/privacy";
 import { InstitutionLogo } from "../../logos/institution-logo";
 import { MerchantLogo } from "../../logos/merchant-logo";
-import { TagChip } from "../../tags/tag-chip";
-import type { TagOption } from "../../tags/tag-picker";
-import { TagPicker } from "../../tags/tag-picker";
 import type { MerchantSearchState } from "../add-transaction-dialog";
 import {
   CategoryIcon,
-  getCategoryDisplayConfig,
-  getDetailedCategoryDisplayName,
+  resolveCategoryIcon,
+  UNKNOWN_CATEGORY_ICON,
 } from "../categories";
 import { getTransactionDisplayName } from "../lib/helpers";
+import { TagChip } from "../tags/tag-chip";
+import type { TagOption } from "../tags/tag-picker";
+import { TagPicker } from "../tags/tag-picker";
 import { EditableCategory } from "./editable-category";
+import type { CategoryPickerOption } from "./editable-category";
 import { EditableDate } from "./editable-date";
 import { EditableLocation } from "./editable-location";
 import { EditableMerchantLogo } from "./editable-merchant-logo";
@@ -52,7 +53,9 @@ export interface TransactionDetailEditHandlers {
   onResetDate: () => void;
   onResetNotes: () => void;
   onResetLocation: () => void;
-  onUpdateCategory: (value: { detailed: string; primary: string }) => void;
+  onUpdateCategory: (value: { categoryId: string }) => void;
+  /** All non-deleted, non-hidden cats for the picker. Caller fetches via `queries.categories.list`. */
+  categoryOptions: readonly CategoryPickerOption[];
   onUpdateDate: (dateIso: string) => void;
   onUpdateLocation: (location: LocationJson) => void;
   onUpdateMerchant: (args: {
@@ -88,13 +91,7 @@ export function TransactionDetailSummary({
     ? "text-red-600 dark:text-red-500"
     : "text-green-550";
 
-  const category = transaction.category
-    ? {
-        confidence_level: transaction.categoryConfidence ?? undefined,
-        detailed: transaction.categoryDetail ?? "",
-        primary: transaction.category,
-      }
-    : null;
+  const { category } = transaction;
   const showLocation = shouldShowLocationSection(transaction.location);
   const displayName =
     getTransactionDisplayName(transaction) || transaction.name;
@@ -199,6 +196,7 @@ export function TransactionDetailSummary({
             isOverridden={false}
             onReset={edit.onResetCategory}
             onSubmit={edit.onUpdateCategory}
+            options={edit.categoryOptions}
           />
         ) : (
           <ReadOnlyCategoryRow category={category} />
@@ -272,34 +270,26 @@ function TagsRow({
 function ReadOnlyCategoryRow({
   category,
 }: {
-  category: {
-    primary: string;
-    detailed: string;
-    confidence_level?: string;
-  } | null;
+  category: TransactionListItem["category"];
 }) {
   if (!category) {
     return null;
   }
-  const categoryConfig = getCategoryDisplayConfig(category);
-  const detailedLabel = category.detailed
-    ? getDetailedCategoryDisplayName(category.detailed)
-    : null;
+  const icon = resolveCategoryIcon(category.iconKey) ?? UNKNOWN_CATEGORY_ICON;
+  const groupLabel = category.groupName;
   return (
     <div
       className="flex min-w-0 items-center gap-2 text-base leading-6"
-      title={
-        detailedLabel
-          ? `${categoryConfig.label} › ${detailedLabel}`
-          : categoryConfig.label
-      }
+      title={groupLabel ? `${groupLabel} › ${category.name}` : category.name}
     >
       <span className="flex size-6 shrink-0 items-center justify-center">
-        <CategoryIcon icon={categoryConfig.icon} />
+        <CategoryIcon icon={icon} />
       </span>
       <div className="flex min-w-0 items-center gap-1.5">
-        <span className="shrink-0 text-foreground">{categoryConfig.label}</span>
-        {detailedLabel ? (
+        <span className="shrink-0 text-foreground">
+          {groupLabel ?? category.name}
+        </span>
+        {groupLabel ? (
           <>
             <HugeiconsIcon
               aria-hidden
@@ -308,7 +298,7 @@ function ReadOnlyCategoryRow({
               strokeWidth={2}
             />
             <span className="min-w-0 truncate text-muted-foreground">
-              {detailedLabel}
+              {category.name}
             </span>
           </>
         ) : null}

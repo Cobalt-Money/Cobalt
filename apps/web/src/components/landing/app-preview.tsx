@@ -71,6 +71,69 @@ type ChatThreadId =
 // Mock data — Transactions
 // ---------------------------------------------------------------------------
 
+function mockCat(
+  groupSystemKey: string,
+  groupName: string,
+  systemKey: string,
+  name: string,
+  iconKey = systemKey
+): NonNullable<TransactionListItem["category"]> {
+  return {
+    groupName,
+    groupSystemKey,
+    iconKey,
+    id: `cat-${systemKey}`,
+    name,
+    systemKey,
+  };
+}
+
+const MOCK_CATS = {
+  ENTERTAINMENT: mockCat(
+    "entertainment",
+    "Entertainment",
+    "movies",
+    "TV & Movies"
+  ),
+  FOOD_AND_DRINK: mockCat(
+    "food_and_drink",
+    "Food & Drink",
+    "restaurants",
+    "Restaurants"
+  ),
+  GENERAL_MERCHANDISE: mockCat(
+    "general_merchandise",
+    "Shopping",
+    "shopping",
+    "General Shopping"
+  ),
+  GENERAL_SERVICES: mockCat(
+    "general_services",
+    "Services",
+    "office_supplies",
+    "Office Supplies"
+  ),
+  HOME_IMPROVEMENT: mockCat(
+    "home_improvement",
+    "Home Improvement",
+    "home_maintenance",
+    "Home Maintenance"
+  ),
+  INCOME: mockCat("income", "Income", "paycheck", "Paycheck"),
+  RENT_AND_UTILITIES: mockCat(
+    "rent_and_utilities",
+    "Rent & Utilities",
+    "rent_mortgage",
+    "Rent"
+  ),
+  TRANSPORTATION: mockCat(
+    "transportation",
+    "Transportation",
+    "public_transit",
+    "Public Transit"
+  ),
+} as const;
+
 function makeTx(
   overrides: Partial<TransactionListItem> &
     Pick<TransactionListItem, "id" | "name" | "amount" | "date">
@@ -80,8 +143,6 @@ function makeTx(
     accountType: "depository",
     authorizedDate: null,
     category: null,
-    categoryConfidence: null,
-    categoryDetail: null,
     counterparties: null,
     institutionLogo: null,
     institutionName: "Chase",
@@ -134,9 +195,7 @@ function noteWithBullets(
 const TRANSACTIONS: TransactionListItem[] = [
   makeTx({
     amount: -4.5,
-    category: "FOOD_AND_DRINK",
-    categoryConfidence: null,
-    categoryDetail: "FOOD_AND_DRINK_COFFEE",
+    category: MOCK_CATS.FOOD_AND_DRINK,
     date: "2026-04-11",
     id: "tx-1",
     location: loc(
@@ -153,9 +212,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -12.99,
-    category: "ENTERTAINMENT",
-    categoryConfidence: null,
-    categoryDetail: "ENTERTAINMENT_MUSIC_AND_AUDIO",
+    category: MOCK_CATS.ENTERTAINMENT,
     date: "2026-04-11",
     id: "tx-2",
     institutionName: "Fidelity",
@@ -166,9 +223,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: 3240,
-    category: "INCOME",
-    categoryConfidence: null,
-    categoryDetail: "INCOME_WAGES",
+    category: MOCK_CATS.INCOME,
     date: "2026-04-10",
     id: "tx-3",
     institutionName: "Chase",
@@ -178,9 +233,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -89,
-    category: "GENERAL_MERCHANDISE",
-    categoryConfidence: null,
-    categoryDetail: "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES",
+    category: MOCK_CATS.GENERAL_MERCHANDISE,
     date: "2026-04-10",
     id: "tx-4",
     institutionName: "Apple",
@@ -197,9 +250,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -156.23,
-    category: "HOME_IMPROVEMENT",
-    categoryConfidence: null,
-    categoryDetail: "HOME_IMPROVEMENT_UTILITIES",
+    category: MOCK_CATS.HOME_IMPROVEMENT,
     date: "2026-04-09",
     id: "tx-5",
     institutionName: "Wells Fargo",
@@ -210,9 +261,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -14.99,
-    category: "ENTERTAINMENT",
-    categoryConfidence: null,
-    categoryDetail: "ENTERTAINMENT_TV_AND_MOVIES",
+    category: MOCK_CATS.ENTERTAINMENT,
     date: "2026-04-09",
     id: "tx-6",
     institutionName: "Chase",
@@ -225,9 +274,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -9.99,
-    category: "GENERAL_SERVICES",
-    categoryConfidence: null,
-    categoryDetail: "GENERAL_SERVICES_SUBSCRIPTION",
+    category: MOCK_CATS.GENERAL_SERVICES,
     date: "2026-04-08",
     id: "tx-7",
     institutionName: "Apple",
@@ -238,9 +285,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -55,
-    category: "FOOD_AND_DRINK",
-    categoryConfidence: null,
-    categoryDetail: "FOOD_AND_DRINK_RESTAURANTS",
+    category: MOCK_CATS.FOOD_AND_DRINK,
     date: "2026-04-07",
     id: "tx-8",
     institutionName: "Chase",
@@ -252,9 +297,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -2400,
-    category: "RENT_AND_UTILITIES",
-    categoryConfidence: null,
-    categoryDetail: "RENT_AND_UTILITIES_RENT",
+    category: MOCK_CATS.RENT_AND_UTILITIES,
     date: "2026-03-31",
     id: "tx-9",
     institutionName: "Bank of America",
@@ -272,9 +315,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -42.5,
-    category: "FOOD_AND_DRINK",
-    categoryConfidence: null,
-    categoryDetail: "FOOD_AND_DRINK_GROCERIES",
+    category: MOCK_CATS.FOOD_AND_DRINK,
     date: "2026-03-28",
     id: "tx-10",
     institutionName: "Chase",
@@ -293,9 +334,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -8.75,
-    category: "TRANSPORTATION",
-    categoryConfidence: null,
-    categoryDetail: "TRANSPORTATION_TAXI_AND_RIDESHARE",
+    category: MOCK_CATS.TRANSPORTATION,
     date: "2026-03-27",
     id: "tx-11",
     institutionName: "Wells Fargo",
@@ -314,9 +353,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -65,
-    category: "FOOD_AND_DRINK",
-    categoryConfidence: null,
-    categoryDetail: "FOOD_AND_DRINK_GROCERIES",
+    category: MOCK_CATS.FOOD_AND_DRINK,
     date: "2026-03-26",
     id: "tx-12",
     institutionName: "Chase",
@@ -335,9 +372,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -29.99,
-    category: "GENERAL_SERVICES",
-    categoryConfidence: null,
-    categoryDetail: "GENERAL_SERVICES_SUBSCRIPTION",
+    category: MOCK_CATS.GENERAL_SERVICES,
     date: "2026-03-25",
     id: "tx-13",
     institutionName: "Wells Fargo",
@@ -356,9 +391,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -18.5,
-    category: "ENTERTAINMENT",
-    categoryConfidence: null,
-    categoryDetail: "ENTERTAINMENT_MOVIES_AND_THEATER",
+    category: MOCK_CATS.ENTERTAINMENT,
     date: "2026-03-24",
     id: "tx-14",
     institutionName: "Chase",
@@ -377,9 +410,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -52.34,
-    category: "FOOD_AND_DRINK",
-    categoryConfidence: null,
-    categoryDetail: "FOOD_AND_DRINK_RESTAURANTS",
+    category: MOCK_CATS.FOOD_AND_DRINK,
     date: "2026-03-23",
     id: "tx-15",
     institutionName: "Apple",
@@ -390,9 +421,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -45.67,
-    category: "TRANSPORTATION",
-    categoryConfidence: null,
-    categoryDetail: "TRANSPORTATION_GAS_STATIONS",
+    category: MOCK_CATS.TRANSPORTATION,
     date: "2026-03-22",
     id: "tx-16",
     institutionName: "Chase",
@@ -411,9 +440,7 @@ const TRANSACTIONS: TransactionListItem[] = [
   }),
   makeTx({
     amount: -11.32,
-    category: "TRANSPORTATION",
-    categoryConfidence: null,
-    categoryDetail: "TRANSPORTATION_TAXI_AND_RIDESHARE",
+    category: MOCK_CATS.TRANSPORTATION,
     date: "2026-03-21",
     id: "tx-17",
     institutionName: "Wells Fargo",

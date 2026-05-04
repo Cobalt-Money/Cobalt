@@ -19,7 +19,7 @@ export const env = createEnv({
   runtimeEnv: process.env,
   server: {
     /** HMAC secret for short-lived bridge JWTs minted to sandboxes (MCP execute_code). */
-    AGENT_BRIDGE_SECRET: z.string().min(32),
+    AGENT_BRIDGE_SECRET: z.string().min(32).optional(),
     /** Public origin used by sandbox to reach the bridge endpoint. Defaults to BETTER_AUTH_URL. */
     AGENT_BRIDGE_URL: z.url().optional(),
     /** Dedicated connection URI for the agent_readonly Postgres role (SELECT-only + RLS). Falls back to DATABASE_URL in dev. */

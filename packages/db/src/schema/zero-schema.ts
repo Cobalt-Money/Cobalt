@@ -15,11 +15,13 @@ export { investmentActivity } from "./accounts/investments/investment-activity";
 export { creditLiability } from "./accounts/banking/liabilities/credit";
 export { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
 export { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
+export { category } from "./accounts/banking/categories/category";
+export { categoryGroup } from "./accounts/banking/categories/category-group";
 export { transaction } from "./accounts/banking/transactions/transaction";
 export { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
 export { recurring } from "./accounts/banking/transactions/recurring";
-export { tag } from "./accounts/banking/transactions/tag";
-export { transactionTag } from "./accounts/banking/transactions/transaction-tag";
+export { tag } from "./accounts/banking/tags/tag";
+export { transactionTag } from "./accounts/banking/tags/transaction-tag";
 export { feedback } from "./users/feedback";
 export { financialGoals } from "./goals/financial-goals";
 export { kalshiUsers } from "./accounts/prediction-markets/kalshi";
@@ -38,6 +40,8 @@ export { subscription } from "./users/subscriptions/stripe";
 export {
   accountRelations,
   balanceRelations,
+  categoryGroupRelations,
+  categoryRelations,
   chatsRelations,
   creditLiabilityRelations,
   eventArticlesRelations,

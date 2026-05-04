@@ -26,8 +26,8 @@ import { InstitutionLogo } from "../logos/institution-logo";
 import { MerchantLogo } from "../logos/merchant-logo";
 import {
   CategoryIcon,
-  getCategoryDisplayConfig,
-  getDetailedCategoryDisplayName,
+  resolveCategoryIcon,
+  UNKNOWN_CATEGORY_ICON,
 } from "./categories";
 import {
   formatMonthGroupLabel,
@@ -205,38 +205,30 @@ const columns: ColumnDef<TransactionListItem>[] = [
   },
   {
     accessorFn: (row) => {
-      if (!row.category) {
+      const cat = row.category;
+      if (!cat) {
         return "";
       }
-      const primary = getCategoryDisplayConfig({
-        detailed: row.categoryDetail ?? "",
-        primary: row.category,
-      }).label;
-      const detailed = row.categoryDetail
-        ? getDetailedCategoryDisplayName(row.categoryDetail)
-        : "";
-      return detailed ? `${primary} ${detailed}` : primary;
+      return cat.groupName ? `${cat.groupName} ${cat.name}` : cat.name;
     },
     cell: ({ row }) => {
-      if (!row.original.category) {
+      const cat = row.original.category;
+      if (!cat) {
         return <div className={cellRow}>—</div>;
       }
-      const config = getCategoryDisplayConfig({
-        detailed: row.original.categoryDetail ?? "",
-        primary: row.original.category,
-      });
-      const detailed = row.original.categoryDetail
-        ? getDetailedCategoryDisplayName(row.original.categoryDetail)
-        : null;
-      const title = detailed ? `${config.label} › ${detailed}` : config.label;
+      const icon = resolveCategoryIcon(cat.iconKey) ?? UNKNOWN_CATEGORY_ICON;
+      const groupLabel = cat.groupName;
+      const title = groupLabel ? `${groupLabel} › ${cat.name}` : cat.name;
 
       return (
         <div className="min-w-0" title={title}>
           <div className={cn(cellRow, "min-w-0 gap-2")}>
-            <CategoryIcon icon={config.icon} />
+            <CategoryIcon icon={icon} />
             <div className={cn(cellRow, "min-w-0 gap-1.5 text-sm")}>
-              <span className="shrink-0 text-foreground">{config.label}</span>
-              {detailed ? (
+              <span className="shrink-0 text-foreground">
+                {groupLabel ?? cat.name}
+              </span>
+              {groupLabel ? (
                 <>
                   <HugeiconsIcon
                     aria-hidden
@@ -245,7 +237,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
                     strokeWidth={2}
                   />
                   <span className="min-w-0 truncate text-muted-foreground">
-                    {detailed}
+                    {cat.name}
                   </span>
                 </>
               ) : null}

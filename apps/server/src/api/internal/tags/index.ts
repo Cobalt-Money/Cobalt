@@ -3,8 +3,11 @@ import {
   createTag,
   deleteTag,
   updateTag,
-} from "@cobalt-web/server-data/tags/mutations";
-import { getTag, listTags } from "@cobalt-web/server-data/tags/queries";
+} from "@cobalt-web/server-data/transactions/tags/mutations";
+import {
+  getTag,
+  listTags,
+} from "@cobalt-web/server-data/transactions/tags/queries";
 import {
   bulkApplyTagsBodySchema,
   createTagBodySchema,
@@ -13,7 +16,7 @@ import {
   tagsListResponseSchema,
   tagSuccessResponse,
   updateTagBodySchema,
-} from "@cobalt-web/server-data/tags/schemas";
+} from "@cobalt-web/server-data/transactions/tags/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 

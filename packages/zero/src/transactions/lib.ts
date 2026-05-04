@@ -58,7 +58,8 @@ export function transactionsForUser(
     .where("userId", userId)
     .related("account", (q2) =>
       q2.related("plaidConnection", (conn) => conn.related("institution"))
-    );
+    )
+    .related("category", (c) => c.related("group"));
 
   if (bankIds) {
     q = q.whereExists("account", (acc) =>
@@ -112,6 +113,7 @@ export function recurringForUser(userId: string) {
   return zql.recurring
     .where("userId", userId)
     .where("isActive", true)
+    .related("category", (c) => c.related("group"))
     .orderBy("lastDate", "desc");
 }
 
@@ -122,7 +124,8 @@ export function creditTransactionsForUser(
   const start = periodStartIso(period);
   let q = zql.transaction
     .where("userId", userId)
-    .whereExists("account", (acc) => acc.where("type", "credit"));
+    .whereExists("account", (acc) => acc.where("type", "credit"))
+    .related("category", (c) => c.related("group"));
   if (start) {
     q = q.where("date", ">=", isoDateToZeroDate(start));
   }

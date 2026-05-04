@@ -1,7 +1,6 @@
 import {
   locationJsonSchema,
   transactionNotesMarkdownSchema,
-  userOverrideCategoryJsonSchema,
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { defineMutator } from "@rocicorp/zero";
 import type { Transaction } from "@rocicorp/zero";
@@ -37,7 +36,7 @@ const updateDateSchema = transactionIdSchema.extend({
 });
 
 const updateCategorySchema = transactionIdSchema.extend({
-  category: userOverrideCategoryJsonSchema,
+  categoryId: z.uuid(),
 });
 
 const updateNotesSchema = transactionIdSchema.extend({
@@ -47,7 +46,7 @@ const updateNotesSchema = transactionIdSchema.extend({
 const createTransactionSchema = z.object({
   accountId: z.string().uuid(),
   amount: z.number(),
-  category: userOverrideCategoryJsonSchema.optional(),
+  categoryId: z.uuid().nullable().optional(),
   currency: z.string().length(3).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   /** Plain-text description; persisted as markdown on `notes`. */
@@ -162,8 +161,7 @@ export const transactionMutators = {
       await tx.mutate.transaction.insert({
         accountId: args.accountId,
         amount: args.amount,
-        category: args.category?.primary ?? null,
-        categoryDetail: args.category?.detailed ?? null,
+        categoryId: args.categoryId ?? null,
         currency: args.currency ?? "USD",
         date: isoDateToEpochMs(args.date),
         id: args.id ?? crypto.randomUUID(),
@@ -200,9 +198,7 @@ export const transactionMutators = {
           editId: args.editId,
           field: "category",
           newValue: null,
-          oldValue: row.category
-            ? { detailed: row.categoryDetail, primary: row.category }
-            : null,
+          oldValue: { categoryId: row.categoryId },
           transactionId: args.id,
           userId,
         }),
@@ -292,19 +288,15 @@ export const transactionMutators = {
       const { row, userId } = await getOwned(tx, ctx, args.id);
       await Promise.all([
         tx.mutate.transaction.update({
-          category: args.category.primary,
-          categoryConfidence: null,
-          categoryDetail: args.category.detailed,
+          categoryId: args.categoryId,
           id: args.id,
           lockedFields: addLocked(row.lockedFields, "category"),
         }),
         appendEdit(tx, {
           editId: args.editId,
           field: "category",
-          newValue: args.category,
-          oldValue: row.category
-            ? { detailed: row.categoryDetail, primary: row.category }
-            : null,
+          newValue: { categoryId: args.categoryId },
+          oldValue: { categoryId: row.categoryId },
           transactionId: args.id,
           userId,
         }),

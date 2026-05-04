@@ -4,8 +4,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 
 /** Fields carried forward from a pending → posted row during sync. */
 export interface UserOverrides {
-  category: string | null;
-  categoryDetail: string | null;
+  categoryId: string | null;
   lockedFields: string[];
   name: string;
 }
@@ -24,8 +23,7 @@ export async function getUserOverrides(
 
   const rows = await db
     .select({
-      category: transactionTable.category,
-      categoryDetail: transactionTable.categoryDetail,
+      categoryId: transactionTable.categoryId,
       externalId: transactionTable.externalId,
       lockedFields: transactionTable.lockedFields,
       name: transactionTable.name,
@@ -48,8 +46,7 @@ export async function getUserOverrides(
       .map((row) => [
         row.externalId,
         {
-          category: row.category,
-          categoryDetail: row.categoryDetail,
+          categoryId: row.categoryId,
           lockedFields: row.lockedFields,
           name: row.name,
         },

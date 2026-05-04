@@ -3,14 +3,16 @@ import { relations } from "drizzle-orm/_relations";
 
 import { financialAccount } from "./accounts/account";
 import { balance } from "./accounts/balance";
+import { category } from "./accounts/banking/categories/category";
+import { categoryGroup } from "./accounts/banking/categories/category-group";
 import { creditLiability } from "./accounts/banking/liabilities/credit";
 import { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
 import { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
+import { tag } from "./accounts/banking/tags/tag";
+import { transactionTag } from "./accounts/banking/tags/transaction-tag";
 import { recurring } from "./accounts/banking/transactions/recurring";
-import { tag } from "./accounts/banking/transactions/tag";
 import { transaction } from "./accounts/banking/transactions/transaction";
 import { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
-import { transactionTag } from "./accounts/banking/transactions/transaction-tag";
 import { holding } from "./accounts/investments/holding";
 import { investmentActivity } from "./accounts/investments/investment-activity";
 import { orders } from "./accounts/investments/order";
@@ -35,6 +37,8 @@ import { subscription } from "./users/subscriptions/stripe";
 export const userRelations = relations(user, ({ one, many }) => ({
   accounts: many(account),
   balances: many(balance),
+  categories: many(category),
+  categoryGroups: many(categoryGroup),
   chats: many(chats),
   feedback: many(feedback),
   financialAccounts: many(financialAccount),
@@ -196,6 +200,10 @@ export const transactionRelations = relations(transaction, ({ many, one }) => ({
     fields: [transaction.accountId],
     references: [financialAccount.id],
   }),
+  category: one(category, {
+    fields: [transaction.categoryId],
+    references: [category.id],
+  }),
   edits: many(transactionEdit),
   transactionTags: many(transactionTag),
   user: one(user, {
@@ -203,6 +211,30 @@ export const transactionRelations = relations(transaction, ({ many, one }) => ({
     references: [user.id],
   }),
 }));
+
+export const categoryRelations = relations(category, ({ many, one }) => ({
+  group: one(categoryGroup, {
+    fields: [category.groupId],
+    references: [categoryGroup.id],
+  }),
+  recurringStreams: many(recurring),
+  transactions: many(transaction),
+  user: one(user, {
+    fields: [category.userId],
+    references: [user.id],
+  }),
+}));
+
+export const categoryGroupRelations = relations(
+  categoryGroup,
+  ({ many, one }) => ({
+    categories: many(category),
+    user: one(user, {
+      fields: [categoryGroup.userId],
+      references: [user.id],
+    }),
+  })
+);
 
 export const tagRelations = relations(tag, ({ many, one }) => ({
   transactionTags: many(transactionTag),
@@ -237,6 +269,10 @@ export const recurringStreamRelations = relations(recurring, ({ one }) => ({
   account: one(financialAccount, {
     fields: [recurring.accountId],
     references: [financialAccount.id],
+  }),
+  category: one(category, {
+    fields: [recurring.categoryId],
+    references: [category.id],
   }),
   user: one(user, {
     fields: [recurring.userId],

@@ -1,4 +1,3 @@
-import { CATEGORY_MAPPING } from "@cobalt-web/server-data/transactions/categories";
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { Button } from "@cobalt-web/ui/components/button";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
@@ -21,31 +20,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CobaltDialog } from "../cobalt-dialog";
 import { CobaltSelectPopover } from "../select-popover";
-import type { TagOption } from "../tags/tag-picker";
-import { TagPicker } from "../tags/tag-picker";
-import { CategoryIcon, PRIMARY_CATEGORY_ICON } from "./categories";
+import {
+  CategoryIcon,
+  resolveCategoryIcon,
+  UNKNOWN_CATEGORY_ICON,
+} from "./categories";
+import { CategoryPicker } from "./detail/category-picker";
+import type { CategoryPickerOption } from "./detail/editable-category";
+import type { TagOption } from "./tags/tag-picker";
+import { TagPicker } from "./tags/tag-picker";
 
-type PrimaryCategory = keyof typeof CATEGORY_MAPPING;
-
-const PRIMARY_CATEGORIES = Object.keys(CATEGORY_MAPPING) as PrimaryCategory[];
-
-interface CategoryItem {
-  value: PrimaryCategory;
-  label: string;
-}
-
-const CATEGORY_ITEMS: readonly CategoryItem[] = PRIMARY_CATEGORIES.map(
-  (value) => ({
-    label: CATEGORY_MAPPING[value].label,
-    value,
-  })
-);
-
-/** Categories that represent inflow (negative amount per Plaid sign convention). */
-const INFLOW_CATEGORIES: ReadonlySet<PrimaryCategory> = new Set([
-  "INCOME",
-  "TRANSFER_IN",
-]);
+/** Group system keys that represent inflow (negative signed amount per Plaid convention). */
+const INFLOW_GROUP_KEYS: ReadonlySet<string> = new Set(["income", "transfers"]);
 
 type LocationJson = NonNullable<TransactionListItem["location"]>;
 
@@ -219,8 +205,8 @@ export interface AddTransactionFormValues {
   /** Brandfetch domain when picked from typeahead, else null. */
   merchantWebsite: string | null;
   description: string | null;
-  /** Plaid PFC primary category, or null. */
-  category: PrimaryCategory | null;
+  /** SRI-311: FK to user's category row, or null (defaults to uncategorized). */
+  categoryId: string | null;
   /** Geocoded location, or null. */
   location: LocationJson | null;
   /** Tag ids selected by the user. */
@@ -230,6 +216,8 @@ export interface AddTransactionFormValues {
 export interface AddTransactionFormProps {
   onSubmit: (values: AddTransactionFormValues) => void;
   accounts: readonly AddTransactionAccountOption[];
+  /** All non-deleted, non-hidden cats for the picker (Zero-fed). */
+  categoryOptions: readonly CategoryPickerOption[];
   submitting?: boolean;
   /** Fires when user hits Backspace with empty name input. Used by command palette to "morph back". */
   onBackspaceWhenEmpty?: () => void;
@@ -252,6 +240,7 @@ export interface AddTransactionDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: AddTransactionFormValues) => void;
   accounts: readonly AddTransactionAccountOption[];
+  categoryOptions: readonly CategoryPickerOption[];
   submitting?: boolean;
   /** Fires when user hits Backspace with empty name input. Used by command palette to "morph back". */
   onBackspaceWhenEmpty?: () => void;
@@ -296,6 +285,7 @@ function formatDateLabel(iso: string): string {
 export function AddTransactionForm({
   onSubmit,
   accounts,
+  categoryOptions,
   submitting = false,
   onBackspaceWhenEmpty,
   submitLabel = "Create transaction",
@@ -309,7 +299,8 @@ export function AddTransactionForm({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState<PrimaryCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState<CategoryPickerOption | null>(null);
   const [date, setDate] = useState(todayIso());
   const [merchant, setMerchant] = useState("");
   const [merchantDomain, setMerchantDomain] = useState<string | null>(null);
@@ -325,7 +316,7 @@ export function AddTransactionForm({
     setName("");
     setDescription("");
     setAmount("");
-    setCategory(null);
+    setSelectedCategory(null);
     setDate(todayIso());
     setMerchant("");
     setMerchantDomain(null);
@@ -371,12 +362,15 @@ export function AddTransactionForm({
     if (!canSubmit) {
       return;
     }
-    const isInflow = category !== null && INFLOW_CATEGORIES.has(category);
+    const isInflow =
+      selectedCategory !== null &&
+      selectedCategory.groupSystemKey !== null &&
+      INFLOW_GROUP_KEYS.has(selectedCategory.groupSystemKey);
     const signed = isInflow ? -parsedAmount : parsedAmount;
     onSubmit({
       accountId,
       amount: signed,
-      category,
+      categoryId: selectedCategory?.id ?? null,
       date,
       description: description.trim() === "" ? null : description.trim(),
       location,
@@ -495,36 +489,29 @@ export function AddTransactionForm({
       />
 
       <div className="flex flex-wrap items-center gap-1.5 pt-2">
-        <CobaltSelectPopover
-          emptyText="No categories"
-          itemKey={(item: CategoryItem) => item.value}
-          itemMatch={(item: CategoryItem, q) =>
-            item.label.toLowerCase().includes(q)
-          }
-          items={CATEGORY_ITEMS}
-          onSelect={(item: CategoryItem) => {
-            setCategory(item.value);
+        <CategoryPicker
+          onSelect={(item) => {
+            setSelectedCategory(item);
           }}
-          renderIcon={(item: CategoryItem) => (
-            <CategoryIcon icon={PRIMARY_CATEGORY_ICON[item.value]} />
-          )}
-          renderLabel={(item: CategoryItem) => item.label}
-          searchPlaceholder="Search categories…"
-          selectedKey={category}
+          options={categoryOptions}
+          selectedKey={selectedCategory?.id ?? null}
           trigger={
             <button
               className={cn(
                 "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs transition-colors",
-                category
+                selectedCategory
                   ? "border-foreground/15 bg-input/40 text-foreground"
                   : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10"
               )}
               type="button"
             >
               <span className="flex size-[1.125rem] shrink-0 items-center justify-center">
-                {category ? (
+                {selectedCategory ? (
                   <CategoryIcon
-                    icon={PRIMARY_CATEGORY_ICON[category]}
+                    icon={
+                      resolveCategoryIcon(selectedCategory.iconKey) ??
+                      UNKNOWN_CATEGORY_ICON
+                    }
                     sizeClassName="size-[1.125rem]"
                   />
                 ) : (
@@ -535,7 +522,7 @@ export function AddTransactionForm({
                   />
                 )}
               </span>
-              {category ? CATEGORY_MAPPING[category].label : "Category"}
+              {selectedCategory ? selectedCategory.name : "Category"}
             </button>
           }
         />
@@ -755,6 +742,7 @@ export function AddTransactionDialog({
   onOpenChange,
   onSubmit,
   accounts,
+  categoryOptions,
   submitting = false,
   onBackspaceWhenEmpty,
   locationSearch,
@@ -775,6 +763,7 @@ export function AddTransactionDialog({
       <AddTransactionForm
         accounts={accounts}
         availableTags={availableTags}
+        categoryOptions={categoryOptions}
         locationSearch={locationSearch}
         merchantSearch={merchantSearch}
         onBackspaceWhenEmpty={onBackspaceWhenEmpty}

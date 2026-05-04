@@ -16,10 +16,14 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
 import type { ReactNode } from "react";
 
-import type { TagColor } from "../../tags/palette";
-import { TagChip } from "../../tags/tag-chip";
-import { CategoryIcon, getCategoryDisplayConfig } from "../categories";
+import {
+  CategoryIcon,
+  resolveCategoryIcon,
+  UNKNOWN_CATEGORY_ICON,
+} from "../categories";
 import { formatDateStringShort } from "../lib/helpers";
+import type { TagColor } from "../tags/palette";
+import { TagChip } from "../tags/tag-chip";
 
 export interface ActivityTagInfo {
   name: string;
@@ -163,11 +167,11 @@ function describeEditEvent(
       return `Merchant changed to "${item.newValue}"`;
     }
     case "category": {
-      const v = item.newValue as { primary?: string } | null;
-      if (!v?.primary) {
+      const v = item.newValue as { categoryId?: string | null } | null;
+      if (!v?.categoryId) {
         return "Category restored";
       }
-      return `Category changed to ${v.primary.replaceAll("_", " ").toLowerCase()}`;
+      return "Category updated";
     }
     case "date": {
       return typeof item.newValue === "string"
@@ -271,21 +275,10 @@ function EventMarker({
   const tone = eventMarkerTone[event.type] ?? "text-muted-foreground";
 
   if (event.type === "edit_category" && rawItem?.field === "category") {
-    const value = rawItem.newValue as {
-      primary?: string;
-      detailed?: string;
-    } | null;
-    const fallback = transaction.category
-      ? {
-          detailed: transaction.categoryDetail ?? "",
-          primary: transaction.category,
-        }
-      : null;
-    const config = getCategoryDisplayConfig(
-      value?.primary
-        ? { detailed: value.detailed ?? "", primary: value.primary }
-        : fallback
-    );
+    const cat = transaction.category;
+    const icon = cat
+      ? (resolveCategoryIcon(cat.iconKey) ?? UNKNOWN_CATEGORY_ICON)
+      : UNKNOWN_CATEGORY_ICON;
     return (
       <span
         className={cn(
@@ -293,7 +286,7 @@ function EventMarker({
           tone
         )}
       >
-        <CategoryIcon icon={config.icon} />
+        <CategoryIcon icon={icon} />
       </span>
     );
   }

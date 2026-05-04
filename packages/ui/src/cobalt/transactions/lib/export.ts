@@ -2,10 +2,6 @@ import type { TransactionListItem } from "@cobalt-web/server-data/transactions/s
 import * as XLSX from "xlsx";
 
 import {
-  getCategoryDisplayConfig,
-  getDetailedCategoryDisplayName,
-} from "../categories";
-import {
   getTransactionDisplayDateString,
   getTransactionDisplayName,
 } from "./helpers";
@@ -25,26 +21,17 @@ interface ExportRow {
 }
 
 function toExportRow(item: TransactionListItem): ExportRow {
-  const primary = item.category
-    ? getCategoryDisplayConfig({
-        detailed: item.categoryDetail ?? "",
-        primary: item.category,
-      }).label
-    : "";
-  const detailed = item.categoryDetail
-    ? getDetailedCategoryDisplayName(item.categoryDetail)
-    : "";
-
+  const cat = item.category;
   return {
     Account: item.accountName ?? "",
     Amount: item.amount,
     Bank: item.institutionName ?? "",
-    Category: primary,
+    Category: cat?.groupName ?? "",
     Date: getTransactionDisplayDateString(item),
     Merchant: item.merchantName?.trim() ?? "",
     Name: getTransactionDisplayName(item),
     Status: item.pending ? "Pending" : "Posted",
-    Subcategory: detailed,
+    Subcategory: cat?.name ?? "",
   };
 }
 

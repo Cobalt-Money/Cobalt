@@ -2,14 +2,16 @@ import { defineRelations } from "drizzle-orm";
 
 import { financialAccount } from "./accounts/account";
 import { balance } from "./accounts/balance";
+import { category } from "./accounts/banking/categories/category";
+import { categoryGroup } from "./accounts/banking/categories/category-group";
 import { creditLiability } from "./accounts/banking/liabilities/credit";
 import { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
 import { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
+import { tag } from "./accounts/banking/tags/tag";
+import { transactionTag } from "./accounts/banking/tags/transaction-tag";
 import { recurring } from "./accounts/banking/transactions/recurring";
-import { tag } from "./accounts/banking/transactions/tag";
 import { transaction } from "./accounts/banking/transactions/transaction";
 import { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
-import { transactionTag } from "./accounts/banking/transactions/transaction-tag";
 import { holding } from "./accounts/investments/holding";
 import { investmentActivity } from "./accounts/investments/investment-activity";
 import { orders } from "./accounts/investments/order";
@@ -37,6 +39,8 @@ import { subscription } from "./users/subscriptions/stripe";
 const schema = {
   account,
   balance,
+  category,
+  categoryGroup,
   chats,
   creditLiability,
   eventArticles,
@@ -91,6 +95,29 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     user: r.one.user({
       from: r.balance.userId,
+      to: r.user.id,
+    }),
+  },
+
+  category: {
+    group: r.one.categoryGroup({
+      from: r.category.groupId,
+      optional: false,
+      to: r.categoryGroup.id,
+    }),
+    user: r.one.user({
+      from: r.category.userId,
+      to: r.user.id,
+    }),
+  },
+
+  categoryGroup: {
+    categories: r.many.category({
+      from: r.categoryGroup.id,
+      to: r.category.groupId,
+    }),
+    user: r.one.user({
+      from: r.categoryGroup.userId,
       to: r.user.id,
     }),
   },
@@ -347,6 +374,10 @@ export const relations = defineRelations(schema, (r) => ({
       optional: false,
       to: r.financialAccount.id,
     }),
+    category: r.one.category({
+      from: r.recurring.categoryId,
+      to: r.category.id,
+    }),
     user: r.one.user({
       from: r.recurring.userId,
       to: r.user.id,
@@ -450,6 +481,10 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.transaction.accountId,
       optional: false,
       to: r.financialAccount.id,
+    }),
+    category: r.one.category({
+      from: r.transaction.categoryId,
+      to: r.category.id,
     }),
     edits: r.many.transactionEdit({
       from: r.transaction.id,

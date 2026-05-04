@@ -1,10 +1,10 @@
-import { getTagIdsForTransaction } from "@cobalt-web/server-data/tags/queries";
 import { patchTransaction } from "@cobalt-web/server-data/transactions/mutations";
 import {
   successResponse,
   transactionIdParamSchema,
   transactionPatchBodySchema,
 } from "@cobalt-web/server-data/transactions/schemas";
+import { getTagIdsForTransaction } from "@cobalt-web/server-data/transactions/tags/queries";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 

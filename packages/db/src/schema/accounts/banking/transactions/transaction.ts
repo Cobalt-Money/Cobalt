@@ -16,6 +16,7 @@ import {
 
 import { user } from "../../../users/auth/auth";
 import { financialAccount } from "../../account";
+import { category } from "../categories/category";
 import type { CounterpartiesArrayJson, LocationJson } from "./zod";
 
 export const transactionSource = pgEnum("transaction_source", [
@@ -37,12 +38,10 @@ export const transaction = pgTable(
     amount: numeric("amount", { precision: 19, scale: 4 }).notNull(),
     /** Card-swipe / authorization date; precedes posted `date`. */
     authorizedDate: date("authorized_date"),
-    /** Plaid PFC primary; e.g. FOOD_AND_DRINK. */
-    category: text("category"),
-    /** Plaid PFC confidence: VERY_HIGH | HIGH | MEDIUM | LOW | UNKNOWN. */
-    categoryConfidence: text("category_confidence"),
-    /** Plaid PFC detailed (subcategory); e.g. FOOD_AND_DRINK_RESTAURANT. */
-    categoryDetail: text("category_detail"),
+    /** SRI-311: FK to user's category row. Resolved via PFC mapping or user override. */
+    categoryId: uuid("category_id").references(() => category.id, {
+      onDelete: "restrict",
+    }),
     /** Check number for paper checks. */
     checkNumber: text("check_number"),
     /** Merchant city. */
@@ -58,6 +57,8 @@ export const transaction = pgTable(
     currency: text("currency"),
     /** Posted date when the bank settled the charge. */
     date: date("date").notNull(),
+    /** Per-tx override of category.excludeFromInsights. */
+    excluded: boolean("excluded").default(false).notNull(),
     /** Provider's transaction ID; for upsert dedupe via (source, external_id). */
     externalId: text("external_id"),
     id: uuid("id").defaultRandom().primaryKey(),
@@ -112,6 +113,7 @@ export const transaction = pgTable(
   },
   (t) => [
     index("transaction_account_id_idx").on(t.accountId),
+    index("transaction_category_id_idx").on(t.categoryId),
     index("transaction_user_id_idx").on(t.userId),
     index("transaction_date_idx").on(t.date),
     index("transaction_account_date_idx").on(t.accountId, t.date),

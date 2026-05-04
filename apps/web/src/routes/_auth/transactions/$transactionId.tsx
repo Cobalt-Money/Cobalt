@@ -1,10 +1,10 @@
-import type { TagColor } from "@cobalt-web/ui/cobalt/tags/palette";
-import { isTagColor } from "@cobalt-web/ui/cobalt/tags/palette";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import type { TransactionDetailEditHandlers } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
 import { TransactionDetailView } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
+import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
+import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { mutators, queries } from "@cobalt-web/zero";
-import { useZero } from "@rocicorp/zero/react";
+import { useQuery, useZero } from "@rocicorp/zero/react";
 import {
   createFileRoute,
   getRouteApi,
@@ -39,6 +39,7 @@ export const Route = createFileRoute("/_auth/transactions/$transactionId")({
     context.zero.run(
       queries.tags.forTransaction({ transactionId: params.transactionId })
     );
+    context.zero.run(queries.categories.list());
   },
   staticData: { title: "Transaction" },
 });
@@ -71,6 +72,26 @@ function TransactionDetailRoute() {
 
   const { options: availableTags } = useTagOptions();
   const { data: allTags = [] } = useTags();
+  const [categoryRows] = useQuery(queries.categories.list());
+  const categoryOptions = useMemo(
+    () =>
+      (categoryRows ?? []).map((c) => {
+        const cat = c as unknown as {
+          id: string;
+          name: string;
+          iconKey: string;
+          group?: { name?: string | null; systemKey?: string | null };
+        };
+        return {
+          groupName: cat.group?.name ?? "",
+          groupSystemKey: cat.group?.systemKey ?? null,
+          iconKey: cat.iconKey,
+          id: cat.id,
+          name: cat.name,
+        };
+      }),
+    [categoryRows]
+  );
   const { openAddTag } = useCommandMenu();
   const setTransactionTags = useSetTransactionTags();
   const { data: currentTagIds = [] } = useTransactionTagIds(transactionId);
@@ -94,6 +115,7 @@ function TransactionDetailRoute() {
 
     return {
       availableTags,
+      categoryOptions,
       onRequestCreateTag: (initialName: string) => {
         openAddTag({ initialName });
       },
@@ -148,13 +170,13 @@ function TransactionDetailRoute() {
           )
           .server.catch(onError("notes"));
       },
-      onUpdateCategory: (category) => {
+      onUpdateCategory: ({ categoryId }) => {
         void zero
           .mutate(
             mutators.transaction.updateCategory({
+              categoryId,
               editId: crypto.randomUUID(),
               id,
-              category,
             })
           )
           .server.catch(onError("category"));
@@ -249,6 +271,7 @@ function TransactionDetailRoute() {
     transaction?.source,
     navigate,
     availableTags,
+    categoryOptions,
     openAddTag,
     setTransactionTags,
     currentTagIds,

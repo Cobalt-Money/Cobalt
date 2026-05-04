@@ -17,8 +17,8 @@ import { Settings02Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
-import { TagChip } from "../../tags/tag-chip";
-import type { TagOption } from "../../tags/tag-picker";
+import { TagChip } from "../tags/tag-chip";
+import type { TagOption } from "../tags/tag-picker";
 
 interface TagFilterProps {
   options: readonly TagOption[];

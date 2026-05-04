@@ -44,16 +44,37 @@ export type ZeroTransactionListRow = Record<string, unknown> & {
     readonly externalId: string | null;
     readonly type: string;
   };
+  readonly category?: {
+    readonly id: string;
+    readonly name: string;
+    readonly iconKey: string;
+    readonly systemKey: string | null;
+    readonly group?: {
+      readonly name: string;
+      readonly systemKey: string | null;
+    };
+  } | null;
 };
 
 export function mapZeroTransactionListRow(
   row: ZeroTransactionListRow
 ): TransactionListItem | null {
-  const { account, ...txRest } = row;
+  const { account, category: cat, ...txRest } = row;
   if (!account) {
     return null;
   }
   const inst = account.plaidConnection?.institution;
+
+  const flatCategory = cat
+    ? {
+        groupName: cat.group?.name ?? "",
+        groupSystemKey: cat.group?.systemKey ?? null,
+        iconKey: cat.iconKey,
+        id: cat.id,
+        name: cat.name,
+        systemKey: cat.systemKey,
+      }
+    : null;
 
   return toTransactionListItem({
     account: {
@@ -68,6 +89,9 @@ export function mapZeroTransactionListRow(
           url: inst.url ?? null,
         }
       : null,
-    transaction: txRest as unknown as TransactionRowInput,
+    transaction: {
+      ...txRest,
+      category: flatCategory,
+    } as unknown as TransactionRowInput,
   });
 }
