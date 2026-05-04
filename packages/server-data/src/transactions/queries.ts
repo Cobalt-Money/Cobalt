@@ -15,10 +15,7 @@ export type TransactionListQuery = z.infer<typeof transactionListQuerySchema>;
 
 // ── Queries ─────────────────────────────────────────────────────────
 
-export async function getUserTransactions(
-  userId: string,
-  params: TransactionListQuery
-) {
+export async function getUserTransactions(userId: string, params: TransactionListQuery) {
   const {
     page = 0,
     pageSize = 50,
@@ -61,7 +58,7 @@ export async function getUserTransactions(
     const orClause = or(
       ilike(transaction.name, searchPattern),
       ilike(transaction.merchantName, searchPattern),
-      sql`${transaction.notes}::text ILIKE ${searchPattern}`
+      sql`${transaction.notes}::text ILIKE ${searchPattern}`,
     );
     if (orClause) {
       conditions.push(orClause);
@@ -72,6 +69,7 @@ export async function getUserTransactions(
     .select({
       account: {
         externalId: financialAccount.externalId,
+        institutionName: financialAccount.institutionName,
         name: financialAccount.name,
         type: financialAccount.type,
       },
@@ -86,11 +84,9 @@ export async function getUserTransactions(
       country: transaction.country,
       date: transaction.date,
       id: transaction.id,
-      institution: {
-        logo: institution.logo,
-        name: institution.name,
-        url: institution.url,
-      },
+      institutionLogo: institution.logo,
+      institutionName: institution.name,
+      institutionUrl: institution.url,
       lat: transaction.lat,
       lockedFields: transaction.lockedFields,
       logoUrl: transaction.logoUrl,
@@ -108,14 +104,8 @@ export async function getUserTransactions(
     })
     .from(transaction)
     .innerJoin(financialAccount, eq(transaction.accountId, financialAccount.id))
-    .leftJoin(
-      plaidConnection,
-      eq(financialAccount.plaidConnectionId, plaidConnection.id)
-    )
-    .leftJoin(
-      institution,
-      eq(institution.plaidInstitutionId, plaidConnection.institutionId)
-    )
+    .leftJoin(plaidConnection, eq(financialAccount.plaidConnectionId, plaidConnection.id))
+    .leftJoin(institution, eq(institution.plaidInstitutionId, plaidConnection.institutionId))
     .where(and(...conditions))
     .orderBy(desc(transaction.date))
     .limit(pageSize)
@@ -128,13 +118,14 @@ export async function getUserTransactions(
         plaidAccountId: row.account.externalId,
         type: row.account.type,
       },
-      institution: row.institution
-        ? {
-            logo: row.institution.logo ?? null,
-            name: row.institution.name ?? null,
-            url: row.institution.url ?? null,
-          }
-        : null,
+      institution:
+        row.institutionName || row.institutionUrl || row.account.institutionName
+          ? {
+              logo: row.institutionLogo ?? null,
+              name: row.institutionName ?? row.account.institutionName ?? null,
+              url: row.institutionUrl ?? null,
+            }
+          : null,
       transaction: {
         address: row.address,
         amount: Number(row.amount),
@@ -162,7 +153,7 @@ export async function getUserTransactions(
         userOverrideLocation: row.userOverrideLocation,
         website: row.website,
       },
-    })
+    }),
   );
 }
 
@@ -224,7 +215,7 @@ export async function getRecurringStreams(userId: string) {
 export async function getCreditSpending(
   userId: string,
   period: "1w" | "1m" | "3m" | "6m" | "1y" | "all",
-  accountId?: string
+  accountId?: string,
 ) {
   const now = new Date();
   const periodOffsets: Record<string, () => Date> = {
@@ -234,13 +225,9 @@ export async function getCreditSpending(
     "3m": () => new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()),
     "6m": () => new Date(now.getFullYear(), now.getMonth() - 6, now.getDate()),
   };
-  const startDate =
-    periodOffsets[period]?.()?.toISOString().split("T")[0] ?? null;
+  const startDate = periodOffsets[period]?.()?.toISOString().split("T")[0] ?? null;
 
-  const conditions: SQL[] = [
-    eq(transaction.userId, userId),
-    eq(financialAccount.type, "credit"),
-  ];
+  const conditions: SQL[] = [eq(transaction.userId, userId), eq(financialAccount.type, "credit")];
   if (accountId) {
     conditions.push(eq(financialAccount.externalId, accountId));
   }
@@ -266,10 +253,7 @@ export async function getCreditSpending(
     "6m": "monthly",
     all: "monthly",
   };
-  const averageLabelMap: Record<
-    string,
-    "daily" | "weekly" | "monthly" | "yearly"
-  > = {
+  const averageLabelMap: Record<string, "daily" | "weekly" | "monthly" | "yearly"> = {
     "1m": "daily",
     "1w": "daily",
     "1y": "monthly",
@@ -301,10 +285,9 @@ export async function getCreditSpending(
     .toSorted((a, b) => a.date.localeCompare(b.date));
   const totalSpending = spending.reduce(
     (sum: number, row: { amount: number; date: string }) => sum + row.amount,
-    0
+    0,
   );
-  const averageSpending =
-    spending.length > 0 ? totalSpending / spending.length : 0;
+  const averageSpending = spending.length > 0 ? totalSpending / spending.length : 0;
 
   return { averageLabel, averageSpending, spending, totalSpending };
 }

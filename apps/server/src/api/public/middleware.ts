@@ -5,14 +5,48 @@ import { createMiddleware } from "hono/factory";
 /**
  * OAuth 2.0 Bearer token authentication for the public API.
  *
- * Uses Better Auth's bearer plugin to resolve access tokens
- * to sessions. Sets c.var.user and c.var.session on success.
+ * Validates JWT access tokens issued by the OAuth2 provider plugin via the
+ * /oauth2/userinfo endpoint, then sets c.var.user.
  */
 export const requireOAuth = createMiddleware<AppEnv>(async (c, next) => {
-  const session = await auth.api.getSession({
-    headers: c.req.raw.headers,
-  });
-  if (!session) {
+  const authHeader = c.req.header("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return c.json(
+      {
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Missing bearer token",
+        },
+      },
+      401,
+    );
+  }
+  try {
+    const userInfo = await auth.api.oauth2UserInfo({
+      headers: new Headers({ authorization: authHeader }),
+    });
+    if (!userInfo?.sub) {
+      return c.json(
+        {
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Invalid or expired access token",
+          },
+        },
+        401,
+      );
+    }
+    c.set("user", {
+      createdAt: new Date(),
+      email: userInfo.email ?? "",
+      emailVerified: userInfo.email_verified ?? false,
+      id: userInfo.sub,
+      image: userInfo.picture ?? null,
+      name: userInfo.name ?? "",
+      updatedAt: new Date(),
+    } as never);
+    await next();
+  } catch {
     return c.json(
       {
         error: {
@@ -20,10 +54,7 @@ export const requireOAuth = createMiddleware<AppEnv>(async (c, next) => {
           message: "Invalid or expired access token",
         },
       },
-      401
+      401,
     );
   }
-  c.set("user", session.user);
-  c.set("session", session.session);
-  await next();
 });
