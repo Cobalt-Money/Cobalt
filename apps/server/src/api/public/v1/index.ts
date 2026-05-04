@@ -1,7 +1,10 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { requireOAuth } from "../middleware.js";
+import { accountsRouter } from "./accounts.js";
+import { networthRouter } from "./networth.js";
 import { tickersRouter } from "./tickers.js";
+import { transactionsRouter } from "./transactions.js";
 
 // Statement-form on purpose: `.use("/*", requireOAuth)` returns a plain
 // `Hono` which drops OpenAPIHono's `.openapi` method, but the public API
@@ -12,6 +15,9 @@ import { tickersRouter } from "./tickers.js";
 // build time without env vars loaded.
 const v1Router = new OpenAPIHono();
 v1Router.use("/*", requireOAuth);
+v1Router.route("/accounts", accountsRouter);
+v1Router.route("/networth", networthRouter);
 v1Router.route("/tickers", tickersRouter);
+v1Router.route("/transactions", transactionsRouter);
 
 export { v1Router };
