@@ -11,7 +11,7 @@ import { appstoreWebhookWorkflow } from "../workflows/appstore/workflow.js";
  * App Store Server Notifications V2 webhook.
  *
  * Configure in App Store Connect → App Information → App Store Server
- * Notifications (Version 2): `https://www.try-cobalt.com/webhooks/appstore`.
+ * Notifications (Version 2): `https://api.cobaltpf.com/webhooks/appstore`.
  *
  * @see https://developer.apple.com/documentation/appstoreservernotifications
  */

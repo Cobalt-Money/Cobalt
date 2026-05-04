@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { env } from "@cobalt-web/env/server";
 import { Hono } from "hono";
@@ -52,7 +52,32 @@ function verifySignature(rawBody: string, signature: string): boolean {
   const sigDigest = createHmac("sha256", clientSecret)
     .update(sigContent)
     .digest("base64");
-  return sigDigest === signature;
+  // Constant-time compare to avoid signature-timing leaks.
+  const a = Buffer.from(sigDigest);
+  const b = Buffer.from(signature);
+  if (a.length !== b.length) {
+    return false;
+  }
+  return timingSafeEqual(a, b);
+}
+
+const MAX_EVENT_AGE_SEC = 300;
+const FUTURE_SKEW_SEC = 60;
+
+/**
+ * Reject events whose `eventTimestamp` is older than 5 minutes (replay) or
+ * more than 60s in the future (clock skew). Per SnapTrade webhook docs.
+ */
+function isFreshEvent(eventTimestamp: unknown): boolean {
+  if (typeof eventTimestamp !== "string") {
+    return false;
+  }
+  const parsed = new Date(eventTimestamp).getTime();
+  if (Number.isNaN(parsed)) {
+    return false;
+  }
+  const ageSec = (Date.now() - parsed) / 1000;
+  return ageSec <= MAX_EVENT_AGE_SEC && ageSec >= -FUTURE_SKEW_SEC;
 }
 
 interface SnaptradeEventPayload {
@@ -219,6 +244,15 @@ export const snaptradeWebhookRouter = new Hono().post("/", async (c) => {
         }
       );
       return c.json({ error: "Invalid payload" }, 400);
+    }
+
+    // Replay protection: drop events whose eventTimestamp is stale or far-future.
+    if (!isFreshEvent((body as { eventTimestamp?: unknown }).eventTimestamp)) {
+      console.error("[snaptrade] Stale or missing eventTimestamp", {
+        eventTimestamp: (body as { eventTimestamp?: unknown }).eventTimestamp,
+        eventType,
+      });
+      return c.json({ error: "Stale event" }, 401);
     }
 
     console.log(`[snaptrade] Received webhook: ${eventType}`, {
