@@ -10,9 +10,7 @@ describe("parseNdjson", () => {
   });
 
   it("parses multiple complete lines in one buffer", () => {
-    const { events, rest } = parseNdjson<{ n: number }>(
-      '{"n":1}\n{"n":2}\n{"n":3}\n'
-    );
+    const { events, rest } = parseNdjson<{ n: number }>('{"n":1}\n{"n":2}\n{"n":3}\n');
     expect(events).toStrictEqual([{ n: 1 }, { n: 2 }, { n: 3 }]);
     expect(rest).toBe("");
   });
@@ -24,9 +22,7 @@ describe("parseNdjson", () => {
   });
 
   it("skips empty lines", () => {
-    const { events, rest } = parseNdjson<{ n: number }>(
-      '\n{"n":1}\n\n{"n":2}\n'
-    );
+    const { events, rest } = parseNdjson<{ n: number }>('\n{"n":1}\n\n{"n":2}\n');
     expect(events).toStrictEqual([{ n: 1 }, { n: 2 }]);
     expect(rest).toBe("");
   });
@@ -44,9 +40,7 @@ describe("parseNdjson", () => {
   });
 
   it("treats a mid-object split as a partial line and preserves prior events", () => {
-    const { events, rest } = parseNdjson<{ n: number }>(
-      '{"n":1}\n{"incomplete":'
-    );
+    const { events, rest } = parseNdjson<{ n: number }>('{"n":1}\n{"incomplete":');
     expect(events).toStrictEqual([{ n: 1 }]);
     expect(rest).toBe('{"incomplete":');
   });

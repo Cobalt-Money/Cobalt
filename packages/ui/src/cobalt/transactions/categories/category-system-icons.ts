@@ -275,8 +275,7 @@ const OTHER_CAT_TO_GROUP: Record<string, CategoryGroupKey> = {
 const EMOJI_PATTERN =
   /^(\p{Extended_Pictographic}|\p{Emoji_Presentation})(‍\p{Extended_Pictographic})*️?$/u;
 
-export const isEmojiIconKey = (iconKey: string): boolean =>
-  EMOJI_PATTERN.test(iconKey);
+export const isEmojiIconKey = (iconKey: string): boolean => EMOJI_PATTERN.test(iconKey);
 
 /**
  * Resolve `category.iconKey` to a render target.
@@ -287,7 +286,7 @@ export const isEmojiIconKey = (iconKey: string): boolean =>
  * - Unknown → undefined; caller falls back to UNKNOWN_CATEGORY_ICON
  */
 export function resolveCategoryIcon(
-  iconKey: string | null | undefined
+  iconKey: string | null | undefined,
 ): CategoryPrimaryGlyph | { kind: "emoji"; char: string } | undefined {
   if (!iconKey) {
     return undefined;
@@ -308,7 +307,7 @@ export function resolveCategoryIcon(
 
 /** Lookup icon for a category group (used for group filter UI / pickers). */
 export function resolveGroupIcon(
-  groupKey: string | null | undefined
+  groupKey: string | null | undefined,
 ): { kind: "image"; src: string } | undefined {
   if (!groupKey) {
     return undefined;

@@ -227,12 +227,7 @@ function VideoEmbedSection({ embedUrl }: { embedUrl: string }) {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-lg font-semibold tracking-tight">Video</h2>
-      <div
-        className={cn(
-          "bg-muted relative w-full overflow-hidden rounded-xl",
-          "aspect-video"
-        )}
-      >
+      <div className={cn("bg-muted relative w-full overflow-hidden rounded-xl", "aspect-video")}>
         <iframe
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
@@ -247,8 +242,7 @@ function VideoEmbedSection({ embedUrl }: { embedUrl: string }) {
 }
 
 function SourceArticleCard({ article }: { article: EventArticleRow }) {
-  const host =
-    article.sourceName?.trim() || hostnameFromUrl(article.newsUrl) || "Source";
+  const host = article.sourceName?.trim() || hostnameFromUrl(article.newsUrl) || "Source";
   const fav = faviconUrlForNewsUrl(article.newsUrl);
   const snippet = article.text?.trim();
   return (
@@ -288,9 +282,7 @@ function SourceArticleCard({ article }: { article: EventArticleRow }) {
               className="text-muted-foreground mt-0.5 shrink-0"
             />
           </span>
-          <span className="text-muted-foreground mt-1 block text-sm">
-            {host}
-          </span>
+          <span className="text-muted-foreground mt-1 block text-sm">{host}</span>
           {snippet ? (
             <span className="text-muted-foreground mt-2 line-clamp-3 block text-sm leading-relaxed">
               {snippet}
@@ -302,11 +294,7 @@ function SourceArticleCard({ article }: { article: EventArticleRow }) {
   );
 }
 
-function SourcesSection({
-  articles,
-}: {
-  articles: readonly EventArticleRow[];
-}) {
+function SourcesSection({ articles }: { articles: readonly EventArticleRow[] }) {
   if (articles.length === 0) {
     return null;
   }
@@ -329,8 +317,7 @@ export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
         <p className="text-muted-foreground text-sm">
-          This story could not be loaded. It may have been removed or the link
-          is invalid.
+          This story could not be loaded. It may have been removed or the link is invalid.
         </p>
       </div>
     );
@@ -342,8 +329,7 @@ export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
   const tickers = parseTickers(event.tickers);
   const summary = event.summary?.trim() || null;
   const eventText = event.eventText?.trim() || null;
-  const heroImage =
-    articles.find((a) => a.imageUrl?.trim())?.imageUrl?.trim() ?? null;
+  const heroImage = articles.find((a) => a.imageUrl?.trim())?.imageUrl?.trim() ?? null;
   const videoEmbed = pickVideoEmbed(articles);
   const ts = eventTimestampMs(event);
   const timeLabel =
@@ -356,12 +342,7 @@ export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8">
-      <StoryHeader
-        event={event}
-        timeLabel={timeLabel}
-        tickers={tickers}
-        ts={ts}
-      />
+      <StoryHeader event={event} timeLabel={timeLabel} tickers={tickers} ts={ts} />
 
       {heroImage ? <HeroImage src={heroImage} /> : null}
 
@@ -377,9 +358,7 @@ export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
       {eventText && eventText !== summary ? (
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold tracking-tight">Details</h2>
-          <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-            {eventText}
-          </p>
+          <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{eventText}</p>
         </section>
       ) : null}
 

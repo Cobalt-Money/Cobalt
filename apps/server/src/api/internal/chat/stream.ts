@@ -35,7 +35,7 @@ function extractMessageText(message: UIMessage): string {
   return message.parts
     .filter(
       (p): p is { text: string; type: "text" } =>
-        p.type === "text" && typeof (p as { text?: unknown }).text === "string"
+        p.type === "text" && typeof (p as { text?: unknown }).text === "string",
     )
     .map((p) => p.text)
     .join(" ")
@@ -45,7 +45,7 @@ function extractMessageText(message: UIMessage): string {
 async function startChatTitle(
   chatTitle: string | null,
   chatId: string,
-  message: UIMessage
+  message: UIMessage,
 ): Promise<void> {
   if (chatTitle || message.role !== "user") {
     return;
@@ -189,7 +189,7 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
     const standardProviderOptions = getProviderOptions(
       standardBaseModel,
       standardUseReasoning,
-      effort
+      effort,
     );
     const modelMessages = pruneMessages({
       messages: trimmed,
@@ -219,5 +219,5 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
     });
 
     return result.toUIMessageStreamResponse({ sendReasoning: true });
-  }
+  },
 );

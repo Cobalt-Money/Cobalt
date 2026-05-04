@@ -1,13 +1,5 @@
 import { sql } from "drizzle-orm";
-import {
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  uniqueIndex,
-} from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, text, timestamp, uuid, uniqueIndex } from "drizzle-orm/pg-core";
 
 import { user } from "../users/auth/auth";
 
@@ -60,7 +52,7 @@ export const userAlerts = pgTable(
     uniqueIndex("user_alerts_active_dedup_idx")
       .on(table.source, table.sourceId, table.type)
       .where(sql`status NOT IN ('resolved', 'dismissed')`),
-  ]
+  ],
 );
 
 // Type exports

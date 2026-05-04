@@ -11,9 +11,7 @@ vi.mock(import("@cobalt-web/ui/components/ui/map"), () => ({
   MarkerContent: () => null,
 }));
 
-function createMockTransaction(
-  overrides: Partial<TransactionListItem> = {}
-): TransactionListItem {
+function createMockTransaction(overrides: Partial<TransactionListItem> = {}): TransactionListItem {
   return {
     accountName: "Checking",
     accountType: "depository",
@@ -45,12 +43,8 @@ describe(TransactionDetailView, () => {
   it("renders merchant/title, formatted amount, and Activity", () => {
     render(<TransactionDetailView transaction={createMockTransaction()} />);
 
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Coffee Shop Purchase" })
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Coffee Shop Purchase" })).toBeTruthy();
     expect(screen.getByText("$12.34")).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Activity" })
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "Activity" })).toBeTruthy();
   });
 });

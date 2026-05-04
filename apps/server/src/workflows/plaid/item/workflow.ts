@@ -7,10 +7,7 @@ import type {
 } from "plaid";
 
 import { insertAlertStep, resolveAlertsStep } from "../../shared/alert-steps";
-import {
-  captureWorkflowExceptionStep,
-  toSerializableError,
-} from "../../shared/steps";
+import { captureWorkflowExceptionStep, toSerializableError } from "../../shared/steps";
 import { getPlaidItemStep, updateItemStateStep } from "../sync/steps";
 
 type ItemWebhook =
@@ -26,7 +23,7 @@ export interface PlaidItemWebhookResult {
 }
 
 export async function plaidItemWebhookWorkflow(
-  webhook: ItemWebhook
+  webhook: ItemWebhook,
 ): Promise<PlaidItemWebhookResult> {
   "use workflow";
 
@@ -44,8 +41,7 @@ export async function plaidItemWebhookWorkflow(
       }
     }
 
-    const errorPayload =
-      "error" in webhook ? (webhook as ItemErrorWebhook).error : undefined;
+    const errorPayload = "error" in webhook ? (webhook as ItemErrorWebhook).error : undefined;
 
     const result = await updateItemStateStep({
       error: errorPayload,
@@ -120,13 +116,8 @@ export async function plaidItemWebhookWorkflow(
 
     return { itemId, success: true };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "plaid_item",
-      toSerializableError(error),
-      { itemId }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    await captureWorkflowExceptionStep("plaid_item", toSerializableError(error), { itemId });
     return { error: errorMessage, itemId, success: false };
   }
 }

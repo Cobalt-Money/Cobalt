@@ -21,10 +21,7 @@ export async function getAccountOwner(plaidAccountId: string) {
 }
 
 /** Set the user-override credit limit on the balance row for a Plaid account. */
-export async function setCreditLimitOverride(
-  plaidAccountId: string,
-  creditLimit: number
-) {
+export async function setCreditLimitOverride(plaidAccountId: string, creditLimit: number) {
   const acct = await db.query.financialAccount.findFirst({
     columns: { id: true },
     where: {
@@ -69,10 +66,7 @@ export async function clearCreditLimitOverride(plaidAccountId: string) {
  * given the access token so it can call Plaid's `/item/remove` (stops billing
  * and webhook delivery).
  */
-export async function disconnectBankConnection(
-  userId: string,
-  accountId: string
-) {
+export async function disconnectBankConnection(userId: string, accountId: string) {
   const row = await db.query.financialAccount.findFirst({
     columns: { id: true },
     where: {

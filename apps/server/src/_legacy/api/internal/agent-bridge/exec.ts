@@ -18,9 +18,7 @@ const execBodySchema = z.object({
  */
 export const agentBridgeRouter = new OpenAPIHono().post("/exec", async (c) => {
   const auth = c.req.header("authorization");
-  const token = auth?.toLowerCase().startsWith("bearer ")
-    ? auth.slice(7).trim()
-    : null;
+  const token = auth?.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : null;
   if (!token) {
     return c.json({ error: "missing bearer token" }, 401);
   }
@@ -49,10 +47,7 @@ export const agentBridgeRouter = new OpenAPIHono().post("/exec", async (c) => {
   };
   const argsParse = entry.schema.safeParse(args ?? {});
   if (!argsParse.success) {
-    return c.json(
-      { error: "invalid args", issues: argsParse.error.issues },
-      400
-    );
+    return c.json({ error: "invalid args", issues: argsParse.error.issues }, 400);
   }
 
   try {
@@ -64,7 +59,7 @@ export const agentBridgeRouter = new OpenAPIHono().post("/exec", async (c) => {
         error: error instanceof Error ? error.message : "handler failed",
         ok: false,
       },
-      500
+      500,
     );
   }
 });

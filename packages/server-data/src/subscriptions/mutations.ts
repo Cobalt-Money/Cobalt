@@ -15,7 +15,7 @@ import type {
  */
 export async function syncAppStoreSubscription(
   userId: string,
-  input: AppStoreSyncInput
+  input: AppStoreSyncInput,
 ): Promise<AppStoreSyncMutationResult> {
   const now = new Date();
   let expiresAt = new Date(input.expiresAt);
@@ -30,8 +30,7 @@ export async function syncAppStoreSubscription(
 
   const status = expiresAt > now ? "active" : "expired";
   const { environment } = input;
-  const latestTransactionId =
-    input.latestTransactionId ?? input.originalTransactionId;
+  const latestTransactionId = input.latestTransactionId ?? input.originalTransactionId;
 
   const existingRecord = await db.query.mobileSubscription.findFirst({
     where: { originalTransactionId: { eq: input.originalTransactionId } },
@@ -48,12 +47,7 @@ export async function syncAppStoreSubscription(
         updatedAt: now,
         userId,
       })
-      .where(
-        eq(
-          mobileSubscription.originalTransactionId,
-          input.originalTransactionId
-        )
-      );
+      .where(eq(mobileSubscription.originalTransactionId, input.originalTransactionId));
 
     return {
       action: existingRecord.userId === userId ? "updated" : "transferred",
@@ -109,7 +103,7 @@ export async function syncAppStoreSubscription(
  * we skip and let the next sync catch up.
  */
 export async function applyAppStoreNotification(
-  input: AppStoreNotificationInput
+  input: AppStoreNotificationInput,
 ): Promise<AppStoreNotificationResult> {
   const {
     environment,
@@ -160,7 +154,7 @@ export async function applyAppStoreNotification(
 
 function mapNotificationToStatus(
   notificationType: AppStoreNotificationInput["notificationType"],
-  currentStatus: string
+  currentStatus: string,
 ): string {
   switch (notificationType) {
     case "SUBSCRIBED":

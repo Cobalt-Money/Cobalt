@@ -9,9 +9,7 @@ interface StockNewsTickerArticlesResponse {
   total_items: number;
 }
 
-export function getResearchNews(
-  symbol: string
-): Promise<StockNewsTickerArticlesResponse> {
+export function getResearchNews(symbol: string): Promise<StockNewsTickerArticlesResponse> {
   return stockNewsRequest<StockNewsTickerArticlesResponse>("", {
     items: "50",
     sourceexclude: "Benzinga,The Motley Fool,Zacks Investment Research",

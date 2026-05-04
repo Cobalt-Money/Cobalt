@@ -26,7 +26,7 @@ export function ZeroProvider({ children }: { children: ReactNode }) {
   const userID = authenticatedUserId ?? "anon";
   const context = useMemo<Context | undefined>(
     () => (authenticatedUserId ? { userId: authenticatedUserId } : undefined),
-    [authenticatedUserId]
+    [authenticatedUserId],
   );
 
   const init = useCallback(
@@ -40,13 +40,11 @@ export function ZeroProvider({ children }: { children: ReactNode }) {
       });
       router.invalidate();
     },
-    [router]
+    [router],
   );
 
   return (
-    <BaseZeroProvider
-      {...{ cacheURL, context, init, mutators, schema, userID }}
-    >
+    <BaseZeroProvider {...{ cacheURL, context, init, mutators, schema, userID }}>
       {children}
     </BaseZeroProvider>
   );

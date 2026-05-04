@@ -29,7 +29,7 @@ export const rssArticles = pgTable(
     index("rss_articles_link_where_idx").on(table.link),
     index("rss_articles_published_date_idx").on(table.publishedDate),
     index("rss_articles_created_at_idx").on(table.createdAt),
-  ]
+  ],
 );
 
 export const rssFeeds = pgTable(
@@ -57,7 +57,7 @@ export const rssFeeds = pgTable(
     index("rss_feeds_url_idx").on(table.url),
     index("rss_feeds_is_active_idx").on(table.isActive),
     index("rss_feeds_last_fetched_idx").on(table.lastFetched),
-  ]
+  ],
 );
 
 // Type exports

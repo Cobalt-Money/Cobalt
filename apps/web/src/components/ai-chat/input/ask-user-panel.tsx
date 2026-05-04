@@ -53,8 +53,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
       : null;
 
   const canSubmit =
-    selectedOption !== undefined ||
-    (isOtherSelected && currentOtherText.trim().length > 0);
+    selectedOption !== undefined || (isOtherSelected && currentOtherText.trim().length > 0);
 
   const handleSelect = (value: string) => {
     setSelections((prev) => ({ ...prev, [current.toolCallId]: value }));
@@ -150,7 +149,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
             <button
               className={cn(
                 "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                isSelected ? "bg-primary/10" : "hover:bg-muted"
+                isSelected ? "bg-primary/10" : "hover:bg-muted",
               )}
               key={option.value}
               onClick={() => handleSelect(option.value)}
@@ -161,23 +160,17 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
                   "flex size-5 shrink-0 items-center justify-center rounded font-semibold text-xs",
                   isSelected
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted-foreground/15 text-muted-foreground"
+                    : "bg-muted-foreground/15 text-muted-foreground",
                 )}
               >
                 {OPTION_LETTERS[idx] ?? String(idx + 1)}
               </span>
-              <span
-                className={cn(
-                  isSelected ? "text-foreground" : "text-muted-foreground"
-                )}
-              >
+              <span className={cn(isSelected ? "text-foreground" : "text-muted-foreground")}>
                 {option.label}
                 {option.description && (
                   <span
                     className={cn(
-                      isSelected
-                        ? "text-muted-foreground"
-                        : "text-muted-foreground/60"
+                      isSelected ? "text-muted-foreground" : "text-muted-foreground/60",
                     )}
                   >
                     {" "}

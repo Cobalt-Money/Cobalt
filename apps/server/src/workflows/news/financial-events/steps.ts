@@ -8,10 +8,7 @@ import {
   selectBestArticles,
   toFailedProcessedArticle,
 } from "@cobalt-web/server-data/news/events/lib";
-import type {
-  EventSummary,
-  ProcessedArticle,
-} from "@cobalt-web/server-data/news/events/lib";
+import type { EventSummary, ProcessedArticle } from "@cobalt-web/server-data/news/events/lib";
 import {
   applyEventSummary,
   replaceEventArticles,
@@ -26,9 +23,7 @@ import {
 
 // ── Per-event pipeline ────────────────────────────────────────────
 
-export async function upsertEventHeaderStep(
-  event: StockNewsEvent
-): Promise<string> {
+export async function upsertEventHeaderStep(event: StockNewsEvent): Promise<string> {
   "use step";
 
   return await upsertFinancialEventHeader({
@@ -41,9 +36,7 @@ export async function upsertEventHeaderStep(
   });
 }
 
-export async function fetchEventArticlesStep(
-  eventId: string
-): Promise<StockNewsArticle[]> {
+export async function fetchEventArticlesStep(eventId: string): Promise<StockNewsArticle[]> {
   "use step";
 
   return await fetchArticlesForEvent(eventId, 20);
@@ -54,9 +47,7 @@ export function pickArticles(articles: StockNewsArticle[]): StockNewsArticle[] {
   return selectBestArticles(articles, 5);
 }
 
-export async function processArticleStep(
-  article: StockNewsArticle
-): Promise<ProcessedArticle> {
+export async function processArticleStep(article: StockNewsArticle): Promise<ProcessedArticle> {
   "use step";
 
   const result = await fetchArticleContent(article);
@@ -73,7 +64,7 @@ export async function processArticleStep(
 export async function summarizeEventStep(
   eventName: string,
   eventText: string | undefined,
-  scraped: ProcessedArticle[]
+  scraped: ProcessedArticle[],
 ): Promise<EventSummary> {
   "use step";
 
@@ -98,7 +89,7 @@ export async function persistEventStep(
   eventRecordId: string,
   persisted: ProcessedArticle[],
   summary: EventSummary,
-  scrapedArticlesCount: number
+  scrapedArticlesCount: number,
 ): Promise<void> {
   "use step";
 

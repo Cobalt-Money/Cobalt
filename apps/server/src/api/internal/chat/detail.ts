@@ -1,7 +1,4 @@
-import {
-  getChatMessagesForUser,
-  getVotesForChat,
-} from "@cobalt-web/server-data/chat/queries";
+import { getChatMessagesForUser, getVotesForChat } from "@cobalt-web/server-data/chat/queries";
 import {
   chatDetailResponseSchema,
   chatErrorResponseSchema,
@@ -43,20 +40,17 @@ const route = createRoute({
   tags: ["Chat"],
 });
 
-export const chatDetailRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const { chatId } = c.req.valid("param");
-    const userId = c.var.user.id;
+export const chatDetailRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  const { chatId } = c.req.valid("param");
+  const userId = c.var.user.id;
 
-    try {
-      const [messages, votes] = await Promise.all([
-        getChatMessagesForUser(userId, chatId),
-        getVotesForChat(userId, chatId),
-      ]);
-      return c.json({ id: chatId, messages, votes }, 200);
-    } catch {
-      return c.json({ id: chatId, messages: [], votes: {} }, 404);
-    }
+  try {
+    const [messages, votes] = await Promise.all([
+      getChatMessagesForUser(userId, chatId),
+      getVotesForChat(userId, chatId),
+    ]);
+    return c.json({ id: chatId, messages, votes }, 200);
+  } catch {
+    return c.json({ id: chatId, messages: [], votes: {} }, 404);
   }
-);
+});

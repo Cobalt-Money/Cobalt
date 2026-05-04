@@ -71,7 +71,7 @@ export function rangeText(view: TCalendarView, date: Date): string {
 export function navigateDate(
   date: Date,
   view: TCalendarView,
-  direction: "previous" | "next"
+  direction: "previous" | "next",
 ): Date {
   const operations: Record<TCalendarView, (d: Date, n: number) => Date> = {
     agenda: direction === "next" ? addMonths : subMonths,
@@ -84,11 +84,7 @@ export function navigateDate(
   return operations[view](date, 1);
 }
 
-export function getEventsCount(
-  events: IEvent[],
-  date: Date,
-  view: TCalendarView
-): number {
+export function getEventsCount(events: IEvent[], date: Date, view: TCalendarView): number {
   const compareFns: Record<TCalendarView, (d1: Date, d2: Date) => boolean> = {
     agenda: isSameMonth,
     day: isSameDay,
@@ -98,13 +94,12 @@ export function getEventsCount(
   };
 
   const compareFn = compareFns[view];
-  return events.filter((event) => compareFn(parseISO(event.startDate), date))
-    .length;
+  return events.filter((event) => compareFn(parseISO(event.startDate), date)).length;
 }
 
 export function groupEvents(dayEvents: IEvent[]): IEvent[][] {
   const sortedEvents = dayEvents.toSorted(
-    (a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()
+    (a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime(),
   );
   const groups: IEvent[][] = [];
 
@@ -138,7 +133,7 @@ export function getEventBlockStyle(
   event: IEvent,
   day: Date,
   groupIndex: number,
-  groupSize: number
+  groupSize: number,
 ) {
   const startDate = parseISO(event.startDate);
   const dayStart = startOfDay(day); // Use startOfDay instead of manual reset
@@ -173,14 +168,11 @@ export function getCalendarCells(selectedDate: Date): ICalendarCell[] {
     day: i + 1,
   }));
 
-  const nextMonthCells = Array.from(
-    { length: (7 - (totalDays % 7)) % 7 },
-    (_, i) => ({
-      currentMonth: false,
-      date: new Date(year, month + 1, i + 1),
-      day: i + 1,
-    })
-  );
+  const nextMonthCells = Array.from({ length: (7 - (totalDays % 7)) % 7 }, (_, i) => ({
+    currentMonth: false,
+    date: new Date(year, month + 1, i + 1),
+    day: i + 1,
+  }));
 
   return [...prevMonthCells, ...currentMonthCells, ...nextMonthCells];
 }
@@ -188,7 +180,7 @@ export function getCalendarCells(selectedDate: Date): ICalendarCell[] {
 export function calculateMonthEventPositions(
   multiDayEvents: IEvent[],
   singleDayEvents: IEvent[],
-  selectedDate: Date
+  selectedDate: Date,
 ): Record<string, number> {
   const monthStart = startOfMonth(selectedDate);
   const monthEnd = endOfMonth(selectedDate);
@@ -202,22 +194,14 @@ export function calculateMonthEventPositions(
 
   const sortedEvents = [
     ...multiDayEvents.toSorted((a, b) => {
-      const aDuration = differenceInDays(
-        parseISO(a.endDate),
-        parseISO(a.startDate)
-      );
-      const bDuration = differenceInDays(
-        parseISO(b.endDate),
-        parseISO(b.startDate)
-      );
+      const aDuration = differenceInDays(parseISO(a.endDate), parseISO(a.startDate));
+      const bDuration = differenceInDays(parseISO(b.endDate), parseISO(b.startDate));
       return (
-        bDuration - aDuration ||
-        parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()
+        bDuration - aDuration || parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()
       );
     }),
     ...singleDayEvents.toSorted(
-      (a, b) =>
-        parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()
+      (a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime(),
     ),
   ];
 
@@ -258,7 +242,7 @@ export function calculateMonthEventPositions(
 export function getMonthCellEvents(
   date: Date,
   events: IEvent[],
-  eventPositions: Record<string, number>
+  eventPositions: Record<string, number>,
 ) {
   const dayStart = startOfDay(date);
   const eventsForDate = events.filter((event) => {
@@ -288,10 +272,7 @@ export function getMonthCellEvents(
     });
 }
 
-export function formatTime(
-  date: Date | string,
-  use24HourFormat: boolean
-): string {
+export function formatTime(date: Date | string, use24HourFormat: boolean): string {
   const parsedDate = typeof date === "string" ? parseISO(date) : date;
   if (!isValid(parsedDate)) {
     return "";
@@ -310,11 +291,7 @@ export const getFirstLetters = (str: string): string => {
   return `${words[0].charAt(0).toUpperCase()}${words[1].charAt(0).toUpperCase()}`;
 };
 
-export const getEventsForDay = (
-  events: IEvent[],
-  date: Date,
-  isWeek = false
-): IEvent[] => {
+export const getEventsForDay = (events: IEvent[], date: Date, isWeek = false): IEvent[] => {
   const targetDate = startOfDay(date);
   return events
     .filter((event) => {
@@ -327,10 +304,7 @@ export const getEventsForDay = (
           startOfDayForEventEnd >= targetDate
         );
       }
-      return (
-        startOfDayForEventStart <= targetDate &&
-        startOfDayForEventEnd >= targetDate
-      );
+      return startOfDayForEventStart <= targetDate && startOfDayForEventEnd >= targetDate;
     })
     .map((event) => {
       const eventStart = startOfDay(parseISO(event.startDate));

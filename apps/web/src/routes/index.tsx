@@ -50,9 +50,7 @@ function Container({
   className?: string;
 }) {
   return (
-    <div
-      className={`mx-auto w-full max-w-7xl px-6 2xl:max-w-[100rem] ${className}`}
-    >
+    <div className={`mx-auto w-full max-w-7xl px-6 2xl:max-w-[100rem] ${className}`}>
       {children}
     </div>
   );
@@ -83,36 +81,19 @@ function Nav() {
         <span className="text-xl">Cobalt</span>
         <div className="flex items-center gap-6">
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex">
-            <a
-              href="#features"
-              className="hover:text-foreground transition-colors"
-            >
+            <a href="#features" className="hover:text-foreground transition-colors">
               Features
             </a>
-            <a
-              href="/privacy"
-              className="hover:text-foreground transition-colors"
-            >
+            <a href="/privacy" className="hover:text-foreground transition-colors">
               Privacy
             </a>
-            <a
-              href="/terms"
-              className="hover:text-foreground transition-colors"
-            >
+            <a href="/terms" className="hover:text-foreground transition-colors">
               Terms
             </a>
           </nav>
           <div className="flex items-center gap-2">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setTheme(isDark ? "light" : "dark")}
-            >
-              <HugeiconsIcon
-                icon={isDark ? Sun02Icon : MoonIcon}
-                size={18}
-                strokeWidth={2}
-              />
+            <Button size="icon" variant="ghost" onClick={() => setTheme(isDark ? "light" : "dark")}>
+              <HugeiconsIcon icon={isDark ? Sun02Icon : MoonIcon} size={18} strokeWidth={2} />
             </Button>
             <Link
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
@@ -168,14 +149,7 @@ interface ShowcaseProps {
   visual: React.ReactNode;
 }
 
-function Showcase({
-  bare,
-  eyebrow,
-  title,
-  description,
-  flip,
-  visual,
-}: ShowcaseProps) {
+function Showcase({ bare, eyebrow, title, description, flip, visual }: ShowcaseProps) {
   return (
     <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-20">
       <div className={flip ? "lg:order-2" : undefined}>
@@ -185,9 +159,7 @@ function Showcase({
         <h3 className="font-display mt-3 text-3xl italic tracking-tight sm:text-4xl lg:text-5xl">
           {title}
         </h3>
-        <p className="mt-4 max-w-md text-lg text-muted-foreground">
-          {description}
-        </p>
+        <p className="mt-4 max-w-md text-lg text-muted-foreground">{description}</p>
       </div>
       <div className={flip ? "lg:order-1" : undefined}>
         {bare ? (
@@ -321,10 +293,7 @@ function McpVisual() {
     <div
       className="w-full overflow-hidden rounded-lg border bg-[#1a1a1a] shadow-2xl shadow-black/40"
       onClick={(e) => {
-        if (
-          e.target === e.currentTarget ||
-          !(e.target as HTMLElement).closest("a, input")
-        ) {
+        if (e.target === e.currentTarget || !(e.target as HTMLElement).closest("a, input")) {
           inputRef.current?.focus();
         }
       }}
@@ -366,9 +335,7 @@ function McpVisual() {
 
         <div className="text-white/90">
           <span className="text-white/40">&gt;</span>
-          <span className="ml-2">
-            what did I spend on restaurants last month?
-          </span>
+          <span className="ml-2">what did I spend on restaurants last month?</span>
         </div>
         <div className="mt-3">
           <span className="text-[#d97757]">⏺</span>
@@ -388,16 +355,13 @@ function McpVisual() {
         </div>
         <div className="mt-0.5 pl-5 text-white/50">
           <span>⎿</span>
-          <span className="ml-2 text-white/60">
-            total: $847.23 · count: 23 · vs_prev: +18%
-          </span>
+          <span className="ml-2 text-white/60">total: $847.23 · count: 23 · vs_prev: +18%</span>
         </div>
         <div className="mt-3">
           <span className="text-[#d97757]">⏺</span>
           <span className="ml-2 text-white/90">
-            You spent <span className="text-white">$847</span> on restaurants
-            last month across 23 transactions —{" "}
-            <span className="text-[#febc2e]">18% over</span> September. Three
+            You spent <span className="text-white">$847</span> on restaurants last month across 23
+            transactions — <span className="text-[#febc2e]">18% over</span> September. Three
             late-night Uber Eats orders did most of the damage.
           </span>
         </div>
@@ -423,9 +387,7 @@ function McpVisual() {
                   <>
                     <div className="mt-2">
                       <span className="text-[#febc2e]">⏺</span>
-                      <span className="ml-2 text-white/70">
-                        cobalt mcp · not authenticated
-                      </span>
+                      <span className="ml-2 text-white/70">cobalt mcp · not authenticated</span>
                     </div>
                     <div className="mt-2 pl-5">
                       <Link
@@ -446,9 +408,7 @@ function McpVisual() {
                 </div>
                 <div className="mt-2">
                   <span className="text-[#febc2e]">⏺</span>
-                  <span className="ml-2 text-white/70">
-                    cobalt mcp · not authenticated
-                  </span>
+                  <span className="ml-2 text-white/70">cobalt mcp · not authenticated</span>
                 </div>
                 <div className="mt-2 pl-5">
                   <Link
@@ -597,15 +557,12 @@ function ChatGPTVisual() {
     ],
   };
 
-  const [entries, setEntries] = useState<GPTEntry[]>(
-    conversations["Trip to Lisbon"]
-  );
+  const [entries, setEntries] = useState<GPTEntry[]>(conversations["Trip to Lisbon"]);
   const [draft, setDraft] = useState("");
   const [streaming, setStreaming] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [showToolDetail, setShowToolDetail] = useState<number | null>(null);
-  const [activeConversation, setActiveConversation] =
-    useState("Trip to Lisbon");
+  const [activeConversation, setActiveConversation] = useState("Trip to Lisbon");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const brandfetchClientId = process.env.VITE_BRANDFETCH_CLIENT_ID || "";
@@ -638,10 +595,7 @@ function ChatGPTVisual() {
       return;
     }
     const scripted = GPT_SCRIPTED[entries.length % GPT_SCRIPTED.length];
-    setEntries((prev) => [
-      ...prev,
-      { id: Date.now(), prompt: trimmed, ...scripted },
-    ]);
+    setEntries((prev) => [...prev, { id: Date.now(), prompt: trimmed, ...scripted }]);
     setDraft("");
     setStreaming("");
     setIsStreaming(true);
@@ -683,25 +637,21 @@ function ChatGPTVisual() {
             />
           </div>
         )}
-        <div className="mt-2 px-2 text-[11px] uppercase tracking-wider text-white/40">
-          Today
-        </div>
-        {["Cobalt finances", "Trip to Lisbon", "React hooks refresher"].map(
-          (name) => (
-            <button
-              className={`mt-0.5 w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-                activeConversation === name
-                  ? "bg-white/10 text-white"
-                  : "text-white/60 hover:text-white/80"
-              }`}
-              key={name}
-              onClick={() => switchConversation(name)}
-              type="button"
-            >
-              {name}
-            </button>
-          )
-        )}
+        <div className="mt-2 px-2 text-[11px] uppercase tracking-wider text-white/40">Today</div>
+        {["Cobalt finances", "Trip to Lisbon", "React hooks refresher"].map((name) => (
+          <button
+            className={`mt-0.5 w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+              activeConversation === name
+                ? "bg-white/10 text-white"
+                : "text-white/60 hover:text-white/80"
+            }`}
+            key={name}
+            onClick={() => switchConversation(name)}
+            type="button"
+          >
+            {name}
+          </button>
+        ))}
         <div className="mt-auto flex items-center gap-2 rounded-md px-2 py-2 text-white/70">
           <div className="flex size-6 items-center justify-center rounded-full bg-[#ab68ff] text-[11px] font-semibold text-white">
             A
@@ -749,9 +699,7 @@ function ChatGPTVisual() {
                     <button
                       className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[12px] text-white/70 hover:bg-white/10"
                       onClick={() =>
-                        setShowToolDetail(
-                          showToolDetail === entry.id ? null : entry.id
-                        )
+                        setShowToolDetail(showToolDetail === entry.id ? null : entry.id)
                       }
                       type="button"
                     >
@@ -768,29 +716,19 @@ function ChatGPTVisual() {
                         stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path
-                          d="M19 9l-7 7-7-7"
-                          strokeLinecap="round"
-                          strokeWidth="2"
-                        />
+                        <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeWidth="2" />
                       </svg>
                     </button>
                     {showToolDetail === entry.id && (
                       <div className="space-y-1 rounded-lg border border-white/10 bg-black/30 p-3 font-mono text-[11px] text-white/70">
                         <div>
                           <span className="text-[#10a37f]">→</span>{" "}
-                          <span className="text-white/90">
-                            {entry.tool.name}
-                          </span>
-                          <span className="text-white/50">
-                            ({entry.tool.args})
-                          </span>
+                          <span className="text-white/90">{entry.tool.name}</span>
+                          <span className="text-white/50">({entry.tool.args})</span>
                         </div>
                         <div>
                           <span className="text-white/40">←</span>{" "}
-                          <span className="text-[#d0c58a]">
-                            {entry.tool.result}
-                          </span>
+                          <span className="text-[#d0c58a]">{entry.tool.result}</span>
                         </div>
                       </div>
                     )}
@@ -810,17 +748,8 @@ function ChatGPTVisual() {
         <div className="px-4 pb-4">
           <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-full border border-white/10 bg-[#2f2f2f] px-3 py-1.5">
             <button className="text-white/50 hover:text-white/80" type="button">
-              <svg
-                className="size-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M12 4v16m8-8H4"
-                  strokeLinecap="round"
-                  strokeWidth="2"
-                />
+              <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeWidth="2" />
               </svg>
             </button>
             <input
@@ -842,12 +771,7 @@ function ChatGPTVisual() {
               onClick={submit}
               type="button"
             >
-              <svg
-                className="size-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   d="M12 19V5M5 12l7-7 7 7"
                   strokeLinecap="round"
@@ -870,9 +794,7 @@ function CommandKVisual() {
         <kbd className="rounded-md border bg-background px-2 py-0.5 text-xs font-medium shadow-sm">
           ⌘K
         </kbd>
-        <span className="text-sm text-muted-foreground">
-          categorize WHOLE FOODS #384…
-        </span>
+        <span className="text-sm text-muted-foreground">categorize WHOLE FOODS #384…</span>
       </div>
       <div className="overflow-hidden rounded-xl border">
         {[
@@ -883,17 +805,13 @@ function CommandKVisual() {
         ].map((item, i) => (
           <div
             className={`flex items-center justify-between px-4 py-2.5 text-sm ${
-              i === 0
-                ? "bg-primary/10 text-primary"
-                : "border-t text-muted-foreground"
+              i === 0 ? "bg-primary/10 text-primary" : "border-t text-muted-foreground"
             }`}
             key={item}
           >
             <span>{item}</span>
             {i === 0 && (
-              <kbd className="rounded border bg-background/80 px-1.5 py-0.5 text-xs">
-                ↵
-              </kbd>
+              <kbd className="rounded border bg-background/80 px-1.5 py-0.5 text-xs">↵</kbd>
             )}
           </div>
         ))}
@@ -960,19 +878,13 @@ function ChatVisual() {
         <div className="space-y-2">
           <div className="max-w-[85%] rounded-2xl rounded-tl-sm border bg-muted/30 px-4 py-3">
             <p className="leading-relaxed">
-              Yes &mdash; you&apos;re at $16,820 and saving $1,240/mo on
-              average. You&apos;ll clear $20k around November 18 if nothing
-              changes.
+              Yes &mdash; you&apos;re at $16,820 and saving $1,240/mo on average. You&apos;ll clear
+              $20k around November 18 if nothing changes.
             </p>
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground pl-2">
             <button className="rounded p-1 hover:bg-muted text-foreground/50">
-              <svg
-                className="size-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2h-2.93a2 2 0 00-1.41.59l-2.17 1.83a1 1 0 01-1.6-.74V16z"
                   strokeLinecap="round"
@@ -982,12 +894,7 @@ function ChatVisual() {
               </svg>
             </button>
             <button className="rounded p-1 hover:bg-muted text-foreground/50">
-              <svg
-                className="size-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m0 0l-2-1m2 1v2.5M14 4l-2 1m0 0l-2-1m2 1v2.5"
                   strokeLinecap="round"
@@ -997,12 +904,7 @@ function ChatVisual() {
               </svg>
             </button>
             <button className="rounded p-1 hover:bg-muted text-foreground/50">
-              <svg
-                className="size-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   d="M10 19l-7-7m0 0l7-7m-7 7h18"
                   strokeLinecap="round"
@@ -1012,12 +914,7 @@ function ChatVisual() {
               </svg>
             </button>
             <button className="rounded p-1 hover:bg-muted text-foreground/50">
-              <svg
-                className="size-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   d="M4 12a8 8 0 018-8v0m0 0a8 8 0 110 16v0m0-16v16"
                   strokeLinecap="round"
@@ -1079,12 +976,7 @@ function ChatVisual() {
       <div className="border-t p-3">
         <div className="flex items-end gap-2 rounded-full border bg-background px-3 py-2">
           <button className="flex size-6 flex-shrink-0 items-center justify-center rounded-full hover:bg-muted text-foreground/60">
-            <svg
-              className="size-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 d="M12 5v14m7-7H5"
                 strokeLinecap="round"
@@ -1113,12 +1005,7 @@ function ChatVisual() {
             onClick={chatSubmit}
             type="button"
           >
-            <svg
-              className="size-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 d="M5 12h14M12 5l7 7-7 7"
                 strokeLinecap="round"
@@ -1175,9 +1062,7 @@ function SubscriptionsVisual() {
           key={s.name}
         >
           <div className="flex items-center gap-3">
-            <span className="w-14 font-mono text-xs text-muted-foreground">
-              {s.day}
-            </span>
+            <span className="w-14 font-mono text-xs text-muted-foreground">{s.day}</span>
             <span className="font-medium">{s.name}</span>
             {s.warn && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">

@@ -96,8 +96,7 @@ export const screenerQuerySchema = z.object({
   dividendLowerThan: z.coerce.number().optional(),
   dividendMoreThan: z.coerce.number().optional(),
   exchange: z.string().min(1).optional().openapi({
-    description:
-      "Ignored — this endpoint always returns NASDAQ and NYSE listings only.",
+    description: "Ignored — this endpoint always returns NASDAQ and NYSE listings only.",
     example: "NASDAQ",
   }),
   industry: z.string().min(1).optional(),
@@ -105,10 +104,7 @@ export const screenerQuerySchema = z.object({
     .enum(["true", "false"])
     .optional()
     .openapi({ description: "Filter actively trading names" }),
-  isEtf: z
-    .enum(["true", "false"])
-    .optional()
-    .openapi({ description: "ETF-only filter" }),
+  isEtf: z.enum(["true", "false"]).optional().openapi({ description: "ETF-only filter" }),
   limit: z.coerce.number().int().min(1).max(10_000).optional().openapi({
     example: 50,
   }),

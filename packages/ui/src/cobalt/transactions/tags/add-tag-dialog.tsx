@@ -90,9 +90,7 @@ export function AddTagForm({
       />
 
       <div className="flex flex-col gap-2">
-        <p className="text-muted-foreground text-xs uppercase tracking-wider">
-          Color
-        </p>
+        <p className="text-muted-foreground text-xs uppercase tracking-wider">Color</p>
         <div className="grid w-fit grid-cols-8 gap-2">
           {TAG_COLORS.map((c) => (
             <button
@@ -102,7 +100,7 @@ export function AddTagForm({
                 "size-7 rounded-full border transition",
                 c === color
                   ? "ring-2 ring-foreground ring-offset-2 ring-offset-popover"
-                  : "border-border hover:scale-110"
+                  : "border-border hover:scale-110",
               )}
               key={c}
               onClick={() => setColor(c)}

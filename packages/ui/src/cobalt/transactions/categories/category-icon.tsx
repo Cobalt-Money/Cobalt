@@ -4,25 +4,13 @@ import type { IconSvgElement } from "@hugeicons/react";
 import type { CategoryPrimaryGlyph } from "./category-primary-icons";
 
 function isImageGlyph(
-  icon: CategoryPrimaryGlyph
+  icon: CategoryPrimaryGlyph,
 ): icon is { kind: "image"; src: string; srcDark?: string } {
-  return (
-    typeof icon === "object" &&
-    icon !== null &&
-    "kind" in icon &&
-    icon.kind === "image"
-  );
+  return typeof icon === "object" && icon !== null && "kind" in icon && icon.kind === "image";
 }
 
-function isEmojiGlyph(
-  icon: CategoryPrimaryGlyph
-): icon is { kind: "emoji"; char: string } {
-  return (
-    typeof icon === "object" &&
-    icon !== null &&
-    "kind" in icon &&
-    icon.kind === "emoji"
-  );
+function isEmojiGlyph(icon: CategoryPrimaryGlyph): icon is { kind: "emoji"; char: string } {
+  return typeof icon === "object" && icon !== null && "kind" in icon && icon.kind === "emoji";
 }
 
 const baseImageGlyphClass = "shrink-0 object-contain opacity-80";
@@ -69,15 +57,7 @@ export function CategoryIcon({
       );
     }
 
-    return (
-      <img
-        alt=""
-        aria-hidden
-        className={imageGlyphClass}
-        decoding="async"
-        src={icon.src}
-      />
-    );
+    return <img alt="" aria-hidden className={imageGlyphClass} decoding="async" src={icon.src} />;
   }
 
   return (

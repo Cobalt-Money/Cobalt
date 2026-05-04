@@ -35,7 +35,7 @@ export const encodeCursor = (date: Date | null, id: string): string => {
 export const decodeCursor = (cursor: string): GeneralEventsCursor | null => {
   try {
     const decoded = JSON.parse(
-      Buffer.from(cursor, "base64").toString("utf-8")
+      Buffer.from(cursor, "base64").toString("utf-8"),
     ) as GeneralEventsCursor;
 
     if (!decoded.id || typeof decoded.id !== "string") {
@@ -55,12 +55,10 @@ export const encodeCursorForYou = (createdAt: Date, id: string): string => {
   return Buffer.from(JSON.stringify(cursor)).toString("base64");
 };
 
-export const decodeCursorForYou = (
-  cursor: string
-): ForYouEventsCursor | null => {
+export const decodeCursorForYou = (cursor: string): ForYouEventsCursor | null => {
   try {
     const decoded = JSON.parse(
-      Buffer.from(cursor, "base64").toString("utf-8")
+      Buffer.from(cursor, "base64").toString("utf-8"),
     ) as ForYouEventsCursor;
 
     if (!decoded.id || typeof decoded.id !== "string") {
@@ -224,19 +222,16 @@ export const formatPublishDate = (date: Date | null): string => {
 // ---------------------------------------------------------------------------
 
 export const getImageUrl = (
-  articles: { imageUrl: string | null; type: string | null }[]
+  articles: { imageUrl: string | null; type: string | null }[],
 ): string => {
   const regularWithImage = articles.find(
-    (article) =>
-      article.imageUrl?.startsWith("http") && article.type !== "Video"
+    (article) => article.imageUrl?.startsWith("http") && article.type !== "Video",
   );
   if (regularWithImage?.imageUrl) {
     return regularWithImage.imageUrl;
   }
 
-  const anyWithImage = articles.find((article) =>
-    article.imageUrl?.startsWith("http")
-  );
+  const anyWithImage = articles.find((article) => article.imageUrl?.startsWith("http"));
   if (anyWithImage?.imageUrl) {
     return anyWithImage.imageUrl;
   }
@@ -245,7 +240,7 @@ export const getImageUrl = (
 };
 
 export const getAllSources = (
-  articles: { sourceName: string | null }[]
+  articles: { sourceName: string | null }[],
 ): { name: string; logo: string }[] => {
   if (articles.length === 0) {
     return [{ logo: "FN", name: "Financial News" }];
@@ -269,7 +264,7 @@ export const getAllSources = (
 // ---------------------------------------------------------------------------
 
 export const transformFinancialEventsForUI = (
-  events: FinancialEventWithArticles[]
+  events: FinancialEventWithArticles[],
 ): MappedFinancialEvent[] =>
   events.map((event) => ({
     id: event.id,

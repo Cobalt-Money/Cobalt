@@ -1,22 +1,12 @@
 import { sql } from "drizzle-orm";
-import {
-  index,
-  integer,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 import { user } from "../../../users/auth/auth";
 
 export const categoryGroup = pgTable(
   "category_group",
   {
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     id: uuid("id").defaultRandom().primaryKey(),
     /** User-mutable display name. */
@@ -41,7 +31,7 @@ export const categoryGroup = pgTable(
     uniqueIndex("category_group_user_system_key_idx")
       .on(t.userId, t.systemKey)
       .where(sql`system_key IS NOT NULL`),
-  ]
+  ],
 );
 
 export type CategoryGroup = typeof categoryGroup.$inferSelect;

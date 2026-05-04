@@ -8,7 +8,7 @@ export async function upsertSnaptradeAuthorization(
   brokerageSlug: string,
   brokerage: string,
   name: string,
-  type = "read"
+  type = "read",
 ): Promise<string> {
   const existing = await db.query.snaptradeAuthorization.findFirst({
     columns: { id: true },
@@ -27,9 +27,7 @@ export async function upsertSnaptradeAuthorization(
         type,
         userId: appUserId,
       })
-      .where(
-        eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId)
-      );
+      .where(eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId));
 
     return existing.id;
   }
@@ -53,7 +51,7 @@ export async function upsertSnaptradeAuthorization(
 
 export async function updateSnaptradeAuthorizationStatus(
   brokerageAuthorizationId: string,
-  isDisabled: boolean
+  isDisabled: boolean,
 ): Promise<void> {
   await db
     .update(snaptradeAuthorization)
@@ -61,17 +59,13 @@ export async function updateSnaptradeAuthorizationStatus(
       disabledAt: isDisabled ? new Date() : null,
       isDisabled,
     })
-    .where(
-      eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId)
-    );
+    .where(eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId));
 }
 
 export async function deleteSnaptradeAuthorization(
-  brokerageAuthorizationId: string
+  brokerageAuthorizationId: string,
 ): Promise<void> {
   await db
     .delete(snaptradeAuthorization)
-    .where(
-      eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId)
-    );
+    .where(eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId));
 }

@@ -99,7 +99,7 @@ const linkRouter = new OpenAPIHono<AppEnv>()
           const tokenResult = await createLinkTokenForUpdate(
             existing.plaidAccessToken,
             userId,
-            "add-accounts"
+            "add-accounts",
           );
           const hookToken = uuidv7();
           const run = await start(plaidAddAccountWorkflow, [
@@ -123,7 +123,7 @@ const linkRouter = new OpenAPIHono<AppEnv>()
               plaidItemId: existing.plaidItemId,
               runId: run.runId,
             },
-            200
+            200,
           );
         }
       }
@@ -138,12 +138,11 @@ const linkRouter = new OpenAPIHono<AppEnv>()
           link_token: tokenResult.link_token,
           runId: run.runId,
         },
-        200
+        200,
       );
     } catch (error) {
       console.error("[/createLinkToken] failed", error);
-      const message =
-        error instanceof Error ? error.message : "Error generating link token";
+      const message = error instanceof Error ? error.message : "Error generating link token";
       return c.json({ error: message }, 500);
     }
   })
@@ -151,18 +150,14 @@ const linkRouter = new OpenAPIHono<AppEnv>()
     const { cancelled, hookToken, publicToken } = c.req.valid("json");
 
     if (!cancelled && !publicToken) {
-      return c.json(
-        { error: "Must provide publicToken or cancelled: true" },
-        400
-      );
+      return c.json({ error: "Must provide publicToken or cancelled: true" }, 400);
     }
 
     try {
       await resumeHook(hookToken, { cancelled, publicToken });
       return c.json({ success: true }, 200);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to resume workflow";
+      const message = error instanceof Error ? error.message : "Failed to resume workflow";
       return c.json({ error: message }, 500);
     }
   });

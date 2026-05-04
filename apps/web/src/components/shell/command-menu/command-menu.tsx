@@ -42,14 +42,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 
 import {
@@ -264,8 +257,7 @@ function CommandMenuDialog({
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
-  const [settingsSection, setSettingsSection] =
-    useState<SettingsSection>("profile");
+  const [settingsSection, setSettingsSection] = useState<SettingsSection>("profile");
 
   const activePage = pages.at(-1);
   const inSearchTransactions = activePage === "search-transactions";
@@ -282,8 +274,10 @@ function CommandMenuDialog({
 
   // ── Search hooks ────────────────────────────────────────────────────────────
 
-  const { filteredTransactions, prefetch: prefetchTransactions } =
-    useTransactionSearch(trimmedSearch, inSearchTransactions);
+  const { filteredTransactions, prefetch: prefetchTransactions } = useTransactionSearch(
+    trimmedSearch,
+    inSearchTransactions,
+  );
 
   const {
     filteredChats,
@@ -293,18 +287,14 @@ function CommandMenuDialog({
 
   const { filteredTickers, isLoadingUniverse, tickerRows } = useTickerSearch(
     trimmedSearch,
-    inSearchTickers
+    inSearchTickers,
   );
 
   // ── Add-account ─────────────────────────────────────────────────────────────
 
-  const { data: plaidInstitutions = [] } = useInstitutionSearch(
-    search,
-    inAddAccount
-  );
+  const { data: plaidInstitutions = [] } = useInstitutionSearch(search, inAddAccount);
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
-  const { handleChoose: handleChooseConnect, updateModeDialog } =
-    useAccountLauncher(dismiss);
+  const { handleChoose: handleChooseConnect, updateModeDialog } = useAccountLauncher(dismiss);
   const { submit: submitAddCashAccount } = useAddCashAccountSubmit();
   const {
     availableTags: addTxAvailableTags,
@@ -314,8 +304,7 @@ function CommandMenuDialog({
     merchantSearch: addTxMerchantSearch,
     submit: submitAddTransaction,
   } = useAddTransactionData();
-  const { isPending: submittingAddTag, submit: submitAddTagInner } =
-    useAddTagSubmit();
+  const { isPending: submittingAddTag, submit: submitAddTagInner } = useAddTagSubmit();
   const submitAddTag = useCallback(
     async (values: Parameters<typeof submitAddTagInner>[0]) => {
       try {
@@ -324,7 +313,7 @@ function CommandMenuDialog({
         // Toast already shown.
       }
     },
-    [submitAddTagInner]
+    [submitAddTagInner],
   );
 
   // ── Manage-tags data ────────────────────────────────────────────────────────
@@ -342,7 +331,7 @@ function CommandMenuDialog({
           id: t.id,
           name: t.name,
         })),
-    [allTags]
+    [allTags],
   );
 
   // ── Theme ───────────────────────────────────────────────────────────────────
@@ -357,7 +346,7 @@ function CommandMenuDialog({
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => onOpenChange(nextOpen),
-    [onOpenChange]
+    [onOpenChange],
   );
 
   const go = useCallback(
@@ -366,7 +355,7 @@ function CommandMenuDialog({
       handleOpenChange(false);
       navigate({ to });
     },
-    [handleOpenChange, navigate, router]
+    [handleOpenChange, navigate, router],
   );
 
   const toggleTheme = useCallback(() => {
@@ -409,14 +398,14 @@ function CommandMenuDialog({
       setSearch("");
       setPages((p) => [...p, "add-tag"]);
     },
-    [setAddTagInitialName, setPages, setSearch]
+    [setAddTagInitialName, setPages, setSearch],
   );
 
   const addTxOnRequestCreateTag = useCallback(
     (initialName: string) => {
       enterAddTag(initialName);
     },
-    [enterAddTag]
+    [enterAddTag],
   );
 
   const enterManageTags = useCallback(() => {
@@ -431,9 +420,7 @@ function CommandMenuDialog({
     // grabbing focus. Double-rAF after state commit, then focus the input.
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        const el = document.querySelector<HTMLInputElement>(
-          '[data-slot="command-input"]'
-        );
+        const el = document.querySelector<HTMLInputElement>('[data-slot="command-input"]');
         el?.focus();
       });
     });
@@ -450,7 +437,7 @@ function CommandMenuDialog({
       }
       handleChooseConnect(institution);
     },
-    [handleChooseConnect, setPages, setSearch]
+    [handleChooseConnect, setPages, setSearch],
   );
 
   const enterSettings = useCallback(
@@ -459,7 +446,7 @@ function CommandMenuDialog({
       setSettingsSection(section);
       setPages((p) => [...p, "settings"]);
     },
-    [setPages, setSearch]
+    [setPages, setSearch],
   );
 
   // ── Navigation handlers ─────────────────────────────────────────────────────
@@ -476,7 +463,7 @@ function CommandMenuDialog({
         to: "/transactions/$transactionId",
       });
     },
-    [handleOpenChange, navigate, router]
+    [handleOpenChange, navigate, router],
   );
 
   const handleSelectChat = useCallback(
@@ -485,7 +472,7 @@ function CommandMenuDialog({
       handleOpenChange(false);
       navigate({ params: { chatId }, to: "/ai-chat/$chatId" });
     },
-    [handleOpenChange, navigate, router]
+    [handleOpenChange, navigate, router],
   );
 
   const handleSelectTicker = useCallback(
@@ -494,7 +481,7 @@ function CommandMenuDialog({
       handleOpenChange(false);
       navigate({ params: { symbol }, to: "/research/$symbol" });
     },
-    [handleOpenChange, navigate, router]
+    [handleOpenChange, navigate, router],
   );
 
   // ── Keyboard ────────────────────────────────────────────────────────────────
@@ -511,7 +498,7 @@ function CommandMenuDialog({
         setSearch("");
       }
     },
-    [pages.length, search.length, setPages, setSearch]
+    [pages.length, search.length, setPages, setSearch],
   );
 
   // ── Action groups ───────────────────────────────────────────────────────────
@@ -635,7 +622,7 @@ function CommandMenuDialog({
           inAddTransaction && "sm:max-w-3xl",
           inAddCashAccount && "sm:max-w-3xl",
           inAddTag && "sm:max-w-lg",
-          inManageTags && "sm:max-w-md"
+          inManageTags && "sm:max-w-md",
         )}
         description="Search for a page or action"
         onOpenChange={handleOpenChange}
@@ -665,11 +652,7 @@ function CommandMenuDialog({
           {inAddCashAccount && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-foreground text-lg leading-none">
-                <HugeiconsIcon
-                  className="size-6 shrink-0"
-                  icon={Wallet01Icon}
-                  strokeWidth={2}
-                />
+                <HugeiconsIcon className="size-6 shrink-0" icon={Wallet01Icon} strokeWidth={2} />
                 New Cash Account
               </h2>
               <AddCashAccountForm
@@ -691,11 +674,7 @@ function CommandMenuDialog({
           {inAddTransaction && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
-                <HugeiconsIcon
-                  className="size-6 shrink-0"
-                  icon={Money01Icon}
-                  strokeWidth={2}
-                />
+                <HugeiconsIcon className="size-6 shrink-0" icon={Money01Icon} strokeWidth={2} />
                 New Transaction
               </h2>
               <AddTransactionForm
@@ -727,11 +706,7 @@ function CommandMenuDialog({
           {inAddTag && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
-                <HugeiconsIcon
-                  className="size-5 shrink-0"
-                  icon={Tag01Icon}
-                  strokeWidth={2}
-                />
+                <HugeiconsIcon className="size-5 shrink-0" icon={Tag01Icon} strokeWidth={2} />
                 New Tag
               </h2>
               <AddTagForm
@@ -760,11 +735,7 @@ function CommandMenuDialog({
           {inManageTags && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
-                <HugeiconsIcon
-                  className="size-5 shrink-0"
-                  icon={Tag01Icon}
-                  strokeWidth={2}
-                />
+                <HugeiconsIcon className="size-5 shrink-0" icon={Tag01Icon} strokeWidth={2} />
                 Manage tags
               </h2>
               <ManageTagsForm
@@ -820,24 +791,22 @@ function CommandMenuDialog({
                   <CommandEmpty>No results found.</CommandEmpty>
 
                   <CommandGroup heading="Navigation">
-                    {COMMAND_NAV_ROUTES.map(
-                      ({ icon, keywords, label, path }) => (
-                        <CommandItem
-                          key={String(path)}
-                          keywords={keywords}
-                          onSelect={() => go(path)}
-                          value={`${label} ${path}`}
-                        >
-                          <HugeiconsIcon
-                            aria-hidden
-                            className="text-muted-foreground"
-                            icon={icon}
-                            strokeWidth={2}
-                          />
-                          {label}
-                        </CommandItem>
-                      )
-                    )}
+                    {COMMAND_NAV_ROUTES.map(({ icon, keywords, label, path }) => (
+                      <CommandItem
+                        key={String(path)}
+                        keywords={keywords}
+                        onSelect={() => go(path)}
+                        value={`${label} ${path}`}
+                      >
+                        <HugeiconsIcon
+                          aria-hidden
+                          className="text-muted-foreground"
+                          icon={icon}
+                          strokeWidth={2}
+                        />
+                        {label}
+                      </CommandItem>
+                    ))}
                   </CommandGroup>
 
                   <CommandGroup heading="Accounts">
@@ -923,20 +892,14 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
 
   const openManageTags = useCallback(() => openAt("manage-tags"), [openAt]);
   const openAddAccount = useCallback(() => openAt("add-account"), [openAt]);
-  const openAddCashAccount = useCallback(
-    () => openAt("add-cash-account"),
-    [openAt]
-  );
-  const openAddTransaction = useCallback(
-    () => openAt("add-transaction"),
-    [openAt]
-  );
+  const openAddCashAccount = useCallback(() => openAt("add-cash-account"), [openAt]);
+  const openAddTransaction = useCallback(() => openAt("add-transaction"), [openAt]);
   const openAddTag = useCallback(
     (opts?: { initialName?: string }) => {
       setAddTagInitialName(opts?.initialName ?? "");
       openAt("add-tag");
     },
-    [openAt]
+    [openAt],
   );
 
   useEffect(() => {
@@ -977,7 +940,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
       openAddTransaction,
       openManageTags,
       setOpen,
-    ]
+    ],
   );
 
   return (
@@ -1000,15 +963,10 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
 // ── Shortcut badge ────────────────────────────────────────────────────────────
 
 export function CommandMenuSearchShortcut() {
-  const isMac =
-    typeof navigator !== "undefined" &&
-    /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+  const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
   return (
-    <KbdGroup
-      aria-hidden
-      className="pointer-events-none hidden shrink-0 gap-0.5 sm:inline-flex"
-    >
+    <KbdGroup aria-hidden className="pointer-events-none hidden shrink-0 gap-0.5 sm:inline-flex">
       <Kbd className="min-w-6 px-1">{isMac ? "⌘" : "Ctrl"}</Kbd>
       <Kbd className="min-w-6 px-1">K</Kbd>
     </KbdGroup>

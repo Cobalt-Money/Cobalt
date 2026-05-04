@@ -57,9 +57,7 @@ async function handleTransactionsWebhook(webhook: PlaidWebhook) {
       const hook = await getHookByToken(token).catch(() => null);
       if (hook) {
         await resumeHook(token, payload);
-        console.log(
-          `[plaid] Resumed onboarding run ${hook.runId} for item: ${w.item_id}`
-        );
+        console.log(`[plaid] Resumed onboarding run ${hook.runId} for item: ${w.item_id}`);
       } else {
         await start(plaidSyncWorkflow, [{ ...payload, item_id: w.item_id }]);
         console.log(`[plaid] Triggered sync workflow for item: ${w.item_id}`);
@@ -70,16 +68,12 @@ async function handleTransactionsWebhook(webhook: PlaidWebhook) {
     case "RECURRING_TRANSACTIONS_UPDATE": {
       const w = webhook as RecurringTransactionsUpdateWebhook;
       await start(plaidRecurringTransactionsWorkflow, [w]);
-      console.log(
-        `[plaid] Triggered recurring transactions workflow for item: ${w.item_id}`
-      );
+      console.log(`[plaid] Triggered recurring transactions workflow for item: ${w.item_id}`);
       break;
     }
 
     default: {
-      console.log(
-        `[plaid] Unknown TRANSACTIONS webhook code: ${webhook.webhook_code}`
-      );
+      console.log(`[plaid] Unknown TRANSACTIONS webhook code: ${webhook.webhook_code}`);
     }
   }
 }
@@ -88,7 +82,7 @@ export const plaidWebhookRouter = new Hono().post("/", async (c) => {
   try {
     const webhook: PlaidWebhook = await c.req.json();
     console.log(
-      `[plaid] Received webhook: ${webhook.webhook_type}/${webhook.webhook_code} for item ${webhook.item_id}`
+      `[plaid] Received webhook: ${webhook.webhook_type}/${webhook.webhook_code} for item ${webhook.item_id}`,
     );
 
     switch (webhook.webhook_type) {
@@ -100,45 +94,33 @@ export const plaidWebhookRouter = new Hono().post("/", async (c) => {
       case "HOLDINGS": {
         const w = webhook as HoldingsDefaultUpdateWebhook;
         await start(plaidHoldingsWorkflow, [w]);
-        console.log(
-          `[plaid] Triggered holdings workflow for item: ${w.item_id}`
-        );
+        console.log(`[plaid] Triggered holdings workflow for item: ${w.item_id}`);
         break;
       }
 
       case "INVESTMENTS_TRANSACTIONS": {
-        const w = webhook as
-          | InvestmentsDefaultUpdateWebhook
-          | InvestmentsHistoricalUpdateWebhook;
+        const w = webhook as InvestmentsDefaultUpdateWebhook | InvestmentsHistoricalUpdateWebhook;
         await start(plaidInvestmentTransactionsWorkflow, [w]);
-        console.log(
-          `[plaid] Triggered investment transactions workflow for item: ${w.item_id}`
-        );
+        console.log(`[plaid] Triggered investment transactions workflow for item: ${w.item_id}`);
         break;
       }
 
       case "LIABILITIES": {
         const w = webhook as LiabilitiesDefaultUpdateWebhook;
         await start(plaidLiabilitiesSyncWorkflow, [w.item_id]);
-        console.log(
-          `[plaid] Triggered liabilities workflow for item: ${w.item_id}`
-        );
+        console.log(`[plaid] Triggered liabilities workflow for item: ${w.item_id}`);
         break;
       }
 
       case "ITEM": {
         const w = webhook as ItemWebhook;
         await start(plaidItemWebhookWorkflow, [w]);
-        console.log(
-          `[plaid] Triggered item webhook workflow: ${w.webhook_code}`
-        );
+        console.log(`[plaid] Triggered item webhook workflow: ${w.webhook_code}`);
         break;
       }
 
       default: {
-        console.log(
-          `[plaid] Ignoring unhandled webhook type: ${webhook.webhook_type}`
-        );
+        console.log(`[plaid] Ignoring unhandled webhook type: ${webhook.webhook_type}`);
         return c.json({ status: "ignored" });
       }
     }

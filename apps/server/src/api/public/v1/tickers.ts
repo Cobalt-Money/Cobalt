@@ -39,10 +39,7 @@ const searchQuerySchema = z.object({
     .max(50)
     .default(10)
     .openapi({ description: "Max results to return", example: 10 }),
-  q: z
-    .string()
-    .min(1)
-    .openapi({ description: "Search query", example: "apple" }),
+  q: z.string().min(1).openapi({ description: "Search query", example: "apple" }),
 });
 
 const searchResultSchema = z.object({
@@ -52,7 +49,7 @@ const searchResultSchema = z.object({
       name: z.string().openapi({ example: "Apple Inc." }),
       symbol: z.string().openapi({ example: "AAPL" }),
       type: z.string().openapi({ example: "equity" }),
-    })
+    }),
   ),
 });
 
@@ -108,7 +105,7 @@ export const tickersRouter = new OpenAPIHono<AppEnv>()
         symbol: symbol.toUpperCase(),
         volume: 0,
       },
-      200
+      200,
     );
   })
   .openapi(searchTickers, (c) => {

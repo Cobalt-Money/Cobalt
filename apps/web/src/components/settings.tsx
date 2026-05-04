@@ -46,9 +46,7 @@ export function Settings() {
             <DropdownMenuShortcut>
               <Switch
                 checked={isDarkMode}
-                onCheckedChange={(checked) =>
-                  setTheme(checked ? "dark" : "light")
-                }
+                onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
               />
             </DropdownMenuShortcut>
           </DropdownMenuItem>
@@ -58,9 +56,7 @@ export function Settings() {
             <DropdownMenuShortcut>
               <Switch
                 checked={isDotVariant}
-                onCheckedChange={(checked) =>
-                  setBadgeVariant(checked ? "dot" : "colored")
-                }
+                onCheckedChange={(checked) => setBadgeVariant(checked ? "dot" : "colored")}
               />
             </DropdownMenuShortcut>
           </DropdownMenuItem>
@@ -68,10 +64,7 @@ export function Settings() {
           <DropdownMenuItem>
             Use 24 hour format
             <DropdownMenuShortcut>
-              <Switch
-                checked={use24HourFormat}
-                onCheckedChange={toggleTimeFormat}
-              />
+              <Switch checked={use24HourFormat} onCheckedChange={toggleTimeFormat} />
             </DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuGroup>
@@ -80,9 +73,7 @@ export function Settings() {
           <DropdownMenuLabel>Agenda view group by</DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={agendaModeGroupBy}
-            onValueChange={(value) =>
-              setAgendaModeGroupBy(value as "date" | "color")
-            }
+            onValueChange={(value) => setAgendaModeGroupBy(value as "date" | "color")}
           >
             <DropdownMenuRadioItem value="date">Date</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="color">Color</DropdownMenuRadioItem>

@@ -6,8 +6,7 @@ import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
-  description:
-    "Active recurring transaction streams (subscriptions, bills, income)",
+  description: "Active recurring transaction streams (subscriptions, bills, income)",
   method: "get",
   middleware: [requirePaidUser] as const,
   path: "/recurring",
@@ -25,10 +24,7 @@ const route = createRoute({
   tags: ["Transactions"],
 });
 
-export const recurringRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const streams = await getRecurringStreams(c.var.user.id);
-    return c.json({ streams }, 200);
-  }
-);
+export const recurringRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  const streams = await getRecurringStreams(c.var.user.id);
+  return c.json({ streams }, 200);
+});

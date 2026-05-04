@@ -1,8 +1,5 @@
 import { getRssArticles } from "@cobalt-web/server-data/news/rss/queries";
-import {
-  rssQuerySchema,
-  rssResponseSchema,
-} from "@cobalt-web/server-data/news/rss/schemas";
+import { rssQuerySchema, rssResponseSchema } from "@cobalt-web/server-data/news/rss/schemas";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 

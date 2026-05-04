@@ -15,16 +15,14 @@ export function useAddCashAccountSubmit() {
           name: values.name,
           subtype: "cash",
           type: "depository",
-        })
+        }),
       );
       cobaltToast.manualAccountCreated(values.name);
       void (async () => {
         try {
           const result = await server;
           if (result.type === "error") {
-            cobaltToast.error(
-              result.error.message || "Couldn't create account."
-            );
+            cobaltToast.error(result.error.message || "Couldn't create account.");
           }
         } catch (error) {
           console.error("Failed to create cash account", error);
@@ -33,7 +31,7 @@ export function useAddCashAccountSubmit() {
       })();
       return Promise.resolve();
     },
-    [zero]
+    [zero],
   );
 
   return { submit };

@@ -12,11 +12,7 @@ const NewsLayoutContext = createContext<NewsLayoutContextValue | null>(null);
 export function NewsLayoutProvider({ children }: { children: ReactNode }) {
   const [activeTab, setActiveTab] = useState<NewsTab>("general");
   const value = useMemo(() => ({ activeTab, setActiveTab }), [activeTab]);
-  return (
-    <NewsLayoutContext.Provider value={value}>
-      {children}
-    </NewsLayoutContext.Provider>
-  );
+  return <NewsLayoutContext.Provider value={value}>{children}</NewsLayoutContext.Provider>;
 }
 
 export function useNewsLayout() {

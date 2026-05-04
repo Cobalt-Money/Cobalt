@@ -28,8 +28,7 @@ export default defineConfig({
       // Point the spawned Nitro at docker-hosted Postgres (port 5433 per
       // docker-compose.local-db.yml). Integration tests MUST NOT touch the
       // shared `DATABASE_URL` — that's a live dev/prod PlanetScale.
-      LOCAL_DATABASE_URL:
-        "postgresql://postgres:postgres@127.0.0.1:5433/cobalt",
+      LOCAL_DATABASE_URL: "postgresql://postgres:postgres@127.0.0.1:5433/cobalt",
       WORKFLOW_LOCAL_BASE_URL: "http://localhost:4000",
     },
     environment: "node",

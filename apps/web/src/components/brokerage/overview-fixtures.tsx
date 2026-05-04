@@ -35,15 +35,12 @@ const FIXTURE_SCOPE_ACCOUNTS: ScopeAccount[] = [
   },
 ];
 
-const FIXTURE_PORTFOLIO_SNAPSHOTS: PortfolioSnapshotRow[] = Array.from(
-  { length: 60 },
-  (_, i) => ({
-    accountId: "fixture-account-1",
-    id: `snap-${i}`,
-    snapshotDate: Date.now() - (60 - i) * 86_400_000,
-    totalValue: 120_000 + Math.sin(i / 6) * 8000 + i * 320,
-  })
-);
+const FIXTURE_PORTFOLIO_SNAPSHOTS: PortfolioSnapshotRow[] = Array.from({ length: 60 }, (_, i) => ({
+  accountId: "fixture-account-1",
+  id: `snap-${i}`,
+  snapshotDate: Date.now() - (60 - i) * 86_400_000,
+  totalValue: 120_000 + Math.sin(i / 6) * 8000 + i * 320,
+}));
 
 const FIXTURE_POSITIONS: PositionRow[] = [
   {
@@ -151,20 +148,12 @@ export function BalanceChartCardFixture() {
 
 export function RecentActivityCardFixture() {
   return (
-    <RecentActivityCard
-      allActivities={FIXTURE_ACTIVITIES}
-      scopedActivities={FIXTURE_ACTIVITIES}
-    />
+    <RecentActivityCard allActivities={FIXTURE_ACTIVITIES} scopedActivities={FIXTURE_ACTIVITIES} />
   );
 }
 
 export function PositionsTableFixture() {
-  return (
-    <PositionsTable
-      allPositions={FIXTURE_POSITIONS}
-      scopedPositions={FIXTURE_POSITIONS}
-    />
-  );
+  return <PositionsTable allPositions={FIXTURE_POSITIONS} scopedPositions={FIXTURE_POSITIONS} />;
 }
 
 export const _fixtureAccounts: readonly BrokerageRowWithRelations[] = [];

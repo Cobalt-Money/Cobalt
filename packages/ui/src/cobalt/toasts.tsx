@@ -9,13 +9,9 @@ interface AccountToastInstitution {
   institutionUrl: string | null;
 }
 
-const POSTED_ICON = (
-  <img alt="" className="size-4" src="/assets/vectors/posted.svg" />
-);
+const POSTED_ICON = <img alt="" className="size-4" src="/assets/vectors/posted.svg" />;
 
-const PENDING_ICON = (
-  <img alt="" className="size-4" src="/assets/vectors/pending.svg" />
-);
+const PENDING_ICON = <img alt="" className="size-4" src="/assets/vectors/pending.svg" />;
 
 export const cobaltToast = {
   accountDisconnected(account: AccountToastInstitution) {

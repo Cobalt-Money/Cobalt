@@ -7,9 +7,7 @@ import { useMemo } from "react";
 import { SegmentedGauge } from "@/components/subscriptions/segmented-gauge";
 
 const logoDevToken =
-  (
-    import.meta.env.VITE_LOGO_DEV_PUBLISHABLE_KEY as string | undefined
-  )?.trim() ?? "";
+  (import.meta.env.VITE_LOGO_DEV_PUBLISHABLE_KEY as string | undefined)?.trim() ?? "";
 
 interface Subscription {
   id: number;
@@ -265,10 +263,7 @@ function MonthGrid({ date }: { date: Date }) {
     <div className="flex flex-col gap-1 pb-8">
       <div className="grid grid-cols-7 gap-1">
         {WEEK_DAYS.map((d) => (
-          <div
-            key={d}
-            className="py-1 text-center text-xs font-medium text-muted-foreground"
-          >
+          <div key={d} className="py-1 text-center text-xs font-medium text-muted-foreground">
             {d}
           </div>
         ))}
@@ -286,7 +281,7 @@ function MonthGrid({ date }: { date: Date }) {
 
           const dayNumberClass = cn(
             "w-full text-center text-base font-semibold leading-none tabular-nums",
-            today ? "font-bold text-primary" : "text-muted-foreground"
+            today ? "font-bold text-primary" : "text-muted-foreground",
           );
 
           return (
@@ -295,7 +290,7 @@ function MonthGrid({ date }: { date: Date }) {
               key={cell.reactKey}
               className={cn(
                 "flex h-20 flex-col rounded-2xl bg-input/30 p-1.5 text-center transition-colors hover:bg-input/50",
-                today && "ring-2 ring-primary"
+                today && "ring-2 ring-primary",
               )}
             >
               <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -318,7 +313,7 @@ function MonthGrid({ date }: { date: Date }) {
                   aria-hidden
                   className={cn(
                     "size-1.5 shrink-0 rounded-full",
-                    billers.length > 0 ? "bg-primary" : "opacity-0"
+                    billers.length > 0 ? "bg-primary" : "opacity-0",
                   )}
                 />
               </div>
@@ -336,14 +331,8 @@ export function BabySubscriptionsCalendar() {
 
   const title = format(currentDate, "MMMM yyyy");
 
-  const monthTotal = useMemo(
-    () => calcMonthlyTotal(currentDate),
-    [currentDate]
-  );
-  const paidToDate = useMemo(
-    () => calcCumulativeTotal(currentDate, today),
-    [currentDate, today]
-  );
+  const monthTotal = useMemo(() => calcMonthlyTotal(currentDate), [currentDate]);
+  const paidToDate = useMemo(() => calcCumulativeTotal(currentDate, today), [currentDate, today]);
   const remaining = monthTotal - paidToDate;
 
   return (
@@ -359,9 +348,7 @@ export function BabySubscriptionsCalendar() {
         <span className="text-base font-semibold tabular-nums">{title}</span>
         <p className="text-base text-muted-foreground">
           Monthly total:{" "}
-          <span className="font-semibold text-foreground">
-            {USD.format(monthTotal)}
-          </span>
+          <span className="font-semibold text-foreground">{USD.format(monthTotal)}</span>
         </p>
       </div>
 

@@ -46,24 +46,15 @@ function tryNavigateToClient(url: string): void {
 }
 
 function RouteComponent() {
-  const [status, setStatus] = useState<
-    "idle" | "submitting" | "redirect" | "error"
-  >("idle");
+  const [status, setStatus] = useState<"idle" | "submitting" | "redirect" | "error">("idle");
   /** Which action is in flight — drives the post-click message before redirect. */
-  const [pendingIntent, setPendingIntent] = useState<"allow" | "deny" | null>(
-    null
-  );
+  const [pendingIntent, setPendingIntent] = useState<"allow" | "deny" | null>(null);
   /** Set when consent API succeeded; used for reliable `cursor://` handoff. */
   const [_redirectUrl, setRedirectUrl] = useState<string | null>(null);
-  const [completedIntent, setCompletedIntent] = useState<
-    "allow" | "deny" | null
-  >(null);
+  const [completedIntent, setCompletedIntent] = useState<"allow" | "deny" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const oauthQuery = useMemo(
-    () => window.location.search.replace(/^\?/, ""),
-    []
-  );
+  const oauthQuery = useMemo(() => window.location.search.replace(/^\?/, ""), []);
 
   const clientId = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
@@ -98,7 +89,7 @@ function RouteComponent() {
         });
       } catch {
         setErrorMessage(
-          "Could not reach the server (network or CORS). Check that the API is running and CORS allows this origin."
+          "Could not reach the server (network or CORS). Check that the API is running and CORS allows this origin.",
         );
         setStatus("error");
         setPendingIntent(null);
@@ -132,7 +123,7 @@ function RouteComponent() {
       setPendingIntent(null);
       tryNavigateToClient(next);
     },
-    [oauthQuery]
+    [oauthQuery],
   );
 
   const isAllowDone = status === "redirect" && completedIntent === "allow";
@@ -157,28 +148,18 @@ function RouteComponent() {
     <>
       <h1 className="text-xl font-semibold">Authorize access</h1>
       <p className="text-muted-foreground text-sm">
-        An application requested access to your Cobalt account. Allow only if
-        you started this request from a trusted AI tool.
+        An application requested access to your Cobalt account. Allow only if you started this
+        request from a trusted AI tool.
       </p>
-      {clientId ? (
-        <p className="text-muted-foreground text-sm">Client: {clientId}</p>
-      ) : null}
+      {clientId ? <p className="text-muted-foreground text-sm">Client: {clientId}</p> : null}
       {requestedScope ? (
-        <p className="text-muted-foreground text-sm">
-          Requested scopes: {requestedScope}
-        </p>
+        <p className="text-muted-foreground text-sm">Requested scopes: {requestedScope}</p>
       ) : null}
-      {oauthQuery ? null : (
-        <p className="text-destructive text-sm">Missing oauth query.</p>
-      )}
-      {errorMessage ? (
-        <p className="text-destructive text-sm">{errorMessage}</p>
-      ) : null}
+      {oauthQuery ? null : <p className="text-destructive text-sm">Missing oauth query.</p>}
+      {errorMessage ? <p className="text-destructive text-sm">{errorMessage}</p> : null}
       <div className="flex flex-wrap justify-center gap-3">
         <Button
-          className={cn(
-            isAllowDone && "bg-green-600 hover:bg-green-600 pointer-events-none"
-          )}
+          className={cn(isAllowDone && "bg-green-600 hover:bg-green-600 pointer-events-none")}
           disabled={!oauthQuery || isSubmitting}
           onClick={async () => {
             await postConsent(true);

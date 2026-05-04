@@ -29,15 +29,13 @@ export interface BrandfetchSearchResult {
 export async function brandfetchSearch(
   query: string,
   clientId: string,
-  options?: { signal?: AbortSignal }
+  options?: { signal?: AbortSignal },
 ): Promise<BrandfetchSearchResult[]> {
   const q = query.trim();
   if (!q) {
     return [];
   }
-  const url = new URL(
-    `${BRANDFETCH_API_ORIGIN}/v2/search/${encodeURIComponent(q)}`
-  );
+  const url = new URL(`${BRANDFETCH_API_ORIGIN}/v2/search/${encodeURIComponent(q)}`);
   url.searchParams.set("c", clientId);
   const res = await fetch(url.toString(), {
     headers: { Accept: "application/json" },
@@ -114,7 +112,7 @@ function buildTickerCdnPath(
   w: number,
   h: number,
   segment: string,
-  theme?: BrandfetchTheme
+  theme?: BrandfetchTheme,
 ): string {
   const sym = normalizeTickerInput(symbol);
   const themePrefix = theme ? `theme/${theme}/` : "";
@@ -128,14 +126,12 @@ function buildTickerCdnPath(
 export function brandfetchTickerDimensionsUrl(
   ticker: string,
   clientId: string,
-  options?: { h?: number; w?: number }
+  options?: { h?: number; w?: number },
 ): string {
   const sym = normalizeTickerInput(ticker);
   const w = options?.w ?? 400;
   const h = options?.h ?? 400;
-  const url = new URL(
-    `${BRANDFETCH_CDN_ORIGIN}/ticker/${encodeURIComponent(sym)}/w/${w}/h/${h}/`
-  );
+  const url = new URL(`${BRANDFETCH_CDN_ORIGIN}/ticker/${encodeURIComponent(sym)}/w/${w}/h/${h}/`);
   url.searchParams.set("c", clientId);
   return url.toString();
 }
@@ -153,7 +149,7 @@ export function brandfetchTickerLogoAssetUrl(
     svg?: boolean;
     theme?: BrandfetchTheme;
     w?: number;
-  } = {}
+  } = {},
 ): string {
   const w = options.w ?? 800;
   const h = options.h ?? 800;
@@ -171,7 +167,7 @@ export function brandfetchTickerLogoAssetUrl(
 export function brandfetchTickerIconLettermarkFallbackUrl(
   ticker: string,
   clientId: string,
-  options?: { h?: number; theme?: BrandfetchTheme; w?: number }
+  options?: { h?: number; theme?: BrandfetchTheme; w?: number },
 ): string {
   const sym = normalizeTickerInput(ticker);
   const w = options?.w ?? 128;
@@ -192,7 +188,7 @@ export function brandfetchTickerIconLettermarkFallbackUrl(
 export function brandfetchTickerIconUrls(
   ticker: string,
   clientId: string,
-  options?: { size?: number }
+  options?: { size?: number },
 ): string[] {
   const size = options?.size ?? 128;
   return [
@@ -213,12 +209,8 @@ export type BrandfetchLogoAsset = "icon" | "logo" | "symbol";
 export type BrandfetchTheme = "dark" | "light";
 
 /** Last path segment: bare `icon`, or `logo` / `symbol` with optional `.svg`. */
-function assetPathSegment(
-  asset: BrandfetchLogoAsset,
-  svg: boolean | undefined
-): string {
-  const useSvgVariant =
-    svg !== false && (asset === "logo" || asset === "symbol");
+function assetPathSegment(asset: BrandfetchLogoAsset, svg: boolean | undefined): string {
+  const useSvgVariant = svg !== false && (asset === "logo" || asset === "symbol");
   if (useSvgVariant) {
     return `${asset}.svg`;
   }
@@ -230,7 +222,7 @@ function buildCdnPath(
   w: number,
   h: number,
   segment: string,
-  theme?: BrandfetchTheme
+  theme?: BrandfetchTheme,
 ): string {
   const themePrefix = theme ? `theme/${theme}/` : "";
   return `${BRANDFETCH_CDN_ORIGIN}/domain/${host}/w/${w}/h/${h}/${themePrefix}${segment}`;
@@ -243,7 +235,7 @@ function buildCdnPath(
 export function brandfetchDimensionsOnlyUrl(
   domain: string,
   clientId: string,
-  options?: { h?: number; w?: number }
+  options?: { h?: number; w?: number },
 ): string {
   const host = normalizeDomainInput(domain);
   const w = options?.w ?? 128;
@@ -265,7 +257,7 @@ export function brandfetchDefaultLogoUrl(
     svg?: boolean;
     theme?: BrandfetchTheme;
     w?: number;
-  }
+  },
 ): string {
   const host = normalizeDomainInput(domain);
   const segment = assetPathSegment("symbol", options?.svg);
@@ -290,7 +282,7 @@ export function brandfetchLogoAssetUrl(
     svg?: boolean;
     theme?: BrandfetchTheme;
     w?: number;
-  } = {}
+  } = {},
 ): string {
   const host = normalizeDomainInput(domain);
   const w = options.w ?? 800;
@@ -316,7 +308,7 @@ export function brandfetchLogoAssetUrl(
 export function brandfetchIconLettermarkFallbackUrl(
   domain: string,
   clientId: string,
-  options?: { h?: number; theme?: BrandfetchTheme; w?: number }
+  options?: { h?: number; theme?: BrandfetchTheme; w?: number },
 ): string {
   const host = normalizeDomainInput(domain);
   const w = options?.w ?? 128;
@@ -339,7 +331,7 @@ export function brandfetchIconLettermarkFallbackUrl(
 export function brandfetchIconDomainUrls(
   domain: string,
   clientId: string,
-  options?: { size?: number }
+  options?: { size?: number },
 ): string[] {
   const size = options?.size ?? 128;
   return [
@@ -365,7 +357,7 @@ export function brandfetchIconDomainUrls(
 export function brandfetchDomainFallbackUrls(
   domain: string,
   clientId: string,
-  options?: { h?: number; w?: number }
+  options?: { h?: number; w?: number },
 ): string[] {
   const w = options?.w ?? 128;
   const h = options?.h ?? 128;

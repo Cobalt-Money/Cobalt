@@ -15,7 +15,7 @@ export const askUserTool = tool({
             .describe("Optional longer description of what this option means"),
           label: z.string().describe("Display label for the option"),
           value: z.string().describe("Short identifier for this option"),
-        })
+        }),
       )
       .min(2)
       .max(6)

@@ -24,10 +24,7 @@ function tickerPhraseFor(tickers: readonly string[]): string {
   return `Shares of ${tickers.slice(0, 2).join(" and ")} moved in extended trading as investors digested the news.`;
 }
 
-function buildExtraParagraphs(
-  eventName: string,
-  tickers: readonly string[]
-): string[] {
+function buildExtraParagraphs(eventName: string, tickers: readonly string[]): string[] {
   const tickerPhrase = tickerPhraseFor(tickers);
 
   return [
@@ -109,9 +106,7 @@ export function BabyNewsArticle({
       <header className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           {article.sourceName ? (
-            <span className="font-medium text-foreground">
-              {article.sourceName}
-            </span>
+            <span className="font-medium text-foreground">{article.sourceName}</span>
           ) : null}
           {article.publishedAt ? (
             <>
@@ -154,13 +149,9 @@ export function BabyNewsArticle({
 
       <div className="flex flex-col gap-4 text-sm leading-relaxed text-foreground">
         {article.summary ? (
-          <p className="text-base font-medium text-foreground">
-            {article.summary}
-          </p>
+          <p className="text-base font-medium text-foreground">{article.summary}</p>
         ) : null}
-        {article.body ? (
-          <p className="text-muted-foreground">{article.body}</p>
-        ) : null}
+        {article.body ? <p className="text-muted-foreground">{article.body}</p> : null}
         {article.bodyExtra.map((paragraph, i) => (
           // eslint-disable-next-line react/no-array-index-key
           <p className="text-muted-foreground" key={i}>

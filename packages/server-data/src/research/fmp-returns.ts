@@ -26,14 +26,11 @@ function parseBatchQuoteTo1dMap(raw: unknown): Map<string, number | undefined> {
       continue;
     }
     const o = item as Record<string, unknown>;
-    const sym =
-      typeof o.symbol === "string" ? o.symbol.trim().toUpperCase() : "";
+    const sym = typeof o.symbol === "string" ? o.symbol.trim().toUpperCase() : "";
     if (!sym) {
       continue;
     }
-    const pct = parseNumeric(
-      o.changePercentage ?? o.changesPercentage ?? o.changePercent
-    );
+    const pct = parseNumeric(o.changePercentage ?? o.changesPercentage ?? o.changePercent);
     map.set(sym, pct);
   }
   return map;
@@ -53,10 +50,7 @@ function unwrapObject(raw: unknown): Record<string, unknown> | undefined {
   return raw as Record<string, unknown>;
 }
 
-function pickNumeric(
-  o: Record<string, unknown>,
-  keys: string[]
-): number | undefined {
+function pickNumeric(o: Record<string, unknown>, keys: string[]): number | undefined {
   for (const k of keys) {
     if (Object.hasOwn(o, k)) {
       const n = parseNumeric(o[k]);
@@ -86,12 +80,10 @@ function parseStockPriceChange(raw: unknown): {
   const nested = unwrapObject(o.changes);
 
   const d1 =
-    pickNumeric(o, ["1D", "1d"]) ??
-    (nested ? pickNumeric(nested, ["1D", "1d"]) : undefined);
+    pickNumeric(o, ["1D", "1d"]) ?? (nested ? pickNumeric(nested, ["1D", "1d"]) : undefined);
 
   const ytd =
-    pickNumeric(o, ["ytd", "YTD"]) ??
-    (nested ? pickNumeric(nested, ["ytd", "YTD"]) : undefined);
+    pickNumeric(o, ["ytd", "YTD"]) ?? (nested ? pickNumeric(nested, ["ytd", "YTD"]) : undefined);
 
   const y1 =
     pickNumeric(o, ["1Y", "1y"]) ??
@@ -110,7 +102,7 @@ function rowSymbolUpper(row: Record<string, unknown>): string {
  * (batch quote + stock-price-change).
  */
 export async function enrichScreenerRowsWithReturns(
-  rows: Record<string, unknown>[]
+  rows: Record<string, unknown>[],
 ): Promise<Record<string, unknown>[]> {
   const symbols = [...new Set(rows.map(rowSymbolUpper).filter(Boolean))];
   if (symbols.length === 0) {
@@ -135,10 +127,7 @@ export async function enrichScreenerRowsWithReturns(
     }
   }
 
-  const priceChangeBySym = new Map<
-    string,
-    { d1?: number; ytd?: number; y1?: number }
-  >();
+  const priceChangeBySym = new Map<string, { d1?: number; ytd?: number; y1?: number }>();
   for (let i = 0; i < symbols.length; i += PRICE_CHANGE_CONCURRENCY) {
     const chunk = symbols.slice(i, i + PRICE_CHANGE_CONCURRENCY);
     const settled = await Promise.all(
@@ -151,7 +140,7 @@ export async function enrichScreenerRowsWithReturns(
         } catch {
           return [sym, {}] as const;
         }
-      })
+      }),
     );
     for (const [sym, parsed] of settled) {
       priceChangeBySym.set(sym, parsed);

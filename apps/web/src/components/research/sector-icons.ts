@@ -43,7 +43,7 @@ const SECTOR_ICON_BY_NORMALIZED: Record<string, typeof GlobeIcon> = {
 
 /** Normalized labels we map to a dedicated icon (not the generic globe). */
 export const KNOWN_SECTOR_NORMALIZED_LABELS: readonly string[] = Object.keys(
-  SECTOR_ICON_BY_NORMALIZED
+  SECTOR_ICON_BY_NORMALIZED,
 ).toSorted((a, b) => a.localeCompare(b));
 
 export function normalizeSector(raw: unknown): string {

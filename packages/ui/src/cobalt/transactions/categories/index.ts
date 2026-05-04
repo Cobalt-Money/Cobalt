@@ -18,7 +18,4 @@ export {
   resolveCategoryIcon,
   resolveGroupIcon,
 } from "./category-system-icons";
-export type {
-  CategoryGroupKey,
-  CategorySystemKey,
-} from "./category-system-icons";
+export type { CategoryGroupKey, CategorySystemKey } from "./category-system-icons";

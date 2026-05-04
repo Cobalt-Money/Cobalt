@@ -15,14 +15,12 @@ function toSidebarItem(row: unknown): NewsRssSidebarItem | null {
   }
   const o = row as Record<string, unknown>;
   const id = o.id !== undefined && o.id !== null ? String(o.id) : "";
-  const title =
-    o.title !== undefined && o.title !== null ? String(o.title) : "";
+  const title = o.title !== undefined && o.title !== null ? String(o.title) : "";
   const link = o.link !== undefined && o.link !== null ? String(o.link) : "";
   if (!id || !title || !link) {
     return null;
   }
-  const publishedAt =
-    typeof o.publishedDate === "number" ? o.publishedDate : null;
+  const publishedAt = typeof o.publishedDate === "number" ? o.publishedDate : null;
   return { id, link, publishedAt, title };
 }
 

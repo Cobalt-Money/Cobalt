@@ -24,7 +24,7 @@ function log(event: string, fields: Record<string, unknown> = {}): void {
       port: PORT,
       scope: "workflow-integration-setup",
       ...fields,
-    })
+    }),
   );
 }
 
@@ -94,15 +94,14 @@ export async function setup(): Promise<void> {
   })();
 
   if (!ready) {
-    const tail = (lines: string[]): string =>
-      lines.join("").trim().slice(-1500) || "(empty)";
+    const tail = (lines: string[]): string => lines.join("").trim().slice(-1500) || "(empty)";
     throw new Error(
       [
         `Nitro dev server didn't report ready within ${READY_TIMEOUT_MS}ms.`,
         "Is docker running + local Postgres up? (bun run db:local:up)",
         `Recent stdout:\n${tail(stdout)}`,
         `Recent stderr:\n${tail(stderr)}`,
-      ].join("\n\n")
+      ].join("\n\n"),
     );
   }
 

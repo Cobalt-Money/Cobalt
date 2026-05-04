@@ -21,9 +21,7 @@ export const studentLoanLiability = pgTable(
       .unique()
       .references(() => financialAccount.id, { onDelete: "cascade" }),
     accountNumber: text("account_number"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     disbursementDates: jsonb("disbursement_dates").$type<string[] | null>(),
     expectedPayoffDate: date("expected_payoff_date"),
     guarantor: text("guarantor"),
@@ -77,9 +75,8 @@ export const studentLoanLiability = pgTable(
       scale: 4,
     }),
   },
-  (t) => [index("student_loan_liability_user_id_idx").on(t.userId)]
+  (t) => [index("student_loan_liability_user_id_idx").on(t.userId)],
 );
 
 export type StudentLoanLiability = typeof studentLoanLiability.$inferSelect;
-export type StudentLoanLiabilityInsert =
-  typeof studentLoanLiability.$inferInsert;
+export type StudentLoanLiabilityInsert = typeof studentLoanLiability.$inferInsert;

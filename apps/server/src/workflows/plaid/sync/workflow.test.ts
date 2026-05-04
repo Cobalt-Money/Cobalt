@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  syncHoldings,
-  syncInvestmentTransactions,
-} from "../investments/orchestration";
+import { syncHoldings, syncInvestmentTransactions } from "../investments/orchestration";
 import { syncLiabilities } from "../liabilities/orchestration";
 import {
   backfillHistoricalSnapshotsStep,
@@ -22,10 +19,7 @@ import {
   syncTransactionsStep,
   triggerPlaidSyncStep,
 } from "./steps.js";
-import {
-  plaidAddAccountWorkflow,
-  plaidOnboardingHookToken,
-} from "./workflow.js";
+import { plaidAddAccountWorkflow, plaidOnboardingHookToken } from "./workflow.js";
 
 const HOOK_TOKEN = "plaid:link:user-1:test-hook";
 
@@ -99,9 +93,7 @@ vi.mock(import("workflow"), async () => {
             next() {
               const value = payloads.shift();
               return Promise.resolve(
-                value === undefined
-                  ? { done: true, value: undefined }
-                  : { done: false, value }
+                value === undefined ? { done: true, value: undefined } : { done: false, value },
               );
             },
           };
@@ -140,7 +132,7 @@ function fakeItem(
     available_products?: string[];
     billed_products?: string[];
     institution_id?: string | null;
-  } = {}
+  } = {},
 ) {
   return {
     available_products: overrides.available_products ?? ["transactions"],
@@ -261,9 +253,7 @@ describe("plaidAddAccountWorkflow", () => {
     // Exchange must happen before validate, validate before persist.
     expect(phases.indexOf("exchange")).toBeLessThan(phases.indexOf("validate"));
     expect(phases.indexOf("validate")).toBeLessThan(phases.indexOf("persist"));
-    expect(phases.indexOf("persist")).toBeLessThan(
-      phases.indexOf("waiting_for_plaid")
-    );
+    expect(phases.indexOf("persist")).toBeLessThan(phases.indexOf("waiting_for_plaid"));
   });
 
   it("terminates with DUPLICATE_ACCOUNT when dup check matches, removes item, does not persist", async () => {

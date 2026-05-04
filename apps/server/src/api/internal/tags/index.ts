@@ -4,10 +4,7 @@ import {
   deleteTag,
   updateTag,
 } from "@cobalt-web/server-data/transactions/tags/mutations";
-import {
-  getTag,
-  listTags,
-} from "@cobalt-web/server-data/transactions/tags/queries";
+import { getTag, listTags } from "@cobalt-web/server-data/transactions/tags/queries";
 import {
   bulkApplyTagsBodySchema,
   createTagBodySchema,
@@ -23,8 +20,7 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { requirePaidUser } from "../middleware.js";
 
 const listTagsRoute = createRoute({
-  description:
-    "Lists every tag the user owns (active + archived) with usage counts.",
+  description: "Lists every tag the user owns (active + archived) with usage counts.",
   method: "get",
   middleware: [requirePaidUser] as const,
   path: "/",
@@ -78,8 +74,7 @@ const updateTagRoute = createRoute({
 });
 
 const deleteTagRoute = createRoute({
-  description:
-    "Permanently deletes a tag and all its transaction memberships (cascade).",
+  description: "Permanently deletes a tag and all its transaction memberships (cascade).",
   method: "delete",
   middleware: [requirePaidUser] as const,
   path: "/{tagId}",
@@ -95,8 +90,7 @@ const deleteTagRoute = createRoute({
 });
 
 const bulkApplyRoute = createRoute({
-  description:
-    "Adds and/or removes tags across many transactions in a single operation.",
+  description: "Adds and/or removes tags across many transactions in a single operation.",
   method: "post",
   middleware: [requirePaidUser] as const,
   path: "/bulk-apply",

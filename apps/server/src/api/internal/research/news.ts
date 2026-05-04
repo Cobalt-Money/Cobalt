@@ -28,19 +28,13 @@ const route = createRoute({
   tags: ["Research"],
 });
 
-export const newsRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const { symbol } = c.req.valid("query");
-      const news = await getResearchNews(symbol);
-      c.header(
-        "Cache-Control",
-        "public, s-maxage=3600, stale-while-revalidate=1800"
-      );
-      return c.json(news, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch news" }, 500);
-    }
+export const newsRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const { symbol } = c.req.valid("query");
+    const news = await getResearchNews(symbol);
+    c.header("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=1800");
+    return c.json(news, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch news" }, 500);
   }
-);
+});

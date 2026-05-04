@@ -2,10 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const DEFAULT_CLOSE_DELAY = 1000;
 
-export function useAutoCollapse(
-  isStreaming: boolean,
-  closeDelay: number = DEFAULT_CLOSE_DELAY
-) {
+export function useAutoCollapse(isStreaming: boolean, closeDelay: number = DEFAULT_CLOSE_DELAY) {
   const [isOpen, setIsOpen] = useState(() => isStreaming);
   const prevIsStreamingRef = useRef<boolean | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

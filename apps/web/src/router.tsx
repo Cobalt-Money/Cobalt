@@ -31,7 +31,7 @@ export const getRouter = () => {
       routeTree,
       scrollRestoration: true,
     }),
-    queryClient
+    queryClient,
   );
 };
 

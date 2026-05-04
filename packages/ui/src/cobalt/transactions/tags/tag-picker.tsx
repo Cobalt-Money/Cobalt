@@ -1,17 +1,9 @@
 "use client";
 
 import { Button } from "@cobalt-web/ui/components/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import {
-  Add01Icon,
-  PlusSignIcon,
-  Tick02Icon,
-} from "@hugeicons/core-free-icons";
+import { Add01Icon, PlusSignIcon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import * as React from "react";
 
@@ -59,15 +51,11 @@ export function TagPicker({
   const selectedSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
   const lowerQuery = query.trim().toLowerCase();
   const filtered = React.useMemo(
-    () =>
-      lowerQuery
-        ? options.filter((o) => o.name.toLowerCase().includes(lowerQuery))
-        : options,
-    [lowerQuery, options]
+    () => (lowerQuery ? options.filter((o) => o.name.toLowerCase().includes(lowerQuery)) : options),
+    [lowerQuery, options],
   );
   const exactMatch = options.some((o) => o.name.toLowerCase() === lowerQuery);
-  const canCreate =
-    Boolean(onRequestCreate) && lowerQuery.length > 0 && !exactMatch;
+  const canCreate = Boolean(onRequestCreate) && lowerQuery.length > 0 && !exactMatch;
 
   function toggle(id: string) {
     if (selectedSet.has(id)) {
@@ -128,9 +116,7 @@ export function TagPicker({
         </div>
         <div className="scrollbar-thin max-h-72 overflow-y-auto">
           {filtered.length === 0 && !canCreate ? (
-            <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-              No tags
-            </div>
+            <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">No tags</div>
           ) : null}
           {filtered.map((opt) => {
             const checked = selectedSet.has(opt.id);
@@ -138,7 +124,7 @@ export function TagPicker({
               <button
                 className={cn(
                   "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40",
-                  checked && "bg-input/30"
+                  checked && "bg-input/30",
                 )}
                 key={opt.id}
                 onClick={() => toggle(opt.id)}
@@ -148,7 +134,7 @@ export function TagPicker({
                 <span
                   className={cn(
                     "ml-auto flex size-4 items-center justify-center text-foreground",
-                    checked ? "opacity-100" : "opacity-0"
+                    checked ? "opacity-100" : "opacity-0",
                   )}
                 >
                   <HugeiconsIcon className="size-3.5" icon={Tick02Icon} />
@@ -158,9 +144,7 @@ export function TagPicker({
           })}
           {canCreate ? (
             <>
-              {filtered.length > 0 ? (
-                <div className="my-1 h-px bg-border/60" />
-              ) : null}
+              {filtered.length > 0 ? <div className="my-1 h-px bg-border/60" /> : null}
               <button
                 className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
                 onClick={handleCreate}

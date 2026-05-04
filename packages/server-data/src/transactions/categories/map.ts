@@ -77,8 +77,7 @@ export const PFC_TO_SYSTEM_KEY: Record<string, CategorySystemKey> = {
 
   // GOVERNMENT_AND_NON_PROFIT (4)
   GOVERNMENT_AND_NON_PROFIT_DONATIONS: "donations",
-  GOVERNMENT_AND_NON_PROFIT_GOVERNMENT_DEPARTMENTS_AND_AGENCIES:
-    "government_fee",
+  GOVERNMENT_AND_NON_PROFIT_GOVERNMENT_DEPARTMENTS_AND_AGENCIES: "government_fee",
   GOVERNMENT_AND_NON_PROFIT_OTHER_GOVERNMENT_AND_NON_PROFIT: "other_government",
   GOVERNMENT_AND_NON_PROFIT_TAX_PAYMENT: "taxes",
 
@@ -163,9 +162,7 @@ export const PFC_TO_SYSTEM_KEY: Record<string, CategorySystemKey> = {
 };
 
 /** Resolve Plaid PFC detailed key → systemKey. Unmapped/null → `uncategorized`. */
-export function pfcDetailedToSystemKey(
-  detail: string | null | undefined
-): CategorySystemKey {
+export function pfcDetailedToSystemKey(detail: string | null | undefined): CategorySystemKey {
   if (!detail) {
     return "uncategorized";
   }

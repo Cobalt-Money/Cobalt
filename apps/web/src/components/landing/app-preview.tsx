@@ -76,7 +76,7 @@ function mockCat(
   groupName: string,
   systemKey: string,
   name: string,
-  iconKey = systemKey
+  iconKey = systemKey,
 ): NonNullable<TransactionListItem["category"]> {
   return {
     groupName,
@@ -89,54 +89,24 @@ function mockCat(
 }
 
 const MOCK_CATS = {
-  ENTERTAINMENT: mockCat(
-    "entertainment",
-    "Entertainment",
-    "movies",
-    "TV & Movies"
-  ),
-  FOOD_AND_DRINK: mockCat(
-    "food_and_drink",
-    "Food & Drink",
-    "restaurants",
-    "Restaurants"
-  ),
-  GENERAL_MERCHANDISE: mockCat(
-    "general_merchandise",
-    "Shopping",
-    "shopping",
-    "General Shopping"
-  ),
-  GENERAL_SERVICES: mockCat(
-    "general_services",
-    "Services",
-    "office_supplies",
-    "Office Supplies"
-  ),
+  ENTERTAINMENT: mockCat("entertainment", "Entertainment", "movies", "TV & Movies"),
+  FOOD_AND_DRINK: mockCat("food_and_drink", "Food & Drink", "restaurants", "Restaurants"),
+  GENERAL_MERCHANDISE: mockCat("general_merchandise", "Shopping", "shopping", "General Shopping"),
+  GENERAL_SERVICES: mockCat("general_services", "Services", "office_supplies", "Office Supplies"),
   HOME_IMPROVEMENT: mockCat(
     "home_improvement",
     "Home Improvement",
     "home_maintenance",
-    "Home Maintenance"
+    "Home Maintenance",
   ),
   INCOME: mockCat("income", "Income", "paycheck", "Paycheck"),
-  RENT_AND_UTILITIES: mockCat(
-    "rent_and_utilities",
-    "Rent & Utilities",
-    "rent_mortgage",
-    "Rent"
-  ),
-  TRANSPORTATION: mockCat(
-    "transportation",
-    "Transportation",
-    "public_transit",
-    "Public Transit"
-  ),
+  RENT_AND_UTILITIES: mockCat("rent_and_utilities", "Rent & Utilities", "rent_mortgage", "Rent"),
+  TRANSPORTATION: mockCat("transportation", "Transportation", "public_transit", "Public Transit"),
 } as const;
 
 function makeTx(
   overrides: Partial<TransactionListItem> &
-    Pick<TransactionListItem, "id" | "name" | "amount" | "date">
+    Pick<TransactionListItem, "id" | "name" | "amount" | "date">,
 ): TransactionListItem {
   return {
     accountName: "Chase Checking",
@@ -167,7 +137,7 @@ function loc(
   region: string,
   postal: string,
   lat: number,
-  lon: number
+  lon: number,
 ): NonNullable<TransactionListItem["location"]> {
   return {
     address,
@@ -187,7 +157,7 @@ function note(text: string): NonNullable<TransactionListItem["notes"]> {
 
 function noteWithBullets(
   intro: string,
-  items: string[]
+  items: string[],
 ): NonNullable<TransactionListItem["notes"]> {
   return [intro, ...items.map((item) => `- ${item}`)].join("\n");
 }
@@ -198,14 +168,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     category: MOCK_CATS.FOOD_AND_DRINK,
     date: "2026-04-11",
     id: "tx-1",
-    location: loc(
-      "66 Mint St",
-      "San Francisco",
-      "CA",
-      "94103",
-      37.7824,
-      -122.4067
-    ),
+    location: loc("66 Mint St", "San Francisco", "CA", "94103", 37.7824, -122.4067),
     name: "Blue Bottle Coffee",
     notes: note("Morning oat milk latte before standup."),
     website: "bluebottlecoffee.com",
@@ -267,9 +230,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionName: "Chase",
     institutionUrl: "chase.com",
     name: "Netflix",
-    notes: note(
-      "Standard plan. Consider downgrading — barely watched in March."
-    ),
+    notes: note("Standard plan. Consider downgrading — barely watched in March."),
     website: "netflix.com",
   }),
   makeTx({
@@ -302,14 +263,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-9",
     institutionName: "Bank of America",
     institutionUrl: "bankofamerica.com",
-    location: loc(
-      "1288 Howard St, Apt 4B",
-      "San Francisco",
-      "CA",
-      "94103",
-      37.7765,
-      -122.4117
-    ),
+    location: loc("1288 Howard St, Apt 4B", "San Francisco", "CA", "94103", 37.7765, -122.4117),
     name: "March Rent",
     notes: note("Monthly rent — autopay. Lease renewal in June."),
   }),
@@ -320,14 +274,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-10",
     institutionName: "Chase",
     institutionUrl: "chase.com",
-    location: loc(
-      "555 9th St",
-      "San Francisco",
-      "CA",
-      "94103",
-      37.7717,
-      -122.4077
-    ),
+    location: loc("555 9th St", "San Francisco", "CA", "94103", 37.7717, -122.4077),
     name: "Trader Joe's",
     notes: note("Weekly groceries + flowers."),
     website: "traderjoes.com",
@@ -339,14 +286,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-11",
     institutionName: "Wells Fargo",
     institutionUrl: "wellsfargo.com",
-    location: loc(
-      "Mission St & 16th St",
-      "San Francisco",
-      "CA",
-      "94103",
-      37.7651,
-      -122.4196
-    ),
+    location: loc("Mission St & 16th St", "San Francisco", "CA", "94103", 37.7651, -122.4196),
     name: "Uber",
     notes: note("Ride home after the company offsite dinner."),
     website: "uber.com",
@@ -358,14 +298,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-12",
     institutionName: "Chase",
     institutionUrl: "chase.com",
-    location: loc(
-      "399 4th St",
-      "San Francisco",
-      "CA",
-      "94107",
-      37.7799,
-      -122.4005
-    ),
+    location: loc("399 4th St", "San Francisco", "CA", "94107", 37.7799, -122.4005),
     name: "Whole Foods Market",
     notes: note("Restocked pantry — olive oil, coffee beans, snacks."),
     website: "wholefoodsmarket.com",
@@ -377,14 +310,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-13",
     institutionName: "Wells Fargo",
     institutionUrl: "wellsfargo.com",
-    location: loc(
-      "301 Pine St",
-      "San Francisco",
-      "CA",
-      "94104",
-      37.7923,
-      -122.4014
-    ),
+    location: loc("301 Pine St", "San Francisco", "CA", "94104", 37.7923, -122.4014),
     name: "Equinox Fitness",
     notes: note("Monthly membership. Goal: hit classes 3x/week."),
     website: "equinox.com",
@@ -396,14 +322,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-14",
     institutionName: "Chase",
     institutionUrl: "chase.com",
-    location: loc(
-      "135 4th St",
-      "San Francisco",
-      "CA",
-      "94103",
-      37.7847,
-      -122.4055
-    ),
+    location: loc("135 4th St", "San Francisco", "CA", "94103", 37.7847, -122.4055),
     name: "AMC Theaters",
     notes: note("Saw Dune: Part Two finally. Worth the IMAX upcharge."),
     website: "amctheatres.com",
@@ -426,14 +345,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-16",
     institutionName: "Chase",
     institutionUrl: "chase.com",
-    location: loc(
-      "1301 Harrison St",
-      "San Francisco",
-      "CA",
-      "94103",
-      37.7706,
-      -122.4107
-    ),
+    location: loc("1301 Harrison St", "San Francisco", "CA", "94103", 37.7706, -122.4107),
     name: "Shell Gas Station",
     notes: note("Full tank before the Tahoe drive."),
     website: "shell.com",
@@ -445,14 +357,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     id: "tx-17",
     institutionName: "Wells Fargo",
     institutionUrl: "wellsfargo.com",
-    location: loc(
-      "1455 Market St",
-      "San Francisco",
-      "CA",
-      "94103",
-      37.7762,
-      -122.4171
-    ),
+    location: loc("1455 Market St", "San Francisco", "CA", "94103", 37.7762, -122.4171),
     name: "Lyft",
     notes: note("Quick ride to the dentist appointment."),
     website: "lyft.com",
@@ -544,8 +449,7 @@ const MOCK_NEWS_EVENTS: FinancialEventCard[] = [
     articles: [
       {
         id: "art-4",
-        imageUrl:
-          "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80",
+        imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80",
         newsUrl: "https://www.ft.com",
         sourceName: "FT",
         title: "March jobs report: 275K nonfarm payrolls added",
@@ -579,8 +483,7 @@ const MOCK_NEWS_EVENTS: FinancialEventCard[] = [
     createdAt: Date.now() - 1000 * 60 * 60 * 12,
     date: Date.now() - 1000 * 60 * 60 * 12,
     eventId: "evt-5",
-    eventName:
-      "a16z unveils $800M dedicated fund for AI-powered startups and infrastructure",
+    eventName: "a16z unveils $800M dedicated fund for AI-powered startups and infrastructure",
     eventText:
       "Andreessen Horowitz announced its latest artificial intelligence-focused fund, committing $800 million to invest in next-generation AI companies addressing both infrastructure and application layers.",
     id: "evt-5",
@@ -598,8 +501,7 @@ const MOCK_RSS_ITEMS: NewsMagazineSidebarItem[] = [
     id: "rss-1",
     link: "https://www.bloomberg.com",
     publishedAt: Date.now() - 1000 * 60 * 40,
-    title:
-      "Markets wrap: S&P 500 closes at record high amid Fed patience signals",
+    title: "Markets wrap: S&P 500 closes at record high amid Fed patience signals",
   },
   {
     id: "rss-2",
@@ -611,8 +513,7 @@ const MOCK_RSS_ITEMS: NewsMagazineSidebarItem[] = [
     id: "rss-3",
     link: "https://www.coindesk.com",
     publishedAt: Date.now() - 1000 * 60 * 120,
-    title:
-      "Bitcoin tops $70K as ETF inflows accelerate and institutional demand grows",
+    title: "Bitcoin tops $70K as ETF inflows accelerate and institutional demand grows",
   },
   {
     id: "rss-4",
@@ -624,22 +525,19 @@ const MOCK_RSS_ITEMS: NewsMagazineSidebarItem[] = [
     id: "rss-5",
     link: "https://www.ft.com",
     publishedAt: Date.now() - 1000 * 60 * 240,
-    title:
-      "European stocks surge on tech rally and easing rate cut timeline expectations",
+    title: "European stocks surge on tech rally and easing rate cut timeline expectations",
   },
   {
     id: "rss-6",
     link: "https://www.cnbc.com",
     publishedAt: Date.now() - 1000 * 60 * 300,
-    title:
-      "Magnificent Seven stocks power Nasdaq to fresh all-time highs this quarter",
+    title: "Magnificent Seven stocks power Nasdaq to fresh all-time highs this quarter",
   },
   {
     id: "rss-7",
     link: "https://www.ft.com",
     publishedAt: Date.now() - 1000 * 60 * 360,
-    title:
-      "Central banks signal pause in interest rate hikes as inflation moderates globally",
+    title: "Central banks signal pause in interest rate hikes as inflation moderates globally",
   },
 ];
 
@@ -865,9 +763,7 @@ function MiniSidebar({
       {/* User row */}
       <div className="flex items-center gap-2.5 rounded-md px-2 py-2">
         <div className="size-6 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-400 to-violet-500" />
-        <span className="truncate text-sm font-medium text-foreground">
-          Alex Johnson
-        </span>
+        <span className="truncate text-sm font-medium text-foreground">Alex Johnson</span>
       </div>
 
       {/* Nav */}
@@ -878,7 +774,7 @@ function MiniSidebar({
               "flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm leading-none transition-colors [&_svg]:size-3.5 [&_svg]:shrink-0",
               active === item.id
                 ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
+                : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground",
             )}
             key={item.id}
             type="button"
@@ -897,7 +793,7 @@ function MiniSidebar({
             "flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm leading-none transition-colors [&_svg]:size-3.5 [&_svg]:shrink-0",
             active === "ai-chat"
               ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-              : "bg-input/60 text-muted-foreground hover:bg-input"
+              : "bg-input/60 text-muted-foreground hover:bg-input",
           )}
           type="button"
           onClick={() => {
@@ -1149,9 +1045,7 @@ function BrokerageView() {
 }
 
 function ResearchView() {
-  const [selectedTicker, setSelectedTicker] = useState<BabyScreenerRow | null>(
-    null
-  );
+  const [selectedTicker, setSelectedTicker] = useState<BabyScreenerRow | null>(null);
 
   if (selectedTicker) {
     return (
@@ -1193,12 +1087,7 @@ function BackableScreen({
           onClick={onBack}
           type="button"
         >
-          <HugeiconsIcon
-            aria-hidden
-            className="size-5"
-            icon={ArrowLeft01Icon}
-            strokeWidth={2}
-          />
+          <HugeiconsIcon aria-hidden className="size-5" icon={ArrowLeft01Icon} strokeWidth={2} />
           <span>{label}</span>
         </button>
       </div>
@@ -1209,10 +1098,7 @@ function BackableScreen({
 
 function NotesRenderer({ markdown }: { markdown: string }) {
   const lines = markdown.split("\n");
-  const blocks: (
-    | { type: "p"; text: string }
-    | { type: "ul"; items: string[] }
-  )[] = [];
+  const blocks: ({ type: "p"; text: string } | { type: "ul"; items: string[] })[] = [];
   let bullets: string[] = [];
   for (const line of lines) {
     if (line.startsWith("- ")) {
@@ -1247,25 +1133,21 @@ function NotesRenderer({ markdown }: { markdown: string }) {
           <p className="whitespace-pre-wrap" key={i}>
             {block.text}
           </p>
-        )
+        ),
       )}
     </div>
   );
 }
 
 function TransactionsView() {
-  const [selectedTx, setSelectedTx] = useState<TransactionListItem | null>(
-    null
-  );
+  const [selectedTx, setSelectedTx] = useState<TransactionListItem | null>(null);
 
   if (selectedTx) {
     return (
       <BackableScreen onBack={() => setSelectedTx(null)} label="Transactions">
         <div className="mx-auto flex w-full min-w-0 max-w-2xl flex-col gap-8 pt-[10vh] pb-8">
           <TransactionDetailSummary transaction={selectedTx} />
-          {selectedTx.notes ? (
-            <NotesRenderer markdown={selectedTx.notes} />
-          ) : null}
+          {selectedTx.notes ? <NotesRenderer markdown={selectedTx.notes} /> : null}
           <Separator />
           <TransactionDetailActivity editEvents={[]} transaction={selectedTx} />
         </div>
@@ -1275,11 +1157,7 @@ function TransactionsView() {
 
   return (
     <div className="h-full overflow-hidden pt-4">
-      <TransactionsTable
-        isComplete
-        items={TRANSACTIONS}
-        onOpenTransaction={setSelectedTx}
-      />
+      <TransactionsTable isComplete items={TRANSACTIONS} onOpenTransaction={setSelectedTx} />
     </div>
   );
 }
@@ -1293,11 +1171,8 @@ function SubscriptionsView() {
 }
 
 function NewsView() {
-  const [selectedEvent, setSelectedEvent] = useState<FinancialEventCard | null>(
-    null
-  );
-  const [selectedRssItem, setSelectedRssItem] =
-    useState<NewsMagazineSidebarItem | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<FinancialEventCard | null>(null);
+  const [selectedRssItem, setSelectedRssItem] = useState<NewsMagazineSidebarItem | null>(null);
 
   if (selectedEvent || selectedRssItem) {
     return (
@@ -1411,13 +1286,7 @@ function AiChatView({ thread }: { thread: ChatThreadId }) {
 // View map
 // ---------------------------------------------------------------------------
 
-function ActiveView({
-  active,
-  chatThread,
-}: {
-  active: NavId;
-  chatThread: ChatThreadId;
-}) {
+function ActiveView({ active, chatThread }: { active: NavId; chatThread: ChatThreadId }) {
   switch (active) {
     case "dashboard": {
       return <DashboardView />;
@@ -1460,18 +1329,12 @@ export function AppPreview() {
   return (
     <BrowserWindow className="w-full h-full" size="2xl" variant="chrome">
       <div className="flex h-full overflow-hidden rounded-2xl bg-sidebar">
-        <MiniSidebar
-          active={active}
-          onChatThread={setChatThread}
-          onNav={setActive}
-        />
+        <MiniSidebar active={active} onChatThread={setChatThread} onNav={setActive} />
 
         {/* Inset content area */}
         <div className="m-1 ml-0 flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-sidebar-inset">
           <header className="flex h-[42px] shrink-0 items-center gap-2 px-4 pt-2">
-            <h1 className="flex-1 truncate text-left text-lg font-semibold">
-              Cobalt
-            </h1>
+            <h1 className="flex-1 truncate text-left text-lg font-semibold">Cobalt</h1>
             <button
               type="button"
               className="flex h-9 min-w-0 max-w-[15rem] flex-1 items-center gap-2 rounded-2xl bg-input/30 px-3 text-left text-sm text-muted-foreground transition-colors hover:bg-input/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
@@ -1483,10 +1346,7 @@ export function AppPreview() {
                 strokeWidth={2}
               />
               <span className="min-w-0 flex-1 truncate">Search…</span>
-              <KbdGroup
-                aria-hidden
-                className="pointer-events-none shrink-0 gap-0.5"
-              >
+              <KbdGroup aria-hidden className="pointer-events-none shrink-0 gap-0.5">
                 <Kbd className="min-w-6 px-1">⌘</Kbd>
                 <Kbd className="min-w-6 px-1">K</Kbd>
               </KbdGroup>
@@ -1495,21 +1355,13 @@ export function AppPreview() {
               className="flex size-9 items-center justify-center rounded-xl text-muted-foreground hover:bg-sidebar-accent/50"
               type="button"
             >
-              <HugeiconsIcon
-                className="size-5"
-                icon={EyeIcon}
-                strokeWidth={2}
-              />
+              <HugeiconsIcon className="size-5" icon={EyeIcon} strokeWidth={2} />
             </button>
             <button
               className="flex size-9 items-center justify-center rounded-xl text-muted-foreground hover:bg-sidebar-accent/50"
               type="button"
             >
-              <HugeiconsIcon
-                className="size-5"
-                icon={BellDotIcon}
-                strokeWidth={2}
-              />
+              <HugeiconsIcon className="size-5" icon={BellDotIcon} strokeWidth={2} />
             </button>
           </header>
 

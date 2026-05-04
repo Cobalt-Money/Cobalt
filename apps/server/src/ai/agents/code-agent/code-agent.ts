@@ -7,11 +7,7 @@ import { z } from "zod";
 import { chartCatalogServer } from "../../json-render/chart-catalog-server.js";
 import { documentCatalogServer } from "../../json-render/document-catalog-server.js";
 import { getKnowledgeTOC, loadKnowledgeFiles } from "../../knowledge/index.js";
-import {
-  gatewayModel,
-  getProviderOptions,
-  parseModelWithReasoning,
-} from "../../model-provider.js";
+import { gatewayModel, getProviderOptions, parseModelWithReasoning } from "../../model-provider.js";
 import type { ReasoningEffort } from "../../model-provider.js";
 import { loadSchemaFiles } from "./schema-context.js";
 import { askUserTool } from "./tools/ask-user-tools.js";
@@ -33,7 +29,7 @@ const MUTATING_COMMAND_RE =
 export async function createCodeAgent(
   model: string | undefined,
   userId: string,
-  effort: ReasoningEffort = "high"
+  effort: ReasoningEffort = "high",
 ) {
   const [schemaFiles, knowledgeFiles, knowledgeTOC] = await Promise.all([
     loadSchemaFiles(),
@@ -47,9 +43,7 @@ export async function createCodeAgent(
       "Prefer read-only discovery commands (ls, grep, cat). Avoid long-running commands. Write operations are blocked at the sandbox layer — do not attempt them.",
     files: {
       ...schemaFiles,
-      ...Object.fromEntries(
-        Object.entries(knowledgeFiles).map(([k, v]) => [`knowledge/${k}`, v])
-      ),
+      ...Object.fromEntries(Object.entries(knowledgeFiles).map(([k, v]) => [`knowledge/${k}`, v])),
     },
     maxFiles: 500,
     maxOutputLength: 15_000,
@@ -63,13 +57,8 @@ export async function createCodeAgent(
   });
 
   const rawModel = model ?? DEFAULT_MODEL;
-  const { baseModel: resolvedModel, useReasoning } =
-    parseModelWithReasoning(rawModel);
-  const providerOptions = getProviderOptions(
-    resolvedModel,
-    useReasoning,
-    effort
-  );
+  const { baseModel: resolvedModel, useReasoning } = parseModelWithReasoning(rawModel);
+  const providerOptions = getProviderOptions(resolvedModel, useReasoning, effort);
   const executeCodeTool = createExecuteCodeTool(userId);
 
   type AgentProviderOptions = NonNullable<

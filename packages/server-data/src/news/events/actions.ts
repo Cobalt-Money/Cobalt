@@ -39,16 +39,13 @@ export async function fetchRecentEvents(): Promise<StockNewsEvent[]> {
 
 export async function fetchArticlesForEvent(
   eventId: string,
-  items = 20
+  items = 20,
 ): Promise<StockNewsArticle[]> {
-  const response = await stockNewsRequest<StockNewsEventArticlesResponse>(
-    "/events",
-    {
-      eventid: eventId,
-      items: items.toString(),
-      page: "1",
-    }
-  );
+  const response = await stockNewsRequest<StockNewsEventArticlesResponse>("/events", {
+    eventid: eventId,
+    items: items.toString(),
+    page: "1",
+  });
   if (!response.data) {
     throw new Error(`Stock News API returned no articles for ${eventId}`);
   }
@@ -90,7 +87,7 @@ const swallowConsoleError = (..._args: unknown[]): void => undefined;
 
 function extractWithReadability(
   html: string,
-  url: string
+  url: string,
 ): ReturnType<Readability["parse"]> | null {
   // Suppress DOM parser noise during Readability extraction.
   const originalConsoleError = console.error;
@@ -112,7 +109,7 @@ function extractWithReadability(
 function failedArticleResult(
   article: StockNewsArticle,
   error: string,
-  startedAt: number
+  startedAt: number,
 ): ProcessedArticle {
   return {
     extractedContent: {
@@ -134,7 +131,7 @@ function failedArticleResult(
 function successArticleResult(
   article: StockNewsArticle,
   extracted: ReturnType<Readability["parse"]> | null,
-  startedAt: number
+  startedAt: number,
 ): ProcessedArticle {
   return {
     extractedContent: {
@@ -156,9 +153,7 @@ function successArticleResult(
   };
 }
 
-export async function fetchArticleContent(
-  article: StockNewsArticle
-): Promise<ProcessedArticle> {
+export async function fetchArticleContent(article: StockNewsArticle): Promise<ProcessedArticle> {
   const startedAt = Date.now();
 
   try {
@@ -169,7 +164,7 @@ export async function fetchArticleContent(
     return failedArticleResult(
       article,
       error instanceof Error ? error.message : String(error),
-      startedAt
+      startedAt,
     );
   }
 }

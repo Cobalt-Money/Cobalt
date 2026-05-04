@@ -53,7 +53,7 @@ export function useAddTransactionData(): AddTransactionData {
       onQueryChange: setLocationQuery,
       results: locationResults,
     }),
-    [locationLoading, locationResults]
+    [locationLoading, locationResults],
   );
 
   const [merchantQuery, setMerchantQuery] = useState("");
@@ -70,7 +70,7 @@ export function useAddTransactionData(): AddTransactionData {
         name: r.name,
       })),
     }),
-    [merchantLoading, merchantResults]
+    [merchantLoading, merchantResults],
   );
 
   const { options: availableTags } = useTagOptions();
@@ -92,7 +92,7 @@ export function useAddTransactionData(): AddTransactionData {
           name: cat.name,
         };
       }),
-    [categoryRows]
+    [categoryRows],
   );
 
   const submit = useCallback(
@@ -110,16 +110,14 @@ export function useAddTransactionData(): AddTransactionData {
           merchantName: values.merchantName ?? undefined,
           name: values.name,
           website: values.merchantWebsite ?? undefined,
-        })
+        }),
       );
       cobaltToast.transactionAdded(values.name);
       void (async () => {
         try {
           const result = await server;
           if (result.type === "error") {
-            cobaltToast.error(
-              result.error.message || "Couldn't add transaction."
-            );
+            cobaltToast.error(result.error.message || "Couldn't add transaction.");
             return;
           }
           if (values.tagIds.length > 0) {
@@ -138,7 +136,7 @@ export function useAddTransactionData(): AddTransactionData {
       })();
       return Promise.resolve();
     },
-    [zero]
+    [zero],
   );
 
   return {

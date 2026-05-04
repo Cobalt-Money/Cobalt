@@ -9,7 +9,7 @@ import { TransactionNotes } from "./transaction-notes";
 describe(TransactionNotes, () => {
   it("mounts for empty notes without throwing", () => {
     const { container } = render(
-      <TransactionNotes notes={null} onReset={vi.fn()} onUpdate={vi.fn()} />
+      <TransactionNotes notes={null} onReset={vi.fn()} onUpdate={vi.fn()} />,
     );
 
     expect(container.firstChild).toBeTruthy();
@@ -17,11 +17,7 @@ describe(TransactionNotes, () => {
 
   it("mounts for non-empty markdown without throwing", () => {
     const { container } = render(
-      <TransactionNotes
-        notes="existing note"
-        onReset={vi.fn()}
-        onUpdate={vi.fn()}
-      />
+      <TransactionNotes notes="existing note" onReset={vi.fn()} onUpdate={vi.fn()} />,
     );
 
     expect(container.firstChild).toBeTruthy();

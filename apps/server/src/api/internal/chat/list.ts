@@ -9,8 +9,7 @@ import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
-  description:
-    "List the authenticated user's chats (most recently updated first).",
+  description: "List the authenticated user's chats (most recently updated first).",
   method: "get",
   middleware: [requirePaidUser] as const,
   path: "/list",
@@ -32,14 +31,11 @@ const route = createRoute({
   tags: ["Chat"],
 });
 
-export const chatListRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const items = await getChatsByUserId(c.var.user.id);
-      return c.json(items, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch chats" }, 500);
-    }
+export const chatListRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const items = await getChatsByUserId(c.var.user.id);
+    return c.json(items, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch chats" }, 500);
   }
-);
+});

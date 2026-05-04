@@ -43,54 +43,46 @@ const updateLinkTokenRoute = createRoute({
   tags: ["Plaid"],
 });
 
-const updateRouter = new OpenAPIHono<AppEnv>().openapi(
-  updateLinkTokenRoute,
-  async (c) => {
-    const { mode, plaidItemId } = c.req.valid("json");
-    const userId = c.var.user.id;
+const updateRouter = new OpenAPIHono<AppEnv>().openapi(updateLinkTokenRoute, async (c) => {
+  const { mode, plaidItemId } = c.req.valid("json");
+  const userId = c.var.user.id;
 
-    if (mode !== "reauth") {
-      // add-accounts / add-products are detected upfront by /createLinkToken
-      // (Scenario C). Reject other modes here so unsupported paths can't
-      // sneak through.
-      return c.json({ error: `mode '${mode}' not supported` }, 500);
-    }
-
-    try {
-      const accessToken = await getAccessTokenForItem(userId, plaidItemId);
-      const tokenResult = await createLinkTokenForUpdate(
-        accessToken,
-        userId,
-        "reauth"
-      );
-      const hookToken = uuidv7();
-      const run = await start(plaidAddAccountWorkflow, [
-        {
-          hookToken,
-          reauthMode: { accessToken, plaidItemId },
-          userId,
-        },
-      ]);
-      return c.json(
-        {
-          hookToken,
-          link_token: tokenResult.link_token,
-          mode: "reauth" as const,
-          plaidItemId,
-          runId: run.runId,
-        },
-        200
-      );
-    } catch (error) {
-      console.error("[/link-token/update] failed", error);
-      const message =
-        error instanceof Error ? error.message : "Error generating link token";
-      if (message.includes("not found") || message.includes("access denied")) {
-        return c.json({ error: message }, 404);
-      }
-      return c.json({ error: message }, 500);
-    }
+  if (mode !== "reauth") {
+    // add-accounts / add-products are detected upfront by /createLinkToken
+    // (Scenario C). Reject other modes here so unsupported paths can't
+    // sneak through.
+    return c.json({ error: `mode '${mode}' not supported` }, 500);
   }
-);
+
+  try {
+    const accessToken = await getAccessTokenForItem(userId, plaidItemId);
+    const tokenResult = await createLinkTokenForUpdate(accessToken, userId, "reauth");
+    const hookToken = uuidv7();
+    const run = await start(plaidAddAccountWorkflow, [
+      {
+        hookToken,
+        reauthMode: { accessToken, plaidItemId },
+        userId,
+      },
+    ]);
+    return c.json(
+      {
+        hookToken,
+        link_token: tokenResult.link_token,
+        mode: "reauth" as const,
+        plaidItemId,
+        runId: run.runId,
+      },
+      200,
+    );
+  } catch (error) {
+    console.error("[/link-token/update] failed", error);
+    const message = error instanceof Error ? error.message : "Error generating link token";
+    if (message.includes("not found") || message.includes("access denied")) {
+      return c.json({ error: message }, 404);
+    }
+    return c.json({ error: message }, 500);
+  }
+});
 
 export { updateRouter };

@@ -11,12 +11,7 @@ interface TagListProps {
 }
 
 /** Inline tag chip row with `+N` overflow. */
-export function TagList({
-  className,
-  max = 3,
-  size = "sm",
-  tags,
-}: TagListProps) {
+export function TagList({ className, max = 3, size = "sm", tags }: TagListProps) {
   if (tags.length === 0) {
     return null;
   }
@@ -28,9 +23,7 @@ export function TagList({
         <TagChip color={t.color} key={t.id} name={t.name} size={size} />
       ))}
       {overflow > 0 ? (
-        <span className="shrink-0 text-muted-foreground text-xs">
-          +{overflow}
-        </span>
+        <span className="shrink-0 text-muted-foreground text-xs">+{overflow}</span>
       ) : null}
     </div>
   );

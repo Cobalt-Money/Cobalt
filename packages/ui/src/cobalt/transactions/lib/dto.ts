@@ -11,9 +11,7 @@ export type ZeroTransactionEditRow = Record<string, unknown> & {
   readonly createdAt: number | string;
 };
 
-export function mapZeroTransactionEditRow(
-  row: ZeroTransactionEditRow
-): TransactionActivityItem {
+export function mapZeroTransactionEditRow(row: ZeroTransactionEditRow): TransactionActivityItem {
   return {
     actor: row.actor as TransactionActivityItem["actor"],
     createdAt:
@@ -56,9 +54,7 @@ export type ZeroTransactionListRow = Record<string, unknown> & {
   } | null;
 };
 
-export function mapZeroTransactionListRow(
-  row: ZeroTransactionListRow
-): TransactionListItem | null {
+export function mapZeroTransactionListRow(row: ZeroTransactionListRow): TransactionListItem | null {
   const { account, category: cat, ...txRest } = row;
   if (!account) {
     return null;

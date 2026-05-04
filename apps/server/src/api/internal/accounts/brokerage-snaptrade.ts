@@ -92,15 +92,9 @@ export const brokerageSnaptradeRouter = new OpenAPIHono<AppEnv>()
     const { accountId } = c.req.valid("param");
 
     try {
-      const result = await disconnectBrokerageAccountByUserId(
-        c.var.user.id,
-        accountId
-      );
+      const result = await disconnectBrokerageAccountByUserId(c.var.user.id, accountId);
       return c.json(result, 200);
     } catch {
-      return c.json(
-        { error: "Failed to disconnect account. Please try again." },
-        500
-      );
+      return c.json({ error: "Failed to disconnect account. Please try again." }, 500);
     }
   });

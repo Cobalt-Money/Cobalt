@@ -69,7 +69,7 @@ function mcpAudienceCandidates(primary: string): string[] {
  */
 export async function verifyOAuthAccessTokenForMcp(
   accessToken: string,
-  audienceFromRequest: string
+  audienceFromRequest: string,
 ): Promise<McpAccessTokenPayload | null> {
   const jwksUrl = `${betterAuthBaseUrl()}/jwks`;
   const audiences = mcpAudienceCandidates(audienceFromRequest);

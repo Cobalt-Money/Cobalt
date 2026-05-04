@@ -39,10 +39,7 @@ export function SqlToolRenderer({
   context: ToolRendererContext;
 }) {
   const query = invocation.input?.query ?? "";
-  const rows =
-    invocation.state === "output-available"
-      ? (invocation.output?.rows ?? [])
-      : [];
+  const rows = invocation.state === "output-available" ? (invocation.output?.rows ?? []) : [];
   const err = invocation.state === "output-error" ? invocation.errorText : null;
   const hasError = Boolean(err);
 
@@ -55,19 +52,13 @@ export function SqlToolRenderer({
             <SandboxTabsList>
               <SandboxTabsTrigger value="query">Query</SandboxTabsTrigger>
               <SandboxTabsTrigger value="results">Results</SandboxTabsTrigger>
-              {hasError && (
-                <SandboxTabsTrigger value="error">Error</SandboxTabsTrigger>
-              )}
+              {hasError && <SandboxTabsTrigger value="error">Error</SandboxTabsTrigger>}
             </SandboxTabsList>
             <SandboxTabContent value="query">
               <CodeBlock code={query} language="sql" showLineNumbers />
             </SandboxTabContent>
             <SandboxTabContent value="results">
-              <CodeBlock
-                code={JSON.stringify(rows, null, 2)}
-                language="json"
-                showLineNumbers
-              />
+              <CodeBlock code={JSON.stringify(rows, null, 2)} language="json" showLineNumbers />
             </SandboxTabContent>
             {hasError && (
               <SandboxTabContent value="error">

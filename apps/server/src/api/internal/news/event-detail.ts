@@ -32,17 +32,14 @@ const route = createRoute({
   tags: ["News"],
 });
 
-export const eventDetailRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const { eventId } = c.req.valid("param");
-    const event = await getFinancialEventDetails(c.var.user.id, eventId);
+export const eventDetailRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  const { eventId } = c.req.valid("param");
+  const event = await getFinancialEventDetails(c.var.user.id, eventId);
 
-    if (!event) {
-      return c.json({ error: "Event not found" }, 404);
-    }
-
-    c.header("Cache-Control", "private, max-age=60");
-    return c.json({ event }, 200);
+  if (!event) {
+    return c.json({ error: "Event not found" }, 404);
   }
-);
+
+  c.header("Cache-Control", "private, max-age=60");
+  return c.json({ event }, 200);
+});

@@ -15,7 +15,7 @@ export interface UserOverrides {
  * one of: name, category, date.
  */
 export async function getUserOverrides(
-  transactionIds: string[]
+  transactionIds: string[],
 ): Promise<Map<string, UserOverrides>> {
   if (transactionIds.length === 0) {
     return new Map();
@@ -33,16 +33,13 @@ export async function getUserOverrides(
       and(
         eq(transactionTable.source, "plaid"),
         inArray(transactionTable.externalId, transactionIds),
-        sql`jsonb_array_length(${transactionTable.lockedFields}) > 0`
-      )
+        sql`jsonb_array_length(${transactionTable.lockedFields}) > 0`,
+      ),
     );
 
   return new Map(
     rows
-      .filter(
-        (row): row is typeof row & { externalId: string } =>
-          row.externalId !== null
-      )
+      .filter((row): row is typeof row & { externalId: string } => row.externalId !== null)
       .map((row) => [
         row.externalId,
         {
@@ -50,6 +47,6 @@ export async function getUserOverrides(
           lockedFields: row.lockedFields,
           name: row.name,
         },
-      ])
+      ]),
   );
 }

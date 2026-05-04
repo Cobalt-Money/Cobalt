@@ -22,8 +22,7 @@ function plaidAccountToScope(a: BrokerageAccount): ScopeAccount {
   return {
     displayName: mask ? `${base} ${mask}` : base,
     id: a.id,
-    institutionLogo:
-      inst?.logo?.trim() ?? a.plaidConnection?.institutionLogo?.trim() ?? null,
+    institutionLogo: inst?.logo?.trim() ?? a.plaidConnection?.institutionLogo?.trim() ?? null,
     institutionName: inst?.name?.trim() || "Investment",
     institutionUrl: inst?.url?.trim() ?? null,
   };
@@ -32,8 +31,7 @@ function plaidAccountToScope(a: BrokerageAccount): ScopeAccount {
 function snaptradeAccountToScope(a: BrokerageAccount): ScopeAccount {
   const digits = (a.accountNumber ?? "").replaceAll(/\D/g, "");
   const mask = digits.length >= 4 ? `···${digits.slice(-4)}` : null;
-  const base =
-    a.name?.trim() || a.subtype?.trim() || a.type?.trim() || "Account";
+  const base = a.name?.trim() || a.subtype?.trim() || a.type?.trim() || "Account";
   const branding = brokerageInstitutionBranding({
     institutionName: a.institutionName ?? null,
     snaptradeAuthorization: a.snaptradeAuthorization ?? null,
@@ -46,11 +44,8 @@ function snaptradeAccountToScope(a: BrokerageAccount): ScopeAccount {
     id: a.id,
     institutionLogo: branding.institutionLogo,
     institutionLogosExtra:
-      branding.institutionLogosExtra.length > 0
-        ? branding.institutionLogosExtra
-        : null,
-    institutionName:
-      a.institutionName?.trim() || snaptradeAuthName || "Brokerage",
+      branding.institutionLogosExtra.length > 0 ? branding.institutionLogosExtra : null,
+    institutionName: a.institutionName?.trim() || snaptradeAuthName || "Brokerage",
     institutionUrl: branding.institutionUrl,
   };
 }
@@ -64,13 +59,7 @@ function accountToScope(a: BrokerageAccount): ScopeAccount {
 
 export function Overview() {
   const { openAddAccount } = useCommandMenu();
-  const {
-    accounts,
-    accountsComplete,
-    activities,
-    portfolioSnapshots,
-    positions,
-  } = useBrokerage();
+  const { accounts, accountsComplete, activities, portfolioSnapshots, positions } = useBrokerage();
 
   const [brokerageScope, setBrokerageScope] = useState<BrokerageScope>({
     type: "all",
@@ -83,10 +72,7 @@ export function Overview() {
     return new Set(brokerageScope.accountIds);
   }, [brokerageScope]);
 
-  const scopeAccounts = useMemo(
-    (): ScopeAccount[] => accounts.map(accountToScope),
-    [accounts]
-  );
+  const scopeAccounts = useMemo((): ScopeAccount[] => accounts.map(accountToScope), [accounts]);
 
   const scopedPositions = useMemo(() => {
     if (scopedAccountIds === null) {
@@ -96,7 +82,7 @@ export function Overview() {
       (p) =>
         p.brokerageAccount?.id !== undefined &&
         p.brokerageAccount?.id !== null &&
-        scopedAccountIds.has(p.brokerageAccount.id)
+        scopedAccountIds.has(p.brokerageAccount.id),
     );
   }, [positions, scopedAccountIds]);
 
@@ -108,7 +94,7 @@ export function Overview() {
       (a) =>
         a.brokerageAccount?.id !== undefined &&
         a.brokerageAccount?.id !== null &&
-        scopedAccountIds.has(a.brokerageAccount.id)
+        scopedAccountIds.has(a.brokerageAccount.id),
     );
   }, [activities, scopedAccountIds]);
 
@@ -131,16 +117,10 @@ export function Overview() {
           scopedAccountIds={scopedAccountIds}
           scopeAccounts={scopeAccounts}
         />
-        <RecentActivityCard
-          allActivities={activities}
-          scopedActivities={scopedActivities}
-        />
+        <RecentActivityCard allActivities={activities} scopedActivities={scopedActivities} />
       </div>
 
-      <PositionsTable
-        allPositions={positions}
-        scopedPositions={scopedPositions}
-      />
+      <PositionsTable allPositions={positions} scopedPositions={scopedPositions} />
     </div>
   );
 }

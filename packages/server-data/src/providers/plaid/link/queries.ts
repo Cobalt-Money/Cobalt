@@ -13,7 +13,7 @@ export interface AccountRef {
  * Returns a Map keyed by Plaid account_id. Missing entries = orphaned/unsynced.
  */
 export async function lookupFinancialAccountsByPlaidIds(
-  plaidAccountIds: string[]
+  plaidAccountIds: string[],
 ): Promise<Map<string, AccountRef>> {
   if (plaidAccountIds.length === 0) {
     return new Map();
@@ -36,7 +36,7 @@ export async function lookupFinancialAccountsByPlaidIds(
 
 /** Resolve plaid_connection by Plaid item_id. Returns null if not found. */
 export async function lookupPlaidConnection(
-  plaidItemId: string
+  plaidItemId: string,
 ): Promise<{ id: string; userId: string } | null> {
   const row = await db.query.plaidConnection.findFirst({
     columns: { id: true, userId: true },
@@ -61,10 +61,7 @@ export async function getBankConnectionByItemId(plaidItemId: string) {
  * Get access token for a Plaid item with ownership check.
  * Throws if item not found or user doesn't own it.
  */
-export async function getAccessTokenForItem(
-  userId: string,
-  plaidItemId: string
-): Promise<string> {
+export async function getAccessTokenForItem(userId: string, plaidItemId: string): Promise<string> {
   const row = await db.query.plaidConnection.findFirst({
     columns: { plaidAccessToken: true },
     where: {
@@ -90,7 +87,7 @@ export async function getAccessTokenForItem(
 export async function checkForDuplicateAccounts(
   userId: string,
   institutionId: string | null,
-  newAccounts: DuplicateCheckCandidate[]
+  newAccounts: DuplicateCheckCandidate[],
 ): Promise<{
   isDuplicate: boolean;
   duplicateAccounts: { name: string; createdAt: Date }[];
@@ -169,7 +166,7 @@ export async function checkForDuplicateAccounts(
  */
 export async function findExistingHealthyConnection(
   userId: string,
-  institutionId: string
+  institutionId: string,
 ): Promise<{
   id: string;
   plaidAccessToken: string;

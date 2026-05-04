@@ -1,9 +1,6 @@
 import { db } from "@cobalt-web/db";
 import { ALERT_STATUSES, userAlerts } from "@cobalt-web/db/schema/users/alerts";
-import type {
-  AlertSource,
-  AlertType,
-} from "@cobalt-web/db/schema/users/alerts";
+import type { AlertSource, AlertType } from "@cobalt-web/db/schema/users/alerts";
 import { and, eq, inArray } from "drizzle-orm";
 
 export async function insertAlertStep(params: {
@@ -49,8 +46,8 @@ export async function resolveAlertsStep(params: {
       and(
         eq(userAlerts.source, params.source),
         eq(userAlerts.sourceId, params.sourceId),
-        inArray(userAlerts.status, [ALERT_STATUSES.UNREAD, ALERT_STATUSES.READ])
-      )
+        inArray(userAlerts.status, [ALERT_STATUSES.UNREAD, ALERT_STATUSES.READ]),
+      ),
     );
 
   return { resolvedCount: result.rowCount ?? 0 };

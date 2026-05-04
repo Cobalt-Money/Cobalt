@@ -34,9 +34,9 @@ export function NewsToolbar({
               activeTab === t.id
                 ? cn(
                     "text-foreground after:absolute after:bottom-0 after:h-0.5 after:rounded-full after:bg-foreground",
-                    isFirst ? "after:left-0 after:right-3" : "after:inset-x-3"
+                    isFirst ? "after:left-0 after:right-3" : "after:inset-x-3",
                   )
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             {t.label}

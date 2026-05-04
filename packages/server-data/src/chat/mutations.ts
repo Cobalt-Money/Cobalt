@@ -5,23 +5,14 @@ import { and, eq } from "drizzle-orm";
 
 import { mapUIMessagePartsToDbParts } from "./lib.js";
 
-export async function createChat(
-  userId: string,
-  title?: string
-): Promise<string> {
+export async function createChat(userId: string, title?: string): Promise<string> {
   const chatId = crypto.randomUUID();
   await db.insert(chats).values({ chatId, title: title ?? null, userId });
   return chatId;
 }
 
-export async function updateChatTitle(
-  chatId: string,
-  title: string
-): Promise<void> {
-  await db
-    .update(chats)
-    .set({ title, updatedAt: new Date() })
-    .where(eq(chats.chatId, chatId));
+export async function updateChatTitle(chatId: string, title: string): Promise<void> {
+  await db.update(chats).set({ title, updatedAt: new Date() }).where(eq(chats.chatId, chatId));
 }
 
 /**
@@ -32,10 +23,7 @@ export async function updateChatTitle(
  * the Zero `chats.delete` mutator for optimistic UX; both paths ultimately
  * remove the same row and benefit from the same FK cascade.
  */
-export async function deleteChat(
-  userId: string,
-  chatId: string
-): Promise<boolean> {
+export async function deleteChat(userId: string, chatId: string): Promise<boolean> {
   const deleted = await db
     .delete(chats)
     .where(and(eq(chats.chatId, chatId), eq(chats.userId, userId)))
@@ -76,9 +64,6 @@ export async function upsertMessage({
       await tx.insert(parts).values(dbParts);
     }
 
-    await tx
-      .update(chats)
-      .set({ updatedAt: new Date() })
-      .where(eq(chats.chatId, chatId));
+    await tx.update(chats).set({ updatedAt: new Date() }).where(eq(chats.chatId, chatId));
   });
 }

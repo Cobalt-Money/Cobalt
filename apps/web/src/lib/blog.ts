@@ -35,13 +35,10 @@ const allPosts: BlogPost[] = Object.entries(modules)
     slug: slugFromPath(path),
   }))
   .toSorted(
-    (a, b) =>
-      new Date(b.frontmatter.date).getTime() -
-      new Date(a.frontmatter.date).getTime()
+    (a, b) => new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime(),
   );
 
-const isPublished = (post: BlogPost): boolean =>
-  import.meta.env.DEV || !post.frontmatter.draft;
+const isPublished = (post: BlogPost): boolean => import.meta.env.DEV || !post.frontmatter.draft;
 
 export const getBlogPosts = (): BlogPost[] => allPosts.filter(isPublished);
 

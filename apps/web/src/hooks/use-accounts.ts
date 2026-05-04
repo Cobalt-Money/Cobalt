@@ -9,22 +9,19 @@ import { useMemo } from "react";
 
 export function useAccounts() {
   const [bankRows, bankResult] = useQuery(queries.accounts.bankAccounts());
-  const [brokerageRows, brokerageResult] = useQuery(
-    queries.accounts.brokerageAccounts()
-  );
+  const [brokerageRows, brokerageResult] = useQuery(queries.accounts.brokerageAccounts());
 
   const items = useMemo(
     () =>
       mergeAndSortAccountCards(
         bankRows as BankAccountRowWithRelations[],
-        brokerageRows as BrokerageRowWithRelations[]
+        brokerageRows as BrokerageRowWithRelations[],
       ),
-    [bankRows, brokerageRows]
+    [bankRows, brokerageRows],
   );
 
   return {
-    isComplete:
-      bankResult.type === "complete" && brokerageResult.type === "complete",
+    isComplete: bankResult.type === "complete" && brokerageResult.type === "complete",
     items,
   };
 }

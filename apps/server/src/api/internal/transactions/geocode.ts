@@ -9,8 +9,7 @@ import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { requirePaidUser } from "../middleware.js";
 
 const search = createRoute({
-  description:
-    "Free-text geocoding via OpenStreetMap Nominatim. Returns up to 5 candidates.",
+  description: "Free-text geocoding via OpenStreetMap Nominatim. Returns up to 5 candidates.",
   method: "get",
   middleware: [requirePaidUser] as const,
   path: "/geocode",
@@ -25,11 +24,8 @@ const search = createRoute({
   tags: ["Transactions"],
 });
 
-export const geocodeRouter = new OpenAPIHono<AppEnv>().openapi(
-  search,
-  async (c) => {
-    const { q } = c.req.valid("query");
-    const results = await geocodeSearch(q);
-    return c.json({ results }, 200);
-  }
-);
+export const geocodeRouter = new OpenAPIHono<AppEnv>().openapi(search, async (c) => {
+  const { q } = c.req.valid("query");
+  const results = await geocodeSearch(q);
+  return c.json({ results }, 200);
+});

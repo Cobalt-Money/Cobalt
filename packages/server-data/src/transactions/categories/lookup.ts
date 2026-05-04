@@ -15,7 +15,7 @@ import type { CategorySystemKey } from "./system-keys.js";
  */
 export async function lookupCategoryIdsBySystemKey(
   userId: string,
-  systemKeys: readonly CategorySystemKey[]
+  systemKeys: readonly CategorySystemKey[],
 ): Promise<Map<CategorySystemKey, string>> {
   if (systemKeys.length === 0) {
     return new Map();
@@ -28,8 +28,8 @@ export async function lookupCategoryIdsBySystemKey(
       and(
         eq(category.userId, userId),
         isNull(category.deletedAt),
-        inArray(category.systemKey, systemKeys as CategorySystemKey[])
-      )
+        inArray(category.systemKey, systemKeys as CategorySystemKey[]),
+      ),
     );
 
   const map = new Map<CategorySystemKey, string>();
@@ -45,9 +45,7 @@ export async function lookupCategoryIdsBySystemKey(
  * Convenience: get the user's `uncategorized` cat id. Hard-locked seed row;
  * Plaid sync falls back here when a PFC has no mapping or maps to a deleted row.
  */
-export async function getUncategorizedId(
-  userId: string
-): Promise<string | undefined> {
+export async function getUncategorizedId(userId: string): Promise<string | undefined> {
   const map = await lookupCategoryIdsBySystemKey(userId, ["uncategorized"]);
   return map.get("uncategorized");
 }

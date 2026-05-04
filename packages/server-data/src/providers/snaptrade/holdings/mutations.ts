@@ -18,23 +18,17 @@ const externalIdNotNullWhere = sql`external_id IS NOT NULL`;
 export async function upsertAccountPositions(
   snaptradeAccountId: string,
   appUserId: string,
-  positionsData: AccountHoldingsAccount["positions"]
+  positionsData: AccountHoldingsAccount["positions"],
 ): Promise<void> {
-  if (
-    !positionsData ||
-    !Array.isArray(positionsData) ||
-    positionsData.length === 0
-  ) {
+  if (!positionsData || !Array.isArray(positionsData) || positionsData.length === 0) {
     return;
   }
 
-  const accountMap = await lookupFinancialAccountsBySnaptradeIds([
-    snaptradeAccountId,
-  ]);
+  const accountMap = await lookupFinancialAccountsBySnaptradeIds([snaptradeAccountId]);
   const acct = accountMap.get(snaptradeAccountId);
   if (!acct) {
     throw new Error(
-      `financial_account not found for SnapTrade account ${snaptradeAccountId} (user ${appUserId})`
+      `financial_account not found for SnapTrade account ${snaptradeAccountId} (user ${appUserId})`,
     );
   }
 
@@ -71,9 +65,7 @@ export async function upsertAccountPositions(
 
   // Step 3: build holding rows, upsert.
   const holdingRows = positionsData
-    .map((p) =>
-      buildHoldingRow(p as AnyRecord, acct.id, acct.userId, securityMap)
-    )
+    .map((p) => buildHoldingRow(p as AnyRecord, acct.id, acct.userId, securityMap))
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
   for (let i = 0; i < holdingRows.length; i += BATCH_SIZE) {
@@ -100,8 +92,7 @@ export async function upsertAccountPositions(
 
 function extractSecurityRow(position: AnyRecord) {
   const resolved = resolvePositionNestedData(position);
-  const { symbolData, currencyData, exchangeData, securityTypeData, ticker } =
-    resolved;
+  const { symbolData, currencyData, exchangeData, securityTypeData, ticker } = resolved;
   const symbolId = (symbolData as AnyRecord).id ?? position.symbol_id ?? null;
   if (typeof symbolId !== "string") {
     return null;
@@ -138,7 +129,7 @@ function buildHoldingRow(
   position: AnyRecord,
   accountId: string,
   userId: string,
-  securityMap: Map<string, string>
+  securityMap: Map<string, string>,
 ) {
   const resolved = resolvePositionNestedData(position);
   const { symbolData, currencyData } = resolved;
@@ -153,8 +144,7 @@ function buildHoldingRow(
 
   return {
     accountId,
-    averagePrice:
-      toDecimalString(position.average_purchase_price as number) || null,
+    averagePrice: toDecimalString(position.average_purchase_price as number) || null,
     currency:
       ((currencyData as AnyRecord).code as string | undefined) ??
       (position.currency_code as string | undefined) ??

@@ -21,10 +21,7 @@ const authRouter = new OpenAPIHono()
     if (contentType.includes("application/x-www-form-urlencoded")) {
       const bodyText = await req.text();
       const params = new URLSearchParams(bodyText);
-      if (
-        params.get("grant_type") === "authorization_code" &&
-        !params.has("resource")
-      ) {
+      if (params.get("grant_type") === "authorization_code" && !params.has("resource")) {
         params.set("resource", mcpAudience);
       }
       // Always reconstruct — body stream was consumed by req.text().
@@ -33,7 +30,7 @@ const authRouter = new OpenAPIHono()
           body: params.toString(),
           headers: req.headers,
           method: req.method,
-        })
+        }),
       );
     }
     return auth.handler(req);
@@ -59,9 +56,7 @@ const authRouter = new OpenAPIHono()
         // Invalid JSON — reconstruct and let auth reject it cleanly.
         const headers = new Headers(req.headers);
         headers.delete("content-length");
-        return auth.handler(
-          new Request(req.url, { body: rawBody, headers, method: req.method })
-        );
+        return auth.handler(new Request(req.url, { body: rawBody, headers, method: req.method }));
       }
 
       const newBody = JSON.stringify({
@@ -70,9 +65,7 @@ const authRouter = new OpenAPIHono()
       });
       const headers = new Headers(req.headers);
       headers.delete("content-length");
-      return auth.handler(
-        new Request(req.url, { body: newBody, headers, method: req.method })
-      );
+      return auth.handler(new Request(req.url, { body: newBody, headers, method: req.method }));
     }
 
     // Non-JSON DCR (unexpected). Log and let Better Auth handle it.

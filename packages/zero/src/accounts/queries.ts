@@ -5,12 +5,7 @@ import { zql } from "../schema.js";
 import { NO_MATCH_ID } from "../transactions/lib.js";
 
 const BANK_SNAPSHOT_LIMIT = 3000;
-const PLAID_ACCOUNT_TYPES = [
-  "depository",
-  "credit",
-  "loan",
-  "investment",
-] as const;
+const PLAID_ACCOUNT_TYPES = ["depository", "credit", "loan", "investment"] as const;
 const BANK_ACCOUNT_SOURCES = ["plaid", "manual"] as const;
 
 /** Accounts domain — `queries.accounts.*` (bank + brokerage lists). */
@@ -38,11 +33,9 @@ export const accountsQueries = {
     return zql.snapshot
       .where("userId", userId)
       .whereExists("account", (acc) =>
-        acc.where("source", "plaid").where("type", "IN", PLAID_ACCOUNT_TYPES)
+        acc.where("source", "plaid").where("type", "IN", PLAID_ACCOUNT_TYPES),
       )
-      .related("account", (q) =>
-        q.related("plaidConnection", (c) => c.related("institution"))
-      )
+      .related("account", (q) => q.related("plaidConnection", (c) => c.related("institution")))
       .orderBy("snapshotDate", "desc")
       .limit(BANK_SNAPSHOT_LIMIT);
   }),

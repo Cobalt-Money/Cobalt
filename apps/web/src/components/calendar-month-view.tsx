@@ -4,10 +4,7 @@ import { useMemo } from "react";
 import { staggerContainer, transition } from "@/components/animations";
 import { useCalendar } from "@/components/calendar-context";
 import { DayCell } from "@/components/day-cell";
-import {
-  calculateMonthEventPositions,
-  getCalendarCells,
-} from "@/components/helpers";
+import { calculateMonthEventPositions, getCalendarCells } from "@/components/helpers";
 import type { IEvent } from "@/components/interfaces";
 
 interface IProps {
@@ -25,13 +22,8 @@ export function CalendarMonthView({ singleDayEvents, multiDayEvents }: IProps) {
   const cells = useMemo(() => getCalendarCells(selectedDate), [selectedDate]);
 
   const eventPositions = useMemo(
-    () =>
-      calculateMonthEventPositions(
-        multiDayEvents,
-        singleDayEvents,
-        selectedDate
-      ),
-    [multiDayEvents, singleDayEvents, selectedDate]
+    () => calculateMonthEventPositions(multiDayEvents, singleDayEvents, selectedDate),
+    [multiDayEvents, singleDayEvents, selectedDate],
   );
 
   return (

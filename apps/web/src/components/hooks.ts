@@ -16,7 +16,7 @@ export function useDisclosure({
 
 export const useLocalStorage = <T>(
   key: string,
-  initialValue: T
+  initialValue: T,
 ): [T, (value: T | ((prev: T) => T)) => void] => {
   const readValue = (): T => {
     if (typeof window === "undefined") {
@@ -38,8 +38,7 @@ export const useLocalStorage = <T>(
     (value: T | ((prev: T) => T)) => {
       setStoredValue((prev) => {
         try {
-          const valueToStore =
-            typeof value === "function" ? (value as (p: T) => T)(prev) : value;
+          const valueToStore = typeof value === "function" ? (value as (p: T) => T)(prev) : value;
           if (typeof window !== "undefined") {
             window.localStorage.setItem(key, JSON.stringify(valueToStore));
           }
@@ -50,7 +49,7 @@ export const useLocalStorage = <T>(
         }
       });
     },
-    [key]
+    [key],
   );
 
   return [storedValue, setValue];

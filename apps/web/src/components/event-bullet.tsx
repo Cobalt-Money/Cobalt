@@ -22,13 +22,7 @@ const eventBulletVariants = cva("size-2 rounded-full", {
   },
 });
 
-export function EventBullet({
-  color,
-  className,
-}: {
-  color: TEventColor;
-  className?: string;
-}) {
+export function EventBullet({ color, className }: { color: TEventColor; className?: string }) {
   return (
     <motion.div
       className={cn(eventBulletVariants({ className, color }))}

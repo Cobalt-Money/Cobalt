@@ -2,14 +2,8 @@ import type { RecurringTransactionsUpdateWebhook } from "plaid";
 import { createHook, sleep } from "workflow";
 import { start } from "workflow/api";
 
-import {
-  captureWorkflowExceptionStep,
-  toSerializableError,
-} from "../../shared/steps";
-import {
-  syncHoldings,
-  syncInvestmentTransactions,
-} from "../investments/orchestration";
+import { captureWorkflowExceptionStep, toSerializableError } from "../../shared/steps";
+import { syncHoldings, syncInvestmentTransactions } from "../investments/orchestration";
 import { plaidInitialInvestmentSyncWorkflow } from "../investments/workflow";
 import { syncLiabilities } from "../liabilities/orchestration";
 import { plaidLiabilitiesSyncWorkflow } from "../liabilities/workflow";
@@ -65,9 +59,7 @@ export interface PlaidSyncResult {
 }
 
 /** Recurring / webhook-triggered sync. No progress stream, no first-time branch. */
-export async function plaidSyncWorkflow(
-  webhook: SyncUpdatesWebhook
-): Promise<PlaidSyncResult> {
+export async function plaidSyncWorkflow(webhook: SyncUpdatesWebhook): Promise<PlaidSyncResult> {
   "use workflow";
 
   try {
@@ -77,11 +69,7 @@ export async function plaidSyncWorkflow(
     await reconcileOrphanAccountsStep(item.plaidAccessToken, item.plaidItemId);
 
     const [, balanceResult] = await Promise.all([
-      syncTransactionsStep(
-        item.plaidAccessToken,
-        item.plaidItemId,
-        item.transactionsCursor
-      ),
+      syncTransactionsStep(item.plaidAccessToken, item.plaidItemId, item.transactionsCursor),
       syncBalancesStep(item.plaidAccessToken, item.plaidItemId),
     ]);
 
@@ -100,13 +88,10 @@ export async function plaidSyncWorkflow(
 
     return { itemId: webhook.item_id, success: true };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "plaid_sync",
-      toSerializableError(error),
-      { itemId: webhook.item_id }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    await captureWorkflowExceptionStep("plaid_sync", toSerializableError(error), {
+      itemId: webhook.item_id,
+    });
 
     return {
       error: errorMessage,
@@ -117,7 +102,7 @@ export async function plaidSyncWorkflow(
 }
 
 export async function plaidRecurringTransactionsWorkflow(
-  webhook: RecurringTransactionsUpdateWebhook
+  webhook: RecurringTransactionsUpdateWebhook,
 ): Promise<PlaidSyncResult> {
   "use workflow";
 
@@ -128,13 +113,10 @@ export async function plaidRecurringTransactionsWorkflow(
 
     return { itemId: webhook.item_id, success: true };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "plaid_recurring",
-      toSerializableError(error),
-      { itemId: webhook.item_id }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    await captureWorkflowExceptionStep("plaid_recurring", toSerializableError(error), {
+      itemId: webhook.item_id,
+    });
 
     return {
       error: errorMessage,
@@ -177,9 +159,7 @@ interface PlaidLinkResolution {
 }
 
 /** Wrapped in a step so `start()` doesn't run in workflow context. */
-async function startUpdateModeChildSyncsStep(
-  plaidItemId: string
-): Promise<void> {
+async function startUpdateModeChildSyncsStep(plaidItemId: string): Promise<void> {
   "use step";
   await Promise.all([
     start(plaidInitialInvestmentSyncWorkflow, [plaidItemId]),
@@ -198,17 +178,16 @@ async function startUpdateModeChildSyncsStep(
  *                  → park on iterable sync hook + parallel direct-API branches).
  */
 export async function plaidAddAccountWorkflow(
-  input: PlaidAddAccountInput
+  input: PlaidAddAccountInput,
 ): Promise<PlaidSyncResult> {
   "use workflow";
 
-  let itemId =
-    input.updateMode?.plaidItemId ?? input.reauthMode?.plaidItemId ?? "";
+  let itemId = input.updateMode?.plaidItemId ?? input.reauthMode?.plaidItemId ?? "";
 
   const emit = (
     phase: PlaidOnboardingPhase,
     status: "start" | "done",
-    detail?: Record<string, unknown>
+    detail?: Record<string, unknown>,
   ) => emitOnboardingProgressStep({ detail, itemId, phase, status });
 
   try {
@@ -372,29 +351,18 @@ export async function plaidAddAccountWorkflow(
 
     await Promise.all([
       handleSyncBranch(syncHook, accessToken, itemId, emit),
-      hasInvestments
-        ? handleHoldingsBranch(accessToken, emit)
-        : Promise.resolve(),
-      hasInvestments
-        ? handleInvestmentsTxBranch(accessToken, emit)
-        : Promise.resolve(),
-      hasLiabilities
-        ? handleLiabilitiesBranch(accessToken, itemId, emit)
-        : Promise.resolve(),
+      hasInvestments ? handleHoldingsBranch(accessToken, emit) : Promise.resolve(),
+      hasInvestments ? handleInvestmentsTxBranch(accessToken, emit) : Promise.resolve(),
+      hasLiabilities ? handleLiabilitiesBranch(accessToken, itemId, emit) : Promise.resolve(),
     ]);
 
     await emit("done", "done");
     await closeOnboardingProgressStep();
     return { itemId, success: true };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     await emit("error", "done", { message: errorMessage });
-    await captureWorkflowExceptionStep(
-      "plaid_add_account",
-      toSerializableError(error),
-      { itemId }
-    );
+    await captureWorkflowExceptionStep("plaid_add_account", toSerializableError(error), { itemId });
     await closeOnboardingProgressStep();
     return { error: errorMessage, itemId, success: false };
   }
@@ -408,13 +376,12 @@ async function handleSyncBranch(
   emit: (
     phase: PlaidOnboardingPhase,
     status: "start" | "done",
-    detail?: Record<string, unknown>
-  ) => Promise<void>
+    detail?: Record<string, unknown>,
+  ) => Promise<void>,
 ) {
   let initialDone = false;
   let historicalDone = false;
-  let cachedBalances: Awaited<ReturnType<typeof syncBalancesStep>> | null =
-    null;
+  let cachedBalances: Awaited<ReturnType<typeof syncBalancesStep>> | null = null;
 
   for await (const payload of hook) {
     if (payload.initial_update_complete && !initialDone) {
@@ -467,8 +434,8 @@ async function handleHoldingsBranch(
   emit: (
     phase: PlaidOnboardingPhase,
     status: "start" | "done",
-    detail?: Record<string, unknown>
-  ) => Promise<void>
+    detail?: Record<string, unknown>,
+  ) => Promise<void>,
 ) {
   await emit("holdings", "start");
   await syncHoldings(accessToken);
@@ -480,8 +447,8 @@ async function handleInvestmentsTxBranch(
   emit: (
     phase: PlaidOnboardingPhase,
     status: "start" | "done",
-    detail?: Record<string, unknown>
-  ) => Promise<void>
+    detail?: Record<string, unknown>,
+  ) => Promise<void>,
 ) {
   await emit("investment_transactions", "start");
   await syncInvestmentTransactions(accessToken);
@@ -494,8 +461,8 @@ async function handleLiabilitiesBranch(
   emit: (
     phase: PlaidOnboardingPhase,
     status: "start" | "done",
-    detail?: Record<string, unknown>
-  ) => Promise<void>
+    detail?: Record<string, unknown>,
+  ) => Promise<void>,
 ) {
   await emit("liabilities", "start");
   await syncLiabilities(accessToken, itemId);

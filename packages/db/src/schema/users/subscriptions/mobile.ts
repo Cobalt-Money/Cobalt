@@ -27,11 +27,9 @@ export const mobileSubscription = pgTable(
   },
   (table) => [
     index("mobile_subscription_user_id_idx").on(table.userId),
-    index("mobile_subscription_original_transaction_id_idx").on(
-      table.originalTransactionId
-    ),
+    index("mobile_subscription_original_transaction_id_idx").on(table.originalTransactionId),
     index("mobile_subscription_status_idx").on(table.status),
-  ]
+  ],
 );
 
 // Type exports

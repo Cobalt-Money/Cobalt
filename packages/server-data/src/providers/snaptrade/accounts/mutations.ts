@@ -9,7 +9,7 @@ export async function upsertBrokerageAccount(
   accountId: string,
   snaptradeAuthorizationDbId: string,
   appUserId: string,
-  accountData: Account
+  accountData: Account,
 ): Promise<void> {
   const insertData = {
     accountNumber: accountData.number || null,
@@ -51,7 +51,7 @@ export async function upsertBrokerageAccount(
 export async function upsertAccountDetails(
   _snaptradeAccountId: string,
   _appUserId: string,
-  _detailsData: Account
+  _detailsData: Account,
 ): Promise<void> {
   // intentionally empty — see SRI-264 D1
 }

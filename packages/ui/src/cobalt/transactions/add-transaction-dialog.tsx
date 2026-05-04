@@ -1,11 +1,7 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { Button } from "@cobalt-web/ui/components/button";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
   Calendar03Icon,
@@ -20,11 +16,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CobaltDialog } from "../cobalt-dialog";
 import { CobaltSelectPopover } from "../select-popover";
-import {
-  CategoryIcon,
-  resolveCategoryIcon,
-  UNKNOWN_CATEGORY_ICON,
-} from "./categories";
+import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "./categories";
 import { CategoryPicker } from "./detail/category-picker";
 import type { CategoryPickerOption } from "./detail/editable-category";
 import type { TagOption } from "./tags/tag-picker";
@@ -65,25 +57,15 @@ function renderLocationResults({
   onPick: (r: GeocodeSearchResult) => void;
 }) {
   if (loading) {
-    return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        Searching…
-      </div>
-    );
+    return <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Searching…</div>;
   }
   if (query.trim() === "") {
     return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        Type to search
-      </div>
+      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Type to search</div>
     );
   }
   if (results.length === 0) {
-    return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        No results
-      </div>
-    );
+    return <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">No results</div>;
   }
   return results.map((r) => (
     <button
@@ -115,11 +97,7 @@ function renderMerchantPickerResults({
   onUseTyped: () => void;
 }) {
   if (merchantSearch.loading && merchantSearch.results.length === 0) {
-    return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        Searching…
-      </div>
-    );
+    return <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Searching…</div>;
   }
   if (query.trim().length < 2) {
     if (hasMerchant) {
@@ -134,9 +112,7 @@ function renderMerchantPickerResults({
       );
     }
     return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        Type to search
-      </div>
+      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Type to search</div>
     );
   }
   if (merchantSearch.results.length === 0) {
@@ -167,11 +143,7 @@ function renderMerchantPickerResults({
         <div className="size-5 shrink-0 rounded-sm bg-foreground/5" />
       )}
       <span className="min-w-0 flex-1 truncate text-foreground">{r.name}</span>
-      {r.domain ? (
-        <span className="shrink-0 text-muted-foreground text-xs">
-          {r.domain}
-        </span>
-      ) : null}
+      {r.domain ? <span className="shrink-0 text-muted-foreground text-xs">{r.domain}</span> : null}
     </button>
   ));
 }
@@ -299,8 +271,7 @@ export function AddTransactionForm({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [selectedCategory, setSelectedCategory] =
-    useState<CategoryPickerOption | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryPickerOption | null>(null);
   const [date, setDate] = useState(todayIso());
   const [merchant, setMerchant] = useState("");
   const [merchantDomain, setMerchantDomain] = useState<string | null>(null);
@@ -349,14 +320,9 @@ export function AddTransactionForm({
 
   const noAccounts = accounts.length === 0;
   const parsedAmount = Number(amount);
-  const validAmount =
-    amount.trim() !== "" && Number.isFinite(parsedAmount) && parsedAmount > 0;
+  const validAmount = amount.trim() !== "" && Number.isFinite(parsedAmount) && parsedAmount > 0;
   const canSubmit =
-    !submitting &&
-    !noAccounts &&
-    accountId !== "" &&
-    name.trim().length > 0 &&
-    validAmount;
+    !submitting && !noAccounts && accountId !== "" && name.trim().length > 0 && validAmount;
 
   const handleSubmit = () => {
     if (!canSubmit) {
@@ -381,8 +347,7 @@ export function AddTransactionForm({
     });
   };
 
-  const accountLabel =
-    accounts.find((a) => a.id === accountId)?.name ?? "Account";
+  const accountLabel = accounts.find((a) => a.id === accountId)?.name ?? "Account";
 
   const selectedDate = useMemo(() => isoToDate(date), [date]);
 
@@ -455,9 +420,7 @@ export function AddTransactionForm({
         <span
           className={cn(
             "text-lg tabular-nums",
-            amount.trim() === ""
-              ? "text-muted-foreground/50"
-              : "text-foreground"
+            amount.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
           )}
         >
           $
@@ -501,25 +464,18 @@ export function AddTransactionForm({
                 "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs transition-colors",
                 selectedCategory
                   ? "border-foreground/15 bg-input/40 text-foreground"
-                  : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10"
+                  : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10",
               )}
               type="button"
             >
               <span className="flex size-[1.125rem] shrink-0 items-center justify-center">
                 {selectedCategory ? (
                   <CategoryIcon
-                    icon={
-                      resolveCategoryIcon(selectedCategory.iconKey) ??
-                      UNKNOWN_CATEGORY_ICON
-                    }
+                    icon={resolveCategoryIcon(selectedCategory.iconKey) ?? UNKNOWN_CATEGORY_ICON}
                     sizeClassName="size-[1.125rem]"
                   />
                 ) : (
-                  <HugeiconsIcon
-                    className="size-[1.125rem]"
-                    icon={Folder02Icon}
-                    strokeWidth={2}
-                  />
+                  <HugeiconsIcon className="size-[1.125rem]" icon={Folder02Icon} strokeWidth={2} />
                 )}
               </span>
               {selectedCategory ? selectedCategory.name : "Category"}
@@ -530,9 +486,7 @@ export function AddTransactionForm({
         <CobaltSelectPopover
           emptyText="No accounts"
           itemKey={(acc: AddTransactionAccountOption) => acc.id}
-          itemMatch={(acc: AddTransactionAccountOption, q) =>
-            acc.name.toLowerCase().includes(q)
-          }
+          itemMatch={(acc: AddTransactionAccountOption, q) => acc.name.toLowerCase().includes(q)}
           items={accounts}
           onSelect={(acc: AddTransactionAccountOption) => {
             setAccountId(acc.id);
@@ -567,11 +521,7 @@ export function AddTransactionForm({
                 className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 text-muted-foreground text-xs transition-colors hover:bg-foreground/10"
                 type="button"
               >
-                <HugeiconsIcon
-                  className="size-3.5 shrink-0"
-                  icon={Tag01Icon}
-                  strokeWidth={2}
-                />
+                <HugeiconsIcon className="size-3.5 shrink-0" icon={Tag01Icon} strokeWidth={2} />
                 {tagIds.length > 0 ? `Tags · ${tagIds.length}` : "Tags"}
               </button>
             }
@@ -594,7 +544,7 @@ export function AddTransactionForm({
                     "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs transition-colors",
                     merchant
                       ? "border-foreground/15 bg-input/40 text-foreground"
-                      : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10"
+                      : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10",
                   )}
                   type="button"
                 >
@@ -682,7 +632,7 @@ export function AddTransactionForm({
                     "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs transition-colors",
                     location
                       ? "border-foreground/15 bg-input/40 text-foreground"
-                      : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10"
+                      : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10",
                   )}
                   type="button"
                 >

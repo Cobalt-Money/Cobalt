@@ -40,9 +40,7 @@ interface ReauthSession {
   linkToken: string;
 }
 
-export function AccountConnectionActions({
-  account,
-}: AccountConnectionActionsProps) {
+export function AccountConnectionActions({ account }: AccountConnectionActionsProps) {
   const [plaidToken, setPlaidToken] = useState<string | null>(null);
   const [busy, setBusy] = useState<"disconnect" | "reconnect" | null>(null);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
@@ -79,9 +77,7 @@ export function AccountConnectionActions({
         institutionUrl: account.institutionUrl,
       });
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not refresh connection"
-      );
+      toast.error(error instanceof Error ? error.message : "Could not refresh connection");
     }
   }, [
     account.institution,
@@ -130,18 +126,15 @@ export function AccountConnectionActions({
     }
     setBusy("reconnect");
     try {
-      const res = await fetch(
-        `${env.VITE_SERVER_URL}/api/plaid/link-token/update`,
-        {
-          body: JSON.stringify({
-            mode: "reauth",
-            plaidItemId: account.plaidItemId,
-          }),
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
-        }
-      );
+      const res = await fetch(`${env.VITE_SERVER_URL}/api/plaid/link-token/update`, {
+        body: JSON.stringify({
+          mode: "reauth",
+          plaidItemId: account.plaidItemId,
+        }),
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
       const data = (await res.json()) as {
         error?: string;
         hookToken?: string;
@@ -170,18 +163,15 @@ export function AccountConnectionActions({
     }
     setBusy("reconnect");
     try {
-      const res = await fetch(
-        `${env.VITE_SERVER_URL}/api/snaptrade/generateConnectionPortal`,
-        {
-          body: JSON.stringify({
-            broker: "",
-            reconnectAuthorizationId: account.snaptradeAuthorizationId,
-          }),
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
-        }
-      );
+      const res = await fetch(`${env.VITE_SERVER_URL}/api/snaptrade/generateConnectionPortal`, {
+        body: JSON.stringify({
+          broker: "",
+          reconnectAuthorizationId: account.snaptradeAuthorizationId,
+        }),
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
       const data = (await res.json()) as {
         error?: string;
         redirectURI?: string;
@@ -200,9 +190,7 @@ export function AccountConnectionActions({
   };
 
   const handleReconnect = async () => {
-    await (account.kind === "bank"
-      ? startBankReconnect()
-      : startBrokerageReconnect());
+    await (account.kind === "bank" ? startBankReconnect() : startBrokerageReconnect());
   };
 
   const performDisconnect = async () => {
@@ -221,7 +209,7 @@ export function AccountConnectionActions({
         }
         const res = await fetch(
           `${env.VITE_SERVER_URL}/api/accounts/bank/${encodeURIComponent(account.plaidAccountId)}`,
-          { credentials: "include", method: "DELETE" }
+          { credentials: "include", method: "DELETE" },
         );
         const data = (await res.json()) as {
           message?: string;
@@ -234,7 +222,7 @@ export function AccountConnectionActions({
       } else {
         const res = await fetch(
           `${env.VITE_SERVER_URL}/api/accounts/brokerage/${encodeURIComponent(account.id)}`,
-          { credentials: "include", method: "DELETE" }
+          { credentials: "include", method: "DELETE" },
         );
         if (res.status === 403) {
           const err = (await res.json()) as { error?: string };
@@ -258,9 +246,7 @@ export function AccountConnectionActions({
   };
 
   const reconnectDisabled =
-    account.kind === "bank"
-      ? !account.plaidItemId
-      : !account.snaptradeAuthorizationId;
+    account.kind === "bank" ? !account.plaidItemId : !account.snaptradeAuthorizationId;
 
   return (
     <>
@@ -294,8 +280,7 @@ export function AccountConnectionActions({
           <AlertDialogHeader>
             <AlertDialogTitle>Disconnect account?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the account from Cobalt. You can connect it again
-              later.
+              This removes the account from Cobalt. You can connect it again later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

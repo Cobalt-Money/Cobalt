@@ -59,10 +59,7 @@ export function AskUserToolRenderer({
         <span>
           {part.input?.question}
           {selected && (
-            <span className="font-medium text-foreground">
-              {" "}
-              &mdash; {selected.selectedLabel}
-            </span>
+            <span className="font-medium text-foreground"> &mdash; {selected.selectedLabel}</span>
           )}
         </span>
       </div>

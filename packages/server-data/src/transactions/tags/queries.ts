@@ -39,10 +39,7 @@ export async function listTags(userId: string): Promise<TagDto[]> {
   return rows.map(toDto);
 }
 
-export async function getTag(
-  userId: string,
-  tagId: string
-): Promise<TagDto | null> {
+export async function getTag(userId: string, tagId: string): Promise<TagDto | null> {
   const row = await db.query.tag.findFirst({
     where: { id: { eq: tagId }, userId: { eq: userId } },
     with: { transactionTags: { columns: { tagId: true } } },
@@ -53,7 +50,7 @@ export async function getTag(
 /** Returns the set of tag ids currently attached to a transaction owned by the user. */
 export async function getTagIdsForTransaction(
   userId: string,
-  transactionId: string
+  transactionId: string,
 ): Promise<string[]> {
   const txn = await db.query.transaction.findFirst({
     columns: { id: true },

@@ -1,13 +1,7 @@
 import { OnboardingHostContext } from "@cobalt-web/ui/cobalt/accounts/onboarding-host";
 import { mutators } from "@cobalt-web/zero";
 import { useZero } from "@rocicorp/zero/react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import { plaidApi } from "@/lib/clients/api-client";
@@ -48,29 +42,19 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 export function useOnboarding(): OnboardingContextValue {
   const ctx = useContext(OnboardingContext);
   if (!ctx) {
-    throw new Error(
-      "useOnboarding must be used within OnboardingProgressProvider"
-    );
+    throw new Error("useOnboarding must be used within OnboardingProgressProvider");
   }
   return ctx;
 }
 
-export function OnboardingProgressProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const [onboardingRunId, setOnboardingRunId] = useState<string | null>(
-    readStoredRunId
-  );
+export function OnboardingProgressProvider({ children }: { children: ReactNode }) {
+  const [onboardingRunId, setOnboardingRunId] = useState<string | null>(readStoredRunId);
   const zero = useZero();
   const deleteManualAccount = useCallback(
     (accountId: string): Promise<void> => {
       // Fire-and-forget: optimistic local removal; server confirmation runs
       // in background. See `.agents/skills/cobalt/mutations/SKILL.md`.
-      const { server } = zero.mutate(
-        mutators.accounts.deleteAccount({ id: accountId })
-      );
+      const { server } = zero.mutate(mutators.accounts.deleteAccount({ id: accountId }));
       void (async () => {
         try {
           const result = await server;
@@ -83,7 +67,7 @@ export function OnboardingProgressProvider({
       })();
       return Promise.resolve();
     },
-    [zero]
+    [zero],
   );
 
   const startOnboarding = useCallback((runId: string) => {
@@ -107,7 +91,7 @@ export function OnboardingProgressProvider({
         throw new Error(err.error ?? "Failed to resume flow");
       }
     },
-    []
+    [],
   );
 
   const value = useMemo(
@@ -117,19 +101,17 @@ export function OnboardingProgressProvider({
       resolveLink,
       startOnboarding,
     }),
-    [onboardingRunId, startOnboarding, finishOnboarding, resolveLink]
+    [onboardingRunId, startOnboarding, finishOnboarding, resolveLink],
   );
 
   const hostValue = useMemo(
     () => ({ deleteManualAccount, resolveLink, startOnboarding }),
-    [deleteManualAccount, resolveLink, startOnboarding]
+    [deleteManualAccount, resolveLink, startOnboarding],
   );
 
   return (
     <OnboardingContext.Provider value={value}>
-      <OnboardingHostContext.Provider value={hostValue}>
-        {children}
-      </OnboardingHostContext.Provider>
+      <OnboardingHostContext.Provider value={hostValue}>{children}</OnboardingHostContext.Provider>
     </OnboardingContext.Provider>
   );
 }

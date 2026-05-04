@@ -2,11 +2,7 @@ import type { TransactionListItem } from "@cobalt-web/server-data/transactions/s
 import { ArrowRight01Icon, Refresh01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-import {
-  CategoryIcon,
-  resolveCategoryIcon,
-  UNKNOWN_CATEGORY_ICON,
-} from "../categories";
+import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "../categories";
 import { CategoryPicker } from "./category-picker";
 
 export interface CategoryPickerOption {
@@ -56,9 +52,7 @@ export function EditableCategory({
                   <CategoryIcon icon={icon} />
                 </span>
                 <span className="flex min-w-0 items-center gap-1.5">
-                  <span className="shrink-0 text-foreground">
-                    {groupLabel ?? category.name}
-                  </span>
+                  <span className="shrink-0 text-foreground">{groupLabel ?? category.name}</span>
                   {groupLabel ? (
                     <>
                       <HugeiconsIcon
@@ -91,11 +85,7 @@ export function EditableCategory({
           onClick={onReset}
           type="button"
         >
-          <HugeiconsIcon
-            className="size-3"
-            icon={Refresh01Icon}
-            strokeWidth={2}
-          />
+          <HugeiconsIcon className="size-3" icon={Refresh01Icon} strokeWidth={2} />
           Reset
         </button>
       ) : null}

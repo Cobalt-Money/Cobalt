@@ -1,12 +1,4 @@
-import {
-  boolean,
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import type { StringArrayJson } from "./zod";
 
@@ -31,7 +23,7 @@ export const institution = pgTable(
   (table) => [
     index("institution_provider_id_idx").on(table.plaidInstitutionId),
     index("institution_name_idx").on(table.name),
-  ]
+  ],
 );
 
 export type Institution = typeof institution.$inferInsert;

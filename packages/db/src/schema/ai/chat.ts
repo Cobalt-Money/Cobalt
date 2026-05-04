@@ -31,7 +31,7 @@ export const chats = pgTable(
     index("chats_user_id_idx").on(table.userId),
     index("chats_updated_at_idx").on(table.updatedAt),
     index("chats_chat_id_updated_at_idx").on(table.chatId, table.updatedAt),
-  ]
+  ],
 );
 
 export const messages = pgTable(
@@ -47,7 +47,7 @@ export const messages = pgTable(
   (table) => [
     index("messages_chat_id_idx").on(table.chatId),
     index("messages_chat_id_created_at_idx").on(table.chatId, table.createdAt),
-  ]
+  ],
 );
 
 export const parts = pgTable(
@@ -86,25 +86,25 @@ export const parts = pgTable(
 
     check(
       "text_text_required_if_type_is_text",
-      sql`CASE WHEN ${t.type} = 'text' THEN ${t.text_text} IS NOT NULL ELSE TRUE END`
+      sql`CASE WHEN ${t.type} = 'text' THEN ${t.text_text} IS NOT NULL ELSE TRUE END`,
     ),
     check(
       "reasoning_text_required_if_type_is_reasoning",
-      sql`CASE WHEN ${t.type} = 'reasoning' THEN ${t.reasoning_text} IS NOT NULL ELSE TRUE END`
+      sql`CASE WHEN ${t.type} = 'reasoning' THEN ${t.reasoning_text} IS NOT NULL ELSE TRUE END`,
     ),
     check(
       "file_fields_required_if_type_is_file",
-      sql`CASE WHEN ${t.type} = 'file' THEN ${t.file_mediaType} IS NOT NULL AND ${t.file_url} IS NOT NULL ELSE TRUE END`
+      sql`CASE WHEN ${t.type} = 'file' THEN ${t.file_mediaType} IS NOT NULL AND ${t.file_url} IS NOT NULL ELSE TRUE END`,
     ),
     check(
       "source_url_fields_required_if_type_is_source_url",
-      sql`CASE WHEN ${t.type} = 'source_url' THEN ${t.source_url_sourceId} IS NOT NULL AND ${t.source_url_url} IS NOT NULL ELSE TRUE END`
+      sql`CASE WHEN ${t.type} = 'source_url' THEN ${t.source_url_sourceId} IS NOT NULL AND ${t.source_url_url} IS NOT NULL ELSE TRUE END`,
     ),
     check(
       "source_document_fields_required_if_type_is_source_document",
-      sql`CASE WHEN ${t.type} = 'source_document' THEN ${t.source_document_sourceId} IS NOT NULL AND ${t.source_document_mediaType} IS NOT NULL AND ${t.source_document_title} IS NOT NULL ELSE TRUE END`
+      sql`CASE WHEN ${t.type} = 'source_document' THEN ${t.source_document_sourceId} IS NOT NULL AND ${t.source_document_mediaType} IS NOT NULL AND ${t.source_document_title} IS NOT NULL ELSE TRUE END`,
     ),
-  ]
+  ],
 );
 
 // Type exports

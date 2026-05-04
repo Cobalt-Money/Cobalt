@@ -2,12 +2,7 @@ import { Toaster } from "@cobalt-web/ui/components/sonner";
 import { ThemeProvider } from "@cobalt-web/ui/components/theme-provider";
 import { TooltipProvider } from "@cobalt-web/ui/components/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import {
-  HeadContent,
-  Outlet,
-  Scripts,
-  createRootRouteWithContext,
-} from "@tanstack/react-router";
+import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { useEffect } from "react";
 // import { Agentation } from "agentation";
 
@@ -92,10 +87,7 @@ function RootDocument() {
         </ThemeProvider>
         {/* {import.meta.env.DEV ? <Agentation /> : null} */}
         {import.meta.env.DEV ? (
-          <script
-            crossOrigin="anonymous"
-            src="https://tweakcn.com/live-preview.min.js"
-          />
+          <script crossOrigin="anonymous" src="https://tweakcn.com/live-preview.min.js" />
         ) : null}
         <Scripts />
       </body>

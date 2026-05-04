@@ -10,11 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import {
-  appFullAccess,
-  agentSelectViaBankAccount,
-  agentSelectViaBankConnection,
-} from "../../rls";
+import { appFullAccess, agentSelectViaBankAccount, agentSelectViaBankConnection } from "../../rls";
 import { bankConnection } from "./items/bank-connection";
 
 // Bank Accounts (individual accounts within a connection)
@@ -46,7 +42,7 @@ export const bankAccount = pgTable.withRLS(
     index("bank_account_persistent_id_idx").on(table.persistentAccountId),
     appFullAccess(),
     agentSelectViaBankConnection(table.plaidItemId),
-  ]
+  ],
 );
 
 // Bank Balances (latest balances per account)
@@ -73,13 +69,10 @@ export const bankBalance = pgTable.withRLS(
   (table) => [
     index("bank_balance_account_id_idx").on(table.plaidAccountId),
     index("bank_balance_updated_at_idx").on(table.updatedAt),
-    index("bank_balance_account_updated_idx").on(
-      table.plaidAccountId,
-      table.updatedAt
-    ),
+    index("bank_balance_account_updated_idx").on(table.plaidAccountId, table.updatedAt),
     appFullAccess(),
     agentSelectViaBankAccount(table.plaidAccountId),
-  ]
+  ],
 );
 
 // Bank Balance Snapshots (historical daily balance records)
@@ -103,11 +96,11 @@ export const bankBalanceSnapshot = pgTable.withRLS(
     index("bank_balance_snapshot_date_idx").on(table.snapshotDate),
     uniqueIndex("bank_balance_snapshot_account_date_idx").on(
       table.plaidAccountId,
-      table.snapshotDate
+      table.snapshotDate,
     ),
     appFullAccess(),
     agentSelectViaBankAccount(table.plaidAccountId),
-  ]
+  ],
 );
 
 // Type exports

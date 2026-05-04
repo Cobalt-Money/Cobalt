@@ -14,8 +14,7 @@ function protectedResourceMetadataUrlFromOrigin(origin: string): string {
   const resource = mcpResourceUrlFromOrigin(origin);
   const u = new URL(resource);
   const pathSuffix = u.pathname && u.pathname !== "/" ? u.pathname : "";
-  return new URL(`/.well-known/oauth-protected-resource${pathSuffix}`, u.origin)
-    .href;
+  return new URL(`/.well-known/oauth-protected-resource${pathSuffix}`, u.origin).href;
 }
 
 function unauthorizedResponse(origin: string, description: string): Response {
@@ -33,7 +32,7 @@ function unauthorizedResponse(origin: string, description: string): Response {
         "WWW-Authenticate": wwwAuthenticate,
       },
       status: 401,
-    }
+    },
   );
 }
 
@@ -46,9 +45,7 @@ export function getPublicOriginFromRequest(req: Request): string {
   return `${proto}://${host}`;
 }
 
-function clientIdFromClaims(
-  claims: Pick<McpAccessTokenPayload, "aud" | "azp">
-): string {
+function clientIdFromClaims(claims: Pick<McpAccessTokenPayload, "aud" | "azp">): string {
   if (typeof claims.azp === "string") {
     return claims.azp;
   }
@@ -61,13 +58,9 @@ function clientIdFromClaims(
   return "unknown";
 }
 
-function scopesFromClaims(
-  claims: Pick<McpAccessTokenPayload, "scope">
-): string[] {
+function scopesFromClaims(claims: Pick<McpAccessTokenPayload, "scope">): string[] {
   if (Array.isArray(claims.scope)) {
-    return claims.scope.filter(
-      (scope): scope is string => typeof scope === "string"
-    );
+    return claims.scope.filter((scope): scope is string => typeof scope === "string");
   }
   if (typeof claims.scope === "string") {
     return claims.scope.split(/\s+/).filter(Boolean);
@@ -93,12 +86,12 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
           error_description:
             "OAuth callback hit /api/mcp; use the client's redirect_uri (e.g. cursor://…), not the MCP URL.",
         },
-        { headers: { "Cache-Control": "no-store" }, status: 400 }
+        { headers: { "Cache-Control": "no-store" }, status: 400 },
       );
     }
     return unauthorizedResponse(
       origin,
-      "Missing or invalid Authorization header; expected Bearer token."
+      "Missing or invalid Authorization header; expected Bearer token.",
     );
   }
 
@@ -109,10 +102,7 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
 
   const userId = verified.sub;
   if (typeof userId !== "string" || userId.length === 0) {
-    return unauthorizedResponse(
-      origin,
-      "Access token is not associated with a Cobalt user."
-    );
+    return unauthorizedResponse(origin, "Access token is not associated with a Cobalt user.");
   }
 
   const entitled = await userHasActiveSubscription(userId);
@@ -120,10 +110,9 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
     return Response.json(
       {
         error: "subscription_required",
-        error_description:
-          "An active Cobalt subscription is required to use the MCP API.",
+        error_description: "An active Cobalt subscription is required to use the MCP API.",
       },
-      { headers: { "Cache-Control": "no-store" }, status: 403 }
+      { headers: { "Cache-Control": "no-store" }, status: 403 },
     );
   }
 
@@ -142,7 +131,7 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
 
   const server = new McpServer(
     { name: "cobalt", version: "0.1.0" },
-    { capabilities: { tools: { listChanged: true } } }
+    { capabilities: { tools: { listChanged: true } } },
   );
 
   registerMcpTools(server, userId);

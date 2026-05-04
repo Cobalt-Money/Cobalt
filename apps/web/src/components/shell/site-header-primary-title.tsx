@@ -39,26 +39,20 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { useAmbientInset } from "./ambient-inset-context";
 import { useShellRouteTitle } from "./header/use-shell-route-title";
 
-function TransactionDetailBreadcrumb({
-  transactionId,
-}: {
-  transactionId: string;
-}) {
+function TransactionDetailBreadcrumb({ transactionId }: { transactionId: string }) {
   const { items } = useTransactions();
   const zero = useZero();
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const transaction = useMemo(
     () => items.find((t) => t.id === transactionId),
-    [items, transactionId]
+    [items, transactionId],
   );
   const label = transaction ? getTransactionDisplayName(transaction) : null;
   const canDelete = transaction?.source === "manual";
 
   const handleDelete = () => {
-    const { server } = zero.mutate(
-      mutators.transaction.deleteTransaction({ id: transactionId })
-    );
+    const { server } = zero.mutate(mutators.transaction.deleteTransaction({ id: transactionId }));
     cobaltToast.transactionDeleted();
     navigate({ replace: true, to: "/transactions" });
     void (async () => {
@@ -103,19 +97,12 @@ function TransactionDetailBreadcrumb({
                   type="button"
                   variant="ghost"
                 >
-                  <HugeiconsIcon
-                    className="size-5"
-                    icon={Settings01Icon}
-                    strokeWidth={2}
-                  />
+                  <HugeiconsIcon className="size-5" icon={Settings01Icon} strokeWidth={2} />
                 </Button>
               }
             />
             <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                onClick={() => setConfirmOpen(true)}
-                variant="destructive"
-              >
+              <DropdownMenuItem onClick={() => setConfirmOpen(true)} variant="destructive">
                 <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
                 Delete transaction
               </DropdownMenuItem>
@@ -126,8 +113,7 @@ function TransactionDetailBreadcrumb({
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This permanently removes the transaction. This action cannot
-                  be undone.
+                  This permanently removes the transaction. This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -153,24 +139,14 @@ function ResearchTickerHeader({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase();
 
   return (
-    <nav
-      aria-label="Research ticker"
-      className="flex min-h-0 min-w-0 flex-1 self-stretch"
-    >
+    <nav aria-label="Research ticker" className="flex min-h-0 min-w-0 flex-1 self-stretch">
       <div className="flex min-h-0 min-w-0 flex-1 flex-nowrap items-center gap-2 sm:gap-2.5">
         <Link
           aria-label="Back to research"
-          className={cn(
-            buttonVariants({ size: "icon-sm", variant: "ghost" }),
-            "shrink-0 -ml-1"
-          )}
+          className={cn(buttonVariants({ size: "icon-sm", variant: "ghost" }), "shrink-0 -ml-1")}
           to="/research"
         >
-          <HugeiconsIcon
-            className="size-6"
-            icon={ArrowLeft01Icon}
-            strokeWidth={2}
-          />
+          <HugeiconsIcon className="size-6" icon={ArrowLeft01Icon} strokeWidth={2} />
         </Link>
         <TickerLogo size={28} symbol={sym} />
         <div className="flex min-w-0 items-baseline gap-2 sm:gap-2.5">
@@ -205,8 +181,7 @@ function AiChatThreadTitle({ chatId }: { chatId: string }) {
 
 function NewsEventBreadcrumb({ eventId }: { eventId: string }) {
   const { event } = useFinancialEventDetail(eventId);
-  const label =
-    typeof event?.eventName === "string" ? event.eventName.trim() : null;
+  const label = typeof event?.eventName === "string" ? event.eventName.trim() : null;
 
   return (
     <nav

@@ -15,17 +15,13 @@ const cobaltToggleOutlineChrome = "border-[0.5px] border-border shadow-xs";
 
 export type CobaltToggleProps = ComponentProps<typeof Toggle>;
 
-function CobaltToggle({
-  className,
-  variant = "default",
-  ...props
-}: CobaltToggleProps) {
+function CobaltToggle({ className, variant = "default", ...props }: CobaltToggleProps) {
   return (
     <Toggle
       className={cn(
         cobaltToggleChrome,
         variant === "outline" && cobaltToggleOutlineChrome,
-        className
+        className,
       )}
       variant={variant}
       {...props}
@@ -33,10 +29,5 @@ function CobaltToggle({
   );
 }
 
-export {
-  CobaltToggle,
-  cobaltToggleChrome,
-  cobaltToggleOutlineChrome,
-  toggleVariants,
-};
+export { CobaltToggle, cobaltToggleChrome, cobaltToggleOutlineChrome, toggleVariants };
 export type { VariantProps };

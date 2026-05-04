@@ -11,11 +11,7 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 
-import {
-  appFullAccess,
-  agentSelectPublic,
-  agentSelectViaBankAccount,
-} from "../../rls";
+import { appFullAccess, agentSelectPublic, agentSelectViaBankAccount } from "../../rls";
 import { bankAccount } from "./accounts";
 
 // Investment Securities
@@ -26,9 +22,7 @@ export const investmentSecurity = pgTable.withRLS(
     closePrice: real("close_price"),
     closePriceAsOf: text("close_price_as_of"),
 
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     cusip: text("cusip"),
     fixedIncome: jsonb("fixed_income"),
     id: uuid("id").defaultRandom().primaryKey(),
@@ -69,7 +63,7 @@ export const investmentSecurity = pgTable.withRLS(
     index("investment_security_sector_idx").on(table.sector),
     appFullAccess(),
     agentSelectPublic(),
-  ]
+  ],
 );
 
 // Investment Holdings
@@ -78,9 +72,7 @@ export const investmentPosition = pgTable.withRLS(
   "investment_position",
   {
     costBasis: real("cost_basis"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     id: uuid("id").defaultRandom().primaryKey(),
 
     institutionPrice: real("institution_price").notNull(),
@@ -113,11 +105,11 @@ export const investmentPosition = pgTable.withRLS(
     index("investment_position_security_idx").on(table.securityId),
     uniqueIndex("investment_position_account_security_idx").on(
       table.plaidAccountId,
-      table.securityId
+      table.securityId,
     ),
     appFullAccess(),
     agentSelectViaBankAccount(table.plaidAccountId),
-  ]
+  ],
 );
 
 // Investment Transactions
@@ -127,16 +119,12 @@ export const investmentActivity = pgTable.withRLS(
   {
     amount: real("amount").notNull(),
     cancelTransactionId: text("cancel_transaction_id"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     date: text("date").notNull(),
 
     fees: real("fees"),
     id: uuid("id").defaultRandom().primaryKey(),
-    investmentTransactionId: text("investment_transaction_id")
-      .notNull()
-      .unique(),
+    investmentTransactionId: text("investment_transaction_id").notNull().unique(),
     isoCurrencyCode: varchar("iso_currency_code"),
 
     name: text("name").notNull(),
@@ -146,10 +134,9 @@ export const investmentActivity = pgTable.withRLS(
     price: real("price").notNull(),
     quantity: real("quantity").notNull(),
 
-    securityId: text("security_id").references(
-      () => investmentSecurity.securityId,
-      { onDelete: "set null" }
-    ),
+    securityId: text("security_id").references(() => investmentSecurity.securityId, {
+      onDelete: "set null",
+    }),
     subtype: varchar("subtype").notNull(),
 
     type: varchar("type").notNull(),
@@ -159,15 +146,12 @@ export const investmentActivity = pgTable.withRLS(
   (table) => [
     index("investment_activity_account_idx").on(table.plaidAccountId),
     index("investment_activity_date_idx").on(table.date),
-    index("investment_activity_account_date_idx").on(
-      table.plaidAccountId,
-      table.date
-    ),
+    index("investment_activity_account_date_idx").on(table.plaidAccountId, table.date),
     index("investment_activity_security_idx").on(table.securityId),
     index("investment_activity_type_idx").on(table.type),
     appFullAccess(),
     agentSelectViaBankAccount(table.plaidAccountId),
-  ]
+  ],
 );
 
 // Type exports

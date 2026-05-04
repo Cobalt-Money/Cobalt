@@ -16,19 +16,17 @@ const externalIdNotNullWhere = sql`external_id IS NOT NULL`;
 export async function upsertAccountActivities(
   snaptradeAccountId: string,
   appUserId: string,
-  activitiesData: UniversalActivity[]
+  activitiesData: UniversalActivity[],
 ): Promise<void> {
   if (activitiesData.length === 0) {
     return;
   }
 
-  const accountMap = await lookupFinancialAccountsBySnaptradeIds([
-    snaptradeAccountId,
-  ]);
+  const accountMap = await lookupFinancialAccountsBySnaptradeIds([snaptradeAccountId]);
   const acct = accountMap.get(snaptradeAccountId);
   if (!acct) {
     throw new Error(
-      `financial_account not found for SnapTrade account ${snaptradeAccountId} (user ${appUserId})`
+      `financial_account not found for SnapTrade account ${snaptradeAccountId} (user ${appUserId})`,
     );
   }
 
@@ -73,8 +71,7 @@ export async function upsertAccountActivities(
 
 function extractSymbolId(activity: UniversalActivity): string | null {
   const symbolData = activity.symbol as AnyRecord | undefined;
-  const id =
-    (symbolData?.id as string | undefined) ?? activity.symbol_id ?? null;
+  const id = (symbolData?.id as string | undefined) ?? activity.symbol_id ?? null;
   return typeof id === "string" ? id : null;
 }
 
@@ -84,9 +81,7 @@ function resolveCurrency(activity: UniversalActivity): string {
     (symbolData.currency as AnyRecord | undefined) ??
     (activity.currency as AnyRecord | undefined) ??
     {};
-  return (
-    (currencyData.code as string | undefined) ?? activity.currency_code ?? "USD"
-  );
+  return (currencyData.code as string | undefined) ?? activity.currency_code ?? "USD";
 }
 
 function resolveOptionSymbol(raw: unknown): string | null {
@@ -108,7 +103,7 @@ function buildRow(
   activity: UniversalActivity,
   accountId: string,
   userId: string,
-  securityMap: Map<string, string>
+  securityMap: Map<string, string>,
 ) {
   const externalId = activity.activity_id ?? activity.id;
   if (!externalId) {
@@ -129,15 +124,12 @@ function buildRow(
     fxRate: toDecimalString(activity.fx_rate) || null,
     name: activity.description ?? "",
     optionSymbol: resolveOptionSymbol(activity.option_symbol),
-    optionType:
-      typeof activity.option_type === "string" ? activity.option_type : null,
+    optionType: typeof activity.option_type === "string" ? activity.option_type : null,
     price: toDecimalString(activity.price) || null,
     quantity: toDecimalString(activity.units) || null,
     securityId,
     settlementDate:
-      (activity.settlement_date &&
-        extractDateFromISO(activity.settlement_date)) ||
-      null,
+      (activity.settlement_date && extractDateFromISO(activity.settlement_date)) || null,
     source: "snaptrade" as const,
     type: activity.type ?? "unknown",
     userId,

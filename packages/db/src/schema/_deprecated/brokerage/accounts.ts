@@ -1,12 +1,4 @@
-import {
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  varchar,
-} from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 import { appFullAccess, agentSelectOwn } from "../../rls";
 import { user } from "../../users/auth/auth";
@@ -52,7 +44,7 @@ export const brokerageAccounts = pgTable.withRLS(
     index("brokerage_account_account_status_idx").on(table.accountStatus),
     appFullAccess(),
     agentSelectOwn("user_id"),
-  ]
+  ],
 );
 
 /** @deprecated Merged into `financialAccount` from `@cobalt-web/db/schema/accounts/financial-account`. */
@@ -91,21 +83,17 @@ export const brokerageAccountDetails = pgTable.withRLS(
   (table) => [
     index("brokerage_account_detail_account_id_idx").on(table.accountId),
     index("brokerage_account_detail_user_id_idx").on(table.userId),
-    index("brokerage_account_detail_snaptrade_account_id_idx").on(
-      table.snapTradeAccountId
-    ),
+    index("brokerage_account_detail_snaptrade_account_id_idx").on(table.snapTradeAccountId),
     index("brokerage_account_detail_brokerage_authorization_id_idx").on(
-      table.brokerageAuthorizationId
+      table.brokerageAuthorizationId,
     ),
     appFullAccess(),
     agentSelectOwn("user_id"),
-  ]
+  ],
 );
 
 // Type exports
 export type BrokerageAccount = typeof brokerageAccounts.$inferSelect;
 export type BrokerageAccountInsert = typeof brokerageAccounts.$inferInsert;
-export type BrokerageAccountDetail =
-  typeof brokerageAccountDetails.$inferSelect;
-export type BrokerageAccountDetailInsert =
-  typeof brokerageAccountDetails.$inferInsert;
+export type BrokerageAccountDetail = typeof brokerageAccountDetails.$inferSelect;
+export type BrokerageAccountDetailInsert = typeof brokerageAccountDetails.$inferInsert;

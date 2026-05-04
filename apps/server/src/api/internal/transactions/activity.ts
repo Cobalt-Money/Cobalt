@@ -28,11 +28,8 @@ const getActivityRoute = createRoute({
   tags: ["Transactions"],
 });
 
-export const activityRouter = new OpenAPIHono<AppEnv>().openapi(
-  getActivityRoute,
-  async (c) => {
-    const { transactionId } = c.req.valid("param");
-    const events = await getTransactionActivity(transactionId);
-    return c.json({ events }, 200);
-  }
-);
+export const activityRouter = new OpenAPIHono<AppEnv>().openapi(getActivityRoute, async (c) => {
+  const { transactionId } = c.req.valid("param");
+  const events = await getTransactionActivity(transactionId);
+  return c.json({ events }, 200);
+});

@@ -37,7 +37,7 @@ export function toSerializableError(error: unknown): SerializableError {
 export async function captureWorkflowExceptionStep(
   _workflow: string,
   _error: SerializableError,
-  _context?: Record<string, unknown>
+  _context?: Record<string, unknown>,
 ): Promise<void> {
   "use step";
 

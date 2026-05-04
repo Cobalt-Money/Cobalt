@@ -71,8 +71,7 @@ export function AddCashAccountForm({
     const parsed = balance.trim() === "" ? null : Number(balance);
     onSubmit({
       name: trimmed,
-      startingBalance:
-        parsed !== null && Number.isFinite(parsed) ? parsed : null,
+      startingBalance: parsed !== null && Number.isFinite(parsed) ? parsed : null,
     });
   };
 
@@ -99,9 +98,7 @@ export function AddCashAccountForm({
         <span
           className={cn(
             "text-lg tabular-nums",
-            balance.trim() === ""
-              ? "text-muted-foreground/50"
-              : "text-foreground"
+            balance.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
           )}
         >
           $

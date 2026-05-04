@@ -2,11 +2,7 @@
 
 import { motion } from "framer-motion";
 
-import {
-  slideFromLeft,
-  slideFromRight,
-  transition,
-} from "@/components/animations";
+import { slideFromLeft, slideFromRight, transition } from "@/components/animations";
 import { useCalendar } from "@/components/calendar-context";
 import { DateNavigator } from "@/components/date-navigator";
 import FilterEvents from "@/components/filter";

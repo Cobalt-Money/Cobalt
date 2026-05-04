@@ -3,10 +3,7 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@cobalt-web/ui/components/ai-elements/conversation";
-import {
-  Message,
-  MessageContent,
-} from "@cobalt-web/ui/components/ai-elements/message";
+import { Message, MessageContent } from "@cobalt-web/ui/components/ai-elements/message";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
@@ -76,9 +73,7 @@ function getTextContent(message: ChatMessageRow) {
     .join("");
 }
 
-function partRowToUIPart(
-  p: ChatMessagePart
-): UIMessage["parts"][number] | null {
+function partRowToUIPart(p: ChatMessagePart): UIMessage["parts"][number] | null {
   const type = typeof p.type === "string" ? p.type : null;
   if (!type) {
     return null;
@@ -145,10 +140,7 @@ function rowToUIMessage(message: ChatMessageRow): UIMessage {
  * handing us a fresh row reference for unchanged content — without this, every
  * streamed chunk would force a full re-render of every settled message.
  */
-function rowPartsEqual(
-  a: readonly ChatMessagePart[],
-  b: readonly ChatMessagePart[]
-): boolean {
+function rowPartsEqual(a: readonly ChatMessagePart[], b: readonly ChatMessagePart[]): boolean {
   if (a.length !== b.length) {
     return false;
   }
@@ -211,7 +203,7 @@ const UserBubble = memo(
           className={cn(
             "w-full max-w-full text-base leading-snug",
             "group-[.is-user]:rounded-3xl group-[.is-user]:bg-[oklch(0.949_0_0)] group-[.is-user]:px-5 group-[.is-user]:py-3.5 group-[.is-user]:text-foreground",
-            "dark:group-[.is-user]:bg-[oklch(0.29_0_0)]"
+            "dark:group-[.is-user]:bg-[oklch(0.29_0_0)]",
           )}
         >
           <p className="whitespace-pre-wrap">{text}</p>
@@ -219,7 +211,7 @@ const UserBubble = memo(
       </Message>
     );
   },
-  (prev, next) => rowsEqual(prev.row, next.row)
+  (prev, next) => rowsEqual(prev.row, next.row),
 );
 
 const AssistantBubble = memo(
@@ -233,30 +225,19 @@ const AssistantBubble = memo(
       </Message>
     );
   },
-  (prev, next) => rowsEqual(prev.row, next.row)
+  (prev, next) => rowsEqual(prev.row, next.row),
 );
 
 export default function ChatView() {
   const { chatId } = useParams({ from: "/_auth/ai-chat/$chatId" });
-  const [messages, messagesResult] = useQuery(
-    queries.chats.messages({ chatId })
-  );
-  const {
-    inFlightMessage,
-    isStreaming,
-    streamStartedAt,
-    clearStream,
-    setZeroMessages,
-  } = useChat();
+  const [messages, messagesResult] = useQuery(queries.chats.messages({ chatId }));
+  const { inFlightMessage, isStreaming, streamStartedAt, clearStream, setZeroMessages } = useChat();
 
   useEffect(() => {
     setZeroMessages(messages);
   }, [messages, setZeroMessages]);
 
-  const sections = useMemo(
-    () => groupMessagesIntoSections(messages),
-    [messages]
-  );
+  const sections = useMemo(() => groupMessagesIntoSections(messages), [messages]);
 
   /**
    * Once streaming ends, keep showing the overlay until Zero delivers the
@@ -267,10 +248,7 @@ export default function ChatView() {
     if (!isStreaming && inFlightMessage && streamStartedAt !== null) {
       const startMs = streamStartedAt.getTime();
       const synced = messages.some(
-        (m) =>
-          m.role === "assistant" &&
-          typeof m.createdAt === "number" &&
-          m.createdAt > startMs
+        (m) => m.role === "assistant" && typeof m.createdAt === "number" && m.createdAt > startMs,
       );
       if (synced) {
         clearStream();
@@ -297,10 +275,7 @@ export default function ChatView() {
               <div className="flex flex-col gap-8" key={sectionKey}>
                 {section.user && <UserBubble row={section.user} />}
                 {section.assistants.map((assistant) => (
-                  <AssistantBubble
-                    key={String(assistant.messageId)}
-                    row={assistant}
-                  />
+                  <AssistantBubble key={String(assistant.messageId)} row={assistant} />
                 ))}
               </div>
             );
@@ -309,10 +284,7 @@ export default function ChatView() {
           {inFlightMessage && (
             <Message className="max-w-full" from="assistant">
               <MessageContent className="w-full min-w-0 px-4 text-base leading-snug">
-                <MessagePartsRenderer
-                  isStreaming={isStreaming}
-                  message={inFlightMessage}
-                />
+                <MessagePartsRenderer isStreaming={isStreaming} message={inFlightMessage} />
               </MessageContent>
             </Message>
           )}

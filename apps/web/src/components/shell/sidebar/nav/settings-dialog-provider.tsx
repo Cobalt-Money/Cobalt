@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import { SettingsDialog } from "./settings-dialog";
@@ -15,16 +9,12 @@ interface SettingsDialogContextValue {
   openSettings: (section?: SettingsSection) => void;
 }
 
-const SettingsDialogContext = createContext<SettingsDialogContextValue | null>(
-  null
-);
+const SettingsDialogContext = createContext<SettingsDialogContextValue | null>(null);
 
 export function useSettingsDialog(): SettingsDialogContextValue {
   const ctx = useContext(SettingsDialogContext);
   if (!ctx) {
-    throw new Error(
-      "useSettingsDialog must be used within SettingsDialogProvider"
-    );
+    throw new Error("useSettingsDialog must be used within SettingsDialogProvider");
   }
   return ctx;
 }
@@ -43,11 +33,7 @@ export function SettingsDialogProvider({ children }: { children: ReactNode }) {
   return (
     <SettingsDialogContext.Provider value={value}>
       {children}
-      <SettingsDialog
-        defaultSection={section}
-        onOpenChange={setOpen}
-        open={open}
-      />
+      <SettingsDialog defaultSection={section} onOpenChange={setOpen} open={open} />
     </SettingsDialogContext.Provider>
   );
 }

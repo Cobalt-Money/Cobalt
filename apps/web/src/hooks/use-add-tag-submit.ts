@@ -18,7 +18,7 @@ export function useAddTagSubmit() {
         throw error;
       }
     },
-    [createTag]
+    [createTag],
   );
 
   return { isPending: createTag.isPending, submit };

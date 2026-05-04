@@ -15,9 +15,7 @@ function isHttpUrl(url: string): boolean {
   }
 }
 
-function hostnameFromInstitutionUrl(
-  url: string | null | undefined
-): string | null {
+function hostnameFromInstitutionUrl(url: string | null | undefined): string | null {
   if (!url?.trim()) {
     return null;
   }
@@ -32,7 +30,7 @@ function hostnameFromInstitutionUrl(
 
 /** Logo.dev domain logo by institution URL. */
 export function institutionLogoDevUrlFromInstitutionUrl(
-  institutionUrl: string | null | undefined
+  institutionUrl: string | null | undefined,
 ): string | null {
   const token = env.VITE_LOGO_DEV_PUBLISHABLE_KEY;
   const host = hostnameFromInstitutionUrl(institutionUrl);
@@ -43,7 +41,7 @@ export function institutionLogoDevUrlFromInstitutionUrl(
 }
 
 function buildInstitutionLogoCandidates(
-  row: Pick<TransactionListItem, "institutionUrl">
+  row: Pick<TransactionListItem, "institutionUrl">,
 ): string[] {
   const out: string[] = [];
   const clientId = env.VITE_BRANDFETCH_CLIENT_ID;
@@ -51,19 +49,14 @@ function buildInstitutionLogoCandidates(
   if (clientId && host) {
     out.push(...brandfetchIconDomainUrls(host, clientId));
   }
-  const fromLogoDev = institutionLogoDevUrlFromInstitutionUrl(
-    row.institutionUrl
-  );
+  const fromLogoDev = institutionLogoDevUrlFromInstitutionUrl(row.institutionUrl);
   if (fromLogoDev && !out.includes(fromLogoDev)) {
     out.push(fromLogoDev);
   }
   return out;
 }
 
-export type InstitutionLogoSource = Pick<
-  TransactionListItem,
-  "institutionUrl"
-> & {
+export type InstitutionLogoSource = Pick<TransactionListItem, "institutionUrl"> & {
   institutionLogo?: string | null;
   /** Additional direct logo URLs tried after `institutionLogo` (e.g. SnapTrade Passiv fallbacks). */
   institutionLogosExtra?: readonly string[] | null;
@@ -73,9 +66,7 @@ export type InstitutionLogoSource = Pick<
  * Same candidate order as {@link InstitutionLogo}: direct Plaid/CDN URL first,
  * then Brandfetch / Logo.dev from `institutionUrl`.
  */
-export function buildInstitutionLogoImageCandidates(
-  props: InstitutionLogoSource
-): string[] {
+export function buildInstitutionLogoImageCandidates(props: InstitutionLogoSource): string[] {
   const fromDomain = buildInstitutionLogoCandidates({
     institutionUrl: props.institutionUrl,
   });
@@ -108,7 +99,7 @@ export function buildInstitutionLogoImageCandidates(
  * visible logo when possible.
  */
 export function firstInstitutionLogoImageUrlForSampling(
-  props: InstitutionLogoSource
+  props: InstitutionLogoSource,
 ): string | null {
   const [first] = buildInstitutionLogoImageCandidates(props);
   return first ?? null;
@@ -116,7 +107,7 @@ export function firstInstitutionLogoImageUrlForSampling(
 
 function pickFallbackText(
   institutionName: string | null | undefined,
-  isManual: boolean
+  isManual: boolean,
 ): string | undefined {
   const trimmed = institutionName?.trim();
   if (trimmed) {
@@ -137,7 +128,7 @@ export function InstitutionLogo(
     institutionLogosExtra?: readonly string[] | null;
     /** When `"manual"`, falls back to cash.svg instead of letter glyph. */
     source?: "plaid" | "snaptrade" | "manual";
-  }
+  },
 ) {
   const {
     className,
@@ -154,7 +145,7 @@ export function InstitutionLogo(
         institutionLogosExtra,
         institutionUrl,
       }),
-    [institutionLogo, institutionLogosExtra, institutionUrl]
+    [institutionLogo, institutionLogosExtra, institutionUrl],
   );
   const alt = institutionName?.trim() ? `${institutionName} logo` : "Bank logo";
   const isManual = source === "manual";

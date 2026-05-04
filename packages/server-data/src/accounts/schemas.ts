@@ -63,7 +63,7 @@ const bankAccountDetailPickedSchema = financialAccountRowSchema
   .extend(
     balanceRowSchema.pick({
       currency: true,
-    }).shape
+    }).shape,
   )
   .extend({
     available: z.number().nullable(),
@@ -79,13 +79,13 @@ const bankAccountDetailPickedSchema = financialAccountRowSchema
       institutionId: true,
       institutionName: true,
       newAccountsAvailable: true,
-    }).shape
+    }).shape,
   )
   .extend(
     institutionRowSchema.pick({
       logo: true,
       url: true,
-    }).shape
+    }).shape,
   );
 
 /** Full bank account DTO returned by getAllAccountsWithInstitutions. */
@@ -112,7 +112,7 @@ const bankAccountListPickedSchema = financialAccountRowSchema
   .extend(
     balanceRowSchema.pick({
       currency: true,
-    }).shape
+    }).shape,
   )
   .extend({
     current: z.number().nullable(),
@@ -123,7 +123,7 @@ const bankAccountListPickedSchema = financialAccountRowSchema
     plaidConnectionRowSchema.pick({
       institutionName: true,
       newAccountsAvailable: true,
-    }).shape
+    }).shape,
   )
   .extend(institutionRowSchema.pick({ logo: true }).shape);
 

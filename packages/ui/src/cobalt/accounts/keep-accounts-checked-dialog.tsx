@@ -40,9 +40,7 @@ export function KeepAccountsCheckedDialog({
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogTitle>Keep existing accounts checked</AlertDialogTitle>
-          <AlertDialogDescription>
-            Unchecking any deletes its history.
-          </AlertDialogDescription>
+          <AlertDialogDescription>Unchecking any deletes its history.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel size="sm">Cancel</AlertDialogCancel>

@@ -33,8 +33,7 @@ const eventBadgeVariants = cva(
         "purple-dot":
           "bg-bg-secondary text-t-primary [&_svg]:fill-purple-600 dark:[&_svg]:fill-purple-500",
         red: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
-        "red-dot":
-          "bg-bg-secondary text-t-primary [&_svg]:fill-red-600 dark:[&_svg]:fill-red-500",
+        "red-dot": "bg-bg-secondary text-t-primary [&_svg]:fill-red-600 dark:[&_svg]:fill-red-500",
         yellow:
           "border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300",
         "yellow-dot":
@@ -43,17 +42,14 @@ const eventBadgeVariants = cva(
       multiDayPosition: {
         first: "relative z-10 mr-0 rounded-r-none border-r-0 [&>span]:mr-2.5",
         last: "ml-0 rounded-l-none border-l-0",
-        middle:
-          "relative z-10 mx-0 w-[calc(100%_+_1px)] rounded-none border-x-0",
+        middle: "relative z-10 mx-0 w-[calc(100%_+_1px)] rounded-none border-x-0",
         none: "",
       },
     },
-  }
+  },
 );
 
-type MultiDayPosition = NonNullable<
-  VariantProps<typeof eventBadgeVariants>["multiDayPosition"]
->;
+type MultiDayPosition = NonNullable<VariantProps<typeof eventBadgeVariants>["multiDayPosition"]>;
 
 interface IProps extends Omit<
   VariantProps<typeof eventBadgeVariants>,
@@ -81,9 +77,9 @@ export function MonthEventBadge({
   const end = parseISO(event.endDate);
   const isMultiDay = !isSameDay(start, end);
 
-  const color = (
-    badgeVariant === "dot" ? `${event.color}-dot` : event.color
-  ) as VariantProps<typeof eventBadgeVariants>["color"];
+  const color = (badgeVariant === "dot" ? `${event.color}-dot` : event.color) as VariantProps<
+    typeof eventBadgeVariants
+  >["color"];
 
   let multiDayPosition: MultiDayPosition = "none";
   if (positionProp !== undefined) {
@@ -98,15 +94,14 @@ export function MonthEventBadge({
     }
   }
 
-  const showDayProgress =
-    eventCurrentDay !== undefined && eventTotalDays !== undefined;
+  const showDayProgress = eventCurrentDay !== undefined && eventTotalDays !== undefined;
 
   return (
     <DraggableEvent event={event}>
       <div
         className={cn(
           eventBadgeVariants({ className, color, multiDayPosition }),
-          isMultiDay && multiDayPosition === "middle" && "justify-center"
+          isMultiDay && multiDayPosition === "middle" && "justify-center",
         )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-1.5">

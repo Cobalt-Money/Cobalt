@@ -149,17 +149,11 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
     const isMultiDay = Math.random() < 0.1;
 
     const startDate = new Date(
-      startRange.getTime() +
-        Math.random() * (endRange.getTime() - startRange.getTime())
+      startRange.getTime() + Math.random() * (endRange.getTime() - startRange.getTime()),
     );
 
     // Set time between 8 AM and 8 PM
-    startDate.setHours(
-      8 + Math.floor(Math.random() * 12),
-      Math.floor(Math.random() * 60),
-      0,
-      0
-    );
+    startDate.setHours(8 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60), 0, 0);
 
     const endDate = new Date(startDate);
 
@@ -167,12 +161,7 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
       // Multi-day event: Add 1-4 days
       const additionalDays = Math.floor(Math.random() * 4) + 1;
       endDate.setDate(startDate.getDate() + additionalDays);
-      endDate.setHours(
-        8 + Math.floor(Math.random() * 12),
-        Math.floor(Math.random() * 60),
-        0,
-        0
-      );
+      endDate.setHours(8 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60), 0, 0);
     } else {
       // Same-day event: Add 1-3 hours
       endDate.setHours(endDate.getHours() + Math.floor(Math.random() * 3) + 1);

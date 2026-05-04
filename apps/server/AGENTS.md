@@ -55,9 +55,7 @@ router.openapi(routeA, handlerA);
 router.openapi(routeB, handlerB);
 
 // ✅ GOOD — types propagate up through `typeof app`
-const router = new OpenAPIHono<AppEnv>()
-  .openapi(routeA, handlerA)
-  .openapi(routeB, handlerB);
+const router = new OpenAPIHono<AppEnv>().openapi(routeA, handlerA).openapi(routeB, handlerB);
 ```
 
 **Auth gotcha:** `.use("/*", requireAuth)` returns a plain `Hono` and drops OpenAPIHono's `.openapi()` method from the chain's return type. Do NOT chain `.use(path, middleware)` before `.openapi(...)`. Instead, attach auth at the route level via `createRoute`'s `middleware` field:

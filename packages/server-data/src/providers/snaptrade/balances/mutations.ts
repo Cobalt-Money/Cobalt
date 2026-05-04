@@ -16,19 +16,17 @@ import { toDecimalString } from "../lib.js";
 export async function upsertAccountBalances(
   snaptradeAccountId: string,
   appUserId: string,
-  balancesData: Balance[]
+  balancesData: Balance[],
 ): Promise<void> {
   if (balancesData.length === 0) {
     return;
   }
 
-  const accountMap = await lookupFinancialAccountsBySnaptradeIds([
-    snaptradeAccountId,
-  ]);
+  const accountMap = await lookupFinancialAccountsBySnaptradeIds([snaptradeAccountId]);
   const acct = accountMap.get(snaptradeAccountId);
   if (!acct) {
     throw new Error(
-      `financial_account not found for SnapTrade account ${snaptradeAccountId} (user ${appUserId})`
+      `financial_account not found for SnapTrade account ${snaptradeAccountId} (user ${appUserId})`,
     );
   }
 

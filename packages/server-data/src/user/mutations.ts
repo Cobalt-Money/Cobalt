@@ -6,11 +6,7 @@ import { user } from "@cobalt-web/db/schema/users/auth/auth";
 import { subscription } from "@cobalt-web/db/schema/users/subscriptions/stripe";
 import { eq } from "drizzle-orm";
 
-const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
-  "active",
-  "trialing",
-  "past_due",
-]);
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 /** Sets `lastSeenAt` to now for the given user. */
 export async function updateLastSeen(userId: string) {
@@ -106,10 +102,7 @@ async function cancelActiveStripeSubscriptions(userId: string) {
     });
 
     for (const sub of subs) {
-      if (
-        !sub.stripeSubscriptionId ||
-        !ACTIVE_SUBSCRIPTION_STATUSES.has(sub.status)
-      ) {
+      if (!sub.stripeSubscriptionId || !ACTIVE_SUBSCRIPTION_STATUSES.has(sub.status)) {
         continue;
       }
       try {
@@ -129,7 +122,7 @@ async function cancelActiveStripeSubscriptions(userId: string) {
         if (statusCode !== 404) {
           console.warn(
             `[deleteUserAccount] Stripe cancel failed for ${sub.stripeSubscriptionId}`,
-            error
+            error,
           );
         }
       }

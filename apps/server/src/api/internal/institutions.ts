@@ -118,10 +118,7 @@ const institutionsRouter = new OpenAPIHono<AppEnv>()
     try {
       const { query } = c.req.valid("query");
       const institutions = await searchInstitutions(query);
-      c.header(
-        "Cache-Control",
-        "public, s-maxage=60, stale-while-revalidate=300"
-      );
+      c.header("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
       return c.json({ institutions }, 200);
     } catch {
       return c.json({ error: "Failed to fetch institutions" }, 500);
@@ -131,10 +128,7 @@ const institutionsRouter = new OpenAPIHono<AppEnv>()
     try {
       const { id } = c.req.valid("param");
       const inst = await getInstitutionById(id);
-      c.header(
-        "Cache-Control",
-        "public, s-maxage=60, stale-while-revalidate=300"
-      );
+      c.header("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
       return c.json(inst, 200);
     } catch {
       return c.json({ error: "Failed to fetch institution details" }, 500);
@@ -147,10 +141,7 @@ const institutionsRouter = new OpenAPIHono<AppEnv>()
       if (!inst) {
         return c.json({ error: "Institution not found in database" }, 404);
       }
-      c.header(
-        "Cache-Control",
-        "public, s-maxage=60, stale-while-revalidate=300"
-      );
+      c.header("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
       return c.json(inst, 200);
     } catch {
       return c.json({ error: "Failed to fetch institution" }, 500);
@@ -168,7 +159,7 @@ const institutionsRouter = new OpenAPIHono<AppEnv>()
             institution: existing,
             message: "Institution already exists in database",
           },
-          200
+          200,
         );
       }
 
@@ -189,7 +180,7 @@ const institutionsRouter = new OpenAPIHono<AppEnv>()
           institution: newInstitution,
           message: "Institution synced successfully",
         },
-        200
+        200,
       );
     } catch (error) {
       return c.json(
@@ -197,7 +188,7 @@ const institutionsRouter = new OpenAPIHono<AppEnv>()
           details: error instanceof Error ? error.message : "Unknown error",
           error: "Failed to sync institution",
         },
-        500
+        500,
       );
     }
   });

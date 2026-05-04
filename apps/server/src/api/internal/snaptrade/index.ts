@@ -8,9 +8,6 @@ import { generateConnectionPortalRouter } from "./generate-connection-portal.js"
 // `requireAuth` is applied per-route via `createRoute({ middleware: ... })`,
 // not via `.use("/*", requireAuth)` on this parent — see chain contract in
 // `apps/server/src/index.ts`.
-const snaptradeRouter = new OpenAPIHono().route(
-  "/",
-  generateConnectionPortalRouter
-);
+const snaptradeRouter = new OpenAPIHono().route("/", generateConnectionPortalRouter);
 
 export { snaptradeRouter };

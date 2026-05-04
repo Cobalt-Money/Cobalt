@@ -23,24 +23,16 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const AgendaEvents: FC = () => {
-  const {
-    events,
-    use24HourFormat,
-    badgeVariant,
-    agendaModeGroupBy,
-    selectedDate,
-  } = useCalendar();
+  const { events, use24HourFormat, badgeVariant, agendaModeGroupBy, selectedDate } = useCalendar();
 
   const monthEvents = getEventsForMonth(events, selectedDate);
 
   const agendaEvents = Object.groupBy(monthEvents, (event) =>
-    agendaModeGroupBy === "date"
-      ? format(parseISO(event.startDate), "yyyy-MM-dd")
-      : event.color
+    agendaModeGroupBy === "date" ? format(parseISO(event.startDate), "yyyy-MM-dd") : event.color,
   );
 
   const groupedAndSortedEvents = Object.entries(agendaEvents).toSorted(
-    (a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime()
+    (a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime(),
   );
 
   return (
@@ -69,10 +61,9 @@ export const AgendaEvents: FC = () => {
                     "mb-2 p-4 border rounded-md data-[selected=true]:bg-bg transition-all data-[selected=true]:text-none hover:cursor-pointer",
                     {
                       [getColorClass(event.color)]: badgeVariant === "colored",
-                      "hover:bg-zinc-200 dark:hover:bg-gray-900":
-                        badgeVariant === "dot",
+                      "hover:bg-zinc-200 dark:hover:bg-gray-900": badgeVariant === "dot",
                       "hover:opacity-60": badgeVariant === "colored",
-                    }
+                    },
                   )}
                 >
                   <div className="w-full flex items-center justify-between gap-4">
@@ -104,23 +95,15 @@ export const AgendaEvents: FC = () => {
                     <div className="w-40 flex justify-center items-center gap-1">
                       {agendaModeGroupBy === "date" ? (
                         <>
-                          <p className="text-sm">
-                            {formatTime(event.startDate, use24HourFormat)}
-                          </p>
+                          <p className="text-sm">{formatTime(event.startDate, use24HourFormat)}</p>
                           <span className="text-muted-foreground">-</span>
-                          <p className="text-sm">
-                            {formatTime(event.endDate, use24HourFormat)}
-                          </p>
+                          <p className="text-sm">{formatTime(event.endDate, use24HourFormat)}</p>
                         </>
                       ) : (
                         <>
-                          <p className="text-sm">
-                            {format(event.startDate, "MM/dd/yyyy")}
-                          </p>
+                          <p className="text-sm">{format(event.startDate, "MM/dd/yyyy")}</p>
                           <span className="text-sm">at</span>
-                          <p className="text-sm">
-                            {formatTime(event.startDate, use24HourFormat)}
-                          </p>
+                          <p className="text-sm">{formatTime(event.startDate, use24HourFormat)}</p>
                         </>
                       )}
                     </div>

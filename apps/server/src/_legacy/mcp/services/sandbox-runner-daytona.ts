@@ -28,7 +28,7 @@ export const daytonaSandboxBackend: SandboxBackend = {
       const response = await sandbox.process.codeRun(
         program,
         undefined,
-        Math.ceil(SCRIPT_TIMEOUT_MS / 1000)
+        Math.ceil(SCRIPT_TIMEOUT_MS / 1000),
       );
       return {
         exitCode: response.exitCode,

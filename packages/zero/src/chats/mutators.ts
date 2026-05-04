@@ -17,12 +17,12 @@ export const chatsMutators = {
         throw new Error("Not authenticated");
       }
       const chat = await tx.run(
-        zql.chats.where("chatId", chatId).where("userId", ctx.userId).one()
+        zql.chats.where("chatId", chatId).where("userId", ctx.userId).one(),
       );
       if (!chat) {
         return;
       }
       await tx.mutate.chats.delete({ chatId });
-    }
+    },
   ),
 };

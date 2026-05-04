@@ -8,16 +8,13 @@ export function registerMcpTools(server: McpServer, userId: string): void {
     "cobalt_get_session_subject",
     {
       annotations: { destructiveHint: false, readOnlyHint: true },
-      description:
-        "Returns the Cobalt user id (`sub`) for the current OAuth access token.",
+      description: "Returns the Cobalt user id (`sub`) for the current OAuth access token.",
       inputSchema: z.object({}),
       title: "Session subject",
     },
     () => ({
-      content: [
-        { text: JSON.stringify({ sub: userId }), type: "text" as const },
-      ],
-    })
+      content: [{ text: JSON.stringify({ sub: userId }), type: "text" as const }],
+    }),
   );
 
   server.registerTool(
@@ -57,11 +54,11 @@ export function registerMcpTools(server: McpServer, userId: string): void {
           .string()
           .min(1)
           .describe(
-            "JavaScript source (no TypeScript syntax). Top-level await is supported. `cobalt.*` is preinjected — do not import it."
+            "JavaScript source (no TypeScript syntax). Top-level await is supported. `cobalt.*` is preinjected — do not import it.",
           ),
       }),
       title: "Execute code",
     },
-    ({ code }) => executeCode(userId, code)
+    ({ code }) => executeCode(userId, code),
   );
 }

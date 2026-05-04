@@ -5,7 +5,7 @@ import type { RemovedTransaction, Transaction, TransactionStream } from "plaid";
 export async function syncTransactionsPage(
   accessToken: string,
   cursor: string | undefined,
-  count: number
+  count: number,
 ): Promise<{
   added: Transaction[];
   modified: Transaction[];

@@ -24,9 +24,7 @@ export const holding = pgTable(
     averagePrice: numeric("average_price", { precision: 28, scale: 10 }),
     /** Total cost basis (sum of purchase prices). */
     costBasis: numeric("cost_basis", { precision: 19, scale: 4 }),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     /** ISO-4217 currency code. */
     currency: text("currency"),
     id: uuid("id").defaultRandom().primaryKey(),
@@ -75,7 +73,7 @@ export const holding = pgTable(
     index("holding_user_id_idx").on(t.userId),
     index("holding_security_id_idx").on(t.securityId),
     uniqueIndex("holding_account_security_idx").on(t.accountId, t.securityId),
-  ]
+  ],
 );
 
 export type Holding = typeof holding.$inferSelect;

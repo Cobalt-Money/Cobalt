@@ -7,11 +7,7 @@ import {
   CommandItem,
   CommandList,
 } from "@cobalt-web/ui/components/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { Settings02Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -29,12 +25,7 @@ interface TagFilterProps {
 }
 
 /** Multi-select tag filter pill. Matches `status-filter.tsx` shape. */
-export function TagFilter({
-  onChange,
-  onManage,
-  options,
-  selectedIds,
-}: TagFilterProps) {
+export function TagFilter({ onChange, onManage, options, selectedIds }: TagFilterProps) {
   const [open, setOpen] = useState(false);
   const isActive = selectedIds.length > 0;
   const triggerLabel = isActive ? `Tags · ${selectedIds.length}` : "Tags";
@@ -52,14 +43,7 @@ export function TagFilter({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        render={
-          <CobaltToggle
-            pressed={isActive}
-            size="sm"
-            type="button"
-            variant="outline"
-          />
-        }
+        render={<CobaltToggle pressed={isActive} size="sm" type="button" variant="outline" />}
       >
         {triggerLabel}
       </PopoverTrigger>
@@ -73,16 +57,12 @@ export function TagFilter({
                 {options.map((opt) => {
                   const checked = selectedSet.has(opt.id);
                   return (
-                    <CommandItem
-                      key={opt.id}
-                      onSelect={() => toggle(opt.id)}
-                      value={opt.name}
-                    >
+                    <CommandItem key={opt.id} onSelect={() => toggle(opt.id)} value={opt.name}>
                       <TagChip color={opt.color} name={opt.name} size="sm" />
                       <span
                         className={cn(
                           "ml-auto flex size-4 items-center justify-center",
-                          checked ? "opacity-100" : "opacity-0"
+                          checked ? "opacity-100" : "opacity-0",
                         )}
                       >
                         <HugeiconsIcon className="size-3.5" icon={Tick02Icon} />

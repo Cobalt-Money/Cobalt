@@ -9,10 +9,7 @@ import { sql } from "drizzle-orm";
  * `packages/server-data/src/transactions/categories/seed.ts`. This SQL must stay in
  * lockstep with that file and with `20260504100000_seed_system_categories/migration.sql`.
  */
-export async function seedUserCategories(
-  database: typeof Db,
-  userId: string
-): Promise<void> {
+export async function seedUserCategories(database: typeof Db, userId: string): Promise<void> {
   await database.execute(sql`
 WITH seed_groups (system_key, name, "order") AS (
   VALUES

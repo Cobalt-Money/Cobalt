@@ -26,15 +26,12 @@ const route = createRoute({
   tags: ["Brokerage"],
 });
 
-export const balancesRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const result = await getBalancesByUserId(c.var.user.id);
-      c.header("Cache-Control", "private, max-age=60");
-      return c.json(result, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch brokerage balances" }, 500);
-    }
+export const balancesRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const result = await getBalancesByUserId(c.var.user.id);
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json(result, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch brokerage balances" }, 500);
   }
-);
+});

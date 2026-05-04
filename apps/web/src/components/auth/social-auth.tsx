@@ -6,18 +6,11 @@ import { toast } from "sonner";
 
 import { authClient } from "@/lib/clients/auth-client";
 
-export default function SocialAuth({
-  callbackURL: callbackURLProp,
-}: {
-  callbackURL?: string;
-}) {
+export default function SocialAuth({ callbackURL: callbackURLProp }: { callbackURL?: string }) {
   const [loading, setLoading] = useState(false);
 
   const callbackURL =
-    callbackURLProp ??
-    (typeof window === "undefined"
-      ? "/home"
-      : `${window.location.origin}/home`);
+    callbackURLProp ?? (typeof window === "undefined" ? "/home" : `${window.location.origin}/home`);
 
   const handleGoogleAuth = async () => {
     setLoading(true);
@@ -34,7 +27,7 @@ export default function SocialAuth({
           onResponse: () => {
             setLoading(false);
           },
-        }
+        },
       );
     } catch {
       toast.error("Failed to authenticate with Google. Please try again.");
@@ -57,7 +50,7 @@ export default function SocialAuth({
           onResponse: () => {
             setLoading(false);
           },
-        }
+        },
       );
     } catch {
       toast.error("Failed to authenticate with Apple. Please try again.");
@@ -68,12 +61,8 @@ export default function SocialAuth({
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
       <div className="text-center">
-        <h1 className="mb-2 font-semibold text-2xl tracking-tight">
-          Welcome to Cobalt
-        </h1>
-        <p className="text-muted-foreground">
-          Sign in with your social account to get started.
-        </p>
+        <h1 className="mb-2 font-semibold text-2xl tracking-tight">Welcome to Cobalt</h1>
+        <p className="text-muted-foreground">Sign in with your social account to get started.</p>
       </div>
 
       <div className="space-y-4">

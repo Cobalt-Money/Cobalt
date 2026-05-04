@@ -5,12 +5,7 @@ import type {
   ProcessedArticle,
   TopicCategory,
 } from "@cobalt-web/server-data/news/events/lib";
-import {
-  generateText,
-  NoObjectGeneratedError,
-  NoOutputGeneratedError,
-  Output,
-} from "ai";
+import { generateText, NoObjectGeneratedError, NoOutputGeneratedError, Output } from "ai";
 import { z } from "zod";
 
 import { gatewayModel } from "../../model-provider.js";
@@ -62,7 +57,7 @@ ${article.extractedContent.text}
 export async function summarizeEventArticles(
   eventName: string,
   eventText: string | undefined,
-  articles: ProcessedArticle[]
+  articles: ProcessedArticle[],
 ): Promise<EventSummary> {
   const start = Date.now();
 
@@ -73,9 +68,7 @@ export async function summarizeEventArticles(
     throw new Error("AI_GATEWAY_API_KEY not configured");
   }
 
-  const hasVideo = articles.some(
-    (a) => a.originalArticle.type.toLowerCase() === "video"
-  );
+  const hasVideo = articles.some((a) => a.originalArticle.type.toLowerCase() === "video");
 
   const prompt = `Analyze these financial news articles about "${eventName}" and provide a comprehensive, factual analysis based on the information provided.
 
@@ -135,9 +128,7 @@ Stay strictly factual. No predictions, no investment advice.`;
     if (
       NoObjectGeneratedError.isInstance(error) ||
       NoOutputGeneratedError.isInstance(error) ||
-      /did not match schema|No object generated|No output generated/i.test(
-        message
-      )
+      /did not match schema|No object generated|No output generated/i.test(message)
     ) {
       throw new TransientSummaryError(`AI output error: ${message}`);
     }

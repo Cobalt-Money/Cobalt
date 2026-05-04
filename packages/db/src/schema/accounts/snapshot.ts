@@ -21,9 +21,7 @@ export const snapshot = pgTable(
       .references(() => financialAccount.id, { onDelete: "cascade" }),
     available: numeric("available", { precision: 19, scale: 4 }),
     buyingPower: numeric("buying_power", { precision: 19, scale: 4 }),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     creditLimit: numeric("credit_limit", { precision: 19, scale: 4 }),
     currency: text("currency"),
     current: numeric("current", { precision: 19, scale: 4 }).notNull(),
@@ -41,7 +39,7 @@ export const snapshot = pgTable(
     index("snapshot_user_id_idx").on(t.userId),
     index("snapshot_date_idx").on(t.snapshotDate),
     uniqueIndex("snapshot_account_date_idx").on(t.accountId, t.snapshotDate),
-  ]
+  ],
 );
 
 export type Snapshot = typeof snapshot.$inferSelect;

@@ -35,28 +35,21 @@ const route = createRoute({
   tags: ["Brokerage"],
 });
 
-export const holdingsNewsRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const { limit } = c.req.valid("query");
-      const tickers = await getUserStockTickers(c.var.user.id);
+export const holdingsNewsRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const { limit } = c.req.valid("query");
+    const tickers = await getUserStockTickers(c.var.user.id);
 
-      if (tickers.length === 0) {
-        c.header("Cache-Control", "private, max-age=60");
-        return c.json({ news: [] }, 200);
-      }
-
-      const result = await getFinancialEventsForTickers(
-        c.var.user.id,
-        tickers,
-        limit
-      );
-
+    if (tickers.length === 0) {
       c.header("Cache-Control", "private, max-age=60");
-      return c.json({ news: result.events }, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch holdings news" }, 500);
+      return c.json({ news: [] }, 200);
     }
+
+    const result = await getFinancialEventsForTickers(c.var.user.id, tickers, limit);
+
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json({ news: result.events }, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch holdings news" }, 500);
   }
-);
+});

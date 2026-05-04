@@ -3,9 +3,7 @@ import { zql } from "../schema.js";
 /** UUID that never matches real rows — used when there is no authenticated user. */
 export const NO_MATCH_ID = "00000000-0000-0000-0000-000000000000";
 
-export function periodStartIso(
-  period: "1w" | "1m" | "3m" | "6m" | "1y" | "all"
-): string | null {
+export function periodStartIso(period: "1w" | "1m" | "3m" | "6m" | "1y" | "all"): string | null {
   if (period === "all") {
     return null;
   }
@@ -39,17 +37,8 @@ export interface TransactionListFilters {
   bank?: readonly string[];
 }
 
-export function transactionsForUser(
-  userId: string,
-  filters: TransactionListFilters = {}
-) {
-  const {
-    amount = "all",
-    amountMin,
-    amountMax,
-    status = "all",
-    bank,
-  } = filters;
+export function transactionsForUser(userId: string, filters: TransactionListFilters = {}) {
+  const { amount = "all", amountMin, amountMax, status = "all", bank } = filters;
   const bankIds = bank && bank.length > 0 ? bank : null;
   const hasMin = typeof amountMin === "number" && amountMin > 0;
   const hasMax = typeof amountMax === "number";
@@ -57,15 +46,13 @@ export function transactionsForUser(
   let q = zql.transaction
     .where("userId", userId)
     .related("account", (q2) =>
-      q2.related("plaidConnection", (conn) => conn.related("institution"))
+      q2.related("plaidConnection", (conn) => conn.related("institution")),
     )
     .related("category", (c) => c.related("group"));
 
   if (bankIds) {
     q = q.whereExists("account", (acc) =>
-      acc.whereExists("plaidConnection", (conn) =>
-        conn.where("institutionId", "IN", bankIds)
-      )
+      acc.whereExists("plaidConnection", (conn) => conn.where("institutionId", "IN", bankIds)),
     );
   }
 
@@ -78,9 +65,7 @@ export function transactionsForUser(
       q = q.where("amount", "<=", amountMax);
     }
   } else if (amount === "income") {
-    q = hasMin
-      ? q.where("amount", "<=", -amountMin)
-      : q.where("amount", "<", 0);
+    q = hasMin ? q.where("amount", "<=", -amountMin) : q.where("amount", "<", 0);
     if (hasMax) {
       q = q.where("amount", ">=", -amountMax);
     }
@@ -88,15 +73,9 @@ export function transactionsForUser(
     const min = hasMin ? amountMin : 0;
     q = q.where(({ cmp, or, and }) =>
       or(
-        and(
-          cmp("amount", ">=", min),
-          ...(hasMax ? [cmp("amount", "<=", amountMax)] : [])
-        ),
-        and(
-          cmp("amount", "<=", -min),
-          ...(hasMax ? [cmp("amount", ">=", -amountMax)] : [])
-        )
-      )
+        and(cmp("amount", ">=", min), ...(hasMax ? [cmp("amount", "<=", amountMax)] : [])),
+        and(cmp("amount", "<=", -min), ...(hasMax ? [cmp("amount", ">=", -amountMax)] : [])),
+      ),
     );
   }
 
@@ -119,7 +98,7 @@ export function recurringForUser(userId: string) {
 
 export function creditTransactionsForUser(
   userId: string,
-  period: "1w" | "1m" | "3m" | "6m" | "1y" | "all"
+  period: "1w" | "1m" | "3m" | "6m" | "1y" | "all",
 ) {
   const start = periodStartIso(period);
   let q = zql.transaction

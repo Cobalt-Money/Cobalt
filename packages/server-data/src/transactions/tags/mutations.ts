@@ -5,16 +5,9 @@ import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions
 import { transactionEdit } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction-edit";
 import { and, eq, inArray, sql } from "drizzle-orm";
 
-import type {
-  BulkApplyTagsBody,
-  CreateTagBody,
-  UpdateTagBody,
-} from "./schemas.js";
+import type { BulkApplyTagsBody, CreateTagBody, UpdateTagBody } from "./schemas.js";
 
-export async function createTag(
-  userId: string,
-  body: CreateTagBody
-): Promise<{ id: string }> {
+export async function createTag(userId: string, body: CreateTagBody): Promise<{ id: string }> {
   const [row] = await db
     .insert(tag)
     .values({
@@ -30,11 +23,7 @@ export async function createTag(
   return { id: row.id };
 }
 
-export async function updateTag(
-  userId: string,
-  tagId: string,
-  body: UpdateTagBody
-): Promise<void> {
+export async function updateTag(userId: string, tagId: string, body: UpdateTagBody): Promise<void> {
   const updates: Partial<typeof tag.$inferInsert> = {};
   if (body.name !== undefined) {
     updates.name = body.name;
@@ -66,7 +55,7 @@ export async function deleteTag(userId: string, tagId: string): Promise<void> {
 export async function setTransactionTags(
   userId: string,
   transactionId: string,
-  nextTagIds: string[]
+  nextTagIds: string[],
 ): Promise<void> {
   await db.transaction(async (tx) => {
     // Verify ownership of the transaction.
@@ -86,10 +75,7 @@ export async function setTransactionTags(
     const oldIds = existing.map((r) => r.tagId).toSorted();
     const newIds = [...new Set(nextTagIds)].toSorted();
 
-    if (
-      oldIds.length === newIds.length &&
-      oldIds.every((v, i) => v === newIds[i])
-    ) {
+    if (oldIds.length === newIds.length && oldIds.every((v, i) => v === newIds[i])) {
       return;
     }
 
@@ -113,8 +99,8 @@ export async function setTransactionTags(
         .where(
           and(
             eq(transactionTag.transactionId, transactionId),
-            inArray(transactionTag.tagId, toRemove)
-          )
+            inArray(transactionTag.tagId, toRemove),
+          ),
         );
     }
     if (toAdd.length > 0) {
@@ -122,7 +108,7 @@ export async function setTransactionTags(
         toAdd.map((tagId) => ({
           tagId,
           transactionId,
-        }))
+        })),
       );
     }
 
@@ -143,7 +129,7 @@ export async function setTransactionTags(
  */
 export function bulkApplyTags(
   userId: string,
-  body: BulkApplyTagsBody
+  body: BulkApplyTagsBody,
 ): Promise<{ updatedCount: number }> {
   const { addTagIds, removeTagIds, transactionIds } = body;
   const addSet = [...new Set(addTagIds)];
@@ -166,12 +152,7 @@ export function bulkApplyTags(
     const ownedTxns = await tx
       .select({ id: transaction.id })
       .from(transaction)
-      .where(
-        and(
-          inArray(transaction.id, transactionIds),
-          eq(transaction.userId, userId)
-        )
-      );
+      .where(and(inArray(transaction.id, transactionIds), eq(transaction.userId, userId)));
     const ownedTxnIds = ownedTxns.map((t) => t.id);
     if (ownedTxnIds.length === 0) {
       return { updatedCount: 0 };
@@ -208,10 +189,7 @@ export function bulkApplyTags(
       }
       const oldIds = [...before].toSorted();
       const newIds = [...after].toSorted();
-      if (
-        oldIds.length === newIds.length &&
-        oldIds.every((v, i) => v === newIds[i])
-      ) {
+      if (oldIds.length === newIds.length && oldIds.every((v, i) => v === newIds[i])) {
         continue;
       }
       updatedCount += 1;
@@ -235,8 +213,8 @@ export function bulkApplyTags(
         .where(
           and(
             inArray(transactionTag.transactionId, ownedTxnIds),
-            inArray(transactionTag.tagId, removeSet)
-          )
+            inArray(transactionTag.tagId, removeSet),
+          ),
         );
     }
     if (addSet.length > 0) {

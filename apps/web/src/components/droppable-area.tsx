@@ -10,13 +10,7 @@ interface DroppableAreaProps {
   className?: string;
 }
 
-export function DroppableArea({
-  date,
-  hour,
-  minute,
-  children,
-  className,
-}: DroppableAreaProps) {
+export function DroppableArea({ date, hour, minute, children, className }: DroppableAreaProps) {
   const { handleEventDrop, isDragging } = useDragDrop();
 
   return (

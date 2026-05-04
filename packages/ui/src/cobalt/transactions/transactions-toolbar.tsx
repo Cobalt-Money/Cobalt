@@ -107,12 +107,7 @@ export function TransactionsToolbar({
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button
-                className="shrink-0"
-                size="sm"
-                type="button"
-                variant="outline"
-              >
+              <Button className="shrink-0" size="sm" type="button" variant="outline">
                 {label}
               </Button>
             }

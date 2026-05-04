@@ -141,23 +141,17 @@ export const DETAILED_CATEGORY_MAPPING = {
   TRAVEL_RENTAL_CARS: "Car Rental",
 } as const;
 
-export const getDetailedCategoryDisplayName = (
-  detailedCategory: string | null
-): string => {
+export const getDetailedCategoryDisplayName = (detailedCategory: string | null): string => {
   if (!detailedCategory) {
     return "—";
   }
 
   const customLabel =
-    DETAILED_CATEGORY_MAPPING[
-      detailedCategory as keyof typeof DETAILED_CATEGORY_MAPPING
-    ];
+    DETAILED_CATEGORY_MAPPING[detailedCategory as keyof typeof DETAILED_CATEGORY_MAPPING];
   return customLabel || detailedCategory.replaceAll("_", " ");
 };
 
-export const getPrimaryCategoryLabel = (
-  category: CategoryData | null
-): string => {
+export const getPrimaryCategoryLabel = (category: CategoryData | null): string => {
   if (!category?.primary) {
     return "Unknown";
   }

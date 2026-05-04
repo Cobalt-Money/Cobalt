@@ -20,18 +20,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@cobalt-web/ui/components/empty";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import {
-  Add01Icon,
-  Delete02Icon,
-  Tag01Icon,
-  Tick02Icon,
-} from "@hugeicons/core-free-icons";
+import { Add01Icon, Delete02Icon, Tag01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 
@@ -76,9 +67,7 @@ export function ManageTagsForm({
             />
           </EmptyMedia>
           <EmptyTitle>No tags yet</EmptyTitle>
-          <EmptyDescription>
-            Create your first tag to start labeling transactions.
-          </EmptyDescription>
+          <EmptyDescription>Create your first tag to start labeling transactions.</EmptyDescription>
         </EmptyHeader>
         {onRequestCreate ? (
           <EmptyContent>
@@ -214,8 +203,7 @@ function ManageTagsRow({
                 aria-pressed={c === color}
                 className={cn(
                   "flex size-6 items-center justify-center rounded-full transition hover:scale-110",
-                  c === color &&
-                    "ring-2 ring-foreground ring-offset-2 ring-offset-popover"
+                  c === color && "ring-2 ring-foreground ring-offset-2 ring-offset-popover",
                 )}
                 key={c}
                 onClick={() => {
@@ -228,10 +216,7 @@ function ManageTagsRow({
                 type="button"
               >
                 {c === color ? (
-                  <HugeiconsIcon
-                    className="size-3.5 text-white drop-shadow"
-                    icon={Tick02Icon}
-                  />
+                  <HugeiconsIcon className="size-3.5 text-white drop-shadow" icon={Tick02Icon} />
                 ) : null}
               </button>
             ))}
@@ -280,12 +265,10 @@ function ManageTagsRow({
         />
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Delete tag &ldquo;{name}&rdquo;?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Delete tag &ldquo;{name}&rdquo;?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the tag from every transaction it&apos;s applied to.
-              This action cannot be undone.
+              This removes the tag from every transaction it&apos;s applied to. This action cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

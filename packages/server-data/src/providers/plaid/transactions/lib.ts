@@ -54,7 +54,7 @@ export function transactionToRecord(
   tx: Transaction,
   accountId: string,
   userId: string,
-  categoryId: string
+  categoryId: string,
 ): TransactionInsert {
   return {
     accountId,

@@ -8,7 +8,7 @@ interface UserCreds {
 /** Remove a brokerage authorization on SnapTrade's side. */
 export async function removeBrokerageAuthorization(
   authorizationId: string,
-  creds: UserCreds
+  creds: UserCreds,
 ): Promise<void> {
   await snaptradeClient.connections.removeBrokerageAuthorization({
     authorizationId,

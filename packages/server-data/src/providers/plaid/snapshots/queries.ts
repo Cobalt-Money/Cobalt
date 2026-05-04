@@ -7,7 +7,7 @@ import { lookupFinancialAccountsByPlaidIds } from "../link/queries.js";
  * reconstruct historical daily balances.
  */
 export async function getPostedTransactionsForAccount(
-  plaidAccountId: string
+  plaidAccountId: string,
 ): Promise<{ amount: number; date: string }[]> {
   const map = await lookupFinancialAccountsByPlaidIds([plaidAccountId]);
   const acct = map.get(plaidAccountId);
@@ -26,9 +26,7 @@ export async function getPostedTransactionsForAccount(
 }
 
 /** Existing snapshot dates for a Plaid account — used to skip already-persisted rows. */
-export async function getSnapshotDatesForAccount(
-  plaidAccountId: string
-): Promise<string[]> {
+export async function getSnapshotDatesForAccount(plaidAccountId: string): Promise<string[]> {
   const map = await lookupFinancialAccountsByPlaidIds([plaidAccountId]);
   const acct = map.get(plaidAccountId);
   if (!acct) {

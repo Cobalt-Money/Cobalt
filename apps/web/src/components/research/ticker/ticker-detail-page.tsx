@@ -36,9 +36,7 @@ function QuoteDisplay({
         })}
       </p>
       {crosshair ? (
-        <p className="text-muted-foreground text-sm tabular-nums">
-          {crosshair.timeLabel}
-        </p>
+        <p className="text-muted-foreground text-sm tabular-nums">{crosshair.timeLabel}</p>
       ) : (
         <p className={cn("text-sm tabular-nums", changeClass)}>
           {quote.change >= 0 ? "+" : ""}
@@ -56,18 +54,14 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
 
   const { data: quote, isLoading: quoteLoading } = useQuery(quoteQuery(sym));
   const [period, setPeriod] = useState<ChartPeriod>("1M");
-  const [chartCrosshair, setChartCrosshair] =
-    useState<ChartCrosshairHover | null>(null);
+  const [chartCrosshair, setChartCrosshair] = useState<ChartCrosshairHover | null>(null);
   const { data: chartPoints } = useQuery(chartQuery(sym, period));
 
   useEffect(() => {
     setChartCrosshair(null);
   }, [period, sym]);
 
-  const chartColor =
-    dominantHex && /^#[0-9a-f]{6}$/i.test(dominantHex)
-      ? dominantHex
-      : undefined;
+  const chartColor = dominantHex && /^#[0-9a-f]{6}$/i.test(dominantHex) ? dominantHex : undefined;
 
   const changeClass =
     (quote?.change ?? 0) < 0
@@ -77,20 +71,14 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
   const priceRow = quote ? (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
       <div className="flex min-w-0 flex-col gap-1">
-        <QuoteDisplay
-          changeClass={changeClass}
-          crosshair={chartCrosshair}
-          quote={quote}
-        />
+        <QuoteDisplay changeClass={changeClass} crosshair={chartCrosshair} quote={quote} />
       </div>
       <ChartPeriodToolbar period={period} setPeriod={setPeriod} />
     </div>
   ) : (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
       <div className="flex min-w-0 flex-col gap-1">
-        {quoteLoading ? null : (
-          <p className="text-muted-foreground text-sm">Quote unavailable</p>
-        )}
+        {quoteLoading ? null : <p className="text-muted-foreground text-sm">Quote unavailable</p>}
       </div>
       <ChartPeriodToolbar period={period} setPeriod={setPeriod} />
     </div>

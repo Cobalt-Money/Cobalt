@@ -2,11 +2,7 @@ import type { InferAgentUIMessage, ToolSet } from "ai";
 import { ToolLoopAgent, stepCountIs } from "ai";
 import { z } from "zod";
 
-import {
-  gatewayModel,
-  getProviderOptions,
-  parseModelWithReasoning,
-} from "../../model-provider.js";
+import { gatewayModel, getProviderOptions, parseModelWithReasoning } from "../../model-provider.js";
 import type { ReasoningEffort } from "../../model-provider.js";
 
 const DEFAULT_MODEL = "anthropic/claude-opus-4.7";
@@ -18,16 +14,11 @@ const DEFAULT_MODEL = "anthropic/claude-opus-4.7";
 export function createFinancialAgent(
   model?: string,
   _userId?: string,
-  effort: ReasoningEffort = "high"
+  effort: ReasoningEffort = "high",
 ) {
   const rawModel = model ?? DEFAULT_MODEL;
-  const { baseModel: resolvedModel, useReasoning } =
-    parseModelWithReasoning(rawModel);
-  const providerOptions = getProviderOptions(
-    resolvedModel,
-    useReasoning,
-    effort
-  );
+  const { baseModel: resolvedModel, useReasoning } = parseModelWithReasoning(rawModel);
+  const providerOptions = getProviderOptions(resolvedModel, useReasoning, effort);
 
   type AgentProviderOptions = NonNullable<
     ConstructorParameters<typeof ToolLoopAgent>[0]["providerOptions"]
@@ -55,5 +46,4 @@ export function createFinancialAgent(
 }
 
 type FinancialAgentInstance = ReturnType<typeof createFinancialAgent>;
-export type FinancialAgentUIMessage =
-  InferAgentUIMessage<FinancialAgentInstance>;
+export type FinancialAgentUIMessage = InferAgentUIMessage<FinancialAgentInstance>;

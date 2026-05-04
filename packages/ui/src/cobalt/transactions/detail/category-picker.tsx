@@ -1,8 +1,4 @@
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -28,19 +24,11 @@ interface CategoryPickerProps {
  * Sectioned category picker. Two-level: group headers + indented cat rows.
  * When searching, flattens to "Group › Cat" rows for context.
  */
-export function CategoryPicker({
-  trigger,
-  options,
-  selectedKey,
-  onSelect,
-}: CategoryPickerProps) {
+export function CategoryPicker({ trigger, options, selectedKey, onSelect }: CategoryPickerProps) {
   const [query, setQuery] = useState("");
 
   const grouped = useMemo(() => {
-    const map = new Map<
-      string,
-      { groupName: string; items: CategoryPickerOption[] }
-    >();
+    const map = new Map<string, { groupName: string; items: CategoryPickerOption[] }>();
     for (const opt of options) {
       const key = opt.groupSystemKey ?? "_ungrouped";
       const bucket = map.get(key);
@@ -59,9 +47,7 @@ export function CategoryPicker({
       return null;
     }
     return options.filter(
-      (o) =>
-        o.name.toLowerCase().includes(q) ||
-        o.groupName.toLowerCase().includes(q)
+      (o) => o.name.toLowerCase().includes(q) || o.groupName.toLowerCase().includes(q),
     );
   }, [options, query]);
 
@@ -116,9 +102,7 @@ export function CategoryPicker({
                   <div className="flex items-center gap-2 px-2.5 pt-2 pb-1 font-medium text-muted-foreground text-xs uppercase tracking-wider">
                     <span className="flex size-4 shrink-0 items-center justify-center">
                       <CategoryIcon
-                        icon={
-                          resolveGroupIcon(groupKey) ?? UNKNOWN_CATEGORY_ICON
-                        }
+                        icon={resolveGroupIcon(groupKey) ?? UNKNOWN_CATEGORY_ICON}
                         sizeClassName="size-4"
                       />
                     </span>
@@ -162,7 +146,7 @@ function CategoryRow({
       className={cn(
         "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40",
         flat ? "" : "pl-6",
-        isSelected && "bg-input/30 font-medium"
+        isSelected && "bg-input/30 font-medium",
       )}
       onClick={onSelect}
       type="button"
@@ -172,18 +156,14 @@ function CategoryRow({
       </span>
       {flat ? (
         <span className="flex min-w-0 items-center gap-1.5">
-          <span className="shrink-0 text-muted-foreground">
-            {option.groupName}
-          </span>
+          <span className="shrink-0 text-muted-foreground">{option.groupName}</span>
           <HugeiconsIcon
             aria-hidden
             className="size-3 shrink-0 text-muted-foreground"
             icon={ArrowRight01Icon}
             strokeWidth={2}
           />
-          <span className="min-w-0 truncate text-foreground">
-            {option.name}
-          </span>
+          <span className="min-w-0 truncate text-foreground">{option.name}</span>
         </span>
       ) : (
         <span className="min-w-0 truncate text-foreground">{option.name}</span>

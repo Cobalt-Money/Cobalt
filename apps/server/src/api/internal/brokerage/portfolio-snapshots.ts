@@ -30,17 +30,11 @@ const route = createRoute({
   tags: ["Brokerage"],
 });
 
-export const portfolioSnapshotsRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const snapshots = await getPortfolioSnapshotsByUserId(
-        c.var.user.id,
-        c.req.valid("query")
-      );
-      return c.json({ snapshots }, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch portfolio snapshots" }, 500);
-    }
+export const portfolioSnapshotsRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const snapshots = await getPortfolioSnapshotsByUserId(c.var.user.id, c.req.valid("query"));
+    return c.json({ snapshots }, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch portfolio snapshots" }, 500);
   }
-);
+});

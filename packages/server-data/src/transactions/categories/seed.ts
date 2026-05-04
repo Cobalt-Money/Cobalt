@@ -37,7 +37,7 @@ export interface CategoryGroupSeed {
 const cat = (
   systemKey: CategorySystemKey,
   name: string,
-  excludeFromInsights = false
+  excludeFromInsights = false,
 ): CategorySeedRow => ({ excludeFromInsights, name, systemKey });
 
 export const CATEGORY_GROUP_SEED: CategoryGroupSeed[] = [
@@ -254,5 +254,6 @@ export const CATEGORY_GROUP_SEED: CategoryGroupSeed[] = [
 ];
 
 /** Flat list — useful for backfill validation and unit tests. */
-export const ALL_SYSTEM_KEYS: readonly CategorySystemKey[] =
-  CATEGORY_GROUP_SEED.flatMap((g) => g.categories.map((c) => c.systemKey));
+export const ALL_SYSTEM_KEYS: readonly CategorySystemKey[] = CATEGORY_GROUP_SEED.flatMap((g) =>
+  g.categories.map((c) => c.systemKey),
+);

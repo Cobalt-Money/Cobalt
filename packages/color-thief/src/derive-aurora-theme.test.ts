@@ -1,7 +1,4 @@
-import {
-  AURORA_FALLBACK_BACKGROUND,
-  deriveAuroraThemeFromHex,
-} from "./derive-aurora-theme";
+import { AURORA_FALLBACK_BACKGROUND, deriveAuroraThemeFromHex } from "./derive-aurora-theme";
 
 describe(deriveAuroraThemeFromHex, () => {
   it("returns fallback when hex is null", () => {

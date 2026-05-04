@@ -79,9 +79,7 @@ export const appStoreNotificationTypeSchema = z.enum([
   "TEST",
 ]);
 
-export type AppStoreNotificationType = z.infer<
-  typeof appStoreNotificationTypeSchema
->;
+export type AppStoreNotificationType = z.infer<typeof appStoreNotificationTypeSchema>;
 
 export interface AppStoreNotificationInput {
   notificationType: AppStoreNotificationType;

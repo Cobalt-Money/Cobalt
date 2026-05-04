@@ -1,15 +1,6 @@
 import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@cobalt-web/ui/components/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Command, CommandGroup, CommandItem, CommandList } from "@cobalt-web/ui/components/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { useState } from "react";
 
 export type StatusFilterValue = "all" | "pending" | "posted";
@@ -36,14 +27,7 @@ export function StatusFilter({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        render={
-          <CobaltToggle
-            pressed={isActive}
-            size="sm"
-            type="button"
-            variant="outline"
-          />
-        }
+        render={<CobaltToggle pressed={isActive} size="sm" type="button" variant="outline" />}
       >
         {triggerLabel}
       </PopoverTrigger>

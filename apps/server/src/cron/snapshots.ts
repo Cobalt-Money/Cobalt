@@ -40,12 +40,8 @@ export const cronSnapshotsRouter = new Hono().get("/snapshots", async (c) => {
   const date = todayIso();
   const results = await Promise.all(
     userIds.map((userId) =>
-      send(
-        "snapshots",
-        { userId },
-        { idempotencyKey: `snapshot-${userId}-${date}` }
-      )
-    )
+      send("snapshots", { userId }, { idempotencyKey: `snapshot-${userId}-${date}` }),
+    ),
   );
 
   return c.json({

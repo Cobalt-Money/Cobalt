@@ -12,13 +12,8 @@ export const renderDocumentTool = tool({
         .record(
           z.string(),
           z.object({
-            children: z
-              .array(z.string())
-              .default([])
-              .describe("Child element keys"),
-            props: z
-              .record(z.string(), z.unknown())
-              .describe("Component props"),
+            children: z.array(z.string()).default([]).describe("Child element keys"),
+            props: z.record(z.string(), z.unknown()).describe("Component props"),
             type: z
               .enum([
                 "PDFPage",
@@ -36,11 +31,8 @@ export const renderDocumentTool = tool({
                 "PDFCallout",
               ])
               .describe("PDF component type"),
-            visible: z
-              .any()
-              .optional()
-              .describe("Visibility condition (optional)"),
-          })
+            visible: z.any().optional().describe("Visibility condition (optional)"),
+          }),
         )
         .describe("Map of element keys to element definitions"),
       root: z.string().describe("Root element key (e.g., 'page-1')"),
@@ -48,6 +40,4 @@ export const renderDocumentTool = tool({
   }),
 });
 
-export type RenderDocumentToolInvocation = UIToolInvocation<
-  typeof renderDocumentTool
->;
+export type RenderDocumentToolInvocation = UIToolInvocation<typeof renderDocumentTool>;

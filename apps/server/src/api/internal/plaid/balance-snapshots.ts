@@ -30,18 +30,15 @@ const getBalanceSnapshots = createRoute({
   tags: ["Plaid"],
 });
 
-const balanceSnapshotsRouter = new OpenAPIHono<AppEnv>().openapi(
-  getBalanceSnapshots,
-  async (c) => {
-    try {
-      const query = c.req.valid("query");
-      const snapshots = await getBalanceSnapshotsByUserId(c.var.user.id, query);
-      c.header("Cache-Control", "private, max-age=86400");
-      return c.json({ snapshots }, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch balance snapshots" }, 500);
-    }
+const balanceSnapshotsRouter = new OpenAPIHono<AppEnv>().openapi(getBalanceSnapshots, async (c) => {
+  try {
+    const query = c.req.valid("query");
+    const snapshots = await getBalanceSnapshotsByUserId(c.var.user.id, query);
+    c.header("Cache-Control", "private, max-age=86400");
+    return c.json({ snapshots }, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch balance snapshots" }, 500);
   }
-);
+});
 
 export { balanceSnapshotsRouter };

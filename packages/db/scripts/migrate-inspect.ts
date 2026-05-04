@@ -16,7 +16,7 @@ if (!url) {
 const client = new Client({ connectionString: url });
 await client.connect();
 const { rows } = await client.query(
-  `SELECT id, hash, created_at, name FROM drizzle.__drizzle_migrations ORDER BY id`
+  `SELECT id, hash, created_at, name FROM drizzle.__drizzle_migrations ORDER BY id`,
 );
 await client.end();
 console.log(JSON.stringify(rows, null, 2));

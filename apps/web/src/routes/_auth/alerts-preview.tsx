@@ -80,21 +80,15 @@ function AlertsPreviewPage() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-      <h1 className="font-medium text-foreground text-lg">
-        Notifications sheet preview
-      </h1>
+      <h1 className="font-medium text-foreground text-lg">Notifications sheet preview</h1>
       <p className="max-w-md text-center text-muted-foreground text-sm">
-        Dev-only route that renders the notifications sheet with mock alerts —
-        real data is disabled here. Close and reopen to verify animation.
+        Dev-only route that renders the notifications sheet with mock alerts — real data is disabled
+        here. Close and reopen to verify animation.
       </p>
       <Button onClick={() => setOpen(true)} type="button">
         Open notifications
       </Button>
-      <NotificationsSheet
-        onOpenChange={setOpen}
-        open={open}
-        previewAlerts={MOCK_ALERTS}
-      />
+      <NotificationsSheet onOpenChange={setOpen} open={open} previewAlerts={MOCK_ALERTS} />
     </div>
   );
 }

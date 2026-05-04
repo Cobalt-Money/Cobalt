@@ -32,21 +32,18 @@ const route = createRoute({
   tags: ["Brokerage"],
 });
 
-export const mergedBundleRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const q = c.req.valid("query");
-      const data = await getMergedBrokerageDataByUserId(c.var.user.id, {
-        activitiesLimit: q.activitiesLimit,
-        endDate: q.endDate,
-        positionsLimit: q.positionsLimit,
-        startDate: q.startDate,
-      });
-      c.header("Cache-Control", "private, max-age=60");
-      return c.json(data, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch brokerage data" }, 500);
-    }
+export const mergedBundleRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const q = c.req.valid("query");
+    const data = await getMergedBrokerageDataByUserId(c.var.user.id, {
+      activitiesLimit: q.activitiesLimit,
+      endDate: q.endDate,
+      positionsLimit: q.positionsLimit,
+      startDate: q.startDate,
+    });
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json(data, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch brokerage data" }, 500);
   }
-);
+});

@@ -1,9 +1,6 @@
 import { sleep } from "workflow";
 
-import {
-  captureWorkflowExceptionStep,
-  toSerializableError,
-} from "../../shared/steps.js";
+import { captureWorkflowExceptionStep, toSerializableError } from "../../shared/steps.js";
 import { listActiveFeedsStep, processFeedStep } from "./steps.js";
 import type { FeedProcessStats } from "./steps.js";
 
@@ -39,10 +36,7 @@ export async function rssSyncWorkflow(): Promise<RssSyncWorkflowResult> {
       reusedArticles: stats.reduce((sum, s) => sum + s.reusedArticles, 0),
     };
   } catch (error) {
-    await captureWorkflowExceptionStep(
-      "news_rss_sync",
-      toSerializableError(error)
-    );
+    await captureWorkflowExceptionStep("news_rss_sync", toSerializableError(error));
     throw error;
   }
 }

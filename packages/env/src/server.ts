@@ -11,7 +11,7 @@ const commaList = z
           .split(",")
           .map((x) => x.trim())
           .filter(Boolean)
-      : []
+      : [],
   );
 
 export const env = createEnv({
@@ -33,9 +33,7 @@ export const env = createEnv({
     /** Numeric App Apple ID from App Store Connect. Required for Production App Store webhooks; ignored in Sandbox. */
     APPLE_APP_ID: z.coerce.number().int().positive().optional(),
     /** App Store Server Notifications environment. "Sandbox" (default) for dev/TestFlight, "Production" once the app ships. */
-    APPLE_APP_STORE_ENVIRONMENT: z
-      .enum(["Production", "Sandbox"])
-      .default("Sandbox"),
+    APPLE_APP_STORE_ENVIRONMENT: z.enum(["Production", "Sandbox"]).default("Sandbox"),
     APPLE_KEY_ID: z.string().min(1),
     APPLE_PRIVATE_KEY: z.string().min(1),
     APPLE_SERVICE_ID: z.string().min(1),
@@ -62,9 +60,7 @@ export const env = createEnv({
     LOCAL_DATABASE_URL: z.string().min(1).optional(),
     /** Drizzle Kit DDL: superuser URL locally. See `db:migrate:local`. */
     MIGRATION_URI: z.string().optional(),
-    NODE_ENV: z
-      .enum(["development", "production", "test"])
-      .default("development"),
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     /** Parallel web search API key. Optional — web search/extract tools are disabled when absent. */
     PARALLEL_API_KEY: z.string().min(1).optional(),
     PLAID_CLIENT_ID: z.string().min(1),

@@ -22,19 +22,16 @@ const listArgsSchema = z
 
 /** Transaction-related named queries (`queries.transactions.*`). Composed in root `queries.ts`. */
 export const transactionsQueries = {
-  activity: defineQuery(
-    z.object({ transactionId: z.string() }),
-    ({ ctx, args }) => {
-      const userId = ctx?.userId;
-      if (!userId) {
-        return zql.transactionEdit.where("id", NO_MATCH_ID);
-      }
-      return zql.transactionEdit
-        .where("transactionId", args.transactionId)
-        .where("userId", userId)
-        .orderBy("createdAt", "asc");
+  activity: defineQuery(z.object({ transactionId: z.string() }), ({ ctx, args }) => {
+    const userId = ctx?.userId;
+    if (!userId) {
+      return zql.transactionEdit.where("id", NO_MATCH_ID);
     }
-  ),
+    return zql.transactionEdit
+      .where("transactionId", args.transactionId)
+      .where("userId", userId)
+      .orderBy("createdAt", "asc");
+  }),
 
   creditSpending: defineQuery(
     z.object({
@@ -46,7 +43,7 @@ export const transactionsQueries = {
         return zql.transaction.where("id", NO_MATCH_ID);
       }
       return creditTransactionsForUser(userId, args.period);
-    }
+    },
   ),
 
   list: defineQuery(listArgsSchema, ({ ctx, args }) => {

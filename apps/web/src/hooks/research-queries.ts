@@ -47,9 +47,7 @@ export interface TickerSearchItem {
   price?: number;
 }
 
-export function screenerRowToTickerSearchItem(
-  row: ScreenerRow
-): TickerSearchItem {
+export function screenerRowToTickerSearchItem(row: ScreenerRow): TickerSearchItem {
   const sym = row.symbol ?? row.ticker;
   const symbol = typeof sym === "string" ? sym.trim() : "";
   const name =
@@ -57,10 +55,7 @@ export function screenerRowToTickerSearchItem(
     (typeof row.name === "string" && row.name.trim()) ||
     symbol;
   const type = row.isEtf === true ? "ETF" : "Equity";
-  const price =
-    typeof row.price === "number" && Number.isFinite(row.price)
-      ? row.price
-      : undefined;
+  const price = typeof row.price === "number" && Number.isFinite(row.price) ? row.price : undefined;
   return { name, price, symbol, type };
 }
 

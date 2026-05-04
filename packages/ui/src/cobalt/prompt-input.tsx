@@ -23,11 +23,7 @@ export type CobaltPromptInputProps = PromptInputProps;
  * treatment (borderless, no shadow). Prefer this in product chat UIs; keep
  * `PromptInput` for stock ai-elements behavior.
  */
-function CobaltPromptInput({
-  className,
-  inputGroupClassName,
-  ...props
-}: CobaltPromptInputProps) {
+function CobaltPromptInput({ className, inputGroupClassName, ...props }: CobaltPromptInputProps) {
   return (
     <PromptInput
       className={className}

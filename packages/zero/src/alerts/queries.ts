@@ -19,9 +19,7 @@ export const alertsQueries = {
     }
     return zql.userAlerts
       .where("userId", userId)
-      .where(({ cmp, or }) =>
-        or(cmp("status", "=", "unread"), cmp("status", "=", "read"))
-      )
+      .where(({ cmp, or }) => or(cmp("status", "=", "unread"), cmp("status", "=", "read")))
       .orderBy("createdAt", "desc");
   }),
 };

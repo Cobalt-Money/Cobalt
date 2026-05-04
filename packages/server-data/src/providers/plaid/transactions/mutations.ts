@@ -8,10 +8,7 @@ import type { Transaction, TransactionStream } from "plaid";
 import { lookupCategoryIdsBySystemKey } from "../../../transactions/categories/lookup.js";
 import { pfcDetailedToSystemKey } from "../../../transactions/categories/map.js";
 import type { CategorySystemKey } from "../../../transactions/categories/system-keys.js";
-import {
-  lookupFinancialAccountsByPlaidIds,
-  lookupPlaidConnection,
-} from "../link/queries.js";
+import { lookupFinancialAccountsByPlaidIds, lookupPlaidConnection } from "../link/queries.js";
 import { fetchRecurringStreams } from "./actions.js";
 import { transactionToRecord } from "./lib.js";
 import type { UserOverrides } from "./queries.js";
@@ -20,7 +17,7 @@ const externalIdNotNullWhere = sql`external_id IS NOT NULL`;
 
 export async function setTransactionsCursor(
   plaidItemId: string,
-  cursor: string | undefined
+  cursor: string | undefined,
 ): Promise<void> {
   await db
     .update(plaidConnection)
@@ -34,7 +31,7 @@ export async function setTransactionsCursor(
  * Returns: Map<userId, Map<systemKey, categoryId>>.
  */
 async function resolveCategoryIdsForUsers(
-  needs: Map<string, Set<CategorySystemKey>>
+  needs: Map<string, Set<CategorySystemKey>>,
 ): Promise<Map<string, Map<CategorySystemKey, string>>> {
   const out = new Map<string, Map<CategorySystemKey, string>>();
   await Promise.all(
@@ -42,7 +39,7 @@ async function resolveCategoryIdsForUsers(
       keys.add("uncategorized");
       const map = await lookupCategoryIdsBySystemKey(userId, [...keys]);
       out.set(userId, map);
-    })
+    }),
   );
   return out;
 }
@@ -50,7 +47,7 @@ async function resolveCategoryIdsForUsers(
 function pickCategoryId(
   resolved: Map<string, Map<CategorySystemKey, string>>,
   userId: string,
-  systemKey: CategorySystemKey
+  systemKey: CategorySystemKey,
 ): string | null {
   const userMap = resolved.get(userId);
   if (!userMap) {
@@ -59,9 +56,7 @@ function pickCategoryId(
   return userMap.get(systemKey) ?? userMap.get("uncategorized") ?? null;
 }
 
-export async function persistTransactions(
-  transactions: Transaction[]
-): Promise<void> {
+export async function persistTransactions(transactions: Transaction[]): Promise<void> {
   if (transactions.length === 0) {
     return;
   }
@@ -91,9 +86,7 @@ export async function persistTransactions(
       if (!ref) {
         return null;
       }
-      const systemKey = pfcDetailedToSystemKey(
-        tx.personal_finance_category?.detailed
-      );
+      const systemKey = pfcDetailedToSystemKey(tx.personal_finance_category?.detailed);
       const categoryId = pickCategoryId(resolved, ref.userId, systemKey);
       if (!categoryId) {
         // User missing seed (signup hook failure); skip until backfill.
@@ -146,9 +139,7 @@ export async function persistTransactions(
     });
 }
 
-export async function removeTransactionsByIds(
-  transactionIds: string[]
-): Promise<void> {
+export async function removeTransactionsByIds(transactionIds: string[]): Promise<void> {
   if (transactionIds.length === 0) {
     return;
   }
@@ -157,13 +148,13 @@ export async function removeTransactionsByIds(
     .where(
       and(
         eq(transactionTable.source, "plaid"),
-        inArray(transactionTable.externalId, transactionIds)
-      )
+        inArray(transactionTable.externalId, transactionIds),
+      ),
     );
 }
 
 export async function applyPendingOverrides(
-  overrides: Map<string, UserOverrides>
+  overrides: Map<string, UserOverrides>,
 ): Promise<number> {
   if (overrides.size === 0) {
     return 0;
@@ -193,16 +184,14 @@ export async function applyPendingOverrides(
           ? (override.categoryId ?? undefined)
           : undefined,
         lockedFields: override.lockedFields,
-        name: override.lockedFields.includes("name")
-          ? override.name
-          : undefined,
+        name: override.lockedFields.includes("name") ? override.name : undefined,
         updatedAt: new Date(),
       })
       .where(
         and(
           eq(transactionTable.source, "plaid"),
-          eq(transactionTable.externalId, posted.externalId)
-        )
+          eq(transactionTable.externalId, posted.externalId),
+        ),
       );
 
     applied += 1;
@@ -223,7 +212,7 @@ function mapRecurringStreamBase(
   s: RecurringStreamRow,
   today: string,
   accountId: string,
-  userId: string
+  userId: string,
 ) {
   const isActive =
     s.is_active && s.predicted_next_date && s.predicted_next_date < today
@@ -254,9 +243,7 @@ function mapRecurringStreamMeta(s: RecurringStreamRow) {
   };
 }
 
-async function upsertRecurringStreams(
-  streams: RecurringStreamRow[]
-): Promise<void> {
+async function upsertRecurringStreams(streams: RecurringStreamRow[]): Promise<void> {
   const today = todayDateOnly();
 
   const plaidAccountIds = [...new Set(streams.map((s) => s.account_id))];
@@ -284,9 +271,7 @@ async function upsertRecurringStreams(
       if (!ref) {
         return null;
       }
-      const systemKey = pfcDetailedToSystemKey(
-        s.personal_finance_category?.detailed
-      );
+      const systemKey = pfcDetailedToSystemKey(s.personal_finance_category?.detailed);
       const categoryId = pickCategoryId(resolved, ref.userId, systemKey);
       if (!categoryId) {
         return null;
@@ -327,7 +312,7 @@ async function upsertRecurringStreams(
 
 export async function syncRecurringForItem(
   accessToken: string,
-  plaidItemId: string
+  plaidItemId: string,
 ): Promise<{ added: number; modified: number; removed: number }> {
   const conn = await lookupPlaidConnection(plaidItemId);
   if (!conn) {
@@ -351,7 +336,7 @@ export async function syncRecurringForItem(
   const existingStreamIds = new Set(
     existingStreams
       .filter((s) => accountIdSet.has(s.accountId) && s.externalId !== null)
-      .map((s) => s.externalId as string)
+      .map((s) => s.externalId as string),
   );
 
   const { inflowStreams, outflowStreams, updatedDatetime } =
@@ -365,12 +350,8 @@ export async function syncRecurringForItem(
     })),
   ];
 
-  const added = allStreams.filter(
-    (s) => !existingStreamIds.has(s.stream_id)
-  ).length;
-  const modified = allStreams.filter((s) =>
-    existingStreamIds.has(s.stream_id)
-  ).length;
+  const added = allStreams.filter((s) => !existingStreamIds.has(s.stream_id)).length;
+  const modified = allStreams.filter((s) => existingStreamIds.has(s.stream_id)).length;
 
   await upsertRecurringStreams(allStreams);
 
@@ -384,20 +365,13 @@ export async function syncRecurringForItem(
     removed = removedStreamIds.length;
     await db
       .delete(recurring)
-      .where(
-        and(
-          eq(recurring.source, "plaid"),
-          inArray(recurring.externalId, removedStreamIds)
-        )
-      );
+      .where(and(eq(recurring.source, "plaid"), inArray(recurring.externalId, removedStreamIds)));
   }
 
   await db
     .update(plaidConnection)
     .set({
-      recurringUpdatedDatetime: updatedDatetime
-        ? new Date(updatedDatetime)
-        : null,
+      recurringUpdatedDatetime: updatedDatetime ? new Date(updatedDatetime) : null,
       updatedAt: new Date(),
     })
     .where(eq(plaidConnection.plaidItemId, plaidItemId));

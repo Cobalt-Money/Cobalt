@@ -28,9 +28,7 @@ export async function listActiveFeedsStep(): Promise<RssFeed[]> {
   return await listActiveRssFeeds();
 }
 
-export async function processFeedStep(
-  feed: RssFeed
-): Promise<FeedProcessStats> {
+export async function processFeedStep(feed: RssFeed): Promise<FeedProcessStats> {
   "use step";
 
   let xml: string;
@@ -94,10 +92,7 @@ export async function processFeedStep(
   };
 }
 
-async function tryUpsertItem(
-  feedId: string,
-  item: RssItem
-): Promise<"new" | "linked" | "skipped"> {
+async function tryUpsertItem(feedId: string, item: RssItem): Promise<"new" | "linked" | "skipped"> {
   try {
     const result = await upsertRssArticleForFeed({
       description: item.description ?? null,

@@ -17,14 +17,7 @@ import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  Cell,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 import { AllocationDonutChart } from "@/components/dashboard/net-worth-donut-chart";
 import { NetWorthSectionSkeleton } from "@/components/dashboard/skeletons/net-worth-section-skeleton";
@@ -181,10 +174,7 @@ function getBucketKey(ts: number, range: TimeRange): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function bucketLabels(
-  key: string,
-  range: TimeRange
-): { label: string; fullLabel: string } {
+function bucketLabels(key: string, range: TimeRange): { label: string; fullLabel: string } {
   if (range === "1W") {
     const [y, m, day] = key.split("-").map(Number);
     const d = new Date(y, (m ?? 1) - 1, day);
@@ -218,19 +208,10 @@ function bucketLabels(
  *
  * For each bucket, takes the last snapshot per account → sums (depository – credit + investments).
  */
-type BankBucketMap = Map<
-  string,
-  Map<string, { balance: number; type: string; date: number }>
->;
-type PortfolioBucketMap = Map<
-  string,
-  Map<string, { totalValue: number; date: number }>
->;
+type BankBucketMap = Map<string, Map<string, { balance: number; type: string; date: number }>>;
+type PortfolioBucketMap = Map<string, Map<string, { totalValue: number; date: number }>>;
 
-function buildBankBuckets(
-  snapshots: BankSnapshotRow[],
-  range: TimeRange
-): BankBucketMap {
+function buildBankBuckets(snapshots: BankSnapshotRow[], range: TimeRange): BankBucketMap {
   const byBucket: BankBucketMap = new Map();
   for (const snap of snapshots) {
     const key = getBucketKey(snap.snapshotDate, range);
@@ -252,7 +233,7 @@ function buildBankBuckets(
 
 function buildPortfolioBuckets(
   snapshots: PortfolioSnapshotRow[],
-  range: TimeRange
+  range: TimeRange,
 ): PortfolioBucketMap {
   const byBucket: PortfolioBucketMap = new Map();
   for (const snap of snapshots) {
@@ -277,11 +258,9 @@ function buildNetWorthSeries(
   bankSnapshots: BankSnapshotRow[],
   portfolioSnapshots: PortfolioSnapshotRow[],
   since: number | null,
-  range: TimeRange
+  range: TimeRange,
 ): ChartPoint[] {
-  const filteredBank = since
-    ? bankSnapshots.filter((s) => s.snapshotDate >= since)
-    : bankSnapshots;
+  const filteredBank = since ? bankSnapshots.filter((s) => s.snapshotDate >= since) : bankSnapshots;
   const filteredPortfolio = since
     ? portfolioSnapshots.filter((s) => s.snapshotDate >= since)
     : portfolioSnapshots;
@@ -289,10 +268,7 @@ function buildNetWorthSeries(
   const bankByBucket = buildBankBuckets(filteredBank, range);
   const portfolioByBucket = buildPortfolioBuckets(filteredPortfolio, range);
 
-  const allKeys = new Set([
-    ...bankByBucket.keys(),
-    ...portfolioByBucket.keys(),
-  ]);
+  const allKeys = new Set([...bankByBucket.keys(), ...portfolioByBucket.keys()]);
 
   return [...allKeys]
     .toSorted() // lexicographic = chronological for all key formats
@@ -319,7 +295,7 @@ function buildNetWorthSeries(
 function scopeLabel(
   scope: AccountScope,
   bankAccounts: BankAccountEntry[],
-  portfolioAccounts: PortfolioAccountEntry[]
+  portfolioAccounts: PortfolioAccountEntry[],
 ): string {
   if (scope.type === "all") {
     return "All accounts";
@@ -328,15 +304,9 @@ function scopeLabel(
     return GROUP_LABELS[scope.group];
   }
   if (scope.type === "bank") {
-    return (
-      bankAccounts.find((a) => a.plaidAccountId === scope.plaidAccountId)
-        ?.name ?? "Account"
-    );
+    return bankAccounts.find((a) => a.plaidAccountId === scope.plaidAccountId)?.name ?? "Account";
   }
-  return (
-    portfolioAccounts.find((a) => a.accountKey === scope.accountKey)?.name ??
-    "Account"
-  );
+  return portfolioAccounts.find((a) => a.accountKey === scope.accountKey)?.name ?? "Account";
 }
 
 type NavSection = "bank" | "investments";
@@ -374,7 +344,7 @@ function NetWorthScopePicker({
       "flex w-full cursor-pointer items-center rounded-lg px-3 py-2 text-left text-xs transition-colors",
       active
         ? "bg-accent text-foreground font-medium"
-        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
     );
 
   const rightItemClass = (active: boolean) =>
@@ -439,27 +409,22 @@ function NetWorthScopePicker({
           <div className="bg-muted/40 flex min-w-0 flex-1 flex-col gap-0.5 overflow-y-auto rounded-xl p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {nav === "bank" && (
               <>
-                {(["bank", "checking", "savings", "loans"] as const).map(
-                  (g) => (
-                    <DropdownMenuItem
-                      className={rightItemClass(
-                        scope.type === "group" && scope.group === g
-                      )}
-                      key={g}
-                      onClick={() => onScopeChange({ group: g, type: "group" })}
-                    >
-                      {GROUP_LABELS[g]}
-                    </DropdownMenuItem>
-                  )
-                )}
+                {(["bank", "checking", "savings", "loans"] as const).map((g) => (
+                  <DropdownMenuItem
+                    className={rightItemClass(scope.type === "group" && scope.group === g)}
+                    key={g}
+                    onClick={() => onScopeChange({ group: g, type: "group" })}
+                  >
+                    {GROUP_LABELS[g]}
+                  </DropdownMenuItem>
+                ))}
                 {bankAccounts.length > 0 && (
                   <>
                     <div className="border-border/40 my-1 border-t" />
                     {bankAccounts.map((acc) => (
                       <DropdownMenuItem
                         className={rightItemClass(
-                          scope.type === "bank" &&
-                            scope.plaidAccountId === acc.plaidAccountId
+                          scope.type === "bank" && scope.plaidAccountId === acc.plaidAccountId,
                         )}
                         key={acc.plaidAccountId}
                         onClick={() =>
@@ -489,11 +454,9 @@ function NetWorthScopePicker({
               <>
                 <DropdownMenuItem
                   className={rightItemClass(
-                    scope.type === "group" && scope.group === "investments"
+                    scope.type === "group" && scope.group === "investments",
                   )}
-                  onClick={() =>
-                    onScopeChange({ group: "investments", type: "group" })
-                  }
+                  onClick={() => onScopeChange({ group: "investments", type: "group" })}
                 >
                   All investments
                 </DropdownMenuItem>
@@ -503,8 +466,7 @@ function NetWorthScopePicker({
                     {portfolioAccounts.map((acc) => (
                       <DropdownMenuItem
                         className={rightItemClass(
-                          scope.type === "portfolio" &&
-                            scope.accountKey === acc.accountKey
+                          scope.type === "portfolio" && scope.accountKey === acc.accountKey,
                         )}
                         key={acc.accountKey}
                         onClick={() =>
@@ -544,19 +506,13 @@ function NetWorthScopePicker({
   );
 }
 
-type ConnectionField = NonNullable<
-  NonNullable<BankSnapshotRow["account"]>["connection"]
->;
+type ConnectionField = NonNullable<NonNullable<BankSnapshotRow["account"]>["connection"]>;
 
-function institutionFieldsFromConnection(
-  conn: ConnectionField | null | undefined
-) {
+function institutionFieldsFromConnection(conn: ConnectionField | null | undefined) {
   const inst = conn?.institution;
   return {
-    institutionLogo:
-      inst?.logo?.trim() || conn?.institutionLogo?.trim() || null,
-    institutionName:
-      inst?.name?.trim() || conn?.institutionName?.trim() || null,
+    institutionLogo: inst?.logo?.trim() || conn?.institutionLogo?.trim() || null,
+    institutionName: inst?.name?.trim() || conn?.institutionName?.trim() || null,
     institutionUrl: inst?.url?.trim() || null,
   };
 }
@@ -584,18 +540,12 @@ export function NetWorthSection() {
   const { mask } = usePrivacy();
 
   // Snapshot history — drives both the chart and headline totals
-  const [rawBankSnapshots, bankResult] = useQuery(
-    queries.accounts.bankBalanceSnapshots()
-  );
-  const [rawPortfolioSnapshots, portfolioResult] = useQuery(
-    queries.brokerage.portfolioSnapshots()
-  );
+  const [rawBankSnapshots, bankResult] = useQuery(queries.accounts.bankBalanceSnapshots());
+  const [rawPortfolioSnapshots, portfolioResult] = useQuery(queries.brokerage.portfolioSnapshots());
   const allBankSnapshots = rawBankSnapshots as unknown as BankSnapshotRow[];
-  const allPortfolioSnapshots =
-    rawPortfolioSnapshots as unknown as PortfolioSnapshotRow[];
+  const allPortfolioSnapshots = rawPortfolioSnapshots as unknown as PortfolioSnapshotRow[];
 
-  const isDataComplete =
-    bankResult.type === "complete" && portfolioResult.type === "complete";
+  const isDataComplete = bankResult.type === "complete" && portfolioResult.type === "complete";
 
   // ── Unique account lists for the picker ──────────────────────────
 
@@ -640,9 +590,7 @@ export function NetWorthSection() {
       return allBankSnapshots;
     }
     if (scope.type === "bank") {
-      return allBankSnapshots.filter(
-        (s) => s.accountId === scope.plaidAccountId
-      );
+      return allBankSnapshots.filter((s) => s.accountId === scope.plaidAccountId);
     }
     if (scope.type === "group") {
       if (scope.group === "investments") {
@@ -653,14 +601,12 @@ export function NetWorthSection() {
       }
       if (scope.group === "checking") {
         return allBankSnapshots.filter(
-          (s) =>
-            s.account?.type === "depository" && s.account.subtype !== "savings"
+          (s) => s.account?.type === "depository" && s.account.subtype !== "savings",
         );
       }
       if (scope.group === "savings") {
         return allBankSnapshots.filter(
-          (s) =>
-            s.account?.type === "depository" && s.account.subtype === "savings"
+          (s) => s.account?.type === "depository" && s.account.subtype === "savings",
         );
       }
       if (scope.group === "loans") {
@@ -675,9 +621,7 @@ export function NetWorthSection() {
       return allPortfolioSnapshots;
     }
     if (scope.type === "portfolio") {
-      return allPortfolioSnapshots.filter(
-        (s) => s.accountId === scope.accountKey
-      );
+      return allPortfolioSnapshots.filter((s) => s.accountId === scope.accountKey);
     }
     if (scope.type === "group" && scope.group === "investments") {
       return allPortfolioSnapshots;
@@ -701,32 +645,24 @@ export function NetWorthSection() {
     if (portfolioSnapshots.length === 0) {
       return [];
     }
-    const newestDate = Math.max(
-      ...portfolioSnapshots.map((s) => s.snapshotDate)
-    );
+    const newestDate = Math.max(...portfolioSnapshots.map((s) => s.snapshotDate));
     return portfolioSnapshots.filter((s) => s.snapshotDate === newestDate);
   }, [portfolioSnapshots]);
 
   const checkingTotal = useMemo(
     () =>
       latestBankSnapshots
-        .filter(
-          (s) =>
-            s.account?.type === "depository" && s.account.subtype !== "savings"
-        )
+        .filter((s) => s.account?.type === "depository" && s.account.subtype !== "savings")
         .reduce((sum, s) => sum + (s.current ?? 0), 0),
-    [latestBankSnapshots]
+    [latestBankSnapshots],
   );
 
   const savingsTotal = useMemo(
     () =>
       latestBankSnapshots
-        .filter(
-          (s) =>
-            s.account?.type === "depository" && s.account.subtype === "savings"
-        )
+        .filter((s) => s.account?.type === "depository" && s.account.subtype === "savings")
         .reduce((sum, s) => sum + (s.current ?? 0), 0),
-    [latestBankSnapshots]
+    [latestBankSnapshots],
   );
 
   const depositoryTotal = checkingTotal + savingsTotal;
@@ -736,7 +672,7 @@ export function NetWorthSection() {
       latestBankSnapshots
         .filter((s) => s.account?.type === "credit")
         .reduce((sum, s) => sum + (s.current ?? 0), 0),
-    [latestBankSnapshots]
+    [latestBankSnapshots],
   );
 
   const loanTotal = useMemo(
@@ -744,29 +680,21 @@ export function NetWorthSection() {
       latestBankSnapshots
         .filter((s) => s.account?.type === "loan")
         .reduce((sum, s) => sum + (s.current ?? 0), 0),
-    [latestBankSnapshots]
+    [latestBankSnapshots],
   );
 
   const investmentTotal = useMemo(
-    () =>
-      latestPortfolioSnapshots.reduce((sum, s) => sum + (s.current ?? 0), 0),
-    [latestPortfolioSnapshots]
+    () => latestPortfolioSnapshots.reduce((sum, s) => sum + (s.current ?? 0), 0),
+    [latestPortfolioSnapshots],
   );
 
-  const totalNetWorth =
-    depositoryTotal + investmentTotal - creditTotal - loanTotal;
+  const totalNetWorth = depositoryTotal + investmentTotal - creditTotal - loanTotal;
 
   // ── Historical chart ─────────────────────────────────────────
 
   const chartData = useMemo(
-    () =>
-      buildNetWorthSeries(
-        bankSnapshots,
-        portfolioSnapshots,
-        rangeCutoff(range),
-        range
-      ),
-    [bankSnapshots, portfolioSnapshots, range]
+    () => buildNetWorthSeries(bankSnapshots, portfolioSnapshots, rangeCutoff(range), range),
+    [bankSnapshots, portfolioSnapshots, range],
   );
 
   const yDomain = useMemo((): [number, number] => {
@@ -782,8 +710,7 @@ export function NetWorthSection() {
 
   // ── Categories donut ─────────────────────────────────────────
 
-  const categoryBase =
-    checkingTotal + savingsTotal + investmentTotal + creditTotal + loanTotal;
+  const categoryBase = checkingTotal + savingsTotal + investmentTotal + creditTotal + loanTotal;
 
   const categories = useMemo(() => {
     if (categoryBase === 0) {
@@ -829,14 +756,7 @@ export function NetWorthSection() {
     ]
       .filter((c) => c.value > 0)
       .toSorted((a, b) => b.pct - a.pct);
-  }, [
-    checkingTotal,
-    savingsTotal,
-    investmentTotal,
-    creditTotal,
-    loanTotal,
-    categoryBase,
-  ]);
+  }, [checkingTotal, savingsTotal, investmentTotal, creditTotal, loanTotal, categoryBase]);
 
   const categoryDonutConfig = useMemo((): ChartConfig => {
     const out: Record<string, { color: string; label: string }> = {};
@@ -848,7 +768,7 @@ export function NetWorthSection() {
 
   const categoryDonutData = useMemo(
     () => categories.map((c) => ({ name: c.key, value: c.pct })),
-    [categories]
+    [categories],
   );
 
   const categoryCenterValue =
@@ -858,11 +778,7 @@ export function NetWorthSection() {
 
   // ── Render ───────────────────────────────────────────────────
 
-  if (
-    !isDataComplete &&
-    allBankSnapshots.length === 0 &&
-    allPortfolioSnapshots.length === 0
-  ) {
+  if (!isDataComplete && allBankSnapshots.length === 0 && allPortfolioSnapshots.length === 0) {
     return <NetWorthSectionSkeleton />;
   }
 
@@ -880,7 +796,7 @@ export function NetWorthSection() {
                       {formatUsdInteger(
                         hoverIndex === null
                           ? totalNetWorth
-                          : (chartData[hoverIndex]?.value ?? totalNetWorth)
+                          : (chartData[hoverIndex]?.value ?? totalNetWorth),
                       )}
                     </PrivateAmount>
                   </p>
@@ -896,11 +812,7 @@ export function NetWorthSection() {
                 />
               </div>
 
-              <div
-                aria-label="Chart time range"
-                className="flex flex-wrap gap-1"
-                role="toolbar"
-              >
+              <div aria-label="Chart time range" className="flex flex-wrap gap-1" role="toolbar">
                 {TIME_RANGES.map((t) => {
                   const selected = range === t;
                   return (
@@ -956,9 +868,7 @@ export function NetWorthSection() {
                         {chartData.map((row, i) => (
                           <Cell
                             fill="var(--color-green-550)"
-                            fillOpacity={
-                              hoverIndex !== null && i !== hoverIndex ? 0.2 : 1
-                            }
+                            fillOpacity={hoverIndex !== null && i !== hoverIndex ? 0.2 : 1}
                             key={row.fullLabel}
                           />
                         ))}
@@ -973,13 +883,11 @@ export function NetWorthSection() {
             <div
               className={cn(
                 "border-border/60 flex w-full shrink-0 flex-col gap-4 border-t px-5 sm:px-6",
-                "lg:w-[min(100%,20rem)] lg:border-t-0 lg:border-l"
+                "lg:w-[min(100%,20rem)] lg:border-t-0 lg:border-l",
               )}
               onMouseLeave={() => setCategoryHover(null)}
             >
-              <p className="text-muted-foreground text-sm font-medium">
-                Categories
-              </p>
+              <p className="text-muted-foreground text-sm font-medium">Categories</p>
 
               {categories.length === 0 ? (
                 <ConnectAccountEmpty
@@ -1009,9 +917,7 @@ export function NetWorthSection() {
                       <div
                         className={cn(
                           "min-w-0 space-y-1 transition-opacity duration-150",
-                          categoryHover !== null &&
-                            categoryHover !== i &&
-                            "opacity-[0.28]"
+                          categoryHover !== null && categoryHover !== i && "opacity-[0.28]",
                         )}
                         key={c.key}
                         onMouseEnter={() => setCategoryHover(i)}
@@ -1022,13 +928,9 @@ export function NetWorthSection() {
                             className="size-2.5 shrink-0 rounded-full"
                             style={{ backgroundColor: c.color }}
                           />
-                          <span className="text-muted-foreground truncate">
-                            {c.label}
-                          </span>
+                          <span className="text-muted-foreground truncate">{c.label}</span>
                         </div>
-                        <p className="text-foreground pl-4 font-semibold tabular-nums">
-                          {c.pct}%
-                        </p>
+                        <p className="text-foreground pl-4 font-semibold tabular-nums">{c.pct}%</p>
                       </div>
                     ))}
                   </div>

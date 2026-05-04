@@ -232,6 +232,4 @@ export const transactionActivityResponseSchema = z.object({
   events: z.array(transactionActivityItemSchema),
 });
 
-export type TransactionActivityItem = z.infer<
-  typeof transactionActivityItemSchema
->;
+export type TransactionActivityItem = z.infer<typeof transactionActivityItemSchema>;

@@ -26,15 +26,12 @@ const route = createRoute({
   tags: ["Brokerage"],
 });
 
-export const userTickersRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const tickers = await getUserTickersByUserId(c.var.user.id);
-      c.header("Cache-Control", "private, max-age=60");
-      return c.json({ tickers }, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch user tickers" }, 500);
-    }
+export const userTickersRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const tickers = await getUserTickersByUserId(c.var.user.id);
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json({ tickers }, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch user tickers" }, 500);
   }
-);
+});

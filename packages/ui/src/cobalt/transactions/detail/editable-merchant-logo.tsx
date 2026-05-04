@@ -1,18 +1,11 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { Edit02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
 import { MerchantLogo } from "../../logos/merchant-logo";
-import type {
-  MerchantSearchState,
-  MerchantSuggestionItem,
-} from "../add-transaction-dialog";
+import type { MerchantSearchState, MerchantSuggestionItem } from "../add-transaction-dialog";
 
 function renderMerchantResults({
   merchantSearch,
@@ -30,18 +23,12 @@ function renderMerchantResults({
   onUseTyped: () => void;
 }) {
   if (merchantSearch.loading && merchantSearch.results.length === 0) {
-    return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        Searching…
-      </div>
-    );
+    return <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Searching…</div>;
   }
   if (query.trim().length < 2) {
     return (
       <div className="flex flex-col">
-        <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-          Type to search
-        </div>
+        <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Type to search</div>
         {hasMerchant ? (
           <button
             className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
@@ -82,25 +69,15 @@ function renderMerchantResults({
         <div className="size-5 shrink-0 rounded-sm bg-foreground/5" />
       )}
       <span className="min-w-0 flex-1 truncate text-foreground">{r.name}</span>
-      {r.domain ? (
-        <span className="shrink-0 text-muted-foreground text-xs">
-          {r.domain}
-        </span>
-      ) : null}
+      {r.domain ? <span className="shrink-0 text-muted-foreground text-xs">{r.domain}</span> : null}
     </button>
   ));
 }
 
 interface EditableMerchantLogoProps {
-  transaction: Pick<
-    TransactionListItem,
-    "counterparties" | "logoUrl" | "merchantName" | "website"
-  >;
+  transaction: Pick<TransactionListItem, "counterparties" | "logoUrl" | "merchantName" | "website">;
   merchantSearch: MerchantSearchState;
-  onSubmit: (args: {
-    merchantName: string | null;
-    website: string | null;
-  }) => void;
+  onSubmit: (args: { merchantName: string | null; website: string | null }) => void;
 }
 
 export function EditableMerchantLogo({
@@ -138,11 +115,7 @@ export function EditableMerchantLogo({
               website={transaction.website}
             />
             <span className="absolute inset-0 flex items-center justify-center rounded-md bg-foreground/40 opacity-0 transition-opacity group-hover:opacity-100">
-              <HugeiconsIcon
-                className="size-5 text-white"
-                icon={Edit02Icon}
-                strokeWidth={2}
-              />
+              <HugeiconsIcon className="size-5 text-white" icon={Edit02Icon} strokeWidth={2} />
             </span>
           </button>
         }

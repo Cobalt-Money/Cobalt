@@ -43,17 +43,12 @@ export const brokerageBalances = pgTable.withRLS(
   (table) => [
     index("brokerage_balance_account_id_idx").on(table.accountId),
     index("brokerage_balance_user_id_idx").on(table.userId),
-    index("brokerage_balance_snaptrade_account_id_idx").on(
-      table.snapTradeAccountId
-    ),
+    index("brokerage_balance_snaptrade_account_id_idx").on(table.snapTradeAccountId),
     index("brokerage_balance_currency_code_idx").on(table.currencyCode),
-    uniqueIndex("brokerage_balance_account_currency_idx").on(
-      table.accountId,
-      table.currencyCode
-    ),
+    uniqueIndex("brokerage_balance_account_currency_idx").on(table.accountId, table.currencyCode),
     appFullAccess(),
     agentSelectOwn("user_id"),
-  ]
+  ],
 );
 
 /** @deprecated Use `holding` from `@cobalt-web/db/schema/investments/holding`. */
@@ -113,16 +108,11 @@ export const brokeragePositions = pgTable.withRLS(
     index("brokerage_position_account_id_idx").on(table.accountId),
     index("brokerage_position_user_id_idx").on(table.userId),
     index("brokerage_position_symbol_idx").on(table.symbol),
-    index("brokerage_position_snap_trade_account_id_idx").on(
-      table.snapTradeAccountId
-    ),
-    uniqueIndex("brokerage_position_account_symbol_idx").on(
-      table.accountId,
-      table.symbol
-    ),
+    index("brokerage_position_snap_trade_account_id_idx").on(table.snapTradeAccountId),
+    uniqueIndex("brokerage_position_account_symbol_idx").on(table.accountId, table.symbol),
     appFullAccess(),
     agentSelectOwn("user_id"),
-  ]
+  ],
 );
 
 // Type exports

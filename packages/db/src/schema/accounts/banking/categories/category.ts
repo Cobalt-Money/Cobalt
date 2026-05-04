@@ -16,14 +16,10 @@ import { categoryGroup } from "./category-group";
 export const category = pgTable(
   "category",
   {
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     /** Default insight exclusion (transfers, investments). Per-tx override on transaction.excluded. */
-    excludeFromInsights: boolean("exclude_from_insights")
-      .default(false)
-      .notNull(),
+    excludeFromInsights: boolean("exclude_from_insights").default(false).notNull(),
     groupId: uuid("group_id")
       .notNull()
       .references(() => categoryGroup.id, { onDelete: "restrict" }),
@@ -55,7 +51,7 @@ export const category = pgTable(
     uniqueIndex("category_user_system_key_idx")
       .on(t.userId, t.systemKey)
       .where(sql`system_key IS NOT NULL`),
-  ]
+  ],
 );
 
 export type Category = typeof category.$inferSelect;

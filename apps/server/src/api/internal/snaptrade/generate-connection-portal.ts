@@ -45,15 +45,12 @@ export const generateConnectionPortalRouter = new OpenAPIHono<AppEnv>().openapi(
       const result = await generateConnectionPortal(
         c.var.user.id,
         broker,
-        reconnectAuthorizationId
+        reconnectAuthorizationId,
       );
       return c.json(result, 200);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Error generating connection portal";
+      const message = error instanceof Error ? error.message : "Error generating connection portal";
       return c.json({ error: message }, 500);
     }
-  }
+  },
 );

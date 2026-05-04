@@ -50,9 +50,7 @@ export interface TransactionRowInput {
   website: string | null | undefined;
 }
 
-function synthesizeLocation(
-  row: TransactionRowInput
-): TransactionListItem["location"] {
+function synthesizeLocation(row: TransactionRowInput): TransactionListItem["location"] {
   const hasAny =
     row.address ||
     row.city ||

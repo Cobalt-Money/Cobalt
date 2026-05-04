@@ -1,9 +1,5 @@
 import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { Slider } from "@cobalt-web/ui/components/slider";
 import { useState } from "react";
 
@@ -69,14 +65,7 @@ export function AmountFilter({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        render={
-          <CobaltToggle
-            pressed={isActive}
-            size="sm"
-            type="button"
-            variant="outline"
-          />
-        }
+        render={<CobaltToggle pressed={isActive} size="sm" type="button" variant="outline" />}
       >
         {triggerLabel}
       </PopoverTrigger>

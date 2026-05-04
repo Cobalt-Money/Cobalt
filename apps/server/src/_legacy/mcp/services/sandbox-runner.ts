@@ -5,10 +5,7 @@ import { env } from "@cobalt-web/env/server";
 import { signBridgeToken } from "../../api/internal/agent-bridge/jwt.js";
 import { COBALT_SDK_SHIM } from "./cobalt-sdk-shim.js";
 import { daytonaSandboxBackend } from "./sandbox-runner-daytona.js";
-import type {
-  SandboxBackend,
-  SandboxRunResult,
-} from "./sandbox-runner-types.js";
+import type { SandboxBackend, SandboxRunResult } from "./sandbox-runner-types.js";
 import { TOKEN_TTL_SECONDS } from "./sandbox-runner-types.js";
 import { vercelSandboxBackend } from "./sandbox-runner-vercel.js";
 
@@ -39,10 +36,7 @@ function backend(): SandboxBackend {
  *
  * The active backend is selected by `SANDBOX_RUNTIME` env (`vercel` | `daytona`).
  */
-export async function runUserCode(
-  userId: string,
-  userCode: string
-): Promise<SandboxRunResult> {
+export async function runUserCode(userId: string, userCode: string): Promise<SandboxRunResult> {
   const sandboxId = randomUUID();
   const token = await signBridgeToken({ sandboxId, userId }, TOKEN_TTL_SECONDS);
 

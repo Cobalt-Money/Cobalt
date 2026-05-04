@@ -19,10 +19,7 @@ import { financialAccount } from "../../account";
 import { category } from "../categories/category";
 import type { CounterpartiesArrayJson, LocationJson } from "./zod";
 
-export const transactionSource = pgEnum("transaction_source", [
-  "plaid",
-  "manual",
-]);
+export const transactionSource = pgEnum("transaction_source", ["plaid", "manual"]);
 
 export const transaction = pgTable(
   "transaction",
@@ -50,9 +47,7 @@ export const transaction = pgTable(
     counterparties: jsonb("counterparties").$type<CounterpartiesArrayJson>(),
     /** Merchant ISO country code. */
     country: text("country"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     /** ISO-4217 currency code (e.g. USD). */
     currency: text("currency"),
     /** Posted date when the bank settled the charge. */
@@ -104,9 +99,7 @@ export const transaction = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     /** User-edited location override; wins over flat lat/lon/address columns. */
-    userOverrideLocation: jsonb(
-      "user_override_location"
-    ).$type<LocationJson | null>(),
+    userOverrideLocation: jsonb("user_override_location").$type<LocationJson | null>(),
     /** Plaid merchant website. */
     website: text("website"),
     /** Fields the user has explicitly edited; Plaid sync skips these on upsert. */
@@ -122,7 +115,7 @@ export const transaction = pgTable(
     uniqueIndex("transaction_source_external_id_idx")
       .on(t.source, t.externalId)
       .where(sql`external_id IS NOT NULL`),
-  ]
+  ],
 );
 
 export type Transaction = typeof transaction.$inferSelect;

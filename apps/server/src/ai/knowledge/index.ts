@@ -38,9 +38,7 @@ function keyToPath(key: string): string {
  * List all knowledge .md file paths from Nitro's `assets:knowledge` mount
  * (configured in nitro.config.ts serverAssets).
  */
-async function listKnowledgeEntries(): Promise<
-  { file: string; folder: string }[]
-> {
+async function listKnowledgeEntries(): Promise<{ file: string; folder: string }[]> {
   const storage = useStorage("assets:knowledge");
   const keys = await storage.getKeys();
   const results: { file: string; folder: string }[] = [];
@@ -55,14 +53,10 @@ async function listKnowledgeEntries(): Promise<
     if (basename === "README.md") {
       continue;
     }
-    if (
-      segments.includes("_tables") ||
-      segments.some((s) => s.startsWith("."))
-    ) {
+    if (segments.includes("_tables") || segments.some((s) => s.startsWith("."))) {
       continue;
     }
-    const folder =
-      segments.length > 1 ? segments.slice(0, -1).join("/") : "root";
+    const folder = segments.length > 1 ? segments.slice(0, -1).join("/") : "root";
     results.push({ file, folder });
   }
 
@@ -133,9 +127,7 @@ export async function loadKnowledgeFiles(): Promise<Record<string, string>> {
   }
 
   // Folder README.md files (glossaries)
-  const folders = new Set(
-    entries.map((f) => f.folder).filter((f) => f !== "root")
-  );
+  const folders = new Set(entries.map((f) => f.folder).filter((f) => f !== "root"));
   for (const folder of folders) {
     const readmePath = `${folder}/README.md`;
     const content = await readAsset(readmePath);
@@ -165,9 +157,7 @@ export async function loadKnowledgeFiles(): Promise<Record<string, string>> {
   ];
   for (const folder of [...folders].toSorted()) {
     readmeLines.push(`### ${folder}/`);
-    readmeLines.push(
-      `See \`${folder}/README.md\` for glossary and file descriptions.`
-    );
+    readmeLines.push(`See \`${folder}/README.md\` for glossary and file descriptions.`);
     readmeLines.push("");
     for (const entry of byFolder[folder] ?? []) {
       readmeLines.push(`- \`${entry.filename}\`: ${entry.description}`);

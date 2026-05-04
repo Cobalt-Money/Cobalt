@@ -13,19 +13,14 @@ import { useParams } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 
-import {
-  ModelChip,
-  ModelPicker,
-} from "@/components/ai-chat/input/model-picker";
+import { ModelChip, ModelPicker } from "@/components/ai-chat/input/model-picker";
 import { useChat } from "@/components/ai-chat/state/chat-context";
 
 interface ChatPromptInputInnerProps {
   extraInputGroupClassName?: string;
 }
 
-function ChatPromptInputInner({
-  extraInputGroupClassName,
-}: ChatPromptInputInnerProps) {
+function ChatPromptInputInner({ extraInputGroupClassName }: ChatPromptInputInnerProps) {
   const { textInput } = usePromptInputController();
   const { submit, isStreaming, stop } = useChat();
   // strict: false so this works in both /_auth/ai-chat/ and /_auth/ai-chat/$chatId
@@ -44,7 +39,7 @@ function ChatPromptInputInner({
       setExpanded(false);
       await submit(params.chatId, content);
     },
-    [submit, params.chatId]
+    [submit, params.chatId],
   );
 
   const checkOverflow = useCallback(() => {
@@ -66,7 +61,7 @@ function ChatPromptInputInner({
       }
       requestAnimationFrame(checkOverflow);
     },
-    [expanded, checkOverflow, textInput]
+    [expanded, checkOverflow, textInput],
   );
 
   const didMountRef = useRef(false);
@@ -90,7 +85,7 @@ function ChatPromptInputInner({
         setExpanded(false);
       }
     },
-    [expanded, textInput.value]
+    [expanded, textInput.value],
   );
 
   const handleBlur = useCallback(() => {
@@ -106,7 +101,7 @@ function ChatPromptInputInner({
         expanded
           ? "h-auto flex-col rounded-3xl has-[textarea]:rounded-3xl has-data-[align=block-end]:rounded-3xl"
           : "h-auto rounded-full has-[textarea]:rounded-full has-data-[align=block-end]:rounded-full",
-        extraInputGroupClassName
+        extraInputGroupClassName,
       )}
       onSubmit={handleChatPromptSubmit}
     >
@@ -128,11 +123,7 @@ function ChatPromptInputInner({
                 type="button"
                 className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <HugeiconsIcon
-                  icon={PlusSignIcon}
-                  className="size-4"
-                  strokeWidth={2}
-                />
+                <HugeiconsIcon icon={PlusSignIcon} className="size-4" strokeWidth={2} />
               </button>
               <ModelPicker isStreaming={isStreaming} />
             </div>
@@ -149,11 +140,7 @@ function ChatPromptInputInner({
             type="button"
             className="ml-1.5 flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
-            <HugeiconsIcon
-              icon={PlusSignIcon}
-              className="size-4"
-              strokeWidth={2}
-            />
+            <HugeiconsIcon icon={PlusSignIcon} className="size-4" strokeWidth={2} />
           </button>
           <PromptInputBody>
             <PromptInputTextarea
@@ -184,7 +171,5 @@ export function ChatPromptInput({
 }: {
   extraInputGroupClassName?: string;
 } = {}) {
-  return (
-    <ChatPromptInputInner extraInputGroupClassName={extraInputGroupClassName} />
-  );
+  return <ChatPromptInputInner extraInputGroupClassName={extraInputGroupClassName} />;
 }

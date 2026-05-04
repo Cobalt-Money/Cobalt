@@ -272,7 +272,7 @@ useEffect(
   () => () => {
     preloadHandleRef.current?.cleanup();
   },
-  []
+  [],
 );
 ```
 

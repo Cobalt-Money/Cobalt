@@ -25,7 +25,7 @@ export interface UseImagePaletteResult {
  */
 export function useImagePalette(
   url: string | null,
-  options?: ExtractionOptions & { includeSwatches?: boolean }
+  options?: ExtractionOptions & { includeSwatches?: boolean },
 ): UseImagePaletteResult {
   const { includeSwatches = false, ...extractionOptions } = options ?? {};
   const extractionRef = useRef(extractionOptions);
@@ -96,14 +96,10 @@ export function useImagePalette(
           swatches,
         });
       } catch (error) {
-        if (
-          signal.aborted ||
-          (error instanceof DOMException && error.name === "AbortError")
-        ) {
+        if (signal.aborted || (error instanceof DOMException && error.name === "AbortError")) {
           return;
         }
-        const normalized =
-          error instanceof Error ? error : new Error(String(error));
+        const normalized = error instanceof Error ? error : new Error(String(error));
         setState({
           dominant: null,
           dominantHex: null,
@@ -135,7 +131,7 @@ export interface UseDominantColorResult {
  */
 export function useDominantColor(
   url: string | null,
-  options?: ExtractionOptions
+  options?: ExtractionOptions,
 ): UseDominantColorResult {
   const optionsRef = useRef(options);
   optionsRef.current = options;
@@ -186,14 +182,10 @@ export function useDominantColor(
           status: "success",
         });
       } catch (error) {
-        if (
-          signal.aborted ||
-          (error instanceof DOMException && error.name === "AbortError")
-        ) {
+        if (signal.aborted || (error instanceof DOMException && error.name === "AbortError")) {
           return;
         }
-        const normalized =
-          error instanceof Error ? error : new Error(String(error));
+        const normalized = error instanceof Error ? error : new Error(String(error));
         setState({
           color: null,
           error: normalized,

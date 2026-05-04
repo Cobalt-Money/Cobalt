@@ -4,11 +4,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@cobalt-web/ui/components/dropdown-menu";
-import {
-  ArrowReloadHorizontalIcon,
-  FilterIcon,
-  Tick01Icon,
-} from "@hugeicons/core-free-icons";
+import { ArrowReloadHorizontalIcon, FilterIcon, Tick01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { useCalendar } from "@/components/calendar-context";
@@ -17,23 +13,13 @@ import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 
 export default function FilterEvents() {
-  const { selectedColors, filterEventsBySelectedColors, clearFilter } =
-    useCalendar();
+  const { selectedColors, filterEventsBySelectedColors, clearFilter } = useCalendar();
 
-  const colors: TEventColor[] = [
-    "blue",
-    "green",
-    "red",
-    "yellow",
-    "purple",
-    "orange",
-  ];
+  const colors: TEventColor[] = ["blue", "green", "red", "yellow", "purple", "orange"];
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        render={<Toggle variant="outline" className="cursor-pointer w-fit" />}
-      >
+      <DropdownMenuTrigger render={<Toggle variant="outline" className="cursor-pointer w-fit" />}>
         <HugeiconsIcon icon={FilterIcon} size={16} strokeWidth={2} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[150px]">
@@ -46,19 +32,13 @@ export default function FilterEvents() {
               filterEventsBySelectedColors(color);
             }}
           >
-            <div
-              className={`size-3.5 rounded-full bg-${color}-600 dark:bg-${color}-700`}
-            />
+            <div className={`size-3.5 rounded-full bg-${color}-600 dark:bg-${color}-700`} />
             <span className="capitalize flex justify-center items-center gap-2">
               {color}
               <span>
                 {selectedColors.includes(color) && (
                   <span className="text-blue-500">
-                    <HugeiconsIcon
-                      icon={Tick01Icon}
-                      size={16}
-                      strokeWidth={2}
-                    />
+                    <HugeiconsIcon icon={Tick01Icon} size={16} strokeWidth={2} />
                   </span>
                 )}
               </span>
@@ -74,11 +54,7 @@ export default function FilterEvents() {
             clearFilter();
           }}
         >
-          <HugeiconsIcon
-            icon={ArrowReloadHorizontalIcon}
-            size={14}
-            strokeWidth={2}
-          />
+          <HugeiconsIcon icon={ArrowReloadHorizontalIcon} size={14} strokeWidth={2} />
           Clear Filter
         </DropdownMenuItem>
       </DropdownMenuContent>

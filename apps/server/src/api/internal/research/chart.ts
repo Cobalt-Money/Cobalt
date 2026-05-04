@@ -29,34 +29,28 @@ const route = createRoute({
   tags: ["Research"],
 });
 
-export const chartRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const { symbol, timePeriod } = c.req.valid("query");
-      const period = (timePeriod ?? "1M") as TimePeriod;
-      const points = await fmpGetChart(symbol, period);
+export const chartRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const { symbol, timePeriod } = c.req.valid("query");
+    const period = (timePeriod ?? "1M") as TimePeriod;
+    const points = await fmpGetChart(symbol, period);
 
-      const data = points.map((p, i) => ({
-        close: p.close,
-        high: p.high,
-        id: p.date || `chart-${i}`,
-        low: p.low,
-        open: p.open,
-        price: p.close,
-        time: p.date,
-        volume: p.volume,
-      }));
+    const data = points.map((p, i) => ({
+      close: p.close,
+      high: p.high,
+      id: p.date || `chart-${i}`,
+      low: p.low,
+      open: p.open,
+      price: p.close,
+      time: p.date,
+      volume: p.volume,
+    }));
 
-      const isIntraday = period === "1D" || period === "1W";
-      const cacheSeconds = isIntraday ? 900 : 86_400;
-      c.header(
-        "Cache-Control",
-        `public, s-maxage=${cacheSeconds}, stale-while-revalidate=3600`
-      );
-      return c.json({ data }, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch chart data" }, 500);
-    }
+    const isIntraday = period === "1D" || period === "1W";
+    const cacheSeconds = isIntraday ? 900 : 86_400;
+    c.header("Cache-Control", `public, s-maxage=${cacheSeconds}, stale-while-revalidate=3600`);
+    return c.json({ data }, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch chart data" }, 500);
   }
-);
+});

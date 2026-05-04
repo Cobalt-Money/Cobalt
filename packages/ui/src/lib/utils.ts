@@ -18,9 +18,7 @@ export function decodeHtmlEntities(text: string): string {
   }
   return text
     .replaceAll(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replaceAll(/&#x([0-9a-fA-F]+);/g, (_, h) =>
-      String.fromCodePoint(Number.parseInt(h, 16))
-    )
+    .replaceAll(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(Number.parseInt(h, 16)))
     .replaceAll("&nbsp;", "\u00A0")
     .replaceAll("&apos;", "'")
     .replaceAll("&quot;", '"')

@@ -13,23 +13,16 @@ interface TagChipProps {
   className?: string;
 }
 
-export function TagChip({
-  className,
-  color,
-  name,
-  onRemove,
-  size = "md",
-}: TagChipProps) {
+export function TagChip({ className, color, name, onRemove, size = "md" }: TagChipProps) {
   const hex = TAG_COLOR_HEX[color];
-  const sizeClasses =
-    size === "sm" ? "h-5 gap-1 px-1.5 text-xs" : "h-6 gap-1.5 px-2 text-xs";
+  const sizeClasses = size === "sm" ? "h-5 gap-1 px-1.5 text-xs" : "h-6 gap-1.5 px-2 text-xs";
   return (
     <span
       className={cn(
         "inline-flex shrink-0 items-center rounded-full border font-medium",
         "border-transparent text-foreground",
         sizeClasses,
-        className
+        className,
       )}
       style={{
         backgroundColor: `${hex}1F`,

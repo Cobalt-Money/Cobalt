@@ -69,10 +69,7 @@ describe("plaid webhook router — SYNC_UPDATES_AVAILABLE", () => {
       initial_update_complete: true,
     });
     // When a hook is waiting, the recurring sync workflow must NOT start.
-    expect(mockStart).not.toHaveBeenCalledWith(
-      plaidSyncWorkflow,
-      expect.anything()
-    );
+    expect(mockStart).not.toHaveBeenCalledWith(plaidSyncWorkflow, expect.anything());
   });
 
   it("falls back to starting plaidSyncWorkflow when no hook is waiting", async () => {

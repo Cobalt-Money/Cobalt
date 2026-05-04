@@ -41,7 +41,7 @@ export function TickerLogoCDN({
     return brandfetchTickerIconUrls(
       t,
       clientId,
-      logoApiSize === 128 ? undefined : { size: logoApiSize }
+      logoApiSize === 128 ? undefined : { size: logoApiSize },
     );
   }, [clientId, logoApiSize, symbol]);
 

@@ -8,9 +8,8 @@ const NO_MATCH_ID = "00000000-0000-0000-0000-000000000000";
 
 /** Tag named queries (`queries.tags.*`). */
 export const tagsQueries = {
-  forTransaction: defineQuery(
-    z.object({ transactionId: z.string() }),
-    ({ args }) => zql.transactionTag.where("transactionId", args.transactionId)
+  forTransaction: defineQuery(z.object({ transactionId: z.string() }), ({ args }) =>
+    zql.transactionTag.where("transactionId", args.transactionId),
   ),
 
   list: defineQuery(({ ctx }: { ctx: Context }) => {
@@ -18,9 +17,6 @@ export const tagsQueries = {
     if (!userId) {
       return zql.tag.where("id", NO_MATCH_ID);
     }
-    return zql.tag
-      .where("userId", userId)
-      .related("transactionTags")
-      .orderBy("name", "asc");
+    return zql.tag.where("userId", userId).related("transactionTags").orderBy("name", "asc");
   }),
 };

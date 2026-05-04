@@ -16,15 +16,11 @@ const BATCH_SIZE = 100;
 
 const externalIdNotNullWhere = sql`external_id IS NOT NULL`;
 
-function numToStr(
-  value: number | string | boolean | null | undefined
-): string | null {
+function numToStr(value: number | string | boolean | null | undefined): string | null {
   return value === null || value === undefined ? null : String(value);
 }
 
-export async function upsertInvestmentSecurities(
-  securities: PlaidSecurity[]
-): Promise<void> {
+export async function upsertInvestmentSecurities(securities: PlaidSecurity[]): Promise<void> {
   if (securities.length === 0) {
     return;
   }
@@ -87,9 +83,7 @@ export async function upsertInvestmentSecurities(
   }
 }
 
-export async function upsertInvestmentPositions(
-  holdings: PlaidHolding[]
-): Promise<void> {
+export async function upsertInvestmentPositions(holdings: PlaidHolding[]): Promise<void> {
   if (holdings.length === 0) {
     return;
   }
@@ -153,7 +147,7 @@ export async function upsertInvestmentPositions(
 }
 
 export async function upsertInvestmentActivities(
-  transactions: InvestmentTransaction[]
+  transactions: InvestmentTransaction[],
 ): Promise<void> {
   if (transactions.length === 0) {
     return;
@@ -164,7 +158,7 @@ export async function upsertInvestmentActivities(
     ...new Set(
       transactions
         .map((t) => t.security_id)
-        .filter((id): id is string => id !== null && id !== undefined)
+        .filter((id): id is string => id !== null && id !== undefined),
     ),
   ];
 

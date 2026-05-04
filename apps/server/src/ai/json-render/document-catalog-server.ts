@@ -19,7 +19,7 @@ const documentSchema = defineSchema((s) => ({
         props: s.propsOf("catalog.components"),
         type: s.ref("catalog.components"),
         visible: s.any(),
-      })
+      }),
     ),
     root: s.string(),
   }),
@@ -63,14 +63,11 @@ const documentComponentProps = {
         changeType: z.enum(["positive", "negative", "neutral"]).optional(),
         label: z.string(),
         value: z.string(),
-      })
+      }),
     ),
   }),
   PDFPage: z.object({
-    orientation: z
-      .enum(["portrait", "landscape"])
-      .optional()
-      .default("portrait"),
+    orientation: z.enum(["portrait", "landscape"]).optional().default("portrait"),
     size: z.enum(["A4", "LETTER", "LEGAL"]).optional().default("LETTER"),
   }),
   PDFSection: z.object({
@@ -105,8 +102,7 @@ export const documentCatalogServer = defineCatalog(documentSchema, {
       props: documentComponentProps.PDFColumn,
     },
     PDFColumns: {
-      description:
-        "A multi-column layout container. Children should be PDFColumn elements.",
+      description: "A multi-column layout container. Children should be PDFColumn elements.",
       props: documentComponentProps.PDFColumns,
     },
     PDFDivider: {
@@ -124,8 +120,7 @@ export const documentCatalogServer = defineCatalog(documentSchema, {
       props: documentComponentProps.PDFHeader,
     },
     PDFHeading: {
-      description:
-        "A section heading. Level 1 is the largest, level 3 is the smallest.",
+      description: "A section heading. Level 1 is the largest, level 3 is the smallest.",
       props: documentComponentProps.PDFHeading,
     },
     PDFList: {
@@ -153,8 +148,7 @@ export const documentCatalogServer = defineCatalog(documentSchema, {
       props: documentComponentProps.PDFTable,
     },
     PDFText: {
-      description:
-        "A text paragraph. Supports font size, bold, italic, color, and alignment.",
+      description: "A text paragraph. Supports font size, bold, italic, color, and alignment.",
       props: documentComponentProps.PDFText,
     },
   },

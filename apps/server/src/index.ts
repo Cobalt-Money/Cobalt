@@ -32,10 +32,7 @@ import { cronFinancialEventsRouter } from "./cron/financial-events.js";
 import { cronRefreshFundamentalsRouter } from "./cron/refresh-fundamentals.js";
 import { cronRssRouter } from "./cron/rss.js";
 import { cronSnapshotsRouter } from "./cron/snapshots.js";
-import {
-  getPublicOriginFromRequest,
-  handleMcpHttpRequest,
-} from "./mcp/handle-mcp-request.js";
+import { getPublicOriginFromRequest, handleMcpHttpRequest } from "./mcp/handle-mcp-request.js";
 import { buildMcpProtectedResourceMetadata } from "./mcp/oauth-discovery.js";
 import { snapshotUserQueueRouter } from "./queue/snapshot-user.js";
 import { appstoreWebhookRouter } from "./webhooks/appstore.js";
@@ -60,9 +57,7 @@ import { snaptradeWebhookRouter } from "./webhooks/snaptrade.js";
 // ── OAuth discovery helpers ─────────────────────────────────────────
 
 const oauthAuthServerMetadata = oauthProviderAuthServerMetadata(auth as never);
-const oauthOpenIdConfigMetadata = oauthProviderOpenIdConfigMetadata(
-  auth as never
-);
+const oauthOpenIdConfigMetadata = oauthProviderOpenIdConfigMetadata(auth as never);
 
 // Stable Hono-compatible wrapper so both well-known mount paths below can
 // reuse the same handler.
@@ -118,27 +113,24 @@ base.doc31("/openapi.json", {
 // Third-party developer surface at `/v1`. Kept on its own `OpenAPIHono`
 // instance so it can publish an independent title, server URL, and auth
 // scheme at `/v1/openapi.json` without leaking internal routes.
-const publicApi = new OpenAPIHono()
-  .route("/v1", v1Router)
-  .doc("/v1/openapi.json", {
-    info: {
-      description:
-        "The Cobalt public API provides programmatic access to market data, portfolio analytics, and financial insights.",
-      title: "Cobalt Public API",
-      version: "1.0.0",
-    },
-    openapi: "3.1.0",
-    security: [{ bearerAuth: [] }],
-    servers: [{ description: "Production", url: "https://api.cobaltpf.com" }],
-  });
+const publicApi = new OpenAPIHono().route("/v1", v1Router).doc("/v1/openapi.json", {
+  info: {
+    description:
+      "The Cobalt public API provides programmatic access to market data, portfolio analytics, and financial insights.",
+    title: "Cobalt Public API",
+    version: "1.0.0",
+  },
+  openapi: "3.1.0",
+  security: [{ bearerAuth: [] }],
+  servers: [{ description: "Production", url: "https://api.cobaltpf.com" }],
+});
 
 // `registerComponent` mutates the schema registry (not the Hono instance)
 // and doesn't return anything useful, so it runs as a side-effect statement
 // after the const. Not subject to the chain-return contract above.
 publicApi.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
   bearerFormat: "OAuth 2.0 Access Token",
-  description:
-    "OAuth 2.0 access token obtained via the authorization code flow",
+  description: "OAuth 2.0 access token obtained via the authorization code flow",
   scheme: "bearer",
   type: "http",
 });
@@ -164,7 +156,7 @@ const app = new Hono()
       credentials: true,
       exposeHeaders: ["Mcp-Session-Id", "mcp-session-id"],
       origin: env.CORS_ORIGIN,
-    })
+    }),
   )
   .get("/.well-known/oauth-protected-resource/api/mcp", (c) => {
     // RFC 9728 — Protected Resource Metadata; first endpoint clients hit to discover which auth server protects MCP.
@@ -172,17 +164,9 @@ const app = new Hono()
     const mcpResourceUrl = new URL("/api/mcp", origin).href;
     return c.json(buildMcpProtectedResourceMetadata(mcpResourceUrl));
   })
-  .get(
-    "/.well-known/oauth-authorization-server/api/auth",
-    oauthAuthServerMetadataHandler
-  ) // RFC 8414 — Authorization Server Metadata (path-suffixed for issuer /api/auth); authorize, token, registration, JWKS, revocation.
-  .get(
-    "/.well-known/oauth-authorization-server",
-    oauthAuthServerMetadataHandler
-  ) // Some clients probe the root well-known path; same document to avoid 404 noise.
-  .get("/.well-known/openid-configuration", (c) =>
-    oauthOpenIdConfigMetadata(c.req.raw)
-  ) // OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
+  .get("/.well-known/oauth-authorization-server/api/auth", oauthAuthServerMetadataHandler) // RFC 8414 — Authorization Server Metadata (path-suffixed for issuer /api/auth); authorize, token, registration, JWKS, revocation.
+  .get("/.well-known/oauth-authorization-server", oauthAuthServerMetadataHandler) // Some clients probe the root well-known path; same document to avoid 404 noise.
+  .get("/.well-known/openid-configuration", (c) => oauthOpenIdConfigMetadata(c.req.raw)) // OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
   .all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw)) // Streamable HTTP MCP; Bearer from OAuth above.
   .route("/api/cron", cronRefreshFundamentalsRouter) // Cron (no user auth — CRON_SECRET).
   .route("/api/cron", cronFinancialEventsRouter)
@@ -205,7 +189,7 @@ const app = new Hono()
           url: "/api/auth/open-api/generate-schema",
         },
       ],
-    })
+    }),
   )
   .route("/", base)
   .route("/", publicApi);

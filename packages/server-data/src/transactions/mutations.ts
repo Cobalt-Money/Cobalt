@@ -14,7 +14,7 @@ type EditableField = "category" | "date" | "name" | "notes";
 async function restoreOriginalValue(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   transactionId: string,
-  field: EditableField
+  field: EditableField,
 ): Promise<unknown> {
   const row = await tx.query.transactionEdit.findFirst({
     columns: { oldValue: true },
@@ -36,7 +36,7 @@ async function restoreOriginalValue(
 export async function patchTransaction(
   transactionId: string,
   userId: string,
-  patch: TransactionPatchBody
+  patch: TransactionPatchBody,
 ): Promise<void> {
   const { categoryId, date, name, notes, tags, userOverrideLocation } = patch;
 
@@ -109,11 +109,7 @@ export async function patchTransaction(
     // ── category ──────────────────────────────────────────────────────────
     if (categoryId !== undefined) {
       if (categoryId === null) {
-        const original = await restoreOriginalValue(
-          tx,
-          transactionId,
-          "category"
-        );
+        const original = await restoreOriginalValue(tx, transactionId, "category");
         if (original && typeof original === "object") {
           const parsed = original as { categoryId: string | null };
           if (parsed.categoryId) {
@@ -160,9 +156,7 @@ export async function patchTransaction(
 
     // ── Apply lockedFields mutations ───────────────────────────────────────
     const updatedLocked = [
-      ...current.lockedFields.filter(
-        (f) => !removeFromLocked.includes(f as EditableField)
-      ),
+      ...current.lockedFields.filter((f) => !removeFromLocked.includes(f as EditableField)),
       ...addToLocked.filter((f) => !current.lockedFields.includes(f)),
     ];
 

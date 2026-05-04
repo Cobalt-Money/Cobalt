@@ -19,10 +19,7 @@ import {
   portfolioSnapshotsQuerySchema,
   positionsQuerySchema,
 } from "@cobalt-web/server-data/brokerage/schemas";
-import {
-  fmpGetProfile,
-  fmpGetQuote,
-} from "@cobalt-web/server-data/research/fmp-ticker";
+import { fmpGetProfile, fmpGetQuote } from "@cobalt-web/server-data/research/fmp-ticker";
 import { getResearchNews } from "@cobalt-web/server-data/research/queries";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
 import { balanceSnapshotQuerySchema } from "@cobalt-web/server-data/snapshots/schemas";
@@ -45,9 +42,7 @@ interface BridgeRoute<S extends z.ZodTypeAny> {
   handler: (userId: string, args: z.infer<S>) => Promise<unknown>;
 }
 
-function defineRoute<S extends z.ZodTypeAny>(
-  r: BridgeRoute<S>
-): BridgeRoute<S> {
+function defineRoute<S extends z.ZodTypeAny>(r: BridgeRoute<S>): BridgeRoute<S> {
   return r;
 }
 
@@ -110,8 +105,7 @@ export const BRIDGE_ROUTES = {
     schema: emptySchema,
   }),
   "brokerage.portfolioSnapshots": defineRoute({
-    handler: async (userId, args) =>
-      await getPortfolioSnapshotsByUserId(userId, args),
+    handler: async (userId, args) => await getPortfolioSnapshotsByUserId(userId, args),
     schema: portfolioSnapshotsQuerySchema,
   }),
   "brokerage.positions": defineRoute({

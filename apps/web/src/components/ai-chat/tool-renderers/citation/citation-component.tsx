@@ -61,28 +61,14 @@ export const CitationComponent = memo(function CitationComponent({
     <InlineCitation>
       <InlineCitationCard>
         <InlineCitationCardTrigger sources={[url]}>
-          <img
-            alt=""
-            className="size-3.5 rounded-sm"
-            height={14}
-            src={faviconUrl}
-            width={14}
-          />
+          <img alt="" className="size-3.5 rounded-sm" height={14} src={faviconUrl} width={14} />
           {getSiteName(url)}
         </InlineCitationCardTrigger>
         <InlineCitationCardBody>
           <div className="p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <img
-                alt=""
-                className="size-4 rounded-sm"
-                height={16}
-                src={faviconUrl}
-                width={16}
-              />
-              <span className="text-xs text-muted-foreground">
-                {hostDisplay}
-              </span>
+              <img alt="" className="size-4 rounded-sm" height={16} src={faviconUrl} width={16} />
+              <span className="text-xs text-muted-foreground">{hostDisplay}</span>
             </div>
             {title ? (
               <a

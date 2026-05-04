@@ -1,14 +1,7 @@
 "use client";
 
 import { cn } from "@cobalt-web/ui/lib/utils";
-import {
-  addMinutes,
-  differenceInMinutes,
-  format,
-  isAfter,
-  isBefore,
-  parseISO,
-} from "date-fns";
+import { addMinutes, differenceInMinutes, format, isAfter, isBefore, parseISO } from "date-fns";
 import { motion } from "framer-motion";
 import { Resizable } from "re-resizable";
 import type { ResizeCallback } from "re-resizable";
@@ -27,11 +20,7 @@ const PIXELS_PER_HOUR = 96;
 const MINUTES_PER_PIXEL = 60 / PIXELS_PER_HOUR;
 const MIN_DURATION = 15; // in minutes
 
-export function ResizableEvent({
-  event,
-  children,
-  className,
-}: ResizableEventBlockProps) {
+export function ResizableEvent({ event, children, className }: ResizableEventBlockProps) {
   const { updateEvent, use24HourFormat } = useCalendar();
 
   const [isResizing, setIsResizing] = useState(false);
@@ -42,10 +31,7 @@ export function ResizableEvent({
 
   const start = useMemo(() => parseISO(event.startDate), [event.startDate]);
   const end = useMemo(() => parseISO(event.endDate), [event.endDate]);
-  const durationInMinutes = useMemo(
-    () => differenceInMinutes(end, start),
-    [start, end]
-  );
+  const durationInMinutes = useMemo(() => differenceInMinutes(end, start), [start, end]);
 
   const resizeBoundaries = useMemo(() => {
     const dayStart = new Date(start);
@@ -64,10 +50,7 @@ export function ResizableEvent({
   const handleResize: ResizeCallback = useCallback(
     (_e: MouseEvent | TouchEvent, direction: string, ref: HTMLElement) => {
       const newHeight = Number.parseInt(ref.style.height, 10);
-      const newDuration = Math.max(
-        MIN_DURATION,
-        Math.round((newHeight + 8) * MINUTES_PER_PIXEL)
-      );
+      const newDuration = Math.max(MIN_DURATION, Math.round((newHeight + 8) * MINUTES_PER_PIXEL));
       const delta = newDuration - durationInMinutes;
 
       let newStart = start;
@@ -97,15 +80,7 @@ export function ResizableEvent({
         startDate: newStart.toISOString(),
       });
     },
-    [
-      start,
-      end,
-      durationInMinutes,
-      resizeBoundaries,
-      use24HourFormat,
-      updateEvent,
-      event,
-    ]
+    [start, end, durationInMinutes, resizeBoundaries, use24HourFormat, updateEvent, event],
   );
 
   const handleResizeStop = useCallback(() => {
@@ -115,10 +90,7 @@ export function ResizableEvent({
 
   const resizeConfig = useMemo(
     () => ({
-      className: cn(
-        "transition-all duration-200",
-        isResizing && "z-50 shadow-lg"
-      ),
+      className: cn("transition-all duration-200", isResizing && "z-50 shadow-lg"),
       enable: {
         bottom: true,
         bottomLeft: false,
@@ -151,7 +123,7 @@ export function ResizableEvent({
       onResizeStart: handleResizeStart,
       onResizeStop: handleResizeStop,
     }),
-    [handleResizeStart, handleResize, handleResizeStop, isResizing]
+    [handleResizeStart, handleResize, handleResizeStop, isResizing],
   );
 
   return (

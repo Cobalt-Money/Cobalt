@@ -37,7 +37,7 @@ export function useTagOptions(): {
       data
         .filter((t) => t.archivedAt === null && isTagColor(t.color))
         .map((t) => ({ color: t.color as TagColor, id: t.id, name: t.name })),
-    [data]
+    [data],
   );
   return { isLoading: false, options };
 }
@@ -48,7 +48,7 @@ export function useCreateTag() {
     (input: { name: string; color: TagColor }): Promise<TagOption> => {
       const id = crypto.randomUUID();
       const { server } = zero.mutate(
-        mutators.tags.create({ color: input.color, id, name: input.name })
+        mutators.tags.create({ color: input.color, id, name: input.name }),
       );
       // Fire-and-forget: optimistic client run already inserted the row.
       // Surface server rejections via toast without blocking the caller.
@@ -65,7 +65,7 @@ export function useCreateTag() {
       })();
       return Promise.resolve({ color: input.color, id, name: input.name });
     },
-    [zero]
+    [zero],
   );
   return { isPending: false, mutateAsync: mutate };
 }
@@ -73,17 +73,14 @@ export function useCreateTag() {
 export function useUpdateTag() {
   const zero = useZero();
   const mutate = useCallback(
-    (input: {
-      tagId: string;
-      body: { name?: string; color?: TagColor; archived?: boolean };
-    }) => {
+    (input: { tagId: string; body: { name?: string; color?: TagColor; archived?: boolean } }) => {
       const { server } = zero.mutate(
         mutators.tags.update({
           archived: input.body.archived,
           color: input.body.color,
           name: input.body.name,
           tagId: input.tagId,
-        })
+        }),
       );
       void (async () => {
         try {
@@ -93,7 +90,7 @@ export function useUpdateTag() {
         }
       })();
     },
-    [zero]
+    [zero],
   );
   return { mutate };
 }
@@ -111,15 +108,13 @@ export function useDeleteTag() {
         }
       })();
     },
-    [zero]
+    [zero],
   );
   return { mutate };
 }
 
 export function useTransactionTagIds(transactionId: string | undefined) {
-  const [raw] = useQuery(
-    queries.tags.forTransaction({ transactionId: transactionId ?? "" })
-  );
+  const [raw] = useQuery(queries.tags.forTransaction({ transactionId: transactionId ?? "" }));
   const rows = raw as unknown as TransactionTagRow[];
   const data = useMemo(() => rows.map((r) => r.tagId), [rows]);
   return { data };
@@ -130,14 +125,14 @@ export function useSetTransactionTags() {
   const mutate = useCallback(
     (
       input: { transactionId: string; tagIds: string[] },
-      options?: { onError?: (err: unknown) => void }
+      options?: { onError?: (err: unknown) => void },
     ) => {
       const { server } = zero.mutate(
         mutators.tags.setTransactionTags({
           editId: crypto.randomUUID(),
           tagIds: input.tagIds,
           transactionId: input.transactionId,
-        })
+        }),
       );
       void (async () => {
         try {
@@ -150,7 +145,7 @@ export function useSetTransactionTags() {
         }
       })();
     },
-    [zero]
+    [zero],
   );
   return { mutate };
 }
@@ -158,25 +153,21 @@ export function useSetTransactionTags() {
 export function useBulkApplyTags() {
   const zero = useZero();
   const mutate = useCallback(
-    async (input: {
-      transactionIds: string[];
-      addTagIds?: string[];
-      removeTagIds?: string[];
-    }) => {
+    async (input: { transactionIds: string[]; addTagIds?: string[]; removeTagIds?: string[] }) => {
       const { server } = zero.mutate(
         mutators.tags.bulkApply({
           addTagIds: input.addTagIds ?? [],
           editIds: input.transactionIds.map(() => crypto.randomUUID()),
           removeTagIds: input.removeTagIds ?? [],
           transactionIds: input.transactionIds,
-        })
+        }),
       );
       const result = await server;
       if (result.type === "error") {
         throw new Error(result.error.message);
       }
     },
-    [zero]
+    [zero],
   );
   return { mutateAsync: mutate };
 }

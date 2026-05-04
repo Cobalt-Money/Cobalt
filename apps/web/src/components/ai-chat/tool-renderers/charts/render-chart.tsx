@@ -1,10 +1,5 @@
 import type { Spec } from "@json-render/core";
-import {
-  ActionProvider,
-  DataProvider,
-  Renderer,
-  VisibilityProvider,
-} from "@json-render/react";
+import { ActionProvider, DataProvider, Renderer, VisibilityProvider } from "@json-render/react";
 
 import { ToolErrorCard, ToolLoadingSkeleton } from "../shared";
 import type { ToolRendererContext } from "../types";
@@ -21,7 +16,7 @@ interface ChartInvocation {
 }
 
 function isChartSpec(
-  output: unknown
+  output: unknown,
 ): output is { root: string; elements: Record<string, unknown> } {
   return (
     typeof output === "object" &&
@@ -40,11 +35,7 @@ export function RenderChartToolRenderer({
   invocation: ChartInvocation;
   context: ToolRendererContext;
 }) {
-  if (
-    part.state === "output-available" &&
-    part.output &&
-    isChartSpec(part.output)
-  ) {
+  if (part.state === "output-available" && part.output && isChartSpec(part.output)) {
     return (
       <div key={toolRendererKey(context, "chart")} className="pb-4">
         <DataProvider initialData={{}}>

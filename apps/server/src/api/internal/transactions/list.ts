@@ -30,14 +30,8 @@ const route = createRoute({
   tags: ["Transactions"],
 });
 
-export const listRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const transactions = await getUserTransactions(
-      c.var.user.id,
-      c.req.valid("query")
-    );
-    c.header("Cache-Control", "private, max-age=60");
-    return c.json({ transactions }, 200);
-  }
-);
+export const listRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  const transactions = await getUserTransactions(c.var.user.id, c.req.valid("query"));
+  c.header("Cache-Control", "private, max-age=60");
+  return c.json({ transactions }, 200);
+});

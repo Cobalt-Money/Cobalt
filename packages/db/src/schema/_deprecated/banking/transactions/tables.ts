@@ -68,7 +68,7 @@ export const transaction = pgTable.withRLS(
     pending: boolean("pending").default(false).notNull(),
     pendingTransactionId: text("pending_transaction_id"),
     personalFinanceCategory: jsonb(
-      "personal_finance_category"
+      "personal_finance_category",
     ).$type<PersonalFinanceCategoryJson | null>(),
     personalFinanceCategoryIconUrl: text("personal_finance_category_icon_url"),
     plaidAccountId: text("plaid_account_id")
@@ -82,13 +82,9 @@ export const transaction = pgTable.withRLS(
       .defaultNow()
       .notNull()
       .$onUpdate(() => new Date()),
-    userOverrideCategory: jsonb(
-      "user_override_category"
-    ).$type<UserOverrideCategoryJson | null>(),
+    userOverrideCategory: jsonb("user_override_category").$type<UserOverrideCategoryJson | null>(),
     userOverrideDate: date("user_override_date"),
-    userOverrideLocation: jsonb(
-      "user_override_location"
-    ).$type<LocationJson | null>(),
+    userOverrideLocation: jsonb("user_override_location").$type<LocationJson | null>(),
     userOverrideName: text("user_override_name"),
     website: text("website"),
   },
@@ -100,7 +96,7 @@ export const transaction = pgTable.withRLS(
     index("transaction_date_pending_idx").on(table.date, table.pending),
     appFullAccess(),
     agentSelectViaBankAccount(table.plaidAccountId),
-  ]
+  ],
 );
 
 export type Transaction = typeof transaction.$inferInsert;

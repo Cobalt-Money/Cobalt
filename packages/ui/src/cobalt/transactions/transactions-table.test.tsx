@@ -16,9 +16,7 @@ vi.mock(import("@tanstack/react-router"), async (importOriginal) => {
   };
 });
 
-function createMockTransaction(
-  overrides: Partial<TransactionListItem> = {}
-): TransactionListItem {
+function createMockTransaction(overrides: Partial<TransactionListItem> = {}): TransactionListItem {
   return {
     accountName: "Checking",
     accountType: "depository",
@@ -64,7 +62,7 @@ describe(TransactionsTable, () => {
     expect(
       within(table).getByRole("checkbox", {
         name: "Select transaction Coffee Shop Purchase",
-      })
+      }),
     ).toBeTruthy();
   });
 });
