@@ -20,10 +20,9 @@ const zeroRouter = new OpenAPIHono<AppEnv>()
   .post("/query", requirePaidUser, async (c) => {
     const zeroContext = c.get("zeroContext");
     const result = await handleQueryRequest(
-      (name, args) =>
-        mustGetQuery(queries, name).fn({ args, ctx: zeroContext }),
+      (name, args) => mustGetQuery(queries, name).fn({ args, ctx: zeroContext }),
       schema,
-      c.req.raw
+      c.req.raw,
     );
     return c.json(result);
   })
@@ -42,9 +41,9 @@ const zeroRouter = new OpenAPIHono<AppEnv>()
               args,
               ctx: zeroContext,
               tx,
-            })
+            }),
           ),
-        c.req.raw
+        c.req.raw,
       );
       return c.json(result);
     } catch (error) {

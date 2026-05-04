@@ -106,13 +106,8 @@ export const chartQueryOptions = (symbol: string, timePeriod: ChartPeriod) =>
 // ── Screener → ticker cache bridging ──────────────────────────────
 
 /** Finds the screener row for a symbol in the React Query cache, if loaded. */
-export function screenerRowFor(
-  queryClient: QueryClient,
-  symbol: string
-): ScreenerRow | undefined {
-  const cached = queryClient.getQueryData<ScreenerResponse>(
-    screenerQueryOptions.queryKey
-  );
+export function screenerRowFor(queryClient: QueryClient, symbol: string): ScreenerRow | undefined {
+  const cached = queryClient.getQueryData<ScreenerResponse>(screenerQueryOptions.queryKey);
   const target = symbol.trim().toUpperCase();
   return cached?.results.find((r) => {
     const s = r.symbol ?? r.ticker;
@@ -123,7 +118,7 @@ export function screenerRowFor(
 /** Maps a screener row to the quote shape, for placeholder rendering. */
 export function screenerRowToQuote(
   row: ScreenerRow,
-  fallbackSymbol: string
+  fallbackSymbol: string,
 ): TickerQuote | undefined {
   const price = typeof row.price === "number" ? row.price : null;
   if (price === null) {

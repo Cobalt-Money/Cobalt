@@ -21,7 +21,7 @@ function cobaltCommandDialogPopupClassNames() {
     /* Below app chrome, clearly above vertical center (not `top-1/2` / mid-screen). */
     "fixed top-[max(6rem,13svh)] left-1/2 z-50 flex w-full max-w-[calc(100%-2rem)] -translate-x-1/2 translate-y-0 flex-col overflow-hidden rounded-3xl! p-0 text-sm duration-100 outline-none",
     "max-h-[min(55vh,35rem)] sm:max-w-2xl",
-    "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
+    "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
   );
 }
 
@@ -33,10 +33,7 @@ const cobaltCommandDialogContentClassName =
 const cobaltCommandDialogOverlayClassName =
   "bg-black/25 supports-backdrop-filter:backdrop-blur-none";
 
-type CobaltCommandDialogProps = Omit<
-  ComponentProps<typeof Dialog>,
-  "children"
-> & {
+type CobaltCommandDialogProps = Omit<ComponentProps<typeof Dialog>, "children"> & {
   title?: string;
   description?: string;
   className?: string;
@@ -69,20 +66,14 @@ function CobaltCommandDialog({
           className={cn(
             cobaltCommandDialogPopupClassNames(),
             cobaltCommandDialogContentClassName,
-            className
+            className,
           )}
         >
           {children}
           {showCloseButton ? (
             <DialogPrimitive.Close
               data-slot="dialog-close"
-              render={
-                <Button
-                  variant="ghost"
-                  className="absolute top-4 right-4"
-                  size="icon-sm"
-                />
-              }
+              render={<Button variant="ghost" className="absolute top-4 right-4" size="icon-sm" />}
             >
               <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
               <span className="sr-only">Close</span>
@@ -98,10 +89,7 @@ function CobaltCommandDialog({
  * cmdk root styled for the Cobalt command palette (Linear / Mobbin-style shell).
  * Use inside {@link CobaltCommandDialog} with {@link CobaltCommandInput}, {@link CommandList}, etc.
  */
-function CobaltCommandPaletteRoot({
-  className,
-  ...props
-}: ComponentProps<typeof Command>) {
+function CobaltCommandPaletteRoot({ className, ...props }: ComponentProps<typeof Command>) {
   return (
     <Command
       className={cn(
@@ -118,7 +106,7 @@ function CobaltCommandPaletteRoot({
         "[&_[cmdk-item]]:!rounded-lg",
         "[&_[cmdk-item]]:!px-4 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5",
         "[&_[cmdk-empty]]:!px-4",
-        className
+        className,
       )}
       {...props}
     />
@@ -139,7 +127,7 @@ function CobaltCommandInput({
         data-slot="command-input"
         className={cn(
           "w-full border-0 bg-transparent text-base outline-none placeholder:text-muted-foreground focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
-          className
+          className,
         )}
         {...props}
       />

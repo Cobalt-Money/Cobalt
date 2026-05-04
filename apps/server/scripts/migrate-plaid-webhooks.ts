@@ -32,8 +32,7 @@ if (!targetUrl) {
 
 const { plaidClient } = await import("@cobalt-web/clients/plaid");
 const { db } = await import("@cobalt-web/db");
-const { plaidConnection } =
-  await import("@cobalt-web/db/schema/providers/plaid/connection");
+const { plaidConnection } = await import("@cobalt-web/db/schema/providers/plaid/connection");
 const { eq, ne, isNull, or } = await import("drizzle-orm");
 
 // Pull every connection whose stored webhook URL doesn't match the target.
@@ -46,15 +45,10 @@ const rows = await db
     webhookUrl: plaidConnection.webhookUrl,
   })
   .from(plaidConnection)
-  .where(
-    or(
-      isNull(plaidConnection.webhookUrl),
-      ne(plaidConnection.webhookUrl, targetUrl)
-    )
-  );
+  .where(or(isNull(plaidConnection.webhookUrl), ne(plaidConnection.webhookUrl, targetUrl)));
 
 console.log(
-  `Found ${rows.length} Plaid Items to repoint → ${targetUrl} ${APPLY ? "(APPLY)" : "(dry-run)"}`
+  `Found ${rows.length} Plaid Items to repoint → ${targetUrl} ${APPLY ? "(APPLY)" : "(dry-run)"}`,
 );
 for (const r of rows) {
   console.log(`  ${r.itemId}  current=${r.webhookUrl ?? "(null)"}`);
@@ -80,10 +74,7 @@ for (const r of rows) {
     console.log(`✓ ${r.itemId}`);
     ok += 1;
   } catch (error) {
-    console.error(
-      `✗ ${r.itemId}`,
-      error instanceof Error ? error.message : error
-    );
+    console.error(`✗ ${r.itemId}`, error instanceof Error ? error.message : error);
     fail += 1;
   }
 }

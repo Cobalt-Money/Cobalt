@@ -36,14 +36,13 @@ const CONCURRENCY = 5;
 const DELAY_MS = 200;
 
 const { db } = await import("@cobalt-web/db");
-const { plaidConnection } =
-  await import("@cobalt-web/db/schema/providers/plaid/connection");
+const { plaidConnection } = await import("@cobalt-web/db/schema/providers/plaid/connection");
 const { plaidClient } = await import("@cobalt-web/clients/plaid");
 const { eq, and, isNotNull, ne } = await import("drizzle-orm");
 
 const baseWhere = and(
   isNotNull(plaidConnection.plaidAccessToken),
-  ne(plaidConnection.plaidAccessToken, "")
+  ne(plaidConnection.plaidAccessToken, ""),
 );
 const filters = [baseWhere];
 if (ITEM_ID) {
@@ -68,14 +67,12 @@ const rows = await db
 const mode = APPLY ? "(APPLY)" : "(dry-run)";
 const itemFilter = ITEM_ID ? ` filtered to item=${ITEM_ID}` : "";
 const userFilter = USER_ID ? ` filtered to user=${USER_ID}` : "";
-console.log(
-  `Will trigger sync for ${rows.length} Item(s) ${mode}${itemFilter}${userFilter}`
-);
+console.log(`Will trigger sync for ${rows.length} Item(s) ${mode}${itemFilter}${userFilter}`);
 
 const noCursor = rows.filter((r) => !r.cursor || r.cursor === "");
 if (noCursor.length > 0) {
   console.log(
-    `\n⚠ ${noCursor.length} Item(s) have no cursor — first sync will be FULL historical:`
+    `\n⚠ ${noCursor.length} Item(s) have no cursor — first sync will be FULL historical:`,
   );
   for (const r of noCursor) {
     console.log(`  ${r.itemId}  (${r.institutionName ?? "?"})`);
@@ -107,8 +104,7 @@ async function runOne(r: (typeof rows)[number]) {
         error as {
           response?: { data?: { error_code?: string; error_message?: string } };
         }
-      ).response?.data?.error_code ??
-      (error instanceof Error ? error.message : String(error));
+      ).response?.data?.error_code ?? (error instanceof Error ? error.message : String(error));
     console.log(`✗ ${r.itemId}  (${r.institutionName ?? "?"})  ${msg}`);
     fail += 1;
     failures.push({ error: String(msg), itemId: r.itemId });
@@ -137,9 +133,7 @@ if (failures.length > 0) {
   for (const f of failures) {
     byCode[f.error] = (byCode[f.error] ?? 0) + 1;
   }
-  for (const [code, n] of Object.entries(byCode).toSorted(
-    (a, b) => b[1] - a[1]
-  )) {
+  for (const [code, n] of Object.entries(byCode).toSorted((a, b) => b[1] - a[1])) {
     console.log(`  ${code}: ${n}`);
   }
 }

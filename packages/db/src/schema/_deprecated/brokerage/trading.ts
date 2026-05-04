@@ -95,15 +95,13 @@ export const brokerageOrders = pgTable.withRLS(
     index("brokerage_order_account_id_idx").on(table.accountId),
     index("brokerage_order_user_id_idx").on(table.userId),
     index("brokerage_order_brokerage_order_id_idx").on(table.brokerageOrderId),
-    index("brokerage_order_snap_trade_account_id_idx").on(
-      table.snapTradeAccountId
-    ),
+    index("brokerage_order_snap_trade_account_id_idx").on(table.snapTradeAccountId),
     index("brokerage_order_status_idx").on(table.status),
     index("brokerage_order_symbol_idx").on(table.symbol),
     index("brokerage_order_time_placed_idx").on(table.timePlaced),
     appFullAccess(),
     agentSelectOwn("user_id"),
-  ]
+  ],
 );
 
 /** @deprecated Use `investmentActivity` from `@cobalt-web/db/schema/investments/investment-activity`. */
@@ -174,20 +172,15 @@ export const brokerageActivities = pgTable.withRLS(
     index("brokerage_activity_account_id_idx").on(table.accountId),
     index("brokerage_activity_user_id_idx").on(table.userId),
     index("brokerage_activity_activity_id_idx").on(table.activityId),
-    index("brokerage_activity_snap_trade_account_id_idx").on(
-      table.snapTradeAccountId
-    ),
+    index("brokerage_activity_snap_trade_account_id_idx").on(table.snapTradeAccountId),
     index("brokerage_activity_type_idx").on(table.type),
     index("brokerage_activity_symbol_ticker_idx").on(table.symbolTicker),
     index("brokerage_activity_trade_date_idx").on(table.tradeDate),
     index("brokerage_activity_settlement_date_idx").on(table.settlementDate),
-    index("brokerage_activity_user_trade_date_idx").on(
-      table.userId,
-      table.tradeDate
-    ),
+    index("brokerage_activity_user_trade_date_idx").on(table.userId, table.tradeDate),
     appFullAccess(),
     agentSelectOwn("user_id"),
-  ]
+  ],
 );
 
 // Type exports

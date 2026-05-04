@@ -1,10 +1,6 @@
 import { db } from "@cobalt-web/db";
 
-import type {
-  DetailedFinancialEvent,
-  EventArticleDTO,
-  EventVideoDTO,
-} from "./schemas.js";
+import type { DetailedFinancialEvent, EventArticleDTO, EventVideoDTO } from "./schemas.js";
 
 // ── Helpers ────────────────────────────────────────────────────────
 
@@ -12,15 +8,12 @@ const VIDEO_URL_PATTERNS = ["youtube.com", "youtu.be", "vimeo.com"];
 
 const isVideo = (article: { type: string | null; newsUrl: string }): boolean =>
   (article.type?.toLowerCase().includes("video") ?? false) ||
-  VIDEO_URL_PATTERNS.some((pattern) =>
-    article.newsUrl.toLowerCase().includes(pattern)
-  );
+  VIDEO_URL_PATTERNS.some((pattern) => article.newsUrl.toLowerCase().includes(pattern));
 
-const toISOStringOrNull = (val: Date | null): string | null =>
-  val ? val.toISOString() : null;
+const toISOStringOrNull = (val: Date | null): string | null => (val ? val.toISOString() : null);
 
 const getAllSources = (
-  articles: { sourceName: string | null }[]
+  articles: { sourceName: string | null }[],
 ): { logo: string; name: string }[] => {
   const seen = new Set<string>();
   const sources: { logo: string; name: string }[] = [];
@@ -45,7 +38,7 @@ const getAllSources = (
 
 export async function getFinancialEventDetails(
   _userId: string,
-  eventId: string
+  eventId: string,
 ): Promise<DetailedFinancialEvent | null> {
   const row = await db.query.financialEvents.findFirst({
     where: { id: { eq: eventId } },

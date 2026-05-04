@@ -17,7 +17,7 @@ const STRIPE_ENTITLED_STATUSES = new Set(["active", "past_due", "trialing"]);
  */
 export function stripeSubscriptionGrantsAccess(
   sub: Pick<Subscription, "cancelAtPeriodEnd" | "periodEnd" | "status">,
-  now: Date
+  now: Date,
 ): boolean {
   if (STRIPE_ENTITLED_STATUSES.has(sub.status)) {
     return true;
@@ -34,7 +34,7 @@ export function stripeSubscriptionGrantsAccess(
  */
 export function mobileSubscriptionGrantsAccess(
   sub: Pick<MobileSubscription, "expiresAt" | "status">,
-  now: Date
+  now: Date,
 ): boolean {
   if (sub.status !== "active") {
     return false;

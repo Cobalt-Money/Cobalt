@@ -10,7 +10,7 @@ import { db } from "@cobalt-web/db";
  */
 export async function createBillingPortalSession(
   userId: string,
-  returnUrl: string
+  returnUrl: string,
 ): Promise<string> {
   const user = await db.query.user.findFirst({
     columns: { stripeCustomerId: true },

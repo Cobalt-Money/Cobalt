@@ -17,16 +17,14 @@ config({ path: resolve(import.meta.dir, "../.env"), quiet: true });
 const APPLY = process.argv.includes("--apply");
 
 const { db } = await import("@cobalt-web/db");
-const { plaidConnection } =
-  await import("@cobalt-web/db/schema/providers/plaid/connection");
-const { financialAccount } =
-  await import("@cobalt-web/db/schema/accounts/account");
+const { plaidConnection } = await import("@cobalt-web/db/schema/providers/plaid/connection");
+const { financialAccount } = await import("@cobalt-web/db/schema/accounts/account");
 const { inArray, like, or, sql } = await import("drizzle-orm");
 
 // Match seed-pattern item IDs.
 const matchPredicate = or(
   like(plaidConnection.plaidItemId, "demo-item-%"),
-  like(plaidConnection.plaidItemId, "rv-item-%")
+  like(plaidConnection.plaidItemId, "rv-item-%"),
 );
 
 const rows = await db
@@ -56,11 +54,9 @@ const acctRows = await db
 const cascadeAccountCount = acctRows[0]?.c ?? 0;
 
 console.log(
-  `\nCascade impact: ${cascadeAccountCount} account row(s) will be deleted via FK cascade`
+  `\nCascade impact: ${cascadeAccountCount} account row(s) will be deleted via FK cascade`,
 );
-console.log(
-  "(further cascades may follow: transactions, balances, snapshots, etc.)"
-);
+console.log("(further cascades may follow: transactions, balances, snapshots, etc.)");
 
 if (!APPLY) {
   console.log("\nDry-run. Re-run with --apply to delete.");

@@ -124,9 +124,7 @@ export function AddAccountGrid({
     const deduped = [...byKey.values()];
 
     if (isSearchActive) {
-      return deduped
-        .filter((i) => i.name.toLowerCase().includes(trimmedQuery))
-        .slice(0, 60);
+      return deduped.filter((i) => i.name.toLowerCase().includes(trimmedQuery)).slice(0, 60);
     }
 
     return deduped;
@@ -137,10 +135,7 @@ export function AddAccountGrid({
       {/* Left rail */}
       <nav
         aria-label="Account categories"
-        className={cn(
-          "flex shrink-0 flex-col gap-1",
-          compact ? "w-36 p-2" : "w-44 p-3"
-        )}
+        className={cn("flex shrink-0 flex-col gap-1", compact ? "w-36 p-2" : "w-44 p-3")}
       >
         {FILTERS.map((f) => {
           const active = activeFilter === f.id;
@@ -150,7 +145,7 @@ export function AddAccountGrid({
                 "rounded-md px-3 py-2 text-left font-medium text-sm transition-colors",
                 active
                   ? "bg-input/40 text-foreground"
-                  : "text-muted-foreground hover:bg-input/20 hover:text-foreground"
+                  : "text-muted-foreground hover:bg-input/20 hover:text-foreground",
               )}
               key={f.id}
               onClick={() => {
@@ -168,7 +163,7 @@ export function AddAccountGrid({
       <div
         className={cn(
           "flex min-w-0 flex-1 flex-col overflow-y-auto",
-          compact ? "no-scrollbar px-4 py-3" : "scrollbar-thin px-5 py-4"
+          compact ? "no-scrollbar px-4 py-3" : "scrollbar-thin px-5 py-4",
         )}
       >
         {visible.length === 0 ? (
@@ -183,7 +178,7 @@ export function AddAccountGrid({
               "grid gap-x-3 gap-y-5",
               compact
                 ? "grid-cols-4 sm:grid-cols-5"
-                : "grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7"
+                : "grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7",
             )}
           >
             {visible.map((inst) => (
@@ -199,21 +194,16 @@ export function AddAccountGrid({
                   <div
                     className={cn(
                       "flex items-center justify-center overflow-hidden rounded-2xl bg-amber-50 transition-transform group-hover:scale-105",
-                      compact ? "size-14" : "size-16"
+                      compact ? "size-14" : "size-16",
                     )}
                   >
-                    <img
-                      alt=""
-                      aria-hidden
-                      className="size-10"
-                      src="/assets/vectors/cash.svg"
-                    />
+                    <img alt="" aria-hidden className="size-10" src="/assets/vectors/cash.svg" />
                   </div>
                 ) : (
                   <InstitutionLogo
                     className={cn(
                       "overflow-hidden rounded-2xl transition-transform group-hover:scale-105",
-                      compact ? "size-14" : "size-16"
+                      compact ? "size-14" : "size-16",
                     )}
                     institutionLogo={inst.logo}
                     institutionName={inst.name}

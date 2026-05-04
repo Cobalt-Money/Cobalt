@@ -1,9 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
-import {
-  eventsQuerySchema,
-  eventsResponseSchema,
-} from "../news/events/schemas.js";
+import { eventsQuerySchema, eventsResponseSchema } from "../news/events/schemas.js";
 import {
   activitiesResponseSchema,
   balancesResponseSchema,

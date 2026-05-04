@@ -24,7 +24,7 @@ export function useTransactions(filters: Filters = {}) {
       amountMin: filters.amountMin,
       bank: filters.bank ? [...filters.bank] : [],
       status: filters.status ?? "all",
-    })
+    }),
   );
 
   const items = useMemo(
@@ -32,7 +32,7 @@ export function useTransactions(filters: Filters = {}) {
       rows
         .map((row) => mapZeroTransactionListRow(row))
         .filter((item): item is TransactionListItem => item !== null),
-    [rows]
+    [rows],
   );
 
   return {
@@ -43,8 +43,5 @@ export function useTransactions(filters: Filters = {}) {
 
 export function useHistory(transactionId: string) {
   const [rows] = useQuery(queries.transactions.activity({ transactionId }));
-  return useMemo(
-    () => (rows as ZeroTransactionEditRow[]).map(mapZeroTransactionEditRow),
-    [rows]
-  );
+  return useMemo(() => (rows as ZeroTransactionEditRow[]).map(mapZeroTransactionEditRow), [rows]);
 }

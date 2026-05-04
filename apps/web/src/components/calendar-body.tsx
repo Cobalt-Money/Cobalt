@@ -34,16 +34,10 @@ export function CalendarBody() {
         transition={transition}
       >
         {view === "month" && (
-          <CalendarMonthView
-            singleDayEvents={singleDayEvents}
-            multiDayEvents={multiDayEvents}
-          />
+          <CalendarMonthView singleDayEvents={singleDayEvents} multiDayEvents={multiDayEvents} />
         )}
         {view === "year" && (
-          <CalendarYearView
-            singleDayEvents={singleDayEvents}
-            multiDayEvents={multiDayEvents}
-          />
+          <CalendarYearView singleDayEvents={singleDayEvents} multiDayEvents={multiDayEvents} />
         )}
       </motion.div>
     </div>

@@ -22,13 +22,12 @@ export async function listUserAccounts(creds: UserCreds): Promise<Account[]> {
 /** Get details for a single SnapTrade account. */
 export async function getUserAccountDetails(
   accountId: string,
-  creds: UserCreds
+  creds: UserCreds,
 ): Promise<Account | undefined> {
-  const response =
-    await snaptradeClient.accountInformation.getUserAccountDetails({
-      accountId,
-      userId: creds.providerUserId,
-      userSecret: creds.userSecret,
-    });
+  const response = await snaptradeClient.accountInformation.getUserAccountDetails({
+    accountId,
+    userId: creds.providerUserId,
+    userSecret: creds.userSecret,
+  });
   return response.data as Account | undefined;
 }

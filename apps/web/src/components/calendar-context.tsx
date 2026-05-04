@@ -1,13 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 import { useLocalStorage } from "@/components/hooks";
 import type { IEvent, IUser } from "@/components/interfaces";
@@ -66,32 +60,21 @@ export function CalendarProvider({
   view?: TCalendarView;
   badge?: "dot" | "colored";
 }) {
-  const [settings, setSettings] = useLocalStorage<CalendarSettings>(
-    "calendar-settings",
-    {
-      ...DEFAULT_SETTINGS,
-      badgeVariant: badge,
-      view: view,
-    }
-  );
+  const [settings, setSettings] = useLocalStorage<CalendarSettings>("calendar-settings", {
+    ...DEFAULT_SETTINGS,
+    badgeVariant: badge,
+    view: view,
+  });
 
-  const [badgeVariant, setBadgeVariantState] = useState<"dot" | "colored">(
-    settings.badgeVariant
+  const [badgeVariant, setBadgeVariantState] = useState<"dot" | "colored">(settings.badgeVariant);
+  const [currentView, setCurrentViewState] = useState<TCalendarView>(settings.view);
+  const [use24HourFormat, setUse24HourFormatState] = useState<boolean>(settings.use24HourFormat);
+  const [agendaModeGroupBy, setAgendaModeGroupByState] = useState<"date" | "color">(
+    settings.agendaModeGroupBy,
   );
-  const [currentView, setCurrentViewState] = useState<TCalendarView>(
-    settings.view
-  );
-  const [use24HourFormat, setUse24HourFormatState] = useState<boolean>(
-    settings.use24HourFormat
-  );
-  const [agendaModeGroupBy, setAgendaModeGroupByState] = useState<
-    "date" | "color"
-  >(settings.agendaModeGroupBy);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedUserId, setSelectedUserId] = useState<IUser["id"] | "all">(
-    "all"
-  );
+  const [selectedUserId, setSelectedUserId] = useState<IUser["id"] | "all">("all");
   const [selectedColors, setSelectedColors] = useState<TEventColor[]>([]);
 
   const [allEvents, setAllEvents] = useState<IEvent[]>(events || []);
@@ -101,7 +84,7 @@ export function CalendarProvider({
     (newPartialSettings: Partial<CalendarSettings>) => {
       setSettings((prev) => ({ ...prev, ...newPartialSettings }));
     },
-    [setSettings]
+    [setSettings],
   );
 
   const setBadgeVariant = useCallback(
@@ -109,7 +92,7 @@ export function CalendarProvider({
       setBadgeVariantState(variant);
       updateSettings({ badgeVariant: variant });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const setView = useCallback(
@@ -117,7 +100,7 @@ export function CalendarProvider({
       setCurrentViewState(newView);
       updateSettings({ view: newView });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const toggleTimeFormat = useCallback(() => {
@@ -131,7 +114,7 @@ export function CalendarProvider({
       setAgendaModeGroupByState(groupBy);
       updateSettings({ agendaModeGroupBy: groupBy });
     },
-    [updateSettings]
+    [updateSettings],
   );
 
   const filterEventsBySelectedColors = useCallback(
@@ -153,7 +136,7 @@ export function CalendarProvider({
 
       setSelectedColors(newColors);
     },
-    [allEvents, selectedColors]
+    [allEvents, selectedColors],
   );
 
   const filterEventsBySelectedUser = useCallback(
@@ -166,7 +149,7 @@ export function CalendarProvider({
         setFilteredEvents(filtered);
       }
     },
-    [allEvents]
+    [allEvents],
   );
 
   const handleSelectDate = useCallback((date: Date | undefined) => {
@@ -189,9 +172,7 @@ export function CalendarProvider({
     };
 
     setAllEvents((prev) => prev.map((e) => (e.id === event.id ? updated : e)));
-    setFilteredEvents((prev) =>
-      prev.map((e) => (e.id === event.id ? updated : e))
-    );
+    setFilteredEvents((prev) => prev.map((e) => (e.id === event.id ? updated : e)));
   }, []);
 
   const removeEvent = useCallback((eventId: number) => {
@@ -250,14 +231,10 @@ export function CalendarProvider({
       updateEvent,
       use24HourFormat,
       users,
-    ]
+    ],
   );
 
-  return (
-    <CalendarContext.Provider value={value}>
-      {children}
-    </CalendarContext.Provider>
-  );
+  return <CalendarContext.Provider value={value}>{children}</CalendarContext.Provider>;
 }
 
 export function useCalendar(): ICalendarContext {

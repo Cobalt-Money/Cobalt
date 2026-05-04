@@ -3,14 +3,16 @@ import { relations } from "drizzle-orm/_relations";
 
 import { financialAccount } from "./accounts/account";
 import { balance } from "./accounts/balance";
+import { category } from "./accounts/banking/categories/category";
+import { categoryGroup } from "./accounts/banking/categories/category-group";
 import { creditLiability } from "./accounts/banking/liabilities/credit";
 import { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
 import { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
+import { tag } from "./accounts/banking/tags/tag";
+import { transactionTag } from "./accounts/banking/tags/transaction-tag";
 import { recurring } from "./accounts/banking/transactions/recurring";
-import { tag } from "./accounts/banking/transactions/tag";
 import { transaction } from "./accounts/banking/transactions/transaction";
 import { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
-import { transactionTag } from "./accounts/banking/transactions/transaction-tag";
 import { holding } from "./accounts/investments/holding";
 import { investmentActivity } from "./accounts/investments/investment-activity";
 import { orders } from "./accounts/investments/order";
@@ -35,6 +37,8 @@ import { subscription } from "./users/subscriptions/stripe";
 export const userRelations = relations(user, ({ one, many }) => ({
   accounts: many(account),
   balances: many(balance),
+  categories: many(category),
+  categoryGroups: many(categoryGroup),
   chats: many(chats),
   feedback: many(feedback),
   financialAccounts: many(financialAccount),
@@ -105,33 +109,30 @@ export const partsRelations = relations(parts, ({ one }) => ({
 
 // Unified-schema (SRI-264) relations
 
-export const financialAccountRelations = relations(
-  financialAccount,
-  ({ one, many }) => ({
-    balance: one(balance),
-    creditLiability: one(creditLiability),
-    holdings: many(holding),
-    investmentActivities: many(investmentActivity),
-    mortgageLiability: one(mortgageLiability),
-    orders: many(orders),
-    plaidConnection: one(plaidConnection, {
-      fields: [financialAccount.plaidConnectionId],
-      references: [plaidConnection.id],
-    }),
-    recurringStreams: many(recurring),
-    snapshots: many(snapshot),
-    snaptradeAuthorization: one(snaptradeAuthorization, {
-      fields: [financialAccount.snaptradeAuthorizationId],
-      references: [snaptradeAuthorization.id],
-    }),
-    studentLoanLiability: one(studentLoanLiability),
-    transactions: many(transaction),
-    user: one(user, {
-      fields: [financialAccount.userId],
-      references: [user.id],
-    }),
-  })
-);
+export const financialAccountRelations = relations(financialAccount, ({ one, many }) => ({
+  balance: one(balance),
+  creditLiability: one(creditLiability),
+  holdings: many(holding),
+  investmentActivities: many(investmentActivity),
+  mortgageLiability: one(mortgageLiability),
+  orders: many(orders),
+  plaidConnection: one(plaidConnection, {
+    fields: [financialAccount.plaidConnectionId],
+    references: [plaidConnection.id],
+  }),
+  recurringStreams: many(recurring),
+  snapshots: many(snapshot),
+  snaptradeAuthorization: one(snaptradeAuthorization, {
+    fields: [financialAccount.snaptradeAuthorizationId],
+    references: [snaptradeAuthorization.id],
+  }),
+  studentLoanLiability: one(studentLoanLiability),
+  transactions: many(transaction),
+  user: one(user, {
+    fields: [financialAccount.userId],
+    references: [user.id],
+  }),
+}));
 
 export const balanceRelations = relations(balance, ({ one }) => ({
   account: one(financialAccount, {
@@ -196,10 +197,35 @@ export const transactionRelations = relations(transaction, ({ many, one }) => ({
     fields: [transaction.accountId],
     references: [financialAccount.id],
   }),
+  category: one(category, {
+    fields: [transaction.categoryId],
+    references: [category.id],
+  }),
   edits: many(transactionEdit),
   transactionTags: many(transactionTag),
   user: one(user, {
     fields: [transaction.userId],
+    references: [user.id],
+  }),
+}));
+
+export const categoryRelations = relations(category, ({ many, one }) => ({
+  group: one(categoryGroup, {
+    fields: [category.groupId],
+    references: [categoryGroup.id],
+  }),
+  recurringStreams: many(recurring),
+  transactions: many(transaction),
+  user: one(user, {
+    fields: [category.userId],
+    references: [user.id],
+  }),
+}));
+
+export const categoryGroupRelations = relations(categoryGroup, ({ many, one }) => ({
+  categories: many(category),
+  user: one(user, {
+    fields: [categoryGroup.userId],
     references: [user.id],
   }),
 }));
@@ -223,20 +249,21 @@ export const transactionTagRelations = relations(transactionTag, ({ one }) => ({
   }),
 }));
 
-export const transactionEditRelations = relations(
-  transactionEdit,
-  ({ one }) => ({
-    transaction: one(transaction, {
-      fields: [transactionEdit.transactionId],
-      references: [transaction.id],
-    }),
-  })
-);
+export const transactionEditRelations = relations(transactionEdit, ({ one }) => ({
+  transaction: one(transaction, {
+    fields: [transactionEdit.transactionId],
+    references: [transaction.id],
+  }),
+}));
 
 export const recurringStreamRelations = relations(recurring, ({ one }) => ({
   account: one(financialAccount, {
     fields: [recurring.accountId],
     references: [financialAccount.id],
+  }),
+  category: one(category, {
+    fields: [recurring.categoryId],
+    references: [category.id],
   }),
   user: one(user, {
     fields: [recurring.userId],
@@ -244,80 +271,65 @@ export const recurringStreamRelations = relations(recurring, ({ one }) => ({
   }),
 }));
 
-export const investmentActivityRelations = relations(
-  investmentActivity,
-  ({ one }) => ({
-    account: one(financialAccount, {
-      fields: [investmentActivity.accountId],
-      references: [financialAccount.id],
-    }),
-    security: one(security, {
-      fields: [investmentActivity.securityId],
-      references: [security.id],
-    }),
-    user: one(user, {
-      fields: [investmentActivity.userId],
-      references: [user.id],
-    }),
-  })
-);
+export const investmentActivityRelations = relations(investmentActivity, ({ one }) => ({
+  account: one(financialAccount, {
+    fields: [investmentActivity.accountId],
+    references: [financialAccount.id],
+  }),
+  security: one(security, {
+    fields: [investmentActivity.securityId],
+    references: [security.id],
+  }),
+  user: one(user, {
+    fields: [investmentActivity.userId],
+    references: [user.id],
+  }),
+}));
 
-export const creditLiabilityRelations = relations(
-  creditLiability,
-  ({ one }) => ({
-    account: one(financialAccount, {
-      fields: [creditLiability.accountId],
-      references: [financialAccount.id],
-    }),
-    user: one(user, {
-      fields: [creditLiability.userId],
-      references: [user.id],
-    }),
-  })
-);
+export const creditLiabilityRelations = relations(creditLiability, ({ one }) => ({
+  account: one(financialAccount, {
+    fields: [creditLiability.accountId],
+    references: [financialAccount.id],
+  }),
+  user: one(user, {
+    fields: [creditLiability.userId],
+    references: [user.id],
+  }),
+}));
 
-export const mortgageLiabilityRelations = relations(
-  mortgageLiability,
-  ({ one }) => ({
-    account: one(financialAccount, {
-      fields: [mortgageLiability.accountId],
-      references: [financialAccount.id],
-    }),
-    user: one(user, {
-      fields: [mortgageLiability.userId],
-      references: [user.id],
-    }),
-  })
-);
+export const mortgageLiabilityRelations = relations(mortgageLiability, ({ one }) => ({
+  account: one(financialAccount, {
+    fields: [mortgageLiability.accountId],
+    references: [financialAccount.id],
+  }),
+  user: one(user, {
+    fields: [mortgageLiability.userId],
+    references: [user.id],
+  }),
+}));
 
-export const studentLoanLiabilityRelations = relations(
-  studentLoanLiability,
-  ({ one }) => ({
-    account: one(financialAccount, {
-      fields: [studentLoanLiability.accountId],
-      references: [financialAccount.id],
-    }),
-    user: one(user, {
-      fields: [studentLoanLiability.userId],
-      references: [user.id],
-    }),
-  })
-);
+export const studentLoanLiabilityRelations = relations(studentLoanLiability, ({ one }) => ({
+  account: one(financialAccount, {
+    fields: [studentLoanLiability.accountId],
+    references: [financialAccount.id],
+  }),
+  user: one(user, {
+    fields: [studentLoanLiability.userId],
+    references: [user.id],
+  }),
+}));
 
-export const plaidConnectionRelations = relations(
-  plaidConnection,
-  ({ one, many }) => ({
-    accounts: many(financialAccount),
-    institution: one(institution, {
-      fields: [plaidConnection.institutionId],
-      references: [institution.plaidInstitutionId],
-    }),
-    user: one(user, {
-      fields: [plaidConnection.userId],
-      references: [user.id],
-    }),
-  })
-);
+export const plaidConnectionRelations = relations(plaidConnection, ({ one, many }) => ({
+  accounts: many(financialAccount),
+  institution: one(institution, {
+    fields: [plaidConnection.institutionId],
+    references: [institution.plaidInstitutionId],
+  }),
+  user: one(user, {
+    fields: [plaidConnection.userId],
+    references: [user.id],
+  }),
+}));
 
 export const snaptradeAuthorizationRelations = relations(
   snaptradeAuthorization,
@@ -327,7 +339,7 @@ export const snaptradeAuthorizationRelations = relations(
       fields: [snaptradeAuthorization.userId],
       references: [user.id],
     }),
-  })
+  }),
 );
 
 export const snaptradeUserRelations = relations(snaptradeUser, ({ one }) => ({
@@ -342,12 +354,9 @@ export const institutionRelations = relations(institution, ({ many }) => ({
 }));
 
 // Financial events relations
-export const financialEventsRelations = relations(
-  financialEvents,
-  ({ many }) => ({
-    articles: many(eventArticles),
-  })
-);
+export const financialEventsRelations = relations(financialEvents, ({ many }) => ({
+  articles: many(eventArticles),
+}));
 
 export const eventArticlesRelations = relations(eventArticles, ({ one }) => ({
   financialEvent: one(financialEvents, {
@@ -373,15 +382,12 @@ export const financialGoalsRelations = relations(financialGoals, ({ one }) => ({
 }));
 
 // Mobile subscription relations
-export const mobileSubscriptionRelations = relations(
-  mobileSubscription,
-  ({ one }) => ({
-    user: one(user, {
-      fields: [mobileSubscription.userId],
-      references: [user.id],
-    }),
-  })
-);
+export const mobileSubscriptionRelations = relations(mobileSubscription, ({ one }) => ({
+  user: one(user, {
+    fields: [mobileSubscription.userId],
+    references: [user.id],
+  }),
+}));
 
 // Kalshi relations
 export const kalshiUserRelations = relations(kalshiUsers, ({ one }) => ({

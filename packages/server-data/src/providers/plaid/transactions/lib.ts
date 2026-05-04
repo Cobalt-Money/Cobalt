@@ -31,11 +31,7 @@ function transactionToRecordCore(tx: Transaction) {
 }
 
 function transactionToRecordMeta(tx: Transaction) {
-  const pfc = tx.personal_finance_category;
   return {
-    category: pfc?.primary ?? null,
-    categoryConfidence: pfc?.confidence_level ?? null,
-    categoryDetail: pfc?.detailed ?? null,
     logoUrl: tx.logo_url || null,
     merchantEntityId: tx.merchant_entity_id || null,
     merchantName: tx.merchant_name || null,
@@ -50,16 +46,19 @@ function transactionToRecordMeta(tx: Transaction) {
 
 /**
  * Map a Plaid Transaction → new `transaction` row.
- * Caller resolves the new financial_account.id (uuid) + userId via
- * lookupFinancialAccountsByPlaidIds before calling.
+ * Caller resolves `accountId`, `userId` (via lookupFinancialAccountsByPlaidIds)
+ * and `categoryId` (via PFC → systemKey → lookupCategoryIdsBySystemKey) before
+ * calling.
  */
 export function transactionToRecord(
   tx: Transaction,
   accountId: string,
-  userId: string
+  userId: string,
+  categoryId: string,
 ): TransactionInsert {
   return {
     accountId,
+    categoryId,
     externalId: tx.transaction_id,
     source: "plaid" as const,
     userId,

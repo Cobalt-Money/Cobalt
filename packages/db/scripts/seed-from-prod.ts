@@ -19,9 +19,7 @@ const LOCAL_URL = "postgresql://postgres:postgres@127.0.0.1:5433/cobalt";
 const BATCH = 500;
 
 // DATABASE_URL may be a libpq DSN ("host=... user=...") or a postgres:// URL.
-function parseConnection(
-  s: string
-): Record<string, string> | { connectionString: string } {
+function parseConnection(s: string): Record<string, string> | { connectionString: string } {
   if (s.startsWith("postgres://") || s.startsWith("postgresql://")) {
     return { connectionString: s };
   }
@@ -49,11 +47,7 @@ const prodCfg = parseConnection(process.env.DATABASE_URL ?? "");
 const prod = new Client(prodCfg as never);
 const local = new Client({ connectionString: LOCAL_URL });
 
-async function copy(
-  destTable: string,
-  sql: string,
-  params: unknown[] = []
-): Promise<number> {
+async function copy(destTable: string, sql: string, params: unknown[] = []): Promise<number> {
   const result = await prod.query(sql, params);
   const rows = result.rows as Record<string, unknown>[];
   const fields = result.fields as FieldDef[];
@@ -68,9 +62,7 @@ async function copy(
     const valueGroups = batch
       .map(
         (_, rowIdx) =>
-          `(${fields
-            .map((_f, colIdx) => `$${rowIdx * fields.length + colIdx + 1}`)
-            .join(", ")})`
+          `(${fields.map((_f, colIdx) => `$${rowIdx * fields.length + colIdx + 1}`).join(", ")})`,
       )
       .join(", ");
     // pg returns jsonb/json columns as JS arrays/objects. Re-INSERT needs them
@@ -87,11 +79,11 @@ async function copy(
           return JSON.stringify(v);
         }
         return v;
-      })
+      }),
     );
     await local.query(
       `INSERT INTO ${destTable} (${colList}) VALUES ${valueGroups} ON CONFLICT DO NOTHING`,
-      flat
+      flat,
     );
     inserted += batch.length;
   }
@@ -111,18 +103,14 @@ async function main(): Promise<void> {
   await local.query("BEGIN");
   try {
     // Order: parents (with user_id directly) → children (joined through parent)
-    const u = await copy(`"user"`, `SELECT * FROM "user" WHERE id = $1`, [
-      USER_ID,
-    ]);
+    const u = await copy(`"user"`, `SELECT * FROM "user" WHERE id = $1`, [USER_ID]);
     // eslint-disable-next-line no-console
     console.log(`  user                         ${u}`);
 
     // ---- Plaid hierarchy ----
-    const bc = await copy(
-      "bank_connection",
-      `SELECT * FROM bank_connection WHERE user_id = $1`,
-      [USER_ID]
-    );
+    const bc = await copy("bank_connection", `SELECT * FROM bank_connection WHERE user_id = $1`, [
+      USER_ID,
+    ]);
     // eslint-disable-next-line no-console
     console.log(`  bank_connection              ${bc}`);
 
@@ -131,7 +119,7 @@ async function main(): Promise<void> {
       `SELECT a.* FROM bank_account a
        JOIN bank_connection bc ON bc.plaid_item_id = a.plaid_item_id
        WHERE bc.user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  bank_account                 ${ba}`);
@@ -142,7 +130,7 @@ async function main(): Promise<void> {
        JOIN bank_account a ON a.plaid_account_id = bb.plaid_account_id
        JOIN bank_connection bc ON bc.plaid_item_id = a.plaid_item_id
        WHERE bc.user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  bank_balance                 ${bb}`);
@@ -153,7 +141,7 @@ async function main(): Promise<void> {
        JOIN bank_account a ON a.plaid_account_id = bbs.plaid_account_id
        JOIN bank_connection bc ON bc.plaid_item_id = a.plaid_item_id
        WHERE bc.user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  bank_balance_snapshot        ${bbs}`);
@@ -164,7 +152,7 @@ async function main(): Promise<void> {
        JOIN bank_account a ON a.plaid_account_id = t.plaid_account_id
        JOIN bank_connection bc ON bc.plaid_item_id = a.plaid_item_id
        WHERE bc.user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  transaction                  ${txs}`);
@@ -175,7 +163,7 @@ async function main(): Promise<void> {
        JOIN bank_account a ON a.plaid_account_id = rs.plaid_account_id
        JOIN bank_connection bc ON bc.plaid_item_id = a.plaid_item_id
        WHERE bc.user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  recurring_stream             ${rs}`);
@@ -186,7 +174,7 @@ async function main(): Promise<void> {
        JOIN bank_account a ON a.plaid_account_id = cl.plaid_account_id
        JOIN bank_connection bc ON bc.plaid_item_id = a.plaid_item_id
        WHERE bc.user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  credit_liability             ${cl}`);
@@ -199,7 +187,7 @@ async function main(): Promise<void> {
        JOIN bank_account a ON a.plaid_account_id = ip.plaid_account_id
        JOIN bank_connection bc ON bc.plaid_item_id = a.plaid_item_id
        WHERE bc.user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  investment_security          ${isec}`);
@@ -210,7 +198,7 @@ async function main(): Promise<void> {
        JOIN bank_account a ON a.plaid_account_id = ip.plaid_account_id
        JOIN bank_connection bc ON bc.plaid_item_id = a.plaid_item_id
        WHERE bc.user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  investment_position          ${ip}`);
@@ -221,24 +209,22 @@ async function main(): Promise<void> {
        JOIN bank_account a ON a.plaid_account_id = ia.plaid_account_id
        JOIN bank_connection bc ON bc.plaid_item_id = a.plaid_item_id
        WHERE bc.user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  investment_activity          ${ia}`);
 
     // ---- SnapTrade hierarchy (all tables have user_id directly) ----
-    const bu = await copy(
-      "brokerage_user",
-      `SELECT * FROM brokerage_user WHERE user_id = $1`,
-      [USER_ID]
-    );
+    const bu = await copy("brokerage_user", `SELECT * FROM brokerage_user WHERE user_id = $1`, [
+      USER_ID,
+    ]);
     // eslint-disable-next-line no-console
     console.log(`  brokerage_user               ${bu}`);
 
     const bauth = await copy(
       "brokerage_authorization",
       `SELECT * FROM brokerage_authorization WHERE user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  brokerage_authorization      ${bauth}`);
@@ -246,7 +232,7 @@ async function main(): Promise<void> {
     const bacct = await copy(
       "brokerage_account",
       `SELECT * FROM brokerage_account WHERE user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  brokerage_account            ${bacct}`);
@@ -254,7 +240,7 @@ async function main(): Promise<void> {
     const bad = await copy(
       "brokerage_account_detail",
       `SELECT * FROM brokerage_account_detail WHERE user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  brokerage_account_detail     ${bad}`);
@@ -262,7 +248,7 @@ async function main(): Promise<void> {
     const brb = await copy(
       "brokerage_balance",
       `SELECT * FROM brokerage_balance WHERE user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  brokerage_balance            ${brb}`);
@@ -270,7 +256,7 @@ async function main(): Promise<void> {
     const bp = await copy(
       "brokerage_position",
       `SELECT * FROM brokerage_position WHERE user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  brokerage_position           ${bp}`);
@@ -278,23 +264,21 @@ async function main(): Promise<void> {
     const bact = await copy(
       "brokerage_activity",
       `SELECT * FROM brokerage_activity WHERE user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  brokerage_activity           ${bact}`);
 
-    const bo = await copy(
-      "brokerage_order",
-      `SELECT * FROM brokerage_order WHERE user_id = $1`,
-      [USER_ID]
-    );
+    const bo = await copy("brokerage_order", `SELECT * FROM brokerage_order WHERE user_id = $1`, [
+      USER_ID,
+    ]);
     // eslint-disable-next-line no-console
     console.log(`  brokerage_order              ${bo}`);
 
     const ps = await copy(
       "portfolio_snapshot",
       `SELECT * FROM portfolio_snapshot WHERE user_id = $1`,
-      [USER_ID]
+      [USER_ID],
     );
     // eslint-disable-next-line no-console
     console.log(`  portfolio_snapshot           ${ps}`);

@@ -69,7 +69,7 @@ function buildSeries(
   symbol: string,
   endPrice: number,
   pctChange: number,
-  points: number
+  points: number,
 ): { i: number; v: number }[] {
   const rand = seededRandom(`${symbol}-${points}`);
   const startPrice = endPrice / (1 + pctChange / 100);
@@ -130,12 +130,10 @@ export function BabyTickerDetail({ data }: { data: BabyTickerDetailData }) {
       buildSeries(
         data.symbol,
         data.price,
-        range === "YTD" || range === "1Y" || range === "5Y"
-          ? data.pctChangeYtd
-          : data.pctChange1d,
-        range === "1D" ? 48 : 64
+        range === "YTD" || range === "1Y" || range === "5Y" ? data.pctChangeYtd : data.pctChange1d,
+        range === "1D" ? 48 : 64,
       ),
-    [data.symbol, data.price, data.pctChange1d, data.pctChangeYtd, range]
+    [data.symbol, data.price, data.pctChange1d, data.pctChangeYtd, range],
   );
 
   const change1dAbs = data.price - data.price / (1 + data.pctChange1d / 100);
@@ -178,10 +176,7 @@ export function BabyTickerDetail({ data }: { data: BabyTickerDetailData }) {
             const selected = range === r;
             return (
               <Button
-                className={cn(
-                  "h-7 px-2 text-xs",
-                  selected && "bg-muted text-foreground"
-                )}
+                className={cn("h-7 px-2 text-xs", selected && "bg-muted text-foreground")}
                 key={r}
                 onClick={() => setRange(r)}
                 size="sm"
@@ -197,10 +192,7 @@ export function BabyTickerDetail({ data }: { data: BabyTickerDetailData }) {
 
       <div className="h-64 w-full">
         <ResponsiveContainer height="100%" width="100%">
-          <AreaChart
-            data={series}
-            margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
-          >
+          <AreaChart data={series} margin={{ bottom: 0, left: 0, right: 0, top: 4 }}>
             <defs>
               <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
                 <stop offset="0%" stopColor={lineColor} stopOpacity={0.35} />
@@ -208,12 +200,7 @@ export function BabyTickerDetail({ data }: { data: BabyTickerDetailData }) {
               </linearGradient>
             </defs>
             <XAxis dataKey="i" hide />
-            <YAxis
-              axisLine={false}
-              domain={["dataMin", "dataMax"]}
-              hide
-              tickLine={false}
-            />
+            <YAxis axisLine={false} domain={["dataMin", "dataMax"]} hide tickLine={false} />
             <Area
               dataKey="v"
               fill={`url(#${gradientId})`}
@@ -226,9 +213,7 @@ export function BabyTickerDetail({ data }: { data: BabyTickerDetailData }) {
       </div>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-left text-sm font-medium text-muted-foreground">
-          Key stats
-        </h2>
+        <h2 className="text-left text-sm font-medium text-muted-foreground">Key stats</h2>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
           <Stat label="Market cap" value={formatMarketCap(data.marketCap)} />
           <Stat label="P/E ratio" value={data.peRatio.toFixed(2)} />
@@ -241,20 +226,14 @@ export function BabyTickerDetail({ data }: { data: BabyTickerDetailData }) {
           <Stat
             label="YTD change"
             value={`${data.pctChangeYtd >= 0 ? "+" : ""}${data.pctChangeYtd.toFixed(2)}%`}
-            tone={
-              data.pctChangeYtd >= 0
-                ? "text-green-550"
-                : "text-red-600 dark:text-red-400"
-            }
+            tone={data.pctChangeYtd >= 0 ? "text-green-550" : "text-red-600 dark:text-red-400"}
           />
           <Stat label="Sector" value={data.sector} />
         </dl>
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-left text-sm font-medium text-muted-foreground">
-          About {data.name}
-        </h2>
+        <h2 className="text-left text-sm font-medium text-muted-foreground">About {data.name}</h2>
         <p className="text-left text-sm leading-relaxed text-foreground">
           {companyBlurb(data.symbol)}
         </p>
@@ -263,24 +242,11 @@ export function BabyTickerDetail({ data }: { data: BabyTickerDetailData }) {
   );
 }
 
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: string;
-}) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="flex flex-col">
       <dt className="text-left text-xs text-muted-foreground">{label}</dt>
-      <dd
-        className={cn(
-          "text-left text-sm font-medium tabular-nums text-foreground",
-          tone
-        )}
-      >
+      <dd className={cn("text-left text-sm font-medium tabular-nums text-foreground", tone)}>
         {value}
       </dd>
     </div>

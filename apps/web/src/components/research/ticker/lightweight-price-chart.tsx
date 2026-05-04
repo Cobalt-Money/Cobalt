@@ -1,25 +1,11 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import {
-  AreaSeries,
-  ColorType,
-  CrosshairMode,
-  createChart,
-} from "lightweight-charts";
+import { AreaSeries, ColorType, CrosshairMode, createChart } from "lightweight-charts";
 import type { IChartApi, ISeriesApi, Time } from "lightweight-charts";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef } from "react";
 
-const CHART_PERIODS = [
-  "1D",
-  "1W",
-  "1M",
-  "3M",
-  "6M",
-  "YTD",
-  "1Y",
-  "All",
-] as const;
+const CHART_PERIODS = ["1D", "1W", "1M", "3M", "6M", "YTD", "1Y", "All"] as const;
 
 export type ChartPeriod = (typeof CHART_PERIODS)[number];
 
@@ -32,7 +18,7 @@ const DEFAULT_ZOOM_TRIM_LEFT: Partial<Record<ChartPeriod, number>> = {
 function applyRecentZoomForPeriod(
   baseChart: IChartApi,
   coloredChart: IChartApi,
-  period: ChartPeriod
+  period: ChartPeriod,
 ): void {
   const trim = DEFAULT_ZOOM_TRIM_LEFT[period];
   if (trim === undefined || trim <= 0) {
@@ -146,10 +132,7 @@ interface ThemeColors {
   textColor: string;
 }
 
-function chartTheme(
-  resolvedTheme: string | undefined,
-  lineColor: string | undefined
-): ThemeColors {
+function chartTheme(resolvedTheme: string | undefined, lineColor: string | undefined): ThemeColors {
   const isDark = resolvedTheme !== "light";
   const line = lineColor ?? (isDark ? "#22c55e" : "#16a34a");
 
@@ -186,11 +169,7 @@ type ChartLayer = "base" | "overlay";
  * Shared chart options. Base chart shows the time (x) axis; overlay keeps the same
  * time-scale height so panes align, but hides duplicate tick labels.
  */
-function sharedLayoutOptions(
-  c: ThemeColors,
-  height: number,
-  layer: ChartLayer
-) {
+function sharedLayoutOptions(c: ThemeColors, height: number, layer: ChartLayer) {
   const isBase = layer === "base";
   return {
     autoSize: true,
@@ -268,7 +247,7 @@ export function LightweightPriceChart({
       baseChart: IChartApi,
       baseSeries: ISeriesApi<"Area", Time>,
       coloredChart: IChartApi,
-      coloredSeries: ISeriesApi<"Area", Time>
+      coloredSeries: ISeriesApi<"Area", Time>,
     ) => {
       const c = colors;
       const sharedGrid = {
@@ -346,7 +325,7 @@ export function LightweightPriceChart({
         topColor: c.areaTopColor,
       });
     },
-    [colors]
+    [colors],
   );
 
   // ── Mount: create both chart instances once ──────────────────────
@@ -462,8 +441,7 @@ export function LightweightPriceChart({
       if (!isHoveringRef.current) {
         isHoveringRef.current = true;
         baseSeries.applyOptions({
-          lineColor:
-            colorsRef.current?.mutedLineColor ?? "rgba(120,120,130,0.45)",
+          lineColor: colorsRef.current?.mutedLineColor ?? "rgba(120,120,130,0.45)",
         });
       }
 
@@ -471,7 +449,7 @@ export function LightweightPriceChart({
       // param.point.x is in chart-pane pixels; coloredEl.clientWidth is the container width.
       const rightPct = Math.max(
         0,
-        Math.min(100, (1 - param.point.x / coloredEl.clientWidth) * 100)
+        Math.min(100, (1 - param.point.x / coloredEl.clientWidth) * 100),
       );
       coloredEl.style.clipPath = `inset(0 ${rightPct.toFixed(2)}% 0 0)`;
 
@@ -562,17 +540,11 @@ export function LightweightPriceChart({
        * chart containers fill the right area. autoSize on each chart then handles
        * responsive width changes.
        */}
-      <div
-        className={cn("relative min-h-0 w-full min-w-0", chartClassName)}
-        style={{ height }}
-      >
+      <div className={cn("relative min-h-0 w-full min-w-0", chartClassName)} style={{ height }}>
         {/* Base chart: event layer, muted line on hover, crosshair marker */}
         <div ref={baseContainerRef} className="absolute inset-0" />
         {/* Colored chart: visual overlay, clip-path applied on hover */}
-        <div
-          ref={coloredContainerRef}
-          className="pointer-events-none absolute inset-0"
-        />
+        <div ref={coloredContainerRef} className="pointer-events-none absolute inset-0" />
       </div>
       {showPeriodToolbar ? (
         <ChartPeriodToolbar

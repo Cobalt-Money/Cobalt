@@ -5,7 +5,7 @@ import { db } from "@cobalt-web/db";
  * by Plaid security_id → security.id (uuid).
  */
 export async function lookupSecuritiesByPlaidIds(
-  securityIds: string[]
+  securityIds: string[],
 ): Promise<Map<string, string>> {
   if (securityIds.length === 0) {
     return new Map();

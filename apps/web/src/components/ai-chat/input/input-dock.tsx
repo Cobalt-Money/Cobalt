@@ -18,11 +18,7 @@ export function ChatInputDock() {
   return (
     <div className="flex w-full flex-col">
       {chatId && <PendingQuestions chatId={chatId} />}
-      <PromptQueue
-        items={queuedMessages}
-        onRemove={removeFromQueue}
-        onUpdate={updateInQueue}
-      />
+      <PromptQueue items={queuedMessages} onRemove={removeFromQueue} onUpdate={updateInQueue} />
       <ChatPromptInput />
     </div>
   );
@@ -38,13 +34,12 @@ function PendingQuestions({ chatId }: { chatId: string }) {
 
     const consider = (
       toolCallId: string,
-      input: { question?: unknown; options?: unknown } | undefined
+      input: { question?: unknown; options?: unknown } | undefined,
     ) => {
       if (!toolCallId || seen.has(toolCallId) || !input) {
         return;
       }
-      const question =
-        typeof input.question === "string" ? input.question : null;
+      const question = typeof input.question === "string" ? input.question : null;
       const options = Array.isArray(input.options)
         ? (input.options as PendingAskUserQuestion["options"])
         : null;
@@ -61,13 +56,10 @@ function PendingQuestions({ chatId }: { chatId: string }) {
         continue;
       }
       for (const part of row.parts) {
-        if (
-          part.type === "tool-askUser" &&
-          part.tool_state === "input-available"
-        ) {
+        if (part.type === "tool-askUser" && part.tool_state === "input-available") {
           consider(
             String(part.tool_toolCallId ?? ""),
-            part.tool_input as PendingAskUserQuestion | undefined
+            part.tool_input as PendingAskUserQuestion | undefined,
           );
         }
       }
@@ -82,7 +74,7 @@ function PendingQuestions({ chatId }: { chatId: string }) {
         ) {
           consider(
             (part as { toolCallId?: string }).toolCallId ?? "",
-            (part as { input?: PendingAskUserQuestion }).input
+            (part as { input?: PendingAskUserQuestion }).input,
           );
         }
       }

@@ -6,7 +6,7 @@ export function CashAccountLogo({ className }: { className?: string }) {
     <div
       className={cn(
         "flex shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-amber-50",
-        className
+        className,
       )}
     >
       <img

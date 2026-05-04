@@ -20,7 +20,7 @@ export interface ProcessRssItemResult {
 // Inserts a new article or appends this feedId to an existing matching article.
 // Returns whether we created a new row (for cron statistics).
 export async function upsertRssArticleForFeed(
-  input: ProcessRssItemInput
+  input: ProcessRssItemInput,
 ): Promise<ProcessRssItemResult> {
   const existing = await db.query.rssArticles.findFirst({
     columns: { feedIds: true, id: true },

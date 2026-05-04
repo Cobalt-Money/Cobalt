@@ -24,20 +24,14 @@ import { upsertAccountPositions } from "@cobalt-web/server-data/providers/snaptr
 import { getUserAccountOrders } from "@cobalt-web/server-data/providers/snaptrade/orders/actions";
 import { upsertAccountOrders } from "@cobalt-web/server-data/providers/snaptrade/orders/mutations";
 import { eq } from "drizzle-orm";
-import type {
-  Account,
-  Balance,
-  UniversalActivity,
-} from "snaptrade-typescript-sdk";
+import type { Account, Balance, UniversalActivity } from "snaptrade-typescript-sdk";
 import { FatalError, RetryableError } from "workflow";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type UserCredentials = NonNullable<
-  Awaited<ReturnType<typeof getSnapTradeUserCredentials>>
->;
+export type UserCredentials = NonNullable<Awaited<ReturnType<typeof getSnapTradeUserCredentials>>>;
 
 export interface HoldingsDetails {
   total_value?: { success: boolean };
@@ -100,24 +94,20 @@ function toDateOnlyString(date: Date): string {
 // ============================================================================
 
 export async function getSnapTradeUserCredentialsStep(
-  providerUserId: string
+  providerUserId: string,
 ): Promise<UserCredentials> {
   "use step";
 
   const userCredentials = await getSnapTradeUserCredentials(providerUserId);
 
   if (!userCredentials) {
-    throw new FatalError(
-      `SnapTrade user not found in database: ${providerUserId}`
-    );
+    throw new FatalError(`SnapTrade user not found in database: ${providerUserId}`);
   }
 
   return userCredentials;
 }
 
-export async function fetchAccountsStep(
-  userCredentials: UserCredentials
-): Promise<Account[]> {
+export async function fetchAccountsStep(userCredentials: UserCredentials): Promise<Account[]> {
   "use step";
 
   try {
@@ -138,7 +128,7 @@ export async function fetchAccountsStep(
 export async function upsertSnaptradeAuthorizationStep(
   brokerageAuthorizationId: string,
   appUserId: string,
-  brokerageId: string
+  brokerageId: string,
 ): Promise<string> {
   "use step";
 
@@ -147,7 +137,7 @@ export async function upsertSnaptradeAuthorizationStep(
     appUserId,
     brokerageId,
     brokerageId,
-    `Connection ${brokerageAuthorizationId}`
+    `Connection ${brokerageAuthorizationId}`,
   );
 
   return authDbId;
@@ -155,18 +145,15 @@ export async function upsertSnaptradeAuthorizationStep(
 
 export async function updateAuthorizationStatusStep(
   brokerageAuthorizationId: string,
-  isDisabled: boolean
+  isDisabled: boolean,
 ): Promise<void> {
   "use step";
 
-  await updateSnaptradeAuthorizationStatus(
-    brokerageAuthorizationId,
-    isDisabled
-  );
+  await updateSnaptradeAuthorizationStatus(brokerageAuthorizationId, isDisabled);
 }
 
 export async function getAuthorizationDisplayNameStep(
-  brokerageAuthorizationId: string
+  brokerageAuthorizationId: string,
 ): Promise<string> {
   "use step";
 
@@ -183,7 +170,7 @@ export async function getAuthorizationDisplayNameStep(
 }
 
 export async function deleteSnaptradeAuthorizationStep(
-  brokerageAuthorizationId: string
+  brokerageAuthorizationId: string,
 ): Promise<void> {
   "use step";
 
@@ -193,14 +180,14 @@ export async function deleteSnaptradeAuthorizationStep(
 export async function upsertAccountsStep(
   accounts: Account[],
   authDbId: string,
-  appUserId: string
+  appUserId: string,
 ): Promise<{ upsertedCount: number; failedCount: number }> {
   "use step";
 
   const results = await Promise.allSettled(
     accounts.map((accountData) =>
-      upsertBrokerageAccount(accountData.id, authDbId, appUserId, accountData)
-    )
+      upsertBrokerageAccount(accountData.id, authDbId, appUserId, accountData),
+    ),
   );
 
   let upsertedCount = 0;
@@ -223,7 +210,7 @@ export async function upsertAccountsStep(
 
 export async function syncAccountDetailsStep(
   accountId: string,
-  userCredentials: UserCredentials
+  userCredentials: UserCredentials,
 ): Promise<{ success: boolean; data?: Account }> {
   "use step";
 
@@ -245,16 +232,12 @@ export async function syncAccountDetailsStep(
 export async function upsertAccountDetailsStep(
   accountId: string,
   userCredentials: UserCredentials,
-  accountData: Account
+  accountData: Account,
 ): Promise<{ success: boolean }> {
   "use step";
 
   try {
-    await upsertAccountDetails(
-      accountId,
-      userCredentials.appUserId,
-      accountData
-    );
+    await upsertAccountDetails(accountId, userCredentials.appUserId, accountData);
     return { success: true };
   } catch {
     return { success: false };
@@ -265,17 +248,12 @@ export async function syncBrokerageAccountStep(
   accountId: string,
   authDbId: string,
   userCredentials: UserCredentials,
-  accountData: Account
+  accountData: Account,
 ): Promise<{ success: boolean }> {
   "use step";
 
   try {
-    await upsertBrokerageAccount(
-      accountId,
-      authDbId,
-      userCredentials.appUserId,
-      accountData
-    );
+    await upsertBrokerageAccount(accountId, authDbId, userCredentials.appUserId, accountData);
     return { success: true };
   } catch {
     return { success: false };
@@ -284,7 +262,7 @@ export async function syncBrokerageAccountStep(
 
 export async function syncAccountBalancesStep(
   accountId: string,
-  userCredentials: UserCredentials
+  userCredentials: UserCredentials,
 ): Promise<{ success: boolean; data?: Balance[] }> {
   "use step";
 
@@ -306,18 +284,14 @@ export async function syncAccountBalancesStep(
 
 export async function syncAccountPositionsStep(
   accountId: string,
-  userCredentials: UserCredentials
+  userCredentials: UserCredentials,
 ): Promise<{ success: boolean; positionCount?: number }> {
   "use step";
 
   try {
     const data = await getUserHoldings(accountId, userCredentials);
     if (data?.positions && Array.isArray(data.positions)) {
-      await upsertAccountPositions(
-        accountId,
-        userCredentials.appUserId,
-        data.positions
-      );
+      await upsertAccountPositions(accountId, userCredentials.appUserId, data.positions);
       return { positionCount: data.positions.length, success: true };
     }
     return { success: false };
@@ -332,7 +306,7 @@ export async function syncAccountPositionsStep(
 
 export async function syncAccountOrdersStep(
   accountId: string,
-  userCredentials: UserCredentials
+  userCredentials: UserCredentials,
 ): Promise<{ success: boolean; orderCount?: number }> {
   "use step";
 
@@ -354,7 +328,7 @@ export async function syncAccountOrdersStep(
 
 export async function syncRecentActivitiesStep(
   accountId: string,
-  userCredentials: UserCredentials
+  userCredentials: UserCredentials,
 ): Promise<{ success: boolean; activityCount?: number }> {
   "use step";
 
@@ -368,11 +342,7 @@ export async function syncRecentActivitiesStep(
     });
 
     if (response?.data && Array.isArray(response.data)) {
-      await upsertAccountActivities(
-        accountId,
-        userCredentials.appUserId,
-        response.data
-      );
+      await upsertAccountActivities(accountId, userCredentials.appUserId, response.data);
       return { activityCount: response.data.length, success: true };
     }
 
@@ -392,7 +362,7 @@ export async function syncRecentActivitiesStep(
 
 export async function fetchAllActivitiesStep(
   accountId: string,
-  userCredentials: UserCredentials
+  userCredentials: UserCredentials,
 ): Promise<{ activities: UniversalActivity[]; activityCount: number }> {
   "use step";
 
@@ -410,9 +380,7 @@ export async function fetchAllActivitiesStep(
       const pageActivities = response?.data || [];
 
       if (!Array.isArray(pageActivities)) {
-        throw new TypeError(
-          `Failed to get activities from SnapTrade API at offset ${offset}`
-        );
+        throw new TypeError(`Failed to get activities from SnapTrade API at offset ${offset}`);
       }
 
       allActivities.push(...pageActivities);
@@ -436,7 +404,7 @@ export async function fetchAllActivitiesStep(
 
 export async function fetchIncrementalActivitiesStep(
   accountId: string,
-  userCredentials: UserCredentials
+  userCredentials: UserCredentials,
 ): Promise<{
   activities: UniversalActivity[];
   activityCount: number;
@@ -475,7 +443,7 @@ export async function fetchIncrementalActivitiesStep(
 export async function upsertActivitiesStep(
   accountId: string,
   appUserId: string,
-  activities: UniversalActivity[]
+  activities: UniversalActivity[],
 ): Promise<{ upsertedCount: number }> {
   "use step";
 
@@ -490,7 +458,7 @@ export async function upsertActivitiesStep(
 
 export async function refreshAccountDataStep(
   accountId: string,
-  userCredentials: UserCredentials
+  userCredentials: UserCredentials,
 ): Promise<{ detailsSuccess: boolean; balancesSuccess: boolean }> {
   "use step";
 
@@ -513,10 +481,8 @@ export async function refreshAccountDataStep(
     })(),
   ]);
 
-  const detailsSuccess =
-    detailsResult.status === "fulfilled" && detailsResult.value;
-  const balancesSuccess =
-    balancesResult.status === "fulfilled" && balancesResult.value;
+  const detailsSuccess = detailsResult.status === "fulfilled" && detailsResult.value;
+  const balancesSuccess = balancesResult.status === "fulfilled" && balancesResult.value;
 
   return { balancesSuccess, detailsSuccess };
 }

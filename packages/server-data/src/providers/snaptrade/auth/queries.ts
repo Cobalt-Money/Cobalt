@@ -8,7 +8,7 @@ export interface SnapTradeUserCredentials {
 
 /** Look up SnapTrade credentials by our app's userId. */
 export async function getBrokerageUserByUserId(
-  userId: string
+  userId: string,
 ): Promise<SnapTradeUserCredentials | undefined> {
   const row = await db.query.snaptradeUser.findFirst({
     where: { userId: { eq: userId } },
@@ -24,9 +24,7 @@ export async function getBrokerageUserByUserId(
 }
 
 /** Look up SnapTrade credentials by the provider's userId. */
-export async function getSnapTradeUserCredentials(
-  snaptradeUserIdValue: string
-): Promise<{
+export async function getSnapTradeUserCredentials(snaptradeUserIdValue: string): Promise<{
   appUserId: string;
   providerUserId: string;
   userSecret: string;

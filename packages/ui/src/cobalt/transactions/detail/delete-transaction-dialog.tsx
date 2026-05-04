@@ -13,25 +13,13 @@ import { Button } from "@cobalt-web/ui/components/button";
 import { Delete02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-export function DeleteTransactionDialog({
-  onConfirm,
-}: {
-  onConfirm: () => void;
-}) {
+export function DeleteTransactionDialog({ onConfirm }: { onConfirm: () => void }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger
         render={
-          <Button
-            aria-label="Delete transaction"
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            <HugeiconsIcon
-              className="size-4 text-red-600 dark:text-red-500"
-              icon={Delete02Icon}
-            />
+          <Button aria-label="Delete transaction" size="sm" type="button" variant="ghost">
+            <HugeiconsIcon className="size-4 text-red-600 dark:text-red-500" icon={Delete02Icon} />
           </Button>
         }
       />
@@ -39,8 +27,7 @@ export function DeleteTransactionDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
           <AlertDialogDescription>
-            This permanently removes the transaction. This action cannot be
-            undone.
+            This permanently removes the transaction. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

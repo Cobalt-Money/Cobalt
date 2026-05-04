@@ -4,7 +4,7 @@
  */
 export function loadImageForExtraction(
   url: string,
-  init?: { signal?: AbortSignal }
+  init?: { signal?: AbortSignal },
 ): Promise<HTMLImageElement> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("loadImageForExtraction is browser-only"));

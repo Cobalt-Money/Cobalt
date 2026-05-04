@@ -1,12 +1,4 @@
-import {
-  index,
-  pgTable,
-  text,
-  timestamp,
-  unique,
-  uuid,
-  varchar,
-} from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, unique, uuid, varchar } from "drizzle-orm/pg-core";
 
 import { user } from "../users/auth/auth";
 import { messages } from "./chat";
@@ -29,13 +21,10 @@ export const messageVotes = pgTable(
     vote: varchar("vote").$type<"positive" | "negative">().notNull(),
   },
   (table) => [
-    unique("message_votes_user_message_unique").on(
-      table.userId,
-      table.messageId
-    ),
+    unique("message_votes_user_message_unique").on(table.userId, table.messageId),
     index("message_votes_user_id_idx").on(table.userId),
     index("message_votes_message_id_idx").on(table.messageId),
-  ]
+  ],
 );
 
 // Type exports

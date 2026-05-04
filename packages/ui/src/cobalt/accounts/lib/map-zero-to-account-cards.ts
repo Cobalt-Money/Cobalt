@@ -48,7 +48,7 @@ function categoryFromPlaidType(type: string): AccountCategory {
 }
 
 function syncMsFromBalance(
-  balance: { updatedAt?: number | null } | null | undefined
+  balance: { updatedAt?: number | null } | null | undefined,
 ): number | null {
   return balance?.updatedAt ?? null;
 }
@@ -107,7 +107,7 @@ export interface BrokerageRowWithRelations {
 }
 
 function institutionFieldsFromBankConnection(
-  conn: BankAccountRowWithRelations["plaidConnection"]
+  conn: BankAccountRowWithRelations["plaidConnection"],
 ): {
   institution: string;
   institutionLogo: string | null;
@@ -116,17 +116,12 @@ function institutionFieldsFromBankConnection(
   const inst = conn?.institution;
   return {
     institution: inst?.name?.trim() ?? conn?.institutionName?.trim() ?? "Bank",
-    institutionLogo:
-      inst?.logo?.trim() ?? conn?.institutionLogo?.trim() ?? null,
+    institutionLogo: inst?.logo?.trim() ?? conn?.institutionLogo?.trim() ?? null,
     institutionUrl: inst?.url?.trim() ?? null,
   };
 }
 
-function pickSubtypeLabel(
-  isManual: boolean,
-  subtype: string | null,
-  type: string
-): string {
+function pickSubtypeLabel(isManual: boolean, subtype: string | null, type: string): string {
   if (isManual) {
     return "Cash";
   }
@@ -136,9 +131,7 @@ function pickSubtypeLabel(
   return titleCaseWords(type);
 }
 
-export function bankAccountRowToCard(
-  row: BankAccountRowWithRelations
-): AccountCardViewModel {
+export function bankAccountRowToCard(row: BankAccountRowWithRelations): AccountCardViewModel {
   const isManual = row.source === "manual";
   const fromConn = institutionFieldsFromBankConnection(row.plaidConnection);
   const institution = isManual ? "Cash" : fromConn.institution;
@@ -168,9 +161,7 @@ export function bankAccountRowToCard(
   };
 }
 
-export function brokerageRowToCard(
-  row: BrokerageRowWithRelations
-): AccountCardViewModel {
+export function brokerageRowToCard(row: BrokerageRowWithRelations): AccountCardViewModel {
   const institution = row.institutionName?.trim() ?? "Brokerage";
   const { institutionLogo, institutionLogosExtra, institutionUrl } =
     brokerageInstitutionBranding(row);
@@ -188,8 +179,7 @@ export function brokerageRowToCard(
     id: row.id,
     institution,
     institutionLogo,
-    institutionLogosExtra:
-      institutionLogosExtra.length > 0 ? institutionLogosExtra : null,
+    institutionLogosExtra: institutionLogosExtra.length > 0 ? institutionLogosExtra : null,
     institutionUrl,
     kind: "brokerage",
     lastSyncedAt,
@@ -203,11 +193,9 @@ export function brokerageRowToCard(
 
 export function mergeAndSortAccountCards(
   bankRows: readonly BankAccountRowWithRelations[],
-  brokerageRows: readonly BrokerageRowWithRelations[]
+  brokerageRows: readonly BrokerageRowWithRelations[],
 ): AccountCardViewModel[] {
   const bankCards = bankRows.map(bankAccountRowToCard);
   const broCards = brokerageRows.map(brokerageRowToCard);
-  return [...bankCards, ...broCards].toSorted((a, b) =>
-    a.institution.localeCompare(b.institution)
-  );
+  return [...bankCards, ...broCards].toSorted((a, b) => a.institution.localeCompare(b.institution));
 }

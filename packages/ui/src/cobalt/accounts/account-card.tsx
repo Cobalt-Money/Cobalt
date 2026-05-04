@@ -5,10 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 
 import { AccountConnectionActions } from "./account-connection-actions";
-import {
-  formatLastSyncedLabel,
-  formatLastSyncedTitle,
-} from "./lib/format-last-synced";
+import { formatLastSyncedLabel, formatLastSyncedTitle } from "./lib/format-last-synced";
 import type { AccountCardViewModel } from "./lib/map-zero-to-account-cards";
 
 /** Ghost-style panel: soft fill, no stroke/shadow; compact padding; actions pinned to bottom. */
@@ -25,7 +22,7 @@ export function AccountCard({
       className={cn(
         "flex min-h-[200px] flex-col gap-0 border-0 bg-[oklch(0.949_0_0)] py-0 shadow-none ring-0",
         "rounded-2xl sm:min-h-[220px] sm:rounded-3xl",
-        "dark:bg-white/[0.06]"
+        "dark:bg-white/[0.06]",
       )}
     >
       <CardContent className="flex flex-1 flex-col px-5 pt-4 pb-0 sm:px-6 sm:pt-5">
@@ -46,10 +43,7 @@ export function AccountCard({
           className="mt-4 flex flex-wrap items-baseline gap-x-2 text-lg font-semibold leading-snug tabular-nums tracking-tight sm:mt-5 sm:text-xl"
           title={`Ending in ${account.mask}`}
         >
-          <span
-            aria-hidden
-            className="select-none font-mono tracking-widest text-muted-foreground"
-          >
+          <span aria-hidden className="select-none font-mono tracking-widest text-muted-foreground">
             **** **** ****
           </span>
           <span className="font-bold tracking-normal text-foreground tabular-nums">
@@ -60,7 +54,7 @@ export function AccountCard({
       <CardFooter
         className={cn(
           "mt-auto flex w-full min-w-0 flex-row flex-wrap items-center justify-between gap-x-4 gap-y-2 ",
-          "px-5 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6"
+          "px-5 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6",
         )}
       >
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-1">

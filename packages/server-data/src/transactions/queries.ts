@@ -1,5 +1,7 @@
 import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { category } from "@cobalt-web/db/schema/accounts/banking/categories/category";
+import { categoryGroup } from "@cobalt-web/db/schema/accounts/banking/categories/category-group";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
@@ -52,7 +54,7 @@ export async function getUserTransactions(userId: string, params: TransactionLis
     conditions.push(lte(transaction.amount, String(maxAmount)));
   }
   if (primaryCategory) {
-    conditions.push(eq(transaction.category, primaryCategory));
+    conditions.push(eq(categoryGroup.systemKey, primaryCategory));
   }
   if (searchPattern) {
     const orClause = or(
@@ -76,9 +78,12 @@ export async function getUserTransactions(userId: string, params: TransactionLis
       address: transaction.address,
       amount: transaction.amount,
       authorizedDate: transaction.authorizedDate,
-      category: transaction.category,
-      categoryConfidence: transaction.categoryConfidence,
-      categoryDetail: transaction.categoryDetail,
+      categoryGroupName: categoryGroup.name,
+      categoryGroupSystemKey: categoryGroup.systemKey,
+      categoryIconKey: category.iconKey,
+      categoryId: transaction.categoryId,
+      categoryName: category.name,
+      categorySystemKey: category.systemKey,
       city: transaction.city,
       counterparties: transaction.counterparties,
       country: transaction.country,
@@ -104,6 +109,8 @@ export async function getUserTransactions(userId: string, params: TransactionLis
     })
     .from(transaction)
     .innerJoin(financialAccount, eq(transaction.accountId, financialAccount.id))
+    .leftJoin(category, eq(transaction.categoryId, category.id))
+    .leftJoin(categoryGroup, eq(category.groupId, categoryGroup.id))
     .leftJoin(plaidConnection, eq(financialAccount.plaidConnectionId, plaidConnection.id))
     .leftJoin(institution, eq(institution.plaidInstitutionId, plaidConnection.institutionId))
     .where(and(...conditions))
@@ -130,9 +137,16 @@ export async function getUserTransactions(userId: string, params: TransactionLis
         address: row.address,
         amount: Number(row.amount),
         authorizedDate: row.authorizedDate,
-        category: row.category,
-        categoryConfidence: row.categoryConfidence,
-        categoryDetail: row.categoryDetail,
+        category: row.categoryId
+          ? {
+              groupName: row.categoryGroupName ?? "",
+              groupSystemKey: row.categoryGroupSystemKey,
+              iconKey: row.categoryIconKey ?? "",
+              id: row.categoryId,
+              name: row.categoryName ?? "",
+              systemKey: row.categorySystemKey,
+            }
+          : null,
         city: row.city,
         counterparties: row.counterparties,
         country: row.country,
@@ -178,19 +192,35 @@ export async function getRecurringStreams(userId: string) {
           },
         },
       },
+      category: {
+        columns: { iconKey: true, id: true, name: true, systemKey: true },
+        with: {
+          group: {
+            columns: { name: true, systemKey: true },
+          },
+        },
+      },
     },
   });
 
   return rows.map((row) => {
     const inst = row.account.plaidConnection?.institution ?? null;
+    const cat = row.category ?? null;
     return {
       accountName: row.account.name,
       accountSubtype: row.account.subtype,
       accountType: row.account.type,
       averageAmount: Number(row.averageAmount),
-      category: row.category,
-      categoryConfidence: row.categoryConfidence,
-      categoryDetail: row.categoryDetail,
+      category: cat
+        ? {
+            groupName: cat.group.name,
+            groupSystemKey: cat.group.systemKey,
+            iconKey: cat.iconKey,
+            id: cat.id,
+            name: cat.name,
+            systemKey: cat.systemKey,
+          }
+        : null,
       description: row.description,
       firstDate: row.firstDate,
       frequency: row.frequency,

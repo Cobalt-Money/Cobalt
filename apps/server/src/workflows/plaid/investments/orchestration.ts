@@ -22,9 +22,7 @@ export async function syncHoldings(accessToken: string): Promise<void> {
 }
 
 /** Paginate investment transactions for the standard onboarding window. */
-export async function syncInvestmentTransactions(
-  accessToken: string
-): Promise<void> {
+export async function syncInvestmentTransactions(accessToken: string): Promise<void> {
   const { startDate, endDate } = computeInvestmentTransactionsDateRange();
 
   let offset = 0;
@@ -35,7 +33,7 @@ export async function syncInvestmentTransactions(
       accessToken,
       startDate,
       endDate,
-      offset
+      offset,
     );
 
     if (pageResult.kind === "skip") {
@@ -44,9 +42,7 @@ export async function syncInvestmentTransactions(
 
     const { transactions, securities, totalAvailable } = pageResult.data;
 
-    const newSecurities = securities.filter(
-      (s: Security) => !seenSecurityIds.has(s.security_id)
-    );
+    const newSecurities = securities.filter((s: Security) => !seenSecurityIds.has(s.security_id));
     if (newSecurities.length > 0) {
       await upsertSecuritiesStep(newSecurities);
       for (const s of newSecurities) {

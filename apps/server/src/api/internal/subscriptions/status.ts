@@ -8,8 +8,7 @@ import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
-  description:
-    "Check whether the authenticated user has an active subscription",
+  description: "Check whether the authenticated user has an active subscription",
   method: "get",
   middleware: [requireAuth] as const,
   path: "/",
@@ -25,17 +24,14 @@ const route = createRoute({
   tags: ["Subscriptions"],
 });
 
-export const statusRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const source = await userSubscriptionSource(c.var.user.id);
-    c.header("Cache-Control", "private, no-store");
-    return c.json(
-      {
-        hasActiveSubscription: source !== null,
-        subscriptionSource: source,
-      },
-      200
-    );
-  }
-);
+export const statusRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  const source = await userSubscriptionSource(c.var.user.id);
+  c.header("Cache-Control", "private, no-store");
+  return c.json(
+    {
+      hasActiveSubscription: source !== null,
+      subscriptionSource: source,
+    },
+    200,
+  );
+});

@@ -28,15 +28,11 @@ export const dayCellVariants = cva("text-white", {
     color: {
       blue: "bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400 ",
       gray: "bg-gray-600 dark:bg-gray-500 hover:bg-gray-700 dark:hover:bg-gray-400",
-      green:
-        "bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-400",
-      orange:
-        "bg-orange-600 dark:bg-orange-500 hover:bg-orange-700 dark:hover:bg-orange-400",
-      purple:
-        "bg-purple-600 dark:bg-purple-500 hover:bg-purple-700 dark:hover:bg-purple-400",
+      green: "bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-400",
+      orange: "bg-orange-600 dark:bg-orange-500 hover:bg-orange-700 dark:hover:bg-orange-400",
+      purple: "bg-purple-600 dark:bg-purple-500 hover:bg-purple-700 dark:hover:bg-purple-400",
       red: "bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-400",
-      yellow:
-        "bg-yellow-600 dark:bg-yellow-500 hover:bg-yellow-700 dark:hover:bg-yellow-400",
+      yellow: "bg-yellow-600 dark:bg-yellow-500 hover:bg-yellow-700 dark:hover:bg-yellow-400",
     },
   },
 });
@@ -50,9 +46,7 @@ export function DayCell({ cell, events, eventPositions }: IProps) {
   // Memoize cellEvents and currentCellMonth for performance
   const { cellEvents, currentCellMonth } = useMemo(() => {
     const resolvedCellEvents = getMonthCellEvents(date, events, eventPositions);
-    const resolvedMonthStart = startOfDay(
-      new Date(date.getFullYear(), date.getMonth(), 1)
-    );
+    const resolvedMonthStart = startOfDay(new Date(date.getFullYear(), date.getMonth(), 1));
     return {
       cellEvents: resolvedCellEvents,
       currentCellMonth: resolvedMonthStart,
@@ -73,10 +67,7 @@ export function DayCell({ cell, events, eventPositions }: IProps) {
           />
         );
       }
-      const showBullet = isSameMonth(
-        new Date(event.startDate),
-        currentCellMonth
-      );
+      const showBullet = isSameMonth(new Date(event.startDate), currentCellMonth);
 
       return (
         <motion.div
@@ -86,18 +77,12 @@ export function DayCell({ cell, events, eventPositions }: IProps) {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: position * 0.1, ...transition }}
         >
-          {showBullet && (
-            <EventBullet className="lg:hidden" color={event.color} />
-          )}
-          <MonthEventBadge
-            className="hidden lg:flex"
-            event={event}
-            cellDate={startOfDay(date)}
-          />
+          {showBullet && <EventBullet className="lg:hidden" color={event.color} />}
+          <MonthEventBadge className="hidden lg:flex" event={event} cellDate={startOfDay(date)} />
         </motion.div>
       );
     },
-    [cellEvents, currentCellMonth, date]
+    [cellEvents, currentCellMonth, date],
   );
 
   const showMoreCount = cellEvents.length - MAX_VISIBLE_EVENTS;
@@ -110,7 +95,7 @@ export function DayCell({ cell, events, eventPositions }: IProps) {
       <motion.div
         className={cn(
           "flex h-full lg:min-h-40 flex-col gap-1 border-l border-t",
-          isSunday(date) && "border-l-0"
+          isSunday(date) && "border-l-0",
         )}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -122,7 +107,7 @@ export function DayCell({ cell, events, eventPositions }: IProps) {
               "h-6 px-1 text-xs font-semibold lg:px-2",
               !currentMonth && "opacity-20",
               isToday(date) &&
-                "flex w-6 translate-x-1 items-center justify-center rounded-full bg-primary px-0 font-bold text-primary-foreground"
+                "flex w-6 translate-x-1 items-center justify-center rounded-full bg-primary px-0 font-bold text-primary-foreground",
             )}
           >
             {day}
@@ -131,7 +116,7 @@ export function DayCell({ cell, events, eventPositions }: IProps) {
           <motion.div
             className={cn(
               "flex h-fit gap-1 px-2 mt-1 lg:h-[94px] lg:flex-col lg:gap-2 lg:px-0",
-              !currentMonth && "opacity-50"
+              !currentMonth && "opacity-50",
             )}
           >
             {cellEvents.length === 0 && !isMobile ? (
@@ -153,7 +138,7 @@ export function DayCell({ cell, events, eventPositions }: IProps) {
             <motion.div
               className={cn(
                 "h-4.5 px-1.5 my-2 text-end text-xs font-semibold text-muted-foreground",
-                !currentMonth && "opacity-50"
+                !currentMonth && "opacity-50",
               )}
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
@@ -175,7 +160,7 @@ export function DayCell({ cell, events, eventPositions }: IProps) {
       showMoreCount,
       renderEventAtPosition,
       isMobile,
-    ]
+    ],
   );
 
   return cellContent;

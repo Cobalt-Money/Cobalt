@@ -10,18 +10,14 @@ interface SnapTradeCredentials {
   providerUserSecret: string;
 }
 
-async function registerSnapTradeUser(
-  userId: string
-): Promise<SnapTradeCredentials> {
+async function registerSnapTradeUser(userId: string): Promise<SnapTradeCredentials> {
   const response = await snaptradeClient.authentication.registerSnapTradeUser({
     userId,
   });
 
   const responseData = response.data || response;
   if (!responseData?.userSecret || !responseData?.userId) {
-    throw new Error(
-      "Failed to get userSecret or userId from SnapTrade registration"
-    );
+    throw new Error("Failed to get userSecret or userId from SnapTrade registration");
   }
 
   await db.insert(snaptradeUser).values({
@@ -44,7 +40,7 @@ interface ConnectionPortalResult {
 export async function generateConnectionPortal(
   userId: string,
   broker: string,
-  reconnectAuthorizationId?: string
+  reconnectAuthorizationId?: string,
 ): Promise<ConnectionPortalResult> {
   const existingUser = await getBrokerageUserByUserId(userId);
   const userSession = existingUser ?? (await registerSnapTradeUser(userId));
@@ -57,8 +53,7 @@ export async function generateConnectionPortal(
     userSecret: userSession.providerUserSecret,
   };
 
-  const response =
-    await snaptradeClient.authentication.loginSnapTradeUser(loginParams);
+  const response = await snaptradeClient.authentication.loginSnapTradeUser(loginParams);
 
   const responseData = (response.data || response) as {
     redirectURI?: string;
@@ -71,9 +66,7 @@ export async function generateConnectionPortal(
   const sessionId = responseData.sessionId || responseData.session_id;
 
   if (!redirectURI) {
-    throw new Error(
-      "Failed to get redirectURI from SnapTrade connection portal"
-    );
+    throw new Error("Failed to get redirectURI from SnapTrade connection portal");
   }
 
   return { redirectURI, sessionId };

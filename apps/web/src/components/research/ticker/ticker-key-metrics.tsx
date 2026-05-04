@@ -15,9 +15,7 @@ export function TickerKeyMetrics({ rows }: { rows: readonly KeyMetricRow[] }) {
       <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-3 lg:grid-cols-4">
         {rows.map((row) => (
           <div className="min-w-0" key={row.label}>
-            <dt className="text-muted-foreground text-sm font-medium leading-snug">
-              {row.label}
-            </dt>
+            <dt className="text-muted-foreground text-sm font-medium leading-snug">{row.label}</dt>
             <dd className="mt-1.5 min-w-0">
               {row.href ? (
                 <a
@@ -32,16 +30,12 @@ export function TickerKeyMetrics({ rows }: { rows: readonly KeyMetricRow[] }) {
                 <p
                   className={cn(
                     "font-semibold text-foreground text-base tabular-nums leading-snug sm:text-lg",
-                    row.label === "CEO" ||
-                      row.label === "Sector" ||
-                      row.label === "Industry"
+                    row.label === "CEO" || row.label === "Sector" || row.label === "Industry"
                       ? "break-words"
-                      : ""
+                      : "",
                   )}
                   title={
-                    row.label === "CEO" ||
-                    row.label === "Industry" ||
-                    row.label === "Sector"
+                    row.label === "CEO" || row.label === "Industry" || row.label === "Sector"
                       ? row.value
                       : undefined
                   }

@@ -16,8 +16,7 @@
 import { Pool } from "pg";
 
 const pool = new Pool({
-  connectionString:
-    process.env.LOCAL_DATABASE_URL ?? process.env.DATABASE_URL ?? "",
+  connectionString: process.env.LOCAL_DATABASE_URL ?? process.env.DATABASE_URL ?? "",
 });
 
 interface Check {
@@ -249,9 +248,7 @@ async function main(): Promise<void> {
   const countResults = await Promise.all(COUNT_CHECKS.map(runCount));
   for (const r of countResults) {
     // eslint-disable-next-line no-console
-    console.log(
-      `  ${r.status === "PASS" ? "✓" : "✗"} ${r.name.padEnd(40)} ${r.detail}`
-    );
+    console.log(`  ${r.status === "PASS" ? "✓" : "✗"} ${r.name.padEnd(40)} ${r.detail}`);
   }
 
   // eslint-disable-next-line no-console
@@ -259,9 +256,7 @@ async function main(): Promise<void> {
   const lossResults = await Promise.all(LOSS_CHECKS.map(runLoss));
   for (const r of lossResults) {
     // eslint-disable-next-line no-console
-    console.log(
-      `  ${r.status === "PASS" ? "✓" : "✗"} ${r.name.padEnd(50)} ${r.detail}`
-    );
+    console.log(`  ${r.status === "PASS" ? "✓" : "✗"} ${r.name.padEnd(50)} ${r.detail}`);
   }
 
   const allResults = [...countResults, ...lossResults];
@@ -269,7 +264,7 @@ async function main(): Promise<void> {
 
   // eslint-disable-next-line no-console
   console.log(
-    `\n=== ${failed.length === 0 ? "PASS" : "FAIL"}: ${allResults.length - failed.length}/${allResults.length} checks green ===\n`
+    `\n=== ${failed.length === 0 ? "PASS" : "FAIL"}: ${allResults.length - failed.length}/${allResults.length} checks green ===\n`,
   );
 
   await pool.end();

@@ -86,9 +86,7 @@ function groupByInstitution(accounts: MockAccount[]): InstitutionGroup[] {
       });
     }
   }
-  return [...map.values()].toSorted((a, b) =>
-    a.institution.localeCompare(b.institution)
-  );
+  return [...map.values()].toSorted((a, b) => a.institution.localeCompare(b.institution));
 }
 
 const groups = groupByInstitution(MOCK_ACCOUNTS);
@@ -192,9 +190,7 @@ export function BabyAccounts() {
                       ) : (
                         <time
                           className="tabular-nums"
-                          dateTime={new Date(
-                            account.lastSyncedAt
-                          ).toISOString()}
+                          dateTime={new Date(account.lastSyncedAt).toISOString()}
                           title={formatLastSyncedTitle(account.lastSyncedAt)}
                         >
                           {formatLastSyncedLabel(account.lastSyncedAt)}

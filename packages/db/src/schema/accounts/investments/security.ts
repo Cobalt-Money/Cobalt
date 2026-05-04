@@ -13,20 +13,14 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-export const securitySource = pgEnum("security_source", [
-  "plaid",
-  "snaptrade",
-  "manual",
-]);
+export const securitySource = pgEnum("security_source", ["plaid", "snaptrade", "manual"]);
 
 export const security = pgTable(
   "security",
   {
     closePrice: numeric("close_price", { precision: 28, scale: 10 }),
     closePriceAsOf: date("close_price_as_of"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     currency: text("currency"),
     // cusip/isin/sedol: cross-broker security IDs. Currently always null —
     // Plaid gates these behind a CUSIP Global Services license (null by
@@ -80,7 +74,7 @@ export const security = pgTable(
     uniqueIndex("security_source_external_id_idx")
       .on(t.source, t.externalId)
       .where(sql`external_id IS NOT NULL`),
-  ]
+  ],
 );
 
 export type Security = typeof security.$inferSelect;

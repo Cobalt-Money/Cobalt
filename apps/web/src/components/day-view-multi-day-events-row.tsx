@@ -1,10 +1,4 @@
-import {
-  differenceInDays,
-  endOfDay,
-  isWithinInterval,
-  parseISO,
-  startOfDay,
-} from "date-fns";
+import { differenceInDays, endOfDay, isWithinInterval, parseISO, startOfDay } from "date-fns";
 
 import type { IEvent } from "@/components/interfaces";
 import { MonthEventBadge } from "@/components/month-event-badge";
@@ -14,10 +8,7 @@ interface IProps {
   multiDayEvents: IEvent[];
 }
 
-export function DayViewMultiDayEventsRow({
-  selectedDate,
-  multiDayEvents,
-}: IProps) {
+export function DayViewMultiDayEventsRow({ selectedDate, multiDayEvents }: IProps) {
   const dayStart = startOfDay(selectedDate);
   const dayEnd = endOfDay(selectedDate);
 
@@ -33,14 +24,8 @@ export function DayViewMultiDayEventsRow({
       );
     })
     .toSorted((a, b) => {
-      const durationA = differenceInDays(
-        parseISO(a.endDate),
-        parseISO(a.startDate)
-      );
-      const durationB = differenceInDays(
-        parseISO(b.endDate),
-        parseISO(b.startDate)
-      );
+      const durationA = differenceInDays(parseISO(a.endDate), parseISO(a.startDate));
+      const durationB = differenceInDays(parseISO(b.endDate), parseISO(b.startDate));
       return durationB - durationA;
     });
 

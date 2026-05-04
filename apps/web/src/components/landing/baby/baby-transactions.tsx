@@ -117,9 +117,7 @@ export function BabyTransactions({ items }: BabyTransactionsProps) {
           </div>
           {section.rows.map((tx) => {
             const isDebit = tx.amount >= 0;
-            const amountColor = isDebit
-              ? "text-red-600 dark:text-red-500"
-              : "text-green-550";
+            const amountColor = isDebit ? "text-red-600 dark:text-red-500" : "text-green-550";
             const displayName = truncateName(tx.name);
             const categoryConfig = tx.personalFinanceCategory
               ? getCategoryDisplayConfig(tx.personalFinanceCategory)
@@ -133,11 +131,7 @@ export function BabyTransactions({ items }: BabyTransactionsProps) {
                 {/* Logo */}
                 <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
                   {tx.logoUrl ? (
-                    <img
-                      alt={tx.name}
-                      className="size-full object-cover"
-                      src={tx.logoUrl}
-                    />
+                    <img alt={tx.name} className="size-full object-cover" src={tx.logoUrl} />
                   ) : (
                     <span className="text-xs font-bold text-muted-foreground">
                       {tx.name[0]?.toUpperCase()}
@@ -164,12 +158,7 @@ export function BabyTransactions({ items }: BabyTransactionsProps) {
                 </span>
 
                 {/* Amount */}
-                <span
-                  className={cn(
-                    "shrink-0 text-sm font-medium tabular-nums",
-                    amountColor
-                  )}
-                >
+                <span className={cn("shrink-0 text-sm font-medium tabular-nums", amountColor)}>
                   {currency.format(Math.abs(tx.amount))}
                 </span>
               </div>

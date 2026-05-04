@@ -47,21 +47,17 @@ function TransactionsListPage() {
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const selectedCount = Object.keys(rowSelection).length;
-  const { openAddAccount, openAddTransaction, openManageTags } =
-    useCommandMenu();
+  const { openAddAccount, openAddTransaction, openManageTags } = useCommandMenu();
 
   const handleExport = useCallback(
     (format: ExportFormat) => {
-      const selected =
-        selectedCount > 0
-          ? items.filter((item) => rowSelection[item.id])
-          : items;
+      const selected = selectedCount > 0 ? items.filter((item) => rowSelection[item.id]) : items;
       if (selected.length === 0) {
         return;
       }
       exportTransactions(selected, format);
     },
-    [items, rowSelection, selectedCount]
+    [items, rowSelection, selectedCount],
   );
 
   return (
@@ -80,30 +76,15 @@ function TransactionsListPage() {
             navigate({
               replace: true,
               search: {
-                amount:
-                  next.amount && next.amount !== "all"
-                    ? next.amount
-                    : undefined,
-                amountMax:
-                  typeof next.amountMax === "number"
-                    ? next.amountMax
-                    : undefined,
+                amount: next.amount && next.amount !== "all" ? next.amount : undefined,
+                amountMax: typeof next.amountMax === "number" ? next.amountMax : undefined,
                 amountMin:
                   typeof next.amountMin === "number" && next.amountMin > 0
                     ? next.amountMin
                     : undefined,
-                bank:
-                  next.bank && next.bank.length > 0
-                    ? [...next.bank]
-                    : undefined,
-                status:
-                  next.status && next.status !== "all"
-                    ? next.status
-                    : undefined,
-                tagIds:
-                  next.tagIds && next.tagIds.length > 0
-                    ? [...next.tagIds]
-                    : undefined,
+                bank: next.bank && next.bank.length > 0 ? [...next.bank] : undefined,
+                status: next.status && next.status !== "all" ? next.status : undefined,
+                tagIds: next.tagIds && next.tagIds.length > 0 ? [...next.tagIds] : undefined,
               },
               to: "/transactions",
             });

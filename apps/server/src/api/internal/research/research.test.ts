@@ -7,7 +7,7 @@ vi.mock(import("@cobalt-web/auth"), () => ({
         Promise.resolve({
           session: { id: "sess-1" },
           user: { email: "u@test", id: "user-1" },
-        })
+        }),
       ),
     },
   } as never,
@@ -32,14 +32,11 @@ vi.mock(import("@cobalt-web/server-data/research/fmp-screener"), () => ({
   fmpCompanyScreenerNasdaqNyse: vi.fn(),
 }));
 
-vi.mock(
-  import("@cobalt-web/server-data/research/fmp-screener-metrics"),
-  () => ({
-    enrichScreenerRowsWithRevenueAndRating: vi.fn(
-      (rows: Record<string, unknown>[]) => Promise.resolve(rows)
-    ),
-  })
-);
+vi.mock(import("@cobalt-web/server-data/research/fmp-screener-metrics"), () => ({
+  enrichScreenerRowsWithRevenueAndRating: vi.fn((rows: Record<string, unknown>[]) =>
+    Promise.resolve(rows),
+  ),
+}));
 
 vi.mock(import("@cobalt-web/server-data/research/screener-query"), () => ({
   screenerQueryToCompanyParams: vi.fn(() => ({})),
@@ -47,8 +44,7 @@ vi.mock(import("@cobalt-web/server-data/research/screener-query"), () => ({
 
 const { fmpGetChart, fmpGetProfile, fmpGetQuote } =
   await import("@cobalt-web/server-data/research/fmp-ticker");
-const { getResearchNews } =
-  await import("@cobalt-web/server-data/research/queries");
+const { getResearchNews } = await import("@cobalt-web/server-data/research/queries");
 const { fmpCompanyScreenerNasdaqNyse } =
   await import("@cobalt-web/server-data/research/fmp-screener");
 

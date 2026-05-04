@@ -6,10 +6,7 @@ import { formatDistanceStrict } from "date-fns";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-import type {
-  FinancialEventArticlePreview,
-  FinancialEventCard,
-} from "./financial-events-feed";
+import type { FinancialEventArticlePreview, FinancialEventCard } from "./financial-events-feed";
 import type { NewsTab } from "./news-toolbar";
 
 export type { NewsTab } from "./news-toolbar";
@@ -31,10 +28,7 @@ export interface NewsMagazineProps {
    * Wrap each event block (featured row or grid card) for client-side navigation,
    * e.g. `<Link to={...}>{inner}</Link>`. Default: render `inner` only.
    */
-  readonly renderEventLink?: (
-    event: FinancialEventCard,
-    inner: ReactNode
-  ) => ReactNode;
+  readonly renderEventLink?: (event: FinancialEventCard, inner: ReactNode) => ReactNode;
   /** Called when the "For You" empty-state CTA is clicked. */
   readonly onConnectAccount?: () => void;
 }
@@ -58,10 +52,7 @@ function eventTimestampMs(e: FinancialEventCard): number | null {
   return null;
 }
 
-function eventMatchesTopicSlug(
-  event: FinancialEventCard,
-  slug: string
-): boolean {
+function eventMatchesTopicSlug(event: FinancialEventCard, slug: string): boolean {
   const normalized = slug.toLowerCase();
   return event.topics.some((t) => t.trim().toLowerCase() === normalized);
 }
@@ -93,16 +84,12 @@ function hostnameFromUrl(url: string): string {
 
 function uniqueSourceArticles(
   articles: readonly FinancialEventArticlePreview[],
-  max = 6
+  max = 6,
 ): FinancialEventArticlePreview[] {
   const seen = new Set<string>();
   const out: FinancialEventArticlePreview[] = [];
   for (const a of articles) {
-    const label = (
-      a.sourceName?.trim() ||
-      hostnameFromUrl(a.newsUrl) ||
-      "?"
-    ).toLowerCase();
+    const label = (a.sourceName?.trim() || hostnameFromUrl(a.newsUrl) || "?").toLowerCase();
     if (seen.has(label)) {
       continue;
     }
@@ -143,13 +130,7 @@ function RssSourceFavicon({ link }: { readonly link: string }) {
       className="relative inline-flex size-5 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60"
     >
       {fav ? (
-        <img
-          alt=""
-          className="size-full object-cover"
-          decoding="async"
-          loading="lazy"
-          src={fav}
-        />
+        <img alt="" className="size-full object-cover" decoding="async" loading="lazy" src={fav} />
       ) : (
         <span className="text-muted-foreground flex size-full items-center justify-center text-[9px] font-bold">
           {initial}
@@ -172,11 +153,7 @@ function SourceIconRow({
     <div className="flex items-center">
       {sources.map((a, i) => {
         const fav = faviconUrlForArticle(a);
-        const initial = (
-          a.sourceName?.trim() ||
-          hostnameFromUrl(a.newsUrl) ||
-          "?"
-        )
+        const initial = (a.sourceName?.trim() || hostnameFromUrl(a.newsUrl) || "?")
           .slice(0, 2)
           .toUpperCase();
         return (
@@ -185,7 +162,7 @@ function SourceIconRow({
             className={cn(
               "relative inline-flex overflow-hidden rounded-full",
               ring,
-              i > 0 && "-ml-2"
+              i > 0 && "-ml-2",
             )}
             key={a.id}
           >
@@ -264,9 +241,7 @@ function FeaturedEvent({
       </div>
       <div className="flex w-full shrink-0 items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-          {event.articles.length > 0 ? (
-            <SourceIconRow articles={event.articles} />
-          ) : null}
+          {event.articles.length > 0 ? <SourceIconRow articles={event.articles} /> : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <TickerIconRow tickers={event.tickers} />
@@ -289,7 +264,7 @@ function FeaturedEvent({
       className={cn(
         "relative w-full max-w-full shrink-0 overflow-hidden rounded-2xl bg-muted shadow-sm",
         "aspect-[16/10]",
-        "lg:aspect-auto lg:h-full lg:min-h-[264px] lg:w-[min(100%,440px)] lg:max-w-[440px] lg:self-stretch"
+        "lg:aspect-auto lg:h-full lg:min-h-[264px] lg:w-[min(100%,440px)] lg:max-w-[440px] lg:self-stretch",
       )}
     >
       <img
@@ -305,7 +280,7 @@ function FeaturedEvent({
       className={cn(
         "w-full max-w-full shrink-0 rounded-2xl bg-gradient-to-br from-muted to-muted/30",
         "aspect-[16/10]",
-        "lg:aspect-auto lg:h-full lg:min-h-[264px] lg:w-[min(100%,440px)] lg:max-w-[440px] lg:self-stretch"
+        "lg:aspect-auto lg:h-full lg:min-h-[264px] lg:w-[min(100%,440px)] lg:max-w-[440px] lg:self-stretch",
       )}
     />
   );
@@ -316,7 +291,7 @@ function FeaturedEvent({
         "flex flex-col gap-6 lg:grid lg:items-stretch lg:gap-10",
         imageRight
           ? "lg:grid-cols-[minmax(0,1fr)_min(100%,440px)]"
-          : "lg:grid-cols-[min(100%,440px)_minmax(0,1fr)]"
+          : "lg:grid-cols-[min(100%,440px)_minmax(0,1fr)]",
       )}
     >
       {imageRight ? (
@@ -404,9 +379,7 @@ function GridCard({
  * 3. Repeat: **featured pair** (image left → image right) → **grid** (up to 3)
  * 4. Trailing orphan → single featured (image left)
  */
-function buildSections(
-  events: readonly FinancialEventCard[]
-): MagazineSection[] {
+function buildSections(events: readonly FinancialEventCard[]): MagazineSection[] {
   const sections: MagazineSection[] = [];
   const n = events.length;
   if (n === 0) {
@@ -483,9 +456,7 @@ function LatestNewsSidebar({
   readonly rssItems: readonly NewsMagazineSidebarItem[];
 }) {
   const ulRef = useRef<HTMLUListElement>(null);
-  const [visibleCount, setVisibleCount] = useState(() =>
-    Math.min(rssItems.length, 8)
-  );
+  const [visibleCount, setVisibleCount] = useState(() => Math.min(rssItems.length, 8));
 
   useLayoutEffect(() => {
     if (rssItems.length === 0) {
@@ -558,9 +529,7 @@ function LatestNewsSidebar({
 
   return (
     <>
-      <h3 className="text-foreground mb-4 text-lg font-bold tracking-tight">
-        Latest News
-      </h3>
+      <h3 className="text-foreground mb-4 text-lg font-bold tracking-tight">Latest News</h3>
       <ul className="space-y-1" ref={ulRef}>
         {visible.map((item) => (
           <li key={item.id}>
@@ -580,11 +549,9 @@ function LatestNewsSidebar({
                     className="ml-auto shrink-0 tabular-nums"
                     dateTime={new Date(item.publishedAt).toISOString()}
                   >
-                    {formatDistanceStrict(
-                      new Date(item.publishedAt),
-                      new Date(),
-                      { addSuffix: true }
-                    )}
+                    {formatDistanceStrict(new Date(item.publishedAt), new Date(), {
+                      addSuffix: true,
+                    })}
                   </time>
                 )}
               </p>
@@ -661,16 +628,9 @@ export function NewsMagazine({
             }
             const gridKey = sec.events.map((e) => e.id).join("-");
             return (
-              <div
-                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-                key={`g-${gridKey}`}
-              >
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" key={`g-${gridKey}`}>
                 {sec.events.map((e) => (
-                  <GridCard
-                    event={e}
-                    key={e.id}
-                    renderEventLink={renderEventLink}
-                  />
+                  <GridCard event={e} key={e.id} renderEventLink={renderEventLink} />
                 ))}
               </div>
             );

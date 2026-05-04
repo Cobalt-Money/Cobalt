@@ -11,6 +11,7 @@ import { bearer } from "better-auth/plugins/bearer";
 import { Stripe } from "stripe";
 
 import { getAppleClientSecret } from "./apple-secret.js";
+import { seedUserCategories } from "./seed-user-categories.js";
 
 const schema = { ...authSchema, ...stripeSchema };
 
@@ -64,6 +65,19 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          try {
+            await seedUserCategories(db, user.id);
+          } catch (error) {
+            console.error(`[auth] failed to seed categories for user ${user.id}:`, error);
+          }
+        },
+      },
+    },
+  },
   disabledPaths: ["/token"],
   emailAndPassword: {
     enabled: false,
@@ -97,7 +111,7 @@ export const auth = betterAuth({
         if (event.type === "invoice.payment_failed") {
           const invoice = event.data.object as Stripe.Invoice;
           console.warn(
-            `[stripe] payment failed for invoice ${invoice.id} (customer ${invoice.customer as string})`
+            `[stripe] payment failed for invoice ${invoice.id} (customer ${invoice.customer as string})`,
           );
         }
       },
@@ -137,12 +151,9 @@ export const auth = betterAuth({
         },
         onSubscriptionUpdate: async ({ subscription }) => {
           await Promise.resolve();
-          if (
-            subscription.status === "past_due" ||
-            subscription.status === "unpaid"
-          ) {
+          if (subscription.status === "past_due" || subscription.status === "unpaid") {
             console.warn(
-              `[stripe] subscription ${subscription.id} is ${subscription.status} (user ${subscription.referenceId})`
+              `[stripe] subscription ${subscription.id} is ${subscription.status} (user ${subscription.referenceId})`,
             );
           }
         },

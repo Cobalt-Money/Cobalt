@@ -15,11 +15,7 @@ export interface TransactionNotesProps {
   onUpdate: (markdown: string) => void;
 }
 
-function TransactionNotesEditor({
-  notes,
-  onReset,
-  onUpdate,
-}: TransactionNotesProps) {
+function TransactionNotesEditor({ notes, onReset, onUpdate }: TransactionNotesProps) {
   const crepeRef = useRef<Crepe | null>(null);
   const lastCommittedRef = useRef<string>(notes ?? "");
 
@@ -38,7 +34,7 @@ function TransactionNotesEditor({
         onUpdate(md);
       }
     },
-    [onReset, onUpdate]
+    [onReset, onUpdate],
   );
 
   const debouncedCommit = useDebouncedCallback(commit, AUTOSAVE_DEBOUNCE_MS);
@@ -100,7 +96,7 @@ function TransactionNotesEditor({
     () => () => {
       debouncedCommit.flush();
     },
-    [debouncedCommit]
+    [debouncedCommit],
   );
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -120,11 +116,7 @@ function TransactionNotesEditor({
   }
 
   return (
-    <div
-      className="w-full min-w-0"
-      onKeyDown={handleKeyDown}
-      role="presentation"
-    >
+    <div className="w-full min-w-0" onKeyDown={handleKeyDown} role="presentation">
       <Milkdown />
     </div>
   );

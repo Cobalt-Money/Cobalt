@@ -69,13 +69,13 @@ export function AccountsAddAccountFab({
       onChoose?.(id);
       setExpanded(false);
     },
-    [onChoose]
+    [onChoose],
   );
 
   return (
     <div
       className={cn(
-        "fixed right-4 bottom-6 z-40 flex flex-col items-end gap-2 lg:right-8 lg:bottom-8"
+        "fixed right-4 bottom-6 z-40 flex flex-col items-end gap-2 lg:right-8 lg:bottom-8",
       )}
       role={expanded ? "group" : undefined}
       aria-label={expanded ? "Add account options" : undefined}
@@ -100,12 +100,7 @@ export function AccountsAddAccountFab({
             type="button"
             onClick={close}
           >
-            <HugeiconsIcon
-              aria-hidden
-              className="size-5"
-              icon={Cancel01Icon}
-              strokeWidth={2}
-            />
+            <HugeiconsIcon aria-hidden className="size-5" icon={Cancel01Icon} strokeWidth={2} />
           </button>
         </div>
       ) : (
@@ -117,7 +112,7 @@ export function AccountsAddAccountFab({
             fabTriggerClass,
             "origin-bottom-right",
             "animate-in fade-in-0 zoom-in-95 duration-200 [animation-timing-function:cubic-bezier(0.23,1,0.32,1)]",
-            "motion-reduce:animate-none motion-reduce:opacity-100 motion-reduce:scale-100"
+            "motion-reduce:animate-none motion-reduce:opacity-100 motion-reduce:scale-100",
           )}
           type="button"
           onClick={() => {
@@ -128,12 +123,7 @@ export function AccountsAddAccountFab({
             setExpanded(true);
           }}
         >
-          <HugeiconsIcon
-            aria-hidden
-            className="size-7"
-            icon={PlusSignIcon}
-            strokeWidth={2}
-          />
+          <HugeiconsIcon aria-hidden className="size-7" icon={PlusSignIcon} strokeWidth={2} />
         </button>
       )}
     </div>

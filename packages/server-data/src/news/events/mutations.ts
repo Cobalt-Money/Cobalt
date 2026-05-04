@@ -7,9 +7,7 @@ import { toEventArticleInsertRow } from "./lib.js";
 import type { EventSummary, ProcessedArticle } from "./lib.js";
 
 // Returns the database row id for the event (existing or newly created).
-export async function upsertFinancialEventHeader(
-  event: FinancialEventInsert
-): Promise<string> {
+export async function upsertFinancialEventHeader(event: FinancialEventInsert): Promise<string> {
   const [row] = await db
     .insert(financialEvents)
     .values(event)
@@ -36,11 +34,9 @@ const ARTICLE_BATCH_SIZE = 100;
 
 export async function replaceEventArticles(
   eventRecordId: string,
-  processed: ProcessedArticle[]
+  processed: ProcessedArticle[],
 ): Promise<void> {
-  await db
-    .delete(eventArticles)
-    .where(eq(eventArticles.financialEventId, eventRecordId));
+  await db.delete(eventArticles).where(eq(eventArticles.financialEventId, eventRecordId));
 
   if (processed.length === 0) {
     return;
@@ -56,7 +52,7 @@ export async function replaceEventArticles(
 export async function applyEventSummary(
   eventRecordId: string,
   summary: EventSummary,
-  scrapedArticlesCount: number
+  scrapedArticlesCount: number,
 ): Promise<void> {
   await db
     .update(financialEvents)

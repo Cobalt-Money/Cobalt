@@ -2,19 +2,13 @@ import { env } from "@cobalt-web/env/server";
 
 const BASE = "https://financialmodelingprep.com/stable";
 
-export type FmpSearchParams = Record<
-  string,
-  string | number | boolean | undefined
->;
+export type FmpSearchParams = Record<string, string | number | boolean | undefined>;
 
 /**
  * GET `https://financialmodelingprep.com/stable/{path}` with `apikey` and optional query params.
  * @throws If `FMP_API_KEY` is unset or the response is not OK / not JSON.
  */
-export async function fmpStableGet(
-  path: string,
-  params: FmpSearchParams = {}
-): Promise<unknown> {
+export async function fmpStableGet(path: string, params: FmpSearchParams = {}): Promise<unknown> {
   const apiKey = env.FMP_API_KEY;
   if (!apiKey) {
     throw new Error("FMP_API_KEY is not configured");

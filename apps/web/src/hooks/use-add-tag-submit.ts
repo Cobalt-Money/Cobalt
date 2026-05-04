@@ -1,5 +1,5 @@
-import type { AddTagFormValues } from "@cobalt-web/ui/cobalt/tags/add-tag-dialog";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
+import type { AddTagFormValues } from "@cobalt-web/ui/cobalt/transactions/tags/add-tag-dialog";
 import { useCallback } from "react";
 
 import { useCreateTag } from "@/hooks/use-tags";
@@ -18,7 +18,7 @@ export function useAddTagSubmit() {
         throw error;
       }
     },
-    [createTag]
+    [createTag],
   );
 
   return { isPending: createTag.isPending, submit };

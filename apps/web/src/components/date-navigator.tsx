@@ -28,13 +28,11 @@ export function DateNavigator({ view, events }: IProps) {
 
   const eventCount = useMemo(
     () => getEventsCount(events, selectedDate, view),
-    [events, selectedDate, view]
+    [events, selectedDate, view],
   );
 
-  const handlePrevious = () =>
-    setSelectedDate(navigateDate(selectedDate, view, "previous"));
-  const handleNext = () =>
-    setSelectedDate(navigateDate(selectedDate, view, "next"));
+  const handlePrevious = () => setSelectedDate(navigateDate(selectedDate, view, "previous"));
+  const handleNext = () => setSelectedDate(navigateDate(selectedDate, view, "next"));
 
   return (
     <div className="space-y-0.5">

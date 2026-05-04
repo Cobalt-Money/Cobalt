@@ -35,7 +35,7 @@ export const ButtonGroup = ({
           "flex-col": isVertical,
           "w-fit": isVertical,
         },
-        className
+        className,
       )}
     >
       {Children.map(children, (child, index) => {
@@ -53,7 +53,7 @@ export const ButtonGroup = ({
               "rounded-s-none": isHorizontal && !isFirst,
               "rounded-t-none": isVertical && !isFirst,
             },
-            child.props.className
+            child.props.className,
           ),
         });
       })}

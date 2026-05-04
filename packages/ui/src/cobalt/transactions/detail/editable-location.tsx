@@ -98,14 +98,10 @@ export function EditableLocation({
         {open ? (
           <div className="absolute top-full left-0 z-50 mt-1 w-full min-w-[20rem] rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
             {loading && results.length === 0 ? (
-              <div className="px-2 py-2 text-muted-foreground text-xs">
-                Searching…
-              </div>
+              <div className="px-2 py-2 text-muted-foreground text-xs">Searching…</div>
             ) : null}
             {!loading && results.length === 0 ? (
-              <div className="px-2 py-2 text-muted-foreground text-xs">
-                No matches
-              </div>
+              <div className="px-2 py-2 text-muted-foreground text-xs">No matches</div>
             ) : null}
             {results.map((r) => (
               <button
@@ -129,11 +125,7 @@ export function EditableLocation({
           }}
           type="button"
         >
-          <HugeiconsIcon
-            className="size-3"
-            icon={Refresh01Icon}
-            strokeWidth={2}
-          />
+          <HugeiconsIcon className="size-3" icon={Refresh01Icon} strokeWidth={2} />
           Reset
         </button>
       ) : null}

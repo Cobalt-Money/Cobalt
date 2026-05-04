@@ -37,15 +37,7 @@ interface ChartPoint {
   v: number;
 }
 
-const BALANCE_CHART_RANGE_OPTIONS = [
-  "1W",
-  "1M",
-  "3M",
-  "YTD",
-  "1Y",
-  "5Y",
-  "All",
-] as const;
+const BALANCE_CHART_RANGE_OPTIONS = ["1W", "1M", "3M", "YTD", "1Y", "5Y", "All"] as const;
 
 type BalanceChartRange = (typeof BALANCE_CHART_RANGE_OPTIONS)[number];
 
@@ -119,8 +111,7 @@ export function BalanceChartCard({
   brokerageScope: BrokerageScope;
   onScopeChange: (scope: BrokerageScope) => void;
 }) {
-  const [balanceChartRange, setBalanceChartRange] =
-    useState<BalanceChartRange>("1M");
+  const [balanceChartRange, setBalanceChartRange] = useState<BalanceChartRange>("1M");
   const [hoveredValue, setHoveredValue] = useState<number | null>(null);
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -192,10 +183,7 @@ export function BalanceChartCard({
 
     const byDate = new Map<number, number>();
     for (const s of filtered) {
-      byDate.set(
-        s.snapshotDate,
-        (byDate.get(s.snapshotDate) ?? 0) + (s.totalValue ?? 0)
-      );
+      byDate.set(s.snapshotDate, (byDate.get(s.snapshotDate) ?? 0) + (s.totalValue ?? 0));
     }
 
     return [...byDate.entries()]
@@ -228,7 +216,7 @@ export function BalanceChartCard({
               <p
                 className={cn(
                   "text-muted-foreground text-xs tabular-nums transition-opacity",
-                  hoveredDate ? "opacity-100" : "opacity-0"
+                  hoveredDate ? "opacity-100" : "opacity-0",
                 )}
               >
                 {hoveredDate ?? "\u00A0"}
@@ -255,15 +243,9 @@ export function BalanceChartCard({
         >
           <div className="absolute inset-0">
             <ResponsiveContainer height="100%" width="100%">
-              <AreaChart
-                data={chartPoints}
-                margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
-              >
+              <AreaChart data={chartPoints} margin={{ bottom: 0, left: 0, right: 0, top: 4 }}>
                 <Tooltip content={() => null} />
-                <ChartHoverSync
-                  setHoveredDate={setHoveredDate}
-                  setHoveredValue={setHoveredValue}
-                />
+                <ChartHoverSync setHoveredDate={setHoveredDate} setHoveredValue={setHoveredValue} />
                 <XAxis dataKey="label" hide />
                 <YAxis domain={["auto", "auto"]} hide width={0} />
                 <Area
@@ -277,33 +259,13 @@ export function BalanceChartCard({
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <div
-            ref={coloredLayerRef}
-            className="pointer-events-none absolute inset-0"
-          >
+          <div ref={coloredLayerRef} className="pointer-events-none absolute inset-0">
             <ResponsiveContainer height="100%" width="100%">
-              <AreaChart
-                data={chartPoints}
-                margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
-              >
+              <AreaChart data={chartPoints} margin={{ bottom: 0, left: 0, right: 0, top: 4 }}>
                 <defs>
-                  <linearGradient
-                    id="balanceChartFill"
-                    x1="0"
-                    x2="0"
-                    y1="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="0%"
-                      stopColor="var(--color-green-550)"
-                      stopOpacity={0.35}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="var(--color-green-550)"
-                      stopOpacity={0}
-                    />
+                  <linearGradient id="balanceChartFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-green-550)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="var(--color-green-550)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="label" hide />

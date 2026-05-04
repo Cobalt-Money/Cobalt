@@ -2,10 +2,7 @@ import { env } from "@cobalt-web/env/server";
 import { Sandbox } from "@vercel/sandbox";
 
 import type { SandboxBackend } from "./sandbox-runner-types.js";
-import {
-  SANDBOX_NODE_RUNTIME,
-  SCRIPT_TIMEOUT_MS,
-} from "./sandbox-runner-types.js";
+import { SANDBOX_NODE_RUNTIME, SCRIPT_TIMEOUT_MS } from "./sandbox-runner-types.js";
 
 const SCRIPT_PATH = "run.mjs";
 
@@ -16,7 +13,7 @@ function requireVercelEnv(): {
 } {
   if (!env.VERCEL_TOKEN || !env.VERCEL_TEAM_ID || !env.VERCEL_PROJECT_ID) {
     throw new Error(
-      "SANDBOX_RUNTIME=vercel requires VERCEL_TOKEN, VERCEL_TEAM_ID, VERCEL_PROJECT_ID"
+      "SANDBOX_RUNTIME=vercel requires VERCEL_TOKEN, VERCEL_TEAM_ID, VERCEL_PROJECT_ID",
     );
   }
   return {

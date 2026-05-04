@@ -12,18 +12,13 @@ import type {
   StudentLoan,
 } from "plaid";
 
-import {
-  lookupFinancialAccountsByPlaidIds,
-  lookupPlaidConnection,
-} from "../link/queries.js";
+import { lookupFinancialAccountsByPlaidIds, lookupPlaidConnection } from "../link/queries.js";
 
 const BATCH_SIZE = 100;
 
 const externalIdNotNullWhere = sql`external_id IS NOT NULL`;
 
-function numToStr(
-  value: number | string | boolean | null | undefined
-): string | null {
+function numToStr(value: number | string | boolean | null | undefined): string | null {
   return value === null || value === undefined ? null : String(value);
 }
 
@@ -34,7 +29,7 @@ function numToStr(
  */
 export async function insertBankAccountsOnConflictDoNothing(
   accounts: AccountBase[],
-  plaidItemId: string
+  plaidItemId: string,
 ): Promise<number> {
   if (accounts.length === 0) {
     return 0;
@@ -81,9 +76,7 @@ export async function insertBankAccountsOnConflictDoNothing(
  * Upsert balance rows for Plaid liability accounts. One row per financial
  * account (unique constraint on `balance.account_id`).
  */
-export async function upsertBankBalancesForPlaidAccounts(
-  accounts: AccountBase[]
-): Promise<void> {
+export async function upsertBankBalancesForPlaidAccounts(accounts: AccountBase[]): Promise<void> {
   if (accounts.length === 0) {
     return;
   }
@@ -127,18 +120,14 @@ export async function upsertBankBalancesForPlaidAccounts(
     });
 }
 
-export async function upsertCreditLiabilities(
-  liabilities: CreditCardLiability[]
-): Promise<void> {
+export async function upsertCreditLiabilities(liabilities: CreditCardLiability[]): Promise<void> {
   if (liabilities.length === 0) {
     return;
   }
 
   const plaidAccountIds = [
     ...new Set(
-      liabilities
-        .map((l) => l.account_id)
-        .filter((id): id is string => typeof id === "string")
+      liabilities.map((l) => l.account_id).filter((id): id is string => typeof id === "string"),
     ),
   ];
   const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
@@ -190,7 +179,7 @@ export async function upsertCreditLiabilities(
 }
 
 export async function upsertMortgageLiabilities(
-  liabilities: PlaidMortgageLiability[]
+  liabilities: PlaidMortgageLiability[],
 ): Promise<void> {
   if (liabilities.length === 0) {
     return;
@@ -198,9 +187,7 @@ export async function upsertMortgageLiabilities(
 
   const plaidAccountIds = [
     ...new Set(
-      liabilities
-        .map((l) => l.account_id)
-        .filter((id): id is string => typeof id === "string")
+      liabilities.map((l) => l.account_id).filter((id): id is string => typeof id === "string"),
     ),
   ];
   const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
@@ -273,19 +260,13 @@ export async function upsertMortgageLiabilities(
   }
 }
 
-export async function upsertStudentLoanLiabilities(
-  loans: StudentLoan[]
-): Promise<void> {
+export async function upsertStudentLoanLiabilities(loans: StudentLoan[]): Promise<void> {
   if (loans.length === 0) {
     return;
   }
 
   const plaidAccountIds = [
-    ...new Set(
-      loans
-        .map((l) => l.account_id)
-        .filter((id): id is string => typeof id === "string")
-    ),
+    ...new Set(loans.map((l) => l.account_id).filter((id): id is string => typeof id === "string")),
   ];
   const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
 

@@ -3,7 +3,7 @@ import { CountryCode, Products } from "plaid";
 
 /** Fetch institution name and logo from Plaid. */
 export async function fetchInstitutionDetails(
-  institutionId: string
+  institutionId: string,
 ): Promise<{ logo: string | null; name: string | null }> {
   try {
     const inst = await plaidClient.institutionsGetById({

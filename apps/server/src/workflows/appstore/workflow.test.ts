@@ -39,7 +39,7 @@ describe("appstoreWebhookWorkflow", () => {
 
   it("returns success:false and surfaces error message on failure", async () => {
     vi.mocked(applyAppStoreNotificationStep).mockRejectedValueOnce(
-      new Error("subscription not found")
+      new Error("subscription not found"),
     );
     const out = await appstoreWebhookWorkflow(baseParams);
     expect(out.success).toBeFalsy();

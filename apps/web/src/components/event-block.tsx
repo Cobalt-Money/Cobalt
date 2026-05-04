@@ -42,7 +42,7 @@ const calendarWeekEventCardVariants = cva(
           "border-border bg-card text-foreground hover:bg-accent [&_svg]:fill-yellow-600 dark:[&_svg]:fill-yellow-500",
       },
     },
-  }
+  },
 );
 
 interface IProps
@@ -60,13 +60,13 @@ export function EventBlock({ event, className }: IProps) {
   const durationInMinutes = differenceInMinutes(end, start);
   const heightInPixels = (durationInMinutes / 60) * 96 - 8;
 
-  const color = (
-    badgeVariant === "dot" ? `${event.color}-dot` : event.color
-  ) as VariantProps<typeof calendarWeekEventCardVariants>["color"];
+  const color = (badgeVariant === "dot" ? `${event.color}-dot` : event.color) as VariantProps<
+    typeof calendarWeekEventCardVariants
+  >["color"];
 
   const calendarWeekEventCardClasses = cn(
     calendarWeekEventCardVariants({ className, color }),
-    durationInMinutes < 35 && "py-0 justify-center"
+    durationInMinutes < 35 && "py-0 justify-center",
   );
 
   return (
@@ -96,8 +96,7 @@ export function EventBlock({ event, className }: IProps) {
 
           {durationInMinutes > 25 && (
             <p>
-              {formatTime(start, use24HourFormat)} -{" "}
-              {formatTime(end, use24HourFormat)}
+              {formatTime(start, use24HourFormat)} - {formatTime(end, use24HourFormat)}
             </p>
           )}
         </button>

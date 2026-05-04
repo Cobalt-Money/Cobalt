@@ -38,7 +38,7 @@ function parseScreenerRows(raw: unknown): Record<string, unknown>[] {
   }
   return raw.filter(
     (row): row is Record<string, unknown> =>
-      row !== null && typeof row === "object" && !Array.isArray(row)
+      row !== null && typeof row === "object" && !Array.isArray(row),
   );
 }
 
@@ -66,7 +66,7 @@ function rowSymbolUpper(row: Record<string, unknown>): string {
  * Any `exchange` in `params` is ignored.
  */
 export async function fmpCompanyScreenerNasdaqNyse(
-  params: CompanyScreenerParams
+  params: CompanyScreenerParams,
 ): Promise<Record<string, unknown>[]> {
   const { exchange: _ignored, limit: lim, ...rest } = params;
   const limit = typeof lim === "number" && lim > 0 ? lim : 100;
@@ -77,10 +77,7 @@ export async function fmpCompanyScreenerNasdaqNyse(
   ]);
 
   const bySym = new Map<string, Record<string, unknown>>();
-  for (const row of [
-    ...parseScreenerRows(rawNasdaq),
-    ...parseScreenerRows(rawNyse),
-  ]) {
+  for (const row of [...parseScreenerRows(rawNasdaq), ...parseScreenerRows(rawNyse)]) {
     const sym = rowSymbolUpper(row);
     if (!sym) {
       continue;
@@ -91,14 +88,10 @@ export async function fmpCompanyScreenerNasdaqNyse(
     }
   }
 
-  return [...bySym.values()]
-    .toSorted((a, b) => marketCapOf(b) - marketCapOf(a))
-    .slice(0, limit);
+  return [...bySym.values()].toSorted((a, b) => marketCapOf(b) - marketCapOf(a)).slice(0, limit);
 }
 
-export function fmpCompanyScreener(
-  params: CompanyScreenerParams
-): Promise<unknown> {
+export function fmpCompanyScreener(params: CompanyScreenerParams): Promise<unknown> {
   return fmpStableGet("company-screener", {
     betaLowerThan: params.betaLowerThan,
     betaMoreThan: params.betaMoreThan,

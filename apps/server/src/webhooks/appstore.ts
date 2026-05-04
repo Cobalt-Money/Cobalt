@@ -39,9 +39,7 @@ export const appstoreWebhookRouter = new Hono().post("/", async (c) => {
     const { notificationType, subtype, transaction } =
       await verifyAppStoreNotification(signedPayload);
 
-    console.log(
-      `[appstore] Received ${notificationType}${subtype ? ` (${subtype})` : ""}`
-    );
+    console.log(`[appstore] Received ${notificationType}${subtype ? ` (${subtype})` : ""}`);
 
     if (notificationType === "TEST") {
       return c.json({ notificationType, status: "ok" });
@@ -62,7 +60,7 @@ export const appstoreWebhookRouter = new Hono().post("/", async (c) => {
       },
     ]);
     console.log(
-      `[appstore] Triggered workflow for ${notificationType} (originalTransactionId=${transaction.originalTransactionId})`
+      `[appstore] Triggered workflow for ${notificationType} (originalTransactionId=${transaction.originalTransactionId})`,
     );
 
     return c.json({ notificationType, status: "processing" });

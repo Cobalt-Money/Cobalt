@@ -56,8 +56,7 @@ function makeEvent(id: string) {
 describe("cronFinancialEventsRouter — auth", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (vi.mocked(envModule).env as never as MutableEnv).CRON_SECRET =
-      "test-secret";
+    (vi.mocked(envModule).env as never as MutableEnv).CRON_SECRET = "test-secret";
   });
 
   it("returns 503 when CRON_SECRET unset", async () => {
@@ -77,8 +76,7 @@ describe("cronFinancialEventsRouter — auth", () => {
 describe("cronFinancialEventsRouter — fan-out", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (vi.mocked(envModule).env as never as MutableEnv).CRON_SECRET =
-      "test-secret";
+    (vi.mocked(envModule).env as never as MutableEnv).CRON_SECRET = "test-secret";
     mockStart.mockResolvedValue({ runId: "run-fe" } as never);
   });
 
@@ -93,26 +91,14 @@ describe("cronFinancialEventsRouter — fan-out", () => {
   });
 
   it("starts one workflow per unprocessed event and skips processed", async () => {
-    mockFetch.mockResolvedValueOnce([
-      makeEvent("e1"),
-      makeEvent("e2"),
-      makeEvent("e3"),
-    ]);
+    mockFetch.mockResolvedValueOnce([makeEvent("e1"), makeEvent("e2"), makeEvent("e3")]);
     mockListProcessed.mockResolvedValueOnce(new Set(["e2"]));
 
     const res = await call("Bearer test-secret");
     expect(res.status).toBe(200);
     expect(mockStart).toHaveBeenCalledTimes(2);
-    expect(mockStart).toHaveBeenNthCalledWith(
-      1,
-      processFinancialEventWorkflow,
-      [makeEvent("e1")]
-    );
-    expect(mockStart).toHaveBeenNthCalledWith(
-      2,
-      processFinancialEventWorkflow,
-      [makeEvent("e3")]
-    );
+    expect(mockStart).toHaveBeenNthCalledWith(1, processFinancialEventWorkflow, [makeEvent("e1")]);
+    expect(mockStart).toHaveBeenNthCalledWith(2, processFinancialEventWorkflow, [makeEvent("e3")]);
   });
 
   it("caps fan-out at MAX_EVENTS_PER_RUN (30)", async () => {

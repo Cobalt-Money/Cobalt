@@ -82,10 +82,7 @@ function postWebhook(body: unknown, signature?: string) {
 
 // Injects a fresh eventTimestamp and signs the resulting body. Use for the
 // happy-path dispatch tests that don't care about the timestamp value.
-function postSigned(
-  body: Record<string, unknown>,
-  eventTimestampOverride?: string
-) {
+function postSigned(body: Record<string, unknown>, eventTimestampOverride?: string) {
   const withTs = {
     ...body,
     eventTimestamp: eventTimestampOverride ?? new Date().toISOString(),
@@ -109,10 +106,7 @@ describe("snaptrade webhook router — auth", () => {
   });
 
   it("returns 401 when signature is invalid", async () => {
-    const res = await postWebhook(
-      { eventType: "CONNECTION_ADDED", userId: "u1" },
-      "deadbeef"
-    );
+    const res = await postWebhook({ eventType: "CONNECTION_ADDED", userId: "u1" }, "deadbeef");
     expect(res.status).toBe(401);
     expect(mockStart).not.toHaveBeenCalled();
   });
@@ -231,16 +225,13 @@ describe("snaptrade webhook router — event dispatch", () => {
     };
     const res = await postSigned(body);
     expect(res.status).toBe(200);
-    expect(mockStart).toHaveBeenCalledWith(
-      snaptradeTransactionsInitialWorkflow,
-      [
-        {
-          accountId: "acct-2",
-          brokerageAuthorizationId: "auth-7",
-          userId: "user-7",
-        },
-      ]
-    );
+    expect(mockStart).toHaveBeenCalledWith(snaptradeTransactionsInitialWorkflow, [
+      {
+        accountId: "acct-2",
+        brokerageAuthorizationId: "auth-7",
+        userId: "user-7",
+      },
+    ]);
   });
 
   it("dispatches ACCOUNT_TRANSACTIONS_UPDATED", async () => {
@@ -252,16 +243,13 @@ describe("snaptrade webhook router — event dispatch", () => {
     };
     const res = await postSigned(body);
     expect(res.status).toBe(200);
-    expect(mockStart).toHaveBeenCalledWith(
-      snaptradeTransactionsUpdatedWorkflow,
-      [
-        {
-          accountId: "acct-3",
-          brokerageAuthorizationId: "auth-8",
-          userId: "user-8",
-        },
-      ]
-    );
+    expect(mockStart).toHaveBeenCalledWith(snaptradeTransactionsUpdatedWorkflow, [
+      {
+        accountId: "acct-3",
+        brokerageAuthorizationId: "auth-8",
+        userId: "user-8",
+      },
+    ]);
   });
 
   it("ignores unknown event types without erroring", async () => {
@@ -329,7 +317,7 @@ describe("snaptrade webhook router — replay protection", () => {
         eventType: "CONNECTION_ADDED",
         userId: "user-1",
       },
-      recent
+      recent,
     );
     expect(res.status).toBe(200);
     expect(mockStart).toHaveBeenCalledOnce();

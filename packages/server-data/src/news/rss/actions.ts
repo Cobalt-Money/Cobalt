@@ -34,10 +34,10 @@ export async function fetchRssFeedXml(url: string): Promise<string> {
 export function parseRssXml(xmlContent: string): ParsedRssFeed | null {
   try {
     const titleMatch = xmlContent.match(
-      /<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/
+      /<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/,
     );
     const descriptionMatch = xmlContent.match(
-      /<description><!\[CDATA\[(.*?)\]\]><\/description>|<description>(.*?)<\/description>/
+      /<description><!\[CDATA\[(.*?)\]\]><\/description>|<description>(.*?)<\/description>/,
     );
     const linkMatch = xmlContent.match(/<link>(.*?)<\/link>/);
 
@@ -57,22 +57,18 @@ export function parseRssXml(xmlContent: string): ParsedRssFeed | null {
 }
 
 function parseItem(itemXml: string): RssItem {
-  const titleMatch = itemXml.match(
-    /<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/
-  );
+  const titleMatch = itemXml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/);
   const descriptionMatch = itemXml.match(
-    /<description><!\[CDATA\[(.*?)\]\]><\/description>|<description>(.*?)<\/description>/
+    /<description><!\[CDATA\[(.*?)\]\]><\/description>|<description>(.*?)<\/description>/,
   );
   const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
   const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);
   const guidMatch = itemXml.match(/<guid[^>]*>(.*?)<\/guid>/);
   const authorMatch = itemXml.match(
-    /<author><!\[CDATA\[(.*?)\]\]><\/author>|<author>(.*?)<\/author>/
+    /<author><!\[CDATA\[(.*?)\]\]><\/author>|<author>(.*?)<\/author>/,
   );
   const categoryMatches =
-    itemXml.match(
-      /<category><!\[CDATA\[(.*?)\]\]><\/category>|<category>(.*?)<\/category>/g
-    ) ?? [];
+    itemXml.match(/<category><!\[CDATA\[(.*?)\]\]><\/category>|<category>(.*?)<\/category>/g) ?? [];
   const categories = categoryMatches
     .map((cat) => {
       // Must require [^<]+ (not .*?) in the plain branch — otherwise the engine
@@ -83,13 +79,9 @@ function parseItem(itemXml: string): RssItem {
     })
     .filter(Boolean);
 
-  const metadataTypeMatch = itemXml.match(
-    /<metadata:type>(.*?)<\/metadata:type>/
-  );
+  const metadataTypeMatch = itemXml.match(/<metadata:type>(.*?)<\/metadata:type>/);
   const metadataIdMatch = itemXml.match(/<metadata:id>(.*?)<\/metadata:id>/);
-  const metadataSponsoredMatch = itemXml.match(
-    /<metadata:sponsored>(.*?)<\/metadata:sponsored>/
-  );
+  const metadataSponsoredMatch = itemXml.match(/<metadata:sponsored>(.*?)<\/metadata:sponsored>/);
 
   return {
     author: authorMatch?.[1] ?? authorMatch?.[2],
@@ -113,9 +105,7 @@ export function parseDate(dateString?: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export function buildItemMetadata(
-  item: RssItem
-): Record<string, unknown> | null {
+export function buildItemMetadata(item: RssItem): Record<string, unknown> | null {
   const metadata: Record<string, unknown> = {};
   if (item.author) {
     metadata.author = item.author;

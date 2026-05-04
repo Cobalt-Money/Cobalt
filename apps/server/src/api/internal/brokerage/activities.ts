@@ -28,18 +28,12 @@ const route = createRoute({
   tags: ["Brokerage"],
 });
 
-export const activitiesRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const result = await getActivitiesByUserId(
-        c.var.user.id,
-        c.req.valid("query")
-      );
-      c.header("Cache-Control", "private, max-age=60");
-      return c.json(result, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch brokerage activities" }, 500);
-    }
+export const activitiesRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const result = await getActivitiesByUserId(c.var.user.id, c.req.valid("query"));
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json(result, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch brokerage activities" }, 500);
   }
-);
+});

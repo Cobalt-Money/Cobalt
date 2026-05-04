@@ -117,7 +117,7 @@ export function LogoImageWithFallback({
           io.disconnect();
         }
       },
-      { rootMargin: `${margin}px` }
+      { rootMargin: `${margin}px` },
     );
     io.observe(el);
     return () => {
@@ -139,16 +139,11 @@ export function LogoImageWithFallback({
           className={cn(
             "flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full",
             fallbackImageBgClassName,
-            className
+            className,
           )}
           role="img"
         >
-          <img
-            alt=""
-            aria-hidden
-            className="size-[70%] object-contain"
-            src={fallbackImageSrc}
-          />
+          <img alt="" aria-hidden className="size-[70%] object-contain" src={fallbackImageSrc} />
         </div>
       );
     }
@@ -159,7 +154,7 @@ export function LogoImageWithFallback({
           aria-label={alt.trim() || "Logo"}
           className={cn(
             "flex size-5 shrink-0 items-center justify-center overflow-hidden",
-            className
+            className,
           )}
           role="img"
         >
@@ -181,14 +176,11 @@ export function LogoImageWithFallback({
       ref={rootRef}
       className={cn(
         "relative size-5 shrink-0 overflow-hidden rounded-full bg-zinc-900/15 dark:bg-zinc-100/35",
-        className
+        className,
       )}
     >
       {showLetterUnderlay ? (
-        <span
-          aria-hidden
-          className={cn(letterFallbackClassName(), "absolute inset-0 z-0")}
-        >
+        <span aria-hidden className={cn(letterFallbackClassName(), "absolute inset-0 z-0")}>
           {letter}
         </span>
       ) : null}
@@ -197,7 +189,7 @@ export function LogoImageWithFallback({
         className={cn(
           "absolute inset-0 z-10 size-full transition-opacity duration-150",
           loaded ? "opacity-100" : "opacity-0",
-          imgClassName
+          imgClassName,
         )}
         decoding="async"
         fetchPriority="low"
@@ -224,11 +216,7 @@ export function LogoImageWithFallback({
             next += 1;
           }
           if (next >= candidates.length) {
-            console.warn(
-              "[logo] all candidates exhausted for:",
-              alt,
-              candidates
-            );
+            console.warn("[logo] all candidates exhausted for:", alt, candidates);
           }
           setIndex(next);
         }}

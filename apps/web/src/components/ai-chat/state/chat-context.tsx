@@ -14,10 +14,7 @@ import {
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
-import {
-  normalizeGatewayModelId,
-  useAgentSettings,
-} from "./agent-settings-context";
+import { normalizeGatewayModelId, useAgentSettings } from "./agent-settings-context";
 
 // Shape of a Zero-synced message part. Fields match the zero schema; any can be
 // null for parts that don't use that field.
@@ -40,9 +37,7 @@ interface ZeroMessageRow {
   parts: readonly ZeroMessagePart[];
 }
 
-function partRowToUIPart(
-  p: ZeroMessagePart
-): UIMessage["parts"][number] | null {
+function partRowToUIPart(p: ZeroMessagePart): UIMessage["parts"][number] | null {
   const type = typeof p.type === "string" ? p.type : null;
   if (!type) {
     return null;
@@ -104,9 +99,7 @@ function zeroRowToFullUIMessage(row: ZeroMessageRow): UIMessage {
  * handling text, reasoning, tool-input, and all other part types.
  */
 class InternalTransport extends DefaultChatTransport<UIMessage> {
-  public decodeStream(
-    stream: ReadableStream<Uint8Array>
-  ): ReadableStream<UIMessageChunk> {
+  public decodeStream(stream: ReadableStream<Uint8Array>): ReadableStream<UIMessageChunk> {
     return super.processResponseStream(stream);
   }
 }
@@ -132,11 +125,7 @@ interface ChatContextValue extends StreamState {
   /** Abort the in-flight stream (does nothing if not streaming). */
   stop: () => void;
   /** Resolve a pending tool call (e.g. askUser) and resume the agent. */
-  addToolOutput: (opts: {
-    chatId: string;
-    toolCallId: string;
-    output: unknown;
-  }) => Promise<void>;
+  addToolOutput: (opts: { chatId: string; toolCallId: string; output: unknown }) => Promise<void>;
   /** Messages queued while streaming; auto-dispatched when stream ends. */
   queuedMessages: QueuedMessage[];
   removeFromQueue: (id: string) => void;
@@ -192,7 +181,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     () => () => {
       abortRef.current?.abort();
     },
-    []
+    [],
   );
 
   const setZeroMessages = useCallback((rows: readonly ZeroMessageRow[]) => {
@@ -258,10 +247,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
         if (!res.ok || !res.body) {
           const errorText = await res.text().catch(() => "(unreadable)");
-          console.error(
-            `[chat-stream] ${res.status} ${res.statusText}:`,
-            errorText
-          );
+          console.error(`[chat-stream] ${res.status} ${res.statusText}:`, errorText);
           toast.error(getToastMessage(res.status));
           setState((prev) => ({ ...prev, isStreaming: false }));
           return;
@@ -311,7 +297,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [serverUrl, settings]
+    [serverUrl, settings],
   );
 
   const submit = useCallback(
@@ -354,14 +340,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         role: "user",
       };
 
-      const historyUIMessages = zeroMessagesRef.current.map(
-        zeroRowToFullUIMessage
-      );
+      const historyUIMessages = zeroMessagesRef.current.map(zeroRowToFullUIMessage);
       const allMessages: UIMessage[] = [...historyUIMessages, userMessage];
 
       await runStream(activeChatId, userMessage, allMessages);
     },
-    [navigate, runStream, serverUrl]
+    [navigate, runStream, serverUrl],
   );
 
   const addToolOutput = useCallback(
@@ -385,7 +369,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           (p) =>
             typeof p.type === "string" &&
             p.type.startsWith("tool-") &&
-            (p as { toolCallId?: string }).toolCallId === toolCallId
+            (p as { toolCallId?: string }).toolCallId === toolCallId,
         );
         if (idx === -1) {
           return msg;
@@ -414,7 +398,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       await runStream(chatId, lastAssistant, updated);
     },
-    [runStream]
+    [runStream],
   );
 
   const removeFromQueue = useCallback((id: string) => {
@@ -422,9 +406,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateInQueue = useCallback((id: string, text: string) => {
-    setQueuedMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, text } : m))
-    );
+    setQueuedMessages((prev) => prev.map((m) => (m.id === id ? { ...m, text } : m)));
   }, []);
 
   // Auto-dispatch the head of the queue once streaming ends.
@@ -474,7 +456,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       stop,
       submit,
       updateInQueue,
-    ]
+    ],
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

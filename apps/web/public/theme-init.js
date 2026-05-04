@@ -7,9 +7,7 @@
     if (stored === "dark" || stored === "light") {
       resolved = stored;
     } else if (stored === "system" || !stored) {
-      resolved = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
+      resolved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     } else {
       resolved = "light";
     }

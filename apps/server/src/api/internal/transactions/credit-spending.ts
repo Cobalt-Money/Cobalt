@@ -9,8 +9,7 @@ import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
-  description:
-    "Aggregated credit spending bucketed by period (daily/weekly/monthly)",
+  description: "Aggregated credit spending bucketed by period (daily/weekly/monthly)",
   method: "get",
   middleware: [requirePaidUser] as const,
   path: "/credit-spending",
@@ -29,11 +28,8 @@ const route = createRoute({
   tags: ["Transactions"],
 });
 
-export const creditSpendingRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const { period, accountId } = c.req.valid("query");
-    const result = await getCreditSpending(c.var.user.id, period, accountId);
-    return c.json(result, 200);
-  }
-);
+export const creditSpendingRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  const { period, accountId } = c.req.valid("query");
+  const result = await getCreditSpending(c.var.user.id, period, accountId);
+  return c.json(result, 200);
+});

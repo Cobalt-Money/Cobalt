@@ -3,9 +3,7 @@ import { env } from "@cobalt-web/env/server";
 import { CountryCode, Products } from "plaid";
 
 /** Create a Plaid link token for initial account connection. */
-export async function createLinkToken(
-  userId: string
-): Promise<{ link_token: string }> {
+export async function createLinkToken(userId: string): Promise<{ link_token: string }> {
   const response = await plaidClient.linkTokenCreate({
     client_name: "Cobalt",
     country_codes: [CountryCode.Us],
@@ -21,7 +19,7 @@ export async function createLinkToken(
 
 /** Exchange a Plaid public token for an access token. */
 export async function exchangePublicToken(
-  publicToken: string
+  publicToken: string,
 ): Promise<{ access_token: string; item_id: string }> {
   const response = await plaidClient.itemPublicTokenExchange({
     public_token: publicToken,
@@ -72,7 +70,7 @@ export async function fetchAccounts(accessToken: string) {
 export async function createLinkTokenForUpdate(
   accessToken: string,
   userId: string,
-  mode: "add-accounts" | "add-products" | "reauth"
+  mode: "add-accounts" | "add-products" | "reauth",
 ): Promise<{ link_token: string }> {
   const itemGet = await plaidClient.itemGet({ access_token: accessToken });
   const billedProducts = itemGet.data.item.billed_products ?? [];
@@ -100,10 +98,7 @@ export async function createLinkTokenForUpdate(
     additionalProducts.push(Products.Liabilities);
   }
 
-  return createLinkTokenWithProductFallback(
-    linkTokenParams,
-    additionalProducts
-  );
+  return createLinkTokenWithProductFallback(linkTokenParams, additionalProducts);
 }
 
 /**
@@ -112,23 +107,14 @@ export async function createLinkTokenForUpdate(
  */
 async function createLinkTokenWithProductFallback(
   baseParams: Parameters<typeof plaidClient.linkTokenCreate>[0],
-  additionalProducts: Products[]
+  additionalProducts: Products[],
 ): Promise<{ link_token: string }> {
-  const liabilitiesOnly = additionalProducts.filter(
-    (p) => p === Products.Liabilities
-  );
-  const investmentsOnly = additionalProducts.filter(
-    (p) => p === Products.Investments
-  );
+  const liabilitiesOnly = additionalProducts.filter((p) => p === Products.Liabilities);
+  const investmentsOnly = additionalProducts.filter((p) => p === Products.Investments);
 
   const toTry: Products[][] = [];
   const seen = new Set<string>();
-  for (const arr of [
-    additionalProducts,
-    liabilitiesOnly,
-    investmentsOnly,
-    [],
-  ]) {
+  for (const arr of [additionalProducts, liabilitiesOnly, investmentsOnly, []]) {
     const key = arr.join(",");
     if (!seen.has(key)) {
       seen.add(key);
@@ -137,9 +123,7 @@ async function createLinkTokenWithProductFallback(
   }
 
   for (const [idx, products] of toTry.entries()) {
-    const params = { ...baseParams } as Parameters<
-      typeof plaidClient.linkTokenCreate
-    >[0];
+    const params = { ...baseParams } as Parameters<typeof plaidClient.linkTokenCreate>[0];
     if (products.length > 0) {
       params.additional_consented_products = products;
     } else {
@@ -161,11 +145,8 @@ async function createLinkTokenWithProductFallback(
 
       const plaidMsg = formatPlaidError(axiosErr.response?.data);
       throw new Error(
-        plaidMsg ||
-          (error instanceof Error
-            ? error.message
-            : "Failed to create link token"),
-        { cause: error }
+        plaidMsg || (error instanceof Error ? error.message : "Failed to create link token"),
+        { cause: error },
       );
     }
   }

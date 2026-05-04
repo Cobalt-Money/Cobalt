@@ -1,12 +1,4 @@
-import {
-  index,
-  numeric,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { index, numeric, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 import { user } from "../users/auth/auth";
 import { financialAccount } from "./account";
@@ -19,9 +11,7 @@ export const balance = pgTable(
       .references(() => financialAccount.id, { onDelete: "cascade" }),
     available: numeric("available", { precision: 19, scale: 4 }),
     buyingPower: numeric("buying_power", { precision: 19, scale: 4 }),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     creditLimit: numeric("credit_limit", { precision: 19, scale: 4 }),
     currency: text("currency"),
     current: numeric("current", { precision: 19, scale: 4 }).notNull(),
@@ -43,7 +33,7 @@ export const balance = pgTable(
     uniqueIndex("balance_account_id_unique").on(t.accountId),
     index("balance_user_id_idx").on(t.userId),
     index("balance_account_updated_idx").on(t.accountId, t.updatedAt),
-  ]
+  ],
 );
 
 export type Balance = typeof balance.$inferSelect;

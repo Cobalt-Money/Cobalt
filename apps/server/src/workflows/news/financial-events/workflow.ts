@@ -1,13 +1,7 @@
 import type { StockNewsEvent } from "@cobalt-web/server-data/news/events/actions";
-import type {
-  EventSummary,
-  ProcessedArticle,
-} from "@cobalt-web/server-data/news/events/lib";
+import type { EventSummary, ProcessedArticle } from "@cobalt-web/server-data/news/events/lib";
 
-import {
-  captureWorkflowExceptionStep,
-  toSerializableError,
-} from "../../shared/steps.js";
+import { captureWorkflowExceptionStep, toSerializableError } from "../../shared/steps.js";
 import {
   fetchEventArticlesStep,
   persistEventStep,
@@ -29,8 +23,7 @@ export interface ProcessFinancialEventResult {
 function emptyScrapeSummary(eventText: string | undefined): EventSummary {
   return {
     articleCount: 0,
-    eventSummary:
-      eventText ?? "No article content could be extracted for this event.",
+    eventSummary: eventText ?? "No article content could be extracted for this event.",
     keyPoints: [],
     overallSentiment: "neutral",
     processingMetadata: {
@@ -45,7 +38,7 @@ function emptyScrapeSummary(eventText: string | undefined): EventSummary {
 }
 
 export async function processFinancialEventWorkflow(
-  event: StockNewsEvent
+  event: StockNewsEvent,
 ): Promise<ProcessFinancialEventResult> {
   "use workflow";
 
@@ -54,9 +47,7 @@ export async function processFinancialEventWorkflow(
     const rawArticles = await fetchEventArticlesStep(event.event_id);
     const selected = pickArticles(rawArticles);
 
-    const results = await Promise.allSettled(
-      selected.map((a) => processArticleStep(a))
-    );
+    const results = await Promise.allSettled(selected.map((a) => processArticleStep(a)));
 
     const scraped: ProcessedArticle[] = [];
     const persistable: ProcessedArticle[] = [];
@@ -71,10 +62,7 @@ export async function processFinancialEventWorkflow(
       if (!source) {
         continue;
       }
-      const errorMessage =
-        result.reason instanceof Error
-          ? result.reason.message
-          : "Unknown error";
+      const errorMessage = result.reason instanceof Error ? result.reason.message : "Unknown error";
       persistable.push(toFailedProcessedArticle(source, errorMessage));
     }
 
@@ -94,11 +82,10 @@ export async function processFinancialEventWorkflow(
       success,
     };
   } catch (error) {
-    await captureWorkflowExceptionStep(
-      "news_financial_events",
-      toSerializableError(error),
-      { eventId: event.event_id, eventName: event.event_name }
-    );
+    await captureWorkflowExceptionStep("news_financial_events", toSerializableError(error), {
+      eventId: event.event_id,
+      eventName: event.event_name,
+    });
     return {
       articlesPersisted: 0,
       articlesScraped: 0,

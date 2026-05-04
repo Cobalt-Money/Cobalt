@@ -1,34 +1,25 @@
-import { CATEGORY_MAPPING } from "@cobalt-web/server-data/transactions/categories";
-import type { CategoryData } from "@cobalt-web/server-data/transactions/categories";
+import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { ArrowRight01Icon, Refresh01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-import { CobaltSelectPopover } from "../../select-popover";
-import {
-  CategoryIcon,
-  getCategoryDisplayConfig,
-  getDetailedCategoryDisplayName,
-  PRIMARY_CATEGORY_ICON,
-} from "../categories";
-import type { PrimaryCategoryKey } from "../categories";
+import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "../categories";
+import { CategoryPicker } from "./category-picker";
 
-const PRIMARY_KEYS = Object.keys(CATEGORY_MAPPING) as PrimaryCategoryKey[];
-
-interface CategoryItem {
-  value: PrimaryCategoryKey;
-  label: string;
+export interface CategoryPickerOption {
+  id: string;
+  name: string;
+  iconKey: string;
+  groupName: string;
+  groupSystemKey: string | null;
 }
 
-const CATEGORY_ITEMS: readonly CategoryItem[] = PRIMARY_KEYS.map((value) => ({
-  label: CATEGORY_MAPPING[value].label,
-  value,
-}));
-
 interface EditableCategoryProps {
-  category: CategoryData | null;
+  category: TransactionListItem["category"];
   isOverridden: boolean;
   onReset: () => void;
-  onSubmit: (value: { detailed: string; primary: string }) => void;
+  onSubmit: (value: { categoryId: string }) => void;
+  /** All non-deleted, non-hidden cats for the user. Caller fetches via `queries.categories.list`. */
+  options: readonly CategoryPickerOption[];
 }
 
 export function EditableCategory({
@@ -36,46 +27,33 @@ export function EditableCategory({
   isOverridden,
   onReset,
   onSubmit,
+  options,
 }: EditableCategoryProps) {
-  const categoryConfig = category ? getCategoryDisplayConfig(category) : null;
-  const detailedLabel = category?.detailed
-    ? getDetailedCategoryDisplayName(category.detailed)
-    : null;
+  const icon = category
+    ? (resolveCategoryIcon(category.iconKey) ?? UNKNOWN_CATEGORY_ICON)
+    : UNKNOWN_CATEGORY_ICON;
+  const groupLabel = category?.groupName ?? null;
 
   return (
     <div className="flex min-w-0 items-center gap-1 text-base leading-6">
-      <CobaltSelectPopover
-        emptyText="No categories"
-        itemKey={(item: CategoryItem) => item.value}
-        itemMatch={(item: CategoryItem, q) =>
-          item.label.toLowerCase().includes(q)
-        }
-        items={CATEGORY_ITEMS}
-        onSelect={(item: CategoryItem) => {
-          onSubmit({ detailed: "", primary: item.value });
-        }}
-        renderIcon={(item: CategoryItem) => (
-          <CategoryIcon icon={PRIMARY_CATEGORY_ICON[item.value]} />
-        )}
-        renderLabel={(item: CategoryItem) => item.label}
-        searchPlaceholder="Search categories…"
-        selectedKey={category?.primary ?? null}
+      <CategoryPicker
+        onSelect={(item) => onSubmit({ categoryId: item.id })}
+        options={options}
+        selectedKey={category?.id ?? null}
         trigger={
           <button
             aria-label="Edit category"
             className="-mx-2 flex min-w-0 items-center gap-2.5 rounded-lg px-2 py-1 text-left transition-colors hover:bg-muted focus:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[popup-open]:bg-muted"
             type="button"
           >
-            {categoryConfig ? (
+            {category ? (
               <>
                 <span className="flex size-6 shrink-0 items-center justify-center">
-                  <CategoryIcon icon={categoryConfig.icon} />
+                  <CategoryIcon icon={icon} />
                 </span>
                 <span className="flex min-w-0 items-center gap-1.5">
-                  <span className="shrink-0 text-foreground">
-                    {categoryConfig.label}
-                  </span>
-                  {detailedLabel ? (
+                  <span className="shrink-0 text-foreground">{groupLabel ?? category.name}</span>
+                  {groupLabel ? (
                     <>
                       <HugeiconsIcon
                         aria-hidden
@@ -84,7 +62,7 @@ export function EditableCategory({
                         strokeWidth={2}
                       />
                       <span className="min-w-0 truncate text-muted-foreground">
-                        {detailedLabel}
+                        {category.name}
                       </span>
                     </>
                   ) : null}
@@ -107,11 +85,7 @@ export function EditableCategory({
           onClick={onReset}
           type="button"
         >
-          <HugeiconsIcon
-            className="size-3"
-            icon={Refresh01Icon}
-            strokeWidth={2}
-          />
+          <HugeiconsIcon className="size-3" icon={Refresh01Icon} strokeWidth={2} />
           Reset
         </button>
       ) : null}

@@ -38,8 +38,7 @@ const VIRTUAL_OVERSCAN = 8;
  * Fixed column widths so header and body grids compute identical tracks.
  * `auto` sizing would diverge between rows (text-only header vs logo+text body).
  */
-const GRID_TEMPLATE_COLUMNS =
-  "2.75rem 8rem minmax(8rem, 14rem) repeat(6, minmax(0, 1fr))";
+const GRID_TEMPLATE_COLUMNS = "2.75rem 8rem minmax(8rem, 14rem) repeat(6, minmax(0, 1fr))";
 
 function rawTickerSymbol(row: ScreenerRow): string {
   const s = row.symbol ?? row.ticker;
@@ -108,9 +107,7 @@ function NumberCell({
   value: number | null;
   format: (n: number) => string;
 }): ReactNode {
-  return (
-    <span className="tabular-nums">{value === null ? "—" : format(value)}</span>
-  );
+  return <span className="tabular-nums">{value === null ? "—" : format(value)}</span>;
 }
 
 function PinButton({
@@ -124,16 +121,12 @@ function PinButton({
 }): ReactNode {
   return (
     <button
-      aria-label={
-        starred
-          ? `Remove ${symbol} from pinned rows`
-          : `Pin ${symbol || "row"} to top`
-      }
+      aria-label={starred ? `Remove ${symbol} from pinned rows` : `Pin ${symbol || "row"} to top`}
       aria-pressed={starred}
       className={cn(
         "pointer-events-auto inline-flex shrink-0 rounded-md p-0.5 transition-colors",
         "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
-        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
       )}
       disabled={!symbol}
       onClick={(e) => {
@@ -146,10 +139,7 @@ function PinButton({
     >
       <HugeiconsIcon
         aria-hidden
-        className={cn(
-          "size-4",
-          starred && "text-amber-500 dark:text-amber-400"
-        )}
+        className={cn("size-4", starred && "text-amber-500 dark:text-amber-400")}
         icon={StarIcon}
         strokeWidth={2}
       />
@@ -173,10 +163,7 @@ interface BuildColumnsArgs {
   togglePin: (symbol: string) => void;
 }
 
-function buildColumns({
-  pinnedSymbols,
-  togglePin,
-}: BuildColumnsArgs): ColumnDef<ScreenerRow>[] {
+function buildColumns({ pinnedSymbols, togglePin }: BuildColumnsArgs): ColumnDef<ScreenerRow>[] {
   return [
     {
       cell: ({ row }) => {
@@ -238,9 +225,7 @@ function buildColumns({
     },
     {
       accessorFn: (r) => num(r, "peRatio"),
-      cell: ({ getValue }) => (
-        <NumberCell format={formatPe} value={getValue() as number | null} />
-      ),
+      cell: ({ getValue }) => <NumberCell format={formatPe} value={getValue() as number | null} />,
       header: "P/E",
       id: "peRatio",
       meta: {
@@ -251,10 +236,7 @@ function buildColumns({
     {
       accessorFn: (r) => num(r, "marketCap"),
       cell: ({ getValue }) => (
-        <NumberCell
-          format={formatMarketCap}
-          value={getValue() as number | null}
-        />
+        <NumberCell format={formatMarketCap} value={getValue() as number | null} />
       ),
       header: "Market cap",
       id: "marketCap",
@@ -263,10 +245,7 @@ function buildColumns({
     {
       accessorFn: (r) => num(r, "revenue"),
       cell: ({ getValue }) => (
-        <NumberCell
-          format={formatMarketCap}
-          value={getValue() as number | null}
-        />
+        <NumberCell format={formatMarketCap} value={getValue() as number | null} />
       ),
       header: "Revenue",
       id: "revenue",
@@ -295,10 +274,7 @@ function buildColumns({
               icon={Icon}
               strokeWidth={2}
             />
-            <span
-              className="block min-w-0 truncate"
-              title={text === "—" ? undefined : text}
-            >
+            <span className="block min-w-0 truncate" title={text === "—" ? undefined : text}>
               {text}
             </span>
           </div>
@@ -315,9 +291,7 @@ export function StockScreener() {
 
   const rows = data?.results ?? EMPTY_SCREENER_ROWS;
 
-  const [pinnedSymbols, setPinnedSymbols] = useState<Set<string>>(
-    () => new Set()
-  );
+  const [pinnedSymbols, setPinnedSymbols] = useState<Set<string>>(() => new Set());
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const togglePin = useCallback((symbol: string) => {
@@ -334,7 +308,7 @@ export function StockScreener() {
 
   const columns = useMemo(
     () => buildColumns({ pinnedSymbols, togglePin }),
-    [pinnedSymbols, togglePin]
+    [pinnedSymbols, togglePin],
   );
 
   const table = useReactTable({
@@ -427,15 +401,13 @@ export function StockScreener() {
                   const { meta } = header.column.columnDef;
                   const canSort = header.column.getCanSort();
                   const sortDir = header.column.getIsSorted();
-                  const onToggle = canSort
-                    ? header.column.getToggleSortingHandler()
-                    : undefined;
+                  const onToggle = canSort ? header.column.getToggleSortingHandler() : undefined;
                   return (
                     <th
                       className={cn(
                         "h-10 min-w-0 select-none text-left font-normal text-muted-foreground",
                         canSort && "cursor-pointer",
-                        meta?.className
+                        meta?.className,
                       )}
                       key={header.id}
                       onClick={onToggle}
@@ -454,10 +426,7 @@ export function StockScreener() {
                       title={meta?.headerTitle}
                     >
                       <span className="inline-flex h-full items-center">
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        {flexRender(header.column.columnDef.header, header.getContext())}
                         {canSort ? <SortIndicator dir={sortDir} /> : null}
                       </span>
                     </th>
@@ -502,14 +471,11 @@ export function StockScreener() {
                       <td
                         className={cn(
                           "pointer-events-none relative z-10 flex min-w-0 items-center py-1.5",
-                          meta?.className
+                          meta?.className,
                         )}
                         key={cell.id}
                       >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     );
                   })}

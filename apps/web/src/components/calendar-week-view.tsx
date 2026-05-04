@@ -43,10 +43,7 @@ export function CalendarWeekView({ singleDayEvents, multiDayEvents }: IProps) {
 
       <motion.div className="flex-col sm:flex" variants={staggerContainer}>
         <div>
-          <WeekViewMultiDayEventsRow
-            selectedDate={selectedDate}
-            multiDayEvents={multiDayEvents}
-          />
+          <WeekViewMultiDayEventsRow selectedDate={selectedDate} multiDayEvents={multiDayEvents} />
 
           {/* Week header */}
           <motion.div
@@ -76,9 +73,7 @@ export function CalendarWeekView({ singleDayEvents, multiDayEvents }: IProps) {
                   {/* Desktop: Show full format */}
                   <span className="hidden sm:inline">
                     {format(day, "EE")}{" "}
-                    <span className="ml-1 font-semibold text-t-secondary">
-                      {format(day, "d")}
-                    </span>
+                    <span className="ml-1 font-semibold text-t-secondary">{format(day, "d")}</span>
                   </span>
                 </motion.span>
               ))}
@@ -104,7 +99,7 @@ export function CalendarWeekView({ singleDayEvents, multiDayEvents }: IProps) {
                       <span className="text-xs text-t-quaternary">
                         {format(
                           new Date().setHours(hour, 0, 0, 0),
-                          use24HourFormat ? "HH:00" : "h a"
+                          use24HourFormat ? "HH:00" : "h a",
                         )}
                       </span>
                     )}
@@ -114,16 +109,13 @@ export function CalendarWeekView({ singleDayEvents, multiDayEvents }: IProps) {
             </motion.div>
 
             {/* Week grid */}
-            <motion.div
-              className="relative flex-1 border-l"
-              variants={staggerContainer}
-            >
+            <motion.div className="relative flex-1 border-l" variants={staggerContainer}>
               <div className="grid grid-cols-7 divide-x">
                 {weekDays.map((day, dayIndex) => {
                   const dayEvents = singleDayEvents.filter(
                     (event) =>
                       isSameDay(parseISO(event.startDate), day) ||
-                      isSameDay(parseISO(event.endDate), day)
+                      isSameDay(parseISO(event.endDate), day),
                   );
                   const groupedEvents = groupEvents(dayEvents);
 
@@ -170,10 +162,7 @@ export function CalendarWeekView({ singleDayEvents, multiDayEvents }: IProps) {
                         </motion.div>
                       ))}
 
-                      <RenderGroupedEvents
-                        groupedEvents={groupedEvents}
-                        day={day}
-                      />
+                      <RenderGroupedEvents groupedEvents={groupedEvents} day={day} />
                     </motion.div>
                   );
                 })}

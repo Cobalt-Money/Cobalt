@@ -5,10 +5,7 @@ import {
   fetchArticlesForEvent,
 } from "@cobalt-web/server-data/news/events/actions";
 import type { StockNewsEvent } from "@cobalt-web/server-data/news/events/actions";
-import type {
-  EventSummary,
-  ProcessedArticle,
-} from "@cobalt-web/server-data/news/events/lib";
+import type { EventSummary, ProcessedArticle } from "@cobalt-web/server-data/news/events/lib";
 import {
   applyEventSummary,
   replaceEventArticles,
@@ -40,14 +37,12 @@ vi.mock(
   async () => {
     const actual = await vi.importActual<
       typeof import("../../../ai/agents/financial-events-summary/financial-events-summary-agent.js")
-    >(
-      "../../../ai/agents/financial-events-summary/financial-events-summary-agent.js"
-    );
+    >("../../../ai/agents/financial-events-summary/financial-events-summary-agent.js");
     return {
       ...actual,
       summarizeEventArticles: vi.fn(),
     };
-  }
+  },
 );
 
 const mockFetchArticles = vi.mocked(fetchArticlesForEvent);
@@ -163,9 +158,7 @@ describe("processFinancialEventWorkflow", () => {
     expect(rows).toHaveLength(1);
     // The workflow passes ProcessedArticle instances — the mutation layer is
     // responsible for mapping to the DB row shape (see mutations.test.ts).
-    expect(rows?.[0]?.originalArticle.news_url).toBe(
-      "https://bloomberg.com/article-1"
-    );
+    expect(rows?.[0]?.originalArticle.news_url).toBe("https://bloomberg.com/article-1");
   });
 
   it("writes the summary, sentiment, topics, and scraped count back to the event record", async () => {
@@ -210,9 +203,7 @@ describe("processFinancialEventWorkflow", () => {
   });
 
   it("returns a failure result when the fetch step throws (not a scrape failure)", async () => {
-    mockFetchArticles.mockRejectedValueOnce(
-      new Error("Stock News API is down")
-    );
+    mockFetchArticles.mockRejectedValueOnce(new Error("Stock News API is down"));
 
     const result = await processFinancialEventWorkflow(stockEvent());
 

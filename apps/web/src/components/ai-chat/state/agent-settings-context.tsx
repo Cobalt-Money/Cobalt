@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 export type AgentMode = "standard" | "analyst";
@@ -66,16 +60,12 @@ interface AgentSettingsContextValue {
   setSettings: (patch: Partial<AgentSettings>) => void;
 }
 
-const AgentSettingsContext = createContext<AgentSettingsContextValue | null>(
-  null
-);
+const AgentSettingsContext = createContext<AgentSettingsContextValue | null>(null);
 
 export function useAgentSettings(): AgentSettingsContextValue {
   const ctx = useContext(AgentSettingsContext);
   if (!ctx) {
-    throw new Error(
-      "useAgentSettings must be used within AgentSettingsProvider"
-    );
+    throw new Error("useAgentSettings must be used within AgentSettingsProvider");
   }
   return ctx;
 }
@@ -94,14 +84,7 @@ export function AgentSettingsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const value = useMemo(
-    () => ({ setSettings, settings }),
-    [setSettings, settings]
-  );
+  const value = useMemo(() => ({ setSettings, settings }), [setSettings, settings]);
 
-  return (
-    <AgentSettingsContext.Provider value={value}>
-      {children}
-    </AgentSettingsContext.Provider>
-  );
+  return <AgentSettingsContext.Provider value={value}>{children}</AgentSettingsContext.Provider>;
 }

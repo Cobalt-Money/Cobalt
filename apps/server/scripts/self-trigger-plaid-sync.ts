@@ -23,19 +23,15 @@ const APPLY = process.argv.includes("--apply");
 const ALL = process.argv.includes("--all");
 const { USER_ID } = process.env;
 const { ITEM_ID } = process.env;
-const ENDPOINT =
-  process.env.WEBHOOK_ENDPOINT ?? "https://api.cobaltpf.com/webhooks/plaid";
+const ENDPOINT = process.env.WEBHOOK_ENDPOINT ?? "https://api.cobaltpf.com/webhooks/plaid";
 
 if (!USER_ID && !ITEM_ID && !ALL) {
-  console.error(
-    "Set USER_ID, ITEM_ID, or --all. Refuse to fan out implicitly."
-  );
+  console.error("Set USER_ID, ITEM_ID, or --all. Refuse to fan out implicitly.");
   process.exit(1);
 }
 
 const { db } = await import("@cobalt-web/db");
-const { plaidConnection } =
-  await import("@cobalt-web/db/schema/providers/plaid/connection");
+const { plaidConnection } = await import("@cobalt-web/db/schema/providers/plaid/connection");
 const { eq, and } = await import("drizzle-orm");
 
 const filters = [];
@@ -55,7 +51,7 @@ const rows = await db
   .where(and(...filters));
 
 console.log(
-  `Will POST synthetic SYNC_UPDATES_AVAILABLE to ${ENDPOINT} for ${rows.length} Item(s) ${APPLY ? "(APPLY)" : "(dry-run)"}`
+  `Will POST synthetic SYNC_UPDATES_AVAILABLE to ${ENDPOINT} for ${rows.length} Item(s) ${APPLY ? "(APPLY)" : "(dry-run)"}`,
 );
 for (const r of rows) {
   console.log(`  ${r.itemId}  (${r.institutionName ?? "?"})`);
@@ -84,20 +80,18 @@ for (const r of rows) {
       method: "POST",
     });
     if (res.ok) {
-      console.log(
-        `✓ ${r.itemId}  (${r.institutionName ?? "?"})  → ${res.status}`
-      );
+      console.log(`✓ ${r.itemId}  (${r.institutionName ?? "?"})  → ${res.status}`);
       ok += 1;
     } else {
       const text = await res.text();
       console.log(
-        `✗ ${r.itemId}  (${r.institutionName ?? "?"})  → ${res.status} ${text.slice(0, 80)}`
+        `✗ ${r.itemId}  (${r.institutionName ?? "?"})  → ${res.status} ${text.slice(0, 80)}`,
       );
       fail += 1;
     }
   } catch (error) {
     console.log(
-      `✗ ${r.itemId}  (${r.institutionName ?? "?"})  ${error instanceof Error ? error.message : error}`
+      `✗ ${r.itemId}  (${r.institutionName ?? "?"})  ${error instanceof Error ? error.message : error}`,
     );
     fail += 1;
   }
@@ -105,7 +99,5 @@ for (const r of rows) {
   await sleep(300);
 }
 
-console.log(
-  `\nDone. ok=${ok} fail=${fail}. Workflows now running async — verify DB in ~1-2 min.`
-);
+console.log(`\nDone. ok=${ok} fail=${fail}. Workflows now running async — verify DB in ~1-2 min.`);
 process.exit(fail === 0 ? 0 : 1);

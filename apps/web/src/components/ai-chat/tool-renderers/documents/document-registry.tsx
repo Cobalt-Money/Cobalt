@@ -168,10 +168,7 @@ interface ElementDef {
   visible?: unknown;
 }
 
-type ComponentFn = (
-  props: Record<string, unknown>,
-  children: React.ReactNode
-) => React.ReactNode;
+type ComponentFn = (props: Record<string, unknown>, children: React.ReactNode) => React.ReactNode;
 
 function getMetricColor(changeType: string | undefined): string {
   if (changeType === "positive") {
@@ -225,9 +222,7 @@ const componentMap: Record<string, ComponentFn> = {
   PDFColumn: (props, children) => {
     const { width } = props as { width?: string };
     return (
-      <View style={{ ...s.column, ...(width === undefined ? {} : { width }) }}>
-        {children}
-      </View>
+      <View style={{ ...s.column, ...(width === undefined ? {} : { width }) }}>{children}</View>
     );
   },
 
@@ -242,9 +237,7 @@ const componentMap: Record<string, ComponentFn> = {
       <View
         style={{
           ...s.divider,
-          ...(dividerColor === undefined
-            ? {}
-            : { borderBottomColor: dividerColor }),
+          ...(dividerColor === undefined ? {} : { borderBottomColor: dividerColor }),
         }}
       />
     );
@@ -260,9 +253,7 @@ const componentMap: Record<string, ComponentFn> = {
         <Text style={s.footerText}>{footerText ?? ""}</Text>
         {showPageNumbers && (
           <Text
-            render={({ pageNumber, totalPages }) =>
-              `Page ${pageNumber} of ${totalPages}`
-            }
+            render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
             style={s.footerText}
           />
         )}
@@ -398,9 +389,7 @@ const componentMap: Record<string, ComponentFn> = {
             // eslint-disable-next-line react/no-array-index-key
             key={rowIdx}
             style={
-              striped && rowIdx % 2 === 1
-                ? { ...s.tableRow, ...s.tableRowStriped }
-                : s.tableRow
+              striped && rowIdx % 2 === 1 ? { ...s.tableRow, ...s.tableRowStriped } : s.tableRow
             }
           >
             {row.map((cell, cellIdx) => (
@@ -436,10 +425,7 @@ const componentMap: Record<string, ComponentFn> = {
   },
 };
 
-function renderElement(
-  key: string,
-  elements: Record<string, ElementDef>
-): React.ReactNode {
+function renderElement(key: string, elements: Record<string, ElementDef>): React.ReactNode {
   const el = elements[key];
   if (!el) {
     return null;
@@ -455,9 +441,7 @@ function renderElement(
       ? el.children.map((childKey) => renderElement(childKey, elements))
       : null;
 
-  return (
-    <React.Fragment key={key}>{renderer(el.props, childNodes)}</React.Fragment>
-  );
+  return <React.Fragment key={key}>{renderer(el.props, childNodes)}</React.Fragment>;
 }
 
 export function buildPDFTree(spec: Spec): React.ReactNode {

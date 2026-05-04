@@ -58,9 +58,7 @@ describe("appstore webhook router — payload guards", () => {
   });
 
   it("returns 401 on signature verification failure", async () => {
-    mockVerify.mockRejectedValueOnce(
-      new AppStoreVerificationError("bad sig") as Error
-    );
+    mockVerify.mockRejectedValueOnce(new AppStoreVerificationError("bad sig") as Error);
     const res = await postWebhook({ signedPayload: "abc" });
     expect(res.status).toBe(401);
     expect(mockStart).not.toHaveBeenCalled();

@@ -58,10 +58,7 @@ export interface EventSummary {
 // Article selection — unique-source dedup, prefer articles, include one video
 // ---------------------------------------------------------------------------
 
-export function selectBestArticles(
-  articles: StockNewsArticle[],
-  limit = 5
-): StockNewsArticle[] {
+export function selectBestArticles(articles: StockNewsArticle[], limit = 5): StockNewsArticle[] {
   const selected: StockNewsArticle[] = [];
   const seenSources = new Set<string>();
 
@@ -107,7 +104,7 @@ export function selectBestArticles(
 // layer calls this before handing the row off to `db.insert().values()`.
 export function toEventArticleInsertRow(
   eventRecordId: string,
-  processed: ProcessedArticle
+  processed: ProcessedArticle,
 ): EventArticleInsert {
   const original = processed.originalArticle;
   return {
@@ -126,7 +123,7 @@ export function toEventArticleInsertRow(
 
 export function toFailedProcessedArticle(
   article: StockNewsArticle,
-  error: string
+  error: string,
 ): ProcessedArticle {
   return {
     extractedContent: {

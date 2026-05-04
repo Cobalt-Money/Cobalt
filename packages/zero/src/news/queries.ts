@@ -40,8 +40,6 @@ export const newsQueries = {
     if (!userId) {
       return zql.rssArticles.where("id", NO_MATCH_ID);
     }
-    return zql.rssArticles
-      .orderBy("publishedDate", "desc")
-      .limit(RSS_SIDEBAR_LIMIT);
+    return zql.rssArticles.orderBy("publishedDate", "desc").limit(RSS_SIDEBAR_LIMIT);
   }),
 };

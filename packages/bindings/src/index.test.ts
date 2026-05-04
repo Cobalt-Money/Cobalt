@@ -1,21 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import {
-  bindRoutes,
-  bindingsToToolMap,
-  buildShim,
-  route,
-  runWithBindings,
-} from "./index.js";
+import { bindRoutes, bindingsToToolMap, buildShim, route, runWithBindings } from "./index.js";
 
 describe("buildShim", () => {
   it("groups <group>_<method> names under a root namespace", () => {
-    const shim = buildShim([
-      "accounts_listAll",
-      "accounts_getById",
-      "tags_list",
-    ]);
+    const shim = buildShim(["accounts_listAll", "accounts_getById", "tags_list"]);
     expect(shim).toContain("const cobalt = {");
     expect(shim).toContain("accounts:");
     expect(shim).toContain("tags:");
@@ -102,10 +92,7 @@ describe("runWithBindings", () => {
     let receivedCode = "";
     let receivedBindings: Record<string, unknown> = {};
     const driver = {
-      createContext: (opts: {
-        bindings: Record<string, unknown>;
-        timeout?: number;
-      }) => {
+      createContext: (opts: { bindings: Record<string, unknown>; timeout?: number }) => {
         receivedBindings = opts.bindings;
         return Promise.resolve({
           dispose: () => Promise.resolve(),
@@ -128,11 +115,7 @@ describe("runWithBindings", () => {
         name: "accounts_listAll",
       },
     ];
-    const result = await runWithBindings(
-      bindings,
-      "return cobalt.accounts.listAll();",
-      { driver }
-    );
+    const result = await runWithBindings(bindings, "return cobalt.accounts.listAll();", { driver });
     expect(result.ok).toBeTruthy();
     expect(receivedCode).toContain("const cobalt =");
     expect(receivedCode).toContain("accounts: {");

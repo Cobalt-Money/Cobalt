@@ -12,11 +12,7 @@ import {
 } from "@tanstack/react-table";
 import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 import type { Range, Virtualizer } from "@tanstack/react-virtual";
-import {
-  defaultRangeExtractor,
-  observeElementRect,
-  useVirtualizer,
-} from "@tanstack/react-virtual";
+import { defaultRangeExtractor, observeElementRect, useVirtualizer } from "@tanstack/react-virtual";
 import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
@@ -24,11 +20,7 @@ import { PrivateAmount } from "../../components/privacy";
 import { ConnectAccountEmpty } from "../empty/connect-account-empty";
 import { InstitutionLogo } from "../logos/institution-logo";
 import { MerchantLogo } from "../logos/merchant-logo";
-import {
-  CategoryIcon,
-  getCategoryDisplayConfig,
-  getDetailedCategoryDisplayName,
-} from "./categories";
+import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "./categories";
 import {
   formatMonthGroupLabel,
   formatTransactionDateDisplay,
@@ -52,8 +44,7 @@ const STATUS_PENDING_ICON = "/assets/vectors/pending.svg";
 const STATUS_POSTED_ICON = "/assets/vectors/posted.svg";
 
 /** Shared grid template so dividers and rows align on the same columns. */
-const GRID_TEMPLATE_COLUMNS =
-  "2.5rem 3rem 3.5rem 7rem minmax(0, 2fr) minmax(0, 1.5fr) 7rem";
+const GRID_TEMPLATE_COLUMNS = "2.5rem 3rem 3.5rem 7rem minmax(0, 2fr) minmax(0, 1.5fr) 7rem";
 
 /**
  * Fixed row height. Tabular content is uniform by design (truncated name,
@@ -73,7 +64,7 @@ const ROW_HEIGHT = 52;
 function observeElementRectWithFallback<TScroll extends Element>(
   instance: Virtualizer<TScroll, Element>,
   // eslint-disable-next-line promise/prefer-await-to-callbacks
-  cb: (rect: { height: number; width: number }) => void
+  cb: (rect: { height: number; width: number }) => void,
 ) {
   return observeElementRect(instance, (rect) => {
     // eslint-disable-next-line promise/prefer-await-to-callbacks
@@ -100,7 +91,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
         className={cn(
           cellRow,
           "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
-          row.getIsSelected() && "opacity-100"
+          row.getIsSelected() && "opacity-100",
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -147,13 +138,8 @@ const columns: ColumnDef<TransactionListItem>[] = [
   {
     accessorFn: (row) => row.institutionName ?? row.accountName ?? "",
     cell: ({ row }) => {
-      const {
-        accountName,
-        institutionLogo,
-        institutionName,
-        institutionUrl,
-        source,
-      } = row.original;
+      const { accountName, institutionLogo, institutionName, institutionUrl, source } =
+        row.original;
 
       return (
         <div className={cellRow} title={institutionName?.trim() || accountName}>
@@ -205,38 +191,28 @@ const columns: ColumnDef<TransactionListItem>[] = [
   },
   {
     accessorFn: (row) => {
-      if (!row.category) {
+      const cat = row.category;
+      if (!cat) {
         return "";
       }
-      const primary = getCategoryDisplayConfig({
-        detailed: row.categoryDetail ?? "",
-        primary: row.category,
-      }).label;
-      const detailed = row.categoryDetail
-        ? getDetailedCategoryDisplayName(row.categoryDetail)
-        : "";
-      return detailed ? `${primary} ${detailed}` : primary;
+      return cat.groupName ? `${cat.groupName} ${cat.name}` : cat.name;
     },
     cell: ({ row }) => {
-      if (!row.original.category) {
+      const cat = row.original.category;
+      if (!cat) {
         return <div className={cellRow}>—</div>;
       }
-      const config = getCategoryDisplayConfig({
-        detailed: row.original.categoryDetail ?? "",
-        primary: row.original.category,
-      });
-      const detailed = row.original.categoryDetail
-        ? getDetailedCategoryDisplayName(row.original.categoryDetail)
-        : null;
-      const title = detailed ? `${config.label} › ${detailed}` : config.label;
+      const icon = resolveCategoryIcon(cat.iconKey) ?? UNKNOWN_CATEGORY_ICON;
+      const groupLabel = cat.groupName;
+      const title = groupLabel ? `${groupLabel} › ${cat.name}` : cat.name;
 
       return (
         <div className="min-w-0" title={title}>
           <div className={cn(cellRow, "min-w-0 gap-2")}>
-            <CategoryIcon icon={config.icon} />
+            <CategoryIcon icon={icon} />
             <div className={cn(cellRow, "min-w-0 gap-1.5 text-sm")}>
-              <span className="shrink-0 text-foreground">{config.label}</span>
-              {detailed ? (
+              <span className="shrink-0 text-foreground">{groupLabel ?? cat.name}</span>
+              {groupLabel ? (
                 <>
                   <HugeiconsIcon
                     aria-hidden
@@ -244,9 +220,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
                     icon={ArrowRight01Icon}
                     strokeWidth={2}
                   />
-                  <span className="min-w-0 truncate text-muted-foreground">
-                    {detailed}
-                  </span>
+                  <span className="min-w-0 truncate text-muted-foreground">{cat.name}</span>
                 </>
               ) : null}
             </div>
@@ -262,12 +236,9 @@ const columns: ColumnDef<TransactionListItem>[] = [
     cell: ({ row }) => {
       const { amount } = row.original;
       const formattedAmount = currency.format(Math.abs(amount));
-      const amountColor =
-        amount >= 0 ? "text-red-600 dark:text-red-500" : "text-green-550";
+      const amountColor = amount >= 0 ? "text-red-600 dark:text-red-500" : "text-green-550";
       return (
-        <div
-          className={cn(cellRow, "whitespace-nowrap tabular-nums", amountColor)}
-        >
+        <div className={cn(cellRow, "whitespace-nowrap tabular-nums", amountColor)}>
           <PrivateAmount>{formattedAmount}</PrivateAmount>
         </div>
       );
@@ -282,8 +253,8 @@ function isInteractiveCellTarget(target: EventTarget | null): boolean {
   }
   return Boolean(
     target.closest(
-      "button, a, input, [role='checkbox'], [data-slot='checkbox'], [data-slot='checkbox-indicator']"
-    )
+      "button, a, input, [role='checkbox'], [data-slot='checkbox'], [data-slot='checkbox-indicator']",
+    ),
   );
 }
 
@@ -342,21 +313,14 @@ export function TransactionsTable({
 }) {
   const navigate = useNavigate();
   const router = useRouter();
-  const [internalRowSelection, setInternalRowSelection] =
-    useState<RowSelectionState>({});
+  const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
   const isControlled = rowSelectionProp !== undefined;
   const rowSelection = isControlled ? rowSelectionProp : internalRowSelection;
   const setRowSelection = useCallback(
-    (
-      updater:
-        | RowSelectionState
-        | ((old: RowSelectionState) => RowSelectionState)
-    ) => {
+    (updater: RowSelectionState | ((old: RowSelectionState) => RowSelectionState)) => {
       const next =
         typeof updater === "function"
-          ? (updater as (old: RowSelectionState) => RowSelectionState)(
-              rowSelection
-            )
+          ? (updater as (old: RowSelectionState) => RowSelectionState)(rowSelection)
           : updater;
       if (isControlled) {
         onRowSelectionChange?.(next);
@@ -365,7 +329,7 @@ export function TransactionsTable({
         onRowSelectionChange?.(next);
       }
     },
-    [isControlled, onRowSelectionChange, rowSelection]
+    [isControlled, onRowSelectionChange, rowSelection],
   );
 
   const openTransaction = useCallback(
@@ -379,7 +343,7 @@ export function TransactionsTable({
         to: "/transactions/$transactionId",
       });
     },
-    [navigate, onOpenTransaction]
+    [navigate, onOpenTransaction],
   );
 
   const onRowMouseDown = useCallback(
@@ -399,7 +363,7 @@ export function TransactionsTable({
       }
       openTransaction(row);
     },
-    [router, openTransaction, onOpenTransaction]
+    [router, openTransaction, onOpenTransaction],
   );
 
   const onRowActivate = useCallback(
@@ -414,7 +378,7 @@ export function TransactionsTable({
       }
       openTransaction(row);
     },
-    [openTransaction]
+    [openTransaction],
   );
 
   const table = useReactTable({
@@ -472,7 +436,7 @@ export function TransactionsTable({
         return next;
       });
     },
-    [rowIdsByMonth, setRowSelection]
+    [rowIdsByMonth, setRowSelection],
   );
 
   const getMonthSelectionState = useCallback(
@@ -495,7 +459,7 @@ export function TransactionsTable({
       }
       return "some";
     },
-    [rowIdsByMonth, rowSelection]
+    [rowIdsByMonth, rowSelection],
   );
 
   const stickyIndexes = useMemo(() => {
@@ -538,8 +502,7 @@ export function TransactionsTable({
   const rangeExtractor = useCallback(
     (range: Range) => {
       const active =
-        [...stickyIndexes].toReversed().find((i) => range.startIndex >= i) ??
-        stickyIndexes[0];
+        [...stickyIndexes].toReversed().find((i) => range.startIndex >= i) ?? stickyIndexes[0];
       if (active !== undefined) {
         activeStickyIndexRef.current = active;
       }
@@ -549,7 +512,7 @@ export function TransactionsTable({
       }
       return [...next].toSorted((a, b) => a - b);
     },
-    [stickyIndexes]
+    [stickyIndexes],
   );
 
   const virtualizer = useVirtualizer({
@@ -590,8 +553,7 @@ export function TransactionsTable({
                 if (!item) {
                   return null;
                 }
-                const isActiveSticky =
-                  activeStickyIndexRef.current === vi.index;
+                const isActiveSticky = activeStickyIndexRef.current === vi.index;
                 const stickyStyle: CSSProperties = isActiveSticky
                   ? { position: "sticky", top: 0, zIndex: 2 }
                   : {
@@ -623,7 +585,7 @@ export function TransactionsTable({
                         className={cn(
                           "flex items-center p-3",
                           "opacity-0 group-hover/month:opacity-100 group-focus-within/month:opacity-100",
-                          selectionState !== "none" && "opacity-100"
+                          selectionState !== "none" && "opacity-100",
                         )}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -638,10 +600,7 @@ export function TransactionsTable({
                           checked={isChecked}
                           indeterminate={isIndeterminate}
                           onCheckedChange={(checked) => {
-                            toggleMonthSelection(
-                              item.monthKey,
-                              checked === true
-                            );
+                            toggleMonthSelection(item.monthKey, checked === true);
                           }}
                         />
                       </div>
@@ -698,15 +657,12 @@ export function TransactionsTable({
                           index === 0 &&
                             "group-hover:rounded-l-lg group-data-[state=selected]:rounded-l-lg",
                           index === cells.length - 1 &&
-                            "group-hover:rounded-r-lg group-data-[state=selected]:rounded-r-lg"
+                            "group-hover:rounded-r-lg group-data-[state=selected]:rounded-r-lg",
                         )}
                         key={cell.id}
                         role="cell"
                       >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </div>
                     ))}
                   </div>

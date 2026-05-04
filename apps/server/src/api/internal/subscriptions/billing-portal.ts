@@ -9,8 +9,7 @@ import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
-  description:
-    "Create a Stripe billing portal session for the authenticated user",
+  description: "Create a Stripe billing portal session for the authenticated user",
   method: "post",
   middleware: [requireAuth] as const,
   path: "/billingPortal",
@@ -26,14 +25,8 @@ const route = createRoute({
   tags: ["Subscriptions"],
 });
 
-export const billingPortalRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const appUrl = env.APP_URL;
-    const url = await createBillingPortalSession(
-      c.var.user.id,
-      `${appUrl}/settings`
-    );
-    return c.json({ url }, 200);
-  }
-);
+export const billingPortalRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  const appUrl = env.APP_URL;
+  const url = await createBillingPortalSession(c.var.user.id, `${appUrl}/settings`);
+  return c.json({ url }, 200);
+});

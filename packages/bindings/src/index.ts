@@ -15,9 +15,7 @@ export interface RouteSpec<S extends z.ZodTypeAny> {
   handler: (userId: string, args: z.infer<S>) => Promise<unknown>;
 }
 
-export function route<S extends z.ZodTypeAny>(
-  spec: RouteSpec<S>
-): RouteSpec<S> {
+export function route<S extends z.ZodTypeAny>(spec: RouteSpec<S>): RouteSpec<S> {
   return spec;
 }
 
@@ -28,10 +26,7 @@ const toJsonSchema = (s: z.ZodTypeAny): Record<string, unknown> =>
  * Bind a list of `RouteSpec`s to a single `userId`. The `userId` is captured
  * in closure on the host — sandboxed code cannot see, supply, or override it.
  */
-export function bindRoutes(
-  userId: string,
-  routes: RouteSpec<z.ZodTypeAny>[]
-): Binding[] {
+export function bindRoutes(userId: string, routes: RouteSpec<z.ZodTypeAny>[]): Binding[] {
   return routes.map((r) => ({
     description: r.description,
     handler: async (args: unknown) => {
@@ -56,16 +51,14 @@ const safeStringify = (value: unknown): string => {
         }
         return v;
       },
-      2
+      2,
     );
   } catch {
     return String(value);
   }
 };
 
-export function bindingsToToolMap(
-  bindings: Binding[]
-): Record<string, ToolBinding> {
+export function bindingsToToolMap(bindings: Binding[]): Record<string, ToolBinding> {
   const map: Record<string, ToolBinding> = {};
   for (const b of bindings) {
     map[b.name] = {
@@ -99,7 +92,7 @@ export function buildShim(bindingNames: string[], rootName = "cobalt"): string {
     const props = methods
       .map(
         (m) =>
-          `${m}: async (input) => { const r = await ${group}_${m}(input ?? {}); return typeof r === "string" ? JSON.parse(r) : r; }`
+          `${m}: async (input) => { const r = await ${group}_${m}(input ?? {}); return typeof r === "string" ? JSON.parse(r) : r; }`,
       )
       .join(", ");
     return `${group}: { ${props} }`;
@@ -117,19 +110,14 @@ const DEFAULT_TIMEOUT_MS = 180_000;
 const DEFAULT_MAX_OUTPUT_CHARS = 25_000;
 
 const truncate = (s: string, max: number) =>
-  s.length > max
-    ? `${s.slice(0, max)}\n[truncated ${s.length - max} chars]`
-    : s;
+  s.length > max ? `${s.slice(0, max)}\n[truncated ${s.length - max} chars]` : s;
 
 /**
  * Driver shape we depend on. Matches `@tanstack/ai-code-mode`'s `IsolateDriver`
  * but typed locally to keep the dep surface minimal.
  */
 export interface SandboxDriver {
-  createContext(opts: {
-    bindings: Record<string, ToolBinding>;
-    timeout?: number;
-  }): Promise<{
+  createContext(opts: { bindings: Record<string, ToolBinding>; timeout?: number }): Promise<{
     execute(code: string): Promise<{
       success: boolean;
       value?: unknown;
@@ -154,7 +142,7 @@ export interface RunOptions {
 export async function runWithBindings(
   bindings: Binding[],
   userCode: string,
-  options: RunOptions
+  options: RunOptions,
 ): Promise<RunResult> {
   const {
     driver,
@@ -194,9 +182,7 @@ export async function runWithBindings(
       };
     }
     const valuePart =
-      result.value !== undefined && result.value !== null
-        ? safeStringify(result.value)
-        : "";
+      result.value !== undefined && result.value !== null ? safeStringify(result.value) : "";
     const combined = [logs, valuePart].filter(Boolean).join("\n");
     return { ok: true, stdout: truncate(combined, maxOutputChars) };
   } finally {

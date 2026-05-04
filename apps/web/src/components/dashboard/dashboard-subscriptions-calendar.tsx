@@ -33,14 +33,11 @@ export function DashboardSubscriptionsCalendar() {
   const streams = rawStreams as unknown as RecurringRow[];
   const isComplete = result.type === "complete";
 
-  const outflows = useMemo(
-    () => streams.filter((s) => s.streamType === "outflow"),
-    [streams]
-  );
+  const outflows = useMemo(() => streams.filter((s) => s.streamType === "outflow"), [streams]);
 
   const monthlyTotal = useMemo(
     () => outflows.reduce((sum, s) => sum + Math.abs(s.lastAmount), 0),
-    [outflows]
+    [outflows],
   );
 
   /** Days in the current month that have a past or predicted payment. */
@@ -99,9 +96,7 @@ export function DashboardSubscriptionsCalendar() {
               <p className="text-muted-foreground text-right text-base">
                 Monthly total:{" "}
                 <span className="text-foreground font-semibold tabular-nums">
-                  <PrivateAmount>
-                    {formatMonthTotal(monthlyTotal)}
-                  </PrivateAmount>
+                  <PrivateAmount>{formatMonthTotal(monthlyTotal)}</PrivateAmount>
                 </span>
               </p>
             </div>
@@ -130,7 +125,7 @@ export function DashboardSubscriptionsCalendar() {
                 "[&_[data-slot=button][data-selected-single=true]]:!bg-primary",
                 "[&_[data-slot=button][data-selected-single=true]]:!text-primary-foreground",
                 "[&_[data-slot=button][data-selected-single=true]]:hover:!bg-primary/90",
-                "[&_.rdp-weekday]:text-base [&_[data-slot=button]]:text-lg"
+                "[&_.rdp-weekday]:text-base [&_[data-slot=button]]:text-lg",
               )}
               classNames={{
                 day: "relative rounded-2xl border-0 shadow-none",

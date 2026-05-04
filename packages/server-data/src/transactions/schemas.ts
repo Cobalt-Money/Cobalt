@@ -1,4 +1,6 @@
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { category } from "@cobalt-web/db/schema/accounts/banking/categories/category";
+import { categoryGroup } from "@cobalt-web/db/schema/accounts/banking/categories/category-group";
 import { recurring } from "@cobalt-web/db/schema/accounts/banking/transactions/recurring";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import {
@@ -6,7 +8,6 @@ import {
   recurringStreamJsonbSelectRefinements,
   transactionJsonbSelectRefinements,
   transactionNotesMarkdownSchema,
-  userOverrideCategoryJsonSchema,
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
 import { z } from "@hono/zod-openapi";
@@ -44,13 +45,32 @@ export const successResponse = z.object({
   success: z.boolean(),
 });
 
+/** `category` columns picked from joined row. */
+const categoryRowSlice = createSelectSchema(category).pick({
+  iconKey: true,
+  id: true,
+  name: true,
+  systemKey: true,
+});
+
+/** `category_group` columns picked from joined row. */
+const categoryGroupRowSlice = createSelectSchema(categoryGroup).pick({
+  name: true,
+  systemKey: true,
+});
+
+/** Joined category slice exposed on list/detail rows. Null when row not yet backfilled. */
+export const transactionCategorySchema = categoryRowSlice
+  .extend({
+    groupName: categoryGroupRowSlice.shape.name,
+    groupSystemKey: categoryGroupRowSlice.shape.systemKey,
+  })
+  .nullable();
+
 /** List transaction DTO: picked `transaction` columns + joined account / institution (see `getUserTransactions`). */
 export const transactionListItemSchema = transactionListItemRowSchema
   .pick({
     authorizedDate: true,
-    category: true,
-    categoryConfidence: true,
-    categoryDetail: true,
     counterparties: true,
     date: true,
     id: true,
@@ -67,6 +87,7 @@ export const transactionListItemSchema = transactionListItemRowSchema
     accountName: bankAccountListSlice.shape.name,
     accountType: bankAccountListSlice.shape.type,
     amount: z.number(),
+    category: transactionCategorySchema,
     institutionLogo: institutionListSlice.shape.logo,
     institutionName: institutionListSlice.shape.name.nullable(),
     institutionUrl: institutionListSlice.shape.url,
@@ -84,9 +105,6 @@ const recurringStreamListRowSchema = createSelectSchema(recurring, {
 /** Recurring stream DTO: picked `recurring_stream` columns + joined account / institution (see `getRecurringStreams`). */
 export const recurringStreamSchema = recurringStreamListRowSchema
   .pick({
-    category: true,
-    categoryConfidence: true,
-    categoryDetail: true,
     description: true,
     firstDate: true,
     frequency: true,
@@ -104,6 +122,7 @@ export const recurringStreamSchema = recurringStreamListRowSchema
     accountSubtype: bankAccountRecurringSlice.shape.subtype.nullable(),
     accountType: bankAccountRecurringSlice.shape.type,
     averageAmount: z.number(),
+    category: transactionCategorySchema,
     institutionLogo: institutionListSlice.shape.logo,
     institutionName: institutionListSlice.shape.name.nullable(),
     institutionUrl: institutionListSlice.shape.url,
@@ -158,7 +177,8 @@ export const creditSpendingQuerySchema = z.object({
  */
 export const transactionPatchBodySchema = z
   .object({
-    category: userOverrideCategoryJsonSchema.nullable().optional(),
+    /** SRI-311: FK to a row in `category`. `null` resets to original (Plaid-derived) cat. */
+    categoryId: z.uuid().nullable().optional(),
     date: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -212,6 +232,4 @@ export const transactionActivityResponseSchema = z.object({
   events: z.array(transactionActivityItemSchema),
 });
 
-export type TransactionActivityItem = z.infer<
-  typeof transactionActivityItemSchema
->;
+export type TransactionActivityItem = z.infer<typeof transactionActivityItemSchema>;

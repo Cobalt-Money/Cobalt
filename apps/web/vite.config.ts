@@ -48,9 +48,7 @@ function ssrStubPlugin(): Plugin {
     resolveId(source, _importer, options) {
       if (
         options.ssr &&
-        ssrStubPackages.some(
-          (pkg) => source === pkg || source.startsWith(`${pkg}/`)
-        )
+        ssrStubPackages.some((pkg) => source === pkg || source.startsWith(`${pkg}/`))
       ) {
         return SSR_STUB_PREFIX + source;
       }
@@ -73,19 +71,13 @@ function patchServerRequirePlugin(): Plugin {
   return {
     generateBundle(_options, bundle) {
       for (const chunk of Object.values(bundle)) {
-        if (
-          chunk.type !== "chunk" ||
-          !chunk.code.includes('__require("react")')
-        ) {
+        if (chunk.type !== "chunk" || !chunk.code.includes('__require("react")')) {
           continue;
         }
         // Find the bundled React function name (require_react, require_react$1, etc.)
         const match = chunk.code.match(/\brequire_react(?:\$\d+)?\b/);
         if (match) {
-          chunk.code = chunk.code.replaceAll(
-            '__require("react")',
-            `${match[0]}()`
-          );
+          chunk.code = chunk.code.replaceAll('__require("react")', `${match[0]}()`);
         }
       }
     },
@@ -100,10 +92,7 @@ export default defineConfig({
     {
       ...mdx({
         jsxImportSource: "react",
-        remarkPlugins: [
-          remarkFrontmatter,
-          [remarkMdxFrontmatter, { name: "frontmatter" }],
-        ],
+        remarkPlugins: [remarkFrontmatter, [remarkMdxFrontmatter, { name: "frontmatter" }]],
       }),
       enforce: "pre",
     },

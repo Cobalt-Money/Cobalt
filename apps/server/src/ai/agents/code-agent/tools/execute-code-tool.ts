@@ -51,7 +51,7 @@ export const createExecuteCodeTool = (userId: string) =>
         .string()
         .min(1)
         .describe(
-          "JavaScript source (no TypeScript syntax). Top-level await is supported. `cobalt.*` is preinjected — do not import it."
+          "JavaScript source (no TypeScript syntax). Top-level await is supported. `cobalt.*` is preinjected — do not import it.",
         ),
     }),
   });

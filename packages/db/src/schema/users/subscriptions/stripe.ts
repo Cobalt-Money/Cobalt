@@ -1,11 +1,4 @@
-import {
-  boolean,
-  index,
-  integer,
-  pgTable,
-  text,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 export const subscription = pgTable(
   "subscription",
@@ -29,10 +22,8 @@ export const subscription = pgTable(
   (table) => [
     index("subscription_reference_id_idx").on(table.referenceId),
     index("subscription_stripe_customer_id_idx").on(table.stripeCustomerId),
-    index("subscription_stripe_subscription_id_idx").on(
-      table.stripeSubscriptionId
-    ),
-  ]
+    index("subscription_stripe_subscription_id_idx").on(table.stripeSubscriptionId),
+  ],
 );
 
 export type Subscription = typeof subscription.$inferSelect;

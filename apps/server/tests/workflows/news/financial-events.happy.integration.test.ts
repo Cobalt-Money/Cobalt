@@ -33,9 +33,7 @@ describe("processFinancialEventWorkflow — happy path (server-based integration
       return;
     }
 
-    console.log(
-      `[test] using live event ${firstEvent.event_id}: ${firstEvent.event_name}`
-    );
+    console.log(`[test] using live event ${firstEvent.event_id}: ${firstEvent.event_name}`);
 
     // Step 1: run the workflow end-to-end.
     const run = await start(processFinancialEventWorkflow, [firstEvent]);
@@ -57,9 +55,7 @@ describe("processFinancialEventWorkflow — happy path (server-based integration
     expect(result.articlesPersisted).toBeGreaterThan(0);
     // Persisted should be ≥ scraped because failed scrapes are still
     // persisted as placeholders (source + image preserved).
-    expect(result.articlesPersisted).toBeGreaterThanOrEqual(
-      result.articlesScraped
-    );
+    expect(result.articlesPersisted).toBeGreaterThanOrEqual(result.articlesScraped);
   }, 180_000);
 
   // Idempotency is a DB-layer invariant, independent of whether AI summary
@@ -74,9 +70,7 @@ describe("processFinancialEventWorkflow — happy path (server-based integration
       return;
     }
 
-    console.log(
-      `[test] idempotency check against live event ${firstEvent.event_id}`
-    );
+    console.log(`[test] idempotency check against live event ${firstEvent.event_id}`);
 
     const firstRun = await start(processFinancialEventWorkflow, [firstEvent]);
     const firstResult = await firstRun.returnValue;

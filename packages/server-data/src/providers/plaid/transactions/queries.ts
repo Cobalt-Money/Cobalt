@@ -4,8 +4,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 
 /** Fields carried forward from a pending → posted row during sync. */
 export interface UserOverrides {
-  category: string | null;
-  categoryDetail: string | null;
+  categoryId: string | null;
   lockedFields: string[];
   name: string;
 }
@@ -16,7 +15,7 @@ export interface UserOverrides {
  * one of: name, category, date.
  */
 export async function getUserOverrides(
-  transactionIds: string[]
+  transactionIds: string[],
 ): Promise<Map<string, UserOverrides>> {
   if (transactionIds.length === 0) {
     return new Map();
@@ -24,8 +23,7 @@ export async function getUserOverrides(
 
   const rows = await db
     .select({
-      category: transactionTable.category,
-      categoryDetail: transactionTable.categoryDetail,
+      categoryId: transactionTable.categoryId,
       externalId: transactionTable.externalId,
       lockedFields: transactionTable.lockedFields,
       name: transactionTable.name,
@@ -35,24 +33,20 @@ export async function getUserOverrides(
       and(
         eq(transactionTable.source, "plaid"),
         inArray(transactionTable.externalId, transactionIds),
-        sql`jsonb_array_length(${transactionTable.lockedFields}) > 0`
-      )
+        sql`jsonb_array_length(${transactionTable.lockedFields}) > 0`,
+      ),
     );
 
   return new Map(
     rows
-      .filter(
-        (row): row is typeof row & { externalId: string } =>
-          row.externalId !== null
-      )
+      .filter((row): row is typeof row & { externalId: string } => row.externalId !== null)
       .map((row) => [
         row.externalId,
         {
-          category: row.category,
-          categoryDetail: row.categoryDetail,
+          categoryId: row.categoryId,
           lockedFields: row.lockedFields,
           name: row.name,
         },
-      ])
+      ]),
   );
 }

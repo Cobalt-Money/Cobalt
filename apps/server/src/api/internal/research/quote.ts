@@ -28,19 +28,13 @@ const route = createRoute({
   tags: ["Research"],
 });
 
-export const quoteRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const { symbol } = c.req.valid("query");
-      const quote = await fmpGetQuote(symbol);
-      c.header(
-        "Cache-Control",
-        "public, s-maxage=900, stale-while-revalidate=3600"
-      );
-      return c.json(quote, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch quote data" }, 500);
-    }
+export const quoteRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const { symbol } = c.req.valid("query");
+    const quote = await fmpGetQuote(symbol);
+    c.header("Cache-Control", "public, s-maxage=900, stale-while-revalidate=3600");
+    return c.json(quote, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch quote data" }, 500);
   }
-);
+});

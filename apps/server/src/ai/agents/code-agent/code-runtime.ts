@@ -26,10 +26,7 @@ function getDriver(): SandboxDriver | null {
   return cachedDriver;
 }
 
-export function runUserCode(
-  bindings: Binding[],
-  userCode: string
-): Promise<RunResult> {
+export function runUserCode(bindings: Binding[], userCode: string): Promise<RunResult> {
   return runWithBindings(bindings, userCode, {
     driver: getDriver(),
     timeoutMs: TIMEOUT_MS,
@@ -42,9 +39,6 @@ export function runUserCode(
  * tool *schemas* and never the userId, so sandboxed code cannot supply or
  * override it.
  */
-export function runCobaltCode(
-  userId: string,
-  code: string
-): Promise<RunResult> {
+export function runCobaltCode(userId: string, code: string): Promise<RunResult> {
   return runUserCode(buildBindings(userId), code);
 }

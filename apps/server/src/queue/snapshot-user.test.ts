@@ -15,9 +15,7 @@ vi.mock(import("@cobalt-web/server-data/snapshots/mutations"), () => ({
 // handleCallback wraps the user fn and returns a request handler. We capture
 // the inner fn so we can invoke it directly without faking the queue's
 // OIDC/auth wrapper.
-let capturedHandler:
-  | ((message: { userId: string }) => Promise<void>)
-  | undefined;
+let capturedHandler: ((message: { userId: string }) => Promise<void>) | undefined;
 
 vi.mock(import("@vercel/queue"), () => ({
   handleCallback: vi.fn((fn) => {

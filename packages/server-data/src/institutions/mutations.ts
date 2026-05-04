@@ -14,10 +14,7 @@ export interface InstitutionUpsertInput {
 
 /** Insert an institution into the local DB. Returns the new row. */
 export async function insertInstitution(data: InstitutionUpsertInput) {
-  const [newInstitution] = await db
-    .insert(institution)
-    .values(data)
-    .returning();
+  const [newInstitution] = await db.insert(institution).values(data).returning();
 
   if (!newInstitution) {
     throw new Error("Failed to insert institution");
@@ -30,9 +27,7 @@ export async function insertInstitution(data: InstitutionUpsertInput) {
  * onboarding so `conn.institution.url` resolves for every newly linked item
  * (the mapper feeds that URL to Brandfetch/Logo.dev).
  */
-export async function upsertInstitutionByPlaidId(
-  data: InstitutionUpsertInput
-): Promise<void> {
+export async function upsertInstitutionByPlaidId(data: InstitutionUpsertInput): Promise<void> {
   await db
     .insert(institution)
     .values(data)

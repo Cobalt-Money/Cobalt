@@ -1,14 +1,9 @@
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { Card } from "@cobalt-web/ui/components/card";
-import {
-  Map,
-  MapControls,
-  MapMarker,
-  MarkerContent,
-} from "@cobalt-web/ui/components/ui/map";
+import { Map, MapControls, MapMarker, MarkerContent } from "@cobalt-web/ui/components/ui/map";
 
 function hasLocationFields(
-  loc: TransactionListItem["location"]
+  loc: TransactionListItem["location"],
 ): loc is NonNullable<TransactionListItem["location"]> {
   if (!loc || typeof loc !== "object") {
     return false;
@@ -26,7 +21,7 @@ function hasLocationFields(
 
 /** Plaid `location.lat` / `location.lon` when present (WGS84). */
 function getLocationCoordinates(
-  loc: TransactionListItem["location"]
+  loc: TransactionListItem["location"],
 ): { lat: number; lng: number } | null {
   if (!loc || typeof loc !== "object") {
     return null;
@@ -44,19 +39,13 @@ function getLocationCoordinates(
   return { lat: l.lat, lng: l.lon };
 }
 
-export function shouldShowLocationSection(
-  loc: TransactionListItem["location"]
-): boolean {
+export function shouldShowLocationSection(loc: TransactionListItem["location"]): boolean {
   return getLocationCoordinates(loc) !== null || hasLocationFields(loc);
 }
 
-function formatLocation(
-  location: NonNullable<TransactionListItem["location"]>
-): string {
+function formatLocation(location: NonNullable<TransactionListItem["location"]>): string {
   const l = location as Record<string, string | null | undefined>;
-  const line2 = [l.city, l.region, l.postal_code, l.country]
-    .filter(Boolean)
-    .join(", ");
+  const line2 = [l.city, l.region, l.postal_code, l.country].filter(Boolean).join(", ");
   const parts = [l.address, line2].filter(Boolean);
   let s = parts.join(", ");
   if (l.store_number?.trim()) {
@@ -74,11 +63,7 @@ function LocationCaption({
   location: TransactionListItem["location"];
 }) {
   if (location && hasLocationFields(location)) {
-    return (
-      <p className="text-foreground text-sm leading-relaxed">
-        {formatLocation(location)}
-      </p>
-    );
+    return <p className="text-foreground text-sm leading-relaxed">{formatLocation(location)}</p>;
   }
   if (coords) {
     return (

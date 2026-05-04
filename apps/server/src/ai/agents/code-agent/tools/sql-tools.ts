@@ -57,7 +57,7 @@ function safeReadOnlyQuery(query: string): string {
   const normalized = normalizeQuery(query);
   if (!isReadOnlyQuery(normalized)) {
     throw new Error(
-      "Only read-only queries are allowed (SELECT or WITH). Destructive or write operations, dangerous functions, and system catalog access are rejected."
+      "Only read-only queries are allowed (SELECT or WITH). Destructive or write operations, dangerous functions, and system catalog access are rejected.",
     );
   }
   return enforceLimit(ensureSingleStatement(normalized));
@@ -75,9 +75,7 @@ export function createRunSqlTool(userId: string) {
         const escapedClaims = claims.replaceAll("'", "''");
         const result = await agentDb.transaction(async (tx) => {
           await tx.execute(sql`SET LOCAL statement_timeout = '10s'`);
-          await tx.execute(
-            sql.raw(`SET LOCAL request.jwt.claims TO '${escapedClaims}'`)
-          );
+          await tx.execute(sql.raw(`SET LOCAL request.jwt.claims TO '${escapedClaims}'`));
           const queryResult = await tx.execute(sql.raw(safeQuery));
           const rows = Array.isArray(queryResult.rows)
             ? queryResult.rows
@@ -86,10 +84,7 @@ export function createRunSqlTool(userId: string) {
         });
         return result;
       } catch (error) {
-        throw new Error(
-          error instanceof Error ? error.message : String(error),
-          { cause: error }
-        );
+        throw new Error(error instanceof Error ? error.message : String(error), { cause: error });
       }
     },
     inputSchema: z.object({
@@ -100,8 +95,7 @@ export function createRunSqlTool(userId: string) {
 
 /** Fallback SQL tool when userId is unavailable (dev/testing only). */
 export const runSqlTool = tool({
-  description:
-    "Execute a read-only SQL query (SELECT or WITH) against the application database.",
+  description: "Execute a read-only SQL query (SELECT or WITH) against the application database.",
   execute: async ({ query }) => {
     const safeQuery = safeReadOnlyQuery(query);
     try {

@@ -28,9 +28,7 @@ const sharedFeatures = [
 const annualExtra = "30-day free trial — cancel anytime";
 
 function PricingPage() {
-  const [subscribing, setSubscribing] = useState<
-    "cobalt-monthly" | "cobalt-annual" | null
-  >(null);
+  const [subscribing, setSubscribing] = useState<"cobalt-monthly" | "cobalt-annual" | null>(null);
   const session = useAppSession();
   const isSignedIn = Boolean(session.data?.user);
 
@@ -57,9 +55,7 @@ function PricingPage() {
   return (
     <main className="flex h-svh flex-col overflow-auto no-scrollbar px-6 py-16">
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-10">
-        <h1 className="text-center text-2xl font-medium tracking-tight sm:text-3xl">
-          Pricing
-        </h1>
+        <h1 className="text-center text-2xl font-medium tracking-tight sm:text-3xl">Pricing</h1>
 
         <div className="grid w-full gap-6 md:grid-cols-2">
           <div className="flex flex-col rounded-3xl bg-muted/40 p-8 sm:p-10">
@@ -70,9 +66,7 @@ function PricingPage() {
                 <span className="text-2xl font-semibold">/month</span>
               </span>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Billed monthly. Cancel anytime.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Billed monthly. Cancel anytime.</p>
 
             <div className="mt-8">
               {isSignedIn ? (
@@ -82,9 +76,7 @@ function PricingPage() {
                   onClick={() => handleSubscribe("cobalt-monthly")}
                   variant="secondary"
                 >
-                  {subscribing === "cobalt-monthly"
-                    ? "Redirecting…"
-                    : "Subscribe monthly"}
+                  {subscribing === "cobalt-monthly" ? "Redirecting…" : "Subscribe monthly"}
                 </Button>
               ) : (
                 <Link
@@ -126,9 +118,7 @@ function PricingPage() {
                 <span className="text-2xl font-semibold">/year</span>
               </span>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Billed annually. Cancel anytime.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Billed annually. Cancel anytime.</p>
 
             <div className="mt-8">
               {isSignedIn ? (
@@ -137,9 +127,7 @@ function PricingPage() {
                   disabled={subscribing !== null}
                   onClick={() => handleSubscribe("cobalt-annual")}
                 >
-                  {subscribing === "cobalt-annual"
-                    ? "Redirecting…"
-                    : "Start 30-day free trial"}
+                  {subscribing === "cobalt-annual" ? "Redirecting…" : "Start 30-day free trial"}
                 </Button>
               ) : (
                 <Link
@@ -177,8 +165,7 @@ function PricingPage() {
         </div>
 
         <p className="max-w-xl text-center text-xs text-muted-foreground">
-          Bank-level security. Data encrypted at rest with AES-256 and in
-          transit with TLS 1.2+.
+          Bank-level security. Data encrypted at rest with AES-256 and in transit with TLS 1.2+.
         </p>
       </div>
     </main>

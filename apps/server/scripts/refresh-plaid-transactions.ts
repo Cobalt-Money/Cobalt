@@ -22,15 +22,12 @@ const { USER_ID } = process.env;
 const { ITEM_ID } = process.env;
 
 if (!USER_ID && !ITEM_ID) {
-  console.error(
-    "Refuse to refresh all Items (paid per-call). Set USER_ID or ITEM_ID."
-  );
+  console.error("Refuse to refresh all Items (paid per-call). Set USER_ID or ITEM_ID.");
   process.exit(1);
 }
 
 const { db } = await import("@cobalt-web/db");
-const { plaidConnection } =
-  await import("@cobalt-web/db/schema/providers/plaid/connection");
+const { plaidConnection } = await import("@cobalt-web/db/schema/providers/plaid/connection");
 const { plaidClient } = await import("@cobalt-web/clients/plaid");
 const { eq, and, isNotNull, ne } = await import("drizzle-orm");
 
@@ -55,7 +52,7 @@ const rows = await db
   .where(and(...filters));
 
 console.log(
-  `Will call /transactions/refresh on ${rows.length} Item(s) ${APPLY ? "(APPLY — billable)" : "(dry-run)"}`
+  `Will call /transactions/refresh on ${rows.length} Item(s) ${APPLY ? "(APPLY — billable)" : "(dry-run)"}`,
 );
 for (const r of rows) {
   console.log(`  ${r.itemId}  (${r.institutionName ?? "?"})`);
@@ -66,9 +63,7 @@ if (rows.length === 0) {
 }
 
 if (!APPLY) {
-  console.log(
-    "\nRe-run with --apply to call Plaid. Each call is billable per your contract."
-  );
+  console.log("\nRe-run with --apply to call Plaid. Each call is billable per your contract.");
   process.exit(0);
 }
 
@@ -77,14 +72,11 @@ let fail = 0;
 for (const r of rows) {
   try {
     await plaidClient.transactionsRefresh({ access_token: r.accessToken });
-    console.log(
-      `✓ ${r.itemId}  (${r.institutionName ?? "?"})  refresh requested`
-    );
+    console.log(`✓ ${r.itemId}  (${r.institutionName ?? "?"})  refresh requested`);
     ok += 1;
   } catch (error) {
     const code =
-      (error as { response?: { data?: { error_code?: string } } }).response
-        ?.data?.error_code ??
+      (error as { response?: { data?: { error_code?: string } } }).response?.data?.error_code ??
       (error instanceof Error ? error.message : String(error));
     console.log(`✗ ${r.itemId}  (${r.institutionName ?? "?"})  ${code}`);
     fail += 1;
@@ -92,6 +84,6 @@ for (const r of rows) {
 }
 
 console.log(
-  `\nDone. ok=${ok} fail=${fail}. Watch server logs for SYNC_UPDATES_AVAILABLE webhooks (typically 10–60s).`
+  `\nDone. ok=${ok} fail=${fail}. Watch server logs for SYNC_UPDATES_AVAILABLE webhooks (typically 10–60s).`,
 );
 process.exit(fail === 0 ? 0 : 1);

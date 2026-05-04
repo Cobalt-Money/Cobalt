@@ -24,19 +24,16 @@ const route = createRoute({
   tags: ["News"],
 });
 
-export const trendingRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const { limit } = c.req.valid("query");
-    const tickers = await getUserStockTickers(c.var.user.id);
+export const trendingRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  const { limit } = c.req.valid("query");
+  const tickers = await getUserStockTickers(c.var.user.id);
 
-    if (tickers.length === 0) {
-      return c.json({ headlines: [] }, 200);
-    }
-
-    const headlines = await getTrendingHeadlines(c.var.user.id, tickers, limit);
-
-    c.header("Cache-Control", "private, max-age=60");
-    return c.json({ headlines }, 200);
+  if (tickers.length === 0) {
+    return c.json({ headlines: [] }, 200);
   }
-);
+
+  const headlines = await getTrendingHeadlines(c.var.user.id, tickers, limit);
+
+  c.header("Cache-Control", "private, max-age=60");
+  return c.json({ headlines }, 200);
+});

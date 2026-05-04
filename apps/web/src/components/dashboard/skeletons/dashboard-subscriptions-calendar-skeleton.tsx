@@ -22,10 +22,7 @@ export function DashboardSubscriptionsCalendarSkeleton() {
             {Array.from({ length: 6 }).map((_, week) => (
               <div key={week} className="flex gap-1.5">
                 {Array.from({ length: 7 }).map((__, day) => (
-                  <Skeleton
-                    className="size-13 rounded-2xl"
-                    key={`${week}-${day}`}
-                  />
+                  <Skeleton className="size-13 rounded-2xl" key={`${week}-${day}`} />
                 ))}
               </div>
             ))}

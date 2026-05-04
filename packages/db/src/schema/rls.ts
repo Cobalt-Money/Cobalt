@@ -23,7 +23,7 @@ export const agentSelectOwn = (userIdColumn: string) =>
     for: "select",
     to: pgReadAllData,
     using: sql.raw(
-      `current_setting('request.jwt.claims', true) IS NULL OR "${userIdColumn}" = (SELECT current_setting('request.jwt.claims', true)::json->>'sub')`
+      `current_setting('request.jwt.claims', true) IS NULL OR "${userIdColumn}" = (SELECT current_setting('request.jwt.claims', true)::json->>'sub')`,
     ),
   });
 

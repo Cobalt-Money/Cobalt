@@ -9,8 +9,7 @@ import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
-  description:
-    "Cursor-paginated list of financial events with grouped articles",
+  description: "Cursor-paginated list of financial events with grouped articles",
   method: "get",
   middleware: [requirePaidUser] as const,
   path: "/events",
@@ -31,20 +30,12 @@ const route = createRoute({
   tags: ["News"],
 });
 
-export const eventsRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const { limit, cursor, topic } = c.req.valid("query");
+export const eventsRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  const { limit, cursor, topic } = c.req.valid("query");
 
-    const result = await getFinancialEventsWithArticles(
-      c.var.user.id,
-      limit,
-      cursor,
-      topic
-    );
+  const result = await getFinancialEventsWithArticles(c.var.user.id, limit, cursor, topic);
 
-    c.header("Cache-Control", "private, max-age=60");
+  c.header("Cache-Control", "private, max-age=60");
 
-    return c.json(result, 200);
-  }
-);
+  return c.json(result, 200);
+});

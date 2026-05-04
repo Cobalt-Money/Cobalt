@@ -28,18 +28,12 @@ const route = createRoute({
   tags: ["Research"],
 });
 
-export const tickerSearchRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const tickers = await searchTickers();
-      c.header(
-        "Cache-Control",
-        "public, s-maxage=60, stale-while-revalidate=300"
-      );
-      return c.json({ count: tickers.length, tickers }, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch tickers" }, 500);
-    }
+export const tickerSearchRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const tickers = await searchTickers();
+    c.header("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+    return c.json({ count: tickers.length, tickers }, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch tickers" }, 500);
   }
-);
+});

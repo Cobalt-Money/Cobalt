@@ -19,8 +19,7 @@ export function SettingsDialog({
   onOpenChange: (open: boolean) => void;
   defaultSection?: SettingsSection;
 }) {
-  const [activeSection, setActiveSection] =
-    useState<SettingsSection>(defaultSection);
+  const [activeSection, setActiveSection] = useState<SettingsSection>(defaultSection);
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
@@ -42,10 +41,7 @@ export function SettingsDialog({
             Manage your profile, account, appearance, and billing.
           </DialogDescription>
         </DialogHeader>
-        <SettingsGrid
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-        />
+        <SettingsGrid activeSection={activeSection} onSectionChange={setActiveSection} />
       </DialogContent>
     </Dialog>
   );

@@ -11,9 +11,7 @@ export const progressRouter = new OpenAPIHono<AppEnv>().get(
     const runId = c.req.param("runId");
     const startIndexParam = c.req.query("startIndex");
     // Default 0 so late subscribers (sub-second sandbox runs) replay history.
-    const startIndex = startIndexParam
-      ? Number.parseInt(startIndexParam, 10)
-      : 0;
+    const startIndex = startIndexParam ? Number.parseInt(startIndexParam, 10) : 0;
 
     const run = getRun(runId);
     if (!(await run.exists)) {
@@ -27,7 +25,7 @@ export const progressRouter = new OpenAPIHono<AppEnv>().get(
         transform(chunk, controller) {
           controller.enqueue(encoder.encode(`${JSON.stringify(chunk)}\n`));
         },
-      })
+      }),
     );
 
     return new Response(ndjson, {
@@ -36,5 +34,5 @@ export const progressRouter = new OpenAPIHono<AppEnv>().get(
         "Content-Type": "application/x-ndjson",
       },
     });
-  }
+  },
 );

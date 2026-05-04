@@ -1,12 +1,4 @@
-import {
-  bigint,
-  date,
-  integer,
-  numeric,
-  pgTable,
-  text,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { bigint, date, integer, numeric, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { tickers } from "./tickers";
 
@@ -62,7 +54,7 @@ export const fundamentals = pgTable(
     totalLiabilities: bigint("total_liabilities", { mode: "bigint" }),
     website: text("website"),
   },
-  () => []
+  () => [],
 );
 
 export type Fundamentals = typeof fundamentals.$inferSelect;

@@ -7,11 +7,7 @@ import {
   CommandItem,
   CommandList,
 } from "@cobalt-web/ui/components/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { useMemo, useState } from "react";
 
 import { InstitutionLogo } from "../../logos/institution-logo";
@@ -49,14 +45,7 @@ export function BankFilter({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        render={
-          <CobaltToggle
-            pressed={isActive}
-            size="sm"
-            type="button"
-            variant="outline"
-          />
-        }
+        render={<CobaltToggle pressed={isActive} size="sm" type="button" variant="outline" />}
       >
         {triggerLabel}
       </PopoverTrigger>

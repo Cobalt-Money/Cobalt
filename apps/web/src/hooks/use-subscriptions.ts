@@ -39,8 +39,7 @@ export function useSubscriptions() {
 
           const d = new Date(refDate);
           const billingDay = d.getUTCDate();
-          const billingCycle =
-            row.frequency === "ANNUALLY" ? "yearly" : "monthly";
+          const billingCycle = row.frequency === "ANNUALLY" ? "yearly" : "monthly";
           const name = (row.merchantName || row.description).trim();
           if (!name) {
             return null;
@@ -52,13 +51,11 @@ export function useSubscriptions() {
             billingDay,
             id: row.id,
             name,
-            ...(billingCycle === "yearly"
-              ? { billingMonth: d.getUTCMonth() }
-              : {}),
+            ...(billingCycle === "yearly" ? { billingMonth: d.getUTCMonth() } : {}),
           };
         })
         .filter((s): s is Subscription => s !== null),
-    [rows]
+    [rows],
   );
 
   return { isComplete: result.type === "complete", subscriptions };

@@ -4,9 +4,6 @@ export interface ToolRendererContext {
   partIndex: number;
 }
 
-export function toolRendererKey(
-  context: ToolRendererContext,
-  suffix: string
-): string {
+export function toolRendererKey(context: ToolRendererContext, suffix: string): string {
   return `${context.chatId ?? "chat"}-${context.messageId}-${suffix}-${context.partIndex}`;
 }

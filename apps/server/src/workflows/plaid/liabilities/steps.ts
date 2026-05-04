@@ -41,13 +41,10 @@ function getPlaidErrorInfo(error: unknown): PlaidErrorInfo {
   ) {
     return {};
   }
-  const { data } = (error as { response: { data: Record<string, unknown> } })
-    .response;
+  const { data } = (error as { response: { data: Record<string, unknown> } }).response;
   return {
-    errorCode:
-      typeof data.error_code === "string" ? data.error_code : undefined,
-    errorMessage:
-      typeof data.error_message === "string" ? data.error_message : undefined,
+    errorCode: typeof data.error_code === "string" ? data.error_code : undefined,
+    errorMessage: typeof data.error_message === "string" ? data.error_message : undefined,
   };
 }
 
@@ -79,16 +76,13 @@ function rethrowPlaidLiabilitiesFailure(error: unknown): never {
   const msg =
     errorCode && errorMessage
       ? `${errorCode}: ${errorMessage}`
-      : (errorCode ??
-        (error instanceof Error
-          ? error.message || "Unknown error"
-          : String(error)));
+      : (errorCode ?? (error instanceof Error ? error.message || "Unknown error" : String(error)));
   throw new Error(`Plaid liabilities failed — ${msg}`, { cause: error });
 }
 
 /** Plaid `/liabilities/get` + skip / rate-limit policy (no DB). */
 export async function fetchPlaidLiabilitiesStep(
-  accessToken: string
+  accessToken: string,
 ): Promise<FetchPlaidLiabilitiesResult> {
   "use step";
 
@@ -112,7 +106,7 @@ export async function fetchPlaidLiabilitiesStep(
 
 export async function persistPlaidLiabilityBankAccountsStep(
   plaidItemId: string,
-  accounts: AccountBase[]
+  accounts: AccountBase[],
 ): Promise<number> {
   "use step";
 
@@ -120,7 +114,7 @@ export async function persistPlaidLiabilityBankAccountsStep(
 }
 
 export async function persistPlaidLiabilityBankBalancesStep(
-  accounts: AccountBase[]
+  accounts: AccountBase[],
 ): Promise<void> {
   "use step";
 
@@ -128,7 +122,7 @@ export async function persistPlaidLiabilityBankBalancesStep(
 }
 
 export async function persistPlaidCreditLiabilitiesStep(
-  credit: CreditCardLiability[] | null
+  credit: CreditCardLiability[] | null,
 ): Promise<void> {
   "use step";
 
@@ -136,7 +130,7 @@ export async function persistPlaidCreditLiabilitiesStep(
 }
 
 export async function persistPlaidMortgageLiabilitiesStep(
-  mortgage: MortgageLiability[] | null
+  mortgage: MortgageLiability[] | null,
 ): Promise<void> {
   "use step";
 
@@ -144,7 +138,7 @@ export async function persistPlaidMortgageLiabilitiesStep(
 }
 
 export async function persistPlaidStudentLoanLiabilitiesStep(
-  student: StudentLoan[] | null
+  student: StudentLoan[] | null,
 ): Promise<void> {
   "use step";
 

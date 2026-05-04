@@ -74,11 +74,7 @@ function getAlertCtaLabel(type: string): string {
  * SnapTrade connection portal) plus a dismiss action that hits the server;
  * Zero syncs the row's new status back into the list automatically.
  */
-export function NotificationsSheet({
-  open,
-  onOpenChange,
-  previewAlerts,
-}: NotificationsSheetProps) {
+export function NotificationsSheet({ open, onOpenChange, previewAlerts }: NotificationsSheetProps) {
   const live = useUserAlerts();
   const alerts = previewAlerts ?? live.alerts;
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -101,9 +97,7 @@ export function NotificationsSheet({
       startOnboarding(session.runId);
       toast.success("Bank connection updated");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not refresh connection"
-      );
+      toast.error(error instanceof Error ? error.message : "Could not refresh connection");
     }
   }, [resolveLink, startOnboarding]);
 
@@ -145,18 +139,15 @@ export function NotificationsSheet({
     setBusyId(alert.id);
     try {
       if (alert.source === "plaid") {
-        const res = await fetch(
-          `${env.VITE_SERVER_URL}/api/plaid/link-token/update`,
-          {
-            body: JSON.stringify({
-              mode: "reauth",
-              plaidItemId: alert.sourceId,
-            }),
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            method: "POST",
-          }
-        );
+        const res = await fetch(`${env.VITE_SERVER_URL}/api/plaid/link-token/update`, {
+          body: JSON.stringify({
+            mode: "reauth",
+            plaidItemId: alert.sourceId,
+          }),
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
         const data = (await res.json()) as {
           error?: string;
           hookToken?: string;
@@ -173,18 +164,15 @@ export function NotificationsSheet({
         };
         setPlaidToken(data.link_token);
       } else if (alert.source === "snaptrade") {
-        const res = await fetch(
-          `${env.VITE_SERVER_URL}/api/snaptrade/generate-connection-portal`,
-          {
-            body: JSON.stringify({
-              broker: "",
-              reconnectAuthorizationId: alert.sourceId,
-            }),
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            method: "POST",
-          }
-        );
+        const res = await fetch(`${env.VITE_SERVER_URL}/api/snaptrade/generate-connection-portal`, {
+          body: JSON.stringify({
+            broker: "",
+            reconnectAuthorizationId: alert.sourceId,
+          }),
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
         const data = (await res.json()) as {
           error?: string;
           redirectURI?: string;
@@ -206,7 +194,7 @@ export function NotificationsSheet({
     try {
       const res = await fetch(
         `${env.VITE_SERVER_URL}/api/alerts/${encodeURIComponent(alert.id)}/dismiss`,
-        { credentials: "include", method: "POST" }
+        { credentials: "include", method: "POST" },
       );
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as {
@@ -226,9 +214,7 @@ export function NotificationsSheet({
       <SheetContent className="flex w-full flex-col gap-0 sm:max-w-md">
         <SheetHeader className="border-b">
           <SheetTitle>Notifications</SheetTitle>
-          <SheetDescription>
-            Connections that need your attention.
-          </SheetDescription>
+          <SheetDescription>Connections that need your attention.</SheetDescription>
         </SheetHeader>
 
         {alerts.length === 0 ? (
@@ -238,9 +224,7 @@ export function NotificationsSheet({
                 <HugeiconsIcon icon={BellDotIcon} strokeWidth={2} />
               </EmptyMedia>
               <EmptyTitle>You're all caught up</EmptyTitle>
-              <EmptyDescription>
-                No connections need attention right now.
-              </EmptyDescription>
+              <EmptyDescription>No connections need attention right now.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : (
@@ -254,7 +238,7 @@ export function NotificationsSheet({
                   <li
                     className={cn(
                       "flex flex-col gap-3 px-6 py-4",
-                      alert.status === "unread" && "bg-muted/30"
+                      alert.status === "unread" && "bg-muted/30",
                     )}
                     key={alert.id}
                   >
@@ -294,11 +278,7 @@ export function NotificationsSheet({
                         type="button"
                         variant="default"
                       >
-                        <HugeiconsIcon
-                          className="size-4"
-                          icon={RefreshIcon}
-                          strokeWidth={2}
-                        />
+                        <HugeiconsIcon className="size-4" icon={RefreshIcon} strokeWidth={2} />
                         {isBusy ? "…" : getAlertCtaLabel(alert.type)}
                       </Button>
                       <Button
@@ -309,11 +289,7 @@ export function NotificationsSheet({
                         type="button"
                         variant="ghost"
                       >
-                        <HugeiconsIcon
-                          className="size-4"
-                          icon={Cancel01Icon}
-                          strokeWidth={2}
-                        />
+                        <HugeiconsIcon className="size-4" icon={Cancel01Icon} strokeWidth={2} />
                         Dismiss
                       </Button>
                     </div>

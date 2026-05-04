@@ -1,9 +1,5 @@
 // users
-export {
-  brokerageUser,
-  type BrokerageUser,
-  type BrokerageUserInsert,
-} from "./users";
+export { brokerageUser, type BrokerageUser, type BrokerageUserInsert } from "./users";
 
 // auth
 export {

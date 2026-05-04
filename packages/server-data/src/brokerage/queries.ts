@@ -15,14 +15,9 @@ import type {
 
 export type PositionsQuery = z.infer<typeof positionsQuerySchema>;
 export type ActivitiesQuery = z.infer<typeof activitiesQuerySchema>;
-export type PortfolioSnapshotsQuery = z.infer<
-  typeof portfolioSnapshotsQuerySchema
->;
+export type PortfolioSnapshotsQuery = z.infer<typeof portfolioSnapshotsQuerySchema>;
 
-const groupBy = <T>(
-  items: T[],
-  key: (item: T) => string
-): Record<string, T[]> => {
+const groupBy = <T>(items: T[], key: (item: T) => string): Record<string, T[]> => {
   const map: Record<string, T[]> = {};
   for (const item of items) {
     const k = key(item);
@@ -79,11 +74,7 @@ const PLAID_TYPE_LABEL: Record<string, string> = {
 
 /** Plaid stores raw type/subtype strings; SnapTrade stores canonical labels.
  * Normalize Plaid rows on read so the wire vocabulary is consistent. */
-function normalizeActivityType(
-  source: string,
-  type: string,
-  subtype: string | null
-): string {
+function normalizeActivityType(source: string, type: string, subtype: string | null): string {
   if (source !== "plaid") {
     return type;
   }
@@ -144,10 +135,7 @@ export async function getBalancesByUserId(userId: string) {
 
 // ── Positions ───────────────────────────────────────────────────────
 
-export async function getPositionsByUserId(
-  userId: string,
-  params: PositionsQuery
-) {
+export async function getPositionsByUserId(userId: string, params: PositionsQuery) {
   const { accountId, limit, offset } = params;
 
   const conditions = [eq(holding.userId, userId)];
@@ -208,10 +196,8 @@ export async function getPositionsByUserId(
     const costBasisNum = Number(r.hold.costBasis ?? 0);
     const institutionValueNum = Number(r.hold.institutionValue ?? 0);
     const averagePurchasePrice =
-      r.hold.averagePrice ??
-      (quantity > 0 ? String(costBasisNum / quantity) : "0");
-    const openPnl =
-      r.hold.openPnl ?? String(institutionValueNum - costBasisNum);
+      r.hold.averagePrice ?? (quantity > 0 ? String(costBasisNum / quantity) : "0");
+    const openPnl = r.hold.openPnl ?? String(institutionValueNum - costBasisNum);
 
     const externalId = r.acct.externalId ?? "";
     return {
@@ -342,21 +328,14 @@ function mapActivityRow(r: ActivityJoinRow, userId: string) {
     symbolId: sec.symbolId,
     symbolTicker: sec.ticker,
     tradeDate: toDateString(r.activity.date),
-    type: normalizeActivityType(
-      r.activity.source,
-      r.activity.type,
-      r.activity.subtype
-    ),
+    type: normalizeActivityType(r.activity.source, r.activity.type, r.activity.subtype),
     units: numStr(r.activity.quantity),
     updatedAt: toISOString(r.activity.updatedAt),
     userId,
   };
 }
 
-export async function getActivitiesByUserId(
-  userId: string,
-  params: ActivitiesQuery
-) {
+export async function getActivitiesByUserId(userId: string, params: ActivitiesQuery) {
   const { accountId, limit, offset } = params;
 
   const rows = await db.query.investmentActivity.findMany({
@@ -431,8 +410,8 @@ export async function getActivitiesByUserId(
         },
         sec: r.security,
       },
-      userId
-    )
+      userId,
+    ),
   );
 
   return {
@@ -445,20 +424,15 @@ export async function getActivitiesByUserId(
 
 export async function getPortfolioSnapshotsByUserId(
   userId: string,
-  params: PortfolioSnapshotsQuery
+  params: PortfolioSnapshotsQuery,
 ) {
-  const {
-    accountId,
-    startDate: startDateParam,
-    endDate: endDateParam,
-  } = params;
+  const { accountId, startDate: startDateParam, endDate: endDateParam } = params;
 
   const now = new Date();
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(now.getMonth() - 6);
 
-  const startDate =
-    startDateParam ?? sixMonthsAgo.toISOString().split("T")[0] ?? "";
+  const startDate = startDateParam ?? sixMonthsAgo.toISOString().split("T")[0] ?? "";
   const endDate = endDateParam ?? now.toISOString().split("T")[0] ?? "";
 
   const rows = await db.query.snapshot.findMany({
@@ -472,9 +446,7 @@ export async function getPortfolioSnapshotsByUserId(
     where: {
       snapshotDate: { gte: startDate, lte: endDate },
       userId: { eq: userId },
-      ...(accountId && accountId !== "all-accounts"
-        ? { accountId: { eq: accountId } }
-        : {}),
+      ...(accountId && accountId !== "all-accounts" ? { accountId: { eq: accountId } } : {}),
     },
   });
 
@@ -561,7 +533,7 @@ export async function getUserTickersByUserId(userId: string) {
  * Institution name is COALESCEd from `plaidConnection` for Plaid rows.
  */
 export async function getBrokerageAccountsByUserId(
-  userId: string
+  userId: string,
 ): Promise<EnhancedBrokerageAccount[]> {
   const accounts = await db.query.financialAccount.findMany({
     columns: {
@@ -625,10 +597,7 @@ export async function getBrokerageAccountsByUserId(
       cashRestrictions: null,
       createdDate: account.createdAt.toISOString(),
       id: account.externalId ?? account.id,
-      institutionName:
-        account.institutionName ??
-        account.plaidConnection?.institutionName ??
-        "",
+      institutionName: account.institutionName ?? account.plaidConnection?.institutionName ?? "",
       name: account.name ?? "",
       userId,
     };

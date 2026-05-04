@@ -21,7 +21,7 @@ function segmentPose(
   segments: number,
   cx: number,
   cy: number,
-  r: number
+  r: number,
 ): { rot: number; x: number; y: number } {
   const t = i / (segments - 1);
   const angleDeg = 180 * (1 - t);

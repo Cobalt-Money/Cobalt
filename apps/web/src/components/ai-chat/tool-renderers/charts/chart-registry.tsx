@@ -5,11 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@cobalt-web/ui/components/card";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@cobalt-web/ui/components/chart";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@cobalt-web/ui/components/chart";
 import type { ChartConfig } from "@cobalt-web/ui/components/chart";
 import { defineRegistry } from "@json-render/react";
 import {
@@ -80,11 +76,7 @@ export const { registry: chartRegistry } = defineRegistry(chartCatalog, {
               config={chartConfig}
               style={{ height: `${height}px` }}
             >
-              <AreaChart
-                accessibilityLayer
-                data={data}
-                margin={{ left: 12, right: 12 }}
-              >
+              <AreaChart accessibilityLayer data={data} margin={{ left: 12, right: 12 }}>
                 <CartesianGrid vertical={false} />
                 <YAxis hide />
                 <XAxis
@@ -155,11 +147,7 @@ export const { registry: chartRegistry } = defineRegistry(chartCatalog, {
               config={chartConfig}
               style={{ height: `${height}px` }}
             >
-              <BarChart
-                accessibilityLayer
-                data={data}
-                margin={{ left: 12, right: 12 }}
-              >
+              <BarChart accessibilityLayer data={data} margin={{ left: 12, right: 12 }}>
                 <CartesianGrid vertical={false} />
                 <XAxis
                   axisLine={false}
@@ -171,11 +159,7 @@ export const { registry: chartRegistry } = defineRegistry(chartCatalog, {
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 {yKeys.map((key, index) => (
-                  <Bar
-                    key={key}
-                    dataKey={key}
-                    fill={`var(--chart-${(index % 5) + 1})`}
-                  />
+                  <Bar key={key} dataKey={key} fill={`var(--chart-${(index % 5) + 1})`} />
                 ))}
               </BarChart>
             </ChartContainer>
@@ -223,11 +207,7 @@ export const { registry: chartRegistry } = defineRegistry(chartCatalog, {
               config={chartConfig}
               style={{ height: `${height}px` }}
             >
-              <LineChart
-                accessibilityLayer
-                data={data}
-                margin={{ left: 12, right: 12 }}
-              >
+              <LineChart accessibilityLayer data={data} margin={{ left: 12, right: 12 }}>
                 <CartesianGrid vertical={false} />
                 <YAxis hide />
                 <XAxis
@@ -299,12 +279,7 @@ export const { registry: chartRegistry } = defineRegistry(chartCatalog, {
             >
               <PieChart>
                 <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                <Pie
-                  data={chartData}
-                  dataKey={dataKey}
-                  label
-                  nameKey={nameKey}
-                />
+                <Pie data={chartData} dataKey={dataKey} label nameKey={nameKey} />
               </PieChart>
             </ChartContainer>
           </CardContent>

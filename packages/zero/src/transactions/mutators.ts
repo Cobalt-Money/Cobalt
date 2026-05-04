@@ -1,7 +1,6 @@
 import {
   locationJsonSchema,
   transactionNotesMarkdownSchema,
-  userOverrideCategoryJsonSchema,
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { defineMutator } from "@rocicorp/zero";
 import type { Transaction } from "@rocicorp/zero";
@@ -37,7 +36,7 @@ const updateDateSchema = transactionIdSchema.extend({
 });
 
 const updateCategorySchema = transactionIdSchema.extend({
-  category: userOverrideCategoryJsonSchema,
+  categoryId: z.uuid(),
 });
 
 const updateNotesSchema = transactionIdSchema.extend({
@@ -47,7 +46,7 @@ const updateNotesSchema = transactionIdSchema.extend({
 const createTransactionSchema = z.object({
   accountId: z.string().uuid(),
   amount: z.number(),
-  category: userOverrideCategoryJsonSchema.optional(),
+  categoryId: z.uuid().nullable().optional(),
   currency: z.string().length(3).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   /** Plain-text description; persisted as markdown on `notes`. */
@@ -75,7 +74,7 @@ async function getOwned(tx: Transaction<Schema>, ctx: Context, id: string) {
 async function assertOwnsManualTransaction(
   tx: Transaction<Schema>,
   ctx: Context,
-  transactionId: string
+  transactionId: string,
 ): Promise<void> {
   const { row } = await getOwned(tx, ctx, transactionId);
   if (row.source !== "manual") {
@@ -86,15 +85,13 @@ async function assertOwnsManualTransaction(
 async function assertOwnsManualAccountForInsert(
   tx: Transaction<Schema>,
   ctx: Context,
-  accountId: string
+  accountId: string,
 ): Promise<void> {
   const userId = ctx?.userId;
   if (!userId) {
     throw new Error("Unauthorized");
   }
-  const account = await tx.run(
-    zql.financialAccount.where("id", accountId).one()
-  );
+  const account = await tx.run(zql.financialAccount.where("id", accountId).one());
   if (!account || account.userId !== userId) {
     throw new Error("Account not found");
   }
@@ -109,19 +106,10 @@ function addLocked(current: unknown, field: string): string[] {
 }
 
 function removeLocked(current: unknown, field: string): string[] {
-  return ((current as string[] | null | undefined) ?? []).filter(
-    (f) => f !== field
-  );
+  return ((current as string[] | null | undefined) ?? []).filter((f) => f !== field);
 }
 
-type EditField =
-  | "amount"
-  | "category"
-  | "date"
-  | "location"
-  | "merchantName"
-  | "name"
-  | "notes";
+type EditField = "amount" | "category" | "date" | "location" | "merchantName" | "name" | "notes";
 
 async function appendEdit(
   tx: Transaction<Schema>,
@@ -132,7 +120,7 @@ async function appendEdit(
     field: EditField;
     oldValue: unknown;
     newValue: unknown;
-  }
+  },
 ) {
   await tx.mutate.transactionEdit.insert({
     actor: "user",
@@ -151,64 +139,52 @@ function isoDateToEpochMs(iso: string): number {
 }
 
 export const transactionMutators = {
-  createTransaction: defineMutator(
-    createTransactionSchema,
-    async ({ args, ctx, tx }) => {
-      await assertOwnsManualAccountForInsert(tx, ctx, args.accountId);
-      if (!ctx?.userId) {
-        throw new Error("Unauthorized");
-      }
-      const trimmedDesc = args.description?.trim();
-      await tx.mutate.transaction.insert({
-        accountId: args.accountId,
-        amount: args.amount,
-        category: args.category?.primary ?? null,
-        categoryDetail: args.category?.detailed ?? null,
-        currency: args.currency ?? "USD",
-        date: isoDateToEpochMs(args.date),
-        id: args.id ?? crypto.randomUUID(),
-        merchantName: args.merchantName?.trim() ?? null,
-        name: args.name.trim(),
-        notes: trimmedDesc && trimmedDesc.length > 0 ? trimmedDesc : null,
-        pending: false,
-        source: "manual",
-        userId: ctx.userId,
-        userOverrideLocation: args.location ?? null,
-        website: args.website?.trim() ?? null,
-      });
+  createTransaction: defineMutator(createTransactionSchema, async ({ args, ctx, tx }) => {
+    await assertOwnsManualAccountForInsert(tx, ctx, args.accountId);
+    if (!ctx?.userId) {
+      throw new Error("Unauthorized");
     }
-  ),
+    const trimmedDesc = args.description?.trim();
+    await tx.mutate.transaction.insert({
+      accountId: args.accountId,
+      amount: args.amount,
+      categoryId: args.categoryId ?? null,
+      currency: args.currency ?? "USD",
+      date: isoDateToEpochMs(args.date),
+      id: args.id ?? crypto.randomUUID(),
+      merchantName: args.merchantName?.trim() ?? null,
+      name: args.name.trim(),
+      notes: trimmedDesc && trimmedDesc.length > 0 ? trimmedDesc : null,
+      pending: false,
+      source: "manual",
+      userId: ctx.userId,
+      userOverrideLocation: args.location ?? null,
+      website: args.website?.trim() ?? null,
+    });
+  }),
 
-  deleteTransaction: defineMutator(
-    transactionIdOnlySchema,
-    async ({ args, ctx, tx }) => {
-      await assertOwnsManualTransaction(tx, ctx, args.id);
-      await tx.mutate.transaction.delete({ id: args.id });
-    }
-  ),
+  deleteTransaction: defineMutator(transactionIdOnlySchema, async ({ args, ctx, tx }) => {
+    await assertOwnsManualTransaction(tx, ctx, args.id);
+    await tx.mutate.transaction.delete({ id: args.id });
+  }),
 
-  resetCategory: defineMutator(
-    transactionIdSchema,
-    async ({ args, ctx, tx }) => {
-      const { row, userId } = await getOwned(tx, ctx, args.id);
-      await Promise.all([
-        tx.mutate.transaction.update({
-          id: args.id,
-          lockedFields: removeLocked(row.lockedFields, "category"),
-        }),
-        appendEdit(tx, {
-          editId: args.editId,
-          field: "category",
-          newValue: null,
-          oldValue: row.category
-            ? { detailed: row.categoryDetail, primary: row.category }
-            : null,
-          transactionId: args.id,
-          userId,
-        }),
-      ]);
-    }
-  ),
+  resetCategory: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
+    const { row, userId } = await getOwned(tx, ctx, args.id);
+    await Promise.all([
+      tx.mutate.transaction.update({
+        id: args.id,
+        lockedFields: removeLocked(row.lockedFields, "category"),
+      }),
+      appendEdit(tx, {
+        editId: args.editId,
+        field: "category",
+        newValue: null,
+        oldValue: { categoryId: row.categoryId },
+        transactionId: args.id,
+        userId,
+      }),
+    ]);
+  }),
 
   resetDate: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
     const { row, userId } = await getOwned(tx, ctx, args.id);
@@ -228,26 +204,23 @@ export const transactionMutators = {
     ]);
   }),
 
-  resetLocation: defineMutator(
-    transactionIdSchema,
-    async ({ args, ctx, tx }) => {
-      const { row, userId } = await getOwned(tx, ctx, args.id);
-      await Promise.all([
-        tx.mutate.transaction.update({
-          id: args.id,
-          userOverrideLocation: null,
-        }),
-        appendEdit(tx, {
-          editId: args.editId,
-          field: "location",
-          newValue: null,
-          oldValue: row.userOverrideLocation ?? null,
-          transactionId: args.id,
-          userId,
-        }),
-      ]);
-    }
-  ),
+  resetLocation: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
+    const { row, userId } = await getOwned(tx, ctx, args.id);
+    await Promise.all([
+      tx.mutate.transaction.update({
+        id: args.id,
+        userOverrideLocation: null,
+      }),
+      appendEdit(tx, {
+        editId: args.editId,
+        field: "location",
+        newValue: null,
+        oldValue: row.userOverrideLocation ?? null,
+        transactionId: args.id,
+        userId,
+      }),
+    ]);
+  }),
 
   resetName: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
     const { row, userId } = await getOwned(tx, ctx, args.id);
@@ -286,31 +259,24 @@ export const transactionMutators = {
     ]);
   }),
 
-  updateCategory: defineMutator(
-    updateCategorySchema,
-    async ({ args, ctx, tx }) => {
-      const { row, userId } = await getOwned(tx, ctx, args.id);
-      await Promise.all([
-        tx.mutate.transaction.update({
-          category: args.category.primary,
-          categoryConfidence: null,
-          categoryDetail: args.category.detailed,
-          id: args.id,
-          lockedFields: addLocked(row.lockedFields, "category"),
-        }),
-        appendEdit(tx, {
-          editId: args.editId,
-          field: "category",
-          newValue: args.category,
-          oldValue: row.category
-            ? { detailed: row.categoryDetail, primary: row.category }
-            : null,
-          transactionId: args.id,
-          userId,
-        }),
-      ]);
-    }
-  ),
+  updateCategory: defineMutator(updateCategorySchema, async ({ args, ctx, tx }) => {
+    const { row, userId } = await getOwned(tx, ctx, args.id);
+    await Promise.all([
+      tx.mutate.transaction.update({
+        categoryId: args.categoryId,
+        id: args.id,
+        lockedFields: addLocked(row.lockedFields, "category"),
+      }),
+      appendEdit(tx, {
+        editId: args.editId,
+        field: "category",
+        newValue: { categoryId: args.categoryId },
+        oldValue: { categoryId: row.categoryId },
+        transactionId: args.id,
+        userId,
+      }),
+    ]);
+  }),
 
   updateDate: defineMutator(updateDateSchema, async ({ args, ctx, tx }) => {
     const { row, userId } = await getOwned(tx, ctx, args.id);
@@ -332,55 +298,47 @@ export const transactionMutators = {
     ]);
   }),
 
-  updateLocation: defineMutator(
-    updateLocationSchema,
-    async ({ args, ctx, tx }) => {
-      const { row, userId } = await getOwned(tx, ctx, args.id);
-      await Promise.all([
-        tx.mutate.transaction.update({
-          id: args.id,
-          userOverrideLocation: args.location,
-        }),
-        appendEdit(tx, {
-          editId: args.editId,
-          field: "location",
-          newValue: args.location,
-          oldValue: row.userOverrideLocation ?? null,
-          transactionId: args.id,
-          userId,
-        }),
-      ]);
-    }
-  ),
+  updateLocation: defineMutator(updateLocationSchema, async ({ args, ctx, tx }) => {
+    const { row, userId } = await getOwned(tx, ctx, args.id);
+    await Promise.all([
+      tx.mutate.transaction.update({
+        id: args.id,
+        userOverrideLocation: args.location,
+      }),
+      appendEdit(tx, {
+        editId: args.editId,
+        field: "location",
+        newValue: args.location,
+        oldValue: row.userOverrideLocation ?? null,
+        transactionId: args.id,
+        userId,
+      }),
+    ]);
+  }),
 
-  updateMerchant: defineMutator(
-    updateMerchantSchema,
-    async ({ args, ctx, tx }) => {
-      const { row, userId } = await getOwned(tx, ctx, args.id);
-      const trimmedName = args.merchantName?.trim() ?? null;
-      const nextName =
-        trimmedName && trimmedName.length > 0 ? trimmedName : null;
-      const trimmedSite = args.website?.trim() ?? null;
-      const nextSite =
-        trimmedSite && trimmedSite.length > 0 ? trimmedSite : null;
-      await Promise.all([
-        tx.mutate.transaction.update({
-          id: args.id,
-          lockedFields: addLocked(row.lockedFields, "merchantName"),
-          merchantName: nextName,
-          website: nextSite,
-        }),
-        appendEdit(tx, {
-          editId: args.editId,
-          field: "merchantName",
-          newValue: nextName,
-          oldValue: row.merchantName ?? null,
-          transactionId: args.id,
-          userId,
-        }),
-      ]);
-    }
-  ),
+  updateMerchant: defineMutator(updateMerchantSchema, async ({ args, ctx, tx }) => {
+    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const trimmedName = args.merchantName?.trim() ?? null;
+    const nextName = trimmedName && trimmedName.length > 0 ? trimmedName : null;
+    const trimmedSite = args.website?.trim() ?? null;
+    const nextSite = trimmedSite && trimmedSite.length > 0 ? trimmedSite : null;
+    await Promise.all([
+      tx.mutate.transaction.update({
+        id: args.id,
+        lockedFields: addLocked(row.lockedFields, "merchantName"),
+        merchantName: nextName,
+        website: nextSite,
+      }),
+      appendEdit(tx, {
+        editId: args.editId,
+        field: "merchantName",
+        newValue: nextName,
+        oldValue: row.merchantName ?? null,
+        transactionId: args.id,
+        userId,
+      }),
+    ]);
+  }),
 
   updateName: defineMutator(updateNameSchema, async ({ args, ctx, tx }) => {
     const { row, userId } = await getOwned(tx, ctx, args.id);

@@ -14,10 +14,7 @@ export interface LogoDevImageOptions {
   theme?: "dark" | "light";
 }
 
-function appendLogoDevSearchParams(
-  url: URL,
-  options: LogoDevImageOptions
-): void {
+function appendLogoDevSearchParams(url: URL, options: LogoDevImageOptions): void {
   url.searchParams.set("token", options.token);
   if (options.size !== undefined) {
     url.searchParams.set("size", String(options.size));
@@ -42,10 +39,7 @@ function assertNonEmpty(label: string, value: string): string {
  * Logo for a verified domain (e.g. `nike.com`, `www.amazon.com` stripped to host in your mapper).
  * @see https://www.logo.dev/docs/logo-images/get
  */
-export function logoDevUrlByDomain(
-  domain: string,
-  options: LogoDevImageOptions
-): string {
+export function logoDevUrlByDomain(domain: string, options: LogoDevImageOptions): string {
   const host = assertNonEmpty("logoDevUrlByDomain", domain);
   const url = new URL(`${LOGO_DEV_IMG_ORIGIN}/${host}`);
   appendLogoDevSearchParams(url, options);
@@ -57,14 +51,9 @@ export function logoDevUrlByDomain(
  * URL-encodes the name for the path segment.
  * @see https://www.logo.dev/docs/logo-images/name
  */
-export function logoDevUrlByBrandName(
-  brandName: string,
-  options: LogoDevImageOptions
-): string {
+export function logoDevUrlByBrandName(brandName: string, options: LogoDevImageOptions): string {
   const name = assertNonEmpty("logoDevUrlByBrandName", brandName);
-  const url = new URL(
-    `${LOGO_DEV_IMG_ORIGIN}/name/${encodeURIComponent(name)}`
-  );
+  const url = new URL(`${LOGO_DEV_IMG_ORIGIN}/name/${encodeURIComponent(name)}`);
   appendLogoDevSearchParams(url, options);
   return url.toString();
 }

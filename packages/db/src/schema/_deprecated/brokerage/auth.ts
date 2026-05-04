@@ -45,11 +45,9 @@ export const brokerageAuthorizations = pgTable.withRLS(
     index("brokerage_auth_is_disabled_idx").on(table.isDisabled),
     appFullAccess(),
     agentSelectOwn("user_id"),
-  ]
+  ],
 );
 
 // Type exports
-export type BrokerageAuthorization =
-  typeof brokerageAuthorizations.$inferSelect;
-export type BrokerageAuthorizationInsert =
-  typeof brokerageAuthorizations.$inferInsert;
+export type BrokerageAuthorization = typeof brokerageAuthorizations.$inferSelect;
+export type BrokerageAuthorizationInsert = typeof brokerageAuthorizations.$inferInsert;

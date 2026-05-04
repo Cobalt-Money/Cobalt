@@ -28,6 +28,6 @@ export const chatsQueries = {
     zql.messages
       .where("chatId", args.chatId)
       .related("parts", (q) => q.orderBy("order", "asc"))
-      .orderBy("createdAt", "asc")
+      .orderBy("createdAt", "asc"),
   ),
 };

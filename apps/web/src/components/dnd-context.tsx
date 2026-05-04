@@ -1,13 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useRef,
-  useState,
-  useMemo,
-} from "react";
+import React, { createContext, useCallback, useContext, useRef, useState, useMemo } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -26,9 +19,7 @@ interface DndProviderProps {
   children: ReactNode;
 }
 
-const DragDropContext = createContext<DragDropContextType | undefined>(
-  undefined
-);
+const DragDropContext = createContext<DragDropContextType | undefined>(undefined);
 
 export function DndProvider({ children }: DndProviderProps) {
   const { updateEvent } = useCalendar();
@@ -57,12 +48,7 @@ export function DndProvider({ children }: DndProviderProps) {
 
       const newStart = new Date(targetDate);
       if (hour === undefined) {
-        newStart.setHours(
-          originalStart.getHours(),
-          originalStart.getMinutes(),
-          0,
-          0
-        );
+        newStart.setHours(originalStart.getHours(), originalStart.getMinutes(), 0, 0);
       } else {
         newStart.setHours(hour, minute || 0, 0, 0);
       }
@@ -72,12 +58,12 @@ export function DndProvider({ children }: DndProviderProps) {
         newStart,
       };
     },
-    []
+    [],
   );
 
   const isSamePosition = useCallback(
     (date1: Date, date2: Date) => date1.getTime() === date2.getTime(),
-    []
+    [],
   );
 
   const handleEventDrop = useCallback(
@@ -87,12 +73,7 @@ export function DndProvider({ children }: DndProviderProps) {
         return;
       }
 
-      const { newStart, newEnd } = calculateNewDates(
-        draggedEvent,
-        targetDate,
-        hour,
-        minute
-      );
+      const { newStart, newEnd } = calculateNewDates(draggedEvent, targetDate, hour, minute);
       const originalStart = new Date(draggedEvent.startDate);
 
       // Check if dropped in same position
@@ -109,7 +90,7 @@ export function DndProvider({ children }: DndProviderProps) {
       }
       endDrag();
     },
-    [dragState, calculateNewDates, isSamePosition, endDrag]
+    [dragState, calculateNewDates, isSamePosition, endDrag],
   );
 
   // Default event update handler
@@ -127,7 +108,7 @@ export function DndProvider({ children }: DndProviderProps) {
         toast.error("Failed to update event");
       }
     },
-    [updateEvent]
+    [updateEvent],
   );
 
   // Set default callback
@@ -143,14 +124,10 @@ export function DndProvider({ children }: DndProviderProps) {
       isDragging: dragState.isDragging,
       startDrag,
     }),
-    [dragState, startDrag, endDrag, handleEventDrop]
+    [dragState, startDrag, endDrag, handleEventDrop],
   );
 
-  return (
-    <DragDropContext.Provider value={contextValue}>
-      {children}
-    </DragDropContext.Provider>
-  );
+  return <DragDropContext.Provider value={contextValue}>{children}</DragDropContext.Provider>;
 }
 
 export function useDragDrop() {

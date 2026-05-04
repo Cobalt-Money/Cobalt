@@ -53,26 +53,15 @@ function activitySymbolLabel(a: ActivityRow): string {
   return "—";
 }
 
-function activityVisiblePages(
-  currentPage: number,
-  totalPages: number
-): ActivityPagerEntry[] {
+function activityVisiblePages(currentPage: number, totalPages: number): ActivityPagerEntry[] {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, i) => {
       const page = i + 1;
       return { key: `page-${page}`, kind: "page" as const, page };
     });
   }
-  const pages = new Set<number>([
-    1,
-    totalPages,
-    currentPage,
-    currentPage - 1,
-    currentPage + 1,
-  ]);
-  const sorted = [...pages]
-    .filter((n) => n >= 1 && n <= totalPages)
-    .toSorted((a, b) => a - b);
+  const pages = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+  const sorted = [...pages].filter((n) => n >= 1 && n <= totalPages).toSorted((a, b) => a - b);
   const out: ActivityPagerEntry[] = [];
   let prev = 0;
   for (const n of sorted) {
@@ -94,10 +83,7 @@ export function RecentActivityCard({
 }) {
   const [activityPageIndex, setActivityPageIndex] = useState(0);
 
-  const activityTotalPages = Math.max(
-    1,
-    Math.ceil(scopedActivities.length / ACTIVITY_PAGE_SIZE)
-  );
+  const activityTotalPages = Math.max(1, Math.ceil(scopedActivities.length / ACTIVITY_PAGE_SIZE));
 
   useEffect(() => {
     const maxIdx = activityTotalPages - 1;
@@ -112,7 +98,7 @@ export function RecentActivityCard({
   const activityPageNumber = activityPageIndex + 1;
   const activityPagerItems = useMemo(
     () => activityVisiblePages(activityPageNumber, activityTotalPages),
-    [activityPageNumber, activityTotalPages]
+    [activityPageNumber, activityTotalPages],
   );
 
   return (
@@ -137,14 +123,10 @@ export function RecentActivityCard({
                 <li key={a.id} className="flex gap-3 py-2 first:pt-0 last:pb-0">
                   <TickerLogo size={36} symbol={sym} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-foreground truncate text-sm font-medium">
-                      {sym}
-                    </p>
+                    <p className="text-foreground truncate text-sm font-medium">{sym}</p>
                     <p className="text-muted-foreground truncate text-xs">
                       {(a.type ?? "Activity") +
-                        (a.brokerageAccount?.name
-                          ? ` · ${a.brokerageAccount.name}`
-                          : "")}
+                        (a.brokerageAccount?.name ? ` · ${a.brokerageAccount.name}` : "")}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
@@ -191,32 +173,24 @@ export function RecentActivityCard({
                 </span>
               ) : (
                 <Button
-                  aria-current={
-                    item.page === activityPageNumber ? "page" : undefined
-                  }
+                  aria-current={item.page === activityPageNumber ? "page" : undefined}
                   aria-label={`Page ${item.page}`}
                   className="size-8 min-w-8 px-0 text-xs"
                   key={item.key}
                   onClick={() => setActivityPageIndex(item.page - 1)}
                   size="icon-sm"
                   type="button"
-                  variant={
-                    item.page === activityPageNumber ? "outline" : "ghost"
-                  }
+                  variant={item.page === activityPageNumber ? "outline" : "ghost"}
                 >
                   {item.page}
                 </Button>
-              )
+              ),
             )}
             <Button
               aria-label="Next page"
               className="size-8"
               disabled={activityPageIndex >= activityTotalPages - 1}
-              onClick={() =>
-                setActivityPageIndex((i) =>
-                  Math.min(activityTotalPages - 1, i + 1)
-                )
-              }
+              onClick={() => setActivityPageIndex((i) => Math.min(activityTotalPages - 1, i + 1))}
               size="icon-sm"
               type="button"
               variant="ghost"

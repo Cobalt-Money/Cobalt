@@ -3,11 +3,7 @@ import { eventArticles } from "@cobalt-web/db/schema/news";
 import { createInsertSchema } from "drizzle-orm/zod";
 
 import type { ProcessedArticle } from "./lib.js";
-import {
-  selectBestArticles,
-  toEventArticleInsertRow,
-  toFailedProcessedArticle,
-} from "./lib.js";
+import { selectBestArticles, toEventArticleInsertRow, toFailedProcessedArticle } from "./lib.js";
 
 const VALID_EVENT_ID = "11111111-1111-4111-8111-111111111111";
 const eventArticleInsertSchema = createInsertSchema(eventArticles);
@@ -50,7 +46,7 @@ describe("selectBestArticles", () => {
 
   it("caps Article results at the given limit", () => {
     const input = Array.from({ length: 8 }, (_, i) =>
-      article({ source_name: `src-${i}`, title: `a${i}` })
+      article({ source_name: `src-${i}`, title: `a${i}` }),
     );
 
     const result = selectBestArticles(input, 3);
@@ -83,9 +79,7 @@ describe("selectBestArticles", () => {
 
     const result = selectBestArticles(input, 4);
 
-    const articleTitles = result
-      .filter((a) => a.type === "Article")
-      .map((a) => a.title);
+    const articleTitles = result.filter((a) => a.type === "Article").map((a) => a.title);
     expect(articleTitles).toHaveLength(4);
     expect(articleTitles).toContain("r1");
     expect(articleTitles).toContain("b1");
@@ -116,8 +110,8 @@ describe("toEventArticleInsertRow", () => {
           news_url: "https://example.com/a",
           source_name: "Bloomberg",
           title: "Chip demand rises",
-        })
-      )
+        }),
+      ),
     );
 
     expect(() => eventArticleInsertSchema.parse(row)).not.toThrow();
@@ -136,8 +130,8 @@ describe("toEventArticleInsertRow", () => {
           title: "Chip shortage report",
           topics: ["earnings"],
           type: "Article",
-        })
-      )
+        }),
+      ),
     );
 
     expect(row).toMatchObject({
@@ -178,9 +172,7 @@ describe("toFailedProcessedArticle", () => {
 
     expect(result.originalArticle).toBe(source);
     expect(result.extractedContent.title).toBe("Chip shortage deepens");
-    expect(result.extractedContent.image).toBe(
-      "https://cdn.example.com/img.jpg"
-    );
+    expect(result.extractedContent.image).toBe("https://cdn.example.com/img.jpg");
     expect(result.processingMetadata.success).toBeFalsy();
     expect(result.processingMetadata.error).toBe("HTTP 403: Forbidden");
     expect(result.processingMetadata.contentLength).toBe(0);

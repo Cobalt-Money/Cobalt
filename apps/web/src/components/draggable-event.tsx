@@ -11,11 +11,7 @@ interface DraggableEventProps {
   className?: string;
 }
 
-export function DraggableEvent({
-  event,
-  children,
-  className,
-}: DraggableEventProps) {
+export function DraggableEvent({ event, children, className }: DraggableEventProps) {
   const { startDrag, endDrag, isDragging, draggedEvent } = useDragDrop();
 
   const isCurrentlyDragged = isDragging && draggedEvent?.id === event.id;

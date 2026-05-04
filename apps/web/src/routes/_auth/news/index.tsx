@@ -47,7 +47,7 @@ function NewsIndexPage() {
       return [];
     }
     return events.filter((e) =>
-      e.tickers.some((t) => holdingSymbols.has(String(t).trim().toUpperCase()))
+      e.tickers.some((t) => holdingSymbols.has(String(t).trim().toUpperCase())),
     );
   }, [events, holdingSymbols]);
 

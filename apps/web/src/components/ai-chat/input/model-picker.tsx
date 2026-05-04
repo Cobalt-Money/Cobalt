@@ -8,11 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@cobalt-web/ui/components/dropdown-menu";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import {
-  ArrowDown01Icon,
-  SparklesIcon,
-  Tick02Icon,
-} from "@hugeicons/core-free-icons";
+import { ArrowDown01Icon, SparklesIcon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { useAgentSettings } from "../state/agent-settings-context";
@@ -74,14 +70,13 @@ function useModelPickerState() {
   const currentModel = MODELS.find((m) => m.id === settings.model) ?? MODELS[0];
   const canReason = currentModel?.supportsReasoning ?? false;
   const availableEfforts = ALL_EFFORTS.filter(
-    (e) => EFFORT_ORDER[e.id] <= EFFORT_ORDER[currentModel?.maxEffort ?? "high"]
+    (e) => EFFORT_ORDER[e.id] <= EFFORT_ORDER[currentModel?.maxEffort ?? "high"],
   );
 
   const selectModel = (modelId: string) => {
     const model = MODELS.find((m) => m.id === modelId);
     const clampedEffort =
-      model?.supportsReasoning &&
-      EFFORT_ORDER[settings.effort] > EFFORT_ORDER[model.maxEffort]
+      model?.supportsReasoning && EFFORT_ORDER[settings.effort] > EFFORT_ORDER[model.maxEffort]
         ? model.maxEffort
         : settings.effort;
     setSettings({
@@ -135,7 +130,7 @@ export function ModelChip({ isStreaming }: ModelPickerProps) {
       <DropdownMenuTrigger
         className={cn(
           "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50",
-          isStreaming && "pointer-events-none opacity-50"
+          isStreaming && "pointer-events-none opacity-50",
         )}
         disabled={isStreaming}
       >
@@ -145,19 +140,11 @@ export function ModelChip({ isStreaming }: ModelPickerProps) {
         {settings.reasoning && canReason && (
           <>
             <span className="text-muted-foreground/60">·</span>
-            <HugeiconsIcon
-              className="size-3 text-primary"
-              icon={SparklesIcon}
-              strokeWidth={2}
-            />
+            <HugeiconsIcon className="size-3 text-primary" icon={SparklesIcon} strokeWidth={2} />
             <span className="capitalize text-primary">{settings.effort}</span>
           </>
         )}
-        <HugeiconsIcon
-          className="size-3"
-          icon={ArrowDown01Icon}
-          strokeWidth={2}
-        />
+        <HugeiconsIcon className="size-3" icon={ArrowDown01Icon} strokeWidth={2} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <ModelMenuContents
@@ -198,7 +185,7 @@ export function ModelPicker({ isStreaming }: ModelPickerProps) {
               "rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
               settings.mode === m.id
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
             disabled={isStreaming}
             type="button"
@@ -216,11 +203,7 @@ export function ModelPicker({ isStreaming }: ModelPickerProps) {
           disabled={isStreaming}
         >
           {currentModel?.shortLabel}
-          <HugeiconsIcon
-            className="size-3"
-            icon={ArrowDown01Icon}
-            strokeWidth={2}
-          />
+          <HugeiconsIcon className="size-3" icon={ArrowDown01Icon} strokeWidth={2} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-52">
           <ModelMenuContents
@@ -242,14 +225,10 @@ export function ModelPicker({ isStreaming }: ModelPickerProps) {
           settings.reasoning && canReason
             ? "bg-primary/10 text-primary"
             : "text-muted-foreground hover:text-foreground",
-          !canReason && "cursor-not-allowed opacity-40"
+          !canReason && "cursor-not-allowed opacity-40",
         )}
         disabled={!canReason || isStreaming}
-        title={
-          canReason
-            ? "Toggle extended thinking"
-            : "Not available for this model"
-        }
+        title={canReason ? "Toggle extended thinking" : "Not available for this model"}
         type="button"
         onClick={toggleReasoning}
       >
@@ -286,9 +265,7 @@ function ModelMenuContents({
   return (
     <>
       <DropdownMenuGroup>
-        <DropdownMenuLabel className="text-xs text-muted-foreground">
-          Model
-        </DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs text-muted-foreground">Model</DropdownMenuLabel>
         {MODELS.map((m) => (
           <DropdownMenuItem
             key={m.id}
@@ -297,20 +274,14 @@ function ModelMenuContents({
           >
             {m.label}
             {settings.model === m.id && (
-              <HugeiconsIcon
-                className="size-3.5 text-primary"
-                icon={Tick02Icon}
-                strokeWidth={2}
-              />
+              <HugeiconsIcon className="size-3.5 text-primary" icon={Tick02Icon} strokeWidth={2} />
             )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
       <DropdownMenuGroup>
-        <DropdownMenuLabel className="text-xs text-muted-foreground">
-          Mode
-        </DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs text-muted-foreground">Mode</DropdownMenuLabel>
         {MODES.map((m) => (
           <DropdownMenuItem
             key={m.id}
@@ -319,11 +290,7 @@ function ModelMenuContents({
           >
             {m.label}
             {settings.mode === m.id && (
-              <HugeiconsIcon
-                className="size-3.5 text-primary"
-                icon={Tick02Icon}
-                strokeWidth={2}
-              />
+              <HugeiconsIcon className="size-3.5 text-primary" icon={Tick02Icon} strokeWidth={2} />
             )}
           </DropdownMenuItem>
         ))}
@@ -333,32 +300,22 @@ function ModelMenuContents({
         <DropdownMenuItem
           className={cn(
             "flex items-center justify-between text-sm",
-            !canReason && "cursor-not-allowed opacity-40"
+            !canReason && "cursor-not-allowed opacity-40",
           )}
           disabled={!canReason}
           onClick={toggleReasoning}
         >
           <span className="flex items-center gap-2">
-            <HugeiconsIcon
-              className="size-3.5"
-              icon={SparklesIcon}
-              strokeWidth={2}
-            />
+            <HugeiconsIcon className="size-3.5" icon={SparklesIcon} strokeWidth={2} />
             Extended thinking
           </span>
           {settings.reasoning && canReason && (
-            <HugeiconsIcon
-              className="size-3.5 text-primary"
-              icon={Tick02Icon}
-              strokeWidth={2}
-            />
+            <HugeiconsIcon className="size-3.5 text-primary" icon={Tick02Icon} strokeWidth={2} />
           )}
         </DropdownMenuItem>
         {settings.reasoning && canReason && (
           <>
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Effort
-            </DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs text-muted-foreground">Effort</DropdownMenuLabel>
             {availableEfforts.map((e) => (
               <DropdownMenuItem
                 key={e.id}

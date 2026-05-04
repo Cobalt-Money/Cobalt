@@ -1,8 +1,5 @@
 import { disconnectBankConnection } from "@cobalt-web/server-data/accounts/mutations";
-import {
-  getBankAccountById,
-  getBankAccounts,
-} from "@cobalt-web/server-data/accounts/queries";
+import { getBankAccountById, getBankAccounts } from "@cobalt-web/server-data/accounts/queries";
 import {
   accountIdParamSchema,
   bankAccountDetailResponseSchema,

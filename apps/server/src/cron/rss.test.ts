@@ -24,9 +24,7 @@ function makeContext(headerValue?: string): {
   const context = {
     json: jsonMock,
     req: {
-      header: vi.fn((name: string) =>
-        name === "Authorization" ? headerValue : undefined
-      ),
+      header: vi.fn((name: string) => (name === "Authorization" ? headerValue : undefined)),
     },
   } as never as HandlerCtx;
   return { context, jsonMock };
@@ -71,10 +69,7 @@ describe("cronRssRouter", () => {
       }
       await route.handler(context, vi.fn() as never);
 
-      expect(jsonMock).toHaveBeenCalledWith(
-        { error: "CRON_SECRET not configured" },
-        503
-      );
+      expect(jsonMock).toHaveBeenCalledWith({ error: "CRON_SECRET not configured" }, 503);
       expect(start).not.toHaveBeenCalled();
     });
 
@@ -136,9 +131,7 @@ describe("cronRssRouter", () => {
         throw new Error("no route");
       }
 
-      await expect(route.handler(context, vi.fn() as never)).rejects.toThrow(
-        "Workflow failed"
-      );
+      await expect(route.handler(context, vi.fn() as never)).rejects.toThrow("Workflow failed");
     });
   });
 });

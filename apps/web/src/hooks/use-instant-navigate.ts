@@ -19,13 +19,7 @@ export function useInstantNavigate() {
   const handleMouseDown = useCallback(
     (e: React.MouseEvent, options: NavigateOptions) => {
       // Left click only, no modifier keys
-      if (
-        e.button === 0 &&
-        !e.altKey &&
-        !e.ctrlKey &&
-        !e.metaKey &&
-        !e.shiftKey
-      ) {
+      if (e.button === 0 && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
         e.preventDefault();
         // Preload the route before navigating
         router.preloadRoute({
@@ -43,7 +37,7 @@ export function useInstantNavigate() {
         });
       }
     },
-    [navigate, router]
+    [navigate, router],
   );
 
   return { handleMouseDown };

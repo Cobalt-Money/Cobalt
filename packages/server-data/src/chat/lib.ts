@@ -19,9 +19,7 @@ export function generateFallbackTitle(firstMessage: string): string {
   }
   const words = cleaned.split(/\s+/).slice(0, FALLBACK_WORD_COUNT);
   const title = words.join(" ");
-  return title.length > MAX_TITLE_LENGTH
-    ? `${title.slice(0, MAX_TITLE_LENGTH - 3)}...`
-    : title;
+  return title.length > MAX_TITLE_LENGTH ? `${title.slice(0, MAX_TITLE_LENGTH - 3)}...` : title;
 }
 
 function textPart(p: PartRow): Record<string, unknown> | null {
@@ -51,11 +49,7 @@ function filePart(p: PartRow): Record<string, unknown> | null {
 }
 
 function sourceUrlPart(p: PartRow): Record<string, unknown> | null {
-  if (
-    nil(p.source_url_sourceId) ||
-    nil(p.source_url_title) ||
-    nil(p.source_url_url)
-  ) {
+  if (nil(p.source_url_sourceId) || nil(p.source_url_title) || nil(p.source_url_url)) {
     return null;
   }
   return {
@@ -116,7 +110,7 @@ type UIMessagePart = UIMessage["parts"][number];
 export function mapUIPartToDb(
   part: UIMessagePart,
   messageId: string,
-  order: number
+  order: number,
 ): PartInsert | null {
   const base = { messageId, order, partId: crypto.randomUUID() };
 
@@ -127,8 +121,7 @@ export function mapUIPartToDb(
     case "reasoning": {
       return {
         ...base,
-        providerMetadata:
-          (part.providerMetadata as Record<string, unknown>) ?? null,
+        providerMetadata: (part.providerMetadata as Record<string, unknown>) ?? null,
         reasoning_text: part.text,
         type: "reasoning",
       };
@@ -145,8 +138,7 @@ export function mapUIPartToDb(
     case "source-url": {
       return {
         ...base,
-        providerMetadata:
-          (part.providerMetadata as Record<string, unknown>) ?? null,
+        providerMetadata: (part.providerMetadata as Record<string, unknown>) ?? null,
         source_url_sourceId: part.sourceId,
         source_url_title: part.title,
         source_url_url: part.url,
@@ -156,8 +148,7 @@ export function mapUIPartToDb(
     case "source-document": {
       return {
         ...base,
-        providerMetadata:
-          (part.providerMetadata as Record<string, unknown>) ?? null,
+        providerMetadata: (part.providerMetadata as Record<string, unknown>) ?? null,
         source_document_filename: part.filename ?? null,
         source_document_mediaType: part.mediaType,
         source_document_sourceId: part.sourceId,
@@ -183,9 +174,7 @@ export function mapUIPartToDb(
           ...base,
           tool_errorText: tp.errorText ?? null,
           tool_input: tp.input ? (tp.input as Record<string, unknown>) : null,
-          tool_output: tp.output
-            ? (tp.output as Record<string, unknown>)
-            : null,
+          tool_output: tp.output ? (tp.output as Record<string, unknown>) : null,
           tool_state: tp.state,
           tool_toolCallId: tp.toolCallId,
           type: t,
@@ -194,10 +183,7 @@ export function mapUIPartToDb(
       if (t.startsWith("data-") && "data" in part) {
         return {
           ...base,
-          data: (part as { type: string; data: unknown }).data as Record<
-            string,
-            unknown
-          >,
+          data: (part as { type: string; data: unknown }).data as Record<string, unknown>,
           type: t,
         };
       }
@@ -212,7 +198,7 @@ export function mapUIPartToDb(
  */
 export function mapUIMessagePartsToDbParts(
   messageParts: UIMessage["parts"],
-  messageId: string
+  messageId: string,
 ): PartInsert[] {
   return messageParts
     .map((part, i) => mapUIPartToDb(part, messageId, i))

@@ -8,10 +8,7 @@
 
 // ---- banking (legacy) ----
 export { bankConnection } from "./banking/items/bank-connection";
-export type {
-  BankConnection,
-  BankConnectionSelect,
-} from "./banking/items/bank-connection";
+export type { BankConnection, BankConnectionSelect } from "./banking/items/bank-connection";
 
 export {
   bankAccount,
@@ -26,10 +23,7 @@ export {
 } from "./banking/accounts";
 
 export { transaction } from "./banking/transactions/tables";
-export type {
-  Transaction,
-  TransactionSelect,
-} from "./banking/transactions/tables";
+export type { Transaction, TransactionSelect } from "./banking/transactions/tables";
 
 export {
   creditLiability,

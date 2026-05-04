@@ -1,7 +1,5 @@
 {
-  "setup": [
-    "git fetch\ngit pull origin main\nbun run sync-env\nbun run sync-sandbox\nbun install"
-  ],
+  "setup": ["git fetch\ngit pull origin main\nbun run sync-env\nbun run sync-sandbox\nbun install"],
   "teardown": ["rm -rf .node_modules"],
   "run": ["bun dev"]
 }

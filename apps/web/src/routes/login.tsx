@@ -18,8 +18,7 @@ function RouteComponent() {
     const { search } = window.location;
     const params = new URLSearchParams(search);
     if (params.get("response_type") && params.get("client_id")) {
-      return new URL(`/api/auth/oauth2/authorize${search}`, env.VITE_SERVER_URL)
-        .href;
+      return new URL(`/api/auth/oauth2/authorize${search}`, env.VITE_SERVER_URL).href;
     }
     return `${window.location.origin}/ai-chat`;
   }, []);

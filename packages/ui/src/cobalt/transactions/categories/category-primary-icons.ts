@@ -1,16 +1,16 @@
 import {
   CATEGORY_MAPPING,
   formatCategoryName,
-} from "@cobalt-web/server-data/transactions/categories";
-import type { CategoryData } from "@cobalt-web/server-data/transactions/categories";
+} from "@cobalt-web/server-data/transactions/categories/labels";
+import type { CategoryData } from "@cobalt-web/server-data/transactions/categories/labels";
 import { QuestionIcon } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 
-export type { CategoryData } from "@cobalt-web/server-data/transactions/categories";
+export type { CategoryData } from "@cobalt-web/server-data/transactions/categories/labels";
 export {
   getDetailedCategoryDisplayName,
   getPrimaryCategoryLabel,
-} from "@cobalt-web/server-data/transactions/categories";
+} from "@cobalt-web/server-data/transactions/categories/labels";
 
 const V = "?v=2";
 const BANK_FEES_ICON_SRC = `/assets/vectors/card.svg${V}`;
@@ -30,10 +30,11 @@ const LOAN_PAYMENTS_ICON_SRC = `/assets/vectors/payment.svg${V}`;
 const GOVERNMENT_AND_NON_PROFIT_ICON_SRC = `/assets/vectors/government.svg${V}`;
 const PERSONAL_CARE_ICON_SRC = `/assets/vectors/health.svg${V}`;
 
-/** Hugeicons glyph or static vector under `public/assets/vectors/`. */
+/** Hugeicons glyph, static vector, or user-chosen emoji char. */
 export type CategoryPrimaryGlyph =
   | IconSvgElement
-  | { kind: "image"; src: string; srcDark?: string };
+  | { kind: "image"; src: string; srcDark?: string }
+  | { kind: "emoji"; char: string };
 
 /** Plaid primary category → Hugeicons glyph (category column). */
 export const PRIMARY_CATEGORY_ICON = {

@@ -1,17 +1,6 @@
-import {
-  boolean,
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
-import type {
-  PlaidItemErrorJson,
-  StringArrayJson,
-} from "../../../providers/plaid/zod";
+import type { PlaidItemErrorJson, StringArrayJson } from "../../../providers/plaid/zod";
 import { appFullAccess, agentSelectOwn } from "../../../rls";
 import { user } from "../../../users/auth/auth";
 
@@ -27,9 +16,7 @@ export const bankConnection = pgTable.withRLS(
     institutionId: text("institution_id"),
     institutionLogo: text("institution_logo"),
     institutionName: text("institution_name"),
-    newAccountsAvailable: boolean("new_accounts_available")
-      .default(false)
-      .notNull(),
+    newAccountsAvailable: boolean("new_accounts_available").default(false).notNull(),
     pendingDisconnectAt: timestamp("pending_disconnect_at"),
     plaidAccessToken: text("plaid_access_token").notNull(),
     plaidItemId: text("plaid_item_id").notNull().unique(),
@@ -46,13 +33,10 @@ export const bankConnection = pgTable.withRLS(
   },
   (table) => [
     index("bank_connection_institution_id_idx").on(table.institutionId),
-    index("bank_connection_user_institution_idx").on(
-      table.userId,
-      table.institutionId
-    ),
+    index("bank_connection_user_institution_idx").on(table.userId, table.institutionId),
     appFullAccess(),
     agentSelectOwn("user_id"),
-  ]
+  ],
 );
 
 export type BankConnection = typeof bankConnection.$inferInsert;

@@ -16,14 +16,12 @@ function triBool(v: unknown): boolean | undefined {
 }
 
 function omitUndefined<T extends object>(o: T): Partial<T> {
-  return Object.fromEntries(
-    Object.entries(o).filter(([, v]) => v !== undefined)
-  ) as Partial<T>;
+  return Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as Partial<T>;
 }
 
 /** Maps validated `GET /screener` query to FMP `CompanyScreenerParams`. */
 export function screenerQueryToCompanyParams(
-  q: ScreenerQueryInput
+  q: ScreenerQueryInput,
 ): Partial<CompanyScreenerParams> {
   const isEtf = triBool(q.isEtf);
   const isActivelyTrading = triBool(q.isActivelyTrading);

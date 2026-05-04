@@ -21,26 +21,23 @@ import {
   portfolioSnapshotsQuerySchema,
   positionsQuerySchema,
 } from "@cobalt-web/server-data/brokerage/schemas";
-import {
-  fmpGetProfile,
-  fmpGetQuote,
-} from "@cobalt-web/server-data/research/fmp-ticker";
+import { fmpGetProfile, fmpGetQuote } from "@cobalt-web/server-data/research/fmp-ticker";
 import { getResearchNews } from "@cobalt-web/server-data/research/queries";
 import { symbolQuerySchema } from "@cobalt-web/server-data/research/schemas";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
 import { balanceSnapshotQuerySchema } from "@cobalt-web/server-data/snapshots/schemas";
-import { setTransactionTags } from "@cobalt-web/server-data/tags/mutations";
-import {
-  getTag,
-  getTagIdsForTransaction,
-  listTags,
-} from "@cobalt-web/server-data/tags/queries";
 import { patchTransaction } from "@cobalt-web/server-data/transactions/mutations";
 import { getUserTransactions } from "@cobalt-web/server-data/transactions/queries";
 import {
   transactionListQuerySchema,
   transactionPatchBodySchema,
 } from "@cobalt-web/server-data/transactions/schemas";
+import { setTransactionTags } from "@cobalt-web/server-data/transactions/tags/mutations";
+import {
+  getTag,
+  getTagIdsForTransaction,
+  listTags,
+} from "@cobalt-web/server-data/transactions/tags/queries";
 import { z } from "zod";
 
 export type { Binding };
@@ -121,8 +118,7 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
   }),
   route({
     description: "Portfolio value snapshots over time (user-scoped).",
-    handler: async (userId, args) =>
-      await getPortfolioSnapshotsByUserId(userId, args),
+    handler: async (userId, args) => await getPortfolioSnapshotsByUserId(userId, args),
     name: "brokerage_portfolioSnapshots",
     schema: portfolioSnapshotsQuerySchema,
   }),
@@ -237,8 +233,7 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
     schema: transactionListQuerySchema,
   }),
   route({
-    description:
-      "Patch a transaction the user owns (mutation). Verifies ownership first.",
+    description: "Patch a transaction the user owns (mutation). Verifies ownership first.",
     handler: async (userId, { patch, transactionId }) => {
       const owner = await db.query.transaction.findFirst({
         columns: { id: true },

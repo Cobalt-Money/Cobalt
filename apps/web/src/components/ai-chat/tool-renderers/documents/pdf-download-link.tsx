@@ -11,10 +11,7 @@ export const PDFDownloadLink = memo(function PDFDownloadLink({
   children,
   title = "Document",
 }: PDFDownloadLinkProps) {
-  const doc = useMemo(
-    () => <Document title={title}>{children}</Document>,
-    [children, title]
-  );
+  const doc = useMemo(() => <Document title={title}>{children}</Document>, [children, title]);
 
   return (
     <BlobProvider document={doc}>
@@ -24,11 +21,7 @@ export const PDFDownloadLink = memo(function PDFDownloadLink({
         }
 
         if (error) {
-          return (
-            <span className="text-sm text-destructive">
-              Failed to generate PDF
-            </span>
-          );
+          return <span className="text-sm text-destructive">Failed to generate PDF</span>;
         }
 
         return (

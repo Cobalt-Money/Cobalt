@@ -11,14 +11,7 @@ import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { format, startOfMonth } from "date-fns";
 import { useState } from "react";
-import {
-  Bar,
-  BarChart,
-  Cell,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 import { AllocationDonutChart } from "@/components/dashboard/net-worth-donut-chart";
 
@@ -220,7 +213,7 @@ const MONTHLY_TOTAL = 148;
 
 // Hardcoded subscription billing days for the current month
 const SUBSCRIPTION_DAYS = [1, 5, 8, 12, 15, 22, 28].map(
-  (day) => new Date(MONTH_START.getFullYear(), MONTH_START.getMonth(), day)
+  (day) => new Date(MONTH_START.getFullYear(), MONTH_START.getMonth(), day),
 );
 
 function DashboardCalendarCard() {
@@ -241,9 +234,7 @@ function DashboardCalendarCard() {
             </p>
             <p className="text-muted-foreground text-right text-base">
               Monthly total:{" "}
-              <span className="text-foreground font-semibold tabular-nums">
-                ${MONTHLY_TOTAL}
-              </span>
+              <span className="text-foreground font-semibold tabular-nums">${MONTHLY_TOTAL}</span>
             </p>
           </div>
 
@@ -261,7 +252,7 @@ function DashboardCalendarCard() {
               "[&_[data-slot=button][data-selected-single=true]]:!bg-primary",
               "[&_[data-slot=button][data-selected-single=true]]:!text-primary-foreground",
               "[&_[data-slot=button][data-selected-single=true]]:hover:!bg-primary/90",
-              "[&_.rdp-weekday]:text-base [&_[data-slot=button]]:text-lg"
+              "[&_.rdp-weekday]:text-base [&_[data-slot=button]]:text-lg",
             )}
             classNames={{
               day: "relative rounded-2xl border-0 shadow-none",
@@ -289,9 +280,7 @@ export function BabyDashboard() {
   const [categoryHover, setCategoryHover] = useState<number | null>(null);
 
   const headlineValue =
-    hoverIndex === null
-      ? NET_WORTH_TOTAL
-      : (DEMO_CHART_DATA[hoverIndex]?.value ?? NET_WORTH_TOTAL);
+    hoverIndex === null ? NET_WORTH_TOTAL : (DEMO_CHART_DATA[hoverIndex]?.value ?? NET_WORTH_TOTAL);
 
   const categoryCenterValue =
     categoryHover === null
@@ -383,11 +372,7 @@ export function BabyDashboard() {
                           {DEMO_CHART_DATA.map((row, i) => (
                             <Cell
                               fill="var(--color-green-550)"
-                              fillOpacity={
-                                hoverIndex !== null && i !== hoverIndex
-                                  ? 0.2
-                                  : 1
-                              }
+                              fillOpacity={hoverIndex !== null && i !== hoverIndex ? 0.2 : 1}
                               key={row.fullLabel}
                             />
                           ))}
@@ -401,13 +386,11 @@ export function BabyDashboard() {
                 <div
                   className={cn(
                     "border-border/60 flex w-full shrink-0 flex-col gap-4 border-t px-5 sm:px-6",
-                    "lg:w-[min(100%,20rem)] lg:border-t-0 lg:border-l"
+                    "lg:w-[min(100%,20rem)] lg:border-t-0 lg:border-l",
                   )}
                   onMouseLeave={() => setCategoryHover(null)}
                 >
-                  <p className="text-muted-foreground text-sm font-medium">
-                    Categories
-                  </p>
+                  <p className="text-muted-foreground text-sm font-medium">Categories</p>
 
                   <div className="flex justify-center">
                     <AllocationDonutChart
@@ -429,9 +412,7 @@ export function BabyDashboard() {
                       <div
                         className={cn(
                           "min-w-0 space-y-1 transition-opacity duration-150",
-                          categoryHover !== null &&
-                            categoryHover !== i &&
-                            "opacity-[0.28]"
+                          categoryHover !== null && categoryHover !== i && "opacity-[0.28]",
                         )}
                         key={c.key}
                         onMouseEnter={() => setCategoryHover(i)}
@@ -442,13 +423,9 @@ export function BabyDashboard() {
                             className="size-2.5 shrink-0 rounded-full"
                             style={{ backgroundColor: c.color }}
                           />
-                          <span className="text-muted-foreground truncate">
-                            {c.label}
-                          </span>
+                          <span className="text-muted-foreground truncate">{c.label}</span>
                         </div>
-                        <p className="text-foreground pl-4 font-semibold tabular-nums">
-                          {c.pct}%
-                        </p>
+                        <p className="text-foreground pl-4 font-semibold tabular-nums">{c.pct}%</p>
                       </div>
                     ))}
                   </div>
@@ -461,15 +438,10 @@ export function BabyDashboard() {
         {/* Main grid */}
         <div className="grid min-w-0 grid-cols-1 items-stretch gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           {/* Recent transactions */}
-          <section
-            aria-label="Recent transactions"
-            className="h-full min-w-0 w-full"
-          >
+          <section aria-label="Recent transactions" className="h-full min-w-0 w-full">
             <CobaltCard className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl py-4">
               <CardContent className="flex min-h-0 flex-1 flex-col gap-5 p-0 px-5 pb-4 sm:px-6">
-                <h2 className="text-foreground text-lg font-medium">
-                  Recent transactions
-                </h2>
+                <h2 className="text-foreground text-lg font-medium">Recent transactions</h2>
                 <ul className="flex flex-col gap-0">
                   {DEMO_TRANSACTIONS.map((tx) => {
                     const isInflow = tx.amount > 0;
@@ -491,15 +463,13 @@ export function BabyDashboard() {
                             <p className="text-foreground truncate text-left font-medium">
                               {tx.name}
                             </p>
-                            <p className="text-muted-foreground text-left text-sm">
-                              {tx.date}
-                            </p>
+                            <p className="text-muted-foreground text-left text-sm">{tx.date}</p>
                           </div>
                         </div>
                         <p
                           className={cn(
                             "shrink-0 text-base font-semibold tabular-nums",
-                            isInflow ? "text-green-550" : "text-foreground"
+                            isInflow ? "text-green-550" : "text-foreground",
                           )}
                         >
                           {isInflow ? "+" : ""}
@@ -517,15 +487,10 @@ export function BabyDashboard() {
           <DashboardCalendarCard />
 
           {/* Portfolio performance */}
-          <section
-            aria-label="Portfolio holdings performance"
-            className="h-full min-w-0 w-full"
-          >
+          <section aria-label="Portfolio holdings performance" className="h-full min-w-0 w-full">
             <CobaltCard className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl py-4">
               <CardContent className="flex min-h-0 flex-1 flex-col gap-5 p-0 px-5 pb-4 sm:px-6">
-                <h2 className="text-foreground text-lg font-medium">
-                  Portfolio performance
-                </h2>
+                <h2 className="text-foreground text-lg font-medium">Portfolio performance</h2>
                 <ul className="flex flex-col gap-0">
                   {DEMO_HOLDINGS.map((holding) => {
                     const up = holding.pct > 0;
@@ -551,7 +516,7 @@ export function BabyDashboard() {
                             "shrink-0 text-base font-semibold tabular-nums",
                             up && "text-green-550",
                             down && "text-red-600 dark:text-red-500",
-                            !up && !down && "text-foreground"
+                            !up && !down && "text-foreground",
                           )}
                         >
                           {up ? "+" : ""}

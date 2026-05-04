@@ -88,7 +88,7 @@ export async function fmpGetQuote(symbol: string): Promise<FmpQuote> {
 function profilePe(
   item: Record<string, unknown>,
   kmTtm: Record<string, unknown> | null,
-  ratiosRow: Record<string, unknown> | null
+  ratiosRow: Record<string, unknown> | null,
 ): number | null {
   return firstFiniteNum(
     item.pe,
@@ -100,28 +100,23 @@ function profilePe(
     kmTtm?.peRatio,
     kmTtm?.priceEarningsRatioTTM,
     ratiosRow?.priceToEarningsRatio,
-    ratiosRow?.peRatio
+    ratiosRow?.peRatio,
   );
 }
 
 function profileRevenue(
   item: Record<string, unknown>,
   kmTtm: Record<string, unknown> | null,
-  incomeRow: Record<string, unknown> | null
+  incomeRow: Record<string, unknown> | null,
 ): number | null {
-  return firstFiniteNum(
-    item.revenue,
-    kmTtm?.revenueTTM,
-    kmTtm?.revenue,
-    incomeRow?.revenue
-  );
+  return firstFiniteNum(item.revenue, kmTtm?.revenueTTM, kmTtm?.revenue, incomeRow?.revenue);
 }
 
 function mapProfileItemToFmpProfile(
   symbol: string,
   item: Record<string, unknown>,
   pe: number | null,
-  revenue: number | null
+  revenue: number | null,
 ): FmpProfile {
   return {
     beta: num(item.beta),
@@ -138,12 +133,7 @@ function mapProfileItemToFmpProfile(
     industry: str(item.industry),
     ipoDate: str(item.ipoDate),
     /** Stable API uses `marketCap`; legacy/v3 samples used `mktCap`. */
-    marketCap: num(
-      item.mktCap ??
-        item.marketCap ??
-        item.market_cap ??
-        item.marketCapitalization
-    ),
+    marketCap: num(item.mktCap ?? item.marketCap ?? item.market_cap ?? item.marketCapitalization),
     pe,
     price: num(item.price),
     revenue,
@@ -158,17 +148,16 @@ function mapProfileItemToFmpProfile(
  * latest `ratios` row (screener P/E), and latest annual `income-statement` for revenue.
  */
 export async function fmpGetProfile(symbol: string): Promise<FmpProfile> {
-  const [profileRes, keyMetricsTtmRes, ratiosRes, incomeRes] =
-    await Promise.allSettled([
-      fmpStableGet("profile", { symbol }),
-      fmpStableGet("key-metrics-ttm", { symbol }),
-      fmpStableGet("ratios", { limit: 1, symbol }),
-      fmpStableGet("income-statement", {
-        limit: 1,
-        period: "annual",
-        symbol,
-      }),
-    ]);
+  const [profileRes, keyMetricsTtmRes, ratiosRes, incomeRes] = await Promise.allSettled([
+    fmpStableGet("profile", { symbol }),
+    fmpStableGet("key-metrics-ttm", { symbol }),
+    fmpStableGet("ratios", { limit: 1, symbol }),
+    fmpStableGet("income-statement", {
+      limit: 1,
+      period: "annual",
+      symbol,
+    }),
+  ]);
 
   if (profileRes.status === "rejected") {
     throw profileRes.reason instanceof Error
@@ -184,13 +173,9 @@ export async function fmpGetProfile(symbol: string): Promise<FmpProfile> {
   }
 
   const kmTtm =
-    keyMetricsTtmRes.status === "fulfilled"
-      ? firstObject(keyMetricsTtmRes.value)
-      : null;
-  const ratiosRow =
-    ratiosRes.status === "fulfilled" ? firstObject(ratiosRes.value) : null;
-  const incomeRow =
-    incomeRes.status === "fulfilled" ? firstObject(incomeRes.value) : null;
+    keyMetricsTtmRes.status === "fulfilled" ? firstObject(keyMetricsTtmRes.value) : null;
+  const ratiosRow = ratiosRes.status === "fulfilled" ? firstObject(ratiosRes.value) : null;
+  const incomeRow = incomeRes.status === "fulfilled" ? firstObject(incomeRes.value) : null;
 
   const pe = profilePe(item, kmTtm, ratiosRow);
   const revenue = profileRevenue(item, kmTtm, incomeRow);
@@ -200,19 +185,11 @@ export async function fmpGetProfile(symbol: string): Promise<FmpProfile> {
 
 // ── Historical Chart ──────────────────────────────────────────────
 
-export type TimePeriod =
-  | "1D"
-  | "1W"
-  | "1M"
-  | "3M"
-  | "6M"
-  | "YTD"
-  | "1Y"
-  | "All";
+export type TimePeriod = "1D" | "1W" | "1M" | "3M" | "6M" | "YTD" | "1Y" | "All";
 
 function chartPathAndParams(
   symbol: string,
-  period: TimePeriod
+  period: TimePeriod,
 ): { params: Record<string, string | number>; path: string } {
   switch (period) {
     case "1D": {
@@ -280,7 +257,7 @@ function periodStartDate(period: TimePeriod): string {
 
 export async function fmpGetChart(
   symbol: string,
-  period: TimePeriod
+  period: TimePeriod,
 ): Promise<FmpHistoricalPoint[]> {
   const { params, path } = chartPathAndParams(symbol, period);
   const raw = await fmpStableGet(path, params);

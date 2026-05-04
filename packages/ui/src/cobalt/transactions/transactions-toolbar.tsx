@@ -6,7 +6,6 @@ import {
   DropdownMenuTrigger,
 } from "@cobalt-web/ui/components/dropdown-menu";
 
-import type { TagOption } from "../tags/tag-picker";
 import { AmountFilter } from "./filters/amount-filter";
 import type { AmountFilterType } from "./filters/amount-filter";
 import { BankFilter } from "./filters/bank-filter";
@@ -15,6 +14,7 @@ import { StatusFilter } from "./filters/status-filter";
 import type { StatusFilterValue } from "./filters/status-filter";
 import { TagFilter } from "./filters/tag-filter";
 import type { ExportFormat } from "./lib/export";
+import type { TagOption } from "./tags/tag-picker";
 
 export type { BankOption } from "./filters/bank-filter";
 
@@ -107,12 +107,7 @@ export function TransactionsToolbar({
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button
-                className="shrink-0"
-                size="sm"
-                type="button"
-                variant="outline"
-              >
+              <Button className="shrink-0" size="sm" type="button" variant="outline">
                 {label}
               </Button>
             }

@@ -15,8 +15,7 @@ import type { ComponentProps } from "react";
  * account cards (`cobalt/accounts/account-card.tsx`). No border or shadow —
  * overrides the stock card ring.
  */
-const cobaltCardChrome =
-  "border-0 bg-[oklch(0.949_0_0)] shadow-none ring-0 dark:bg-white/[0.06]";
+const cobaltCardChrome = "border-0 bg-[oklch(0.949_0_0)] shadow-none ring-0 dark:bg-white/[0.06]";
 
 export type CobaltCardProps = ComponentProps<typeof Card>;
 

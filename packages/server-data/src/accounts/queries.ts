@@ -23,9 +23,7 @@ import type {
  * Joins financial_account ⨝ plaid_connection ⨝ balance ⨝ institution, plus
  * a sibling-types lookup to compute `hasInvestmentAccounts`.
  */
-export async function getAllAccountsWithInstitutions(
-  userId: string
-): Promise<BankAccountDTO[]> {
+export async function getAllAccountsWithInstitutions(userId: string): Promise<BankAccountDTO[]> {
   const rows = await db.query.financialAccount.findMany({
     columns: {
       externalId: true,
@@ -127,23 +125,19 @@ export async function getAllAccountsWithInstitutions(
 
 // ── Filtered queries ────────────────────────────────────────────────
 
-export async function getBankAccounts(
-  userId: string
-): Promise<BankAccountListItem[]> {
+export async function getBankAccounts(userId: string): Promise<BankAccountListItem[]> {
   const all = await getAllAccountsWithInstitutions(userId);
   return all.filter(isBankAccountListType).map(toBankAccountListItem);
 }
 
-export async function getCreditCards(
-  userId: string
-): Promise<BankAccountListItem[]> {
+export async function getCreditCards(userId: string): Promise<BankAccountListItem[]> {
   const all = await getAllAccountsWithInstitutions(userId);
   return all.filter(isCreditCardAccount).map(toBankAccountListItem);
 }
 
 export async function getBankAccountById(
   userId: string,
-  accountId: string
+  accountId: string,
 ): Promise<BankAccountDTO | null> {
   const all = await getAllAccountsWithInstitutions(userId);
   return all.find(matchesPlaidAccountId(accountId)) ?? null;
@@ -151,9 +145,7 @@ export async function getBankAccountById(
 
 // ── Plaid items ─────────────────────────────────────────────────────
 
-export async function getUserPlaidItems(
-  userId: string
-): Promise<PlaidItemDTO[]> {
+export async function getUserPlaidItems(userId: string): Promise<PlaidItemDTO[]> {
   const items = await db.query.plaidConnection.findMany({
     where: { userId: { eq: userId } },
   });
@@ -177,7 +169,7 @@ export async function getUserPlaidItems(
 
 export async function getPlaidAccountsForItem(
   userId: string,
-  plaidItemId: string
+  plaidItemId: string,
 ): Promise<PlaidAccountForItemDTO[]> {
   const accounts = await db.query.financialAccount.findMany({
     columns: {
@@ -227,9 +219,7 @@ export async function getPlaidAccountsForItem(
   });
 }
 
-export async function getPlaidItemsWithAlerts(
-  userId: string
-): Promise<PlaidItemAlertDTO[]> {
+export async function getPlaidItemsWithAlerts(userId: string): Promise<PlaidItemAlertDTO[]> {
   const items = await db.query.plaidConnection.findMany({
     columns: {
       error: true,
@@ -240,10 +230,7 @@ export async function getPlaidItemsWithAlerts(
       plaidItemId: true,
     },
     where: {
-      OR: [
-        { error: { isNotNull: true } },
-        { pendingDisconnectAt: { isNotNull: true } },
-      ],
+      OR: [{ error: { isNotNull: true } }, { pendingDisconnectAt: { isNotNull: true } }],
       userId: { eq: userId },
     },
   });

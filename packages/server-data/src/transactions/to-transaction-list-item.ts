@@ -13,14 +13,22 @@ export type TransactionListItemInstitutionSlice = {
   url: string | null;
 } | null;
 
+/** Joined `category` slice (id + display fields + group). Null when row not yet backfilled. */
+export type TransactionRowCategory = {
+  groupName: string;
+  groupSystemKey: string | null;
+  iconKey: string;
+  id: string;
+  name: string;
+  systemKey: string | null;
+} | null;
+
 /** Transaction row slice for {@link toTransactionListItem} (Drizzle or Zero). */
 export interface TransactionRowInput {
   amount: number;
   authorizedDate: string | Date | number | null | undefined;
   source: "plaid" | "manual";
-  category: string | null | undefined;
-  categoryConfidence: string | null | undefined;
-  categoryDetail: string | null | undefined;
+  category: TransactionRowCategory;
   counterparties: TransactionListItem["counterparties"];
   date: string | Date | number;
   id: string;
@@ -42,9 +50,7 @@ export interface TransactionRowInput {
   website: string | null | undefined;
 }
 
-function synthesizeLocation(
-  row: TransactionRowInput
-): TransactionListItem["location"] {
+function synthesizeLocation(row: TransactionRowInput): TransactionListItem["location"] {
   const hasAny =
     row.address ||
     row.city ||
@@ -90,8 +96,6 @@ export function toTransactionListItem(input: {
     amount: row.amount,
     authorizedDate: normalizeDateForTransactionList(row.authorizedDate),
     category: row.category ?? null,
-    categoryConfidence: row.categoryConfidence ?? null,
-    categoryDetail: row.categoryDetail ?? null,
     counterparties: row.counterparties,
     date: normalizedDate,
     id: row.id,

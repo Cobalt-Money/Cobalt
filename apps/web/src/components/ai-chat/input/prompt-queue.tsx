@@ -19,12 +19,8 @@ export function PromptQueue({ items, onRemove, onUpdate }: PromptQueueProps) {
   return (
     <Queue className="mx-auto w-3/4 rounded-3xl rounded-b-none border-0 shadow-none">
       <div className="flex items-center justify-between px-1">
-        <span className="font-medium text-muted-foreground text-sm">
-          Queued
-        </span>
-        <span className="text-muted-foreground text-xs">
-          {items.length} waiting
-        </span>
+        <span className="font-medium text-muted-foreground text-sm">Queued</span>
+        <span className="text-muted-foreground text-xs">{items.length} waiting</span>
       </div>
       <ul className="flex flex-col gap-1">
         {items.map((item) => (

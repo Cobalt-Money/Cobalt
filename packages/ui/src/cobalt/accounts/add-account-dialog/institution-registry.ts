@@ -186,8 +186,8 @@ const SNAPTRADE_SEEDS: readonly SnaptradeSeed[] = [
   },
 ];
 
-export const SNAPTRADE_INSTITUTIONS: readonly AddAccountInstitution[] =
-  SNAPTRADE_SEEDS.map((s) => ({
+export const SNAPTRADE_INSTITUTIONS: readonly AddAccountInstitution[] = SNAPTRADE_SEEDS.map(
+  (s) => ({
     categories: ["brokerage"],
     id: s.id,
     logo: null,
@@ -195,16 +195,15 @@ export const SNAPTRADE_INSTITUTIONS: readonly AddAccountInstitution[] =
     provider: "snaptrade",
     snaptradeBroker: s.slug,
     url: s.domain,
-  }));
+  }),
+);
 
 /**
  * Plaid institution names whose brokerage side is owned by SnapTrade.
  * Plaid still owns their bank/credit products, so we only blocklist when the
  * user is filtering Brokerage — full blocklisting would hide e.g. Chase debit.
  */
-const SNAPTRADE_NAME_SET = new Set(
-  SNAPTRADE_INSTITUTIONS.map((i) => i.name.toLowerCase())
-);
+const SNAPTRADE_NAME_SET = new Set(SNAPTRADE_INSTITUTIONS.map((i) => i.name.toLowerCase()));
 
 export function isSnaptradeOwnedBrokerage(plaidName: string): boolean {
   return SNAPTRADE_NAME_SET.has(plaidName.toLowerCase());
@@ -388,25 +387,25 @@ const PLAID_CREDIT_SEEDS: readonly PlaidSeed[] = [
   },
 ];
 
-export const PLAID_DEFAULT_BANKS: readonly AddAccountInstitution[] =
-  PLAID_BANK_SEEDS.map((s) => ({
-    categories: ["bank"],
-    id: s.id,
-    logo: null,
-    name: s.name,
-    provider: "plaid",
-    url: s.domain,
-  }));
+export const PLAID_DEFAULT_BANKS: readonly AddAccountInstitution[] = PLAID_BANK_SEEDS.map((s) => ({
+  categories: ["bank"],
+  id: s.id,
+  logo: null,
+  name: s.name,
+  provider: "plaid",
+  url: s.domain,
+}));
 
-export const PLAID_DEFAULT_CREDIT: readonly AddAccountInstitution[] =
-  PLAID_CREDIT_SEEDS.map((s) => ({
+export const PLAID_DEFAULT_CREDIT: readonly AddAccountInstitution[] = PLAID_CREDIT_SEEDS.map(
+  (s) => ({
     categories: ["credit"],
     id: s.id,
     logo: null,
     name: s.name,
     provider: "plaid",
     url: s.domain,
-  }));
+  }),
+);
 
 /**
  * Manual cash account option — appears in the Add Account grid alongside

@@ -37,10 +37,7 @@ const BUCKET_LABELS: Record<Bucket, string> = {
   syncing: "Syncing your data",
 };
 
-const PHASE_TO_BUCKET: Record<
-  Exclude<Phase, "duplicate" | "error" | "cancelled">,
-  Bucket
-> = {
+const PHASE_TO_BUCKET: Record<Exclude<Phase, "duplicate" | "error" | "cancelled">, Bucket> = {
   accounts: "syncing",
   balances: "syncing",
   connecting: "connecting",
@@ -115,13 +112,10 @@ function useProgressStream(runId: string | null, onStale: () => void) {
 
     async function read() {
       try {
-        const res = await fetch(
-          `${env.VITE_SERVER_URL}/api/plaid/progress/${runId}`,
-          {
-            credentials: "include",
-            signal: controller.signal,
-          }
-        );
+        const res = await fetch(`${env.VITE_SERVER_URL}/api/plaid/progress/${runId}`, {
+          credentials: "include",
+          signal: controller.signal,
+        });
         if (!res.ok || !res.body) {
           if (res.status === 404 || res.status === 410) {
             onStale();
@@ -163,10 +157,7 @@ function useProgressStream(runId: string | null, onStale: () => void) {
 
 export function OnboardingProgress() {
   const { onboardingRunId, finishOnboarding } = useOnboarding();
-  const { events, streamError } = useProgressStream(
-    onboardingRunId,
-    finishOnboarding
-  );
+  const { events, streamError } = useProgressStream(onboardingRunId, finishOnboarding);
 
   const latestByPhase = new Map<Phase, ProgressEvent>();
   for (const event of events) {
@@ -256,8 +247,7 @@ function TerminalCard({
   title: string;
   tone: "warning" | "destructive";
 }) {
-  const titleColor =
-    tone === "destructive" ? "text-destructive" : "text-foreground";
+  const titleColor = tone === "destructive" ? "text-destructive" : "text-foreground";
   return (
     <CobaltCard className={`${FLOATING_CARD_CHROME} w-96 gap-2 p-4`}>
       <div className="flex items-start justify-between gap-3">
@@ -309,13 +299,9 @@ function OnboardingProgressCard({
 
   const activeBucket = BUCKET_ORDER.find((b) => bucketState[b] === "active");
   const firstPending = BUCKET_ORDER.find((b) => bucketState[b] === "pending");
-  const currentBucket: Bucket = isDone
-    ? "done"
-    : (activeBucket ?? firstPending ?? "connecting");
+  const currentBucket: Bucket = isDone ? "done" : (activeBucket ?? firstPending ?? "connecting");
 
-  const completedCount = BUCKET_ORDER.filter(
-    (b) => bucketState[b] === "done"
-  ).length;
+  const completedCount = BUCKET_ORDER.filter((b) => bucketState[b] === "done").length;
   const percent = Math.round((completedCount / BUCKET_ORDER.length) * 100);
   const currentLabel = BUCKET_LABELS[currentBucket];
 

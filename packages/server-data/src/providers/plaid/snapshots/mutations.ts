@@ -3,9 +3,7 @@ import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
 
 import { lookupFinancialAccountsByPlaidIds } from "../link/queries.js";
 
-function numToStr(
-  value: number | string | boolean | null | undefined
-): string | null {
+function numToStr(value: number | string | boolean | null | undefined): string | null {
   return value === null || value === undefined ? null : String(value);
 }
 
@@ -23,9 +21,7 @@ export interface BalanceSnapshotInsert {
 const INSERT_BATCH_SIZE = 100;
 
 /** Batch-insert balance snapshots, skipping rows that already exist. */
-export async function insertBalanceSnapshots(
-  rows: BalanceSnapshotInsert[]
-): Promise<number> {
+export async function insertBalanceSnapshots(rows: BalanceSnapshotInsert[]): Promise<number> {
   if (rows.length === 0) {
     return 0;
   }

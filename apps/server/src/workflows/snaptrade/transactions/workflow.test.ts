@@ -86,9 +86,7 @@ describe("snaptradeTransactionsUpdatedWorkflow", () => {
     } as never);
 
     expect(fetchAllActivitiesStep).not.toHaveBeenCalled();
-    expect(upsertActivitiesStep).toHaveBeenCalledWith("acct-2", "app-user-1", [
-      { id: "i1" },
-    ]);
+    expect(upsertActivitiesStep).toHaveBeenCalledWith("acct-2", "app-user-1", [{ id: "i1" }]);
     expect(out.success).toBeTruthy();
   });
 

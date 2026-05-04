@@ -55,9 +55,7 @@ class StockNewsAPI {
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error(
-        `Stock News API error: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Stock News API error: ${response.status} ${response.statusText}`);
     }
 
     return (await response.json()) as StockNewsAlertsResponse;

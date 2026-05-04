@@ -9,7 +9,7 @@ const BASE_URL = "https://stocknewsapi.com/api/v1";
  */
 export async function stockNewsRequest<T>(
   endpoint: string,
-  params: Record<string, string> = {}
+  params: Record<string, string> = {},
 ): Promise<T> {
   const url = new URL(`${BASE_URL}${endpoint}`);
   url.searchParams.set("token", env.STOCK_NEWS_API_KEY);
@@ -27,9 +27,7 @@ export async function stockNewsRequest<T>(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Stock News API error: ${response.status} ${response.statusText}`
-    );
+    throw new Error(`Stock News API error: ${response.status} ${response.statusText}`);
   }
 
   return response.json() as Promise<T>;

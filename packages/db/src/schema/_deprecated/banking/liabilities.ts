@@ -1,12 +1,4 @@
-import {
-  pgTable,
-  text,
-  uuid,
-  timestamp,
-  jsonb,
-  real,
-  boolean,
-} from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, timestamp, jsonb, real, boolean } from "drizzle-orm/pg-core";
 
 import { appFullAccess, agentSelectViaBankAccount } from "../../rls";
 import { bankAccount } from "./accounts";
@@ -35,7 +27,7 @@ export const creditLiability = pgTable.withRLS(
       .notNull()
       .$onUpdate(() => new Date()),
   },
-  (table) => [appFullAccess(), agentSelectViaBankAccount(table.plaidAccountId)]
+  (table) => [appFullAccess(), agentSelectViaBankAccount(table.plaidAccountId)],
 );
 
 // Mortgage Liabilities
@@ -73,7 +65,7 @@ export const mortgageLiability = pgTable.withRLS(
     ytdInterestPaid: real("ytd_interest_paid"),
     ytdPrincipalPaid: real("ytd_principal_paid"),
   },
-  (table) => [appFullAccess(), agentSelectViaBankAccount(table.plaidAccountId)]
+  (table) => [appFullAccess(), agentSelectViaBankAccount(table.plaidAccountId)],
 );
 
 // Student Loan Liabilities
@@ -116,7 +108,7 @@ export const studentLoanLiability = pgTable.withRLS(
     ytdInterestPaid: real("ytd_interest_paid"),
     ytdPrincipalPaid: real("ytd_principal_paid"),
   },
-  (table) => [appFullAccess(), agentSelectViaBankAccount(table.plaidAccountId)]
+  (table) => [appFullAccess(), agentSelectViaBankAccount(table.plaidAccountId)],
 );
 
 // Type exports
@@ -125,5 +117,4 @@ export type CreditLiabilitySelect = typeof creditLiability.$inferSelect;
 export type MortgageLiability = typeof mortgageLiability.$inferInsert;
 export type MortgageLiabilitySelect = typeof mortgageLiability.$inferSelect;
 export type StudentLoanLiability = typeof studentLoanLiability.$inferInsert;
-export type StudentLoanLiabilitySelect =
-  typeof studentLoanLiability.$inferSelect;
+export type StudentLoanLiabilitySelect = typeof studentLoanLiability.$inferSelect;

@@ -20,7 +20,7 @@ const accountIdSchema = z.object({ id: z.string().uuid() });
 async function assertOwnsManualAccount(
   tx: Transaction<Schema>,
   ctx: Context,
-  accountId: string
+  accountId: string,
 ): Promise<void> {
   const userId = ctx?.userId;
   if (!userId) {
@@ -36,22 +36,19 @@ async function assertOwnsManualAccount(
 }
 
 export const accountsMutators = {
-  createAccount: defineMutator(
-    createAccountSchema,
-    async ({ args, ctx, tx }) => {
-      if (!ctx?.userId) {
-        throw new Error("Unauthorized");
-      }
-      await tx.mutate.financialAccount.insert({
-        id: crypto.randomUUID(),
-        name: args.name.trim(),
-        source: "manual",
-        subtype: args.subtype,
-        type: args.type,
-        userId: ctx.userId,
-      });
+  createAccount: defineMutator(createAccountSchema, async ({ args, ctx, tx }) => {
+    if (!ctx?.userId) {
+      throw new Error("Unauthorized");
     }
-  ),
+    await tx.mutate.financialAccount.insert({
+      id: crypto.randomUUID(),
+      name: args.name.trim(),
+      source: "manual",
+      subtype: args.subtype,
+      type: args.type,
+      userId: ctx.userId,
+    });
+  }),
 
   deleteAccount: defineMutator(accountIdSchema, async ({ args, ctx, tx }) => {
     await assertOwnsManualAccount(tx, ctx, args.id);

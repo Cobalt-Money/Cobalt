@@ -1,8 +1,4 @@
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@cobalt-web/ui/components/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@cobalt-web/ui/components/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,11 +14,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@cobalt-web/ui/components/sidebar";
-import {
-  UserCircle02Icon,
-  CreditCardIcon,
-  Logout01Icon,
-} from "@hugeicons/core-free-icons";
+import { UserCircle02Icon, CreditCardIcon, Logout01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "@tanstack/react-router";
 

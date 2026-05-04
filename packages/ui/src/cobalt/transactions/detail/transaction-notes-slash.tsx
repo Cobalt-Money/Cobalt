@@ -57,7 +57,7 @@ function insertTaskList(ctx: Ctx): void {
         state.tr.setNodeMarkup(pos, undefined, {
           ...node.attrs,
           checked: false,
-        })
+        }),
       );
       break;
     }
@@ -125,11 +125,10 @@ export const SLASH_ITEMS: SlashItem[] = [
     group: "inserts",
     icon: GridTableIcon,
     run: (ctx) =>
-      callCmd(
-        ctx,
-        insertTableCommand.key as CmdKey<{ row?: number; col?: number }>,
-        { col: 3, row: 3 }
-      ),
+      callCmd(ctx, insertTableCommand.key as CmdKey<{ row?: number; col?: number }>, {
+        col: 3,
+        row: 3,
+      }),
     searchTerms: ["table", "grid"],
     title: "Table",
   },
@@ -144,73 +143,69 @@ interface SlashMenuProps {
   onSelect: (item: SlashItem) => void;
 }
 
-export const SlashMenu = forwardRef<SlashMenuRef, SlashMenuProps>(
-  ({ items, onSelect }, ref) => {
-    const [selectedIndex, setSelectedIndex] = useState(0);
+export const SlashMenu = forwardRef<SlashMenuRef, SlashMenuProps>(({ items, onSelect }, ref) => {
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
-    useEffect(() => setSelectedIndex(0), [items]);
+  useEffect(() => setSelectedIndex(0), [items]);
 
-    useImperativeHandle(ref, () => ({
-      onKeyDown: (event) => {
-        if (event.key === "ArrowUp") {
-          setSelectedIndex((i) => (i + items.length - 1) % items.length);
-          return true;
+  useImperativeHandle(ref, () => ({
+    onKeyDown: (event) => {
+      if (event.key === "ArrowUp") {
+        setSelectedIndex((i) => (i + items.length - 1) % items.length);
+        return true;
+      }
+      if (event.key === "ArrowDown") {
+        setSelectedIndex((i) => (i + 1) % items.length);
+        return true;
+      }
+      if (event.key === "Enter") {
+        const item = items[selectedIndex];
+        if (item) {
+          onSelect(item);
         }
-        if (event.key === "ArrowDown") {
-          setSelectedIndex((i) => (i + 1) % items.length);
-          return true;
-        }
-        if (event.key === "Enter") {
-          const item = items[selectedIndex];
-          if (item) {
-            onSelect(item);
-          }
-          return true;
-        }
-        return false;
-      },
-    }));
+        return true;
+      }
+      return false;
+    },
+  }));
 
-    if (items.length === 0) {
-      return (
-        <div className="w-60 px-2.5 py-2 text-center text-muted-foreground text-sm">
-          No matches
-        </div>
-      );
-    }
-
+  if (items.length === 0) {
     return (
-      <div className="scrollbar-thin max-h-96 w-64 overflow-y-auto">
-        {items.map((item, i) => (
-          <div key={item.title}>
-            {i > 0 && items[i - 1]?.group !== item.group ? (
-              <div className="my-1 h-px bg-border" />
-            ) : null}
-            <button
-              className={cn(
-                "flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40",
-                i === selectedIndex && "bg-input/30 font-medium"
-              )}
-              onClick={() => onSelect(item)}
-              onMouseDown={(e) => e.preventDefault()}
-              type="button"
-            >
-              <span className="flex size-5 shrink-0 items-center justify-center">
-                <HugeiconsIcon
-                  className="text-muted-foreground"
-                  icon={item.icon}
-                  size={18}
-                  strokeWidth={2}
-                />
-              </span>
-              <span>{item.title}</span>
-            </button>
-          </div>
-        ))}
-      </div>
+      <div className="w-60 px-2.5 py-2 text-center text-muted-foreground text-sm">No matches</div>
     );
   }
-);
+
+  return (
+    <div className="scrollbar-thin max-h-96 w-64 overflow-y-auto">
+      {items.map((item, i) => (
+        <div key={item.title}>
+          {i > 0 && items[i - 1]?.group !== item.group ? (
+            <div className="my-1 h-px bg-border" />
+          ) : null}
+          <button
+            className={cn(
+              "flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40",
+              i === selectedIndex && "bg-input/30 font-medium",
+            )}
+            onClick={() => onSelect(item)}
+            onMouseDown={(e) => e.preventDefault()}
+            type="button"
+          >
+            <span className="flex size-5 shrink-0 items-center justify-center">
+              <HugeiconsIcon
+                className="text-muted-foreground"
+                icon={item.icon}
+                size={18}
+                strokeWidth={2}
+              />
+            </span>
+            <span>{item.title}</span>
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+});
 SlashMenu.displayName = "SlashMenu";
 
 function filterItems(query: string): SlashItem[] {
@@ -220,8 +215,7 @@ function filterItems(query: string): SlashItem[] {
   }
   return SLASH_ITEMS.filter(
     (item) =>
-      item.title.toLowerCase().includes(q) ||
-      item.searchTerms.some((term) => term.includes(q))
+      item.title.toLowerCase().includes(q) || item.searchTerms.some((term) => term.includes(q)),
   );
 }
 
@@ -290,13 +284,7 @@ function buildSlashView(ctx: Ctx, state: SharedSlashState) {
     function render() {
       const text = provider.getContent(view) ?? "";
       const query = text.startsWith("/") ? text.slice(1) : "";
-      root.render(
-        <MenuRoot
-          items={filterItems(query)}
-          onSelect={selectItem}
-          setRef={setRef}
-        />
-      );
+      root.render(<MenuRoot items={filterItems(query)} onSelect={selectItem} setRef={setRef} />);
     }
 
     render();
@@ -341,12 +329,7 @@ export function createSlashBundle(): SlashBundle {
             }
             const { from, $from } = editorState.selection;
             const paragraphStart = $from.start();
-            const textBefore = $from.parent.textBetween(
-              0,
-              $from.parentOffset,
-              undefined,
-              "￼"
-            );
+            const textBefore = $from.parent.textBetween(0, $from.parentOffset, undefined, "￼");
             const slashIdx = textBefore.lastIndexOf("/");
             if (slashIdx === -1) {
               return null;
@@ -368,8 +351,8 @@ export function createSlashBundle(): SlashBundle {
                     span.textContent = "Type to search";
                     return span;
                   },
-                  { side: 1 }
-                )
+                  { side: 1 },
+                ),
               );
             }
             return DecorationSet.create(editorState.doc, decorations);
@@ -389,7 +372,7 @@ export function createSlashBundle(): SlashBundle {
             return false;
           },
         },
-      })
+      }),
   );
 
   return {

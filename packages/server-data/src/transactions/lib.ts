@@ -1,6 +1,4 @@
-export const toDateString = (
-  val: string | Date | null | undefined
-): string | null => {
+export const toDateString = (val: string | Date | null | undefined): string | null => {
   if (!val) {
     return null;
   }
@@ -15,7 +13,7 @@ export const toDateString = (
 
 /** Drizzle `date` strings, JS `Date`, or Zero-replicated epoch ms → `YYYY-MM-DD`. */
 export const normalizeDateForTransactionList = (
-  val: string | Date | number | null | undefined
+  val: string | Date | number | null | undefined,
 ): string | null => {
   if (val === undefined || val === null) {
     return null;

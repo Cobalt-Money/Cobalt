@@ -1,20 +1,12 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
 // import { SidebarTrigger } from "@cobalt-web/ui/components/sidebar";
-import {
-  BellDotIcon,
-  EyeIcon,
-  SearchIcon,
-  ViewOffSlashIcon,
-} from "@hugeicons/core-free-icons";
+import { BellDotIcon, EyeIcon, SearchIcon, ViewOffSlashIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
 import { NotificationsSheet } from "@/components/alerts/notifications-sheet";
-import {
-  CommandMenuSearchShortcut,
-  useCommandMenu,
-} from "@/components/shell/command-menu";
+import { CommandMenuSearchShortcut, useCommandMenu } from "@/components/shell/command-menu";
 import { useUserAlerts } from "@/hooks/use-user-alerts";
 
 import { SiteHeaderPrimaryTitle } from "../site-header-primary-title";
@@ -65,9 +57,7 @@ export function SiteHeader() {
           </Button>
           <Button
             aria-label={
-              hasAlerts
-                ? `Notifications (${alerts.length} need attention)`
-                : "Notifications"
+              hasAlerts ? `Notifications (${alerts.length} need attention)` : "Notifications"
             }
             className="relative text-muted-foreground"
             onClick={() => setNotificationsOpen(true)}
@@ -75,11 +65,7 @@ export function SiteHeader() {
             type="button"
             variant="ghost"
           >
-            <HugeiconsIcon
-              className="size-5"
-              icon={BellDotIcon}
-              strokeWidth={2}
-            />
+            <HugeiconsIcon className="size-5" icon={BellDotIcon} strokeWidth={2} />
             {hasAlerts ? (
               <span
                 aria-hidden
@@ -89,10 +75,7 @@ export function SiteHeader() {
           </Button>
         </div>
       </div>
-      <NotificationsSheet
-        onOpenChange={setNotificationsOpen}
-        open={notificationsOpen}
-      />
+      <NotificationsSheet onOpenChange={setNotificationsOpen} open={notificationsOpen} />
     </header>
   );
 }

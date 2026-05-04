@@ -46,10 +46,7 @@ function toLocation(r: NominatimResult): LocationJson {
   };
 }
 
-export async function geocodeSearch(
-  query: string,
-  limit = 5
-): Promise<GeocodeResult[]> {
+export async function geocodeSearch(query: string, limit = 5): Promise<GeocodeResult[]> {
   const url = new URL(NOMINATIM_URL);
   url.searchParams.set("q", query);
   url.searchParams.set("format", "json");

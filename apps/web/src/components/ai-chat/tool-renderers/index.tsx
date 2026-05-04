@@ -26,7 +26,7 @@ interface ToolPartShape {
 
 function arePartsEqual(
   prev: { part: MessagePart; context: ToolRendererContext },
-  next: { part: MessagePart; context: ToolRendererContext }
+  next: { part: MessagePart; context: ToolRendererContext },
 ): boolean {
   if (
     prev.context.messageId !== next.context.messageId ||
@@ -59,40 +59,26 @@ export const ToolPartRenderer = memo(function ToolPartRenderer({
   context: ToolRendererContext;
 }) {
   if (part.type === "tool-webSearch") {
-    return (
-      <WebSearchToolRenderer context={context} invocation={part as never} />
-    );
+    return <WebSearchToolRenderer context={context} invocation={part as never} />;
   }
 
   if (part.type === "tool-webExtract") {
-    return (
-      <WebExtractToolRenderer context={context} invocation={part as never} />
-    );
+    return <WebExtractToolRenderer context={context} invocation={part as never} />;
   }
 
   if (part.type === "tool-renderChart") {
-    return (
-      <RenderChartToolRenderer context={context} invocation={part as never} />
-    );
+    return <RenderChartToolRenderer context={context} invocation={part as never} />;
   }
 
   if (part.type === "tool-renderDocument") {
     if (part.state === "input-available" || part.state === "input-streaming") {
       return (
-        <div
-          key={toolRendererKey(context, "document-loading")}
-          className="py-1"
-        >
+        <div key={toolRendererKey(context, "document-loading")} className="py-1">
           <Shimmer className="text-sm">Cooking up the PDF</Shimmer>
         </div>
       );
     }
-    return (
-      <RenderDocumentToolRenderer
-        context={context}
-        invocation={part as never}
-      />
-    );
+    return <RenderDocumentToolRenderer context={context} invocation={part as never} />;
   }
 
   if (part.type === "tool-askUser") {
@@ -108,9 +94,7 @@ export const ToolPartRenderer = memo(function ToolPartRenderer({
   }
 
   if (part.type === "tool-readFile") {
-    return (
-      <ReadFileToolRenderer context={context} invocation={part as never} />
-    );
+    return <ReadFileToolRenderer context={context} invocation={part as never} />;
   }
 
   return null;

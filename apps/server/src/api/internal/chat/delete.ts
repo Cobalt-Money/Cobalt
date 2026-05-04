@@ -34,16 +34,13 @@ const route = createRoute({
   tags: ["Chat"],
 });
 
-export const chatDeleteRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const { chatId } = c.req.valid("param");
-    const userId = c.var.user.id;
+export const chatDeleteRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  const { chatId } = c.req.valid("param");
+  const userId = c.var.user.id;
 
-    const deleted = await deleteChat(userId, chatId);
-    if (!deleted) {
-      return c.json({ error: "Chat not found" }, 404);
-    }
-    return c.json({ chatId, success: true }, 200);
+  const deleted = await deleteChat(userId, chatId);
+  if (!deleted) {
+    return c.json({ error: "Chat not found" }, 404);
   }
-);
+  return c.json({ chatId, success: true }, 200);
+});

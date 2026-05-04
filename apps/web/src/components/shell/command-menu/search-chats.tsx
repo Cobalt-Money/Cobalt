@@ -1,8 +1,4 @@
-import {
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@cobalt-web/ui/components/command";
+import { CommandEmpty, CommandGroup, CommandItem } from "@cobalt-web/ui/components/command";
 import { queries, zql } from "@cobalt-web/zero";
 import { Delete02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -65,15 +61,13 @@ export function useChatSearch(trimmedSearch: string, enabled: boolean) {
   const zero = useZero();
 
   const [chatRows] = useQuery(
-    trimmedSearch.length > 0
-      ? buildSearchQuery(trimmedSearch)
-      : buildRecentQuery(),
-    { enabled }
+    trimmedSearch.length > 0 ? buildSearchQuery(trimmedSearch) : buildRecentQuery(),
+    { enabled },
   );
 
   const filteredChats = useMemo<ChatSearchRow[]>(
     () => (enabled ? (chatRows as unknown as ChatSearchRow[]) : []),
-    [enabled, chatRows]
+    [enabled, chatRows],
   );
 
   const prefetchedRef = useRef<Set<string>>(new Set());
@@ -90,7 +84,7 @@ export function useChatSearch(trimmedSearch: string, enabled: boolean) {
       prefetchedRef.current.add(chatId);
       zero.preload(queries.chats.messages({ chatId }));
     },
-    [enabled, zero]
+    [enabled, zero],
   );
 
   const prefetch = useCallback(() => {
@@ -136,9 +130,7 @@ export function ChatSearchResults({
           {trimmedSearch.length > 0 ? "No chats found." : "No recent chats."}
         </CommandEmpty>
       ) : null}
-      <CommandGroup
-        heading={trimmedSearch.length > 0 ? "Search results" : "Recent"}
-      >
+      <CommandGroup heading={trimmedSearch.length > 0 ? "Search results" : "Recent"}>
         {filteredChats.map((c) => {
           const title = c.title?.trim() || "Untitled chat";
           return (
@@ -170,11 +162,7 @@ export function ChatSearchResults({
                   }}
                   type="button"
                 >
-                  <HugeiconsIcon
-                    className="size-4"
-                    icon={Delete02Icon}
-                    strokeWidth={2}
-                  />
+                  <HugeiconsIcon className="size-4" icon={Delete02Icon} strokeWidth={2} />
                 </button>
               </div>
             </CommandItem>

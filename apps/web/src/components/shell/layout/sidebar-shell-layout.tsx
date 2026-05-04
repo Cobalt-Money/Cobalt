@@ -29,9 +29,7 @@ export function SidebarShellLayout({
   sidebarInsetClassName,
 }: SidebarShellLayoutProps) {
   return (
-    <SidebarInset
-      className={cn("min-h-0 overflow-hidden", sidebarInsetClassName)}
-    >
+    <SidebarInset className={cn("min-h-0 overflow-hidden", sidebarInsetClassName)}>
       <AmbientInsetLayer />
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <SiteHeader />
@@ -40,7 +38,7 @@ export function SidebarShellLayout({
           className={cn(
             "relative flex min-h-0 flex-1 flex-col overflow-auto no-scrollbar",
             SHELL_CONTENT_HORIZONTAL_PADDING_CLASS,
-            flushBottom ? "pb-0 lg:pb-0" : SHELL_CONTENT_BOTTOM_PADDING_CLASS
+            flushBottom ? "pb-0 lg:pb-0" : SHELL_CONTENT_BOTTOM_PADDING_CLASS,
           )}
         >
           {children}

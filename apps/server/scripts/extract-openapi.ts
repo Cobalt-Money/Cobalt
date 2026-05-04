@@ -30,8 +30,7 @@ spec.components ??= {};
 spec.components.securitySchemes = {
   bearerAuth: {
     bearerFormat: "OAuth 2.0 Access Token",
-    description:
-      "OAuth 2.0 access token obtained via the authorization code flow",
+    description: "OAuth 2.0 access token obtained via the authorization code flow",
     scheme: "bearer",
     type: "http",
   },

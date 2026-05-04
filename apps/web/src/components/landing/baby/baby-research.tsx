@@ -408,9 +408,7 @@ export function BabyResearch({
 }: {
   onOpenTicker?: (row: BabyScreenerRow) => void;
 } = {}) {
-  const [pinnedSymbols, setPinnedSymbols] = useState<Set<string>>(
-    () => new Set()
-  );
+  const [pinnedSymbols, setPinnedSymbols] = useState<Set<string>>(() => new Set());
 
   const togglePin = useCallback((symbol: string) => {
     setPinnedSymbols((prev) => {
@@ -434,7 +432,7 @@ export function BabyResearch({
         }
         return MOCK_SCREENER_DATA.indexOf(a) - MOCK_SCREENER_DATA.indexOf(b);
       }),
-    [pinnedSymbols]
+    [pinnedSymbols],
   );
 
   return (
@@ -445,33 +443,17 @@ export function BabyResearch({
             <TableHead className="text-muted-foreground min-w-fit shrink-0 pr-6 py-1.5 align-middle">
               <span className="sr-only">Pin row</span>
             </TableHead>
-            <TableHead className="text-muted-foreground px-0 py-1.5 align-middle">
-              Symbol
-            </TableHead>
+            <TableHead className="text-muted-foreground px-0 py-1.5 align-middle">Symbol</TableHead>
             <TableHead className="text-muted-foreground w-48 py-1.5 align-middle pl-0">
               Name
             </TableHead>
-            <TableHead className="text-muted-foreground py-1.5 align-middle">
-              Price
-            </TableHead>
-            <TableHead className="text-muted-foreground py-1.5 align-middle">
-              1D
-            </TableHead>
-            <TableHead className="text-muted-foreground py-1.5 align-middle">
-              YTD
-            </TableHead>
-            <TableHead className="text-muted-foreground py-1.5 align-middle">
-              Consensus
-            </TableHead>
-            <TableHead className="text-muted-foreground py-1.5 align-middle">
-              P/E
-            </TableHead>
-            <TableHead className="text-muted-foreground py-1.5 align-middle">
-              Market cap
-            </TableHead>
-            <TableHead className="text-muted-foreground py-1.5 align-middle">
-              Sector
-            </TableHead>
+            <TableHead className="text-muted-foreground py-1.5 align-middle">Price</TableHead>
+            <TableHead className="text-muted-foreground py-1.5 align-middle">1D</TableHead>
+            <TableHead className="text-muted-foreground py-1.5 align-middle">YTD</TableHead>
+            <TableHead className="text-muted-foreground py-1.5 align-middle">Consensus</TableHead>
+            <TableHead className="text-muted-foreground py-1.5 align-middle">P/E</TableHead>
+            <TableHead className="text-muted-foreground py-1.5 align-middle">Market cap</TableHead>
+            <TableHead className="text-muted-foreground py-1.5 align-middle">Sector</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="[&_tr]:border-0">
@@ -493,7 +475,7 @@ export function BabyResearch({
                     className={cn(
                       "inline-flex shrink-0 rounded-md p-0.5 transition-colors",
                       "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
-                      "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                      "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                     )}
                     type="button"
                     onClick={(e) => {
@@ -505,8 +487,7 @@ export function BabyResearch({
                       aria-hidden
                       className={cn(
                         "size-4",
-                        pinnedSymbols.has(row.symbol) &&
-                          "text-amber-500 dark:text-amber-400"
+                        pinnedSymbols.has(row.symbol) && "text-amber-500 dark:text-amber-400",
                       )}
                       icon={StarIcon}
                       strokeWidth={2}
@@ -531,7 +512,7 @@ export function BabyResearch({
               <TableCell
                 className={cn(
                   "py-1.5 tabular-nums align-middle text-left pr-6",
-                  pctChangeToneClass(row.pctChange1d)
+                  pctChangeToneClass(row.pctChange1d),
                 )}
               >
                 {formatPercent(row.pctChange1d)}
@@ -539,7 +520,7 @@ export function BabyResearch({
               <TableCell
                 className={cn(
                   "py-1.5 tabular-nums align-middle text-left pr-6",
-                  pctChangeToneClass(row.pctChangeYtd)
+                  pctChangeToneClass(row.pctChangeYtd),
                 )}
               >
                 {formatPercent(row.pctChangeYtd)}

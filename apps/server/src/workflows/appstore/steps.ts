@@ -15,7 +15,7 @@ export interface AppStoreWebhookResult {
 }
 
 export async function applyAppStoreNotificationStep(
-  params: AppStoreNotificationInput
+  params: AppStoreNotificationInput,
 ): Promise<AppStoreNotificationResult> {
   "use step";
 

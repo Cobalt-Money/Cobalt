@@ -23,17 +23,9 @@ export function BashToolRenderer({
   const command = invocation.input?.command ?? "";
 
   return (
-    <div
-      className="flex items-center gap-2 py-1"
-      key={toolRendererKey(context, "bash")}
-    >
-      <HugeiconsIcon
-        icon={Search01Icon}
-        className="size-3.5 text-muted-foreground shrink-0"
-      />
-      <code className="text-sm font-mono text-foreground truncate">
-        $ {command}
-      </code>
+    <div className="flex items-center gap-2 py-1" key={toolRendererKey(context, "bash")}>
+      <HugeiconsIcon icon={Search01Icon} className="size-3.5 text-muted-foreground shrink-0" />
+      <code className="text-sm font-mono text-foreground truncate">$ {command}</code>
     </div>
   );
 }

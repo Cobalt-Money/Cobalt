@@ -19,7 +19,7 @@ const chartSchema = defineSchema((s) => ({
         props: s.propsOf("catalog.components"),
         type: s.ref("catalog.components"),
         visible: s.any(),
-      })
+      }),
     ),
     root: s.string(),
   }),

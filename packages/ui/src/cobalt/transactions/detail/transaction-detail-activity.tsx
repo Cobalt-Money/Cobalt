@@ -16,10 +16,10 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
 import type { ReactNode } from "react";
 
-import type { TagColor } from "../../tags/palette";
-import { TagChip } from "../../tags/tag-chip";
-import { CategoryIcon, getCategoryDisplayConfig } from "../categories";
+import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "../categories";
 import { formatDateStringShort } from "../lib/helpers";
+import type { TagColor } from "../tags/palette";
+import { TagChip } from "../tags/tag-chip";
 
 export interface ActivityTagInfo {
   name: string;
@@ -65,9 +65,7 @@ function typeOrderRank(t: ActivityEventType): number {
   return i === -1 ? 0 : i;
 }
 
-function sortActivityEventsNewestFirst(
-  events: ActivityEvent[]
-): ActivityEvent[] {
+function sortActivityEventsNewestFirst(events: ActivityEvent[]): ActivityEvent[] {
   return [...events].toSorted((a, b) => {
     const tb = getEventSortTime(b);
     const ta = getEventSortTime(a);
@@ -82,18 +80,13 @@ function sortActivityEventsNewestFirst(
   });
 }
 
-function renderTagChips(
-  ids: string[],
-  tagsById: ActivityTagMap | undefined
-): ReactNode {
+function renderTagChips(ids: string[], tagsById: ActivityTagMap | undefined): ReactNode {
   return (
     <span className="inline-flex flex-wrap items-center gap-1 align-middle">
       {ids.map((id) => {
         const meta = tagsById?.get(id);
         if (meta) {
-          return (
-            <TagChip color={meta.color} key={id} name={meta.name} size="sm" />
-          );
+          return <TagChip color={meta.color} key={id} name={meta.name} size="sm" />;
         }
         return (
           <span
@@ -110,14 +103,10 @@ function renderTagChips(
 
 function describeTagsEdit(
   item: TransactionActivityItem,
-  tagsById: ActivityTagMap | undefined
+  tagsById: ActivityTagMap | undefined,
 ): ReactNode {
-  const oldArr = (
-    Array.isArray(item.oldValue) ? item.oldValue : []
-  ) as string[];
-  const newArr = (
-    Array.isArray(item.newValue) ? item.newValue : []
-  ) as string[];
+  const oldArr = (Array.isArray(item.oldValue) ? item.oldValue : []) as string[];
+  const newArr = (Array.isArray(item.newValue) ? item.newValue : []) as string[];
   const added = newArr.filter((id) => !oldArr.includes(id));
   const removed = oldArr.filter((id) => !newArr.includes(id));
 
@@ -148,7 +137,7 @@ function describeTagsEdit(
 
 function describeEditEvent(
   item: TransactionActivityItem,
-  tagsById: ActivityTagMap | undefined
+  tagsById: ActivityTagMap | undefined,
 ): ReactNode {
   switch (item.field) {
     case "name": {
@@ -163,11 +152,11 @@ function describeEditEvent(
       return `Merchant changed to "${item.newValue}"`;
     }
     case "category": {
-      const v = item.newValue as { primary?: string } | null;
-      if (!v?.primary) {
+      const v = item.newValue as { categoryId?: string | null } | null;
+      if (!v?.categoryId) {
         return "Category restored";
       }
-      return `Category changed to ${v.primary.replaceAll("_", " ").toLowerCase()}`;
+      return "Category updated";
     }
     case "date": {
       return typeof item.newValue === "string"
@@ -197,7 +186,7 @@ function describeEditEvent(
 function buildActivityEvents(
   transaction: TransactionListItem,
   editEvents: TransactionActivityItem[],
-  tagsById: ActivityTagMap | undefined
+  tagsById: ActivityTagMap | undefined,
 ): ActivityEvent[] {
   const events: ActivityEvent[] = [];
 
@@ -271,29 +260,13 @@ function EventMarker({
   const tone = eventMarkerTone[event.type] ?? "text-muted-foreground";
 
   if (event.type === "edit_category" && rawItem?.field === "category") {
-    const value = rawItem.newValue as {
-      primary?: string;
-      detailed?: string;
-    } | null;
-    const fallback = transaction.category
-      ? {
-          detailed: transaction.categoryDetail ?? "",
-          primary: transaction.category,
-        }
-      : null;
-    const config = getCategoryDisplayConfig(
-      value?.primary
-        ? { detailed: value.detailed ?? "", primary: value.primary }
-        : fallback
-    );
+    const cat = transaction.category;
+    const icon = cat
+      ? (resolveCategoryIcon(cat.iconKey) ?? UNKNOWN_CATEGORY_ICON)
+      : UNKNOWN_CATEGORY_ICON;
     return (
-      <span
-        className={cn(
-          "inline-flex size-4 shrink-0 items-center justify-center",
-          tone
-        )}
-      >
-        <CategoryIcon icon={config.icon} />
+      <span className={cn("inline-flex size-4 shrink-0 items-center justify-center", tone)}>
+        <CategoryIcon icon={icon} />
       </span>
     );
   }
@@ -306,9 +279,7 @@ function EventMarker({
         className="size-4 shrink-0 object-contain"
         decoding="async"
         height={16}
-        src={
-          event.type === "pending" ? STATUS_PENDING_ICON : STATUS_POSTED_ICON
-        }
+        src={event.type === "pending" ? STATUS_PENDING_ICON : STATUS_POSTED_ICON}
         width={16}
       />
     );
@@ -326,11 +297,7 @@ function EventMarker({
 
   const icon = iconByType[event.type];
   if (!icon) {
-    return (
-      <span
-        className={cn("size-2.5 rounded-full", tone.replace("text-", "bg-"))}
-      />
-    );
+    return <span className={cn("size-2.5 rounded-full", tone.replace("text-", "bg-"))} />;
   }
 
   return (
@@ -356,23 +323,15 @@ function ActivityEventRow({
 }) {
   return (
     <div className="relative flex items-start gap-3 pb-6 last:pb-0">
-      {isLast ? null : (
-        <div className="absolute top-5 bottom-0 left-[7px] w-px bg-border" />
-      )}
+      {isLast ? null : <div className="absolute top-5 bottom-0 left-[7px] w-px bg-border" />}
 
       <div className="relative z-10 flex h-5 w-4 shrink-0 items-center justify-center">
-        <EventMarker
-          event={event}
-          rawItem={rawItem}
-          transaction={transaction}
-        />
+        <EventMarker event={event} rawItem={rawItem} transaction={transaction} />
       </div>
 
       <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <p className="text-muted-foreground text-sm leading-5">
-            {event.description}
-          </p>
+          <p className="text-muted-foreground text-sm leading-5">{event.description}</p>
           {event.actor === "system" ? (
             <p className="text-muted-foreground text-xs">Automatic</p>
           ) : null}

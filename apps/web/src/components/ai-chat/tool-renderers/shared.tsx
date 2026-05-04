@@ -8,10 +8,7 @@ export function ToolLoadingSkeleton({
   context: ToolRendererContext;
   variant?: "default" | "company";
 }) {
-  const key = toolRendererKey(
-    context,
-    variant === "company" ? "loading-company" : "loading"
-  );
+  const key = toolRendererKey(context, variant === "company" ? "loading-company" : "loading");
   if (variant === "company") {
     return (
       <div key={key} className="pb-4">
@@ -74,9 +71,7 @@ export function ToolErrorCard({
         <div className="flex items-center gap-2 text-destructive">
           <span className="font-medium">{title}</span>
         </div>
-        {errorText && (
-          <div className="text-sm text-destructive/80 mt-1">{errorText}</div>
-        )}
+        {errorText && <div className="text-sm text-destructive/80 mt-1">{errorText}</div>}
       </div>
     </div>
   );

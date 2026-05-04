@@ -17,6 +17,7 @@
     "@cobalt-web/env": "workspace:*",
     "better-auth": "1.6.8",
     "dotenv": "catalog:",
+    "drizzle-orm": "1.0.0-beta.18-7eb39f0",
     "jose": "^6.1.0",
     "stripe": "^20.2.0",
     "zod": "catalog:"

@@ -5,7 +5,7 @@ import { db } from "@cobalt-web/db";
  * by SnapTrade symbol_id → security.id (uuid).
  */
 export async function lookupSecuritiesBySnaptradeSymbolIds(
-  symbolIds: string[]
+  symbolIds: string[],
 ): Promise<Map<string, string>> {
   if (symbolIds.length === 0) {
     return new Map();

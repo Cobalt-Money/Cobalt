@@ -1,7 +1,4 @@
-import {
-  extractDominantColorFromSource,
-  extractPaletteFromSource,
-} from "./extract";
+import { extractDominantColorFromSource, extractPaletteFromSource } from "./extract";
 
 const mocks = vi.hoisted(() => ({
   mockGetColor: vi.fn(),

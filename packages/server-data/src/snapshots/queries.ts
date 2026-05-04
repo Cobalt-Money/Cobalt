@@ -11,7 +11,7 @@ import type { BalanceSnapshot, BalanceSnapshotQuery } from "./schemas.js";
  */
 export async function getBalanceSnapshotsByUserId(
   userId: string,
-  filters: BalanceSnapshotQuery
+  filters: BalanceSnapshotQuery,
 ): Promise<BalanceSnapshot[]> {
   const dateConstraint = {
     ...(filters.startDate ? { gte: filters.startDate } : {}),
@@ -56,6 +56,6 @@ export async function getBalanceSnapshotsByUserId(
       current: row.current,
       id: row.id,
       snapshotDate: row.snapshotDate,
-    })
+    }),
   );
 }

@@ -1,10 +1,6 @@
 import { db } from "@cobalt-web/db";
 
-import {
-  decodeCursor,
-  encodeCursor,
-  transformFinancialEventsForUI,
-} from "../lib.js";
+import { decodeCursor, encodeCursor, transformFinancialEventsForUI } from "../lib.js";
 import type { PaginatedEventsResult } from "./schemas.js";
 
 // ── Query ─────────────────────────────────────────────────────────
@@ -13,7 +9,7 @@ export const getFinancialEventsWithArticles = async (
   _userId: string,
   limit = 20,
   cursor?: string,
-  topic?: string
+  topic?: string,
 ): Promise<PaginatedEventsResult> => {
   const decoded = cursor ? decodeCursor(cursor) : null;
 
@@ -30,7 +26,7 @@ export const getFinancialEventsWithArticles = async (
 
         if (decoded?.date) {
           parts.push(
-            sql`(${lt(t.date, new Date(decoded.date))} OR (${eq(t.date, new Date(decoded.date))} AND ${lt(t.id, decoded.id)}))`
+            sql`(${lt(t.date, new Date(decoded.date))} OR (${eq(t.date, new Date(decoded.date))} AND ${lt(t.id, decoded.id)}))`,
           );
         }
 
@@ -44,10 +40,7 @@ export const getFinancialEventsWithArticles = async (
   const sliced = events.slice(0, limit);
 
   const lastEvent = sliced.at(-1);
-  const nextCursor =
-    hasMore && lastEvent
-      ? encodeCursor(lastEvent.date, lastEvent.id)
-      : undefined;
+  const nextCursor = hasMore && lastEvent ? encodeCursor(lastEvent.date, lastEvent.id) : undefined;
 
   return {
     events: transformFinancialEventsForUI(sliced),
@@ -58,9 +51,7 @@ export const getFinancialEventsWithArticles = async (
 
 // ── Processed-event checks (used by the cron to skip already-summarized events)
 
-export async function listProcessedEventIds(
-  eventIds: string[]
-): Promise<Set<string>> {
+export async function listProcessedEventIds(eventIds: string[]): Promise<Set<string>> {
   if (eventIds.length === 0) {
     return new Set<string>();
   }
@@ -73,11 +64,7 @@ export async function listProcessedEventIds(
     where: { eventId: { in: eventIds } },
   });
 
-  return new Set(
-    rows
-      .filter((r) => r.summary && r.scrapedArticlesCount > 0)
-      .map((r) => r.eventId)
-  );
+  return new Set(rows.filter((r) => r.summary && r.scrapedArticlesCount > 0).map((r) => r.eventId));
 }
 
 export async function isEventProcessed(eventId: string): Promise<boolean> {

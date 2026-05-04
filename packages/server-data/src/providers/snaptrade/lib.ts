@@ -1,19 +1,11 @@
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export function serializeJsonb(value: unknown): JsonValue {
   if (value === null || value === undefined) {
     return null;
   }
   if (typeof value !== "object") {
-    return typeof value === "string" ||
-      typeof value === "number" ||
-      typeof value === "boolean"
+    return typeof value === "string" || typeof value === "number" || typeof value === "boolean"
       ? value
       : String(value);
   }
@@ -25,9 +17,7 @@ export function serializeJsonb(value: unknown): JsonValue {
   }
 }
 
-export function toDecimalString(
-  value: number | string | null | undefined
-): string | null {
+export function toDecimalString(value: number | string | null | undefined): string | null {
   if (value === null || value === undefined) {
     return null;
   }

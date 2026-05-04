@@ -1,7 +1,5 @@
 /** Pure date helper — extracts YYYY-MM-DD from a Date, ISO string, or date-only string. */
-export const toDateString = (
-  val: string | Date | null | undefined
-): string | null => {
+export const toDateString = (val: string | Date | null | undefined): string | null => {
   if (!val) {
     return null;
   }
@@ -15,9 +13,7 @@ export const toDateString = (
 };
 
 /** Pure timestamp helper — converts Date | string | null to ISO string or null. */
-export const toISOString = (
-  val: Date | string | null | undefined
-): string | null => {
+export const toISOString = (val: Date | string | null | undefined): string | null => {
   if (!val) {
     return null;
   }
@@ -142,7 +138,7 @@ export type BrokerageAccountListItem = Pick<
 };
 
 export function toBrokerageAccountListItem(
-  account: EnhancedBrokerageAccount
+  account: EnhancedBrokerageAccount,
 ): BrokerageAccountListItem {
   return {
     accountDetails: account.accountDetails,

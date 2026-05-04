@@ -21,10 +21,10 @@ export function apiError(
   c: Context,
   code: ErrorCode,
   message: string,
-  details?: Record<string, unknown>
+  details?: Record<string, unknown>,
 ) {
   return c.json(
     { error: { code, message, ...(details ? { details } : {}) } },
-    STATUS_MAP[code] as 400 | 401 | 403 | 404 | 422 | 500
+    STATUS_MAP[code] as 400 | 401 | 403 | 404 | 422 | 500,
   );
 }

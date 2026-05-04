@@ -1,13 +1,7 @@
 import { brandfetchTickerIconUrls } from "@cobalt-web/clients/brandfetch";
 import { useDominantColor } from "@cobalt-web/color-thief";
 import { env } from "@cobalt-web/env/web";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 interface AmbientInsetContextValue {
@@ -17,15 +11,10 @@ interface AmbientInsetContextValue {
   /** Company display name for shell header (when on ticker route). */
   tickerCompanyName: string | null;
   /** Clears both symbol and company name when `symbol` is null. */
-  setResearchTicker: (
-    symbol: string | null,
-    companyName?: string | null
-  ) => void;
+  setResearchTicker: (symbol: string | null, companyName?: string | null) => void;
 }
 
-const AmbientInsetContext = createContext<AmbientInsetContextValue | null>(
-  null
-);
+const AmbientInsetContext = createContext<AmbientInsetContextValue | null>(null);
 
 export function AmbientInsetProvider({ children }: { children: ReactNode }) {
   const [researchTicker, setResearchTickerState] = useState<{
@@ -41,7 +30,7 @@ export function AmbientInsetProvider({ children }: { children: ReactNode }) {
         setResearchTickerState({ companyName, symbol });
       }
     },
-    []
+    [],
   );
 
   const { symbol: insetSymbol } = researchTicker;
@@ -51,9 +40,7 @@ export function AmbientInsetProvider({ children }: { children: ReactNode }) {
     if (!insetSymbol || !clientId) {
       return null;
     }
-    return (
-      brandfetchTickerIconUrls(insetSymbol, clientId, { size: 256 })[0] ?? null
-    );
+    return brandfetchTickerIconUrls(insetSymbol, clientId, { size: 256 })[0] ?? null;
   }, [clientId, insetSymbol]);
 
   const { hex: dominantHex } = useDominantColor(logoUrl);
@@ -65,14 +52,10 @@ export function AmbientInsetProvider({ children }: { children: ReactNode }) {
       setResearchTicker,
       tickerCompanyName: researchTicker.companyName,
     }),
-    [dominantHex, insetSymbol, researchTicker.companyName, setResearchTicker]
+    [dominantHex, insetSymbol, researchTicker.companyName, setResearchTicker],
   );
 
-  return (
-    <AmbientInsetContext.Provider value={value}>
-      {children}
-    </AmbientInsetContext.Provider>
-  );
+  return <AmbientInsetContext.Provider value={value}>{children}</AmbientInsetContext.Provider>;
 }
 
 export function useAmbientInset(): AmbientInsetContextValue {

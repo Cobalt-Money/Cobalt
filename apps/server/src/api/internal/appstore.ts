@@ -50,40 +50,37 @@ const syncRoute = createRoute({
   tags: ["App Store"],
 });
 
-export const appstoreRouter = new OpenAPIHono<AppEnv>().openapi(
-  syncRoute,
-  async (c) => {
-    const body = c.req.valid("json");
-    const userId = c.var.user.id;
+export const appstoreRouter = new OpenAPIHono<AppEnv>().openapi(syncRoute, async (c) => {
+  const body = c.req.valid("json");
+  const userId = c.var.user.id;
 
-    try {
-      const result = await syncAppStoreSubscription(userId, {
-        environment: body.environment,
-        expiresAt: body.expiresAt,
-        latestTransactionId: body.latestTransactionId,
-        originalTransactionId: body.originalTransactionId,
-        productId: body.productId,
-      });
+  try {
+    const result = await syncAppStoreSubscription(userId, {
+      environment: body.environment,
+      expiresAt: body.expiresAt,
+      latestTransactionId: body.latestTransactionId,
+      originalTransactionId: body.originalTransactionId,
+      productId: body.productId,
+    });
 
-      return c.json(
-        {
-          action: result.action,
-          subscriptionId: result.subscriptionId,
-          success: true as const,
-        },
-        200
-      );
-    } catch (error) {
-      if (error instanceof TypeError) {
-        return c.json({ error: error.message || "Invalid request" }, 400);
-      }
-      return c.json(
-        {
-          details: error instanceof Error ? error.message : "Unknown error",
-          error: "Failed to sync subscription",
-        },
-        500
-      );
+    return c.json(
+      {
+        action: result.action,
+        subscriptionId: result.subscriptionId,
+        success: true as const,
+      },
+      200,
+    );
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return c.json({ error: error.message || "Invalid request" }, 400);
     }
+    return c.json(
+      {
+        details: error instanceof Error ? error.message : "Unknown error",
+        error: "Failed to sync subscription",
+      },
+      500,
+    );
   }
-);
+});

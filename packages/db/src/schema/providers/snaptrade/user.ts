@@ -5,9 +5,7 @@ import { user } from "../../users/auth/auth";
 export const snaptradeUser = pgTable(
   "snaptrade_user",
   {
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }),
     snaptradeUserId: text("snaptrade_user_id").notNull().unique(),
     snaptradeUserSecret: text("snaptrade_user_secret").notNull(),
@@ -15,7 +13,7 @@ export const snaptradeUser = pgTable(
       .primaryKey()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (t) => [index("snaptrade_user_snaptrade_user_id_idx").on(t.snaptradeUserId)]
+  (t) => [index("snaptrade_user_snaptrade_user_id_idx").on(t.snaptradeUserId)],
 );
 
 export type SnaptradeUser = typeof snaptradeUser.$inferSelect;

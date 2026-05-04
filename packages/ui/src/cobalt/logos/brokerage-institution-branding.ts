@@ -13,12 +13,8 @@ function pickSnapTradeLogoFieldsFromRecord(o: Record<string, unknown>): {
   url: string | null;
 } {
   return {
-    aws:
-      typeof o.aws_s3_logo_url === "string" ? o.aws_s3_logo_url.trim() : null,
-    sq:
-      typeof o.aws_s3_square_logo_url === "string"
-        ? o.aws_s3_square_logo_url.trim()
-        : null,
+    aws: typeof o.aws_s3_logo_url === "string" ? o.aws_s3_logo_url.trim() : null,
+    sq: typeof o.aws_s3_square_logo_url === "string" ? o.aws_s3_square_logo_url.trim() : null,
     url: typeof o.url === "string" ? o.url.trim() : null,
   };
 }
@@ -51,7 +47,7 @@ function snapTradeLogoFieldsFromUnknown(meta: unknown): {
 
 function isLikelyUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    s.trim()
+    s.trim(),
   );
 }
 
@@ -94,10 +90,7 @@ function passivLogoUrlsForSlug(slug: string): string[] {
   }
   const fileSlug = s.toLowerCase().replaceAll("_", "-");
   const base = PASSIV_BROKERAGE_LOGOS_ORIGIN;
-  return [
-    `${base}/${fileSlug}-logo-square.png`,
-    `${base}/${fileSlug}-logo.png`,
-  ];
+  return [`${base}/${fileSlug}-logo-square.png`, `${base}/${fileSlug}-logo.png`];
 }
 
 function dedupeUrlList(urls: readonly string[]): string[] {
@@ -119,9 +112,7 @@ type BrokerageAuthForPassivLogos =
   | null
   | undefined;
 
-function collectPassivUrlsFromAuth(
-  auth: BrokerageAuthForPassivLogos
-): string[] {
+function collectPassivUrlsFromAuth(auth: BrokerageAuthForPassivLogos): string[] {
   const slugCandidates = new Set<string>();
   const addSlug = (raw: string | null | undefined) => {
     const t = raw?.trim();
@@ -141,7 +132,7 @@ function collectPassivUrlsFromAuth(
 function passivExtrasForLogo(
   dedupedPassiv: string[],
   primary: string | null,
-  hasMetaLogo: boolean
+  hasMetaLogo: boolean,
 ): string[] {
   if (hasMetaLogo) {
     return dedupedPassiv.filter((u) => u !== primary);
@@ -165,25 +156,15 @@ export function brokerageInstitutionBranding(row: {
   const fromAccount = snapTradeLogoFieldsFromUnknown(null);
   const fromAuth = snapTradeLogoFieldsFromUnknown(auth?.meta);
 
-  const awsS3SquareLogoUrl =
-    fromAccount.awsS3SquareLogoUrl ?? fromAuth.awsS3SquareLogoUrl ?? null;
-  const awsS3LogoUrl =
-    fromAccount.awsS3LogoUrl ?? fromAuth.awsS3LogoUrl ?? null;
+  const awsS3SquareLogoUrl = fromAccount.awsS3SquareLogoUrl ?? fromAuth.awsS3SquareLogoUrl ?? null;
+  const awsS3LogoUrl = fromAccount.awsS3LogoUrl ?? fromAuth.awsS3LogoUrl ?? null;
   let institutionUrl =
-    fromAccount.url ??
-    fromAuth.url ??
-    inferBrokerHomepageUrl(row.institutionName ?? "") ??
-    null;
+    fromAccount.url ?? fromAuth.url ?? inferBrokerHomepageUrl(row.institutionName ?? "") ?? null;
 
   const dedupedPassiv = collectPassivUrlsFromAuth(auth);
   const hasMetaLogo = Boolean(awsS3SquareLogoUrl || awsS3LogoUrl);
-  const institutionLogo =
-    awsS3SquareLogoUrl ?? awsS3LogoUrl ?? dedupedPassiv[0] ?? null;
-  const institutionLogosExtra = passivExtrasForLogo(
-    dedupedPassiv,
-    institutionLogo,
-    hasMetaLogo
-  );
+  const institutionLogo = awsS3SquareLogoUrl ?? awsS3LogoUrl ?? dedupedPassiv[0] ?? null;
+  const institutionLogosExtra = passivExtrasForLogo(dedupedPassiv, institutionLogo, hasMetaLogo);
 
   if (!institutionLogo && !institutionUrl) {
     institutionUrl = inferBrokerHomepageUrl(row.institutionName ?? "");

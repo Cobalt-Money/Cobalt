@@ -12,9 +12,5 @@ export interface SandboxRunResult {
 
 export interface SandboxBackend {
   /** Run `program` in a fresh single-shot sandbox (MCP `execute_code`). */
-  run(args: {
-    bridgeToken: string;
-    bridgeUrl: string;
-    program: string;
-  }): Promise<SandboxRunResult>;
+  run(args: { bridgeToken: string; bridgeUrl: string; program: string }): Promise<SandboxRunResult>;
 }

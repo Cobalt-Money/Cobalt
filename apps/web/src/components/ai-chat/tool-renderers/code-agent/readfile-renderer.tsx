@@ -34,13 +34,8 @@ export function ReadFileToolRenderer({
   return (
     <div key={toolRendererKey(context, "readfile")} className="pb-2">
       <div className="flex items-center gap-2 py-1">
-        <HugeiconsIcon
-          icon={File01Icon}
-          className="size-3.5 text-muted-foreground shrink-0"
-        />
-        <span className="text-sm text-foreground truncate">
-          {filename || path || "File"}
-        </span>
+        <HugeiconsIcon icon={File01Icon} className="size-3.5 text-muted-foreground shrink-0" />
+        <span className="text-sm text-foreground truncate">{filename || path || "File"}</span>
         {path && filename !== path && (
           <span className="text-xs text-muted-foreground truncate" title={path}>
             {path}

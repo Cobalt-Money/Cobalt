@@ -19,7 +19,7 @@ function mapOrderCoreIdentity(
   snaptradeAccountId: string,
   appUserId: string,
   lastSync: Date,
-  ticker: string
+  ticker: string,
 ) {
   return {
     accountId: dbAccountId,
@@ -35,10 +35,7 @@ function mapOrderCoreIdentity(
 }
 
 function mapOrderCoreCurrencyExchange(
-  currency:
-    | { code?: string | null; id?: string | null; name?: string | null }
-    | null
-    | undefined,
+  currency: { code?: string | null; id?: string | null; name?: string | null } | null | undefined,
   exchange:
     | {
         code?: string | null;
@@ -47,7 +44,7 @@ function mapOrderCoreCurrencyExchange(
         name?: string | null;
       }
     | null
-    | undefined
+    | undefined,
 ) {
   return {
     currencyCode: currency?.code ?? "USD",
@@ -66,7 +63,7 @@ function mapOrderCoreSymbolMeta(
     | { code?: string | null; description?: string | null; id?: string | null }
     | null
     | undefined,
-  ticker: string
+  ticker: string,
 ) {
   return {
     figiCode: symbolData?.figi_code ?? null,
@@ -84,21 +81,14 @@ function mapOrderCore(
   dbAccountId: string,
   snaptradeAccountId: string,
   appUserId: string,
-  lastSync: Date
+  lastSync: Date,
 ) {
   const { symbolData, ticker } = resolveOrderSymbol(order);
   const currency = symbolData?.currency;
   const exchange = symbolData?.exchange;
   const secType = symbolData?.type;
   return {
-    ...mapOrderCoreIdentity(
-      order,
-      dbAccountId,
-      snaptradeAccountId,
-      appUserId,
-      lastSync,
-      ticker
-    ),
+    ...mapOrderCoreIdentity(order, dbAccountId, snaptradeAccountId, appUserId, lastSync, ticker),
     ...mapOrderCoreCurrencyExchange(currency, exchange),
     ...mapOrderCoreSymbolMeta(symbolData, secType, ticker),
   };
@@ -127,9 +117,7 @@ function mapOrderTimingAmounts(order: AccountOrderRecord) {
 
 function mapOrderTimingDates(order: AccountOrderRecord) {
   return {
-    expirationDate: order.expiration_date
-      ? new Date(order.expiration_date)
-      : null,
+    expirationDate: order.expiration_date ? new Date(order.expiration_date) : null,
     expiryDate: order.expiry_date ? new Date(order.expiry_date) : null,
     timeExecuted: order.time_executed ? new Date(order.time_executed) : null,
     timePlaced: order.time_placed ? new Date(order.time_placed) : new Date(),
@@ -146,16 +134,10 @@ export function mapOrderRecord(
   dbAccountId: string,
   snaptradeAccountId: string,
   appUserId: string,
-  lastSync: Date
+  lastSync: Date,
 ) {
   return {
-    ...mapOrderCore(
-      order,
-      dbAccountId,
-      snaptradeAccountId,
-      appUserId,
-      lastSync
-    ),
+    ...mapOrderCore(order, dbAccountId, snaptradeAccountId, appUserId, lastSync),
     ...mapOrderTiming(order),
   };
 }

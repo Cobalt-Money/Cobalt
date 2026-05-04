@@ -18,9 +18,7 @@ config({
 });
 const rawUrl = process.env.ZERO_UPSTREAM_DB;
 if (!rawUrl) {
-  process.stderr.write(
-    "check-slots: set ZERO_UPSTREAM_DB in apps/zero-cache/.env\n"
-  );
+  process.stderr.write("check-slots: set ZERO_UPSTREAM_DB in apps/zero-cache/.env\n");
   process.exit(1);
 }
 // verify-full requires a root cert that's not always present locally; fall back to require
@@ -49,8 +47,7 @@ const rows = raw
   .split("\n")
   .filter(Boolean)
   .map((line) => {
-    const [slot_name, active, wal_status, retained_wal, retained_bytes] =
-      line.split("|");
+    const [slot_name, active, wal_status, retained_wal, retained_bytes] = line.split("|");
     return {
       active: active === "t",
       retained_bytes: Number(retained_bytes ?? 0),
@@ -66,17 +63,10 @@ if (rows.length === 0) {
 // Slots we expect to exist
 // Only the active prod slot is expected; inactive dev slots still leak WAL
 const KNOWN_ACTIVE_PATTERN = /^zero_0_/; // prod slot only
-const leaked = rows.filter(
-  (r) => !r.active && !KNOWN_ACTIVE_PATTERN.test(r.slot_name)
-);
+const leaked = rows.filter((r) => !r.active && !KNOWN_ACTIVE_PATTERN.test(r.slot_name));
 const totalLeakedBytes = leaked.reduce((s, r) => s + r.retained_bytes, 0);
 console.log("\n=== Logical replication slots ===\n");
-console.log(
-  "slot_name".padEnd(50),
-  "active".padEnd(8),
-  "wal_status".padEnd(12),
-  "retained_wal"
-);
+console.log("slot_name".padEnd(50), "active".padEnd(8), "wal_status".padEnd(12), "retained_wal");
 console.log("-".repeat(90));
 for (const r of rows) {
   const flag = leaked.includes(r) ? " ⚠️" : "";
@@ -84,7 +74,7 @@ for (const r of rows) {
     r.slot_name.padEnd(50),
     String(r.active).padEnd(8),
     r.wal_status.padEnd(12),
-    r.retained_wal + flag
+    r.retained_wal + flag,
   );
 }
 if (leaked.length === 0) {
@@ -93,7 +83,7 @@ if (leaked.length === 0) {
 }
 const totalHuman = (totalLeakedBytes / 1_073_741_824).toFixed(2);
 console.log(
-  `\n⚠️  ${leaked.length} leaked inactive slot(s) retaining ~${totalHuman} GB of WAL total.\n`
+  `\n⚠️  ${leaked.length} leaked inactive slot(s) retaining ~${totalHuman} GB of WAL total.\n`,
 );
 if (!drop) {
   console.log("To drop them, run:\n");
@@ -101,7 +91,7 @@ if (!drop) {
   console.log("\nOr individually:");
   for (const r of leaked) {
     console.log(
-      `  psql "$ZERO_UPSTREAM_DB" -c "SELECT pg_drop_replication_slot('${r.slot_name}');"`
+      `  psql "$ZERO_UPSTREAM_DB" -c "SELECT pg_drop_replication_slot('${r.slot_name}');"`,
     );
   }
   process.exit(1); // non-zero so CI can catch this

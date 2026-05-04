@@ -54,9 +54,7 @@ export const tagsMutators = {
       const ownedTags = await tx.run(
         zql.tag
           .where("userId", ctx.userId)
-          .where(({ cmp, or }) =>
-            or(...allTagIds.map((id) => cmp("id", "=", id)))
-          )
+          .where(({ cmp, or }) => or(...allTagIds.map((id) => cmp("id", "=", id)))),
       );
       if (ownedTags.length !== allTagIds.length) {
         throw new Error("One or more tags not owned by user");
@@ -72,9 +70,7 @@ export const tagsMutators = {
       if (!txn || txn.userId !== ctx.userId) {
         continue;
       }
-      const existing = await tx.run(
-        zql.transactionTag.where("transactionId", txnId)
-      );
+      const existing = await tx.run(zql.transactionTag.where("transactionId", txnId));
       const before = new Set(existing.map((r) => r.tagId as string));
       const after = new Set(before);
       for (const id of args.removeTagIds) {
@@ -85,9 +81,7 @@ export const tagsMutators = {
       }
       const oldIds = [...before].toSorted();
       const newIds = [...after].toSorted();
-      const same =
-        oldIds.length === newIds.length &&
-        oldIds.every((v, j) => v === newIds[j]);
+      const same = oldIds.length === newIds.length && oldIds.every((v, j) => v === newIds[j]);
       if (same) {
         continue;
       }
@@ -142,9 +136,7 @@ export const tagsMutators = {
     if (!ctx?.userId) {
       throw new Error("Not authenticated");
     }
-    const owned = await tx.run(
-      zql.tag.where("id", args.tagId).where("userId", ctx.userId).one()
-    );
+    const owned = await tx.run(zql.tag.where("id", args.tagId).where("userId", ctx.userId).one());
     if (!owned) {
       return;
     }
@@ -152,82 +144,69 @@ export const tagsMutators = {
     await tx.mutate.tag.delete({ id: args.tagId });
   }),
 
-  setTransactionTags: defineMutator(
-    setTransactionTagsSchema,
-    async ({ args, ctx, tx }) => {
-      if (!ctx?.userId) {
-        throw new Error("Not authenticated");
-      }
-      const txn = await tx.run(
-        zql.transaction.where("id", args.transactionId).one()
+  setTransactionTags: defineMutator(setTransactionTagsSchema, async ({ args, ctx, tx }) => {
+    if (!ctx?.userId) {
+      throw new Error("Not authenticated");
+    }
+    const txn = await tx.run(zql.transaction.where("id", args.transactionId).one());
+    if (!txn || txn.userId !== ctx.userId) {
+      return;
+    }
+
+    const nextIds = [...new Set(args.tagIds)].toSorted();
+    if (nextIds.length > 0) {
+      const ownedTags = await tx.run(
+        zql.tag
+          .where("userId", ctx.userId)
+          .where(({ cmp, or }) => or(...nextIds.map((id) => cmp("id", "=", id)))),
       );
-      if (!txn || txn.userId !== ctx.userId) {
-        return;
+      if (ownedTags.length !== nextIds.length) {
+        throw new Error("One or more tags not owned by user");
       }
+    }
 
-      const nextIds = [...new Set(args.tagIds)].toSorted();
-      if (nextIds.length > 0) {
-        const ownedTags = await tx.run(
-          zql.tag
-            .where("userId", ctx.userId)
-            .where(({ cmp, or }) =>
-              or(...nextIds.map((id) => cmp("id", "=", id)))
-            )
-        );
-        if (ownedTags.length !== nextIds.length) {
-          throw new Error("One or more tags not owned by user");
-        }
-      }
+    const existing = await tx.run(zql.transactionTag.where("transactionId", args.transactionId));
+    const oldIds = existing.map((r) => r.tagId as string).toSorted();
 
-      const existing = await tx.run(
-        zql.transactionTag.where("transactionId", args.transactionId)
-      );
-      const oldIds = existing.map((r) => r.tagId as string).toSorted();
+    const same = oldIds.length === nextIds.length && oldIds.every((v, i) => v === nextIds[i]);
+    if (same) {
+      return;
+    }
 
-      const same =
-        oldIds.length === nextIds.length &&
-        oldIds.every((v, i) => v === nextIds[i]);
-      if (same) {
-        return;
-      }
+    const toAdd = nextIds.filter((id) => !oldIds.includes(id));
+    const toRemove = oldIds.filter((id) => !nextIds.includes(id));
 
-      const toAdd = nextIds.filter((id) => !oldIds.includes(id));
-      const toRemove = oldIds.filter((id) => !nextIds.includes(id));
-
-      for (const tagId of toRemove) {
-        await tx.mutate.transactionTag.delete({
-          tagId,
-          transactionId: args.transactionId,
-        });
-      }
-      for (const tagId of toAdd) {
-        await tx.mutate.transactionTag.insert({
-          createdAt: Date.now(),
-          tagId,
-          transactionId: args.transactionId,
-        });
-      }
-
-      await tx.mutate.transactionEdit.insert({
-        actor: "user",
-        createdAt: Date.now(),
-        field: "tags",
-        id: args.editId,
-        newValue: nextIds,
-        oldValue: oldIds,
+    for (const tagId of toRemove) {
+      await tx.mutate.transactionTag.delete({
+        tagId,
         transactionId: args.transactionId,
-        userId: ctx.userId,
       });
     }
-  ),
+    for (const tagId of toAdd) {
+      await tx.mutate.transactionTag.insert({
+        createdAt: Date.now(),
+        tagId,
+        transactionId: args.transactionId,
+      });
+    }
+
+    await tx.mutate.transactionEdit.insert({
+      actor: "user",
+      createdAt: Date.now(),
+      field: "tags",
+      id: args.editId,
+      newValue: nextIds,
+      oldValue: oldIds,
+      transactionId: args.transactionId,
+      userId: ctx.userId,
+    });
+  }),
 
   update: defineMutator(updateTagSchema, async ({ args, ctx, tx }) => {
     if (!ctx?.userId) {
       throw new Error("Not authenticated");
     }
-    const owned = await tx.run(
-      zql.tag.where("id", args.tagId).where("userId", ctx.userId).one()
-    );
+    const owned = await tx.run(zql.tag.where("id", args.tagId).where("userId", ctx.userId).one());
     if (!owned) {
       return;
     }

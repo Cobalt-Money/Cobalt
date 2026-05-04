@@ -28,19 +28,13 @@ const route = createRoute({
   tags: ["Research"],
 });
 
-export const overviewRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const { symbol } = c.req.valid("query");
-      const profile = await fmpGetProfile(symbol);
-      c.header(
-        "Cache-Control",
-        "public, s-maxage=604800, stale-while-revalidate=86400"
-      );
-      return c.json(profile, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch company overview" }, 500);
-    }
+export const overviewRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+  try {
+    const { symbol } = c.req.valid("query");
+    const profile = await fmpGetProfile(symbol);
+    c.header("Cache-Control", "public, s-maxage=604800, stale-while-revalidate=86400");
+    return c.json(profile, 200);
+  } catch {
+    return c.json({ error: "Failed to fetch company overview" }, 500);
   }
-);
+});

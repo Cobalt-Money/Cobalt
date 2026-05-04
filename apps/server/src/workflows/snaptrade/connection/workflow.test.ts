@@ -76,14 +76,10 @@ describe("snaptradeConnectionAddedWorkflow", () => {
     expect(upsertSnaptradeAuthorizationStep).toHaveBeenCalledWith(
       "auth-1",
       "app-user-1",
-      "broker-1"
+      "broker-1",
     );
     expect(fetchAccountsStep).toHaveBeenCalledWith(credentials);
-    expect(upsertAccountsStep).toHaveBeenCalledWith(
-      [{ id: "acct-1" }],
-      "auth-db-1",
-      "app-user-1"
-    );
+    expect(upsertAccountsStep).toHaveBeenCalledWith([{ id: "acct-1" }], "auth-db-1", "app-user-1");
     expect(out).toStrictEqual({
       eventType: "CONNECTION_ADDED",
       success: true,
@@ -111,11 +107,7 @@ describe("snaptradeConnectionUpdatedWorkflow / FixedWorkflow", () => {
   });
 
   it.each([
-    [
-      "UPDATED",
-      snaptradeConnectionUpdatedWorkflow,
-      "CONNECTION_UPDATED",
-    ] as const,
+    ["UPDATED", snaptradeConnectionUpdatedWorkflow, "CONNECTION_UPDATED"] as const,
     ["FIXED", snaptradeConnectionFixedWorkflow, "CONNECTION_FIXED"] as const,
   ])(
     "%s: clears disabled flag, resolves alerts, refreshes accounts",
@@ -124,21 +116,14 @@ describe("snaptradeConnectionUpdatedWorkflow / FixedWorkflow", () => {
         brokerageAuthorizationId: "auth-x",
         userId: "user-x",
       });
-      expect(updateAuthorizationStatusStep).toHaveBeenCalledWith(
-        "auth-x",
-        false
-      );
+      expect(updateAuthorizationStatusStep).toHaveBeenCalledWith("auth-x", false);
       expect(resolveAlertsStep).toHaveBeenCalledWith({
         source: ALERT_SOURCES.SNAPTRADE,
         sourceId: "auth-x",
       });
-      expect(upsertAccountsStep).toHaveBeenCalledWith(
-        [],
-        "auth-x",
-        "app-user-1"
-      );
+      expect(upsertAccountsStep).toHaveBeenCalledWith([], "auth-x", "app-user-1");
       expect(out).toStrictEqual({ eventType, success: true, userId: "user-x" });
-    }
+    },
   );
 });
 
@@ -160,7 +145,7 @@ describe("snaptradeConnectionBrokenWorkflow", () => {
         sourceId: "auth-b",
         type: ALERT_TYPES.CONNECTION_BROKEN,
         userId: "user-b",
-      })
+      }),
     );
     expect(out.success).toBeTruthy();
   });
@@ -219,23 +204,17 @@ describe("snaptradeHoldingsUpdatedWorkflow", () => {
       "acct-1",
       "auth-db-2",
       credentials,
-      expect.objectContaining({ id: "acct-1" })
+      expect.objectContaining({ id: "acct-1" }),
     );
     expect(upsertAccountDetailsStep).toHaveBeenCalledWith(
       "acct-1",
       credentials,
-      expect.objectContaining({ id: "acct-1" })
+      expect.objectContaining({ id: "acct-1" }),
     );
     expect(syncAccountBalancesStep).toHaveBeenCalledWith("acct-1", credentials);
-    expect(syncAccountPositionsStep).toHaveBeenCalledWith(
-      "acct-1",
-      credentials
-    );
+    expect(syncAccountPositionsStep).toHaveBeenCalledWith("acct-1", credentials);
     expect(syncAccountOrdersStep).toHaveBeenCalledWith("acct-1", credentials);
-    expect(syncRecentActivitiesStep).toHaveBeenCalledWith(
-      "acct-1",
-      credentials
-    );
+    expect(syncRecentActivitiesStep).toHaveBeenCalledWith("acct-1", credentials);
     expect(out.success).toBeTruthy();
   });
 
@@ -255,10 +234,7 @@ describe("snaptradeHoldingsUpdatedWorkflow", () => {
     expect(syncAccountPositionsStep).not.toHaveBeenCalled();
     expect(syncAccountOrdersStep).not.toHaveBeenCalled();
     // activities always run
-    expect(syncRecentActivitiesStep).toHaveBeenCalledWith(
-      "acct-1",
-      credentials
-    );
+    expect(syncRecentActivitiesStep).toHaveBeenCalledWith("acct-1", credentials);
     expect(out.success).toBeTruthy();
   });
 

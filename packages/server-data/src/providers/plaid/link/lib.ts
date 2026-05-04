@@ -28,12 +28,11 @@ export const financialAccountInsertFromPlaid =
 export const balanceRowFromPlaidAccount = (
   account: AccountBase,
   accountId: string,
-  userId: string
+  userId: string,
 ) => ({
   accountId,
   available:
-    account.balances.available !== null &&
-    account.balances.available !== undefined
+    account.balances.available !== null && account.balances.available !== undefined
       ? String(account.balances.available)
       : null,
   creditLimit:
@@ -65,7 +64,7 @@ export interface ExistingAccountDuplicateRow {
 /** Pure predicate: same account type and matching mask when both masks are present. */
 export const matchesDuplicateAccountMask = (
   candidate: Pick<ExistingAccountDuplicateRow, "mask" | "type">,
-  existing: ExistingAccountDuplicateRow
+  existing: ExistingAccountDuplicateRow,
 ): boolean =>
   candidate.type === existing.type &&
   candidate.mask !== null &&
@@ -76,19 +75,14 @@ export class DuplicateAccountError extends Error {
   readonly code = "DUPLICATE_ACCOUNT" as const;
   readonly duplicateAccounts: { name: string; createdAt: Date }[];
 
-  constructor(
-    message: string,
-    duplicateAccounts: { name: string; createdAt: Date }[]
-  ) {
+  constructor(message: string, duplicateAccounts: { name: string; createdAt: Date }[]) {
     super(message);
     this.name = "DuplicateAccountError";
     this.duplicateAccounts = duplicateAccounts;
   }
 }
 
-export const isDuplicateAccountError = (
-  error: unknown
-): error is DuplicateAccountError =>
+export const isDuplicateAccountError = (error: unknown): error is DuplicateAccountError =>
   error instanceof DuplicateAccountError ||
   (typeof error === "object" &&
     error !== null &&

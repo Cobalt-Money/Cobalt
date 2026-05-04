@@ -16,7 +16,7 @@ function todayIso(): string {
  */
 async function upsertDailySnapshotsForSource(
   userId: string,
-  source: "plaid" | "snaptrade"
+  source: "plaid" | "snaptrade",
 ): Promise<{ upserted: number }> {
   const snapshotDate = todayIso();
 
@@ -93,14 +93,14 @@ async function upsertDailySnapshotsForSource(
 
 export async function upsertBankBalanceSnapshotsForUser(
   userId: string,
-  _source: string
+  _source: string,
 ): Promise<{ upserted: number }> {
   return await upsertDailySnapshotsForSource(userId, "plaid");
 }
 
 export async function upsertSnapTradePortfolioSnapshotsForUser(
   userId: string,
-  _source: string
+  _source: string,
 ): Promise<{ upserted: number }> {
   return await upsertDailySnapshotsForSource(userId, "snaptrade");
 }
@@ -112,7 +112,7 @@ export async function upsertSnapTradePortfolioSnapshotsForUser(
  */
 export function upsertPlaidInvestmentSnapshotsForUser(
   _userId: string,
-  _source: string
+  _source: string,
 ): Promise<{ upserted: number }> {
   return Promise.resolve({ upserted: 0 });
 }

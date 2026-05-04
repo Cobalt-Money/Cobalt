@@ -21,9 +21,7 @@ export const financialEvents = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     keyPoints: jsonb("key_points"),
     newsItems: integer("news_items").default(0).notNull(),
-    scrapedArticlesCount: integer("scraped_articles_count")
-      .default(0)
-      .notNull(),
+    scrapedArticlesCount: integer("scraped_articles_count").default(0).notNull(),
     sentiment: varchar("sentiment"),
     summary: text("summary"),
     tickers: jsonb("tickers"),
@@ -41,7 +39,7 @@ export const financialEvents = pgTable(
     index("financial_events_date_id_idx").on(table.date, table.id),
     index("financial_events_created_at_id_idx").on(table.createdAt, table.id),
     index("financial_events_tickers_idx").using("gin", table.tickers),
-  ]
+  ],
 );
 
 // Event Articles table
@@ -73,7 +71,7 @@ export const eventArticles = pgTable(
     index("event_articles_news_url_idx").on(table.newsUrl),
     index("event_articles_source_name_idx").on(table.sourceName),
     index("event_articles_date_idx").on(table.date),
-  ]
+  ],
 );
 
 // Type exports

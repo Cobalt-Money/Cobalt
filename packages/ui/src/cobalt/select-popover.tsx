@@ -1,8 +1,4 @@
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { useMemo, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
@@ -71,7 +67,7 @@ export function CobaltSelectPopover<TItem>({
         align="start"
         className={cn(
           "gap-0 bg-[oklch(0.949_0_0)] p-1 dark:bg-[oklch(0.29_0_0)]",
-          contentClassName ?? "w-64"
+          contentClassName ?? "w-64",
         )}
       >
         <div className="flex items-center px-2.5 py-1.5">
@@ -87,9 +83,7 @@ export function CobaltSelectPopover<TItem>({
         </div>
         <div className="scrollbar-thin max-h-72 overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-              {emptyText}
-            </div>
+            <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">{emptyText}</div>
           ) : (
             filtered.map((item) => {
               const key = itemKey(item);
@@ -98,7 +92,7 @@ export function CobaltSelectPopover<TItem>({
                 <button
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40",
-                    isSelected && "bg-input/30 font-medium"
+                    isSelected && "bg-input/30 font-medium",
                   )}
                   key={key}
                   onClick={() => {

@@ -22,7 +22,7 @@ export const brokerageUser = pgTable.withRLS(
     index("brokerage_user_snaptrade_user_id_idx").on(table.providerUserId),
     appFullAccess(),
     agentSelectOwn("user_id"),
-  ]
+  ],
 );
 
 // Type exports

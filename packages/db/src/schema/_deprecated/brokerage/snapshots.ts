@@ -52,17 +52,12 @@ export const portfolioSnapshots = pgTable.withRLS(
   (table) => [
     index("portfolio_snapshot_user_id_idx").on(table.userId),
     index("portfolio_snapshot_account_id_idx").on(table.accountId),
-    index("portfolio_snapshot_snaptrade_account_id_idx").on(
-      table.snapTradeAccountId
-    ),
+    index("portfolio_snapshot_snaptrade_account_id_idx").on(table.snapTradeAccountId),
     index("portfolio_snapshot_snapshot_date_idx").on(table.snapshotDate),
-    uniqueIndex("portfolio_snapshot_account_date_idx").on(
-      table.accountId,
-      table.snapshotDate
-    ),
+    uniqueIndex("portfolio_snapshot_account_date_idx").on(table.accountId, table.snapshotDate),
     appFullAccess(),
     agentSelectOwn("user_id"),
-  ]
+  ],
 );
 
 // Type exports

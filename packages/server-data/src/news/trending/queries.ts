@@ -1,8 +1,4 @@
-import {
-  formatPublishDate,
-  getCleanSourceName,
-  getNewsSourceLogo,
-} from "../lib.js";
+import { formatPublishDate, getCleanSourceName, getNewsSourceLogo } from "../lib.js";
 import type { TrendingHeadline } from "./schemas.js";
 import { stockNewsAPI } from "./stock-news-api.js";
 
@@ -11,7 +7,7 @@ import { stockNewsAPI } from "./stock-news-api.js";
 export const getTrendingHeadlines = async (
   _userId: string,
   userTickers: string[],
-  limit: number
+  limit: number,
 ): Promise<TrendingHeadline[]> => {
   const tickerString = userTickers.join(",");
 

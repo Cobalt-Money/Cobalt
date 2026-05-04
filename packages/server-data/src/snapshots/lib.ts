@@ -20,9 +20,7 @@ export interface BalanceSnapshotJoinedRow {
 }
 
 /** Map a joined snapshot row to the HTTP DTO. */
-export function toBalanceSnapshotDTO(
-  row: BalanceSnapshotJoinedRow
-): BalanceSnapshot {
+export function toBalanceSnapshotDTO(row: BalanceSnapshotJoinedRow): BalanceSnapshot {
   const { account } = row;
   return {
     accountName: account.name,

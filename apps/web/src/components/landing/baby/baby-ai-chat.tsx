@@ -40,7 +40,7 @@ export function BabyAIChat({ messages }: BabyAIChatProps) {
                   <MessageResponse>{msg.text}</MessageResponse>
                 </MessageContent>
               </Message>
-            )
+            ),
           )}
         </div>
       </ConversationContent>

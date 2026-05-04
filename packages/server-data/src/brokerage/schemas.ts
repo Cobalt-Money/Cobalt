@@ -240,10 +240,9 @@ export const brokerageAccountsListResponseSchema = z.object({
   accounts: z.array(brokerageAccountListItemSchema),
 });
 
-export const disconnectBrokerageAccountResponseSchema =
-  successResponseSchema.extend({
-    message: z.string(),
-  });
+export const disconnectBrokerageAccountResponseSchema = successResponseSchema.extend({
+  message: z.string(),
+});
 
 export const brokerageAccountIdParamSchema = z.object({
   accountId: z.string().uuid(),

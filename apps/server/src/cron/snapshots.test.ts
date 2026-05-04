@@ -34,8 +34,7 @@ function call(authHeader?: string) {
 describe("cronSnapshotsRouter — auth", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (vi.mocked(envModule).env as never as MutableEnv).CRON_SECRET =
-      "test-secret";
+    (vi.mocked(envModule).env as never as MutableEnv).CRON_SECRET = "test-secret";
   });
 
   it("returns 503 when CRON_SECRET is unset", async () => {
@@ -59,8 +58,7 @@ describe("cronSnapshotsRouter — auth", () => {
 describe("cronSnapshotsRouter — fan-out", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (vi.mocked(envModule).env as never as MutableEnv).CRON_SECRET =
-      "test-secret";
+    (vi.mocked(envModule).env as never as MutableEnv).CRON_SECRET = "test-secret";
   });
 
   it("returns enqueued:0 when no users", async () => {
@@ -76,7 +74,7 @@ describe("cronSnapshotsRouter — fan-out", () => {
     mockSend.mockImplementation((_topic, _msg, opts) =>
       Promise.resolve({
         messageId: `mid-${opts?.idempotencyKey ?? "x"}`,
-      } as never)
+      } as never),
     );
 
     const res = await call("Bearer test-secret");
@@ -88,7 +86,7 @@ describe("cronSnapshotsRouter — fan-out", () => {
       expect(mockSend).toHaveBeenCalledWith(
         "snapshots",
         { userId: uid },
-        { idempotencyKey: `snapshot-${uid}-${today}` }
+        { idempotencyKey: `snapshot-${uid}-${today}` },
       );
     }
 

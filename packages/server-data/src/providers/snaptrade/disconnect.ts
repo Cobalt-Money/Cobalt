@@ -7,7 +7,7 @@ import { removeBrokerageAuthorization } from "./authorizations/actions.js";
 export async function disconnectSnaptradeAuthorizationByUserId(
   userId: string,
   snapTradeAuthorizationId: string,
-  databaseAuthId: string
+  databaseAuthId: string,
 ): Promise<{
   deletedAccounts?: {
     accountId: string;
@@ -46,9 +46,7 @@ export async function disconnectSnaptradeAuthorizationByUserId(
 
     // Deleting the authorization cascades to financial_account, which cascades
     // to balance / holding / snapshot / orders / investment_activity / etc.
-    await db
-      .delete(snaptradeAuthorization)
-      .where(eq(snaptradeAuthorization.id, databaseAuthId));
+    await db.delete(snaptradeAuthorization).where(eq(snaptradeAuthorization.id, databaseAuthId));
 
     return {
       deletedAccounts: associatedAccounts.map((a) => ({
@@ -69,7 +67,7 @@ export async function disconnectSnaptradeAuthorizationByUserId(
 
 export async function disconnectBrokerageAccountByUserId(
   userId: string,
-  accountId: string
+  accountId: string,
 ): Promise<{ message: string; success: boolean }> {
   try {
     const account = await db.query.financialAccount.findFirst({
@@ -106,7 +104,7 @@ export async function disconnectBrokerageAccountByUserId(
     const result = await disconnectSnaptradeAuthorizationByUserId(
       userId,
       auth.authorizationId,
-      auth.id
+      auth.id,
     );
 
     if (result.success) {
