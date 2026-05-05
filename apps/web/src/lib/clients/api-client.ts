@@ -5,6 +5,7 @@ import type {
   AlertsRouter,
   AppstoreRouter,
   BrokerageRouter,
+  CategoriesRouter,
   ChatRouter,
   InstitutionsRouter,
   NewsRouter,
@@ -37,6 +38,7 @@ export const accountsApi = hc<AccountsRouter>(`${url}/api/accounts`, init);
 export const alertsApi = hc<AlertsRouter>(`${url}/api/alerts`, init);
 export const appstoreApi = hc<AppstoreRouter>(`${url}/api/appstore`, init);
 export const brokerageApi = hc<BrokerageRouter>(`${url}/api/brokerage`, init);
+export const categoriesApi = hc<CategoriesRouter>(`${url}/api/categories`, init);
 export const chatApi = hc<ChatRouter>(`${url}/api/chat`, init);
 export const institutionsApi = hc<InstitutionsRouter>(`${url}/api/institutions`, init);
 export const newsApi = hc<NewsRouter>(`${url}/api/news`, init);
