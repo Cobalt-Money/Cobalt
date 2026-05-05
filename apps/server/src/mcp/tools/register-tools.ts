@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
+import { COBALT_SDK_DESCRIPTION } from "../../ai/agents/code-agent/sdk-description.js";
 import { executeCode } from "./execute-code.js";
 
 export function registerMcpTools(server: McpServer, userId: string): void {
@@ -21,34 +22,7 @@ export function registerMcpTools(server: McpServer, userId: string): void {
     "cobalt_execute_code",
     {
       annotations: { destructiveHint: false, readOnlyHint: false },
-      description: [
-        "Run JavaScript or TypeScript inside an ephemeral V8 isolate sandbox with access to the Cobalt SDK as a `cobalt` global. TS types are stripped before exec (no type-check, syntax only) — annotations, interfaces, generics, and `as` casts are all fine. Imports/requires are NOT available; everything you need is on `cobalt.*`.",
-        "Available APIs:",
-        "  Accounts (user-scoped):",
-        "    - cobalt.accounts.listAll() / listBank() / listCreditCards() / getById({ accountId })",
-        "  Brokerage (user-scoped):",
-        "    - cobalt.brokerage.balances() / accounts() / userBrokerages() / userTickers()",
-        "    - cobalt.brokerage.positions({ accountId?, limit?, offset? })",
-        "    - cobalt.brokerage.activities({ accountId?, limit?, offset? })",
-        "    - cobalt.brokerage.portfolioSnapshots({ accountId?, startDate?, endDate? })",
-        "  Snapshots (user-scoped):",
-        "    - cobalt.snapshots.balances({ accountId?, startDate?, endDate? })",
-        "  Tags (user-scoped):",
-        "    - cobalt.tags.list() / get({ tagId })",
-        "    - cobalt.tags.forTransaction({ transactionId }) — current tagIds on a transaction",
-        "    - cobalt.tags.addToTransaction({ transactionId, tagIds }) — merge (preserves existing)",
-        "    - cobalt.tags.removeFromTransaction({ transactionId, tagIds })",
-        "    - cobalt.tags.setOnTransaction({ transactionId, tagIds }) — full replace; pass [] to clear",
-        "  Transactions (user-scoped):",
-        "    - cobalt.transactions.list({ startDate?, endDate?, primaryCategory?, accountType?, minAmount?, maxAmount?, searchQuery?, pendingFilter?, page?, pageSize? })",
-        "    - cobalt.transactions.update({ transactionId, patch: { name?, date?, notes?, category?, tags?, userOverrideLocation? } }) — patch only, cannot create. patch.tags is a FULL REPLACE of the tag set; to add or remove a single tag use cobalt.tags.addToTransaction / removeFromTransaction instead.",
-        "  Research (global market data):",
-        "    - cobalt.research.quote({ symbol }) / overview / earningsHistory / earningsEstimates / incomeStatement / balanceSheet / news",
-        "    - cobalt.research.timeSeries({ symbol, interval?, outputsize? })",
-        "    - cobalt.research.intraday({ symbol, interval, extended_hours?, outputsize? })",
-        "User-scoped calls are automatically restricted to the authenticated user. Use `console.log` to return data; the script's stdout is what you receive.",
-        "The sandbox is ephemeral and limited to a 3-minute wall-clock budget. Most APIs are read-only; transactions.update is the only mutator and patches existing rows owned by the user.",
-      ].join("\n"),
+      description: COBALT_SDK_DESCRIPTION,
       inputSchema: z.object({
         code: z
           .string()

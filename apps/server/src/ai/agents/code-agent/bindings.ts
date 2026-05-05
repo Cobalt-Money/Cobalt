@@ -1,12 +1,8 @@
 import { bindRoutes, route } from "@cobalt-web/bindings";
 import type { Binding, RouteSpec } from "@cobalt-web/bindings";
 import { db } from "@cobalt-web/db";
-import {
-  getAllAccountsWithInstitutions,
-  getBankAccountById,
-  getBankAccounts,
-  getCreditCards,
-} from "@cobalt-web/server-data/accounts/queries";
+import { getBankAccountById, listAccounts } from "@cobalt-web/server-data/accounts/queries";
+import { accountListQuerySchema } from "@cobalt-web/server-data/accounts/schemas";
 import {
   getActivitiesByUserId,
   getBalancesByUserId,
@@ -32,12 +28,20 @@ import {
   transactionListQuerySchema,
   transactionPatchBodySchema,
 } from "@cobalt-web/server-data/transactions/schemas";
-import { setTransactionTags } from "@cobalt-web/server-data/transactions/tags/mutations";
+import {
+  createTag,
+  setTransactionTags,
+  updateTag,
+} from "@cobalt-web/server-data/transactions/tags/mutations";
 import {
   getTag,
   getTagIdsForTransaction,
   listTags,
 } from "@cobalt-web/server-data/transactions/tags/queries";
+import {
+  createTagBodySchema,
+  updateTagBodySchema,
+} from "@cobalt-web/server-data/transactions/tags/schemas";
 import { z } from "zod";
 
 export type { Binding };
@@ -58,6 +62,10 @@ const transactionPatchSchema = z.object({
   patch: transactionPatchBodySchema,
   transactionId: z.string().min(1),
 });
+const tagUpdateSchema = z.object({
+  patch: updateTagBodySchema,
+  tagId: z.string().min(1),
+});
 
 /**
  * One entry per allowed call. Names use `<group>_<method>` so they survive
@@ -77,24 +85,11 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
     schema: accountIdSchema,
   }),
   route({
-    description: "List all accounts with institution metadata for the user.",
-    handler: async (userId) => ({
-      accounts: await getAllAccountsWithInstitutions(userId),
-    }),
-    name: "accounts_listAll",
-    schema: emptySchema,
-  }),
-  route({
-    description: "List the user's bank accounts.",
-    handler: async (userId) => ({ accounts: await getBankAccounts(userId) }),
-    name: "accounts_listBank",
-    schema: emptySchema,
-  }),
-  route({
-    description: "List the user's credit-card accounts.",
-    handler: async (userId) => ({ accounts: await getCreditCards(userId) }),
-    name: "accounts_listCreditCards",
-    schema: emptySchema,
+    description:
+      "List the user's accounts with institution metadata. Filter by Plaid `type` and/or `subtype`. SnapTrade brokerage data is under `brokerage_accounts`.",
+    handler: async (userId, params) => ({ accounts: await listAccounts(userId, params) }),
+    name: "accounts_list",
+    schema: accountListQuerySchema,
   }),
   route({
     description: "List the user's brokerage accounts.",
@@ -247,6 +242,22 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
     },
     name: "transactions_update",
     schema: transactionPatchSchema,
+  }),
+  route({
+    description: "Create a new tag owned by the user. Returns the created tag id.",
+    handler: async (userId, body) => await createTag(userId, body),
+    name: "tags_create",
+    schema: createTagBodySchema,
+  }),
+  route({
+    description:
+      "Update a tag the user owns: rename, recolor, or archive. `archived: true` is the soft-delete equivalent (tag is hidden from picker but historical assignments remain).",
+    handler: async (userId, { patch, tagId }) => {
+      await updateTag(userId, tagId, patch);
+      return { ok: true };
+    },
+    name: "tags_update",
+    schema: tagUpdateSchema,
   }),
 ];
 

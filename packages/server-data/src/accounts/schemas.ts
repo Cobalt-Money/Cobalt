@@ -12,6 +12,7 @@ import type {
 } from "@cobalt-web/db/schema/providers/plaid/zod";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
+import { AccountSubtype, AccountType } from "plaid";
 
 // ── Row schemas from DB (with JSONB refinements) ────────────────────
 
@@ -25,6 +26,13 @@ const institutionRowSchema = createSelectSchema(institution, {
 });
 
 // ── Param / body schemas ────────────────────────────────────────────
+
+/** Filters for `listAccounts`. Both fields are Plaid SDK enums. */
+export const accountListQuerySchema = z.object({
+  subtype: z.enum(AccountSubtype).optional(),
+  type: z.enum(AccountType).optional(),
+});
+export type AccountListQuery = z.infer<typeof accountListQuerySchema>;
 
 export const accountIdParamSchema = z.object({
   id: z.string(),
