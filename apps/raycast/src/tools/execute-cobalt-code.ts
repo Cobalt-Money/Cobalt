@@ -11,7 +11,7 @@ interface Input {
    *
    * Important: list endpoints return wrapper objects, not raw arrays.
    *   - cobalt.transactions.list(...)        → { transactions: [...] }
-   *   - cobalt.accounts.listAll()            → { accounts: [...] }
+   *   - cobalt.accounts.list({ type?, subtype? }) → { accounts: [...] }  // Plaid type/subtype, e.g. {type:"depository",subtype:"savings"}
    *   - cobalt.recurring.list(...)           → { streams: [...] }
    *   - cobalt.snapshots.balances(...)       → { snapshots: [...] }
    *   - cobalt.brokerage.positions(...)      → { positions: [...] }

@@ -9,6 +9,7 @@ import {
 } from "./lib.js";
 import type { BankAccountJoinedRow } from "./lib.js";
 import type {
+  AccountListQuery,
   BankAccountDTO,
   BankAccountListItem,
   PlaidAccountForItemDTO,
@@ -124,6 +125,26 @@ export async function getAllAccountsWithInstitutions(userId: string): Promise<Ba
 }
 
 // ── Filtered queries ────────────────────────────────────────────────
+
+/**
+ * List accounts filtered by Plaid `type` and/or `subtype`. Both filters are
+ * optional and combined as AND. Same DTO shape as `getAllAccountsWithInstitutions`.
+ */
+export async function listAccounts(
+  userId: string,
+  params: AccountListQuery = {},
+): Promise<BankAccountDTO[]> {
+  const all = await getAllAccountsWithInstitutions(userId);
+  return all.filter((a) => {
+    if (params.type && a.type !== params.type) {
+      return false;
+    }
+    if (params.subtype && a.subtype !== params.subtype) {
+      return false;
+    }
+    return true;
+  });
+}
 
 export async function getBankAccounts(userId: string): Promise<BankAccountListItem[]> {
   const all = await getAllAccountsWithInstitutions(userId);
