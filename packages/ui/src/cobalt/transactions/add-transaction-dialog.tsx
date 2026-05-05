@@ -21,6 +21,8 @@ import { CategoryPicker } from "./detail/category-picker";
 import type { CategoryPickerOption } from "./detail/editable-category";
 import type { TagOption } from "./tags/tag-picker";
 import { TagPicker } from "./tags/tag-picker";
+import type { TransactionNotesInputHandle } from "./transaction-notes-input";
+import { TransactionNotesInput } from "./transaction-notes-input";
 
 /** Group system keys that represent inflow (negative signed amount per Plaid convention). */
 const INFLOW_GROUP_KEYS: ReadonlySet<string> = new Set(["income", "transfers"]);
@@ -269,8 +271,8 @@ export function AddTransactionForm({
   onRequestCreateTag,
 }: AddTransactionFormProps) {
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
+  const notesRef = useRef<TransactionNotesInputHandle>(null);
   const [selectedCategory, setSelectedCategory] = useState<CategoryPickerOption | null>(null);
   const [date, setDate] = useState(todayIso());
   const [merchant, setMerchant] = useState("");
@@ -285,7 +287,7 @@ export function AddTransactionForm({
 
   useEffect(() => {
     setName("");
-    setDescription("");
+    notesRef.current?.reset("");
     setAmount("");
     setSelectedCategory(null);
     setDate(todayIso());
@@ -333,12 +335,13 @@ export function AddTransactionForm({
       selectedCategory.groupSystemKey !== null &&
       INFLOW_GROUP_KEYS.has(selectedCategory.groupSystemKey);
     const signed = isInflow ? -parsedAmount : parsedAmount;
+    const description = (notesRef.current?.getMarkdown() ?? "").trim();
     onSubmit({
       accountId,
       amount: signed,
       categoryId: selectedCategory?.id ?? null,
       date,
-      description: description.trim() === "" ? null : description.trim(),
+      description: description === "" ? null : description,
       location,
       merchantName: merchant.trim() === "" ? null : merchant.trim(),
       merchantWebsite: merchantDomain,
@@ -440,16 +443,12 @@ export function AddTransactionForm({
         />
       </div>
 
-      <textarea
+      <div
         aria-label="Description"
-        className="block min-h-20 w-full resize-none bg-transparent text-base text-foreground leading-normal outline-none placeholder:text-muted-foreground/50"
-        maxLength={2000}
-        onChange={(e) => {
-          setDescription(e.target.value);
-        }}
-        placeholder="Add a note..."
-        value={description}
-      />
+        className="scrollbar-thin max-h-36 w-full overflow-y-auto text-base leading-normal"
+      >
+        <TransactionNotesInput maxLength={2000} placeholder="Add a note…" ref={notesRef} />
+      </div>
 
       <div className="flex flex-wrap items-center gap-1.5 pt-2">
         <CategoryPicker
