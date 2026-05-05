@@ -2,7 +2,6 @@ import type { RecurringTransactionsUpdateWebhook } from "plaid";
 import { createHook, sleep } from "workflow";
 import { start } from "workflow/api";
 
-import { captureWorkflowExceptionStep, toSerializableError } from "../../shared/steps";
 import { syncHoldings, syncInvestmentTransactions } from "../investments/orchestration";
 import { plaidInitialInvestmentSyncWorkflow } from "../investments/workflow";
 import { syncLiabilities } from "../liabilities/orchestration";
@@ -89,9 +88,6 @@ export async function plaidSyncWorkflow(webhook: SyncUpdatesWebhook): Promise<Pl
     return { itemId: webhook.item_id, success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("plaid_sync", toSerializableError(error), {
-      itemId: webhook.item_id,
-    });
 
     return {
       error: errorMessage,
@@ -114,9 +110,6 @@ export async function plaidRecurringTransactionsWorkflow(
     return { itemId: webhook.item_id, success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("plaid_recurring", toSerializableError(error), {
-      itemId: webhook.item_id,
-    });
 
     return {
       error: errorMessage,
@@ -362,7 +355,6 @@ export async function plaidAddAccountWorkflow(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     await emit("error", "done", { message: errorMessage });
-    await captureWorkflowExceptionStep("plaid_add_account", toSerializableError(error), { itemId });
     await closeOnboardingProgressStep();
     return { error: errorMessage, itemId, success: false };
   }

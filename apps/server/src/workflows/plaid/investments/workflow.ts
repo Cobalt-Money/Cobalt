@@ -4,7 +4,6 @@ import type {
   InvestmentsHistoricalUpdateWebhook,
 } from "plaid";
 
-import { captureWorkflowExceptionStep, toSerializableError } from "../../shared/steps";
 import { getPlaidItemStep } from "../sync/steps";
 import { syncHoldings, syncInvestmentTransactions } from "./orchestration";
 import type { PlaidInvestmentSyncResult } from "./types";
@@ -21,7 +20,6 @@ export async function plaidInitialInvestmentSyncWorkflow(
     return { itemId, success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("plaid_investments", toSerializableError(error), { itemId });
     return { error: errorMessage, itemId, success: false };
   }
 }
@@ -37,9 +35,6 @@ export async function plaidHoldingsWorkflow(
     return { itemId: webhook.item_id, success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("plaid_investments", toSerializableError(error), {
-      itemId: webhook.item_id,
-    });
     return {
       error: errorMessage,
       itemId: webhook.item_id,
@@ -59,9 +54,6 @@ export async function plaidInvestmentTransactionsWorkflow(
     return { itemId: webhook.item_id, success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("plaid_investments", toSerializableError(error), {
-      itemId: webhook.item_id,
-    });
     return {
       error: errorMessage,
       itemId: webhook.item_id,

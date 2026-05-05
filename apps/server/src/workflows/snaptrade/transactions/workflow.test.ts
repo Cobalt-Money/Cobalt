@@ -20,13 +20,6 @@ vi.mock(import("./steps"), () => ({
   upsertActivitiesStep: vi.fn(),
 }));
 
-vi.mock(import("../../shared/steps"), () => ({
-  captureWorkflowExceptionStep: vi.fn(),
-  toSerializableError: vi.fn((e) => ({
-    message: e instanceof Error ? e.message : "x",
-  })),
-}));
-
 const credentials = { appUserId: "app-user-1", userSecret: "secret" } as never;
 
 describe("snaptradeTransactionsInitialWorkflow", () => {

@@ -1,7 +1,6 @@
 import type { StockNewsEvent } from "@cobalt-web/server-data/news/events/actions";
 import type { EventSummary, ProcessedArticle } from "@cobalt-web/server-data/news/events/lib";
 
-import { captureWorkflowExceptionStep, toSerializableError } from "../../shared/steps.js";
 import {
   fetchEventArticlesStep,
   persistEventStep,
@@ -82,10 +81,6 @@ export async function processFinancialEventWorkflow(
       success,
     };
   } catch (error) {
-    await captureWorkflowExceptionStep("news_financial_events", toSerializableError(error), {
-      eventId: event.event_id,
-      eventName: event.event_name,
-    });
     return {
       articlesPersisted: 0,
       articlesScraped: 0,
