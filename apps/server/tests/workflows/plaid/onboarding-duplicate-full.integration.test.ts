@@ -28,9 +28,10 @@ import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { and, eq } from "drizzle-orm";
 import { Products } from "plaid";
-import { getRun, resumeHook, start } from "workflow/api";
+import { getRun, start } from "workflow/api";
 
 import { plaidAddAccountWorkflow } from "../../../src/workflows/plaid/sync/workflow.js";
+import { resumeHookWithRetry } from "../../_helpers/resume-hook-with-retry.js";
 
 const TEST_USER_ID = "00000000-0000-4000-8000-000000000002";
 const INSTITUTION_ID = "ins_109508";
@@ -198,7 +199,7 @@ describe("plaid onboarding — Scenario A: full overlap duplicate", () => {
 
       const hookToken = `plaid:link:${TEST_USER_ID}:${crypto.randomUUID()}`;
       const run = await start(plaidAddAccountWorkflow, [{ hookToken, userId: TEST_USER_ID }]);
-      await resumeHook(hookToken, { publicToken });
+      await resumeHookWithRetry(hookToken, { publicToken });
 
       // Drive assertions off the progress stream. The stream closes when the
       // workflow hits `closeOnboardingProgressStep()` in the dup branch. We
