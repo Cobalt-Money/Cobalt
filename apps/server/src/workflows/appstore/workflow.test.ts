@@ -7,13 +7,6 @@ vi.mock(import("./steps"), () => ({
   applyAppStoreNotificationStep: vi.fn(),
 }));
 
-vi.mock(import("../shared/steps"), () => ({
-  captureWorkflowExceptionStep: vi.fn(),
-  toSerializableError: vi.fn((e) => ({
-    message: e instanceof Error ? e.message : "x",
-  })),
-}));
-
 const baseParams = {
   environment: "Production",
   expiresAt: 1_700_000_000_000,

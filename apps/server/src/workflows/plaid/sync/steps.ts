@@ -187,7 +187,7 @@ export async function syncAccountsAndBalancesStep(accessToken: string, itemId: s
               updatedAt: new Date(),
             },
             target: [financialAccount.source, financialAccount.externalId],
-            where: sql`external_id IS NOT NULL`,
+            targetWhere: sql`external_id IS NOT NULL`,
           });
 
         await upsertBalanceForPlaidAccount(account);

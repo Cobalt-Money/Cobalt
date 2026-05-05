@@ -5,7 +5,6 @@ import * as rssSteps from "./steps.js";
 import { rssSyncWorkflow } from "./workflow.js";
 
 vi.mock(import("./steps.js"));
-vi.mock(import("../../shared/steps.js"));
 vi.mock(import("workflow"), (() => ({
   sleep: vi.fn<() => Promise<void>>().mockResolvedValue(),
 })) as never);

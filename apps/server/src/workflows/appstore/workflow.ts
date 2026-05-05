@@ -1,4 +1,3 @@
-import { captureWorkflowExceptionStep, toSerializableError } from "../shared/steps";
 import { applyAppStoreNotificationStep } from "./steps";
 import type { AppStoreWebhookParams, AppStoreWebhookResult } from "./steps";
 
@@ -20,11 +19,6 @@ export async function appstoreWebhookWorkflow(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
-    await captureWorkflowExceptionStep("appstore_webhook", toSerializableError(error), {
-      notificationType,
-      originalTransactionId,
-    });
 
     return {
       error: errorMessage,

@@ -7,7 +7,6 @@ import type {
 } from "plaid";
 
 import { insertAlertStep, resolveAlertsStep } from "../../shared/alert-steps";
-import { captureWorkflowExceptionStep, toSerializableError } from "../../shared/steps";
 import { getPlaidItemStep, updateItemStateStep } from "../sync/steps";
 
 type ItemWebhook =
@@ -117,7 +116,6 @@ export async function plaidItemWebhookWorkflow(
     return { itemId, success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("plaid_item", toSerializableError(error), { itemId });
     return { error: errorMessage, itemId, success: false };
   }
 }

@@ -2,7 +2,6 @@ import { ALERT_SOURCES, ALERT_TYPES } from "@cobalt-web/db/schema/users/alerts";
 import type { Account } from "snaptrade-typescript-sdk";
 
 import { insertAlertStep, resolveAlertsStep } from "../../shared/alert-steps";
-import { captureWorkflowExceptionStep, toSerializableError } from "../../shared/steps";
 import {
   deleteSnaptradeAuthorizationStep,
   fetchAccountsStep,
@@ -51,10 +50,6 @@ export async function snaptradeConnectionAddedWorkflow(
     return { eventType: "CONNECTION_ADDED", success: true, userId };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("snaptrade_connection", toSerializableError(error), {
-      eventType: "CONNECTION_ADDED",
-      userId,
-    });
 
     return {
       error: errorMessage,
@@ -88,10 +83,6 @@ async function snaptradeConnectionRepairedWorkflow(
     return { eventType, success: true, userId };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("snaptrade_connection", toSerializableError(error), {
-      eventType,
-      userId,
-    });
 
     return { error: errorMessage, eventType, success: false, userId };
   }
@@ -135,10 +126,6 @@ export async function snaptradeConnectionBrokenWorkflow(
     return { eventType: "CONNECTION_BROKEN", success: true, userId };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("snaptrade_connection", toSerializableError(error), {
-      eventType: "CONNECTION_BROKEN",
-      userId,
-    });
 
     return {
       error: errorMessage,
@@ -211,10 +198,6 @@ export async function snaptradeHoldingsUpdatedWorkflow(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("snaptrade_holdings", toSerializableError(error), {
-      accountId,
-      userId,
-    });
 
     return {
       error: errorMessage,
@@ -243,10 +226,6 @@ export async function snaptradeConnectionDeletedWorkflow(
     return { eventType: "CONNECTION_DELETED", success: true, userId };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("snaptrade_connection", toSerializableError(error), {
-      eventType: "CONNECTION_DELETED",
-      userId,
-    });
 
     return {
       error: errorMessage,

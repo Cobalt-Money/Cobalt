@@ -1,6 +1,5 @@
 import { generateFallbackTitle } from "@cobalt-web/server-data/chat/lib";
 
-import { captureWorkflowExceptionStep, toSerializableError } from "../shared/steps.js";
 import { generateChatTitleStep, updateChatTitleStep } from "./steps.js";
 
 export interface ChatTitleParams {
@@ -27,17 +26,11 @@ export async function generateChatTitleWorkflow(params: ChatTitleParams): Promis
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
-    await captureWorkflowExceptionStep("chat_title", toSerializableError(error), { chatId });
-
     const fallbackTitle = generateFallbackTitle(firstMessage);
     try {
       await updateChatTitleStep(chatId, fallbackTitle);
       return { chatId, success: true, title: fallbackTitle };
-    } catch (fallbackError) {
-      await captureWorkflowExceptionStep("chat_title", toSerializableError(fallbackError), {
-        chatId,
-        phase: "fallback",
-      });
+    } catch {
       return {
         chatId,
         error: errorMessage,

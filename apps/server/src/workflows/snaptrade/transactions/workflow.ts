@@ -1,4 +1,3 @@
-import { captureWorkflowExceptionStep, toSerializableError } from "../../shared/steps";
 import {
   fetchAllActivitiesStep,
   fetchIncrementalActivitiesStep,
@@ -31,10 +30,6 @@ export async function snaptradeTransactionsInitialWorkflow(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("snaptrade_transactions", toSerializableError(error), {
-      accountId,
-      userId,
-    });
 
     return {
       error: errorMessage,
@@ -75,10 +70,6 @@ export async function snaptradeTransactionsUpdatedWorkflow(
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep("snaptrade_transactions", toSerializableError(error), {
-      accountId,
-      userId,
-    });
 
     return {
       error: errorMessage,

@@ -54,15 +54,6 @@ vi.mock(import("../liabilities/orchestration"), () => ({
   syncLiabilities: vi.fn(),
 }));
 
-function fakeSerializable(err: unknown) {
-  return { message: err instanceof Error ? err.message : "x" };
-}
-
-vi.mock(import("../../shared/steps"), () => ({
-  captureWorkflowExceptionStep: vi.fn(),
-  toSerializableError: vi.fn(fakeSerializable),
-}));
-
 // Iterable hook: each call to `next()` yields the next queued payload.
 // We control what the mocked hook yields per test.
 const mockHookPayloads = vi.hoisted<{

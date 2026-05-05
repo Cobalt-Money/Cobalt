@@ -2,7 +2,6 @@ import { env } from "@cobalt-web/env/server";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
-import * as deprecatedSchema from "./schema/_deprecated";
 import * as financialAccountSchema from "./schema/accounts/account";
 import * as balanceSchema from "./schema/accounts/balance";
 import * as categorySchema from "./schema/accounts/banking/categories/category";
@@ -70,7 +69,6 @@ export const db = drizzle({
     ...plaidConnectionSchema,
     ...snaptradeAuthorizationSchema,
     ...snaptradeUserSchema,
-    ...deprecatedSchema,
     ...feedbackSchema,
     ...financialEventsSchema,
     ...financialGoalsSchema,
