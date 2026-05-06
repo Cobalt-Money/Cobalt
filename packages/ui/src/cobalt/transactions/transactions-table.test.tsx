@@ -18,7 +18,9 @@ vi.mock(import("@tanstack/react-router"), async (importOriginal) => {
 
 function createMockTransaction(overrides: Partial<TransactionListItem> = {}): TransactionListItem {
   return {
+    accountLogoDomain: null,
     accountName: "Checking",
+    accountSubtype: "checking",
     accountType: "depository",
     amount: -12.34,
     authorizedDate: null,

@@ -14,6 +14,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { AccountLogo } from "../accounts/account-logo";
 import { CobaltDialog } from "../cobalt-dialog";
 import { CobaltSelectPopover } from "../select-popover";
 import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "./categories";
@@ -153,6 +154,10 @@ function renderMerchantPickerResults({
 export interface AddTransactionAccountOption {
   id: string;
   name: string;
+  /** Raw subtype — drives cash-glyph special case for `subtype === "cash"`. */
+  subtype: string | null;
+  /** Brandfetch domain (manual accounts) — feeds InstitutionLogo CDN candidates. */
+  logoDomain: string | null;
 }
 
 export interface MerchantSuggestionItem {
@@ -350,7 +355,8 @@ export function AddTransactionForm({
     });
   };
 
-  const accountLabel = accounts.find((a) => a.id === accountId)?.name ?? "Account";
+  const selectedAccount = accounts.find((a) => a.id === accountId);
+  const accountLabel = selectedAccount?.name ?? "Account";
 
   const selectedDate = useMemo(() => isoToDate(date), [date]);
 
@@ -498,11 +504,12 @@ export function AddTransactionForm({
               className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-input/40 px-2 text-foreground text-xs transition-colors"
               type="button"
             >
-              <img
-                alt=""
-                aria-hidden
-                className="size-5 shrink-0 object-contain"
-                src="/assets/vectors/cash.svg"
+              <AccountLogo
+                className="size-5 shrink-0"
+                logoDomain={selectedAccount?.logoDomain ?? null}
+                name={selectedAccount?.name ?? null}
+                source="manual"
+                subtype={selectedAccount?.subtype ?? "cash"}
               />
               {accountLabel}
             </button>

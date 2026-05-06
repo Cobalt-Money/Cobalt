@@ -36,12 +36,16 @@ export function useAddTransactionData(): AddTransactionData {
       id: unknown;
       name: unknown;
       source: unknown;
+      subtype?: unknown;
+      logoDomain?: unknown;
     }[];
     return rows
       .filter((a) => a.source === "manual")
       .map((a) => ({
         id: String(a.id),
+        logoDomain: typeof a.logoDomain === "string" ? a.logoDomain : null,
         name: String(a.name),
+        subtype: typeof a.subtype === "string" ? a.subtype : null,
       }));
   }, [bankAccounts]);
 

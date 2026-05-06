@@ -4,7 +4,7 @@ import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { PrivateAmount } from "../../../components/privacy";
-import { InstitutionLogo } from "../../logos/institution-logo";
+import { AccountLogo } from "../../accounts/account-logo";
 import { MerchantLogo } from "../../logos/merchant-logo";
 import type { MerchantSearchState } from "../add-transaction-dialog";
 import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "../categories";
@@ -141,16 +141,23 @@ export function TransactionDetailSummary({
         </div>
         <div className="flex items-center gap-2.5 text-base">
           <span className="flex size-5 shrink-0 items-center justify-center">
-            <InstitutionLogo
+            <AccountLogo
               institutionLogo={transaction.institutionLogo}
-              institutionName={transaction.institutionName}
-              institutionUrl={transaction.institutionUrl}
+              logoDomain={
+                transaction.source === "manual"
+                  ? transaction.accountLogoDomain
+                  : transaction.institutionUrl
+              }
+              name={transaction.institutionName ?? transaction.accountName}
               source={transaction.source}
+              subtype={transaction.accountSubtype}
             />
           </span>
           <span className="min-w-0 truncate text-foreground">{transaction.accountName}</span>
           <span className="text-muted-foreground">
-            {transaction.source === "manual" ? "Cash" : transaction.accountType}
+            {transaction.accountSubtype
+              ? transaction.accountSubtype.replaceAll("_", " ")
+              : transaction.accountType}
           </span>
         </div>
 

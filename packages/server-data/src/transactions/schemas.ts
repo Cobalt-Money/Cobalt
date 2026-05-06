@@ -22,7 +22,9 @@ const transactionListItemRowSchema = createSelectSchema(transaction, {
 
 /** Joined `financial_account` columns (`account.name` / `account.type` in the mapper). */
 const bankAccountListSlice = createSelectSchema(financialAccount).pick({
+  logoDomain: true,
   name: true,
+  subtype: true,
   type: true,
 });
 
@@ -84,7 +86,9 @@ export const transactionListItemSchema = transactionListItemRowSchema
     website: true,
   })
   .extend({
+    accountLogoDomain: bankAccountListSlice.shape.logoDomain.nullable(),
     accountName: bankAccountListSlice.shape.name,
+    accountSubtype: bankAccountListSlice.shape.subtype.nullable(),
     accountType: bankAccountListSlice.shape.type,
     amount: z.number(),
     category: transactionCategorySchema,

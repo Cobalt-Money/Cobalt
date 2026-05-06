@@ -1,10 +1,9 @@
 import { useMemo } from "react";
 
 import { ConnectAccountEmpty } from "../empty/connect-account-empty";
-import { InstitutionLogo } from "../logos/institution-logo";
 import { AccountCard } from "./account-card";
+import { AccountLogo } from "./account-logo";
 import type { AccountsFilter } from "./accounts-toolbar";
-import { CashAccountLogo } from "./cash-account-logo";
 import {
   filterAccountCardsForToolbar,
   groupAccountCardsByInstitution,
@@ -53,17 +52,15 @@ export function AccountsList({
                 className="min-w-0"
               >
                 <div className="mb-4 flex items-center gap-2.5 sm:mb-5">
-                  {lead.source === "manual" ? (
-                    <CashAccountLogo className="size-7 sm:size-8" />
-                  ) : (
-                    <InstitutionLogo
-                      className="size-7 shrink-0 sm:size-8"
-                      institutionLogo={lead.institutionLogo}
-                      institutionLogosExtra={lead.institutionLogosExtra}
-                      institutionName={lead.institution}
-                      institutionUrl={lead.institutionUrl}
-                    />
-                  )}
+                  <AccountLogo
+                    className="size-7 shrink-0 sm:size-8"
+                    institutionLogo={lead.institutionLogo}
+                    institutionLogosExtra={lead.institutionLogosExtra}
+                    logoDomain={lead.institutionUrl}
+                    name={lead.institution}
+                    source={lead.source}
+                    subtype={lead.subtype}
+                  />
                   <h2
                     className="truncate text-base font-semibold tracking-tight text-foreground sm:text-lg"
                     id={`accounts-inst-${String(sectionIndex)}`}
@@ -77,17 +74,15 @@ export function AccountsList({
                       key={account.id}
                       account={account}
                       institutionLogo={
-                        account.source === "manual" ? (
-                          <CashAccountLogo className="size-8 sm:size-9" />
-                        ) : (
-                          <InstitutionLogo
-                            className="size-8 shrink-0 sm:size-9"
-                            institutionLogo={account.institutionLogo}
-                            institutionLogosExtra={account.institutionLogosExtra}
-                            institutionName={account.institution}
-                            institutionUrl={account.institutionUrl}
-                          />
-                        )
+                        <AccountLogo
+                          className="size-8 shrink-0 sm:size-9"
+                          institutionLogo={account.institutionLogo}
+                          institutionLogosExtra={account.institutionLogosExtra}
+                          logoDomain={account.institutionUrl}
+                          name={account.institution}
+                          source={account.source}
+                          subtype={account.subtype}
+                        />
                       }
                     />
                   ))}
