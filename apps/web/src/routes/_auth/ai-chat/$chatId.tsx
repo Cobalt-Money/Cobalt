@@ -7,6 +7,7 @@ export const Route = createFileRoute("/_auth/ai-chat/$chatId")({
   component: ChatRoute,
   loader: ({ context, params }) => {
     context.zero.run(queries.chats.messages({ chatId: params.chatId }));
+    context.zero.run(queries.chats.chatById({ chatId: params.chatId }));
   },
   staticData: { title: "Chat" },
 });

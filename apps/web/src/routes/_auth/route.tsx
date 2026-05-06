@@ -1,5 +1,6 @@
 import { PrivacyProvider } from "@cobalt-web/ui/components/privacy";
 import { SidebarProvider } from "@cobalt-web/ui/components/sidebar";
+import { queries } from "@cobalt-web/zero";
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 
 import { OnboardingProgressProvider } from "@/components/accounts/onboarding-context";
@@ -21,6 +22,9 @@ import { ZeroProvider } from "@/lib/providers/zero-client";
  */
 export const Route = createFileRoute("/_auth")({
   component: AuthLayout,
+  loader: ({ context }) => {
+    context.zero.run(queries.chats.list());
+  },
 });
 
 function AuthShellWithOutlet() {

@@ -1,9 +1,14 @@
+import { queries } from "@cobalt-web/zero";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { FinancialEventDetailPage } from "@/components/news/financial-event-detail-page";
 
 export const Route = createFileRoute("/_auth/news/$eventId")({
   component: NewsEventDetailRoute,
+  loader: ({ context, params }) => {
+    context.zero.run(queries.news.eventById({ eventId: params.eventId }));
+  },
+  staticData: { title: "Event" },
 });
 
 function NewsEventDetailRoute() {
