@@ -2,6 +2,7 @@ import { Card, CardContent, CardFooter } from "@cobalt-web/ui/components/card";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowReloadHorizontalIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { AccountConnectionActions } from "./account-connection-actions";
@@ -12,11 +13,28 @@ import type { AccountCardViewModel } from "./lib/map-zero-to-account-cards";
 export function AccountCard({
   account,
   institutionLogo,
+  onRename,
 }: {
   account: AccountCardViewModel;
   /** App-provided institution mark (logo component or image). */
   institutionLogo: ReactNode;
+  /** Empty string clears the override and falls back to provider name. */
+  onRename?: (id: string, customName: string) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  function commit() {
+    const next = inputRef.current?.value.trim() ?? "";
+    setEditing(false);
+    if (!onRename) {
+      return;
+    }
+    if (next === account.description) {
+      return;
+    }
+    onRename(account.id, next);
+  }
   return (
     <Card
       className={cn(
@@ -27,12 +45,58 @@ export function AccountCard({
     >
       <CardContent className="flex flex-1 flex-col px-5 pt-4 pb-0 sm:px-6 sm:pt-5">
         <div className="mb-3 flex items-start justify-between gap-3">
-          <h3
-            className="min-w-0 max-w-[min(100%,calc(100%-3.5rem))] text-base font-semibold tracking-tight text-foreground sm:text-lg"
-            title={account.description}
-          >
-            {account.description}
-          </h3>
+          {editing && onRename ? (
+            <input
+              aria-label="Account name"
+              className="min-w-0 max-w-[min(100%,calc(100%-3.5rem))] flex-1 cursor-text bg-transparent text-base font-semibold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/50 sm:text-lg"
+              defaultValue={account.description}
+              key={account.description}
+              onBlur={commit}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  inputRef.current?.blur();
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  if (inputRef.current) {
+                    inputRef.current.value = account.description;
+                  }
+                  setEditing(false);
+                }
+              }}
+              ref={(el) => {
+                inputRef.current = el;
+                if (el) {
+                  el.focus();
+                  el.select();
+                }
+              }}
+              spellCheck={false}
+            />
+          ) : (
+            <h3
+              className={cn(
+                "min-w-0 max-w-[min(100%,calc(100%-3.5rem))] text-base font-semibold tracking-tight text-foreground sm:text-lg",
+                onRename && "cursor-text rounded-sm hover:bg-foreground/5",
+              )}
+              onClick={onRename ? () => setEditing(true) : undefined}
+              onKeyDown={
+                onRename
+                  ? (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setEditing(true);
+                      }
+                    }
+                  : undefined
+              }
+              role={onRename ? "button" : undefined}
+              tabIndex={onRename ? 0 : undefined}
+              title={account.description}
+            >
+              {account.description}
+            </h3>
+          )}
           {institutionLogo}
         </div>
         <p className="mt-1 text-sm font-medium leading-snug text-muted-foreground">

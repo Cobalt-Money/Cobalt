@@ -15,11 +15,13 @@ export function AccountsList({
   isComplete,
   items,
   onConnectAccount,
+  onRenameAccount,
 }: {
   activeFilter: AccountsFilter;
   isComplete: boolean;
   items: AccountCardViewModel[];
   onConnectAccount?: () => void;
+  onRenameAccount?: (id: string, customName: string) => void;
 }) {
   const visible = useMemo(
     () => filterAccountCardsForToolbar(items, activeFilter),
@@ -73,6 +75,7 @@ export function AccountsList({
                     <AccountCard
                       key={account.id}
                       account={account}
+                      onRename={onRenameAccount}
                       institutionLogo={
                         <AccountLogo
                           className="size-8 shrink-0 sm:size-9"
