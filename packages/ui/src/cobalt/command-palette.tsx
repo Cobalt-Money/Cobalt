@@ -27,7 +27,7 @@ function cobaltCommandDialogPopupClassNames() {
 
 /** Solid panel with oklch colors. */
 const cobaltCommandDialogContentClassName =
-  "bg-[oklch(0.949_0_0)] shadow-2xl dark:bg-[oklch(0.29_0_0)]";
+  "bg-[oklch(0.949_0_0)] shadow-2xl dark:bg-sidebar-accent";
 
 /** Lighter scrim than default `DialogOverlay` (`bg-black/80`). */
 const cobaltCommandDialogOverlayClassName =
@@ -101,7 +101,7 @@ function CobaltCommandPaletteRoot({ className, ...props }: ComponentProps<typeof
         "[&_[cmdk-group]]:!p-0 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0",
         "[&_[cmdk-group-heading]]:!px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
         /* Light: `bg-muted` is ~white — use a visible tint; dark keeps token `muted`. */
-        "[&_[cmdk-item][aria-selected='true']]:!bg-black/[0.09] dark:[&_[cmdk-item][aria-selected='true']]:!bg-muted",
+        "[&_[cmdk-item][aria-selected='true']]:!bg-black/[0.09] dark:[&_[cmdk-item][aria-selected='true']]:!bg-accent",
         /* Base `CommandItem` uses `rounded-2xl` in dialog — minimal corner radius. */
         "[&_[cmdk-item]]:!rounded-lg",
         "[&_[cmdk-item]]:!px-4 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5",
