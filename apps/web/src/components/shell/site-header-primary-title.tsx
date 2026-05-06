@@ -68,7 +68,7 @@ function TransactionDetailBreadcrumb({ transactionId }: { transactionId: string 
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex min-w-0 flex-1 items-center gap-1.5 text-lg font-medium leading-tight tracking-tight sm:text-xl"
+      className="flex min-w-0 flex-1 items-center gap-1.5 text-xl font-semibold leading-tight tracking-tight sm:text-2xl"
     >
       <Link
         className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
@@ -78,7 +78,7 @@ function TransactionDetailBreadcrumb({ transactionId }: { transactionId: string 
       </Link>
       <HugeiconsIcon
         aria-hidden
-        className="size-[1.125rem] shrink-0 text-muted-foreground sm:size-5"
+        className="size-5 shrink-0 text-muted-foreground sm:size-6"
         icon={ArrowRight01Icon}
         strokeWidth={2}
       />
@@ -150,11 +150,11 @@ function ResearchTickerHeader({ symbol }: { symbol: string }) {
         </Link>
         <TickerLogo size={28} symbol={sym} />
         <div className="flex min-w-0 items-baseline gap-2 sm:gap-2.5">
-          <span className="shrink-0 font-semibold text-lg leading-none tracking-tight sm:text-xl">
+          <span className="shrink-0 font-semibold text-xl leading-none tracking-tight sm:text-2xl">
             {sym}
           </span>
           {tickerCompanyName ? (
-            <span className="min-w-0 truncate text-muted-foreground text-sm leading-none sm:text-base">
+            <span className="min-w-0 truncate text-muted-foreground text-base leading-none sm:text-lg">
               {tickerCompanyName}
             </span>
           ) : null}
@@ -186,7 +186,7 @@ function NewsEventBreadcrumb({ eventId }: { eventId: string }) {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex min-w-0 flex-1 items-center gap-1.5 text-lg font-medium leading-tight tracking-tight sm:text-xl"
+      className="flex min-w-0 flex-1 items-center gap-1.5 text-xl font-semibold leading-tight tracking-tight sm:text-2xl"
     >
       <Link
         className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
@@ -196,7 +196,7 @@ function NewsEventBreadcrumb({ eventId }: { eventId: string }) {
       </Link>
       <HugeiconsIcon
         aria-hidden
-        className="size-[1.125rem] shrink-0 text-muted-foreground sm:size-5"
+        className="size-5 shrink-0 text-muted-foreground sm:size-6"
         icon={ArrowRight01Icon}
         strokeWidth={2}
       />
