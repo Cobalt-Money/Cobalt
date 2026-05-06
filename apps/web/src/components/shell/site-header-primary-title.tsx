@@ -207,6 +207,29 @@ function NewsEventBreadcrumb({ eventId }: { eventId: string }) {
   );
 }
 
+function TransactionsCategoriesBreadcrumb() {
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className="flex min-w-0 flex-1 items-center gap-1.5 font-semibold text-xl leading-tight tracking-tight sm:text-2xl"
+    >
+      <Link
+        className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+        to="/transactions"
+      >
+        Transactions
+      </Link>
+      <HugeiconsIcon
+        aria-hidden
+        className="size-5 shrink-0 text-muted-foreground sm:size-6"
+        icon={ArrowRight01Icon}
+        strokeWidth={2}
+      />
+      <span className="min-w-0 truncate text-foreground">Categories</span>
+    </nav>
+  );
+}
+
 /**
  * Shell header title area: default route title, or Linear-style breadcrumb on
  * `/transactions/:transactionId`, or ticker chrome on `/research/:symbol`.
@@ -215,7 +238,8 @@ export function SiteHeaderPrimaryTitle() {
   const title = useShellRouteTitle();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const normalized = pathname.replace(/\/$/, "") || "/";
-  const transactionId = /^\/transactions\/([^/]+)$/.exec(normalized)?.[1];
+  const transactionId = /^\/transactions\/(?!categories$)([^/]+)$/.exec(normalized)?.[1];
+  const isCategoriesPage = normalized === "/transactions/categories";
   const researchSymbol = /^\/research\/([^/]+)$/.exec(normalized)?.[1];
   const aiChatId = /^\/ai-chat\/([^/]+)$/.exec(normalized)?.[1];
   const newsEventId = /^\/news\/([^/]+)$/.exec(normalized)?.[1];
@@ -234,6 +258,10 @@ export function SiteHeaderPrimaryTitle() {
 
   if (newsEventId) {
     return <NewsEventBreadcrumb eventId={newsEventId} />;
+  }
+
+  if (isCategoriesPage) {
+    return <TransactionsCategoriesBreadcrumb />;
   }
 
   return (

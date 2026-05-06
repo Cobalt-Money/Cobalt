@@ -69,6 +69,7 @@ function TransactionsListPage() {
           filters={search}
           onAddTransaction={openAddTransaction}
           onExport={handleExport}
+          onManageCategories={() => navigate({ to: "/transactions/categories" })}
           onManageTags={openManageTags}
           selectedCount={selectedCount}
           tagOptions={tagOptions}

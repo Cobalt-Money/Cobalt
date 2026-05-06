@@ -28,6 +28,7 @@ import {
   Edit02Icon,
   EyeIcon,
   File02Icon,
+  Folder01Icon,
   Home04Icon,
   Logout01Icon,
   Money01Icon,
@@ -211,6 +212,8 @@ interface CommandMenuContextValue {
   setOpen: (open: boolean) => void;
   /** Open palette directly to the manage-tags sub-page. */
   openManageTags: () => void;
+  /** Open palette directly to the manage-categories sub-page. */
+  openManageCategories: () => void;
   /** Open palette to the add-account sub-page. */
   openAddAccount: () => void;
   /** Open palette to the add-cash-account sub-page. */
@@ -544,6 +547,15 @@ function CommandMenuDialog({
       label: "Manage Tags",
     },
     {
+      handleSelect: () => {
+        handleOpenChange(false);
+        void navigate({ to: "/transactions/categories" });
+      },
+      icon: Folder01Icon,
+      keywords: ["category", "categories", "group", "edit", "rename", "delete", "manage"],
+      label: "Manage Categories",
+    },
+    {
       handleSelect: () => go("/transactions"),
       icon: Download02Icon,
       keywords: ["export", "download", "csv", "file"],
@@ -867,6 +879,7 @@ function CommandMenuDialog({
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function CommandMenuProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
   const [open, setOpenState] = useState(false);
   const [pages, setPages] = useState<string[]>([]);
   const [search, setSearch] = useState("");
@@ -891,6 +904,9 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const openManageTags = useCallback(() => openAt("manage-tags"), [openAt]);
+  const openManageCategories = useCallback(() => {
+    void navigate({ to: "/transactions/categories" });
+  }, [navigate]);
   const openAddAccount = useCallback(() => openAt("add-account"), [openAt]);
   const openAddCashAccount = useCallback(() => openAt("add-cash-account"), [openAt]);
   const openAddTransaction = useCallback(() => openAt("add-transaction"), [openAt]);
@@ -929,6 +945,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
       openAddCashAccount,
       openAddTag,
       openAddTransaction,
+      openManageCategories,
       openManageTags,
       setOpen,
     }),
@@ -938,6 +955,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
       openAddCashAccount,
       openAddTag,
       openAddTransaction,
+      openManageCategories,
       openManageTags,
       setOpen,
     ],

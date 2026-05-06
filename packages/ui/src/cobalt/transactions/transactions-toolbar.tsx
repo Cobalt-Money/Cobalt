@@ -7,6 +7,7 @@ import {
 } from "@cobalt-web/ui/components/dropdown-menu";
 
 import { AmountFilter } from "./filters/amount-filter";
+import { CategoryFilter } from "./filters/category-filter";
 import type { AmountFilterType } from "./filters/amount-filter";
 import { BankFilter } from "./filters/bank-filter";
 import type { BankOption } from "./filters/bank-filter";
@@ -36,6 +37,7 @@ export interface TransactionsToolbarProps {
   onExport?: (format: ExportFormat) => void;
   onAddTransaction?: () => void;
   onManageTags?: () => void;
+  onManageCategories?: () => void;
   selectedCount?: number;
 }
 
@@ -47,6 +49,7 @@ export function TransactionsToolbar({
   onExport,
   onAddTransaction,
   onManageTags,
+  onManageCategories,
   selectedCount = 0,
 }: TransactionsToolbarProps) {
   const label = selectedCount > 0 ? `Export (${selectedCount})` : "Export all";
@@ -91,6 +94,7 @@ export function TransactionsToolbar({
             selectedIds={filters.tagIds ?? []}
           />
         ) : null}
+        {onManageCategories ? <CategoryFilter onManage={onManageCategories} /> : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {onAddTransaction ? (
