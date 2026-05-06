@@ -23,7 +23,7 @@ import { ZeroProvider } from "@/lib/providers/zero-client";
 export const Route = createFileRoute("/_auth")({
   component: AuthLayout,
   loader: ({ context }) => {
-    context.zero.run(queries.chats.list());
+    context.zero?.run(queries.chats.list());
   },
 });
 
