@@ -12,6 +12,7 @@ import { logger } from "hono/logger";
 
 import { agentBridgeRouter } from "./_legacy/api/internal/agent-bridge/exec.js";
 import { accountsRouter } from "./api/internal/accounts/index.js";
+import { requireAuth } from "./api/internal/middleware.js";
 import { alertsRouter } from "./api/internal/alerts/index.js";
 import { appstoreRouter } from "./api/internal/appstore.js";
 import { authRouter } from "./api/internal/auth.js";
@@ -160,6 +161,13 @@ const app = new Hono()
       origin: env.CORS_ORIGIN,
     }),
   )
+  // Gate internal API schema + Scalar UI behind a session. The schema
+  // describes every internal router (cron, queues, agent-bridge, etc.)
+  // and is not part of the public `/v1` contract — only logged-in users
+  // (typically staff browsing during dev/debug) should see it. Public
+  // developers consume `/v1/openapi.json` + the fumadocs site instead.
+  .use("/docs", requireAuth)
+  .use("/openapi.json", requireAuth)
   .get("/.well-known/oauth-protected-resource/api/mcp", (c) => {
     // RFC 9728 — Protected Resource Metadata; first endpoint clients hit to discover which auth server protects MCP.
     const origin = getPublicOriginFromRequest(c.req.raw);
