@@ -22,6 +22,8 @@ export const financialAccount = pgTable(
     /** Full account number; rarely populated by providers. */
     accountNumber: text("account_number"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    /** User-edited display name override. Plaid sync never writes this. Falls back to `name` when null. */
+    customName: text("custom_name"),
     /** Provider's account ID (Plaid account_id / SnapTrade account id). */
     externalId: text("external_id"),
     id: uuid("id").defaultRandom().primaryKey(),

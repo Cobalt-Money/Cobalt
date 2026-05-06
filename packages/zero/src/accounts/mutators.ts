@@ -25,6 +25,11 @@ const createAccountSchema = z
 
 const accountIdSchema = z.object({ id: z.string().uuid() });
 
+const updateAccountNameSchema = z.object({
+  customName: z.string().trim().min(1).max(80).nullable(),
+  id: z.uuid(),
+});
+
 async function assertOwnsManualAccount(
   tx: Transaction<Schema>,
   ctx: Context,
@@ -40,6 +45,21 @@ async function assertOwnsManualAccount(
   }
   if (row.source !== "manual") {
     throw new Error("Only manual accounts can be modified via this mutator");
+  }
+}
+
+async function assertOwnsAccount(
+  tx: Transaction<Schema>,
+  ctx: Context,
+  accountId: string,
+): Promise<void> {
+  const userId = ctx?.userId;
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+  const row = await tx.run(zql.financialAccount.where("id", accountId).one());
+  if (!row || row.userId !== userId) {
+    throw new Error("Account not found");
   }
 }
 
@@ -71,5 +91,14 @@ export const accountsMutators = {
   deleteAccount: defineMutator(accountIdSchema, async ({ args, ctx, tx }) => {
     await assertOwnsManualAccount(tx, ctx, args.id);
     await tx.mutate.financialAccount.delete({ id: args.id });
+  }),
+
+  updateAccountName: defineMutator(updateAccountNameSchema, async ({ args, ctx, tx }) => {
+    await assertOwnsAccount(tx, ctx, args.id);
+    const next = args.customName === null ? null : args.customName.trim();
+    await tx.mutate.financialAccount.update({
+      customName: next && next.length > 0 ? next : null,
+      id: args.id,
+    });
   }),
 };

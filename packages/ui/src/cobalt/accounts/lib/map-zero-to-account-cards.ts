@@ -6,6 +6,8 @@ const SAVINGS_SUBTYPES = new Set(["savings", "cd", "money market", "money_market
 
 export interface AccountCardViewModel {
   id: string;
+  /** True when user has set `customName`; show reset affordance. */
+  isCustomNamed: boolean;
   /** Bank (Plaid) vs SnapTrade brokerage — drives reconnect/disconnect APIs. */
   kind: "bank" | "brokerage";
   institution: string;
@@ -73,6 +75,7 @@ function maskDigits(mask: string | null | undefined, fallback: string): string {
 export interface BankAccountRowWithRelations {
   id: string;
   name: string;
+  customName: string | null;
   officialName: string | null;
   mask: string | null;
   externalId: string | null;
@@ -106,6 +109,7 @@ export interface BrokerageRowWithRelations {
   subtype: string | null;
   type: string;
   name: string | null;
+  customName: string | null;
   snaptradeAuthorization?: {
     authorizationId?: string | null;
     brokerage?: string | null;
@@ -150,7 +154,8 @@ export function bankAccountRowToCard(row: BankAccountRowWithRelations): AccountC
   const { type } = row;
   const category = categoryFromPlaidType(type, row.subtype);
   const subtypeLabel = pickSubtypeLabel(row.subtype, type);
-  const description = row.officialName?.trim() || row.name;
+  const customName = row.customName?.trim() || null;
+  const description = customName ?? (row.officialName?.trim() || row.name);
 
   return {
     accountTypeLabel: subtypeLabel,
@@ -160,6 +165,7 @@ export function bankAccountRowToCard(row: BankAccountRowWithRelations): AccountC
     institution,
     institutionLogo,
     institutionUrl,
+    isCustomNamed: customName !== null,
     kind: "bank",
     lastSyncedAt,
     mask: maskDigits(row.mask, row.externalId ?? ""),
@@ -181,16 +187,19 @@ export function brokerageRowToCard(row: BrokerageRowWithRelations): AccountCardV
     : "Brokerage";
   const snapAuth = row.snaptradeAuthorization?.authorizationId?.trim() ?? null;
   const lastSyncedAt = syncMsFromBalance(row.balance);
+  const customName = row.customName?.trim() || null;
+  const description = customName ?? (row.name?.trim() || "Investment account");
 
   return {
     accountTypeLabel: typeLabel,
     category: "brokerage",
-    description: row.name?.trim() ?? "Investment account",
+    description,
     id: row.id,
     institution,
     institutionLogo,
     institutionLogosExtra: institutionLogosExtra.length > 0 ? institutionLogosExtra : null,
     institutionUrl,
+    isCustomNamed: customName !== null,
     kind: "brokerage",
     lastSyncedAt,
     mask: maskDigits(row.accountNumber, row.externalId ?? ""),
