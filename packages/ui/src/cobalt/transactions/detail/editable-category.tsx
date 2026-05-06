@@ -5,12 +5,25 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "../categories";
 import { CategoryPicker } from "./category-picker";
 
+export type CategorySectionKey = "income" | "spending" | "transfer";
+
+export function deriveCategorySection(groupSystemKey: string | null): CategorySectionKey {
+  if (groupSystemKey === "income") {
+    return "income";
+  }
+  if (groupSystemKey === "transfers") {
+    return "transfer";
+  }
+  return "spending";
+}
+
 export interface CategoryPickerOption {
   id: string;
   name: string;
   iconKey: string;
   groupName: string;
   groupSystemKey: string | null;
+  sectionKey: CategorySectionKey;
 }
 
 interface EditableCategoryProps {
@@ -20,6 +33,8 @@ interface EditableCategoryProps {
   onSubmit: (value: { categoryId: string }) => void;
   /** All non-deleted, non-hidden cats for the user. Caller fetches via `queries.categories.list`. */
   options: readonly CategoryPickerOption[];
+  /** Optional: when provided, picker shows "+ New category" row that fires this. */
+  onCreateCategory?: () => void;
 }
 
 export function EditableCategory({
@@ -28,6 +43,7 @@ export function EditableCategory({
   onReset,
   onSubmit,
   options,
+  onCreateCategory,
 }: EditableCategoryProps) {
   const icon = category
     ? (resolveCategoryIcon(category.iconKey) ?? UNKNOWN_CATEGORY_ICON)
@@ -37,6 +53,7 @@ export function EditableCategory({
   return (
     <div className="flex min-w-0 items-center gap-1 text-base leading-6">
       <CategoryPicker
+        onCreateCategory={onCreateCategory}
         onSelect={(item) => onSubmit({ categoryId: item.id })}
         options={options}
         selectedKey={category?.id ?? null}

@@ -5,6 +5,7 @@ import type {
   GeocodeSearchState,
   MerchantSearchState,
 } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
+import { deriveCategorySection } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
 import type { CategoryPickerOption } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
 import type { TagOption } from "@cobalt-web/ui/cobalt/transactions/tags/tag-picker";
 import { mutators, queries } from "@cobalt-web/zero";
@@ -84,12 +85,14 @@ export function useAddTransactionData(): AddTransactionData {
           iconKey: string;
           group?: { name?: string | null; systemKey?: string | null };
         };
+        const groupSystemKey = cat.group?.systemKey ?? null;
         return {
           groupName: cat.group?.name ?? "",
-          groupSystemKey: cat.group?.systemKey ?? null,
+          groupSystemKey,
           iconKey: cat.iconKey,
           id: cat.id,
           name: cat.name,
+          sectionKey: deriveCategorySection(groupSystemKey),
         };
       }),
     [categoryRows],

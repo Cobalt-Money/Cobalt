@@ -1,6 +1,8 @@
-import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
+import { CobaltToggle, cobaltToggleSubtleChrome } from "@cobalt-web/ui/cobalt/toggle";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { Slider } from "@cobalt-web/ui/components/slider";
+import { DollarCircleIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
 export type AmountFilterType = "all" | "income" | "expense";
@@ -65,8 +67,16 @@ export function AmountFilter({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        render={<CobaltToggle pressed={isActive} size="sm" type="button" variant="outline" />}
+        render={
+          <CobaltToggle
+            className={cobaltToggleSubtleChrome}
+            pressed={isActive}
+            size="sm"
+            type="button"
+          />
+        }
       >
+        <HugeiconsIcon className="size-3.5" icon={DollarCircleIcon} />
         {triggerLabel}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 gap-3 p-3">

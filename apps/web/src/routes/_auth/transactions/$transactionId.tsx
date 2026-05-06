@@ -1,6 +1,7 @@
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import type { TransactionDetailEditHandlers } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
 import { TransactionDetailView } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
+import { deriveCategorySection } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
 import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { mutators, queries } from "@cobalt-web/zero";
@@ -12,8 +13,10 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
+import { CategoryFormDialog } from "@/components/categories/category-form-dialog";
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
+import { useCategoryGroups } from "@/hooks/use-categories";
 import { useGeocodeSearch } from "@/hooks/use-geocode-search";
 import { useMerchantSearch } from "@/hooks/use-merchant-search";
 import {
@@ -82,17 +85,21 @@ function TransactionDetailRoute() {
           iconKey: string;
           group?: { name?: string | null; systemKey?: string | null };
         };
+        const groupSystemKey = cat.group?.systemKey ?? null;
         return {
           groupName: cat.group?.name ?? "",
-          groupSystemKey: cat.group?.systemKey ?? null,
+          groupSystemKey,
           iconKey: cat.iconKey,
           id: cat.id,
           name: cat.name,
+          sectionKey: deriveCategorySection(groupSystemKey),
         };
       }),
     [categoryRows]
   );
   const { openAddTag } = useCommandMenu();
+  const { data: categoryGroups } = useCategoryGroups();
+  const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
   const setTransactionTags = useSetTransactionTags();
   const { data: currentTagIds = [] } = useTransactionTagIds(transactionId);
   const tagsById = useMemo(() => {
@@ -116,6 +123,9 @@ function TransactionDetailRoute() {
     return {
       availableTags,
       categoryOptions,
+      onCreateCategory: () => {
+        setCreateCategoryOpen(true);
+      },
       onRequestCreateTag: (initialName: string) => {
         openAddTag({ initialName });
       },
@@ -293,6 +303,12 @@ function TransactionDetailRoute() {
           </div>
         )}
       </div>
+      <CategoryFormDialog
+        groups={categoryGroups}
+        initial={null}
+        onOpenChange={setCreateCategoryOpen}
+        open={createCategoryOpen}
+      />
     </SidebarShellLayout>
   );
 }

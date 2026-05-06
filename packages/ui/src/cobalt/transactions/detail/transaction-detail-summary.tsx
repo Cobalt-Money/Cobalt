@@ -52,6 +52,8 @@ export interface TransactionDetailEditHandlers {
   onUpdateCategory: (value: { categoryId: string }) => void;
   /** All non-deleted, non-hidden cats for the picker. Caller fetches via `queries.categories.list`. */
   categoryOptions: readonly CategoryPickerOption[];
+  /** Optional: caller wires "+ New category" row in picker to its create-dialog. */
+  onCreateCategory?: () => void;
   onUpdateDate: (dateIso: string) => void;
   onUpdateLocation: (location: LocationJson) => void;
   onUpdateMerchant: (args: { merchantName: string | null; website: string | null }) => void;
@@ -165,6 +167,7 @@ export function TransactionDetailSummary({
           <EditableCategory
             category={category}
             isOverridden={false}
+            onCreateCategory={edit.onCreateCategory}
             onReset={edit.onResetCategory}
             onSubmit={edit.onUpdateCategory}
             options={edit.categoryOptions}

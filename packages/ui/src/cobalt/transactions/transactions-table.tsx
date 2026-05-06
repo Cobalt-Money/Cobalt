@@ -28,6 +28,14 @@ import {
   transactionDateSortKey,
   transactionMonthGroupKey,
 } from "./lib/helpers";
+import type { TagColor } from "./tags/palette";
+import { TagChip } from "./tags/tag-chip";
+
+export type TransactionTagsById = ReadonlyMap<string, { name: string; color: TagColor }>;
+
+interface TransactionsTableMeta {
+  tagsById?: TransactionTagsById;
+}
 
 function isCleanLeftClick(e: React.MouseEvent): boolean {
   return e.button === 0 && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
@@ -44,7 +52,8 @@ const STATUS_PENDING_ICON = "/assets/vectors/pending.svg";
 const STATUS_POSTED_ICON = "/assets/vectors/posted.svg";
 
 /** Shared grid template so dividers and rows align on the same columns. */
-const GRID_TEMPLATE_COLUMNS = "2.5rem 3rem 3.5rem 7rem minmax(0, 2fr) minmax(0, 1.5fr) 7rem";
+const GRID_TEMPLATE_COLUMNS =
+  "2.5rem 3rem 3.5rem 7rem minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1fr) 7rem";
 
 /**
  * Fixed row height. Tabular content is uniform by design (truncated name,
@@ -232,6 +241,34 @@ const columns: ColumnDef<TransactionListItem>[] = [
     id: "category",
   },
   {
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as TransactionsTableMeta | undefined;
+      const tagsById = meta?.tagsById;
+      const ids = row.original.tagIds ?? [];
+      if (!tagsById || ids.length === 0) {
+        return null;
+      }
+      const visible = ids.slice(0, 2);
+      const overflow = ids.length - visible.length;
+      return (
+        <div className={cn(cellRow, "min-w-0 gap-1")}>
+          {visible.map((id) => {
+            const t = tagsById.get(id);
+            if (!t) {
+              return null;
+            }
+            return <TagChip color={t.color} key={id} name={t.name} size="sm" />;
+          })}
+          {overflow > 0 ? (
+            <span className="shrink-0 text-muted-foreground text-xs">+{overflow}</span>
+          ) : null}
+        </div>
+      );
+    },
+    header: "Tags",
+    id: "tags",
+  },
+  {
     accessorKey: "amount",
     cell: ({ row }) => {
       const { amount } = row.original;
@@ -303,6 +340,7 @@ export function TransactionsTable({
   onOpenTransaction,
   rowSelection: rowSelectionProp,
   onRowSelectionChange,
+  tagsById,
 }: {
   isComplete: boolean;
   items: TransactionListItem[];
@@ -310,6 +348,7 @@ export function TransactionsTable({
   onOpenTransaction?: (transaction: TransactionListItem) => void;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: (next: RowSelectionState) => void;
+  tagsById?: TransactionTagsById;
 }) {
   const navigate = useNavigate();
   const router = useRouter();
@@ -381,6 +420,8 @@ export function TransactionsTable({
     [openTransaction],
   );
 
+  const tableMeta = useMemo<TransactionsTableMeta>(() => ({ tagsById }), [tagsById]);
+
   const table = useReactTable({
     columns,
     data: items,
@@ -391,6 +432,7 @@ export function TransactionsTable({
     initialState: {
       sorting: [{ desc: true, id: "date" }],
     },
+    meta: tableMeta,
     onRowSelectionChange: setRowSelection,
     state: { rowSelection },
   });

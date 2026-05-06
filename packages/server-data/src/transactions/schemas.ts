@@ -94,6 +94,7 @@ export const transactionListItemSchema = transactionListItemRowSchema
     location: locationJsonSchema.nullable(),
     notes: notesMarkdownSchema.nullable(),
     plaidAccountId: z.string().nullable(),
+    tagIds: z.array(z.uuid()).default([]),
   });
 
 export type TransactionListItem = z.infer<typeof transactionListItemSchema>;
@@ -131,7 +132,7 @@ export const recurringStreamSchema = recurringStreamListRowSchema
     updatedAt: z.string().nullable(),
   });
 
-export const creditSpendingSchema = z.object({
+export const spendingSchema = z.object({
   averageLabel: z.enum(["daily", "weekly", "monthly", "yearly"]),
   averageSpending: z.number(),
   spending: z.array(z.object({ amount: z.number(), date: z.string() })),
@@ -163,8 +164,9 @@ export const recurringStreamsResponseSchema = z.object({
   streams: z.array(recurringStreamSchema),
 });
 
-export const creditSpendingQuerySchema = z.object({
+export const spendingQuerySchema = z.object({
   accountId: z.string().optional(),
+  accountType: z.enum(["credit", "depository", "all"]).default("all"),
   period: z.enum(["1w", "1m", "3m", "6m", "1y", "all"]),
 });
 

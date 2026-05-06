@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@cobalt-web/ui/components/alert-dialog";
+import { AddRowButton } from "@cobalt-web/ui/components/add-row-button";
 import { Button } from "@cobalt-web/ui/components/button";
 import {
   Empty,
@@ -83,18 +84,7 @@ export function ManageTagsForm({
 
   return (
     <div className="-mx-2 flex max-h-[60vh] flex-col overflow-y-auto">
-      {onRequestCreate ? (
-        <button
-          className="flex items-center gap-3 rounded-lg px-2 py-2 text-left text-muted-foreground text-sm transition hover:bg-muted/40 hover:text-foreground"
-          onClick={() => onRequestCreate()}
-          type="button"
-        >
-          <span className="flex size-6 items-center justify-center rounded-full border border-border border-dashed">
-            <HugeiconsIcon className="size-3.5" icon={Add01Icon} />
-          </span>
-          New tag
-        </button>
-      ) : null}
+      {onRequestCreate ? <AddRowButton label="New tag" onClick={() => onRequestCreate()} /> : null}
       <ul className="flex flex-col">
         {tags.map((t) => (
           <ManageTagsRow

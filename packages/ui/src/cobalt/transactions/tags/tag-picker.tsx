@@ -3,7 +3,7 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { Add01Icon, PlusSignIcon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { PlusSignIcon, Tag01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import * as React from "react";
 
@@ -88,8 +88,12 @@ export function TagPicker({
       <PopoverTrigger
         render={
           trigger ?? (
-            <Button size="sm" variant="outline">
-              <HugeiconsIcon className="size-4" icon={Add01Icon} />
+            <Button
+              className="h-6 gap-1.5 rounded-full border border-dashed border-muted-foreground/40 bg-input/30 px-2 font-normal text-muted-foreground text-[13px] hover:bg-input/50 hover:text-foreground dark:hover:bg-input/50"
+              size="sm"
+              variant="ghost"
+            >
+              <HugeiconsIcon className="size-3" icon={Tag01Icon} />
               Add tag
             </Button>
           )

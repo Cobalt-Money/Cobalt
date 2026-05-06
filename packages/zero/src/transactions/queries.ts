@@ -5,8 +5,8 @@ import type { Context } from "../auth.js";
 import { zql } from "../schema.js";
 import {
   NO_MATCH_ID,
-  creditTransactionsForUser,
   recurringForUser,
+  spendingTransactionsForUser,
   transactionsForUser,
 } from "./lib.js";
 
@@ -16,7 +16,9 @@ const listArgsSchema = z
     amountMax: z.number().nonnegative().optional(),
     amountMin: z.number().nonnegative().optional(),
     bank: z.array(z.string()).optional(),
+    categoryIds: z.array(z.string()).optional(),
     status: z.enum(["all", "pending", "posted"]).optional(),
+    tagIds: z.array(z.string()).optional(),
   })
   .optional();
 
@@ -33,19 +35,6 @@ export const transactionsQueries = {
       .orderBy("createdAt", "asc");
   }),
 
-  creditSpending: defineQuery(
-    z.object({
-      period: z.enum(["1w", "1m", "3m", "6m", "1y", "all"]),
-    }),
-    ({ ctx, args }) => {
-      const userId = ctx?.userId;
-      if (!userId) {
-        return zql.transaction.where("id", NO_MATCH_ID);
-      }
-      return creditTransactionsForUser(userId, args.period);
-    },
-  ),
-
   list: defineQuery(listArgsSchema, ({ ctx, args }) => {
     const userId = ctx?.userId;
     if (!userId) {
@@ -61,4 +50,18 @@ export const transactionsQueries = {
     }
     return recurringForUser(userId);
   }),
+
+  spending: defineQuery(
+    z.object({
+      accountType: z.enum(["credit", "depository", "all"]).default("all"),
+      period: z.enum(["1w", "1m", "3m", "6m", "1y", "all"]),
+    }),
+    ({ ctx, args }) => {
+      const userId = ctx?.userId;
+      if (!userId) {
+        return zql.transaction.where("id", NO_MATCH_ID);
+      }
+      return spendingTransactionsForUser(userId, args.period, args.accountType);
+    },
+  ),
 };

@@ -14,6 +14,8 @@ interface Filters {
   amountMax?: number;
   status?: "all" | "pending" | "posted";
   bank?: readonly string[];
+  tagIds?: readonly string[];
+  categoryIds?: readonly string[];
 }
 
 export function useTransactions(filters: Filters = {}) {
@@ -23,7 +25,9 @@ export function useTransactions(filters: Filters = {}) {
       amountMax: filters.amountMax,
       amountMin: filters.amountMin,
       bank: filters.bank ? [...filters.bank] : [],
+      categoryIds: filters.categoryIds ? [...filters.categoryIds] : [],
       status: filters.status ?? "all",
+      tagIds: filters.tagIds ? [...filters.tagIds] : [],
     }),
   );
 
