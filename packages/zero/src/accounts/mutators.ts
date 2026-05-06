@@ -7,13 +7,21 @@ import type { Schema } from "../schema.js";
 import { zql } from "../schema.js";
 
 const ACCOUNT_TYPE = ["depository", "credit", "investment", "loan"] as const;
-const MANUAL_SUBTYPES = ["checking", "savings", "cash"] as const;
 
-const createAccountSchema = z.object({
-  name: z.string().min(1).max(255),
-  subtype: z.enum(MANUAL_SUBTYPES).default("cash"),
-  type: z.enum(ACCOUNT_TYPE).default("depository"),
-});
+const createAccountSchema = z
+  .object({
+    creditLimit: z.number().positive().optional(),
+    currency: z.string().length(3).default("USD"),
+    currentBalance: z.number(),
+    logoDomain: z.string().max(253).optional(),
+    name: z.string().min(1).max(255),
+    subtype: z.string().min(1).max(64),
+    type: z.enum(ACCOUNT_TYPE),
+  })
+  .refine((v) => v.creditLimit === undefined || v.type === "credit", {
+    message: "creditLimit only valid for credit accounts",
+    path: ["creditLimit"],
+  });
 
 const accountIdSchema = z.object({ id: z.string().uuid() });
 
@@ -40,12 +48,22 @@ export const accountsMutators = {
     if (!ctx?.userId) {
       throw new Error("Unauthorized");
     }
+    const accountId = crypto.randomUUID();
     await tx.mutate.financialAccount.insert({
-      id: crypto.randomUUID(),
+      id: accountId,
+      logoDomain: args.logoDomain?.trim() || undefined,
       name: args.name.trim(),
       source: "manual",
-      subtype: args.subtype,
+      subtype: args.subtype.trim(),
       type: args.type,
+      userId: ctx.userId,
+    });
+    await tx.mutate.balance.insert({
+      accountId,
+      creditLimit: args.type === "credit" ? args.creditLimit : undefined,
+      currency: args.currency,
+      current: args.currentBalance,
+      id: crypto.randomUUID(),
       userId: ctx.userId,
     });
   }),

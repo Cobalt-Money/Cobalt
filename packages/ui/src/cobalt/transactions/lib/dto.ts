@@ -41,6 +41,8 @@ export type ZeroTransactionListRow = Record<string, unknown> & {
     readonly name: string;
     readonly externalId: string | null;
     readonly type: string;
+    readonly subtype?: string | null;
+    readonly logoDomain?: string | null;
   };
   readonly category?: {
     readonly id: string;
@@ -77,8 +79,10 @@ export function mapZeroTransactionListRow(row: ZeroTransactionListRow): Transact
 
   return toTransactionListItem({
     account: {
+      logoDomain: account.logoDomain ?? null,
       name: account.name,
       plaidAccountId: account.externalId ?? "",
+      subtype: account.subtype ?? null,
       type: account.type,
     },
     institution: inst

@@ -109,7 +109,9 @@ function makeTx(
     Pick<TransactionListItem, "id" | "name" | "amount" | "date">,
 ): TransactionListItem {
   return {
+    accountLogoDomain: null,
     accountName: "Chase Checking",
+    accountSubtype: "checking",
     accountType: "depository",
     authorizedDate: null,
     category: null,

@@ -29,6 +29,8 @@ export interface AccountCardViewModel {
   lastSyncedAt: number | null;
   /** Underlying provider — `manual` accounts disconnect via Zero mutator instead of REST. */
   source: "plaid" | "snaptrade" | "manual";
+  /** Raw subtype for callers that need to special-case (e.g. cash glyph for `subtype === "cash"`). */
+  subtype: string | null;
 }
 
 function titleCaseWords(s: string): string {
@@ -77,6 +79,8 @@ export interface BankAccountRowWithRelations {
   type: string;
   subtype: string | null;
   source: "plaid" | "snaptrade" | "manual";
+  institutionName?: string | null;
+  logoDomain?: string | null;
   plaidConnection?: {
     plaidItemId?: string | null;
     institutionLogo?: string | null;
@@ -129,10 +133,7 @@ function institutionFieldsFromBankConnection(
   };
 }
 
-function pickSubtypeLabel(isManual: boolean, subtype: string | null, type: string): string {
-  if (isManual) {
-    return "Cash";
-  }
+function pickSubtypeLabel(subtype: string | null, type: string): string {
   if (subtype) {
     return titleCaseWords(subtype.replaceAll("_", " "));
   }
@@ -142,13 +143,13 @@ function pickSubtypeLabel(isManual: boolean, subtype: string | null, type: strin
 export function bankAccountRowToCard(row: BankAccountRowWithRelations): AccountCardViewModel {
   const isManual = row.source === "manual";
   const fromConn = institutionFieldsFromBankConnection(row.plaidConnection);
-  const institution = isManual ? "Cash" : fromConn.institution;
+  const institution = isManual ? (row.institutionName?.trim() ?? row.name) : fromConn.institution;
   const institutionLogo = isManual ? null : fromConn.institutionLogo;
-  const institutionUrl = isManual ? null : fromConn.institutionUrl;
+  const institutionUrl = isManual ? (row.logoDomain?.trim() ?? null) : fromConn.institutionUrl;
   const lastSyncedAt = syncMsFromBalance(row.balance) ?? row.updatedAt ?? null;
   const { type } = row;
   const category = categoryFromPlaidType(type, row.subtype);
-  const subtypeLabel = pickSubtypeLabel(isManual, row.subtype, type);
+  const subtypeLabel = pickSubtypeLabel(row.subtype, type);
   const description = row.officialName?.trim() || row.name;
 
   return {
@@ -166,6 +167,7 @@ export function bankAccountRowToCard(row: BankAccountRowWithRelations): AccountC
     plaidItemId: row.plaidConnection?.plaidItemId ?? null,
     snaptradeAuthorizationId: null,
     source: row.source,
+    subtype: row.subtype,
   };
 }
 
@@ -196,6 +198,7 @@ export function brokerageRowToCard(row: BrokerageRowWithRelations): AccountCardV
     plaidItemId: null,
     snaptradeAuthorizationId: snapAuth,
     source: "snaptrade",
+    subtype: row.subtype,
   };
 }
 

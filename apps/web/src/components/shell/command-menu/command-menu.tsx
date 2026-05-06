@@ -1,6 +1,6 @@
 import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-grid";
 import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/types";
-import { AddCashAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-cash-account-dialog";
+import { AddManualAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-manual-account-dialog";
 import {
   CobaltCommandDialog,
   CobaltCommandInput,
@@ -52,7 +52,8 @@ import {
 } from "@/components/accounts/use-add-account-flow";
 import { SettingsGrid } from "@/components/settings/settings-grid";
 import type { SettingsSection } from "@/components/settings/settings-grid";
-import { useAddCashAccountSubmit } from "@/hooks/use-add-cash-account-submit";
+import { useAddManualAccountSubmit } from "@/hooks/use-add-manual-account-submit";
+import { useMerchantSearch } from "@/hooks/use-merchant-search";
 import { useAddTagSubmit } from "@/hooks/use-add-tag-submit";
 import { useAddTransactionData } from "@/hooks/use-add-transaction-data";
 import { useDeleteTag, useTags, useUpdateTag } from "@/hooks/use-tags";
@@ -174,10 +175,35 @@ function getPlaceholder(activePage: string | undefined): string {
   return "Type a command or search…";
 }
 
+/** Strip protocol/path/`www.` to get a bare domain suitable for Brandfetch CDN paths. */
+function domainFromUrl(url: string | null): string | null {
+  if (!url) {
+    return null;
+  }
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return null;
+  }
+  let host = trimmed;
+  if (trimmed.includes("://")) {
+    try {
+      host = new URL(trimmed).hostname;
+    } catch {
+      return null;
+    }
+  }
+  const cleaned = host
+    .replace(/^www\./, "")
+    .split("/")[0]
+    ?.toLowerCase();
+  return cleaned && cleaned.length > 0 ? cleaned : null;
+}
+
 /** Pages that render their own form body and hide the cmdk input + list. */
 function isFormPage(activePage: string | undefined): boolean {
   return (
-    activePage === "add-cash-account" ||
+    activePage === "add-manual-account" ||
+    activePage === "link-or-manual" ||
     activePage === "add-transaction" ||
     activePage === "add-tag" ||
     activePage === "manage-tags"
@@ -216,8 +242,8 @@ interface CommandMenuContextValue {
   openManageCategories: () => void;
   /** Open palette to the add-account sub-page. */
   openAddAccount: () => void;
-  /** Open palette to the add-cash-account sub-page. */
-  openAddCashAccount: () => void;
+  /** Open palette to the add-manual-account sub-page. */
+  openAddManualAccount: () => void;
   /** Open palette to the add-transaction sub-page. */
   openAddTransaction: () => void;
   /** Open palette to the add-tag sub-page, optionally seeded with a name. */
@@ -261,6 +287,9 @@ function CommandMenuDialog({
   const { resolvedTheme, setTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("profile");
+  const [selectedInstitution, setSelectedInstitution] = useState<AddAccountInstitution | null>(
+    null,
+  );
 
   const activePage = pages.at(-1);
   const inSearchTransactions = activePage === "search-transactions";
@@ -268,7 +297,8 @@ function CommandMenuDialog({
   const inAddAccount = activePage === "add-account";
   const inSearchTickers = activePage === "search-tickers";
   const inSettings = activePage === "settings";
-  const inAddCashAccount = activePage === "add-cash-account";
+  const inAddManualAccount = activePage === "add-manual-account";
+  const inLinkOrManual = activePage === "link-or-manual";
   const inAddTransaction = activePage === "add-transaction";
   const inAddTag = activePage === "add-tag";
   const inManageTags = activePage === "manage-tags";
@@ -298,7 +328,9 @@ function CommandMenuDialog({
   const { data: plaidInstitutions = [] } = useInstitutionSearch(search, inAddAccount);
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
   const { handleChoose: handleChooseConnect, updateModeDialog } = useAccountLauncher(dismiss);
-  const { submit: submitAddCashAccount } = useAddCashAccountSubmit();
+  const { submit: submitAddManualAccount } = useAddManualAccountSubmit();
+  const [brandQuery, setBrandQuery] = useState("");
+  const { data: brandResults = [], isFetching: brandSearchLoading } = useMerchantSearch(brandQuery);
   const {
     availableTags: addTxAvailableTags,
     categoryOptions: addTxCategoryOptions,
@@ -432,15 +464,20 @@ function CommandMenuDialog({
   const handleChooseInstitution = useCallback(
     (institution: AddAccountInstitution) => {
       if (institution.provider === "manual") {
-        // Replace add-account page with add-cash-account — same dialog,
-        // same morph in/out as other sub-pages.
+        // Cash tile — no intermediate step, no institution prefill.
+        setSelectedInstitution(null);
         setSearch("");
-        setPages((p) => [...p.slice(0, -1), "add-cash-account"]);
+        setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
         return;
       }
-      handleChooseConnect(institution);
+      // Plaid/SnapTrade institution — give user a choice between linking and
+      // tracking it manually. Stash the institution so the manual form can
+      // prefill name + logoDomain if they pick "Add manually".
+      setSelectedInstitution(institution);
+      setSearch("");
+      setPages((p) => [...p.slice(0, -1), "link-or-manual"]);
     },
-    [handleChooseConnect, setPages, setSearch],
+    [setPages, setSearch],
   );
 
   const enterSettings = useCallback(
@@ -632,7 +669,8 @@ function CommandMenuDialog({
           inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
           inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl",
           inAddTransaction && "sm:max-w-3xl",
-          inAddCashAccount && "sm:max-w-3xl",
+          inAddManualAccount && "sm:max-w-3xl",
+          inLinkOrManual && "sm:max-w-xl",
           inAddTag && "sm:max-w-lg",
           inManageTags && "sm:max-w-md",
         )}
@@ -661,18 +699,72 @@ function CommandMenuDialog({
               onSectionChange={setSettingsSection}
             />
           )}
-          {inAddCashAccount && (
+          {inLinkOrManual && selectedInstitution !== null && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-3 font-semibold text-foreground text-lg leading-none">
+                {selectedInstitution.logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    alt=""
+                    className="size-8 shrink-0 rounded-lg object-contain"
+                    src={selectedInstitution.logo}
+                  />
+                ) : null}
+                <span>{selectedInstitution.name}</span>
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                How would you like to add this account?
+              </p>
+              <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
+                <button
+                  className="flex flex-col items-start gap-1 rounded-lg border border-foreground/10 bg-foreground/[0.03] p-4 text-left transition-colors hover:bg-foreground/[0.07]"
+                  onClick={() => {
+                    handleChooseConnect(selectedInstitution);
+                  }}
+                  type="button"
+                >
+                  <span className="font-medium text-foreground text-sm">
+                    Link with {selectedInstitution.provider === "plaid" ? "Plaid" : "SnapTrade"}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    Auto-sync balances and transactions.
+                  </span>
+                </button>
+                <button
+                  className="flex flex-col items-start gap-1 rounded-lg border border-foreground/10 bg-foreground/[0.03] p-4 text-left transition-colors hover:bg-foreground/[0.07]"
+                  onClick={() => {
+                    setSearch("");
+                    setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
+                  }}
+                  type="button"
+                >
+                  <span className="font-medium text-foreground text-sm">Add manually</span>
+                  <span className="text-muted-foreground text-xs">
+                    Track balance yourself; no auto-sync.
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
+          {inAddManualAccount && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-foreground text-lg leading-none">
                 <HugeiconsIcon className="size-6 shrink-0" icon={Wallet01Icon} strokeWidth={2} />
-                New Cash Account
+                Add an account
               </h2>
-              <AddCashAccountForm
+              <AddManualAccountForm
+                brandSearch={{
+                  loading: brandSearchLoading,
+                  onQueryChange: setBrandQuery,
+                  results: brandResults,
+                }}
+                initialLogoDomain={domainFromUrl(selectedInstitution?.url ?? null)}
+                initialName={selectedInstitution?.name}
                 onBackspaceWhenEmpty={popPage}
                 onSubmit={(values) => {
                   void (async () => {
                     try {
-                      await submitAddCashAccount(values);
+                      await submitAddManualAccount(values);
                       handleOpenChange(false);
                     } catch {
                       // Toast already shown by provider.
@@ -699,7 +791,7 @@ function CommandMenuDialog({
                 onRequestCreateTag={addTxOnRequestCreateTag}
                 onCreateCashAccount={() => {
                   setSearch("");
-                  setPages((p) => [...p.slice(0, -1), "add-cash-account"]);
+                  setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
                 }}
                 onSubmit={(values) => {
                   void (async () => {
@@ -908,7 +1000,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
     void navigate({ to: "/transactions/categories" });
   }, [navigate]);
   const openAddAccount = useCallback(() => openAt("add-account"), [openAt]);
-  const openAddCashAccount = useCallback(() => openAt("add-cash-account"), [openAt]);
+  const openAddManualAccount = useCallback(() => openAt("add-manual-account"), [openAt]);
   const openAddTransaction = useCallback(() => openAt("add-transaction"), [openAt]);
   const openAddTag = useCallback(
     (opts?: { initialName?: string }) => {
@@ -942,7 +1034,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
     () => ({
       open,
       openAddAccount,
-      openAddCashAccount,
+      openAddManualAccount,
       openAddTag,
       openAddTransaction,
       openManageCategories,
@@ -952,7 +1044,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
     [
       open,
       openAddAccount,
-      openAddCashAccount,
+      openAddManualAccount,
       openAddTag,
       openAddTransaction,
       openManageCategories,

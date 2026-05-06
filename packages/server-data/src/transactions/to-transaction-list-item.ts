@@ -5,6 +5,9 @@ export interface TransactionListItemAccountSlice {
   name: string;
   plaidAccountId: string | null;
   type: string;
+  subtype: string | null;
+  /** Brandfetch domain for manual accounts (`financial_account.logo_domain`). */
+  logoDomain: string | null;
 }
 
 export type TransactionListItemInstitutionSlice = {
@@ -92,7 +95,9 @@ export function toTransactionListItem(input: {
   const synthesizedLocation = synthesizeLocation(row);
 
   return {
+    accountLogoDomain: account.logoDomain,
     accountName: account.name,
+    accountSubtype: account.subtype,
     accountType: account.type,
     amount: row.amount,
     authorizedDate: normalizeDateForTransactionList(row.authorizedDate),

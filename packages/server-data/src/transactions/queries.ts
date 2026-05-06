@@ -73,7 +73,9 @@ export async function getUserTransactions(userId: string, params: TransactionLis
       account: {
         externalId: financialAccount.externalId,
         institutionName: financialAccount.institutionName,
+        logoDomain: financialAccount.logoDomain,
         name: financialAccount.name,
+        subtype: financialAccount.subtype,
         type: financialAccount.type,
       },
       address: transaction.address,
@@ -140,8 +142,10 @@ export async function getUserTransactions(userId: string, params: TransactionLis
   return rows.map((row) =>
     toTransactionListItem({
       account: {
+        logoDomain: row.account.logoDomain,
         name: row.account.name,
         plaidAccountId: row.account.externalId,
+        subtype: row.account.subtype,
         type: row.account.type,
       },
       institution:

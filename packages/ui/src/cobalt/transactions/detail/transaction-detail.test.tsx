@@ -13,7 +13,9 @@ vi.mock(import("@cobalt-web/ui/components/ui/map"), () => ({
 
 function createMockTransaction(overrides: Partial<TransactionListItem> = {}): TransactionListItem {
   return {
+    accountLogoDomain: null,
     accountName: "Checking",
+    accountSubtype: "checking",
     accountType: "depository",
     amount: -12.34,
     authorizedDate: null,

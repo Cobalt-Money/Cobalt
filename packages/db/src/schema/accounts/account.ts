@@ -27,6 +27,11 @@ export const financialAccount = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     /** Bank/brokerage display name (denormalized from institution). */
     institutionName: text("institution_name"),
+    /**
+     * Brandfetch domain (e.g. "chase.com"). UI builds CDN URL from this — themeable, resizable.
+     * Populated for manual accounts via Brandfetch typeahead; Plaid/SnapTrade fall back to lettermark.
+     */
+    logoDomain: text("logo_domain"),
     /** Last 4 digits of the account number. */
     mask: text("mask"),
     /** Short user-facing name (e.g. "Sapphire Reserve"). */

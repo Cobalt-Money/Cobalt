@@ -18,7 +18,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { PrivateAmount } from "../../components/privacy";
 import { ConnectAccountEmpty } from "../empty/connect-account-empty";
-import { InstitutionLogo } from "../logos/institution-logo";
+import { AccountLogo } from "../accounts/account-logo";
 import { MerchantLogo } from "../logos/merchant-logo";
 import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "./categories";
 import {
@@ -147,16 +147,26 @@ const columns: ColumnDef<TransactionListItem>[] = [
   {
     accessorFn: (row) => row.institutionName ?? row.accountName ?? "",
     cell: ({ row }) => {
-      const { accountName, institutionLogo, institutionName, institutionUrl, source } =
-        row.original;
+      const {
+        accountLogoDomain,
+        accountName,
+        accountSubtype,
+        institutionLogo,
+        institutionName,
+        institutionUrl,
+        source,
+      } = row.original;
+      const effectiveUrl = source === "manual" ? accountLogoDomain : institutionUrl;
+      const effectiveName = institutionName?.trim() ? institutionName : accountName;
 
       return (
-        <div className={cellRow} title={institutionName?.trim() || accountName}>
-          <InstitutionLogo
+        <div className={cellRow} title={effectiveName}>
+          <AccountLogo
             institutionLogo={institutionLogo}
-            institutionName={institutionName}
-            institutionUrl={institutionUrl}
+            logoDomain={effectiveUrl}
+            name={effectiveName}
             source={source}
+            subtype={accountSubtype}
           />
         </div>
       );
