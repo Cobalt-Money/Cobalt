@@ -1,11 +1,11 @@
 import { NewsMagazine } from "@cobalt-web/ui/cobalt/news/news-magazine";
 import { queries } from "@cobalt-web/zero";
+import { useQuery } from "@rocicorp/zero/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { Link } from "@/components/links";
 import { useCommandMenu } from "@/components/shell/command-menu";
-import { useBrokerage } from "@/hooks/use-brokerage";
 import { useFinancialEvents } from "@/hooks/use-financial-events";
 import { useNewsRssSidebar } from "@/hooks/use-news-rss";
 
@@ -15,32 +15,40 @@ export const Route = createFileRoute("/_auth/news/")({
   component: NewsIndexPage,
   loader: ({ context }) => {
     context.zero.run(queries.news.events());
-    context.zero.run(queries.brokerage.positions());
     context.zero.run(queries.news.rssSidebar());
+    context.zero.run(queries.brokerage.positions());
+    context.zero.run(queries.brokerage.plaidPositions());
   },
   staticData: { title: "News" },
 });
 
+interface HoldingWithSymbol {
+  security?: { tickerSymbol?: string | null } | null;
+}
+
 function NewsIndexPage() {
   const { events } = useFinancialEvents();
   const { items: rssItems } = useNewsRssSidebar();
-  const { positions } = useBrokerage();
+  const [snaptradePositions] = useQuery(queries.brokerage.positions());
+  const [plaidPositions] = useQuery(queries.brokerage.plaidPositions());
   const { openAddAccount } = useCommandMenu();
   const { activeTab } = useNewsLayout();
 
   const holdingSymbols = useMemo(() => {
     const s = new Set<string>();
-    for (const p of positions as readonly {
-      security?: { symbol?: string | null } | null;
-    }[]) {
-      const raw = p.security?.symbol;
+    const all = [
+      ...(snaptradePositions as readonly HoldingWithSymbol[]),
+      ...(plaidPositions as readonly HoldingWithSymbol[]),
+    ];
+    for (const p of all) {
+      const raw = p.security?.tickerSymbol;
       const sym = typeof raw === "string" ? raw.trim().toUpperCase() : "";
       if (sym) {
         s.add(sym);
       }
     }
     return s;
-  }, [positions]);
+  }, [snaptradePositions, plaidPositions]);
 
   const eventsForYou = useMemo(() => {
     if (holdingSymbols.size === 0) {
