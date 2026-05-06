@@ -622,7 +622,7 @@ export function TransactionsTable({
                   const isIndeterminate = selectionState === "some";
                   return (
                     <div
-                      className="group/month grid rounded-lg bg-muted font-medium text-foreground"
+                      className="group/month grid rounded-lg bg-sidebar-accent font-medium text-foreground"
                       data-index={vi.index}
                       key={vi.key}
                       role="row"

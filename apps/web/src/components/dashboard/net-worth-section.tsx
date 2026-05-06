@@ -784,7 +784,7 @@ export function NetWorthSection() {
 
   return (
     <section aria-label="Net worth overview" className="w-full min-w-0">
-      <CobaltCard className="overflow-hidden rounded-3xl py-3">
+      <CobaltCard className="overflow-hidden rounded-3xl py-3 bg-sidebar-accent">
         <CardContent className="p-0">
           <div className="flex flex-col lg:min-h-[380px] lg:flex-row lg:items-stretch">
             {/* Net worth history chart */}
