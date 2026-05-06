@@ -10,6 +10,13 @@ export const cobaltPromptInputChrome =
   "border-0 bg-[oklch(0.949_0_0)] shadow-none ring-0 dark:bg-[oklch(0.29_0_0)] has-[[data-slot=input-group-control]:focus-visible]:border-transparent has-[[data-slot=input-group-control]:focus-visible]:ring-0 has-[[data-slot][aria-invalid=true]]:border-transparent has-[[data-slot][aria-invalid=true]]:ring-0 dark:has-[[data-slot][aria-invalid=true]]:ring-0";
 
 /**
+ * Ghost surface fill matching the composer InputGroup. Use for sibling panels
+ * (queue, ask-user) so they read as the same surface family as the composer.
+ */
+export const cobaltGhostSurfaceClass =
+  "border-0 bg-[oklch(0.949_0_0)] shadow-none dark:bg-[oklch(0.29_0_0)]";
+
+/**
  * User message bubble: same ghost fill and radius as the composer `InputGroup`
  * (`rounded-2xl` matches the textarea + footer shell).
  */

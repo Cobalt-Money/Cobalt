@@ -10,7 +10,7 @@ import { getKnowledgeTOC, loadKnowledgeFiles } from "../../knowledge/index.js";
 import { gatewayModel, getProviderOptions, parseModelWithReasoning } from "../../model-provider.js";
 import type { ReasoningEffort } from "../../model-provider.js";
 import { loadSchemaFiles } from "./schema-context.js";
-import { askUserTool } from "./tools/ask-user-tools.js";
+// import { askUserTool } from "./tools/ask-user-tools.js"; // disabled — sequential-asking loop
 import { renderChartTool } from "./tools/chart-tools.js";
 import { renderDocumentTool } from "./tools/document-tools.js";
 import { createExecuteCodeTool } from "./tools/execute-code-tool.js";
@@ -82,7 +82,6 @@ AVAILABLE TOOLS:
 - webExtract: Extract and read the full content of specific web pages.
 - renderChart: Create interactive charts (LineChart, BarChart, PieChart, AreaChart) from data you've fetched.
 - renderDocument: Create downloadable PDF documents. Use PDFPage as root, PDFHeader for titles, PDFTable for data, PDFMetricRow for KPIs.
-- askUser: Ask the user a multiple-choice clarifying question when their request is ambiguous.
 - Mermaid Diagrams: Create diagrams using fenced \`\`\`mermaid code blocks.
 
 SECURITY RULES (ABSOLUTE):
@@ -174,7 +173,7 @@ WORKFLOW: optionally discover schema/knowledge (bash: ls/cat/grep) → write pla
     stopWhen: stepCountIs(20),
     // bash-tool's FlexibleSchema doesn't fit ToolSet's union — a strict cast OOMs tsc, so go through unknown.
     tools: {
-      askUser: askUserTool,
+      // askUser: askUserTool, // disabled — sequential-asking loop
       bash,
       executeCode: executeCodeTool,
       renderChart: renderChartTool,

@@ -31,15 +31,16 @@ function ChatPromptInputInner({ extraInputGroupClassName }: ChatPromptInputInner
   const canSubmit = textInput.value.trim().length > 0;
 
   const handleChatPromptSubmit = useCallback(
-    async (message: PromptInputMessage) => {
+    (message: PromptInputMessage) => {
       const content = message.text.trim();
       if (!content) {
         return;
       }
       setExpanded(false);
-      await submit(params.chatId, content);
+      textInput.clear();
+      void submit(params.chatId, content);
     },
-    [submit, params.chatId],
+    [submit, params.chatId, textInput],
   );
 
   const checkOverflow = useCallback(() => {

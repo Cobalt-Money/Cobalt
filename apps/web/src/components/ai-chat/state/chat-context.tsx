@@ -126,6 +126,16 @@ interface ChatContextValue extends StreamState {
   stop: () => void;
   /** Resolve a pending tool call (e.g. askUser) and resume the agent. */
   addToolOutput: (opts: { chatId: string; toolCallId: string; output: unknown }) => Promise<void>;
+  /**
+   * Resolve multiple pending tool calls in a single resume. Use when the
+   * model emitted parallel tool calls (e.g. askUser × N) so all results are
+   * sent back together — otherwise unresolved parts are dropped by
+   * convertToModelMessages and the model re-emits them.
+   */
+  addToolOutputs: (opts: {
+    chatId: string;
+    items: { toolCallId: string; output: unknown }[];
+  }) => Promise<void>;
   /** Messages queued while streaming; auto-dispatched when stream ends. */
   queuedMessages: QueuedMessage[];
   removeFromQueue: (id: string) => void;
@@ -348,6 +358,66 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [navigate, runStream, serverUrl],
   );
 
+  const addToolOutputs = useCallback(
+    async ({
+      chatId,
+      items,
+    }: {
+      chatId: string;
+      items: { toolCallId: string; output: unknown }[];
+    }) => {
+      if (items.length === 0) {
+        return;
+      }
+      const outputById = new Map(items.map((i) => [i.toolCallId, i.output]));
+      const remaining = new Set(outputById.keys());
+
+      const history = zeroMessagesRef.current.map(zeroRowToFullUIMessage);
+      const updated = history.map((msg) => {
+        if (msg.role !== "assistant" || remaining.size === 0) {
+          return msg;
+        }
+        let changed = false;
+        const newParts = msg.parts.map((p) => {
+          const id = (p as { toolCallId?: string }).toolCallId;
+          if (
+            !id ||
+            !remaining.has(id) ||
+            typeof p.type !== "string" ||
+            !p.type.startsWith("tool-")
+          ) {
+            return p;
+          }
+          remaining.delete(id);
+          changed = true;
+          return {
+            ...(p as Record<string, unknown>),
+            output: outputById.get(id),
+            state: "output-available",
+          } as UIMessage["parts"][number];
+        });
+        return changed ? { ...msg, parts: newParts } : msg;
+      });
+
+      if (remaining.size === items.length) {
+        console.warn("[chat] addToolOutputs: no matching tool calls", [...remaining]);
+        return;
+      }
+      if (remaining.size > 0) {
+        console.warn("[chat] addToolOutputs: some tool calls not found", [...remaining]);
+      }
+
+      const lastAssistant = updated.at(-1);
+      if (!lastAssistant || lastAssistant.role !== "assistant") {
+        console.warn("[chat] addToolOutputs: last message is not assistant");
+        return;
+      }
+
+      await runStream(chatId, lastAssistant, updated);
+    },
+    [runStream],
+  );
+
   const addToolOutput = useCallback(
     async ({
       chatId,
@@ -358,47 +428,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       toolCallId: string;
       output: unknown;
     }) => {
-      const history = zeroMessagesRef.current.map(zeroRowToFullUIMessage);
-      // Find the newest assistant message carrying this tool call and patch it.
-      let patched = false;
-      const updated = history.map((msg) => {
-        if (patched || msg.role !== "assistant") {
-          return msg;
-        }
-        const idx = msg.parts.findIndex(
-          (p) =>
-            typeof p.type === "string" &&
-            p.type.startsWith("tool-") &&
-            (p as { toolCallId?: string }).toolCallId === toolCallId,
-        );
-        if (idx === -1) {
-          return msg;
-        }
-        const newParts = [...msg.parts];
-        const existing = newParts[idx] as Record<string, unknown>;
-        newParts[idx] = {
-          ...existing,
-          output,
-          state: "output-available",
-        } as UIMessage["parts"][number];
-        patched = true;
-        return { ...msg, parts: newParts };
-      });
-
-      if (!patched) {
-        console.warn("[chat] addToolOutput: no matching tool call", toolCallId);
-        return;
-      }
-
-      const lastAssistant = updated.at(-1);
-      if (!lastAssistant || lastAssistant.role !== "assistant") {
-        console.warn("[chat] addToolOutput: last message is not assistant");
-        return;
-      }
-
-      await runStream(chatId, lastAssistant, updated);
+      await addToolOutputs({ chatId, items: [{ output, toolCallId }] });
     },
-    [runStream],
+    [addToolOutputs],
   );
 
   const removeFromQueue = useCallback((id: string) => {
@@ -438,6 +470,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     () => ({
       ...state,
       addToolOutput,
+      addToolOutputs,
       clearStream,
       queuedMessages,
       removeFromQueue,
@@ -449,6 +482,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [
       state,
       addToolOutput,
+      addToolOutputs,
       clearStream,
       queuedMessages,
       removeFromQueue,
