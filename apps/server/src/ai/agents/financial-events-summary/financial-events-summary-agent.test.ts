@@ -54,7 +54,7 @@ function validAiOutput() {
     finishReason: "stop",
     output: {
       eventSummary:
-        "## Headline\n\nFirst paragraph with cite [1](cite:1).\n\n## Aftermath\n\nMore prose [1](cite:1)[2](cite:2).",
+        "## Headline\n\nFirst paragraph with cite [1](#cite-1).\n\n## Aftermath\n\nMore prose [1](#cite-1)[2](#cite-2).",
       keyPoints: [],
       overallSentiment: "neutral" as const,
       topics: ["tech"] as const,
@@ -77,7 +77,7 @@ describe("summarizeEventArticles", () => {
     const result = await summarizeEventArticles("NVIDIA earnings", undefined, [processedArticle()]);
 
     expect(result.eventSummary).toContain("## Headline");
-    expect(result.eventSummary).toContain("[1](cite:1)");
+    expect(result.eventSummary).toContain("[1](#cite-1)");
     expect(result.keyPoints).toStrictEqual([]);
     expect(result.overallSentiment).toBe("neutral");
     expect(result.topics).toStrictEqual(["tech"]);
