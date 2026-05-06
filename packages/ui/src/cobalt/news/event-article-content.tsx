@@ -18,8 +18,8 @@ interface Props {
 
 const MAX_INLINE_CHIPS = 1;
 
-const CITE_SINGLE_RE = /^cite:(\d+)$/;
-const CITE_GROUP_RE = /^cite-group:([\d,]+)$/;
+const CITE_SINGLE_RE = /^#cite-(\d+)$/;
+const CITE_GROUP_RE = /^#cite-group-([\d,]+)$/;
 
 interface MdNode {
   type: string;
@@ -89,7 +89,7 @@ function remarkGroupCitations() {
         out.push({
           children: [{ type: "text", value: "" }],
           type: "link",
-          url: `cite-group:${indices.join(",")}`,
+          url: `#cite-group-${indices.join(",")}`,
         });
         i = j;
       }

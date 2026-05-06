@@ -83,8 +83,8 @@ OUTPUT REQUIREMENTS — produce four fields:
 1. eventSummary — a markdown article. Strict format:
    - 2 to 4 sections, each starting with a "##" heading. Pick descriptive section titles based on the actual content (not generic headers like "Background" or "Overview" unless that genuinely fits).
    - Each section: 1-2 tight paragraphs. No walls of text. No bullet lists.
-   - Inline citations as markdown links with the special URL scheme "cite:N", where N is the 1-indexed source article. Format: [N](cite:N).
-   - Place citations at the END of the relevant sentence or paragraph. Cite every factual claim. Cluster multiple sources at the same location when they corroborate the same fact: "...announced layoffs [1](cite:1)[3](cite:3)[5](cite:5)."
+   - Inline citations as markdown links with the hash URL "#cite-N", where N is the 1-indexed source article. Format: [N](#cite-N).
+   - Place citations at the END of the relevant sentence or paragraph. Cite every factual claim. Cluster multiple sources at the same location when they corroborate the same fact: "...announced layoffs [1](#cite-1)[3](#cite-3)[5](#cite-5)."
    - Use ONLY citation indices that exist in the source list above. Never fabricate.
    - Do NOT include a "## Sources" section, raw URLs, or footnotes — the UI renders sources separately.
    - Do NOT include the event name as a top-level "#" heading — that is also rendered separately by the UI.
