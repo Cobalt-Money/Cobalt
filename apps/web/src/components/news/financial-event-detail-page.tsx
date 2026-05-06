@@ -1,4 +1,6 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
+import { EventArticleContent } from "@cobalt-web/ui/cobalt/news/event-article-content";
+import type { EventArticleSource } from "@cobalt-web/ui/cobalt/news/event-article-content";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { LinkSquare01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -28,36 +30,6 @@ interface FinancialEventDetailRow {
   readonly date?: number | null;
   readonly createdAt?: number | null;
   readonly articles?: readonly EventArticleRow[];
-}
-
-function parseKeyPoints(raw: unknown): string[] {
-  if (raw === undefined || raw === null) {
-    return [];
-  }
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-  const out: string[] = [];
-  for (const x of raw) {
-    if (typeof x === "string" && x.trim()) {
-      out.push(x.trim());
-    } else if (x !== null && typeof x === "object" && "text" in x) {
-      const t = (x as { text?: unknown }).text;
-      if (typeof t === "string" && t.trim()) {
-        out.push(t.trim());
-      }
-    }
-  }
-  const seen = new Set<string>();
-  const deduped: string[] = [];
-  for (const s of out) {
-    if (seen.has(s)) {
-      continue;
-    }
-    seen.add(s);
-    deduped.push(s);
-  }
-  return deduped;
 }
 
 function parseTickers(raw: unknown): string[] {
@@ -205,24 +177,6 @@ function HeroImage({ src }: { src: string }) {
   );
 }
 
-function KeyPointsSection({ lines }: { lines: readonly string[] }) {
-  if (lines.length === 0) {
-    return null;
-  }
-  return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold tracking-tight">Key points</h2>
-      <ul className="list-disc space-y-2 pl-5">
-        {lines.map((line) => (
-          <li className="text-muted-foreground leading-relaxed" key={line}>
-            {line}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 function VideoEmbedSection({ embedUrl }: { embedUrl: string }) {
   return (
     <section className="flex flex-col gap-3">
@@ -310,6 +264,32 @@ function SourcesSection({ articles }: { articles: readonly EventArticleRow[] }) 
   );
 }
 
+function renderArticleBody({
+  articleSources,
+  eventText,
+  summary,
+}: {
+  articleSources: readonly EventArticleSource[];
+  eventText: string | null;
+  summary: string | null;
+}) {
+  if (summary) {
+    return (
+      <section className="flex flex-col gap-2">
+        <EventArticleContent markdown={summary} sources={articleSources} />
+      </section>
+    );
+  }
+  if (eventText) {
+    return (
+      <section className="flex flex-col gap-2">
+        <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{eventText}</p>
+      </section>
+    );
+  }
+  return null;
+}
+
 export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
   const { event: raw } = useFinancialEventDetail(eventId);
 
@@ -325,10 +305,15 @@ export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
 
   const event = raw as FinancialEventDetailRow;
   const articles = event.articles ?? [];
-  const keyPoints = parseKeyPoints(event.keyPoints);
   const tickers = parseTickers(event.tickers);
   const summary = event.summary?.trim() || null;
   const eventText = event.eventText?.trim() || null;
+  const articleSources: EventArticleSource[] = articles.map((a) => ({
+    id: a.id,
+    newsUrl: a.newsUrl,
+    sourceName: a.sourceName ?? null,
+    title: a.title,
+  }));
   const heroImage = articles.find((a) => a.imageUrl?.trim())?.imageUrl?.trim() ?? null;
   const videoEmbed = pickVideoEmbed(articles);
   const ts = eventTimestampMs(event);
@@ -346,21 +331,7 @@ export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
 
       {heroImage ? <HeroImage src={heroImage} /> : null}
 
-      {summary ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold tracking-tight">Summary</h2>
-          <p className="text-muted-foreground leading-relaxed">{summary}</p>
-        </section>
-      ) : null}
-
-      <KeyPointsSection lines={keyPoints} />
-
-      {eventText && eventText !== summary ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold tracking-tight">Details</h2>
-          <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{eventText}</p>
-        </section>
-      ) : null}
+      {renderArticleBody({ articleSources, eventText, summary })}
 
       {videoEmbed ? <VideoEmbedSection embedUrl={videoEmbed} /> : null}
 
