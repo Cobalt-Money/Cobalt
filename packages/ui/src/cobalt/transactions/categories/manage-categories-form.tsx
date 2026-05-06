@@ -22,6 +22,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   Add01Icon,
+  ChartLineData01Icon,
   Delete02Icon,
   EyeIcon,
   Folder01Icon,
@@ -29,9 +30,20 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
 import { AddRowButton } from "../../../components/add-row-button";
 import { Button } from "../../../components/button";
+import {
+  EmojiPicker,
+  EmojiPickerContent,
+  EmojiPickerSearch,
+} from "../../../components/emoji-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "../../../components/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../../components/tooltip";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -78,6 +90,8 @@ export interface ManageCategoriesFormProps {
   onRenameCategory: (categoryId: string, name: string) => void;
   onDeleteCategory: (cat: ManageCategoriesCat) => void;
   onToggleHidden: (cat: ManageCategoriesCat, hidden: boolean) => void;
+  onToggleExcludeFromInsights: (cat: ManageCategoriesCat, excluded: boolean) => void;
+  onChangeIcon: (categoryId: string, iconKey: string) => void;
   onReorderGroups: (groupIds: string[]) => void;
   onReorderCategories: (groupId: string, categoryIds: string[]) => void;
   onMoveCategoryToGroup: (categoryId: string, groupId: string) => void;
@@ -102,6 +116,7 @@ export function ManageCategoriesForm(props: ManageCategoriesFormProps) {
   const { groups, catsByGroup, onCreateGroup } = props;
   const [active, setActive] = useState<RailKey>(() => groups[0]?.id ?? HIDDEN_KEY);
   const [dragging, setDragging] = useState<ActiveDrag | null>(null);
+  const [hiddenIndex, setHiddenIndex] = useState<number>(() => groups.length);
 
   // If groups arrive after initial mount, jump to the first group (once).
   const didInitActive = useRef(groups.length > 0);
@@ -168,13 +183,25 @@ export function ManageCategoriesForm(props: ManageCategoriesFormProps) {
   const handleDragCancel = () => setDragging(null);
 
   const handleGroupDrop = (activeId: string, overId: string) => {
-    const ids = groups.map((g) => g.id);
-    const from = ids.indexOf(activeId);
-    const to = ids.indexOf(overId);
+    const groupIds = groups.map((g) => g.id);
+    const railIds: string[] = [...groupIds];
+    const clampedHidden = Math.min(Math.max(hiddenIndex, 0), railIds.length);
+    railIds.splice(clampedHidden, 0, HIDDEN_KEY);
+    const from = railIds.indexOf(activeId);
+    const to = railIds.indexOf(overId);
     if (from === -1 || to === -1) {
       return;
     }
-    props.onReorderGroups(arrayMove(ids, from, to));
+    const next = arrayMove(railIds, from, to);
+    const newHiddenIndex = next.indexOf(HIDDEN_KEY);
+    setHiddenIndex(newHiddenIndex);
+    const newGroupOrder = next.filter((id) => id !== HIDDEN_KEY);
+    const sameOrder =
+      newGroupOrder.length === groupIds.length &&
+      newGroupOrder.every((id, i) => id === groupIds[i]);
+    if (!sameOrder) {
+      props.onReorderGroups(newGroupOrder);
+    }
   };
 
   const handleCatDrop = (
@@ -259,63 +286,76 @@ export function ManageCategoriesForm(props: ManageCategoriesFormProps) {
     dragging?.type === "cat" ? (allCats.find((c) => c.id === dragging.id) ?? null) : null;
 
   return (
-    <DndContext
-      collisionDetection={detectCollisions}
-      onDragCancel={handleDragCancel}
-      onDragEnd={handleDragEnd}
-      onDragStart={handleDragStart}
-      sensors={sensors}
-    >
-      <ResizablePanelGroup
-        className="min-h-[70vh]"
-        id="manage-categories-rail"
-        orientation="horizontal"
+    <TooltipProvider>
+      <DndContext
+        collisionDetection={detectCollisions}
+        onDragCancel={handleDragCancel}
+        onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
+        sensors={sensors}
       >
-        <ResizablePanel defaultSize="30%" maxSize="40%" minSize="15%">
-          <SortableContext items={groups.map((g) => g.id)} strategy={verticalListSortingStrategy}>
-            <GroupRail
-              active={active}
-              catsByGroup={catsByGroup}
-              draggingCat={dragging?.type === "cat"}
-              groups={groups}
-              hiddenCount={hiddenCount}
-              onCreateGroup={onCreateGroup}
-              onDeleteGroup={props.onDeleteGroup}
-              onRenameGroup={props.onRenameGroup}
-              onSelect={setActive}
+        <ResizablePanelGroup
+          className="h-full min-h-0 flex-1"
+          id="manage-categories-rail"
+          orientation="horizontal"
+        >
+          <ResizablePanel defaultSize="30%" maxSize="40%" minSize="15%">
+            <SortableContext
+              items={(() => {
+                const ids = groups.map((g) => g.id) as string[];
+                const clamped = Math.min(Math.max(hiddenIndex, 0), ids.length);
+                ids.splice(clamped, 0, HIDDEN_KEY);
+                return ids;
+              })()}
+              strategy={verticalListSortingStrategy}
+            >
+              <GroupRail
+                active={active}
+                catsByGroup={catsByGroup}
+                draggingCat={dragging?.type === "cat"}
+                groups={groups}
+                hiddenCount={hiddenCount}
+                hiddenIndex={hiddenIndex}
+                onCreateGroup={onCreateGroup}
+                onDeleteGroup={props.onDeleteGroup}
+                onRenameGroup={props.onRenameGroup}
+                onSelect={setActive}
+              />
+            </SortableContext>
+          </ResizablePanel>
+          <ResizableHandle className="mx-1 cursor-col-resize bg-border/60 hover:bg-border" />
+          <ResizablePanel defaultSize="70%" minSize="50%">
+            <SortableContext items={detailSortableIds} strategy={verticalListSortingStrategy}>
+              <DetailPane
+                active={active}
+                cats={visibleCats}
+                groups={groups}
+                onChangeIcon={props.onChangeIcon}
+                onCreateCategory={props.onCreateCategory}
+                onDeleteCategory={props.onDeleteCategory}
+                onRenameCategory={props.onRenameCategory}
+                onRenameGroup={props.onRenameGroup}
+                onToggleExcludeFromInsights={props.onToggleExcludeFromInsights}
+                onToggleHidden={props.onToggleHidden}
+                sortable={reorderableGroupId !== null}
+              />
+            </SortableContext>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+        <DragOverlay dropAnimation={null}>
+          {overlayGroup ? (
+            <RailGroupRowDisplay
+              active={false}
+              count={(catsByGroup.get(overlayGroup.id) ?? []).length}
+              elevated
+              group={overlayGroup}
+              isSystem={overlayGroup.systemKey !== null}
             />
-          </SortableContext>
-        </ResizablePanel>
-        <ResizableHandle className="mx-3 cursor-col-resize bg-border/60 hover:bg-border" />
-        <ResizablePanel defaultSize="70%" minSize="50%">
-          <SortableContext items={detailSortableIds} strategy={verticalListSortingStrategy}>
-            <DetailPane
-              active={active}
-              cats={visibleCats}
-              groups={groups}
-              onCreateCategory={props.onCreateCategory}
-              onDeleteCategory={props.onDeleteCategory}
-              onRenameCategory={props.onRenameCategory}
-              onRenameGroup={props.onRenameGroup}
-              onToggleHidden={props.onToggleHidden}
-              sortable={reorderableGroupId !== null}
-            />
-          </SortableContext>
-        </ResizablePanel>
-      </ResizablePanelGroup>
-      <DragOverlay dropAnimation={null}>
-        {overlayGroup ? (
-          <RailGroupRowDisplay
-            active={false}
-            count={(catsByGroup.get(overlayGroup.id) ?? []).length}
-            elevated
-            group={overlayGroup}
-            isSystem={overlayGroup.systemKey !== null}
-          />
-        ) : null}
-        {overlayCat ? <CategoryItemDisplay cat={overlayCat} elevated /> : null}
-      </DragOverlay>
-    </DndContext>
+          ) : null}
+          {overlayCat ? <CategoryItemDisplay cat={overlayCat} elevated /> : null}
+        </DragOverlay>
+      </DndContext>
+    </TooltipProvider>
   );
 }
 
@@ -326,6 +366,7 @@ function GroupRail({
   groups,
   catsByGroup,
   hiddenCount,
+  hiddenIndex,
   draggingCat,
   onSelect,
   onCreateGroup,
@@ -336,34 +377,41 @@ function GroupRail({
   groups: readonly ManageCategoriesGroup[];
   catsByGroup: ReadonlyMap<string, readonly ManageCategoriesCat[]>;
   hiddenCount: number;
+  hiddenIndex: number;
   draggingCat: boolean;
   onSelect: (key: RailKey) => void;
   onCreateGroup: () => void;
   onRenameGroup: (groupId: string, name: string) => void;
   onDeleteGroup: (group: ManageCategoriesGroup) => void;
 }) {
+  const railIds = useMemo(() => {
+    const ids = groups.map((g) => g.id) as RailKey[];
+    const clamped = Math.min(Math.max(hiddenIndex, 0), ids.length);
+    ids.splice(clamped, 0, HIDDEN_KEY);
+    return ids;
+  }, [groups, hiddenIndex]);
   return (
-    <aside className="flex h-full flex-col gap-1 overflow-y-auto pr-2">
+    <aside className="scrollbar-thin flex h-full flex-col gap-1 overflow-y-auto pr-2">
       <AddRowButton
-        className="gap-2 bg-input/30 px-3 hover:bg-input/50"
+        className="mb-2 gap-2 bg-input/30 px-3 hover:bg-input/50"
         label="Create group"
         onClick={onCreateGroup}
       />
-      <RailItem
-        active={active === HIDDEN_KEY}
-        count={hiddenCount}
-        icon={
-          <HugeiconsIcon
-            className="size-6 shrink-0 text-muted-foreground"
-            icon={ViewOffIcon}
-            strokeWidth={2}
-          />
+      {railIds.map((id) => {
+        if (id === HIDDEN_KEY) {
+          return (
+            <SortableHiddenRailRow
+              active={active === HIDDEN_KEY}
+              count={hiddenCount}
+              key={HIDDEN_KEY}
+              onSelect={() => onSelect(HIDDEN_KEY)}
+            />
+          );
         }
-        label="Hidden"
-        onSelect={() => onSelect(HIDDEN_KEY)}
-      />
-      <div className="my-2 h-px bg-border/60" />
-      {groups.map((g) => {
+        const g = groups.find((gg) => gg.id === id);
+        if (!g) {
+          return null;
+        }
         const count = (catsByGroup.get(g.id) ?? []).length;
         const isSystem = g.systemKey !== null;
         return (
@@ -384,35 +432,53 @@ function GroupRail({
   );
 }
 
-function RailItem({
+function SortableHiddenRailRow({
   active,
-  label,
   count,
-  icon,
   onSelect,
 }: {
   active: boolean;
-  label: string;
   count: number;
-  icon: ReactNode | null;
   onSelect: () => void;
 }) {
+  const sortable = useSortable({
+    data: { type: "group" } satisfies DragData,
+    id: HIDDEN_KEY,
+  });
+  const style = {
+    opacity: sortable.isDragging ? 0 : 1,
+    transform: CSS.Transform.toString(sortable.transform),
+    transition: sortable.transition,
+  };
   return (
-    <button
+    <div
       className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-left text-base transition",
-        active
-          ? "bg-muted text-foreground"
-          : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+        "group/rail flex items-center gap-2 rounded-md px-3 py-2 text-base transition",
+        active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/40",
       )}
-      onClick={onSelect}
-      type="button"
+      ref={sortable.setNodeRef}
+      style={style}
     >
-      {icon}
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <button
+        aria-label="Open Hidden"
+        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        onClick={onSelect}
+        type="button"
+      >
+        <HugeiconsIcon
+          className="size-6 shrink-0 text-muted-foreground"
+          icon={ViewOffIcon}
+          strokeWidth={2}
+        />
+        <span className="min-w-0 flex-1 truncate">Hidden</span>
+      </button>
       <span className="shrink-0 text-muted-foreground/60 text-sm tabular-nums">{count}</span>
-      <span className="size-7 shrink-0" />
-    </button>
+      <DragHandle
+        attributes={sortable.attributes}
+        label="Drag to reorder Hidden"
+        listeners={sortable.listeners}
+      />
+    </div>
   );
 }
 
@@ -551,6 +617,8 @@ function DetailPane({
   onRenameGroup,
   onDeleteCategory,
   onToggleHidden,
+  onToggleExcludeFromInsights,
+  onChangeIcon,
 }: {
   active: RailKey;
   groups: readonly ManageCategoriesGroup[];
@@ -561,13 +629,15 @@ function DetailPane({
   onRenameGroup: (groupId: string, name: string) => void;
   onDeleteCategory: (cat: ManageCategoriesCat) => void;
   onToggleHidden: (cat: ManageCategoriesCat, hidden: boolean) => void;
+  onToggleExcludeFromInsights: (cat: ManageCategoriesCat, excluded: boolean) => void;
+  onChangeIcon: (categoryId: string, iconKey: string) => void;
 }) {
   const isPseudo = active === HIDDEN_KEY;
   const activeGroup = isPseudo ? null : (groups.find((g) => g.id === active) ?? null);
   const headingLabel = isPseudo ? "Hidden" : (activeGroup?.name ?? "");
 
   return (
-    <div className="flex h-full min-w-0 flex-col gap-2 overflow-y-auto pl-2">
+    <div className="scrollbar-thin flex h-full min-w-0 flex-col gap-2 overflow-y-auto pl-2">
       <div className="flex items-center gap-2">
         {activeGroup ? (
           <InlineEditableName
@@ -606,8 +676,10 @@ function DetailPane({
               draggable={sortable || isPseudo}
               groupName={isPseudo ? (groups.find((g) => g.id === c.groupId)?.name ?? "") : ""}
               key={c.id}
+              onChangeIcon={(iconKey) => onChangeIcon(c.id, iconKey)}
               onDelete={() => onDeleteCategory(c)}
               onRename={(next) => onRenameCategory(c.id, next)}
+              onToggleExcludeFromInsights={(excluded) => onToggleExcludeFromInsights(c, excluded)}
               onToggleHidden={(hidden) => onToggleHidden(c, hidden)}
               showGroupBadge={isPseudo}
             />
@@ -624,6 +696,8 @@ function SortableCategoryItem({
   onRename,
   onDelete,
   onToggleHidden,
+  onToggleExcludeFromInsights,
+  onChangeIcon,
   showGroupBadge,
   groupName,
 }: {
@@ -632,6 +706,8 @@ function SortableCategoryItem({
   onRename: (next: string) => void;
   onDelete: () => void;
   onToggleHidden: (hidden: boolean) => void;
+  onToggleExcludeFromInsights: (excluded: boolean) => void;
+  onChangeIcon: (iconKey: string) => void;
   showGroupBadge: boolean;
   groupName: string;
 }) {
@@ -661,8 +737,10 @@ function SortableCategoryItem({
           )
         }
         groupName={groupName}
+        onChangeIcon={onChangeIcon}
         onDelete={onDelete}
         onRename={onRename}
+        onToggleExcludeFromInsights={onToggleExcludeFromInsights}
         onToggleHidden={onToggleHidden}
         showGroupBadge={showGroupBadge}
       />
@@ -678,6 +756,8 @@ function CategoryItemDisplay({
   onRename,
   onDelete,
   onToggleHidden,
+  onToggleExcludeFromInsights,
+  onChangeIcon,
   showGroupBadge = false,
   groupName = "",
 }: {
@@ -688,11 +768,21 @@ function CategoryItemDisplay({
   onRename?: (next: string) => void;
   onDelete?: () => void;
   onToggleHidden?: (hidden: boolean) => void;
+  onToggleExcludeFromInsights?: (excluded: boolean) => void;
+  onChangeIcon?: (iconKey: string) => void;
   showGroupBadge?: boolean;
   groupName?: string;
 }) {
-  const icon = resolveCategoryIcon(cat.iconKey) ?? UNKNOWN_CATEGORY_ICON;
+  const resolved = resolveCategoryIcon(cat.iconKey);
   const isSystem = cat.systemKey !== null;
+  let iconNode = <CategoryIcon icon={UNKNOWN_CATEGORY_ICON} sizeClassName="size-6" />;
+  if (resolved) {
+    iconNode = <CategoryIcon icon={resolved} sizeClassName="size-6" />;
+  } else if (cat.iconKey) {
+    iconNode = (
+      <span className="flex size-6 items-center justify-center text-xl">{cat.iconKey}</span>
+    );
+  }
 
   return (
     <div
@@ -704,7 +794,29 @@ function CategoryItemDisplay({
       )}
     >
       {dragHandle ?? <span className="size-7 shrink-0" />}
-      <CategoryIcon icon={icon} sizeClassName="size-6" />
+      {onChangeIcon ? (
+        <Popover>
+          <PopoverTrigger
+            render={
+              <button
+                aria-label={`Change icon for ${cat.name}`}
+                className="flex size-7 shrink-0 items-center justify-center rounded-md outline-none transition-colors hover:bg-input/40"
+                type="button"
+              >
+                {iconNode}
+              </button>
+            }
+          />
+          <PopoverContent align="start" className="w-fit p-0">
+            <EmojiPicker onEmojiSelect={({ emoji }) => onChangeIcon(emoji)}>
+              <EmojiPickerSearch />
+              <EmojiPickerContent />
+            </EmojiPicker>
+          </PopoverContent>
+        </Popover>
+      ) : (
+        iconNode
+      )}
       {onRename ? (
         <InlineEditableName
           ariaLabel="Category name"
@@ -720,12 +832,102 @@ function CategoryItemDisplay({
           {groupName}
         </span>
       ) : null}
+      <CategoryRowActions
+        cat={cat}
+        isSystem={isSystem}
+        onDelete={onDelete}
+        onToggleExcludeFromInsights={onToggleExcludeFromInsights}
+        onToggleHidden={onToggleHidden}
+      />
+    </div>
+  );
+}
+
+function CategoryRowActions({
+  cat,
+  isSystem,
+  onToggleExcludeFromInsights,
+  onToggleHidden,
+  onDelete,
+}: {
+  cat: ManageCategoriesCat;
+  isSystem: boolean;
+  onToggleExcludeFromInsights?: (excluded: boolean) => void;
+  onToggleHidden?: (hidden: boolean) => void;
+  onDelete?: () => void;
+}) {
+  return (
+    <>
+      {onToggleExcludeFromInsights ? (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <RowIconButton
+                ariaLabel={
+                  cat.excludeFromInsights
+                    ? `Include ${cat.name} in insights`
+                    : `Exclude ${cat.name} from insights`
+                }
+                icon={ChartLineData01Icon}
+                muted={cat.excludeFromInsights}
+                onClick={() => onToggleExcludeFromInsights(!cat.excludeFromInsights)}
+              />
+            }
+          />
+          <TooltipContent className="w-72">
+            <div className="flex items-center gap-2">
+              <HugeiconsIcon
+                className="size-4 shrink-0 text-foreground"
+                icon={ChartLineData01Icon}
+                strokeWidth={2}
+              />
+              <span className="font-medium text-foreground text-sm">
+                {cat.excludeFromInsights ? "Excluded from insights" : "Counts in insights"}
+              </span>
+            </div>
+            <p className="text-muted-foreground leading-snug">
+              {cat.excludeFromInsights
+                ? "Transactions in this category are skipped in spending charts and totals."
+                : "Transactions in this category are included in spending charts and totals."}
+            </p>
+            <div className="-mx-3 h-px bg-foreground/10" />
+            <p className="text-muted-foreground">
+              Click to {cat.excludeFromInsights ? "include" : "exclude"}.
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      ) : null}
       {onToggleHidden ? (
-        <RowIconButton
-          ariaLabel={cat.hidden ? `Show ${cat.name}` : `Hide ${cat.name}`}
-          icon={cat.hidden ? ViewOffIcon : EyeIcon}
-          onClick={() => onToggleHidden(!cat.hidden)}
-        />
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <RowIconButton
+                ariaLabel={cat.hidden ? `Show ${cat.name}` : `Hide ${cat.name}`}
+                icon={cat.hidden ? ViewOffIcon : EyeIcon}
+                onClick={() => onToggleHidden(!cat.hidden)}
+              />
+            }
+          />
+          <TooltipContent className="w-72">
+            <div className="flex items-center gap-2">
+              <HugeiconsIcon
+                className="size-4 shrink-0 text-foreground"
+                icon={cat.hidden ? ViewOffIcon : EyeIcon}
+                strokeWidth={2}
+              />
+              <span className="font-medium text-foreground text-sm">
+                {cat.hidden ? "Hidden from pickers" : "Visible in pickers"}
+              </span>
+            </div>
+            <p className="text-muted-foreground leading-snug">
+              {cat.hidden
+                ? "This category won't appear in transaction or add-transaction pickers, but past transactions still keep it."
+                : "This category appears in transaction and add-transaction pickers."}
+            </p>
+            <div className="-mx-3 h-px bg-foreground/10" />
+            <p className="text-muted-foreground">Click to {cat.hidden ? "show" : "hide"}.</p>
+          </TooltipContent>
+        </Tooltip>
       ) : null}
       {!isSystem && onDelete ? (
         <RowIconButton
@@ -735,7 +937,7 @@ function CategoryItemDisplay({
           onClick={onDelete}
         />
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -755,6 +957,7 @@ function InlineEditableName({
   onFocus?: () => void;
 }) {
   const [draft, setDraft] = useState(name);
+  const [editing, setEditing] = useState(false);
   useEffect(() => {
     setDraft(name);
   }, [name]);
@@ -764,6 +967,7 @@ function InlineEditableName({
   }
 
   const commit = () => {
+    setEditing(false);
     const trimmed = draft.trim();
     if (trimmed.length === 0 || trimmed.length > 50 || trimmed === name) {
       setDraft(name);
@@ -772,9 +976,32 @@ function InlineEditableName({
     onCommit(trimmed);
   };
 
+  if (!editing) {
+    return (
+      <div className="flex min-w-0 flex-1 items-center">
+        <button
+          aria-label={ariaLabel}
+          className={cn(
+            "inline-block max-w-full cursor-text truncate bg-transparent text-left leading-none outline-none",
+            className,
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditing(true);
+            onFocus?.();
+          }}
+          type="button"
+        >
+          {name}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <input
       aria-label={ariaLabel}
+      autoFocus
       className={cn(
         "min-w-0 flex-1 cursor-text bg-transparent leading-none outline-none placeholder:text-muted-foreground/50",
         className,
@@ -804,21 +1031,26 @@ function RowIconButton({
   onClick,
   ariaLabel,
   danger = false,
+  muted = false,
+  ...rest
 }: {
   icon: Parameters<typeof HugeiconsIcon>[0]["icon"];
   onClick: () => void;
   ariaLabel: string;
   danger?: boolean;
+  muted?: boolean;
 }) {
   return (
     <button
       aria-label={ariaLabel}
       className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted/60 hover:text-foreground",
+        "flex size-7 shrink-0 items-center justify-center rounded-md transition hover:bg-muted/60 hover:text-foreground",
+        muted ? "text-muted-foreground/40" : "text-muted-foreground",
         danger && "hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-500",
       )}
       onClick={onClick}
       type="button"
+      {...rest}
     >
       <HugeiconsIcon className="size-4" icon={icon} />
     </button>

@@ -1,4 +1,5 @@
 import { CobaltDialog } from "@cobalt-web/ui/cobalt/cobalt-dialog";
+import { CategoryIcon, resolveCategoryIcon } from "@cobalt-web/ui/cobalt/transactions/categories";
 import { Button } from "@cobalt-web/ui/components/button";
 import {
   EmojiPicker,
@@ -7,7 +8,7 @@ import {
 } from "@cobalt-web/ui/components/emoji-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { ViewOffIcon, Folder02Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { ChartLineData01Icon, Folder02Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -70,7 +71,7 @@ export function CategoryFormDialog({ open, onOpenChange, groups, initial }: Prop
     if (!canSubmit) {
       return;
     }
-    createCat({ groupId, iconKey: iconKey.trim(), name: trimmed });
+    createCat({ excludeFromInsights, groupId, iconKey: iconKey.trim(), name: trimmed });
     onOpenChange(false);
   };
 
@@ -102,7 +103,16 @@ export function CategoryFormDialog({ open, onOpenChange, groups, initial }: Prop
                 )}
                 type="button"
               >
-                {iconKey || "+"}
+                {(() => {
+                  if (!iconKey) {
+                    return "+";
+                  }
+                  const resolved = resolveCategoryIcon(iconKey);
+                  if (resolved) {
+                    return <CategoryIcon icon={resolved} sizeClassName="size-7" />;
+                  }
+                  return iconKey;
+                })()}
               </button>
             }
           />
@@ -185,7 +195,7 @@ export function CategoryFormDialog({ open, onOpenChange, groups, initial }: Prop
           onClick={() => setExcludeFromInsights((v) => !v)}
           type="button"
         >
-          <HugeiconsIcon className="size-3.5 shrink-0" icon={ViewOffIcon} strokeWidth={2} />
+          <HugeiconsIcon className="size-3.5 shrink-0" icon={ChartLineData01Icon} strokeWidth={2} />
           {excludeFromInsights ? "Excluded from insights" : "Include in insights"}
         </button>
       </div>

@@ -15,8 +15,8 @@ export const Route = createFileRoute("/_auth/transactions/categories")({
 
 function CategoriesPage() {
   return (
-    <SidebarShellLayout>
-      <div className="flex w-full flex-col gap-4 py-2 sm:gap-5 sm:py-3">
+    <SidebarShellLayout flushBottom>
+      <div className="flex min-h-0 w-full flex-1 flex-col">
         <ManageCategoriesEmbedded />
       </div>
     </SidebarShellLayout>

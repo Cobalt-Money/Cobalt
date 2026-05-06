@@ -8,6 +8,7 @@ import {
 
 import { AmountFilter } from "./filters/amount-filter";
 import { CategoryFilter } from "./filters/category-filter";
+import type { CategoryFilterOption } from "./filters/category-filter";
 import type { AmountFilterType } from "./filters/amount-filter";
 import { BankFilter } from "./filters/bank-filter";
 import type { BankOption } from "./filters/bank-filter";
@@ -26,6 +27,7 @@ export interface TransactionsToolbarFilters {
   status?: StatusFilterValue;
   bank?: readonly string[];
   tagIds?: readonly string[];
+  categoryIds?: readonly string[];
 }
 
 export interface TransactionsToolbarProps {
@@ -33,6 +35,8 @@ export interface TransactionsToolbarProps {
   bankOptions: readonly BankOption[];
   /** Active tags for the filter pill; omit to hide. */
   tagOptions?: readonly TagOption[];
+  /** Categories for the filter pill; omit to render manage-only dropdown. */
+  categoryOptions?: readonly CategoryFilterOption[];
   onFiltersChange: (next: TransactionsToolbarFilters) => void;
   onExport?: (format: ExportFormat) => void;
   onAddTransaction?: () => void;
@@ -45,6 +49,7 @@ export function TransactionsToolbar({
   filters,
   bankOptions,
   tagOptions,
+  categoryOptions,
   onFiltersChange,
   onExport,
   onAddTransaction,
@@ -94,7 +99,16 @@ export function TransactionsToolbar({
             selectedIds={filters.tagIds ?? []}
           />
         ) : null}
-        {onManageCategories ? <CategoryFilter onManage={onManageCategories} /> : null}
+        {onManageCategories || (categoryOptions && categoryOptions.length > 0) ? (
+          <CategoryFilter
+            onChange={(categoryIds) => {
+              onFiltersChange({ ...filters, categoryIds });
+            }}
+            onManage={onManageCategories}
+            options={categoryOptions}
+            selectedIds={filters.categoryIds ?? []}
+          />
+        ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {onAddTransaction ? (

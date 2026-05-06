@@ -252,10 +252,22 @@ export const categoriesMutators = {
     if (!group) {
       throw new Error("Group not found");
     }
-    const ids = [...new Set(args.categoryIds)];
+    /*
+     * Reorder is order-only. Filter to cats currently in this group + owned by
+     * user — never reassign groupId here (cross-group moves go through `update`).
+     * Without this filter a stale client list would yank cats back into this
+     * group via the order-write path.
+     */
+    const owned = await tx.run(
+      zql.category
+        .where("userId", ctx.userId)
+        .where("groupId", args.groupId)
+        .where("deletedAt", "IS", null),
+    );
+    const ownedIds = new Set(owned.map((r) => r.id as string));
+    const ids = [...new Set(args.categoryIds)].filter((id) => ownedIds.has(id));
     for (const [i, id] of ids.entries()) {
       await tx.mutate.category.update({
-        groupId: args.groupId,
         id,
         order: i,
         updatedAt: Date.now(),

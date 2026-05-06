@@ -1,4 +1,4 @@
-import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
+import { CobaltToggle, cobaltToggleSubtleChrome } from "@cobalt-web/ui/cobalt/toggle";
 import {
   Command,
   CommandEmpty,
@@ -9,7 +9,7 @@ import {
 } from "@cobalt-web/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { Settings02Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { Folder01Icon, Settings02Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
@@ -58,8 +58,16 @@ export function CategoryFilter({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        render={<CobaltToggle pressed={isActive} size="sm" type="button" variant="outline" />}
+        render={
+          <CobaltToggle
+            className={cobaltToggleSubtleChrome}
+            pressed={isActive}
+            size="sm"
+            type="button"
+          />
+        }
       >
+        <HugeiconsIcon className="size-3.5" icon={Folder01Icon} />
         {triggerLabel}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-0">

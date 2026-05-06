@@ -6,12 +6,14 @@ const statusSchema = z.enum(["all", "pending", "posted"]).optional();
 const bankSchema = z.array(z.string()).optional();
 const amountBoundSchema = z.number().nonnegative().optional();
 const tagIdsSchema = z.array(z.uuid()).optional();
+const categoryIdsSchema = z.array(z.uuid()).optional();
 
 const transactionsSearchSchema = z.object({
   amount: amountSchema,
   amountMax: amountBoundSchema,
   amountMin: amountBoundSchema,
   bank: bankSchema,
+  categoryIds: categoryIdsSchema,
   status: statusSchema,
   tagIds: tagIdsSchema,
 });

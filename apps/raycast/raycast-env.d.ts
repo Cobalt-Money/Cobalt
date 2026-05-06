@@ -7,14 +7,14 @@
 
 /* eslint-disable @typescript-eslint/ban-types */
 
-interface ExtensionPreferences {
+type ExtensionPreferences = {
   /** API URL - Cobalt API base URL */
   apiUrl: string;
   /** Brandfetch Client ID - Used to render merchant logos via the Brandfetch CDN */
   brandfetchClientId: string;
   /** Logo.dev Publishable Token - Used for recurring/subscription brand logos via logo.dev (matches web) */
   logoDevToken?: string;
-}
+};
 
 /** Preferences accessible in all the extension's commands */
 declare type Preferences = ExtensionPreferences;
@@ -34,13 +34,13 @@ declare namespace Preferences {
 
 declare namespace Arguments {
   /** Arguments passed to the `transactions` command */
-  export interface Transactions {}
+  export type Transactions = {};
   /** Arguments passed to the `recurring` command */
-  export interface Recurring {}
+  export type Recurring = {};
   /** Arguments passed to the `accounts` command */
-  export interface Accounts {}
+  export type Accounts = {};
   /** Arguments passed to the `networth` command */
-  export interface Networth {}
+  export type Networth = {};
   /** Arguments passed to the `menu-bar-networth` command */
-  export interface MenuBarNetworth {}
+  export type MenuBarNetworth = {};
 }

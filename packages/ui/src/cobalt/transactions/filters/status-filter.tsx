@@ -1,6 +1,8 @@
-import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
+import { CobaltToggle, cobaltToggleSubtleChrome } from "@cobalt-web/ui/cobalt/toggle";
 import { Command, CommandGroup, CommandItem, CommandList } from "@cobalt-web/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
+import { Activity03Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
 export type StatusFilterValue = "all" | "pending" | "posted";
@@ -27,8 +29,16 @@ export function StatusFilter({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        render={<CobaltToggle pressed={isActive} size="sm" type="button" variant="outline" />}
+        render={
+          <CobaltToggle
+            className={cobaltToggleSubtleChrome}
+            pressed={isActive}
+            size="sm"
+            type="button"
+          />
+        }
       >
+        <HugeiconsIcon className="size-3.5" icon={Activity03Icon} />
         {triggerLabel}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-48 p-0">

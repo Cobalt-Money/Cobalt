@@ -1,4 +1,4 @@
-import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
+import { CobaltToggle, cobaltToggleSubtleChrome } from "@cobalt-web/ui/cobalt/toggle";
 import {
   Command,
   CommandEmpty,
@@ -8,6 +8,8 @@ import {
   CommandList,
 } from "@cobalt-web/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
+import { BankIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useMemo, useState } from "react";
 
 import { InstitutionLogo } from "../../logos/institution-logo";
@@ -45,8 +47,16 @@ export function BankFilter({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        render={<CobaltToggle pressed={isActive} size="sm" type="button" variant="outline" />}
+        render={
+          <CobaltToggle
+            className={cobaltToggleSubtleChrome}
+            pressed={isActive}
+            size="sm"
+            type="button"
+          />
+        }
       >
+        <HugeiconsIcon className="size-3.5" icon={BankIcon} />
         {triggerLabel}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-0">

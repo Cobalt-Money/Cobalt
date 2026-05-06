@@ -46,6 +46,7 @@ export interface TransactionRowInput {
   name: string;
   notes: TransactionListItem["notes"];
   pending: boolean | null | undefined;
+  tagIds?: readonly string[] | null | undefined;
   userOverrideLocation: TransactionListItem["location"];
   website: string | null | undefined;
 }
@@ -111,6 +112,7 @@ export function toTransactionListItem(input: {
     pending: row.pending ?? false,
     plaidAccountId: account.plaidAccountId,
     source: row.source,
+    tagIds: row.tagIds ? [...row.tagIds] : [],
     userOverrideLocation: row.userOverrideLocation ?? null,
     website: row.website ?? null,
   };

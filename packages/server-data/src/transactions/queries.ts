@@ -2,10 +2,11 @@ import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { category } from "@cobalt-web/db/schema/accounts/banking/categories/category";
 import { categoryGroup } from "@cobalt-web/db/schema/accounts/banking/categories/category-group";
+import { transactionTag } from "@cobalt-web/db/schema/accounts/banking/tags/transaction-tag";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
-import { and, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { z } from "zod";
 
@@ -118,6 +119,24 @@ export async function getUserTransactions(userId: string, params: TransactionLis
     .limit(pageSize)
     .offset(page * pageSize);
 
+  const txIds = rows.map((r) => r.id);
+  const tagRows =
+    txIds.length > 0
+      ? await db
+          .select({ tagId: transactionTag.tagId, transactionId: transactionTag.transactionId })
+          .from(transactionTag)
+          .where(inArray(transactionTag.transactionId, txIds))
+      : [];
+  const tagsByTx = new Map<string, string[]>();
+  for (const t of tagRows) {
+    const arr = tagsByTx.get(t.transactionId);
+    if (arr) {
+      arr.push(t.tagId);
+    } else {
+      tagsByTx.set(t.transactionId, [t.tagId]);
+    }
+  }
+
   return rows.map((row) =>
     toTransactionListItem({
       account: {
@@ -164,6 +183,7 @@ export async function getUserTransactions(userId: string, params: TransactionLis
         region: row.region,
         source: row.source,
         storeNumber: row.storeNumber,
+        tagIds: tagsByTx.get(row.id) ?? [],
         userOverrideLocation: row.userOverrideLocation,
         website: row.website,
       },
@@ -242,9 +262,10 @@ export async function getRecurringStreams(userId: string) {
   });
 }
 
-export async function getCreditSpending(
+export async function getSpending(
   userId: string,
   period: "1w" | "1m" | "3m" | "6m" | "1y" | "all",
+  accountType: "credit" | "depository" | "all",
   accountId?: string,
 ) {
   const now = new Date();
@@ -257,7 +278,19 @@ export async function getCreditSpending(
   };
   const startDate = periodOffsets[period]?.()?.toISOString().split("T")[0] ?? null;
 
-  const conditions: SQL[] = [eq(transaction.userId, userId), eq(financialAccount.type, "credit")];
+  const conditions: SQL[] = [
+    eq(transaction.userId, userId),
+    eq(transaction.excluded, false),
+    or(eq(category.excludeFromInsights, false), sql`${category.id} IS NULL`) as SQL,
+    gte(transaction.amount, "0"),
+  ];
+  if (accountType === "credit") {
+    conditions.push(eq(financialAccount.type, "credit"));
+  } else if (accountType === "depository") {
+    conditions.push(eq(financialAccount.type, "depository"));
+  } else {
+    conditions.push(inArray(financialAccount.type, ["credit", "depository"]));
+  }
   if (accountId) {
     conditions.push(eq(financialAccount.externalId, accountId));
   }
@@ -272,6 +305,7 @@ export async function getCreditSpending(
     })
     .from(transaction)
     .innerJoin(financialAccount, eq(transaction.accountId, financialAccount.id))
+    .leftJoin(category, eq(transaction.categoryId, category.id))
     .where(and(...conditions))
     .orderBy(desc(transaction.date));
 
@@ -307,7 +341,7 @@ export async function getCreditSpending(
     } else {
       key = d.slice(0, 7);
     }
-    buckets.set(key, (buckets.get(key) ?? 0) + Math.abs(Number(row.amount)));
+    buckets.set(key, (buckets.get(key) ?? 0) + Number(row.amount));
   }
 
   const spending = [...buckets.entries()]

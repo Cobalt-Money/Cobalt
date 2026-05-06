@@ -53,7 +53,12 @@ function fireAndForget(
 export function useCreateCategory() {
   const zero = useZero();
   return useCallback(
-    (input: { name: string; iconKey: string; groupId: string }): string => {
+    (input: {
+      name: string;
+      iconKey: string;
+      groupId: string;
+      excludeFromInsights?: boolean;
+    }): string => {
       const id = crypto.randomUUID();
       const { server } = zero.mutate(mutators.categories.create({ id, ...input }));
       fireAndForget(server, "Couldn't create category.");

@@ -52,10 +52,11 @@ export type ZeroTransactionListRow = Record<string, unknown> & {
       readonly systemKey: string | null;
     };
   } | null;
+  readonly transactionTags?: readonly { readonly tagId: string }[];
 };
 
 export function mapZeroTransactionListRow(row: ZeroTransactionListRow): TransactionListItem | null {
-  const { account, category: cat, ...txRest } = row;
+  const { account, category: cat, transactionTags, ...txRest } = row;
   if (!account) {
     return null;
   }
@@ -71,6 +72,8 @@ export function mapZeroTransactionListRow(row: ZeroTransactionListRow): Transact
         systemKey: cat.systemKey,
       }
     : null;
+
+  const tagIds = transactionTags ? transactionTags.map((t) => t.tagId) : [];
 
   return toTransactionListItem({
     account: {
@@ -88,6 +91,7 @@ export function mapZeroTransactionListRow(row: ZeroTransactionListRow): Transact
     transaction: {
       ...txRest,
       category: flatCategory,
+      tagIds,
     } as unknown as TransactionRowInput,
   });
 }

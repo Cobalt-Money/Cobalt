@@ -67,6 +67,7 @@ export function useManageCategoriesProps() {
   const formProps = {
     catsByGroup,
     groups: sortedGroups,
+    onChangeIcon: (categoryId: string, iconKey: string) => updateCat({ categoryId, iconKey }),
     onCreateCategory: (groupId?: string) =>
       setSub((s) => ({
         ...s,
@@ -84,6 +85,8 @@ export function useManageCategoriesProps() {
     onReorderCategories: (groupId: string, categoryIds: string[]) =>
       reorderCats({ categoryIds, groupId }),
     onReorderGroups: (groupIds: string[]) => reorderGroups(groupIds),
+    onToggleExcludeFromInsights: (c: ManageCategoriesCat, excluded: boolean) =>
+      updateCat({ categoryId: c.id, excludeFromInsights: excluded }),
     onToggleHidden: (c: ManageCategoriesCat, hidden: boolean) =>
       updateCat({ categoryId: c.id, hidden }),
   };
