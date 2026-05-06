@@ -1,6 +1,8 @@
 import { brokerageInstitutionBranding } from "../../logos/brokerage-institution-branding";
 
-export type AccountCategory = "banking" | "brokerage" | "credit";
+export type AccountCategory = "banking" | "savings" | "brokerage" | "credit" | "loan";
+
+const SAVINGS_SUBTYPES = new Set(["savings", "cd", "money market", "money_market", "hsa"]);
 
 export interface AccountCardViewModel {
   id: string;
@@ -37,12 +39,18 @@ function titleCaseWords(s: string): string {
     .join(" ");
 }
 
-function categoryFromPlaidType(type: string): AccountCategory {
+function categoryFromPlaidType(type: string, subtype: string | null): AccountCategory {
   if (type === "credit") {
     return "credit";
   }
-  if (type === "investment") {
+  if (type === "investment" || type === "brokerage") {
     return "brokerage";
+  }
+  if (type === "loan") {
+    return "loan";
+  }
+  if (subtype && SAVINGS_SUBTYPES.has(subtype.toLowerCase())) {
+    return "savings";
   }
   return "banking";
 }
@@ -139,7 +147,7 @@ export function bankAccountRowToCard(row: BankAccountRowWithRelations): AccountC
   const institutionUrl = isManual ? null : fromConn.institutionUrl;
   const lastSyncedAt = syncMsFromBalance(row.balance) ?? row.updatedAt ?? null;
   const { type } = row;
-  const category = categoryFromPlaidType(type);
+  const category = categoryFromPlaidType(type, row.subtype);
   const subtypeLabel = pickSubtypeLabel(isManual, row.subtype, type);
   const description = row.officialName?.trim() || row.name;
 

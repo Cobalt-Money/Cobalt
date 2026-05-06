@@ -1,5 +1,4 @@
 import { AccountsToolbar } from "@cobalt-web/ui/cobalt/accounts/accounts-toolbar";
-import { AccountsAddAccountFab } from "@cobalt-web/ui/cobalt/accounts/add-account-fab";
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 
 import { useCommandMenu } from "@/components/shell/command-menu";
@@ -30,13 +29,16 @@ function AccountsLayoutInner() {
       flushBottom
       toolbar={
         isAccountsList ? (
-          <AccountsToolbar activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+          <AccountsToolbar
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            onAddAccount={openAddAccount}
+          />
         ) : undefined
       }
     >
       <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">
         <Outlet />
-        {isAccountsList ? <AccountsAddAccountFab onClickUnified={openAddAccount} /> : null}
       </div>
     </SidebarShellLayout>
   );
