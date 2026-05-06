@@ -1,11 +1,11 @@
 import { Queue } from "@cobalt-web/ui/components/ai-elements/queue";
 import { Button } from "@cobalt-web/ui/components/button";
+import { cobaltGhostSurfaceClass } from "@cobalt-web/ui/cobalt/prompt-input";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
   ArrowDown01Icon,
   ArrowUp01Icon,
   HelpCircleIcon,
-  PencilEdit01Icon,
   SentIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -28,7 +28,7 @@ interface AskUserPanelProps {
 }
 
 export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
-  const { addToolOutput } = useChat();
+  const { addToolOutputs } = useChat();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [otherText, setOtherText] = useState<Record<string, string>>({});
@@ -52,37 +52,55 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
       ? current.options.find((o) => o.value === selectedValue)
       : null;
 
-  const canSubmit =
+  const isCurrentAnswered =
     selectedOption !== undefined || (isOtherSelected && currentOtherText.trim().length > 0);
+
+  // Submit only enabled when EVERY question answered. Server's askUser tool
+  // is fired in parallel — answering one at a time drops unresolved parts in
+  // convertToModelMessages and the model re-asks the rest.
+  const allAnswered = questions.every((q) => {
+    const sel = selections[q.toolCallId];
+    if (!sel) {
+      return false;
+    }
+    if (sel === OTHER_VALUE) {
+      return (otherText[q.toolCallId] ?? "").trim().length > 0;
+    }
+    return q.options.some((o) => o.value === sel);
+  });
 
   const handleSelect = (value: string) => {
     setSelections((prev) => ({ ...prev, [current.toolCallId]: value }));
   };
 
   const handleSubmit = async () => {
-    if (!canSubmit) {
+    if (!allAnswered) {
       return;
     }
-    const output = isOtherSelected
-      ? { selectedLabel: currentOtherText.trim(), selectedValue: "other" }
-      : {
-          selectedLabel: selectedOption?.label ?? "",
-          selectedValue: selectedOption?.value ?? "",
+    const items = questions.map((q) => {
+      const sel = selections[q.toolCallId];
+      if (sel === OTHER_VALUE) {
+        return {
+          output: {
+            selectedLabel: (otherText[q.toolCallId] ?? "").trim(),
+            selectedValue: "other",
+          },
+          toolCallId: q.toolCallId,
         };
-    setSelections((prev) => {
-      const { [current.toolCallId]: _removed, ...rest } = prev;
-      return rest;
+      }
+      const opt = q.options.find((o) => o.value === sel);
+      return {
+        output: {
+          selectedLabel: opt?.label ?? "",
+          selectedValue: opt?.value ?? "",
+        },
+        toolCallId: q.toolCallId,
+      };
     });
-    setOtherText((prev) => {
-      const { [current.toolCallId]: _removed, ...rest } = prev;
-      return rest;
-    });
+    setSelections({});
+    setOtherText({});
     try {
-      await addToolOutput({
-        chatId,
-        output,
-        toolCallId: current.toolCallId,
-      });
+      await addToolOutputs({ chatId, items });
     } catch (error) {
       console.error("[ask-user] submit failed:", error);
     }
@@ -92,7 +110,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
   const canNext = safeIndex < questions.length - 1;
 
   return (
-    <Queue className="mx-auto w-3/4 rounded-3xl rounded-b-none border-0 shadow-none">
+    <Queue className={cn("mb-2 w-full rounded-2xl px-3 pt-2 pb-2", cobaltGhostSurfaceClass)}>
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2 font-medium text-muted-foreground text-sm">
           <HugeiconsIcon icon={HelpCircleIcon} className="size-4" />
@@ -124,7 +142,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
           )}
           <Button
             className="h-6 gap-1 px-2 text-xs"
-            disabled={!canSubmit}
+            disabled={!allAnswered}
             onClick={handleSubmit}
             size="sm"
             variant="ghost"
@@ -135,7 +153,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
         </div>
       </div>
 
-      <div className="px-1 pt-1">
+      <div className="px-2 pt-1">
         <p className="font-medium text-foreground text-sm">
           {questions.length > 1 && `${safeIndex + 1}. `}
           {current.question}
@@ -149,7 +167,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
             <button
               className={cn(
                 "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                isSelected ? "bg-primary/10" : "hover:bg-muted",
+                isSelected ? "bg-primary/10" : "hover:bg-black/5 dark:hover:bg-white/5",
               )}
               key={option.value}
               onClick={() => handleSelect(option.value)}
@@ -182,46 +200,50 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
           );
         })}
 
-        {isOtherSelected ? (
-          <div className="flex items-center gap-2.5 rounded-md bg-primary/10 px-2 py-1.5 text-left text-sm">
-            <span className="flex size-5 shrink-0 items-center justify-center rounded bg-primary font-semibold text-primary-foreground text-xs">
-              <HugeiconsIcon icon={PencilEdit01Icon} className="size-3" />
-            </span>
-            <input
-              className="min-w-0 flex-1 bg-transparent text-foreground text-sm outline-none placeholder:text-muted-foreground/60"
-              onChange={(e) =>
-                setOtherText((prev) => ({
-                  ...prev,
-                  [current.toolCallId]: e.target.value,
-                }))
-              }
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && canSubmit) {
-                  e.preventDefault();
-                  handleSubmit();
+        {(() => {
+          const otherLetter =
+            OPTION_LETTERS[current.options.length] ?? String(current.options.length + 1);
+          return isOtherSelected ? (
+            <div className="flex items-center gap-2.5 rounded-md bg-primary/10 px-2 py-1.5 text-left text-sm">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded bg-primary font-semibold text-primary-foreground text-xs">
+                {otherLetter}
+              </span>
+              <input
+                className="min-w-0 flex-1 bg-transparent text-foreground text-sm outline-none placeholder:text-muted-foreground/60"
+                onChange={(e) =>
+                  setOtherText((prev) => ({
+                    ...prev,
+                    [current.toolCallId]: e.target.value,
+                  }))
                 }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && isCurrentAnswered && allAnswered) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
+                placeholder="Type your answer..."
+                ref={otherInputRef}
+                type="text"
+                value={currentOtherText}
+              />
+            </div>
+          ) : (
+            <button
+              className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+              onClick={() => {
+                handleSelect(OTHER_VALUE);
+                setTimeout(() => otherInputRef.current?.focus(), 0);
               }}
-              placeholder="Type your answer..."
-              ref={otherInputRef}
-              type="text"
-              value={currentOtherText}
-            />
-          </div>
-        ) : (
-          <button
-            className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted"
-            onClick={() => {
-              handleSelect(OTHER_VALUE);
-              setTimeout(() => otherInputRef.current?.focus(), 0);
-            }}
-            type="button"
-          >
-            <span className="flex size-5 shrink-0 items-center justify-center rounded bg-muted-foreground/15 font-semibold text-muted-foreground text-xs">
-              <HugeiconsIcon icon={PencilEdit01Icon} className="size-3" />
-            </span>
-            <span className="text-muted-foreground">Other...</span>
-          </button>
-        )}
+              type="button"
+            >
+              <span className="flex size-5 shrink-0 items-center justify-center rounded bg-muted-foreground/15 font-semibold text-muted-foreground text-xs">
+                {otherLetter}
+              </span>
+              <span className="text-muted-foreground">Other...</span>
+            </button>
+          );
+        })()}
       </div>
     </Queue>
   );

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const askUserTool = tool({
   description:
-    "Ask the user a clarifying multiple-choice question when you need more context to proceed accurately. Use this when the user's request is ambiguous and there are multiple distinct paths you could take. Present 2-6 concise options. Do NOT use for simple yes/no questions — only when multiple meaningful alternatives exist. You can call this tool multiple times in one turn to ask several questions at once.",
+    "Ask the user a clarifying multiple-choice question when you need more context to proceed accurately. STRICT RULES: (1) Batch ALL needed clarifications into a SINGLE assistant turn via parallel askUser calls — never ask one question, get an answer, then ask another. (2) After receiving askUser answers, proceed directly with the work; do NOT emit additional askUser calls in later turns. (3) Prefer reasonable defaults; only ask when truly blocked and there are 2+ meaningfully distinct paths. Present 2-6 concise options. Do NOT use for yes/no.",
   inputSchema: z.object({
     options: z
       .array(
