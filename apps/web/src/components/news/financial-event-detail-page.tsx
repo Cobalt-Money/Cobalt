@@ -1,4 +1,5 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
+import { CobaltCard } from "@cobalt-web/ui/cobalt/card";
 import { EventArticleContent } from "@cobalt-web/ui/cobalt/news/event-article-content";
 import type { EventArticleSource } from "@cobalt-web/ui/cobalt/news/event-article-content";
 import { cn } from "@cobalt-web/ui/lib/utils";
@@ -186,7 +187,7 @@ function VideoEmbedSection({ embedUrl }: { embedUrl: string }) {
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
           className="absolute inset-0 size-full border-0"
-          sandbox="allow-scripts allow-presentation allow-popups allow-popups-to-escape-sandbox"
+          referrerPolicy="strict-origin-when-cross-origin"
           src={embedUrl}
           title="Related video"
         />
@@ -195,54 +196,55 @@ function VideoEmbedSection({ embedUrl }: { embedUrl: string }) {
   );
 }
 
-function SourceArticleCard({ article }: { article: EventArticleRow }) {
+function SourceArticleCard({ article, index }: { article: EventArticleRow; index: number }) {
   const host = article.sourceName?.trim() || hostnameFromUrl(article.newsUrl) || "Source";
   const fav = faviconUrlForNewsUrl(article.newsUrl);
-  const snippet = article.text?.trim();
   return (
     <li>
       <a
-        className="border-border bg-card hover:bg-muted/40 -mx-3 flex gap-3 rounded-xl border px-3 py-3 transition-colors"
+        className="group block h-full"
         href={article.newsUrl}
         rel="noopener noreferrer"
         target="_blank"
       >
-        <span
-          aria-hidden
-          className="relative mt-0.5 inline-flex size-9 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60"
-        >
-          {fav ? (
-            <img
-              alt=""
-              className="size-full object-cover"
-              decoding="async"
-              loading="lazy"
-              src={fav}
-            />
-          ) : (
-            <span className="text-muted-foreground flex size-full items-center justify-center text-[10px] font-bold">
-              {host.slice(0, 2).toUpperCase()}
+        <CobaltCard className="flex h-full flex-col gap-2.5 p-3.5 transition-colors group-hover:bg-[oklch(0.94_0_0)] dark:group-hover:bg-white/[0.08]">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <span
+                aria-hidden
+                className="bg-background ring-border/60 relative inline-flex size-5 shrink-0 overflow-hidden rounded-full ring-1"
+              >
+                {fav ? (
+                  <img
+                    alt=""
+                    className="size-full object-cover"
+                    decoding="async"
+                    loading="lazy"
+                    src={fav}
+                  />
+                ) : (
+                  <span className="text-muted-foreground flex size-full items-center justify-center text-[8px] font-bold">
+                    {host.slice(0, 2).toUpperCase()}
+                  </span>
+                )}
+              </span>
+              <span className="text-muted-foreground truncate text-xs lowercase">{host}</span>
+            </div>
+            <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-[11px] tabular-nums">
+              <span>{index + 1}</span>
+              <HugeiconsIcon
+                aria-hidden
+                className="opacity-60 transition-opacity group-hover:opacity-100"
+                icon={LinkSquare01Icon}
+                size={12}
+                strokeWidth={2}
+              />
             </span>
-          )}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="text-foreground flex items-start justify-between gap-2 font-medium leading-snug">
-            <span className="min-w-0">{article.title}</span>
-            <HugeiconsIcon
-              aria-hidden
-              icon={LinkSquare01Icon}
-              size={16}
-              strokeWidth={2}
-              className="text-muted-foreground mt-0.5 shrink-0"
-            />
-          </span>
-          <span className="text-muted-foreground mt-1 block text-sm">{host}</span>
-          {snippet ? (
-            <span className="text-muted-foreground mt-2 line-clamp-3 block text-sm leading-relaxed">
-              {snippet}
-            </span>
-          ) : null}
-        </span>
+          </div>
+          <p className="text-foreground line-clamp-3 text-sm leading-snug font-medium">
+            {article.title}
+          </p>
+        </CobaltCard>
       </a>
     </li>
   );
@@ -254,10 +256,13 @@ function SourcesSection({ articles }: { articles: readonly EventArticleRow[] }) 
   }
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold tracking-tight">Sources</h2>
-      <ul className="flex flex-col gap-3">
-        {articles.map((a) => (
-          <SourceArticleCard article={a} key={a.id} />
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-lg font-semibold tracking-tight">Sources</h2>
+        <span className="text-muted-foreground text-xs tabular-nums">{articles.length}</span>
+      </div>
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {articles.map((a, i) => (
+          <SourceArticleCard article={a} index={i} key={a.id} />
         ))}
       </ul>
     </section>
