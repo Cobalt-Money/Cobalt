@@ -1,19 +1,17 @@
 import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-grid";
 import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/types";
 import { AddManualAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-manual-account-dialog";
-import {
-  CobaltCommandDialog,
-  CobaltCommandInput,
-  CobaltCommandPaletteRoot,
-} from "@cobalt-web/ui/cobalt/command-palette";
 import { AddTransactionForm } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
 import { AddTagForm } from "@cobalt-web/ui/cobalt/transactions/tags/add-tag-dialog";
 import { ManageTagsForm } from "@cobalt-web/ui/cobalt/transactions/tags/manage-tags-dialog";
 import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import {
+  Command,
+  CommandDialog,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList,
 } from "@cobalt-web/ui/components/command";
@@ -664,7 +662,7 @@ function CommandMenuDialog({
   return (
     <>
       {updateModeDialog}
-      <CobaltCommandDialog
+      <CommandDialog
         className={cn(
           inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
           inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl",
@@ -680,12 +678,13 @@ function CommandMenuDialog({
         showCloseButton={false}
         title="Command palette"
       >
-        <CobaltCommandPaletteRoot
+        <Command
           onValueChange={handleChatHighlight}
           shouldFilter={!isClientFilteredPage(activePage)}
         >
           {inSettings || inFormPage ? null : (
-            <CobaltCommandInput
+            <CommandInput
+              variant="frameless"
               onKeyDown={handleInputKeyDown}
               onValueChange={setSearch}
               placeholder={getPlaceholder(activePage)}
@@ -962,8 +961,8 @@ function CommandMenuDialog({
             </CommandList>
           )}
           {inSearchTransactions ? <TransactionSearchFooter /> : null}
-        </CobaltCommandPaletteRoot>
-      </CobaltCommandDialog>
+        </Command>
+      </CommandDialog>
     </>
   );
 }

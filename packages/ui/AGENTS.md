@@ -32,6 +32,10 @@ Every Shadcn component is available. Import any component directly — no need t
 - `Card` — `variant: default | subtle`. Subtle = ghost fill, no ring (use for dashboard/section panels).
 - `Toggle` — `variant: default | outline | subtle`. Subtle = h-7, dashed muted border (use for filter chips).
 - `Button` — no transition / press translate. Add motion only at callsite if needed.
+- `Dialog` / `DialogContent` — top-anchored by default (`top-[max(6rem,13svh)]`), light scrim (`bg-black/60`), subtle popover bg, `shadow-2xl`, no ring, `flex flex-col` body. Pass `position="center"` for centered. Set `overlayClassName="bg-black/25 ..."` for the very-light command-palette scrim. Don't re-emit any of the baked defaults.
+- `CommandDialog` — wraps `DialogContent` with command-palette tuning: `max-h-[min(55vh,35rem)] sm:max-w-2xl`, `rounded-3xl`, `bg-black/25` overlay, dark mode `bg-sidebar-accent`. Drop-in replacement for the deleted `CobaltCommandDialog`.
+- `Command` — root cmdk container. Bakes group spacing, item radius/padding (`rounded-lg`, `px-4 py-3`), selected-item bg, list scrollbar hide, group heading typography. Drop-in replacement for the deleted `CobaltCommandPaletteRoot`.
+- `CommandInput` — `variant: default | frameless`. `frameless` = no icon, no input-group box, larger text, `px-4 py-5` (Linear-style command palette search). Default keeps the search-icon input-group.
 
 ### Layout & display primitives — prefer over raw Tailwind
 
@@ -72,7 +76,7 @@ Use the Shadcn CLI or manually drop into `src/components/`. Base files in `compo
 
 Reserved for **multi-primitive compositions and product domain code** (accounts, transactions, brokerage, news). Single-primitive look-and-feel lives in `components/*` as variants. Examples that belong in `cobalt/`:
 
-- **Command palette:** Base `Command*` + stock `CommandDialog` stay in `components/command.tsx` (CLI-safe). Product chrome — glass panel, lighter scrim, frameless search — is composed in `cobalt/command-palette.tsx` (`CobaltCommandDialog` uses `Dialog` + `DialogPortal` + `DialogOverlay` + Base UI `Popup`; do not add product-only props to `components/dialog.tsx`). Compose: `CobaltCommandDialog` → `CobaltCommandPaletteRoot` → `CobaltCommandInput` + `CommandList` / items.
+- **`CobaltDialog`** (form-shaped dialog with title icon + footer slots) — composes base `Dialog` + `DialogHeader` + `DialogTitle`. Visual chrome inherited from base; this is purely a shape composition.
 - **Theming:** Components are authored for **both light and dark** (`dark:` where needed).
 - **Backgrounds:** App shells should not rely on extra ambient gradient blobs behind content unless explicitly requested.
 

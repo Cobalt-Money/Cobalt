@@ -34,10 +34,7 @@ export function AddAccountDialog({
 }: AddAccountDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className="top-[max(6rem,13svh)] flex h-[600px] w-[860px] max-w-[calc(100vw-2rem)] translate-y-0 flex-col gap-0 overflow-hidden border-0 bg-popover p-0 shadow-2xl sm:max-w-[860px] dark:bg-popover"
-        overlayClassName="bg-black/25 supports-backdrop-filter:backdrop-blur-none"
-      >
+      <DialogContent className="h-[600px] w-[860px] gap-0 p-0 sm:max-w-[860px]">
         <DialogHeader className="px-4 py-3">
           <DialogTitle className="sr-only">Add an account</DialogTitle>
           <DialogDescription className="sr-only">
