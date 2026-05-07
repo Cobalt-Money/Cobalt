@@ -31,6 +31,12 @@ const deleteCategorySchema = z.object({
   categoryId: z.uuid(),
 });
 
+const hideCategorySchema = z.object({
+  categoryId: z.uuid(),
+  /** Reassign tx + recurring rows to this cat before hiding. Null/omitted = leave assigned. */
+  reassignTo: z.uuid().nullable().optional(),
+});
+
 const reorderCategoriesSchema = z.object({
   categoryIds: z.array(z.uuid()).min(1),
   groupId: z.uuid(),
@@ -234,6 +240,69 @@ export const categoriesMutators = {
     await tx.mutate.categoryGroup.update({
       deletedAt: Date.now(),
       id: args.groupId,
+      updatedAt: Date.now(),
+    });
+  }),
+
+  /**
+   * Hide a category. If `reassignTo` provided, reassign tx + recurring rows to
+   * the target cat first, then flip `hidden=true`. Both system + custom cats
+   * can be hidden. Pass `reassignTo: null` (or omit) to keep rows assigned.
+   */
+  hide: defineMutator(hideCategorySchema, async ({ args, ctx, tx }) => {
+    if (!ctx?.userId) {
+      throw new Error("Not authenticated");
+    }
+    const owned = await tx.run(
+      zql.category
+        .where("id", args.categoryId)
+        .where("userId", ctx.userId)
+        .where("deletedAt", "IS", null)
+        .one(),
+    );
+    if (!owned) {
+      return;
+    }
+
+    if (args.reassignTo) {
+      if (args.reassignTo === args.categoryId) {
+        throw new Error("Reassign target cannot be the same category");
+      }
+      const target = await tx.run(
+        zql.category
+          .where("id", args.reassignTo)
+          .where("userId", ctx.userId)
+          .where("deletedAt", "IS", null)
+          .one(),
+      );
+      if (!target) {
+        throw new Error("Reassign target not found");
+      }
+
+      const txns = await tx.run(
+        zql.transaction.where("userId", ctx.userId).where("categoryId", args.categoryId),
+      );
+      for (const t of txns) {
+        await tx.mutate.transaction.update({
+          categoryId: args.reassignTo,
+          id: t.id as string,
+        });
+      }
+
+      const recs = await tx.run(
+        zql.recurring.where("userId", ctx.userId).where("categoryId", args.categoryId),
+      );
+      for (const r of recs) {
+        await tx.mutate.recurring.update({
+          categoryId: args.reassignTo,
+          id: r.id as string,
+        });
+      }
+    }
+
+    await tx.mutate.category.update({
+      hidden: true,
+      id: args.categoryId,
       updatedAt: Date.now(),
     });
   }),

@@ -71,6 +71,14 @@ function downloadBlob(content: string | ArrayBuffer, filename: string, mime: str
   URL.revokeObjectURL(url);
 }
 
+/**
+ * TSV string of selected rows (header + data, tab-separated).
+ * Pastes cleanly into Excel / Google Sheets / Numbers.
+ */
+export function buildTransactionsTsv(items: TransactionListItem[]): string {
+  return XLSX.utils.sheet_to_csv(buildWorksheet(items), { FS: "\t" });
+}
+
 export function exportTransactions(items: TransactionListItem[], format: ExportFormat): void {
   const filename = buildTransactionsFilename(items.length, format);
   if (format === "csv") {

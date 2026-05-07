@@ -42,7 +42,6 @@ export interface TransactionsToolbarProps {
   onAddTransaction?: () => void;
   onManageTags?: () => void;
   onManageCategories?: () => void;
-  selectedCount?: number;
 }
 
 export function TransactionsToolbar({
@@ -55,9 +54,7 @@ export function TransactionsToolbar({
   onAddTransaction,
   onManageTags,
   onManageCategories,
-  selectedCount = 0,
 }: TransactionsToolbarProps) {
-  const label = selectedCount > 0 ? `Export (${selectedCount})` : "Export all";
   return (
     <div className="flex w-full min-w-0 flex-col gap-4 bg-sidebar-inset px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-6">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -126,7 +123,7 @@ export function TransactionsToolbar({
           <DropdownMenuTrigger
             render={
               <Button className="shrink-0" size="sm" type="button" variant="outline">
-                {label}
+                Export all
               </Button>
             }
           />
