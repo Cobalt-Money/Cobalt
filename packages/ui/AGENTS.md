@@ -55,9 +55,60 @@ All semantic color goes through CSS variables in `src/styles/globals.css`. Use T
 | Status: warning                                 | `text-warning`, `bg-warning/10`                               |
 | Subtle panel surface (cards, popovers, dialogs) | `bg-popover`                                                  |
 | Primary card                                    | `bg-card`                                                     |
-| Hover/muted bg                                  | `bg-muted/40` (resting), `bg-muted/60` (hover)                |
+| Hover/muted bg                                  | see "Token opacity scale" below                               |
 
 `--popover` is the **subtle gray panel color** (light: `oklch(0.949 0 0)`, dark: `oklch(0.29 0 0)`). Used by base `Popover`, `Tooltip`, `Dialog`, `DropdownMenu`, `Card variant="subtle"`. Do not re-emit literal `bg-[oklch(0.949_0_0)]` — use `bg-popover`.
+
+### Token opacity scale
+
+When applying opacity on token classes, stick to canonical pairs. Don't invent new opacities (`bg-input/35`, `bg-muted/45`) — pick the closest from below.
+
+**Form controls / search bars** (input fields, segmented controls):
+
+- Rest: `bg-input/30`
+- Hover: `bg-input/50`
+
+**Tag / chip / list-row surfaces** (selectable items, filter pills):
+
+- Rest: `bg-input/40`
+- Hover: `bg-input/60`
+
+**Menu / popover items** (dropdown rows, command items):
+
+- Rest: `bg-muted/50`
+- Hover: `bg-muted/80`
+
+**Subtle section panels** (in-card subgroups, hint regions):
+
+- Rest: `bg-muted/20` or `bg-foreground/5`
+
+**Borders**:
+
+- Hairline (subtle, internal): `border-foreground/5`, `border-foreground/10`
+- Visible (card-edge, chip): `border-foreground/15`, `border-border/60`
+
+**Rings**:
+
+- Card outline: `ring-foreground/5` (default Card has this)
+- Focus rings handled by `ring-ring/50` from base components
+
+### Radius scale
+
+By component family:
+
+- **Card / surface tiles**: `rounded-2xl` (base default)
+- **Dashboard cards / hero panels**: `rounded-3xl`
+- **Dialog / modal**: `rounded-4xl` (base default)
+- **Buttons / chips**: `rounded-4xl` (base default — pill shape)
+- **Toggles**: `rounded-4xl` (base default — pill shape)
+- **List items inside menus**: `rounded-lg` or `rounded-2xl` (in-dialog)
+- **Avatars / icon backgrounds**: `rounded-full` or `rounded-md` for square icons
+
+Don't override unless promoting a card to "hero" (then `rounded-3xl`).
+
+### Modal anchor offset
+
+Top-anchored dialogs use `top-[max(6rem,13svh)]` baked into base `DialogContent`. Don't re-emit. To opt out for a centered dialog: `<DialogContent position="center">`.
 
 ### Account category palette
 
