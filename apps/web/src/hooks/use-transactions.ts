@@ -16,6 +16,7 @@ interface Filters {
   bank?: readonly string[];
   tagIds?: readonly string[];
   categoryIds?: readonly string[];
+  limit?: number;
 }
 
 export function useTransactions(filters: Filters = {}) {
@@ -26,6 +27,7 @@ export function useTransactions(filters: Filters = {}) {
       amountMin: filters.amountMin,
       bank: filters.bank ? [...filters.bank] : [],
       categoryIds: filters.categoryIds ? [...filters.categoryIds] : [],
+      limit: filters.limit,
       status: filters.status ?? "all",
       tagIds: filters.tagIds ? [...filters.tagIds] : [],
     }),

@@ -7,6 +7,10 @@ import { TransactionsToolbar } from "@cobalt-web/ui/cobalt/transactions/transact
 import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { queries } from "@cobalt-web/zero";
+import {
+  TRANSACTION_LIST_DEFAULT_LIMIT,
+  TRANSACTION_LIST_MAX_LIMIT,
+} from "@cobalt-web/zero/transactions/lib";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -66,15 +70,33 @@ function TransactionsListPage() {
     }
     return map;
   }, [allTags]);
+  const [limit, setLimit] = useState<number>(TRANSACTION_LIST_DEFAULT_LIMIT);
+  // Reset paging window when filters change so we don't keep an oversized subscription.
+  useEffect(() => {
+    setLimit(TRANSACTION_LIST_DEFAULT_LIMIT);
+  }, [
+    search.amount,
+    search.amountMax,
+    search.amountMin,
+    search.bank,
+    search.categoryIds,
+    search.status,
+    search.tagIds,
+  ]);
   const { isComplete, items } = useTransactions({
     amount: search.amount,
     amountMax: search.amountMax,
     amountMin: search.amountMin,
     bank: search.bank,
     categoryIds: search.categoryIds,
+    limit,
     status: search.status,
     tagIds: search.tagIds,
   });
+  const canLoadMore = isComplete && items.length >= limit && limit < TRANSACTION_LIST_MAX_LIMIT;
+  const handleEndReached = useCallback(() => {
+    setLimit((prev) => Math.min(prev + TRANSACTION_LIST_DEFAULT_LIMIT, TRANSACTION_LIST_MAX_LIMIT));
+  }, []);
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const selectedCount = Object.keys(rowSelection).length;
@@ -160,6 +182,7 @@ function TransactionsListPage() {
           isComplete={isComplete}
           items={items}
           onConnectAccount={openAddAccount}
+          onEndReached={canLoadMore ? handleEndReached : undefined}
           onRowSelectionChange={setRowSelection}
           rowSelection={rowSelection}
           tagsById={tagsById}

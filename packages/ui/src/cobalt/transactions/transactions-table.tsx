@@ -14,7 +14,7 @@ import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 import type { Range, Virtualizer } from "@tanstack/react-virtual";
 import { defaultRangeExtractor, observeElementRect, useVirtualizer } from "@tanstack/react-virtual";
 import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { PrivateAmount } from "../../components/privacy";
 import { ConnectAccountEmpty } from "../empty/connect-account-empty";
@@ -347,6 +347,7 @@ export function TransactionsTable({
   isComplete,
   items,
   onConnectAccount,
+  onEndReached,
   onOpenTransaction,
   rowSelection: rowSelectionProp,
   onRowSelectionChange,
@@ -355,6 +356,8 @@ export function TransactionsTable({
   isComplete: boolean;
   items: TransactionListItem[];
   onConnectAccount?: () => void;
+  /** Called when the virtualized list's last row enters the render window. Use to load more rows. */
+  onEndReached?: () => void;
   onOpenTransaction?: (transaction: TransactionListItem) => void;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: (next: RowSelectionState) => void;
@@ -590,6 +593,26 @@ export function TransactionsTable({
   const virtualItems = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
   const hasRows = flatItems.length > 0;
+
+  // Infinite scroll: fire onEndReached once per growth of `flatItems` when the last
+  // virtualized row enters the render window. Stable ref avoids re-running on every
+  // callback identity change; count-guard prevents duplicate fires while paging.
+  const onEndReachedRef = useRef(onEndReached);
+  onEndReachedRef.current = onEndReached;
+  const lastFiredCountRef = useRef(0);
+  useEffect(() => {
+    if (flatItems.length <= lastFiredCountRef.current) {
+      return;
+    }
+    const last = virtualItems.at(-1);
+    if (!last) {
+      return;
+    }
+    if (last.index >= flatItems.length - 5) {
+      lastFiredCountRef.current = flatItems.length;
+      onEndReachedRef.current?.();
+    }
+  }, [virtualItems, flatItems.length]);
 
   return (
     <div className="relative w-full flex-1 overflow-x-auto no-scrollbar">
