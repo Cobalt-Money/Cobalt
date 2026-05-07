@@ -15,6 +15,7 @@ import {
   CommandItem,
   CommandList,
 } from "@cobalt-web/ui/components/command";
+import { Icon } from "@cobalt-web/ui/components/icon";
 import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
@@ -748,7 +749,7 @@ function CommandMenuDialog({
           {inAddManualAccount && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-foreground text-lg leading-none">
-                <HugeiconsIcon className="size-6 shrink-0" icon={Wallet01Icon} strokeWidth={2} />
+                <Icon className="shrink-0" icon={Wallet01Icon} size="lg" />
                 Add an account
               </h2>
               <AddManualAccountForm
@@ -777,7 +778,7 @@ function CommandMenuDialog({
           {inAddTransaction && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
-                <HugeiconsIcon className="size-6 shrink-0" icon={Money01Icon} strokeWidth={2} />
+                <Icon className="shrink-0" icon={Money01Icon} size="lg" />
                 New Transaction
               </h2>
               <AddTransactionForm
@@ -809,7 +810,7 @@ function CommandMenuDialog({
           {inAddTag && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
-                <HugeiconsIcon className="size-5 shrink-0" icon={Tag01Icon} strokeWidth={2} />
+                <Icon className="shrink-0" icon={Tag01Icon} size="md" />
                 New Tag
               </h2>
               <AddTagForm
@@ -838,7 +839,7 @@ function CommandMenuDialog({
           {inManageTags && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
-                <HugeiconsIcon className="size-5 shrink-0" icon={Tag01Icon} strokeWidth={2} />
+                <Icon className="shrink-0" icon={Tag01Icon} size="md" />
                 Manage tags
               </h2>
               <ManageTagsForm

@@ -1,9 +1,16 @@
 import { Button } from "@cobalt-web/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@cobalt-web/ui/components/dialog";
+import { Icon } from "@cobalt-web/ui/components/icon";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { Tag01Icon } from "@hugeicons/core-free-icons";
 import { useEffect, useRef, useState } from "react";
 
-import { CobaltDialog } from "../../cobalt-dialog";
 import type { TagColor } from "./palette";
 import { DEFAULT_TAG_COLOR, TAG_COLOR_HEX, TAG_COLORS } from "./palette";
 import { TagChip } from "./tag-chip";
@@ -143,21 +150,24 @@ export function AddTagDialog({
   submitting = false,
 }: AddTagDialogProps) {
   return (
-    <CobaltDialog
-      className="min-h-[280px] w-[460px] sm:max-w-lg"
-      onOpenChange={onOpenChange}
-      open={open}
-      title="New Tag"
-      titleIcon={Tag01Icon}
-      titleIconClassName="size-5"
-    >
-      <AddTagForm
-        initialName={initialName}
-        key={open ? `open-${initialName ?? ""}` : "closed"}
-        onBackspaceWhenEmpty={onBackspaceWhenEmpty}
-        onSubmit={onSubmit}
-        submitting={submitting}
-      />
-    </CobaltDialog>
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="min-h-[280px] w-[460px] sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Icon icon={Tag01Icon} size="md" />
+            New Tag
+          </DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <AddTagForm
+            initialName={initialName}
+            key={open ? `open-${initialName ?? ""}` : "closed"}
+            onBackspaceWhenEmpty={onBackspaceWhenEmpty}
+            onSubmit={onSubmit}
+            submitting={submitting}
+          />
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }

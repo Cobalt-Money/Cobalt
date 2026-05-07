@@ -1,5 +1,13 @@
-import { CobaltDialog } from "@cobalt-web/ui/cobalt/cobalt-dialog";
 import { Button } from "@cobalt-web/ui/components/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@cobalt-web/ui/components/dialog";
+import { Icon } from "@cobalt-web/ui/components/icon";
 import { Folder01Icon } from "@hugeicons/core-free-icons";
 import { useEffect, useRef, useState } from "react";
 
@@ -56,34 +64,37 @@ export function GroupFormDialog({ open, onOpenChange, initial }: Props) {
   };
 
   return (
-    <CobaltDialog
-      className="min-h-[200px] w-[460px] sm:max-w-lg"
-      footer={
-        <Button disabled={!canSubmit} onClick={handleSubmit} type="button">
-          {isEdit ? "Save" : "Create group"}
-        </Button>
-      }
-      onOpenChange={onOpenChange}
-      open={open}
-      title={isEdit ? "Edit group" : "New group"}
-      titleIcon={Folder01Icon}
-      titleIconClassName="size-5"
-    >
-      <input
-        aria-label="Group name"
-        className="w-full min-w-0 cursor-text bg-transparent font-semibold text-2xl text-foreground leading-tight tracking-tight outline-none placeholder:text-muted-foreground/50"
-        maxLength={50}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            handleSubmit();
-          }
-        }}
-        placeholder="Subscriptions, Travel, Bills…"
-        ref={inputRef}
-        value={name}
-      />
-    </CobaltDialog>
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="min-h-[200px] w-[460px] sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Icon icon={Folder01Icon} size="md" />
+            {isEdit ? "Edit group" : "New group"}
+          </DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <input
+            aria-label="Group name"
+            className="w-full min-w-0 cursor-text bg-transparent font-semibold text-2xl text-foreground leading-tight tracking-tight outline-none placeholder:text-muted-foreground/50"
+            maxLength={50}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
+            placeholder="Subscriptions, Travel, Bills…"
+            ref={inputRef}
+            value={name}
+          />
+        </DialogBody>
+        <DialogFooter className="mt-auto pt-2">
+          <Button disabled={!canSubmit} onClick={handleSubmit} type="button">
+            {isEdit ? "Save" : "Create group"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

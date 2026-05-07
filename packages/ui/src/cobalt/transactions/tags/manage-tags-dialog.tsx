@@ -27,7 +27,14 @@ import { Add01Icon, Delete02Icon, Tag01Icon, Tick02Icon } from "@hugeicons/core-
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 
-import { CobaltDialog } from "../../cobalt-dialog";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@cobalt-web/ui/components/dialog";
+import { Icon } from "@cobalt-web/ui/components/icon";
 import type { TagColor } from "./palette";
 import { TAG_COLOR_HEX, TAG_COLORS } from "./palette";
 
@@ -118,22 +125,25 @@ export function ManageTagsDialog({
   tags,
 }: ManageTagsDialogProps) {
   return (
-    <CobaltDialog
-      className="w-[480px] sm:max-w-md"
-      onOpenChange={onOpenChange}
-      open={open}
-      title="Manage tags"
-      titleIcon={Tag01Icon}
-      titleIconClassName="size-5"
-    >
-      <ManageTagsForm
-        onDelete={onDelete}
-        onRecolor={onRecolor}
-        onRename={onRename}
-        onRequestCreate={onRequestCreate}
-        tags={tags}
-      />
-    </CobaltDialog>
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="w-[480px] sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Icon icon={Tag01Icon} size="md" />
+            Manage tags
+          </DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <ManageTagsForm
+            onDelete={onDelete}
+            onRecolor={onRecolor}
+            onRename={onRename}
+            onRequestCreate={onRequestCreate}
+            tags={tags}
+          />
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }
 

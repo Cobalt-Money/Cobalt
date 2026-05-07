@@ -167,7 +167,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
             <button
               className={cn(
                 "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                isSelected ? "bg-primary/10" : "hover:bg-black/5 dark:hover:bg-white/5",
+                isSelected ? "bg-primary/10" : "hover:bg-foreground/5",
               )}
               key={option.value}
               onClick={() => handleSelect(option.value)}
@@ -230,7 +230,7 @@ export function AskUserPanel({ chatId, questions }: AskUserPanelProps) {
             </div>
           ) : (
             <button
-              className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+              className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-foreground/5"
               onClick={() => {
                 handleSelect(OTHER_VALUE);
                 setTimeout(() => otherInputRef.current?.focus(), 0);

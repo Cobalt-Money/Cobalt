@@ -102,6 +102,16 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-body"
+      className={cn("flex flex-1 flex-col gap-4 pt-4 pb-2", className)}
+      {...props}
+    />
+  );
+}
+
 function DialogFooter({
   className,
   showCloseButton = false,
@@ -157,6 +167,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,

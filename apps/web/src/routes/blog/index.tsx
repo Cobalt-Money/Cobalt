@@ -31,7 +31,7 @@ function BlogIndex() {
         ) : (
           <ul className="space-y-8">
             {posts.map((post) => (
-              <li className="border-white/10 border-b pb-8 last:border-b-0" key={post.slug}>
+              <li className="border-foreground/10 border-b pb-8 last:border-b-0" key={post.slug}>
                 <Link className="group block" params={{ slug: post.slug }} to="/blog/$slug">
                   <p className="mb-2 text-gray-500 text-sm">
                     {dateFormatter.format(new Date(post.frontmatter.date))}

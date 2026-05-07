@@ -9,7 +9,13 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { CobaltDialog } from "../cobalt-dialog";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@cobalt-web/ui/components/dialog";
 
 export type ManualAccountType = "depository" | "credit" | "investment" | "loan";
 
@@ -480,21 +486,23 @@ export function AddManualAccountDialog({
   initialLogoDomain,
 }: AddManualAccountDialogProps) {
   return (
-    <CobaltDialog
-      className="min-h-[280px] w-[720px] sm:max-w-3xl"
-      onOpenChange={onOpenChange}
-      open={open}
-      title="Add an account"
-    >
-      <AddManualAccountForm
-        brandSearch={brandSearch}
-        initialLogoDomain={initialLogoDomain}
-        initialName={initialName}
-        key={open ? "open" : "closed"}
-        onBackspaceWhenEmpty={onBackspaceWhenEmpty}
-        onSubmit={onSubmit}
-        submitting={submitting}
-      />
-    </CobaltDialog>
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="min-h-[280px] w-[720px] sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Add an account</DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <AddManualAccountForm
+            brandSearch={brandSearch}
+            initialLogoDomain={initialLogoDomain}
+            initialName={initialName}
+            key={open ? "open" : "closed"}
+            onBackspaceWhenEmpty={onBackspaceWhenEmpty}
+            onSubmit={onSubmit}
+            submitting={submitting}
+          />
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }

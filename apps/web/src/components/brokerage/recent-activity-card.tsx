@@ -1,9 +1,9 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { Button } from "@cobalt-web/ui/components/button";
+import { Icon } from "@cobalt-web/ui/components/icon";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { format } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 
@@ -163,7 +163,7 @@ export function RecentActivityCard({
               type="button"
               variant="ghost"
             >
-              <HugeiconsIcon icon={ArrowLeft01Icon} strokeWidth={2} />
+              <Icon icon={ArrowLeft01Icon} />
             </Button>
             {activityPagerItems.map((item) =>
               item.kind === "ellipsis" ? (
@@ -198,7 +198,7 @@ export function RecentActivityCard({
               type="button"
               variant="ghost"
             >
-              <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />
+              <Icon icon={ArrowRight01Icon} />
             </Button>
           </nav>
         ) : (
