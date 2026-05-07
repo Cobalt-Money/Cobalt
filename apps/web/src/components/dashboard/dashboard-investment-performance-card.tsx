@@ -70,8 +70,8 @@ export function DashboardInvestmentPerformanceCard() {
                   <p
                     className={cn(
                       "shrink-0 text-base font-semibold tabular-nums",
-                      up && "text-green-550",
-                      down && "text-red-600 dark:text-red-500",
+                      up && "text-success",
+                      down && "text-destructive",
                       !up && !down && "text-foreground",
                     )}
                   >

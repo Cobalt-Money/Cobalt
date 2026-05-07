@@ -117,7 +117,7 @@ export function BabyTransactions({ items }: BabyTransactionsProps) {
           </div>
           {section.rows.map((tx) => {
             const isDebit = tx.amount >= 0;
-            const amountColor = isDebit ? "text-red-600 dark:text-red-500" : "text-green-550";
+            const amountColor = isDebit ? "text-destructive" : "text-success";
             const displayName = truncateName(tx.name);
             const categoryConfig = tx.personalFinanceCategory
               ? getCategoryDisplayConfig(tx.personalFinanceCategory)

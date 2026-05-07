@@ -1,5 +1,6 @@
 "use client";
 
+import { ACCOUNT_CATEGORY_COLORS } from "@cobalt-web/ui/lib/account-palette";
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
 import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { MerchantLogo } from "@cobalt-web/ui/cobalt/logos/merchant-logo";
@@ -26,14 +27,6 @@ const formatUsdInteger = (amount: number) =>
 const TIME_RANGES = ["1W", "1M", "1Y", "All"] as const;
 type TimeRange = (typeof TIME_RANGES)[number];
 
-const CATEGORY_COLORS = {
-  checking: "#3b82f6",
-  credit: "#ec4899",
-  investments: "#38bdf8",
-  loans: "#f97316",
-  savings: "#6366f1",
-} as const;
-
 const NET_WORTH_TOTAL = 728_510;
 
 const DEMO_CHART_DATA = [
@@ -53,35 +46,35 @@ const DEMO_CHART_DATA = [
 
 const DEMO_CATEGORIES = [
   {
-    color: CATEGORY_COLORS.investments,
+    color: ACCOUNT_CATEGORY_COLORS.investments,
     key: "investments",
     label: "Investments",
     pct: 62,
     value: 451_676,
   },
   {
-    color: CATEGORY_COLORS.savings,
+    color: ACCOUNT_CATEGORY_COLORS.savings,
     key: "savings",
     label: "Savings",
     pct: 18,
     value: 131_132,
   },
   {
-    color: CATEGORY_COLORS.checking,
+    color: ACCOUNT_CATEGORY_COLORS.checking,
     key: "checking",
     label: "Checking",
     pct: 12,
     value: 87_421,
   },
   {
-    color: CATEGORY_COLORS.credit,
+    color: ACCOUNT_CATEGORY_COLORS.credit,
     key: "credit",
     label: "Credit",
     pct: 5,
     value: 36_425,
   },
   {
-    color: CATEGORY_COLORS.loans,
+    color: ACCOUNT_CATEGORY_COLORS.loans,
     key: "loans",
     label: "Loans",
     pct: 3,
@@ -90,11 +83,11 @@ const DEMO_CATEGORIES = [
 ];
 
 const DEMO_DONUT_CONFIG: ChartConfig = {
-  checking: { color: CATEGORY_COLORS.checking, label: "Checking" },
-  credit: { color: CATEGORY_COLORS.credit, label: "Credit" },
-  investments: { color: CATEGORY_COLORS.investments, label: "Investments" },
-  loans: { color: CATEGORY_COLORS.loans, label: "Loans" },
-  savings: { color: CATEGORY_COLORS.savings, label: "Savings" },
+  checking: { color: ACCOUNT_CATEGORY_COLORS.checking, label: "Checking" },
+  credit: { color: ACCOUNT_CATEGORY_COLORS.credit, label: "Credit" },
+  investments: { color: ACCOUNT_CATEGORY_COLORS.investments, label: "Investments" },
+  loans: { color: ACCOUNT_CATEGORY_COLORS.loans, label: "Loans" },
+  savings: { color: ACCOUNT_CATEGORY_COLORS.savings, label: "Savings" },
 };
 
 const DEMO_DONUT_DATA = DEMO_CATEGORIES.map((c) => ({
@@ -475,7 +468,7 @@ export function BabyDashboard() {
                         <p
                           className={cn(
                             "shrink-0 text-base font-semibold tabular-nums",
-                            isInflow ? "text-green-550" : "text-foreground",
+                            isInflow ? "text-success" : "text-foreground",
                           )}
                         >
                           {isInflow ? "+" : ""}
@@ -523,8 +516,8 @@ export function BabyDashboard() {
                         <p
                           className={cn(
                             "shrink-0 text-base font-semibold tabular-nums",
-                            up && "text-green-550",
-                            down && "text-red-600 dark:text-red-500",
+                            up && "text-success",
+                            down && "text-destructive",
                             !up && !down && "text-foreground",
                           )}
                         >

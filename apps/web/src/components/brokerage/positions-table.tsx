@@ -64,10 +64,10 @@ function openPnlToneClass(openPnl: number | null | undefined): string {
     return "text-muted-foreground";
   }
   if (openPnl > 0) {
-    return "text-green-550";
+    return "text-success";
   }
   if (openPnl < 0) {
-    return "text-red-600 dark:text-red-400";
+    return "text-destructive";
   }
   return "text-muted-foreground";
 }

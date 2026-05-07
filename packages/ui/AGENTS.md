@@ -40,6 +40,30 @@ Every Shadcn component is available. Import any component directly — no need t
 - **`Stat` / `StatValue`** (`@cobalt-web/ui/components/stat`) — numeric display with `tabular-nums`. Props: `label`, `value`, `delta`, `tone` (default/positive/negative/muted), `size` (sm/default/lg/xl). Use for any displayed number (balances, counts, percentages).
 - **`Icon`** (`@cobalt-web/ui/components/icon`) — wraps `HugeiconsIcon` with `strokeWidth=2` default and named sizes (`xs`/`sm`/`default`/`md`/`lg`/`xl`). Use instead of raw `<HugeiconsIcon icon={X} className="size-4">`.
 
+### Color tokens
+
+All semantic color goes through CSS variables in `src/styles/globals.css`. Use Tailwind's token classes — do **not** use raw color scales (`text-red-600`, `text-green-500`, etc.) for status/state. Raw colors are reserved for chart palettes and brand artwork.
+
+| Intent                                          | Token classes                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------- |
+| Status: error / negative balance                | `text-destructive`, `bg-destructive/10`, `border-destructive` |
+| Status: success / positive balance              | `text-success`, `bg-success/10`                               |
+| Status: warning                                 | `text-warning`, `bg-warning/10`                               |
+| Subtle panel surface (cards, popovers, dialogs) | `bg-popover`                                                  |
+| Primary card                                    | `bg-card`                                                     |
+| Hover/muted bg                                  | `bg-muted/40` (resting), `bg-muted/60` (hover)                |
+
+`--popover` is the **subtle gray panel color** (light: `oklch(0.949 0 0)`, dark: `oklch(0.29 0 0)`). Used by base `Popover`, `Tooltip`, `Dialog`, `DropdownMenu`, `Card variant="subtle"`. Do not re-emit literal `bg-[oklch(0.949_0_0)]` — use `bg-popover`.
+
+### Account category palette
+
+Chart colors for net-worth / allocation buckets live in `src/lib/account-palette.ts` (`ACCOUNT_CATEGORY_COLORS`). Import there — do not duplicate hex values.
+
+```ts
+import { ACCOUNT_CATEGORY_COLORS } from "@cobalt-web/ui/lib/account-palette";
+// { checking, credit, investments, loans, savings }
+```
+
 ### Adding new Shadcn components
 
 Use the Shadcn CLI or manually drop into `src/components/`. Base files in `components/*` are Cobalt-tuned — re-running `shadcn add <name>` on an already-tuned file will overwrite product styling. Diff before accepting.

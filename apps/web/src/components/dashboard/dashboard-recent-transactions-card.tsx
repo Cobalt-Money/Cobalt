@@ -66,7 +66,7 @@ export function DashboardRecentTransactionsCard() {
                   <p
                     className={cn(
                       "shrink-0 text-base font-semibold tabular-nums",
-                      isInflow ? "text-green-550" : "text-foreground",
+                      isInflow ? "text-success" : "text-foreground",
                     )}
                   >
                     <PrivateAmount>

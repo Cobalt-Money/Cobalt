@@ -5,7 +5,7 @@ type StatTone = "default" | "positive" | "negative" | "muted";
 
 const toneMap: Record<StatTone, string> = {
   default: "text-foreground",
-  positive: "text-emerald-600 dark:text-emerald-400",
+  positive: "text-success",
   negative: "text-destructive",
   muted: "text-muted-foreground",
 };

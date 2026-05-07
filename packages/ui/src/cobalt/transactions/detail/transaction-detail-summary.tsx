@@ -82,7 +82,7 @@ export function TransactionDetailSummary({
   transaction: TransactionListItem;
 }) {
   const isDebit = transaction.amount > 0;
-  const amountColor = isDebit ? "text-red-600 dark:text-red-500" : "text-green-550";
+  const amountColor = isDebit ? "text-destructive" : "text-success";
 
   const { category } = transaction;
   const showLocation = shouldShowLocationSection(transaction.location);

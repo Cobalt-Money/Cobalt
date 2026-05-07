@@ -1,4 +1,5 @@
 import { CardContent, Card } from "@cobalt-web/ui/components/card";
+import { ACCOUNT_CATEGORY_COLORS } from "@cobalt-web/ui/lib/account-palette";
 import { brokerageInstitutionBranding } from "@cobalt-web/ui/cobalt/logos/brokerage-institution-branding";
 import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
 import { Button } from "@cobalt-web/ui/components/button";
@@ -52,14 +53,6 @@ const MONTH_LABELS = [
 
 const TIME_RANGES = ["1W", "1M", "1Y", "All"] as const;
 type TimeRange = (typeof TIME_RANGES)[number];
-
-const CATEGORY_COLORS = {
-  checking: "#3b82f6",
-  credit: "#ec4899",
-  investments: "#38bdf8",
-  loans: "#f97316",
-  savings: "#6366f1",
-} as const;
 
 interface BankSnapshotRow {
   accountId: string;
@@ -719,35 +712,35 @@ export function NetWorthSection() {
     const pct = (v: number) => Math.round((v / categoryBase) * 100);
     return [
       {
-        color: CATEGORY_COLORS.checking,
+        color: ACCOUNT_CATEGORY_COLORS.checking,
         key: "checking",
         label: "Checking",
         pct: pct(checkingTotal),
         value: checkingTotal,
       },
       {
-        color: CATEGORY_COLORS.savings,
+        color: ACCOUNT_CATEGORY_COLORS.savings,
         key: "savings",
         label: "Savings",
         pct: pct(savingsTotal),
         value: savingsTotal,
       },
       {
-        color: CATEGORY_COLORS.investments,
+        color: ACCOUNT_CATEGORY_COLORS.investments,
         key: "investments",
         label: "Investments",
         pct: pct(investmentTotal),
         value: investmentTotal,
       },
       {
-        color: CATEGORY_COLORS.credit,
+        color: ACCOUNT_CATEGORY_COLORS.credit,
         key: "credit",
         label: "Credit",
         pct: pct(creditTotal),
         value: creditTotal,
       },
       {
-        color: CATEGORY_COLORS.loans,
+        color: ACCOUNT_CATEGORY_COLORS.loans,
         key: "loans",
         label: "Loans",
         pct: pct(loanTotal),
