@@ -20,6 +20,8 @@ import * as orderSchema from "./schema/accounts/investments/order";
 import * as securitySchema from "./schema/accounts/investments/security";
 import * as kalshiSchema from "./schema/accounts/prediction-markets/kalshi";
 import * as snapshotSchema from "./schema/accounts/snapshot";
+import * as importJobSchema from "./schema/imports/import-job";
+import * as importStagedTransactionSchema from "./schema/imports/import-staged-transaction";
 import * as chatSchema from "./schema/ai/chat";
 import * as messageVotesSchema from "./schema/ai/message-votes";
 import * as financialGoalsSchema from "./schema/goals/financial-goals";
@@ -77,5 +79,7 @@ export const db = drizzle({
     ...userAlertsSchema,
     ...mobileSubscriptionsSchema,
     ...stripeSubscriptionsSchema,
+    ...importJobSchema,
+    ...importStagedTransactionSchema,
   },
 });

@@ -345,13 +345,16 @@
         "@mozilla/readability": "^0.5.0",
         "ai": "^6",
         "drizzle-orm": "1.0.0-beta.18-7eb39f0",
+        "fastest-levenshtein": "^1.0.16",
         "linkedom": "^0.18.12",
+        "papaparse": "^5.5.3",
         "plaid": "^41.4.0",
         "snaptrade-typescript-sdk": "^9.0.160",
         "zod": "catalog:",
       },
       "devDependencies": {
         "@cobalt-web/config": "workspace:*",
+        "@types/papaparse": "^5.3.16",
         "typescript": "^5",
         "vitest": "^3.2.0",
       },
@@ -2303,6 +2306,8 @@
     "@types/node-fetch": ["@types/node-fetch@2.6.13", "", { "dependencies": { "@types/node": "*", "form-data": "^4.0.4" } }, "sha512-QGpRVpzSaUs30JBSGPjOg4Uveu384erbHBoT1zeONvyCfwQxIkUshLAOqN/k9EjGviPRmWTTe6aH2qySWKTVSw=="],
 
     "@types/oracledb": ["@types/oracledb@6.5.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-kK1eBS/Adeyis+3OlBDMeQQuasIDLUYXsi2T15ccNJ0iyUpQ4xDF7svFu3+bGVrI0CMBUclPciz+lsQR3JX3TQ=="],
+
+    "@types/papaparse": ["@types/papaparse@5.5.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-gFnFp/JMzLHCwRf7tQHrNnfhN4eYBVYYI897CGX4MY1tzY9l2aLkVyx2IlKZ/SAqDbB3I1AOZW5gTMGGsqWliA=="],
 
     "@types/pg": ["@types/pg@8.18.0", "", { "dependencies": { "@types/node": "*", "pg-protocol": "*", "pg-types": "^2.2.0" } }, "sha512-gT+oueVQkqnj6ajGJXblFR4iavIXWsGAFCk3dP4Kki5+a9R4NMt0JARdk6s8cUKcfUoqP5dAtDSLU8xYUTFV+Q=="],
 

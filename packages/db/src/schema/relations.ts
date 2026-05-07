@@ -12,6 +12,8 @@ import { transactionTag } from "./accounts/banking/tags/transaction-tag";
 import { recurring } from "./accounts/banking/transactions/recurring";
 import { transaction } from "./accounts/banking/transactions/transaction";
 import { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
+import { importJob } from "./imports/import-job";
+import { importStagedTransaction } from "./imports/import-staged-transaction";
 import { holding } from "./accounts/investments/holding";
 import { investmentActivity } from "./accounts/investments/investment-activity";
 import { orders } from "./accounts/investments/order";
@@ -50,6 +52,8 @@ const schema = {
   financialGoals,
   fundamentals,
   holding,
+  importJob,
+  importStagedTransaction,
   institution,
   investmentActivity,
   kalshiUsers,
@@ -256,6 +260,34 @@ export const relations = defineRelations(schema, (r) => ({
     user: r.one.user({
       from: r.holding.userId,
       to: r.user.id,
+    }),
+  },
+
+  importJob: {
+    stagedTransactions: r.many.importStagedTransaction({
+      from: r.importJob.id,
+      to: r.importStagedTransaction.importJobId,
+    }),
+    transactions: r.many.transaction({
+      from: r.importJob.id,
+      to: r.transaction.importJobId,
+    }),
+    user: r.one.user({
+      from: r.importJob.userId,
+      to: r.user.id,
+    }),
+  },
+
+  importStagedTransaction: {
+    dedupeMatch: r.one.transaction({
+      from: r.importStagedTransaction.dedupeMatchId,
+      optional: true,
+      to: r.transaction.id,
+    }),
+    importJob: r.one.importJob({
+      from: r.importStagedTransaction.importJobId,
+      optional: false,
+      to: r.importJob.id,
     }),
   },
 
@@ -490,6 +522,11 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.transaction.id,
       to: r.transactionEdit.transactionId,
     }),
+    importJob: r.one.importJob({
+      from: r.transaction.importJobId,
+      optional: true,
+      to: r.importJob.id,
+    }),
     transactionTags: r.many.transactionTag({
       from: r.transaction.id,
       to: r.transactionTag.transactionId,
@@ -553,6 +590,10 @@ export const relations = defineRelations(schema, (r) => ({
     holdings: r.many.holding({
       from: r.user.id,
       to: r.holding.userId,
+    }),
+    importJobs: r.many.importJob({
+      from: r.user.id,
+      to: r.importJob.userId,
     }),
     investmentActivities: r.many.investmentActivity({
       from: r.user.id,

@@ -42,3 +42,8 @@ export {
   transactionEdit,
   transactionEditActor,
 } from "./accounts/banking/transactions/transaction-edit";
+
+// SRI-317 — import pipeline tables. Server-only: staged rows are transient
+// (wiped post-commit) and the UI polls job status via REST rather than Zero.
+export { importJob, importJobStatus, importSource } from "./imports/import-job";
+export { importStagedTransaction } from "./imports/import-staged-transaction";

@@ -7,6 +7,7 @@ import type {
   BrokerageRouter,
   CategoriesRouter,
   ChatRouter,
+  ImportsRouter,
   InstitutionsRouter,
   NewsRouter,
   PlaidRouter,
@@ -40,6 +41,8 @@ export const appstoreApi = hc<AppstoreRouter>(`${url}/api/appstore`, init);
 export const brokerageApi = hc<BrokerageRouter>(`${url}/api/brokerage`, init);
 export const categoriesApi = hc<CategoriesRouter>(`${url}/api/categories`, init);
 export const chatApi = hc<ChatRouter>(`${url}/api/chat`, init);
+export const importsApi = hc<ImportsRouter>(`${url}/api/imports`, init);
+export const importsBaseUrl = `${url}/api/imports`;
 export const institutionsApi = hc<InstitutionsRouter>(`${url}/api/institutions`, init);
 export const newsApi = hc<NewsRouter>(`${url}/api/news`, init);
 export const plaidApi = hc<PlaidRouter>(`${url}/api/plaid`, init);
