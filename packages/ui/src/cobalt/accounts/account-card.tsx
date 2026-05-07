@@ -38,7 +38,7 @@ export function AccountCard({
   return (
     <Card
       className={cn(
-        "flex min-h-[200px] flex-col gap-0 border-0 bg-[oklch(0.949_0_0)] py-0 shadow-none ring-0",
+        "flex min-h-[200px] flex-col gap-0 border-0 bg-popover py-0 shadow-none ring-0",
         "rounded-2xl sm:min-h-[220px] sm:rounded-3xl",
         "dark:bg-white/[0.06]",
       )}

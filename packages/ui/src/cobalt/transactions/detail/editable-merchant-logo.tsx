@@ -120,10 +120,7 @@ export function EditableMerchantLogo({
           </button>
         }
       />
-      <PopoverContent
-        align="end"
-        className="w-80 gap-0 bg-[oklch(0.949_0_0)] p-1 dark:bg-[oklch(0.29_0_0)]"
-      >
+      <PopoverContent align="end" className="w-80 gap-0 bg-popover p-1 dark:bg-popover">
         <div className="flex items-center px-2.5 py-1.5">
           <input
             autoFocus

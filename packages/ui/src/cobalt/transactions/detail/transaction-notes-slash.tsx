@@ -239,7 +239,7 @@ function buildSlashView(ctx: Ctx, state: SharedSlashState) {
     content.dataset.transactionNotesSlash = "";
     content.dataset.show = "false";
     content.className =
-      "absolute z-50 rounded-2xl bg-[oklch(0.949_0_0)] p-1 shadow-2xl ring-1 ring-foreground/5 dark:bg-[oklch(0.29_0_0)]";
+      "absolute z-50 rounded-2xl bg-popover p-1 shadow-2xl ring-1 ring-foreground/5 dark:bg-popover";
     const root: Root = createRoot(content);
 
     const providerRef: { current: SlashProvider | null } = { current: null };

@@ -1,4 +1,4 @@
-import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
+import { Toggle } from "@cobalt-web/ui/components/toggle";
 
 export const NEWS_TAB_DEFS = [
   { id: "general", label: "General" },
@@ -23,7 +23,7 @@ export function NewsToolbar({
     <div className="flex w-full min-w-0 flex-col gap-4 bg-sidebar-inset px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-6">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         {NEWS_TAB_DEFS.map((t) => (
-          <CobaltToggle
+          <Toggle
             key={t.id}
             pressed={activeTab === t.id}
             onPressedChange={(pressed) => {
@@ -36,7 +36,7 @@ export function NewsToolbar({
             variant="outline"
           >
             {t.label}
-          </CobaltToggle>
+          </Toggle>
         ))}
       </div>
     </div>

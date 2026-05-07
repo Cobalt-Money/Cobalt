@@ -138,7 +138,7 @@ export function BabyTickerDetail({ data }: { data: BabyTickerDetailData }) {
 
   const change1dAbs = data.price - data.price / (1 + data.pctChange1d / 100);
   const isUp = data.pctChange1d >= 0;
-  const tone = isUp ? "text-green-550" : "text-red-600 dark:text-red-400";
+  const tone = isUp ? "text-success" : "text-destructive";
   const lineColor = isUp ? "var(--color-green-550)" : "#dc2626";
   const gradientId = `babyTickerFill-${data.symbol}`;
 
@@ -226,7 +226,7 @@ export function BabyTickerDetail({ data }: { data: BabyTickerDetailData }) {
           <Stat
             label="YTD change"
             value={`${data.pctChangeYtd >= 0 ? "+" : ""}${data.pctChangeYtd.toFixed(2)}%`}
-            tone={data.pctChangeYtd >= 0 ? "text-green-550" : "text-red-600 dark:text-red-400"}
+            tone={data.pctChangeYtd >= 0 ? "text-success" : "text-destructive"}
           />
           <Stat label="Sector" value={data.sector} />
         </dl>

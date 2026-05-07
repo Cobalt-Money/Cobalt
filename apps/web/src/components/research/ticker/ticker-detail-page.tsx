@@ -63,10 +63,7 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
 
   const chartColor = dominantHex && /^#[0-9a-f]{6}$/i.test(dominantHex) ? dominantHex : undefined;
 
-  const changeClass =
-    (quote?.change ?? 0) < 0
-      ? "text-red-600 dark:text-red-400"
-      : "text-green-600 dark:text-green-400";
+  const changeClass = (quote?.change ?? 0) < 0 ? "text-destructive" : "text-success";
 
   const priceRow = quote ? (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">

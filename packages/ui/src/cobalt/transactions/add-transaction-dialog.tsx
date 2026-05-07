@@ -15,7 +15,14 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AccountLogo } from "../accounts/account-logo";
-import { CobaltDialog } from "../cobalt-dialog";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@cobalt-web/ui/components/dialog";
+import { Icon } from "@cobalt-web/ui/components/icon";
 import { CobaltSelectPopover } from "../select-popover";
 import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "./categories";
 import { CategoryPicker } from "./detail/category-picker";
@@ -572,10 +579,7 @@ export function AddTransactionForm({
                 </button>
               }
             />
-            <PopoverContent
-              align="start"
-              className="w-72 gap-0 bg-[oklch(0.949_0_0)] p-1 dark:bg-[oklch(0.29_0_0)]"
-            >
+            <PopoverContent align="start" className="w-72 gap-0 bg-popover p-1 dark:bg-popover">
               <div className="flex items-center px-2.5 py-1.5">
                 <input
                   autoFocus
@@ -651,10 +655,7 @@ export function AddTransactionForm({
                 </button>
               }
             />
-            <PopoverContent
-              align="start"
-              className="gap-0 bg-[oklch(0.949_0_0)] p-1 dark:bg-[oklch(0.29_0_0)] w-72"
-            >
+            <PopoverContent align="start" className="gap-0 bg-popover p-1 dark:bg-popover w-72">
               <div className="flex items-center px-2.5 py-1.5">
                 <input
                   autoFocus
@@ -708,26 +709,29 @@ export function AddTransactionDialog({
   onRequestCreateTag,
 }: AddTransactionDialogProps) {
   return (
-    <CobaltDialog
-      className="w-[720px] sm:max-w-3xl"
-      onOpenChange={onOpenChange}
-      open={open}
-      title="New Transaction"
-      titleClassName="text-muted-foreground"
-      titleIcon={Money01Icon}
-    >
-      <AddTransactionForm
-        accounts={accounts}
-        availableTags={availableTags}
-        categoryOptions={categoryOptions}
-        locationSearch={locationSearch}
-        merchantSearch={merchantSearch}
-        onBackspaceWhenEmpty={onBackspaceWhenEmpty}
-        onCreateCashAccount={onCreateCashAccount}
-        onRequestCreateTag={onRequestCreateTag}
-        onSubmit={onSubmit}
-        submitting={submitting}
-      />
-    </CobaltDialog>
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="w-[720px] sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-muted-foreground">
+            <Icon icon={Money01Icon} size="md" />
+            New Transaction
+          </DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <AddTransactionForm
+            accounts={accounts}
+            availableTags={availableTags}
+            categoryOptions={categoryOptions}
+            locationSearch={locationSearch}
+            merchantSearch={merchantSearch}
+            onBackspaceWhenEmpty={onBackspaceWhenEmpty}
+            onCreateCashAccount={onCreateCashAccount}
+            onRequestCreateTag={onRequestCreateTag}
+            onSubmit={onSubmit}
+            submitting={submitting}
+          />
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }

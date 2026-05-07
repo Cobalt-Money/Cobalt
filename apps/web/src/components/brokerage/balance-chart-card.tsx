@@ -3,7 +3,7 @@ import type {
   ScopeAccount,
 } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
 import { BrokerageScopePicker } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
-import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { Button } from "@cobalt-web/ui/components/button";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
@@ -205,7 +205,10 @@ export function BalanceChartCard({
   }
 
   return (
-    <CobaltCard className="flex h-full min-h-0 flex-col gap-0 rounded-3xl py-0 lg:min-h-[400px]">
+    <Card
+      variant="subtle"
+      className="flex h-full min-h-0 flex-col gap-0 rounded-3xl py-0 lg:min-h-[400px]"
+    >
       <CardContent className="flex min-h-0 flex-1 flex-col gap-4 px-0 py-4">
         <div className="shrink-0 px-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
@@ -305,6 +308,6 @@ export function BalanceChartCard({
           })}
         </div>
       </CardContent>
-    </CobaltCard>
+    </Card>
   );
 }

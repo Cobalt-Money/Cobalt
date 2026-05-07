@@ -119,7 +119,7 @@ export function BabyAccounts() {
               {group.accounts.map((account) => (
                 <Card
                   key={account.id}
-                  className="flex min-h-[160px] flex-col gap-0 rounded-2xl border-0 bg-[oklch(0.949_0_0)] py-0 shadow-none ring-0 dark:bg-white/[0.06]"
+                  className="flex min-h-[160px] flex-col gap-0 rounded-2xl border-0 bg-popover py-0 shadow-none ring-0 dark:bg-white/[0.06]"
                 >
                   <CardContent className="flex flex-1 flex-col px-4 pt-3 pb-0 sm:px-5 sm:pt-4">
                     <div className="mb-3 flex items-start justify-between gap-3">

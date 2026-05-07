@@ -1,5 +1,5 @@
 import { env } from "@cobalt-web/env/web";
-import { CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { Card } from "@cobalt-web/ui/components/card";
 import { Shimmer } from "@cobalt-web/ui/components/ai-elements/shimmer";
 import confetti from "canvas-confetti";
 import { useEffect, useState } from "react";
@@ -249,7 +249,7 @@ function TerminalCard({
 }) {
   const titleColor = tone === "destructive" ? "text-destructive" : "text-foreground";
   return (
-    <CobaltCard className={`${FLOATING_CARD_CHROME} w-96 gap-2 p-4`}>
+    <Card variant="subtle" className={`${FLOATING_CARD_CHROME} w-96 gap-2 p-4`}>
       <div className="flex items-start justify-between gap-3">
         <p className={`font-medium text-sm ${titleColor}`}>{title}</p>
         <button
@@ -262,7 +262,7 @@ function TerminalCard({
         </button>
       </div>
       <div className="mt-2 text-sm">{body}</div>
-    </CobaltCard>
+    </Card>
   );
 }
 
@@ -306,7 +306,7 @@ function OnboardingProgressCard({
   const currentLabel = BUCKET_LABELS[currentBucket];
 
   return (
-    <CobaltCard className={`${FLOATING_CARD_CHROME} w-80 gap-2 p-4`}>
+    <Card variant="subtle" className={`${FLOATING_CARD_CHROME} w-80 gap-2 p-4`}>
       <div className="mb-2 h-5 text-center text-sm">
         {isDone ? (
           <span className="font-medium">{currentLabel}</span>
@@ -327,6 +327,6 @@ function OnboardingProgressCard({
           Progress stream disconnected — your data will still finish importing.
         </div>
       ) : null}
-    </CobaltCard>
+    </Card>
   );
 }

@@ -19,7 +19,7 @@ export function DeleteTransactionDialog({ onConfirm }: { onConfirm: () => void }
       <AlertDialogTrigger
         render={
           <Button aria-label="Delete transaction" size="sm" type="button" variant="ghost">
-            <HugeiconsIcon className="size-4 text-red-600 dark:text-red-500" icon={Delete02Icon} />
+            <HugeiconsIcon className="size-4 text-destructive" icon={Delete02Icon} />
           </Button>
         }
       />
@@ -33,7 +33,7 @@ export function DeleteTransactionDialog({ onConfirm }: { onConfirm: () => void }
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             onClick={onConfirm}
           >
             Delete

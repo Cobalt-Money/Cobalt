@@ -151,7 +151,7 @@ export function TransactionSearchResults({
                 <span
                   className={cn(
                     "ml-auto shrink-0 font-medium tabular-nums",
-                    isInflow ? "text-green-550" : "text-red-600 dark:text-red-500",
+                    isInflow ? "text-success" : "text-destructive",
                   )}
                 >
                   <PrivateAmount>

@@ -96,7 +96,7 @@ function QueueRow({ item, onRemove, onUpdate }: QueueRowProps) {
         <div className="flex shrink-0 items-center gap-0.5 pt-0.5">
           <button
             aria-label="Cancel edit"
-            className="rounded p-1 text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5"
+            className="rounded p-1 text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
             onMouseDown={(e) => e.preventDefault()}
             onClick={cancel}
             type="button"
@@ -118,7 +118,7 @@ function QueueRow({ item, onRemove, onUpdate }: QueueRowProps) {
   }
 
   return (
-    <li className="group relative flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5">
+    <li className="group relative flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-foreground/5">
       <button
         aria-label="Edit queued message"
         className="absolute inset-0 cursor-text rounded-md"
@@ -128,7 +128,7 @@ function QueueRow({ item, onRemove, onUpdate }: QueueRowProps) {
       <span className="pointer-events-none flex-1 truncate text-muted-foreground">{item.text}</span>
       <button
         aria-label="Remove queued message"
-        className="relative rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-black/5 hover:text-foreground group-hover:opacity-100 dark:hover:bg-white/5"
+        className="relative rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-foreground/5 hover:text-foreground group-hover:opacity-100"
         onClick={(e) => {
           e.stopPropagation();
           onRemove();
