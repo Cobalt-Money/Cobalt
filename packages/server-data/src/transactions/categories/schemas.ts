@@ -74,6 +74,13 @@ export const updateCategoryBodySchema = z
 
 export type UpdateCategoryBody = z.infer<typeof updateCategoryBodySchema>;
 
+export const hideCategoryBodySchema = z.object({
+  /** Reassign all tx + recurring rows to this cat before hiding. Null/omitted = leave assigned. */
+  reassignTo: z.uuid().nullable().optional(),
+});
+
+export type HideCategoryBody = z.infer<typeof hideCategoryBodySchema>;
+
 export const categoryIdParamSchema = z.object({
   categoryId: z.uuid(),
 });

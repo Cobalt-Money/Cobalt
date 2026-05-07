@@ -14,18 +14,21 @@ import {
   useUpdateGroup,
 } from "@/hooks/use-categories";
 import type { CategoryRow, GroupRow } from "@/hooks/use-categories";
+import { useTransactions } from "@/hooks/use-transactions";
 
 import { CategoryFormDialog } from "./category-form-dialog";
 import type { CategoryFormInitial } from "./category-form-dialog";
 import { DeleteCategoryDialog } from "./delete-category-dialog";
 import { DeleteGroupDialog } from "./delete-group-dialog";
 import { GroupFormDialog } from "./group-form-dialog";
+import { HideCategoryDialog } from "./hide-category-dialog";
 
 interface SubDialogState {
   catForm: { open: boolean; initial: CategoryFormInitial | null };
   groupForm: { open: boolean; initial: GroupRow | null };
   deleteCat: CategoryRow | null;
   deleteGroup: GroupRow | null;
+  hideCat: CategoryRow | null;
 }
 
 const INITIAL_SUB: SubDialogState = {
@@ -33,12 +36,14 @@ const INITIAL_SUB: SubDialogState = {
   deleteCat: null,
   deleteGroup: null,
   groupForm: { initial: null, open: false },
+  hideCat: null,
 };
 
 /** Hook returning all data + handlers needed to drive the manage-categories Form. */
 export function useManageCategoriesProps() {
   const { data: categories } = useAllCategories();
   const { data: groups } = useCategoryGroups();
+  const { items: allTxns } = useTransactions();
   const updateCat = useUpdateCategory();
   const updateGroup = useUpdateGroup();
   const reorderCats = useReorderCategories();
@@ -50,6 +55,18 @@ export function useManageCategoriesProps() {
     () => [...groups].toSorted((a, b) => a.order - b.order),
     [groups],
   );
+
+  const txCountById = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const t of allTxns) {
+      const id = t.category?.id;
+      if (!id) {
+        continue;
+      }
+      m.set(id, (m.get(id) ?? 0) + 1);
+    }
+    return m as ReadonlyMap<string, number>;
+  }, [allTxns]);
 
   const catsByGroup = useMemo(() => {
     const map = new Map<string, ManageCategoriesCat[]>();
@@ -87,8 +104,15 @@ export function useManageCategoriesProps() {
     onReorderGroups: (groupIds: string[]) => reorderGroups(groupIds),
     onToggleExcludeFromInsights: (c: ManageCategoriesCat, excluded: boolean) =>
       updateCat({ categoryId: c.id, excludeFromInsights: excluded }),
-    onToggleHidden: (c: ManageCategoriesCat, hidden: boolean) =>
-      updateCat({ categoryId: c.id, hidden }),
+    onToggleHidden: (c: ManageCategoriesCat, hidden: boolean) => {
+      // Unhide: direct flip. Hide: prompt to optionally reassign tx + recurring.
+      if (!hidden) {
+        updateCat({ categoryId: c.id, hidden: false });
+        return;
+      }
+      setSub((s) => ({ ...s, hideCat: c as CategoryRow }));
+    },
+    txCountById,
   };
 
   const subDialogs = (
@@ -113,6 +137,15 @@ export function useManageCategoriesProps() {
           }))
         }
         open={sub.groupForm.open}
+      />
+      <HideCategoryDialog
+        category={sub.hideCat}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSub((s) => ({ ...s, hideCat: null }));
+          }
+        }}
+        open={sub.hideCat !== null}
       />
       <DeleteCategoryDialog
         category={sub.deleteCat}
