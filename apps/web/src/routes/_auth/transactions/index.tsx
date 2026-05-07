@@ -1,5 +1,6 @@
 import type { ExportFormat } from "@cobalt-web/ui/cobalt/transactions/lib/export";
 import { exportTransactions } from "@cobalt-web/ui/cobalt/transactions/lib/export";
+import { SelectionActionBar } from "@cobalt-web/ui/cobalt/transactions/selection-action-bar";
 import type { TransactionTagsById } from "@cobalt-web/ui/cobalt/transactions/transactions-table";
 import { TransactionsTable } from "@cobalt-web/ui/cobalt/transactions/transactions-table";
 import { TransactionsToolbar } from "@cobalt-web/ui/cobalt/transactions/transactions-toolbar";
@@ -8,7 +9,7 @@ import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { queries } from "@cobalt-web/zero";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { RowSelectionState } from "@tanstack/react-table";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
@@ -77,17 +78,44 @@ function TransactionsListPage() {
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const selectedCount = Object.keys(rowSelection).length;
-  const { openAddAccount, openAddTransaction, openManageTags } = useCommandMenu();
+  const { openAddAccount, openAddTransaction, openBulkActions, openManageTags } = useCommandMenu();
+  const clearSelection = useCallback(() => setRowSelection({}), []);
+  const handleOpenBulkActions = useCallback(() => {
+    const selected = items.filter((item) => rowSelection[item.id]);
+    if (selected.length === 0) {
+      return;
+    }
+    openBulkActions(selected);
+  }, [items, openBulkActions, rowSelection]);
+
+  // ⌘K with active selection → bulk actions instead of default palette.
+  // Capture phase intercepts before CommandMenuProvider's document listener.
+  useEffect(() => {
+    if (selectedCount === 0) {
+      return;
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const selected = items.filter((item) => rowSelection[item.id]);
+        if (selected.length > 0) {
+          openBulkActions(selected);
+        }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+  }, [items, openBulkActions, rowSelection, selectedCount]);
 
   const handleExport = useCallback(
     (format: ExportFormat) => {
-      const selected = selectedCount > 0 ? items.filter((item) => rowSelection[item.id]) : items;
-      if (selected.length === 0) {
+      if (items.length === 0) {
         return;
       }
-      exportTransactions(selected, format);
+      exportTransactions(items, format);
     },
-    [items, rowSelection, selectedCount],
+    [items],
   );
 
   return (
@@ -102,7 +130,6 @@ function TransactionsListPage() {
           onExport={handleExport}
           onManageCategories={() => navigate({ to: "/transactions/categories" })}
           onManageTags={openManageTags}
-          selectedCount={selectedCount}
           tagOptions={tagOptions}
           onFiltersChange={(next) => {
             navigate({
@@ -138,6 +165,11 @@ function TransactionsListPage() {
           tagsById={tagsById}
         />
       </div>
+      <SelectionActionBar
+        count={selectedCount}
+        onClear={clearSelection}
+        onOpenActions={handleOpenBulkActions}
+      />
     </SidebarShellLayout>
   );
 }
