@@ -1,4 +1,4 @@
-import { CobaltToggle, cobaltToggleSubtleChrome } from "@cobalt-web/ui/cobalt/toggle";
+import { Toggle } from "@cobalt-web/ui/components/toggle";
 import {
   Command,
   CommandEmpty,
@@ -58,14 +58,7 @@ export function CategoryFilter({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        render={
-          <CobaltToggle
-            className={cobaltToggleSubtleChrome}
-            pressed={isActive}
-            size="sm"
-            type="button"
-          />
-        }
+        render={<Toggle variant="subtle" pressed={isActive} size="sm" type="button" />}
       >
         <HugeiconsIcon className="size-3.5" icon={Folder01Icon} />
         {triggerLabel}

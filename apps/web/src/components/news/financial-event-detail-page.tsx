@@ -1,5 +1,5 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { Card } from "@cobalt-web/ui/components/card";
 import { EventArticleContent } from "@cobalt-web/ui/cobalt/news/event-article-content";
 import type { EventArticleSource } from "@cobalt-web/ui/cobalt/news/event-article-content";
 import { cn } from "@cobalt-web/ui/lib/utils";
@@ -207,7 +207,10 @@ function SourceArticleCard({ article, index }: { article: EventArticleRow; index
         rel="noopener noreferrer"
         target="_blank"
       >
-        <CobaltCard className="flex h-full flex-col gap-2.5 p-3.5 transition-colors group-hover:bg-[oklch(0.94_0_0)] dark:group-hover:bg-white/[0.08]">
+        <Card
+          variant="subtle"
+          className="flex h-full flex-col gap-2.5 p-3.5 transition-colors group-hover:bg-[oklch(0.94_0_0)] dark:group-hover:bg-white/[0.08]"
+        >
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
               <span
@@ -244,7 +247,7 @@ function SourceArticleCard({ article, index }: { article: EventArticleRow; index
           <p className="text-foreground line-clamp-3 text-sm leading-snug font-medium">
             {article.title}
           </p>
-        </CobaltCard>
+        </Card>
       </a>
     </li>
   );

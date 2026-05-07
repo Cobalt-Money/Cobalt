@@ -1,4 +1,4 @@
-import { CobaltToggle, cobaltToggleSubtleChrome } from "@cobalt-web/ui/cobalt/toggle";
+import { Toggle } from "@cobalt-web/ui/components/toggle";
 import { Command, CommandGroup, CommandItem, CommandList } from "@cobalt-web/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { Activity03Icon } from "@hugeicons/core-free-icons";
@@ -29,14 +29,7 @@ export function StatusFilter({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        render={
-          <CobaltToggle
-            className={cobaltToggleSubtleChrome}
-            pressed={isActive}
-            size="sm"
-            type="button"
-          />
-        }
+        render={<Toggle variant="subtle" pressed={isActive} size="sm" type="button" />}
       >
         <HugeiconsIcon className="size-3.5" icon={Activity03Icon} />
         {triggerLabel}

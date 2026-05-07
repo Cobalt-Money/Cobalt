@@ -1,4 +1,4 @@
-import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { brokerageInstitutionBranding } from "@cobalt-web/ui/cobalt/logos/brokerage-institution-branding";
 import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
 import { Button } from "@cobalt-web/ui/components/button";
@@ -784,7 +784,7 @@ export function NetWorthSection() {
 
   return (
     <section aria-label="Net worth overview" className="w-full min-w-0">
-      <CobaltCard className="overflow-hidden rounded-3xl py-3 bg-sidebar-accent">
+      <Card variant="subtle" className="overflow-hidden rounded-3xl py-3 bg-sidebar-accent">
         <CardContent className="p-0">
           <div className="flex flex-col lg:min-h-[380px] lg:flex-row lg:items-stretch">
             {/* Net worth history chart */}
@@ -939,7 +939,7 @@ export function NetWorthSection() {
             </div>
           </div>
         </CardContent>
-      </CobaltCard>
+      </Card>
     </section>
   );
 }

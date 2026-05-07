@@ -1,5 +1,5 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { useMemo } from "react";
@@ -160,7 +160,7 @@ export function PositionsTable({
   );
 
   return (
-    <CobaltCard className="gap-0 overflow-hidden rounded-3xl py-0">
+    <Card variant="subtle" className="gap-0 overflow-hidden rounded-3xl py-0">
       <CardContent className="px-5 pt-3 pb-4">
         <div className="min-w-0 overflow-x-auto">
           <table className="w-full min-w-[880px] text-left text-sm">
@@ -191,6 +191,6 @@ export function PositionsTable({
           </table>
         </div>
       </CardContent>
-    </CobaltCard>
+    </Card>
   );
 }

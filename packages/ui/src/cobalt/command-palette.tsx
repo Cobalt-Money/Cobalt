@@ -26,8 +26,7 @@ function cobaltCommandDialogPopupClassNames() {
 }
 
 /** Solid panel with oklch colors. */
-const cobaltCommandDialogContentClassName =
-  "bg-[oklch(0.949_0_0)] shadow-2xl dark:bg-sidebar-accent";
+const cobaltCommandDialogContentClassName = "bg-popover shadow-2xl dark:bg-sidebar-accent";
 
 /** Lighter scrim than default `DialogOverlay` (`bg-black/80`). */
 const cobaltCommandDialogOverlayClassName =

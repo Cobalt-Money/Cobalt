@@ -15,7 +15,7 @@ import type { ComponentProps, ReactNode } from "react";
  * `flex`/`overflow-hidden` overrides don't strip them via tailwind-merge.
  */
 const COBALT_DIALOG_PANEL =
-  "top-[max(6rem,13svh)] flex max-w-[calc(100vw-2rem)] translate-y-0 flex-col gap-0 overflow-hidden rounded-4xl border-0 bg-[oklch(0.949_0_0)] p-6 shadow-2xl ring-0 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 dark:bg-[oklch(0.29_0_0)]";
+  "top-[max(6rem,13svh)] flex max-w-[calc(100vw-2rem)] translate-y-0 flex-col gap-0 overflow-hidden rounded-4xl border-0 bg-popover p-6 shadow-2xl ring-0 duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 dark:bg-popover";
 
 /** Lighter scrim than the default `bg-black/80` used app-wide. */
 const COBALT_DIALOG_OVERLAY = "bg-black/60 supports-backdrop-filter:backdrop-blur-none";

@@ -6,7 +6,7 @@ import type {
 } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
 import { BrokerageScopePicker } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { format } from "date-fns";
@@ -286,7 +286,10 @@ export function BabyBrokerage({
     <div className="w-full min-w-0 space-y-4 px-4 py-2 sm:py-3">
       <div className="grid w-full items-start gap-4 lg:grid-cols-[1.15fr_0.85fr]">
         {/* Portfolio value card */}
-        <CobaltCard className="flex w-full min-h-0 flex-col gap-0 rounded-3xl py-0 h-[360px]">
+        <Card
+          variant="subtle"
+          className="flex w-full min-h-0 flex-col gap-0 rounded-3xl py-0 h-[360px]"
+        >
           <CardContent className="flex min-h-0 flex-1 flex-col gap-4 p-0">
             <div className="shrink-0 flex w-full items-center justify-between px-5 pt-4">
               <p className="text-left text-foreground text-2xl font-semibold tabular-nums tracking-tight">
@@ -343,10 +346,13 @@ export function BabyBrokerage({
               })}
             </div>
           </CardContent>
-        </CobaltCard>
+        </Card>
 
         {/* Recent activity card */}
-        <CobaltCard className="flex flex-col gap-0 rounded-3xl py-0 h-[360px] overflow-hidden">
+        <Card
+          variant="subtle"
+          className="flex flex-col gap-0 rounded-3xl py-0 h-[360px] overflow-hidden"
+        >
           <CardContent className="flex min-h-0 flex-1 flex-col gap-2 px-5 py-4 text-left">
             <div className="shrink-0">
               <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
@@ -378,11 +384,11 @@ export function BabyBrokerage({
               ))}
             </ul>
           </CardContent>
-        </CobaltCard>
+        </Card>
       </div>
 
       {/* Positions table */}
-      <CobaltCard className="gap-0 overflow-hidden rounded-3xl py-0">
+      <Card variant="subtle" className="gap-0 overflow-hidden rounded-3xl py-0">
         <CardContent className="px-5 pt-3 pb-4">
           <div className="min-w-0 overflow-x-auto">
             <table className="w-full min-w-[880px] text-left text-sm">
@@ -446,7 +452,7 @@ export function BabyBrokerage({
             </table>
           </div>
         </CardContent>
-      </CobaltCard>
+      </Card>
     </div>
   );
 }

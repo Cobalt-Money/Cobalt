@@ -35,7 +35,7 @@ export function AddAccountDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
-        className="top-[max(6rem,13svh)] flex h-[600px] w-[860px] max-w-[calc(100vw-2rem)] translate-y-0 flex-col gap-0 overflow-hidden border-0 bg-[oklch(0.949_0_0)] p-0 shadow-2xl sm:max-w-[860px] dark:bg-[oklch(0.29_0_0)]"
+        className="top-[max(6rem,13svh)] flex h-[600px] w-[860px] max-w-[calc(100vw-2rem)] translate-y-0 flex-col gap-0 overflow-hidden border-0 bg-popover p-0 shadow-2xl sm:max-w-[860px] dark:bg-popover"
         overlayClassName="bg-black/25 supports-backdrop-filter:backdrop-blur-none"
       >
         <DialogHeader className="px-4 py-3">

@@ -1,4 +1,4 @@
-import { CobaltToggle, cobaltToggleSubtleChrome } from "@cobalt-web/ui/cobalt/toggle";
+import { Toggle } from "@cobalt-web/ui/components/toggle";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { Slider } from "@cobalt-web/ui/components/slider";
 import { DollarCircleIcon } from "@hugeicons/core-free-icons";
@@ -67,14 +67,7 @@ export function AmountFilter({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        render={
-          <CobaltToggle
-            className={cobaltToggleSubtleChrome}
-            pressed={isActive}
-            size="sm"
-            type="button"
-          />
-        }
+        render={<Toggle variant="subtle" pressed={isActive} size="sm" type="button" />}
       >
         <HugeiconsIcon className="size-3.5" icon={DollarCircleIcon} />
         {triggerLabel}
@@ -82,7 +75,7 @@ export function AmountFilter({
       <PopoverContent align="start" className="w-72 gap-3 p-3">
         <div className="flex items-center gap-1">
           {TYPE_OPTIONS.map((t) => (
-            <CobaltToggle
+            <Toggle
               className="flex-1"
               key={t}
               onPressedChange={(pressed) => {
@@ -96,7 +89,7 @@ export function AmountFilter({
               variant="outline"
             >
               {TYPE_LABELS[t]}
-            </CobaltToggle>
+            </Toggle>
           ))}
         </div>
         <div className="flex flex-col gap-2">

@@ -202,8 +202,7 @@ const UserBubble = memo(
         <MessageContent
           className={cn(
             "w-full max-w-full text-base leading-snug",
-            "group-[.is-user]:rounded-3xl group-[.is-user]:bg-[oklch(0.949_0_0)] group-[.is-user]:px-5 group-[.is-user]:py-3.5 group-[.is-user]:text-foreground",
-            "dark:group-[.is-user]:bg-[oklch(0.29_0_0)]",
+            "group-[.is-user]:rounded-3xl group-[.is-user]:bg-popover group-[.is-user]:px-5 group-[.is-user]:py-3.5 group-[.is-user]:text-foreground",
           )}
         >
           <p className="whitespace-pre-wrap">{text}</p>
