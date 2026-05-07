@@ -173,7 +173,7 @@ const app = new Hono()
   .route("/api/cron", cronRefreshFundamentalsRouter) // Cron (no user auth — CRON_SECRET).
   .route("/api/cron", cronFinancialEventsRouter)
   .route("/api/cron", cronRssRouter)
-  .route("/api/cron", cronSnapshotsRouter) // Schedule parked in vercel.json `// crons-disabled`.
+  .route("/api/cron", cronSnapshotsRouter)
   .route("/api/queues/snapshot-user", snapshotUserQueueRouter) // Queue consumer (Vercel OIDC — private route).
   .route("/webhooks/appstore", appstoreWebhookRouter) // Webhooks (no user auth — provider signatures).
   .route("/webhooks/plaid", plaidWebhookRouter)
