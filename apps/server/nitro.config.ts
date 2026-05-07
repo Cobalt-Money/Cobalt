@@ -17,6 +17,11 @@ export default defineConfig({
     },
   ],
   vercel: {
+    functionRules: {
+      "/api/queues/snapshot-user": {
+        experimentalTriggers: [{ topic: "snapshots", type: "queue/v2beta" }],
+      },
+    },
     functions: {
       runtime: "nodejs22.x",
     },

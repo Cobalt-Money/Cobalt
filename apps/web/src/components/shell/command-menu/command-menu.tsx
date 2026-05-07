@@ -1,11 +1,6 @@
 import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-grid";
 import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/types";
 import { AddManualAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-manual-account-dialog";
-import {
-  CobaltCommandDialog,
-  CobaltCommandInput,
-  CobaltCommandPaletteRoot,
-} from "@cobalt-web/ui/cobalt/command-palette";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { AddTransactionForm } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
 import type { ExportFormat } from "@cobalt-web/ui/cobalt/transactions/lib/export";
@@ -25,11 +20,15 @@ import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { TagChip } from "@cobalt-web/ui/cobalt/transactions/tags/tag-chip";
 import {
+  Command,
+  CommandDialog,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList,
 } from "@cobalt-web/ui/components/command";
+import { Icon } from "@cobalt-web/ui/components/icon";
 import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
@@ -877,7 +876,7 @@ function CommandMenuDialog({
   return (
     <>
       {updateModeDialog}
-      <CobaltCommandDialog
+      <CommandDialog
         className={cn(
           inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
           inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl",
@@ -894,12 +893,13 @@ function CommandMenuDialog({
         showCloseButton={false}
         title="Command palette"
       >
-        <CobaltCommandPaletteRoot
+        <Command
           onValueChange={handleChatHighlight}
           shouldFilter={!isClientFilteredPage(activePage)}
         >
           {inSettings || inFormPage ? null : (
-            <CobaltCommandInput
+            <CommandInput
+              variant="frameless"
               onKeyDown={handleInputKeyDown}
               onValueChange={setSearch}
               placeholder={getPlaceholder(activePage)}
@@ -963,7 +963,7 @@ function CommandMenuDialog({
           {inAddManualAccount && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-foreground text-lg leading-none">
-                <HugeiconsIcon className="size-6 shrink-0" icon={Wallet01Icon} strokeWidth={2} />
+                <Icon className="shrink-0" icon={Wallet01Icon} size="lg" />
                 Add an account
               </h2>
               <AddManualAccountForm
@@ -992,7 +992,7 @@ function CommandMenuDialog({
           {inAddTransaction && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
-                <HugeiconsIcon className="size-6 shrink-0" icon={Money01Icon} strokeWidth={2} />
+                <Icon className="shrink-0" icon={Money01Icon} size="lg" />
                 New Transaction
               </h2>
               <AddTransactionForm
@@ -1024,7 +1024,7 @@ function CommandMenuDialog({
           {inAddTag && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
-                <HugeiconsIcon className="size-5 shrink-0" icon={Tag01Icon} strokeWidth={2} />
+                <Icon className="shrink-0" icon={Tag01Icon} size="md" />
                 New Tag
               </h2>
               <AddTagForm
@@ -1053,7 +1053,7 @@ function CommandMenuDialog({
           {inManageTags && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
-                <HugeiconsIcon className="size-5 shrink-0" icon={Tag01Icon} strokeWidth={2} />
+                <Icon className="shrink-0" icon={Tag01Icon} size="md" />
                 Manage tags
               </h2>
               <ManageTagsForm
@@ -1348,8 +1348,8 @@ function CommandMenuDialog({
             </CommandList>
           )}
           {inSearchTransactions ? <TransactionSearchFooter /> : null}
-        </CobaltCommandPaletteRoot>
-      </CobaltCommandDialog>
+        </Command>
+      </CommandDialog>
     </>
   );
 }

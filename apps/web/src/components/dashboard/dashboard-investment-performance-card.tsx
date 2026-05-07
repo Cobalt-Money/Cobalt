@@ -1,5 +1,5 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { useMemo } from "react";
@@ -35,7 +35,10 @@ export function DashboardInvestmentPerformanceCard() {
 
   return (
     <section aria-label="Portfolio holdings performance" className="h-full min-w-0 w-full">
-      <CobaltCard className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl py-4">
+      <Card
+        variant="subtle"
+        className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl py-4"
+      >
         <CardContent className="flex min-h-0 flex-1 flex-col gap-5 p-0 px-5 pb-4 sm:px-6">
           <h2 className="text-foreground text-lg font-medium">Portfolio performance</h2>
 
@@ -67,8 +70,8 @@ export function DashboardInvestmentPerformanceCard() {
                   <p
                     className={cn(
                       "shrink-0 text-base font-semibold tabular-nums",
-                      up && "text-green-550",
-                      down && "text-red-600 dark:text-red-500",
+                      up && "text-success",
+                      down && "text-destructive",
                       !up && !down && "text-foreground",
                     )}
                   >
@@ -79,7 +82,7 @@ export function DashboardInvestmentPerformanceCard() {
             })}
           </ul>
         </CardContent>
-      </CobaltCard>
+      </Card>
     </section>
   );
 }

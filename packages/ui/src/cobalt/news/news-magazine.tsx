@@ -1,5 +1,5 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { Card } from "@cobalt-web/ui/components/card";
 import { ConnectAccountEmpty } from "@cobalt-web/ui/cobalt/empty/connect-account-empty";
 import { cn, decodeHtmlEntities } from "@cobalt-web/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
@@ -326,7 +326,10 @@ function GridCard({
   const timeLabel = ts === null ? null : compactTimeAgo(ts);
 
   const card = (
-    <CobaltCard className="flex h-full flex-col gap-0 overflow-hidden p-0 transition-colors hover:bg-[oklch(0.94_0_0)] dark:hover:bg-white/[0.08]">
+    <Card
+      variant="subtle"
+      className="flex h-full flex-col gap-0 overflow-hidden p-0 transition-colors hover:bg-[oklch(0.94_0_0)] dark:hover:bg-white/[0.08]"
+    >
       <div className="bg-muted/50 relative aspect-[16/10] w-full shrink-0 overflow-hidden">
         {img ? (
           <img
@@ -363,7 +366,7 @@ function GridCard({
           </div>
         </div>
       </div>
-    </CobaltCard>
+    </Card>
   );
 
   if (renderEventLink) {

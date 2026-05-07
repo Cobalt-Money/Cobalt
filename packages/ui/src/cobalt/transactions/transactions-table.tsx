@@ -283,7 +283,7 @@ const columns: ColumnDef<TransactionListItem>[] = [
     cell: ({ row }) => {
       const { amount } = row.original;
       const formattedAmount = currency.format(Math.abs(amount));
-      const amountColor = amount >= 0 ? "text-red-600 dark:text-red-500" : "text-green-550";
+      const amountColor = amount >= 0 ? "text-destructive" : "text-success";
       return (
         <div className={cn(cellRow, "whitespace-nowrap tabular-nums", amountColor)}>
           <PrivateAmount>{formattedAmount}</PrivateAmount>

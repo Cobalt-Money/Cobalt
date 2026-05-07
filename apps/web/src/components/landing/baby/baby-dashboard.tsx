@@ -1,7 +1,8 @@
 "use client";
 
+import { ACCOUNT_CATEGORY_COLORS } from "@cobalt-web/ui/lib/account-palette";
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { MerchantLogo } from "@cobalt-web/ui/cobalt/logos/merchant-logo";
 import { Button } from "@cobalt-web/ui/components/button";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
@@ -26,14 +27,6 @@ const formatUsdInteger = (amount: number) =>
 const TIME_RANGES = ["1W", "1M", "1Y", "All"] as const;
 type TimeRange = (typeof TIME_RANGES)[number];
 
-const CATEGORY_COLORS = {
-  checking: "#3b82f6",
-  credit: "#ec4899",
-  investments: "#38bdf8",
-  loans: "#f97316",
-  savings: "#6366f1",
-} as const;
-
 const NET_WORTH_TOTAL = 728_510;
 
 const DEMO_CHART_DATA = [
@@ -53,35 +46,35 @@ const DEMO_CHART_DATA = [
 
 const DEMO_CATEGORIES = [
   {
-    color: CATEGORY_COLORS.investments,
+    color: ACCOUNT_CATEGORY_COLORS.investments,
     key: "investments",
     label: "Investments",
     pct: 62,
     value: 451_676,
   },
   {
-    color: CATEGORY_COLORS.savings,
+    color: ACCOUNT_CATEGORY_COLORS.savings,
     key: "savings",
     label: "Savings",
     pct: 18,
     value: 131_132,
   },
   {
-    color: CATEGORY_COLORS.checking,
+    color: ACCOUNT_CATEGORY_COLORS.checking,
     key: "checking",
     label: "Checking",
     pct: 12,
     value: 87_421,
   },
   {
-    color: CATEGORY_COLORS.credit,
+    color: ACCOUNT_CATEGORY_COLORS.credit,
     key: "credit",
     label: "Credit",
     pct: 5,
     value: 36_425,
   },
   {
-    color: CATEGORY_COLORS.loans,
+    color: ACCOUNT_CATEGORY_COLORS.loans,
     key: "loans",
     label: "Loans",
     pct: 3,
@@ -90,11 +83,11 @@ const DEMO_CATEGORIES = [
 ];
 
 const DEMO_DONUT_CONFIG: ChartConfig = {
-  checking: { color: CATEGORY_COLORS.checking, label: "Checking" },
-  credit: { color: CATEGORY_COLORS.credit, label: "Credit" },
-  investments: { color: CATEGORY_COLORS.investments, label: "Investments" },
-  loans: { color: CATEGORY_COLORS.loans, label: "Loans" },
-  savings: { color: CATEGORY_COLORS.savings, label: "Savings" },
+  checking: { color: ACCOUNT_CATEGORY_COLORS.checking, label: "Checking" },
+  credit: { color: ACCOUNT_CATEGORY_COLORS.credit, label: "Credit" },
+  investments: { color: ACCOUNT_CATEGORY_COLORS.investments, label: "Investments" },
+  loans: { color: ACCOUNT_CATEGORY_COLORS.loans, label: "Loans" },
+  savings: { color: ACCOUNT_CATEGORY_COLORS.savings, label: "Savings" },
 };
 
 const DEMO_DONUT_DATA = DEMO_CATEGORIES.map((c) => ({
@@ -222,7 +215,10 @@ function DashboardCalendarCard() {
       aria-label="Subscriptions and payments calendar"
       className="flex h-full min-h-0 w-full min-w-0 max-w-full flex-col"
     >
-      <CobaltCard className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden rounded-3xl py-4">
+      <Card
+        variant="subtle"
+        className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden rounded-3xl py-4"
+      >
         <CardContent className="flex min-h-0 w-full flex-1 flex-col p-0 px-5 pb-4 sm:px-6">
           <h2 className="text-foreground mb-5 text-lg font-medium whitespace-nowrap">
             Subscriptions &amp; payments
@@ -269,7 +265,7 @@ function DashboardCalendarCard() {
             weekStartsOn={1}
           />
         </CardContent>
-      </CobaltCard>
+      </Card>
     </section>
   );
 }
@@ -292,7 +288,7 @@ export function BabyDashboard() {
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 py-2 sm:gap-5 sm:py-3 2xl:max-w-7xl">
         {/* Net worth section */}
         <section aria-label="Net worth overview" className="w-full min-w-0">
-          <CobaltCard className="overflow-hidden rounded-3xl py-3">
+          <Card variant="subtle" className="overflow-hidden rounded-3xl py-3">
             <CardContent className="p-0">
               <div className="flex flex-col lg:min-h-[300px] lg:flex-row lg:items-stretch">
                 {/* Net worth history chart */}
@@ -432,14 +428,17 @@ export function BabyDashboard() {
                 </div>
               </div>
             </CardContent>
-          </CobaltCard>
+          </Card>
         </section>
 
         {/* Main grid */}
         <div className="grid min-w-0 grid-cols-1 items-stretch gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           {/* Recent transactions */}
           <section aria-label="Recent transactions" className="h-full min-w-0 w-full">
-            <CobaltCard className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl py-4">
+            <Card
+              variant="subtle"
+              className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl py-4"
+            >
               <CardContent className="flex min-h-0 flex-1 flex-col gap-5 p-0 px-5 pb-4 sm:px-6">
                 <h2 className="text-foreground text-lg font-medium">Recent transactions</h2>
                 <ul className="flex flex-col gap-0">
@@ -469,7 +468,7 @@ export function BabyDashboard() {
                         <p
                           className={cn(
                             "shrink-0 text-base font-semibold tabular-nums",
-                            isInflow ? "text-green-550" : "text-foreground",
+                            isInflow ? "text-success" : "text-foreground",
                           )}
                         >
                           {isInflow ? "+" : ""}
@@ -480,7 +479,7 @@ export function BabyDashboard() {
                   })}
                 </ul>
               </CardContent>
-            </CobaltCard>
+            </Card>
           </section>
 
           {/* Subscriptions calendar */}
@@ -488,7 +487,10 @@ export function BabyDashboard() {
 
           {/* Portfolio performance */}
           <section aria-label="Portfolio holdings performance" className="h-full min-w-0 w-full">
-            <CobaltCard className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl py-4">
+            <Card
+              variant="subtle"
+              className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl py-4"
+            >
               <CardContent className="flex min-h-0 flex-1 flex-col gap-5 p-0 px-5 pb-4 sm:px-6">
                 <h2 className="text-foreground text-lg font-medium">Portfolio performance</h2>
                 <ul className="flex flex-col gap-0">
@@ -514,8 +516,8 @@ export function BabyDashboard() {
                         <p
                           className={cn(
                             "shrink-0 text-base font-semibold tabular-nums",
-                            up && "text-green-550",
-                            down && "text-red-600 dark:text-red-500",
+                            up && "text-success",
+                            down && "text-destructive",
                             !up && !down && "text-foreground",
                           )}
                         >
@@ -527,7 +529,7 @@ export function BabyDashboard() {
                   })}
                 </ul>
               </CardContent>
-            </CobaltCard>
+            </Card>
           </section>
         </div>
       </div>

@@ -331,10 +331,10 @@ function formatPercent(v: number): string {
 
 function pctChangeToneClass(v: number): string {
   if (v > 0) {
-    return "text-green-550";
+    return "text-success";
   }
   if (v < 0) {
-    return "text-red-600 dark:text-red-400";
+    return "text-destructive";
   }
   return "text-muted-foreground";
 }
@@ -368,10 +368,10 @@ function consensusToneClass(raw: string | undefined): string | null {
   }
   const s = raw.trim().toLowerCase().replaceAll(/\s+/g, " ");
   if (s === "strong buy" || s === "buy") {
-    return "text-green-550";
+    return "text-success";
   }
   if (s === "strong sell" || s === "sell") {
-    return "text-red-600 dark:text-red-400";
+    return "text-destructive";
   }
   return "text-muted-foreground";
 }

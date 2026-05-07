@@ -65,10 +65,7 @@ export function CobaltSelectPopover<TItem>({
       <PopoverTrigger render={trigger} />
       <PopoverContent
         align="start"
-        className={cn(
-          "gap-0 bg-[oklch(0.949_0_0)] p-1 dark:bg-[oklch(0.29_0_0)]",
-          contentClassName ?? "w-64",
-        )}
+        className={cn("gap-0 bg-popover p-1 dark:bg-popover", contentClassName ?? "w-64")}
       >
         <div className="flex items-center px-2.5 py-1.5">
           <input

@@ -1,9 +1,16 @@
-import { CobaltDialog } from "@cobalt-web/ui/cobalt/cobalt-dialog";
 import {
   CategoryIcon,
   resolveCategoryIcon,
   UNKNOWN_CATEGORY_ICON,
 } from "@cobalt-web/ui/cobalt/transactions/categories";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@cobalt-web/ui/components/dialog";
 import { CategoryPicker } from "@cobalt-web/ui/cobalt/transactions/detail/category-picker";
 import { deriveCategorySection } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
 import type { CategoryPickerOption } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
@@ -153,9 +160,21 @@ export function HideCategoryDialog({ open, onOpenChange, category }: Props) {
   };
 
   return (
-    <CobaltDialog
-      footer={
-        <>
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <HugeiconsIcon className="size-4" icon={ViewOffIcon} strokeWidth={2} />
+            {category ? `Hide ${category.name}` : "Hide category"}
+          </DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <p className="text-muted-foreground text-sm leading-snug">
+            Hidden categories don't appear in pickers or summaries. You can unhide it any time.
+          </p>
+          {renderBody()}
+        </DialogBody>
+        <DialogFooter>
           <Button onClick={() => onOpenChange(false)} type="button" variant="outline">
             Cancel
           </Button>
@@ -163,17 +182,8 @@ export function HideCategoryDialog({ open, onOpenChange, category }: Props) {
             <HugeiconsIcon icon={ViewOffIcon} strokeWidth={2} />
             Hide
           </Button>
-        </>
-      }
-      onOpenChange={onOpenChange}
-      open={open}
-      title={category ? `Hide ${category.name}` : "Hide category"}
-      titleIcon={ViewOffIcon}
-    >
-      <p className="text-muted-foreground text-sm leading-snug">
-        Hidden categories don't appear in pickers or summaries. You can unhide it any time.
-      </p>
-      {renderBody()}
-    </CobaltDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

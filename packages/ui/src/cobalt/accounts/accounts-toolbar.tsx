@@ -1,4 +1,4 @@
-import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
+import { Toggle } from "@cobalt-web/ui/components/toggle";
 import { Button } from "@cobalt-web/ui/components/button";
 
 import type { AccountCategory } from "./lib/map-zero-to-account-cards";
@@ -39,7 +39,7 @@ export function AccountsToolbar({
     <div className="flex w-full min-w-0 flex-col gap-4 bg-sidebar-inset px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-6">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         {FILTERS.map((f) => (
-          <CobaltToggle
+          <Toggle
             key={f.value}
             pressed={activeFilter === f.value}
             onPressedChange={(pressed) => {
@@ -52,7 +52,7 @@ export function AccountsToolbar({
             variant="outline"
           >
             {f.label}
-          </CobaltToggle>
+          </Toggle>
         ))}
       </div>
       {onAddAccount ? (
