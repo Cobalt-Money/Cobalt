@@ -4,6 +4,7 @@ import {
   createCategoryGroup,
   deleteCategory,
   deleteCategoryGroup,
+  hideCategory,
   reorderCategories,
   reorderCategoryGroups,
   updateCategory,
@@ -23,6 +24,7 @@ import {
   createCategoryGroupBodySchema,
   createCategoryGroupResponseSchema,
   createCategoryResponseSchema,
+  hideCategoryBodySchema,
   reorderCategoriesBodySchema,
   reorderCategoryGroupsBodySchema,
   updateCategoryBodySchema,
@@ -123,6 +125,34 @@ const deleteCategoryRoute = createRoute({
     },
   },
   summary: "Delete category",
+  tags: [...TAGS],
+});
+
+const hideCategoryRoute = createRoute({
+  description:
+    "Hides a category. Optionally reassigns dependent transactions and recurring rows to a target cat first; otherwise leaves them assigned to the now-hidden cat.",
+  method: "post",
+  middleware: [requirePaidUser] as const,
+  path: "/{categoryId}/hide",
+  request: {
+    body: { content: { "application/json": { schema: hideCategoryBodySchema } } },
+    params: categoryIdParamSchema,
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: categorySuccessResponse } },
+      description: "Category hidden",
+    },
+    404: {
+      content: { "application/json": { schema: errorResponseSchema } },
+      description: "Category or reassign target not found",
+    },
+    409: {
+      content: { "application/json": { schema: errorResponseSchema } },
+      description: "Reassign target invalid",
+    },
+  },
+  summary: "Hide category",
   tags: [...TAGS],
 });
 
@@ -288,6 +318,22 @@ export const categoriesRouter = new OpenAPIHono<AppEnv>()
     const { categoryId } = c.req.valid("param");
     try {
       await deleteCategory(c.var.user.id, categoryId);
+      return c.json({ success: true }, 200);
+    } catch (error) {
+      if (error instanceof CategoryMutationError) {
+        if (NOT_FOUND_CODES.has(error.code)) {
+          return c.json({ code: error.code, error: error.message }, 404);
+        }
+        return c.json({ code: error.code, error: error.message }, 409);
+      }
+      throw error;
+    }
+  })
+  .openapi(hideCategoryRoute, async (c) => {
+    const { categoryId } = c.req.valid("param");
+    const body = c.req.valid("json");
+    try {
+      await hideCategory(c.var.user.id, categoryId, body);
       return c.json({ success: true }, 200);
     } catch (error) {
       if (error instanceof CategoryMutationError) {

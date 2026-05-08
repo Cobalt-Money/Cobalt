@@ -90,8 +90,8 @@
     "apps/sandbox-worker": {
       "name": "sandbox-worker",
       "dependencies": {
-        "@tanstack/ai-code-mode": "^0.1.8",
-        "@tanstack/ai-isolate-cloudflare": "^0.1.8",
+        "@tanstack/ai-code-mode": "^0.1.9",
+        "@tanstack/ai-isolate-cloudflare": "^0.2.0",
       },
       "devDependencies": {
         "@cloudflare/workers-types": "^4.20250101.0",
@@ -118,9 +118,9 @@
         "@parallel-web/ai-sdk-tools": "^0.2.1",
         "@rocicorp/zero": "catalog:",
         "@scalar/hono-api-reference": "^0.10.4",
-        "@tanstack/ai": "^0.14.0",
-        "@tanstack/ai-code-mode": "^0.1.8",
-        "@tanstack/ai-isolate-cloudflare": "^0.1.8",
+        "@tanstack/ai": "^0.15.0",
+        "@tanstack/ai-code-mode": "^0.1.9",
+        "@tanstack/ai-isolate-cloudflare": "^0.2.0",
         "@vercel/queue": "^0.1.6",
         "@vercel/sandbox": "^1.10.0",
         "ai": "^6",
@@ -257,7 +257,7 @@
       "name": "@cobalt-web/bindings",
       "version": "0.0.0",
       "dependencies": {
-        "@tanstack/ai-code-mode": "^0.1.8",
+        "@tanstack/ai-code-mode": "^0.1.9",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -455,9 +455,6 @@
   "trustedDependencies": [
     "@rocicorp/zero-sqlite3",
   ],
-  "patchedDependencies": {
-    "@tanstack/ai-isolate-cloudflare@0.1.8": "patches/@tanstack%2Fai-isolate-cloudflare@0.1.8.patch",
-  },
   "catalog": {
     "@rocicorp/zero": "^1.3.0",
     "@types/bun": "^1.3.13",
@@ -2087,13 +2084,13 @@
 
     "@takumi-rs/wasm": ["@takumi-rs/wasm@0.73.1", "", { "dependencies": { "@takumi-rs/helpers": "0.73.1" } }, "sha512-WDrstyQettPQSmYDyj7lrJMKlm3E5dg0ZC+PFvKTdfP4aMTZgWBchIL3MfdUwpRIRf96sdL+pAdrwI42X9iRXg=="],
 
-    "@tanstack/ai": ["@tanstack/ai@0.14.0", "", { "dependencies": { "@ag-ui/core": "0.0.49", "@tanstack/ai-event-client": "0.2.8", "partial-json": "^0.1.7" } }, "sha512-oiyYHcWMmyVoKDf018xZMEX62BaJVhdgeeRQeRbqP3p5Nvar2UZUhKzFkUiE4L9KzklPqrtI5aYhVdAp9Z142g=="],
+    "@tanstack/ai": ["@tanstack/ai@0.15.0", "", { "dependencies": { "@ag-ui/core": "0.0.49", "@tanstack/ai-event-client": "0.2.9", "partial-json": "^0.1.7" }, "peerDependencies": { "@opentelemetry/api": ">=1.9.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-Ft1mZ1mwrtbmXjuarJ4I1f+HZwZ+doqg6EIaBtBTvZ7FHMtKzWIxqRngKOwBazv5Csv2lyOMM9E1nvH3/kzEKA=="],
 
-    "@tanstack/ai-code-mode": ["@tanstack/ai-code-mode@0.1.8", "", { "dependencies": { "esbuild": "^0.25.12" }, "peerDependencies": { "@tanstack/ai": "0.14.0", "zod": "^3.0.0 || ^4.0.0" } }, "sha512-wsI4GWtAnLabirw3B2tUeLJjrxs2oWq2TWkarvVxSF6SAQwFxW/KaPOHbzfkc6vCg2cQqDYsVVIz2ncfV3L1xg=="],
+    "@tanstack/ai-code-mode": ["@tanstack/ai-code-mode@0.1.9", "", { "dependencies": { "esbuild": "^0.25.12" }, "peerDependencies": { "@tanstack/ai": "0.15.0", "zod": "^3.0.0 || ^4.0.0" } }, "sha512-df3H7q7PRve6B/cGxR1iGphIqAO6XZO6fOygV4OX9gd0RtQuAfBqE35mJr3+4VMDXYMghVB/642i63P6n31JiQ=="],
 
-    "@tanstack/ai-event-client": ["@tanstack/ai-event-client@0.2.8", "", { "dependencies": { "@tanstack/devtools-event-client": "^0.4.1" }, "peerDependencies": { "@tanstack/ai": "0.14.0" } }, "sha512-pdvT1hh7UorwBiDLrXnI5BFDfc7JSqnN06LaQHG4TGRl/621UnUrh16hQKOMn/msArKiCj+n+TG+cw4mDwMaLw=="],
+    "@tanstack/ai-event-client": ["@tanstack/ai-event-client@0.2.9", "", { "dependencies": { "@tanstack/devtools-event-client": "^0.4.1" }, "peerDependencies": { "@tanstack/ai": "0.15.0" } }, "sha512-4Cpi1tc4fNXXzgMXUi303lGqP4M/dzvo1FsdIaPD/2qmxRbp3xlsLDa/DeH8fzv6b56L2pYyJvTOSH8nFBCg/g=="],
 
-    "@tanstack/ai-isolate-cloudflare": ["@tanstack/ai-isolate-cloudflare@0.1.8", "", { "dependencies": { "@tanstack/ai-code-mode": "0.1.8" } }, "sha512-FfYc93W7R7H2DXvDPLS9u0eciGLq5ENhBbcEeYY1JV7CEYcC/k4NnyiLcZ7QCPtRMKOMbo8oGh3rOZRnwrmq4w=="],
+    "@tanstack/ai-isolate-cloudflare": ["@tanstack/ai-isolate-cloudflare@0.2.0", "", { "dependencies": { "@tanstack/ai-code-mode": "0.1.9" } }, "sha512-87mxSmQxilC86JVrUavPqzHlcO54PZkw9prCVLhs6ixLIxqI6C0rsc7MNIIQJeO4wRAiyQrO+VBIrkYZWD1xRw=="],
 
     "@tanstack/devtools-event-client": ["@tanstack/devtools-event-client@0.4.3", "", { "bin": { "intent": "bin/intent.js" } }, "sha512-OZI6QyULw0FI0wjgmeYzCIfbgPsOEzwJtCpa69XrfLMtNXLGnz3d/dIabk7frg0TmHo+Ah49w5I4KC7Tufwsvw=="],
 

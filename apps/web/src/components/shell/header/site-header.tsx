@@ -1,7 +1,14 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
-// import { SidebarTrigger } from "@cobalt-web/ui/components/sidebar";
-import { BellDotIcon, EyeIcon, SearchIcon, ViewOffSlashIcon } from "@hugeicons/core-free-icons";
+import { useSidebar } from "@cobalt-web/ui/components/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@cobalt-web/ui/components/tooltip";
+import {
+  BellDotIcon,
+  EyeIcon,
+  SearchIcon,
+  SidebarLeftIcon,
+  ViewOffSlashIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
@@ -17,11 +24,43 @@ export function SiteHeader() {
   const { alerts } = useUserAlerts();
   const hasAlerts = alerts.length > 0;
   const { hidden: privacyHidden, toggle: togglePrivacy } = usePrivacy();
+  const { toggleSidebar, state: sidebarState } = useSidebar();
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-stretch overflow-visible transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex h-full min-h-0 w-full min-w-0 items-center gap-2 px-4 py-2 lg:gap-3 lg:px-6">
-        {/* Sidebar toggle disabled for now — restore: <SidebarTrigger className="-ml-1" /> */}
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <button
+                aria-label="Toggle Sidebar"
+                className="shrink-0 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                onClick={toggleSidebar}
+                type="button"
+              >
+                <HugeiconsIcon
+                  aria-hidden
+                  className="size-5 sm:size-6"
+                  icon={SidebarLeftIcon}
+                  strokeWidth={2}
+                />
+              </button>
+            }
+          />
+          <TooltipContent>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-0.5">
+                <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-border/60 bg-muted/40 px-1.5 font-sans font-medium text-[0.7rem] text-foreground/90 shadow-sm">
+                  ⌘
+                </kbd>
+                <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-border/60 bg-muted/40 px-1.5 font-sans font-medium text-[0.7rem] text-foreground/90 shadow-sm">
+                  B
+                </kbd>
+              </span>
+              <span>to {sidebarState === "expanded" ? "collapse" : "expand"} sidebar</span>
+            </span>
+          </TooltipContent>
+        </Tooltip>
         <SiteHeaderPrimaryTitle />
         <button
           type="button"

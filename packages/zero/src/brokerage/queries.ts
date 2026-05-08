@@ -1,4 +1,5 @@
 import { defineQuery } from "@rocicorp/zero";
+import { z } from "zod";
 
 import type { Context } from "../auth.js";
 import { zql } from "../schema.js";
@@ -6,6 +7,17 @@ import { NO_MATCH_ID } from "../transactions/lib.js";
 
 const RECENT_ACTIVITY_LIMIT = 50;
 const RECENT_ORDER_LIMIT = 50;
+const PORTFOLIO_SNAPSHOT_LIMIT = 1000;
+
+const SNAPSHOT_RANGE = z.enum(["1W", "1M", "1Y", "All"]);
+const RANGE_DAYS: Record<"1W" | "1M" | "1Y", number> = { "1M": 30, "1W": 7, "1Y": 365 };
+
+function snapshotCutoff(range: z.infer<typeof SNAPSHOT_RANGE> | undefined): number | null {
+  if (!range || range === "All") {
+    return null;
+  }
+  return Date.now() - RANGE_DAYS[range] * 24 * 60 * 60 * 1000;
+}
 
 /**
  * Brokerage domain — `queries.brokerage.*`. Backed by the unified schema
@@ -72,17 +84,21 @@ export const brokerageQueries = {
    * Historical SnapTrade portfolio snapshots for the signed-in user.
    * One row per brokerage account per day; aggregate for the net-worth chart.
    */
-  portfolioSnapshots: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.snapshot.where("id", NO_MATCH_ID);
-    }
-    return zql.snapshot
-      .where("userId", userId)
-      .whereExists("account", (acc) => acc.where("source", "snaptrade"))
-      .orderBy("snapshotDate", "desc")
-      .limit(1000);
-  }),
+  portfolioSnapshots: defineQuery(
+    z.object({ range: SNAPSHOT_RANGE.optional() }).optional(),
+    ({ ctx, args }) => {
+      const userId = ctx?.userId;
+      if (!userId) {
+        return zql.snapshot.where("id", NO_MATCH_ID);
+      }
+      const cutoff = snapshotCutoff(args?.range);
+      const base = zql.snapshot
+        .where("userId", userId)
+        .whereExists("account", (acc) => acc.where("source", "snaptrade"));
+      const filtered = cutoff === null ? base : base.where("snapshotDate", ">=", cutoff);
+      return filtered.orderBy("snapshotDate", "desc").limit(PORTFOLIO_SNAPSHOT_LIMIT);
+    },
+  ),
 
   /** Flat SnapTrade holdings list across accounts (sorted by symbol). */
   positions: defineQuery(({ ctx }: { ctx: Context }) => {

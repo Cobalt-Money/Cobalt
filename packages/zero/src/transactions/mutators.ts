@@ -43,6 +43,18 @@ const updateNotesSchema = transactionIdSchema.extend({
   notes: transactionNotesMarkdownSchema,
 });
 
+const bulkSetCategorySchema = z.object({
+  categoryId: z.uuid(),
+  /** Audit row id per affected transaction, in `transactionIds` order. */
+  editIds: z.array(z.uuid()),
+  transactionIds: z.array(z.uuid()).min(1),
+});
+
+const bulkSetExcludedSchema = z.object({
+  excluded: z.boolean(),
+  transactionIds: z.array(z.uuid()).min(1),
+});
+
 const createTransactionSchema = z.object({
   accountId: z.string().uuid(),
   amount: z.number(),
@@ -139,6 +151,75 @@ function isoDateToEpochMs(iso: string): number {
 }
 
 export const transactionMutators = {
+  bulkSetCategory: defineMutator(bulkSetCategorySchema, async ({ args, ctx, tx }) => {
+    if (!ctx?.userId) {
+      throw new Error("Not authenticated");
+    }
+    const txnIds = [...new Set(args.transactionIds)];
+    if (args.editIds.length !== txnIds.length) {
+      throw new Error("editIds length must match transactionIds length");
+    }
+    const targetCat = await tx.run(
+      zql.category
+        .where("id", args.categoryId)
+        .where("userId", ctx.userId)
+        .where("deletedAt", "IS", null)
+        .one(),
+    );
+    if (!targetCat) {
+      throw new Error("Category not found");
+    }
+
+    for (const [i, txnId] of txnIds.entries()) {
+      const editId = args.editIds[i];
+      if (!editId) {
+        continue;
+      }
+      const txn = await tx.run(zql.transaction.where("id", txnId).one());
+      if (!txn || txn.userId !== ctx.userId) {
+        continue;
+      }
+      if (txn.categoryId === args.categoryId) {
+        continue;
+      }
+      await tx.mutate.transaction.update({
+        categoryId: args.categoryId,
+        id: txnId,
+        lockedFields: addLocked(txn.lockedFields, "category"),
+      });
+      await tx.mutate.transactionEdit.insert({
+        actor: "user",
+        createdAt: Date.now(),
+        field: "category",
+        id: editId,
+        newValue: { categoryId: args.categoryId },
+        oldValue: { categoryId: txn.categoryId },
+        transactionId: txnId,
+        userId: ctx.userId,
+      });
+    }
+  }),
+
+  bulkSetExcluded: defineMutator(bulkSetExcludedSchema, async ({ args, ctx, tx }) => {
+    if (!ctx?.userId) {
+      throw new Error("Not authenticated");
+    }
+    const txnIds = [...new Set(args.transactionIds)];
+    for (const txnId of txnIds) {
+      const txn = await tx.run(zql.transaction.where("id", txnId).one());
+      if (!txn || txn.userId !== ctx.userId) {
+        continue;
+      }
+      if (txn.excluded === args.excluded) {
+        continue;
+      }
+      await tx.mutate.transaction.update({
+        excluded: args.excluded,
+        id: txnId,
+      });
+    }
+  }),
+
   createTransaction: defineMutator(createTransactionSchema, async ({ args, ctx, tx }) => {
     await assertOwnsManualAccountForInsert(tx, ctx, args.accountId);
     if (!ctx?.userId) {

@@ -50,6 +50,14 @@ export const cobaltToast = {
     });
   },
 
+  /** Bulk-action success — used by toolbar / palette shared notices. */
+  bulkSuccess(message: string, description?: string) {
+    return toast(message, {
+      description,
+      icon: POSTED_ICON,
+    });
+  },
+
   /** Generic failure toast — use when a mutation rejects. */
   error(message: string) {
     return toast(message, {

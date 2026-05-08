@@ -25,12 +25,16 @@ export function BankFilter({
   value,
   options,
   onChange,
+  autoOpen,
+  onClose,
 }: {
   value: readonly string[];
   options: readonly BankOption[];
   onChange: (next: readonly string[]) => void;
+  autoOpen?: boolean;
+  onClose?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen ?? false);
   const isActive = value.length > 0;
   let triggerLabel = "Bank";
   if (isActive) {
@@ -45,7 +49,15 @@ export function BankFilter({
   const selected = useMemo(() => new Set(value), [value]);
 
   return (
-    <Popover onOpenChange={setOpen} open={open}>
+    <Popover
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          onClose?.();
+        }
+      }}
+      open={open}
+    >
       <PopoverTrigger
         render={<Toggle variant="subtle" pressed={isActive} size="sm" type="button" />}
       >

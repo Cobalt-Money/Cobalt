@@ -14,10 +14,12 @@ import type { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 import type { Range, Virtualizer } from "@tanstack/react-virtual";
 import { defaultRangeExtractor, observeElementRect, useVirtualizer } from "@tanstack/react-virtual";
 import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
+import { Skeleton } from "@cobalt-web/ui/components/skeleton";
 import { PrivateAmount } from "../../components/privacy";
 import { ConnectAccountEmpty } from "../empty/connect-account-empty";
+import { NoFilterResultsEmpty } from "../empty/no-filter-results-empty";
 import { AccountLogo } from "../accounts/account-logo";
 import { MerchantLogo } from "../logos/merchant-logo";
 import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "./categories";
@@ -344,17 +346,24 @@ function flattenRowsByMonth(rows: Row<TransactionListItem>[]): FlatItem[] {
 }
 
 export function TransactionsTable({
+  hasActiveFilters = false,
   isComplete,
   items,
+  onClearFilters,
   onConnectAccount,
+  onEndReached,
   onOpenTransaction,
   rowSelection: rowSelectionProp,
   onRowSelectionChange,
   tagsById,
 }: {
+  hasActiveFilters?: boolean;
   isComplete: boolean;
   items: TransactionListItem[];
+  onClearFilters?: () => void;
   onConnectAccount?: () => void;
+  /** Called when the virtualized list's last row enters the render window. Use to load more rows. */
+  onEndReached?: () => void;
   onOpenTransaction?: (transaction: TransactionListItem) => void;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: (next: RowSelectionState) => void;
@@ -591,6 +600,26 @@ export function TransactionsTable({
   const totalSize = virtualizer.getTotalSize();
   const hasRows = flatItems.length > 0;
 
+  // Infinite scroll: fire onEndReached once per growth of `flatItems` when the last
+  // virtualized row enters the render window. Stable ref avoids re-running on every
+  // callback identity change; count-guard prevents duplicate fires while paging.
+  const onEndReachedRef = useRef(onEndReached);
+  onEndReachedRef.current = onEndReached;
+  const lastFiredCountRef = useRef(0);
+  useEffect(() => {
+    if (flatItems.length <= lastFiredCountRef.current) {
+      return;
+    }
+    const last = virtualItems.at(-1);
+    if (!last) {
+      return;
+    }
+    if (last.index >= flatItems.length - 5) {
+      lastFiredCountRef.current = flatItems.length;
+      onEndReachedRef.current?.();
+    }
+  }, [virtualItems, flatItems.length]);
+
   return (
     <div className="relative w-full flex-1 overflow-x-auto no-scrollbar">
       <div className="w-full min-w-full text-sm" role="table">
@@ -722,14 +751,56 @@ export function TransactionsTable({
               })
             : null}
         </div>
+        {!hasRows && !isComplete ? (
+          <div className="flex flex-col gap-1 p-3" role="row">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                className="grid items-center"
+                key={i}
+                role="cell"
+                style={{
+                  gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
+                  height: ROW_HEIGHT,
+                }}
+              >
+                <div className="p-3" />
+                <div className="p-3">
+                  <Skeleton className="size-7 rounded-full" />
+                </div>
+                <div className="p-3">
+                  <Skeleton className="size-7 rounded-full" />
+                </div>
+                <div className="p-3">
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <div className="p-3">
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+                <div className="p-3">
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+                <div className="p-3">
+                  <Skeleton className="h-4 w-12" />
+                </div>
+                <div className="flex justify-end p-3">
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
         {!hasRows && isComplete ? (
           <div className="p-6" role="row">
             <div role="cell">
-              <ConnectAccountEmpty
-                description="Connect a bank account to start seeing your transactions here."
-                onConnect={onConnectAccount}
-                title="No transactions yet"
-              />
+              {hasActiveFilters ? (
+                <NoFilterResultsEmpty onClearFilters={onClearFilters} />
+              ) : (
+                <ConnectAccountEmpty
+                  description="Connect a bank account to start seeing your transactions here."
+                  onConnect={onConnectAccount}
+                  title="No transactions yet"
+                />
+              )}
             </div>
           </div>
         ) : null}

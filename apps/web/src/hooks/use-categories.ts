@@ -86,6 +86,17 @@ export function useUpdateCategory() {
   );
 }
 
+export function useHideCategory() {
+  const zero = useZero();
+  return useCallback(
+    (input: { categoryId: string; reassignTo?: string | null }) => {
+      const { server } = zero.mutate(mutators.categories.hide(input));
+      fireAndForget(server, "Couldn't hide category.");
+    },
+    [zero],
+  );
+}
+
 export function useDeleteCategory() {
   const zero = useZero();
   return useCallback(

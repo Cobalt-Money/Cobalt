@@ -62,14 +62,21 @@ interface BankSnapshotRow {
     type?: string | null;
     subtype?: string | null;
     name?: string | null;
-    connection?: {
-      institutionName?: string | null;
-      institutionLogo?: string | null;
-      institution?: {
-        logo?: string | null;
-        url?: string | null;
-        name?: string | null;
-      } | null;
+  } | null;
+}
+
+interface BankAccountRow {
+  id: string;
+  name?: string | null;
+  type?: string | null;
+  subtype?: string | null;
+  plaidConnection?: {
+    institutionName?: string | null;
+    institutionLogo?: string | null;
+    institution?: {
+      logo?: string | null;
+      url?: string | null;
+      name?: string | null;
     } | null;
   } | null;
 }
@@ -499,7 +506,7 @@ function NetWorthScopePicker({
   );
 }
 
-type ConnectionField = NonNullable<NonNullable<BankSnapshotRow["account"]>["connection"]>;
+type ConnectionField = NonNullable<BankAccountRow["plaidConnection"]>;
 
 function institutionFieldsFromConnection(conn: ConnectionField | null | undefined) {
   const inst = conn?.institution;
@@ -510,16 +517,16 @@ function institutionFieldsFromConnection(conn: ConnectionField | null | undefine
   };
 }
 
-function bankEntryFromSnapshot(s: BankSnapshotRow): BankAccountEntry | null {
-  if (!s.account?.name) {
+function bankEntryFromAccount(a: BankAccountRow): BankAccountEntry | null {
+  if (!a.name) {
     return null;
   }
   return {
-    ...institutionFieldsFromConnection(s.account.connection),
-    name: s.account.name,
-    plaidAccountId: s.accountId,
-    subtype: s.account.subtype,
-    type: s.account.type ?? "depository",
+    ...institutionFieldsFromConnection(a.plaidConnection),
+    name: a.name,
+    plaidAccountId: a.id,
+    subtype: a.subtype,
+    type: a.type ?? "depository",
   };
 }
 
@@ -532,28 +539,63 @@ export function NetWorthSection() {
   const [scope, setScope] = useState<AccountScope>({ type: "all" });
   const { mask } = usePrivacy();
 
-  // Snapshot history — drives both the chart and headline totals
-  const [rawBankSnapshots, bankResult] = useQuery(queries.accounts.bankBalanceSnapshots());
-  const [rawPortfolioSnapshots, portfolioResult] = useQuery(queries.brokerage.portfolioSnapshots());
-  const allBankSnapshots = rawBankSnapshots as unknown as BankSnapshotRow[];
+  // Snapshot history — drives both the chart and headline totals.
+  // Range scoped server-side to cap IVM hydrate cost.
+  const [rawBankSnapshots, bankResult] = useQuery(queries.accounts.bankBalanceSnapshots({ range }));
+  const [rawPortfolioSnapshots, portfolioResult] = useQuery(
+    queries.brokerage.portfolioSnapshots({ range }),
+  );
+  // Account metadata (type/subtype/name + institution chips) — pulled from
+  // the small bankAccounts subscription. Snapshot query stays 0-relate so
+  // its IVM pipeline is a single stage.
+  const [rawBankAccounts] = useQuery(queries.accounts.bankAccounts());
+  const rawSnapshots = rawBankSnapshots as unknown as Omit<BankSnapshotRow, "account">[];
   const allPortfolioSnapshots = rawPortfolioSnapshots as unknown as PortfolioSnapshotRow[];
+  const allBankAccounts = rawBankAccounts as unknown as BankAccountRow[];
+
+  const accountById = useMemo(() => {
+    const m = new Map<string, BankAccountRow>();
+    for (const a of allBankAccounts) {
+      m.set(a.id, a);
+    }
+    return m;
+  }, [allBankAccounts]);
+
+  // Attach account metadata (type/subtype/name) to each snapshot row by
+  // joining with the bankAccounts map. Equivalent to the `.related("account")`
+  // we used to ship server-side, but free of IVM cost.
+  const allBankSnapshots = useMemo<BankSnapshotRow[]>(
+    () =>
+      rawSnapshots.map((s) => {
+        const acc = accountById.get(s.accountId);
+        return {
+          ...s,
+          account: acc
+            ? {
+                name: acc.name ?? null,
+                subtype: acc.subtype ?? null,
+                type: acc.type ?? null,
+              }
+            : null,
+        };
+      }),
+    [rawSnapshots, accountById],
+  );
 
   const isDataComplete = bankResult.type === "complete" && portfolioResult.type === "complete";
 
   // ── Unique account lists for the picker ──────────────────────────
 
   const bankAccountEntries = useMemo((): BankAccountEntry[] => {
-    const seen = new Map<string, BankAccountEntry>();
-    for (const s of allBankSnapshots) {
-      if (!seen.has(s.accountId)) {
-        const entry = bankEntryFromSnapshot(s);
-        if (entry) {
-          seen.set(s.accountId, entry);
-        }
+    const out: BankAccountEntry[] = [];
+    for (const a of allBankAccounts) {
+      const entry = bankEntryFromAccount(a);
+      if (entry) {
+        out.push(entry);
       }
     }
-    return [...seen.values()];
-  }, [allBankSnapshots]);
+    return out;
+  }, [allBankAccounts]);
 
   const portfolioAccountEntries = useMemo((): PortfolioAccountEntry[] => {
     const seen = new Map<string, PortfolioAccountEntry>();
@@ -626,20 +668,35 @@ export function NetWorthSection() {
 
   /** Snapshots from the single most recent snapshot day across all bank accounts. */
   const latestBankSnapshots = useMemo(() => {
-    if (bankSnapshots.length === 0) {
+    // Source query is `orderBy("snapshotDate", "desc")` — index 0 is newest.
+    const newestDate = bankSnapshots[0]?.snapshotDate;
+    if (newestDate === undefined) {
       return [];
     }
-    const newestDate = Math.max(...bankSnapshots.map((s) => s.snapshotDate));
-    return bankSnapshots.filter((s) => s.snapshotDate === newestDate);
+    const out: BankSnapshotRow[] = [];
+    for (const s of bankSnapshots) {
+      if (s.snapshotDate !== newestDate) {
+        break;
+      }
+      out.push(s);
+    }
+    return out;
   }, [bankSnapshots]);
 
   /** Snapshots from the single most recent snapshot day across all portfolio accounts. */
   const latestPortfolioSnapshots = useMemo(() => {
-    if (portfolioSnapshots.length === 0) {
+    const newestDate = portfolioSnapshots[0]?.snapshotDate;
+    if (newestDate === undefined) {
       return [];
     }
-    const newestDate = Math.max(...portfolioSnapshots.map((s) => s.snapshotDate));
-    return portfolioSnapshots.filter((s) => s.snapshotDate === newestDate);
+    const out: PortfolioSnapshotRow[] = [];
+    for (const s of portfolioSnapshots) {
+      if (s.snapshotDate !== newestDate) {
+        break;
+      }
+      out.push(s);
+    }
+    return out;
   }, [portfolioSnapshots]);
 
   const checkingTotal = useMemo(

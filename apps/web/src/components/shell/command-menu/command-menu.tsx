@@ -1,11 +1,24 @@
 import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-grid";
 import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/types";
 import { AddManualAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-manual-account-dialog";
+import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { AddTransactionForm } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
+import type { ExportFormat } from "@cobalt-web/ui/cobalt/transactions/lib/export";
+import {
+  buildTransactionsTsv,
+  exportTransactions,
+} from "@cobalt-web/ui/cobalt/transactions/lib/export";
+import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import {
+  CategoryIcon,
+  resolveCategoryIcon,
+  UNKNOWN_CATEGORY_ICON,
+} from "@cobalt-web/ui/cobalt/transactions/categories";
 import { AddTagForm } from "@cobalt-web/ui/cobalt/transactions/tags/add-tag-dialog";
 import { ManageTagsForm } from "@cobalt-web/ui/cobalt/transactions/tags/manage-tags-dialog";
 import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
+import { TagChip } from "@cobalt-web/ui/cobalt/transactions/tags/tag-chip";
 import {
   Command,
   CommandDialog,
@@ -22,6 +35,7 @@ import {
   AppleStocksIcon,
   ArrowReloadHorizontalIcon,
   BellDotIcon,
+  Copy01Icon,
   CreditCardIcon,
   Download02Icon,
   Edit02Icon,
@@ -55,7 +69,15 @@ import { useAddManualAccountSubmit } from "@/hooks/use-add-manual-account-submit
 import { useMerchantSearch } from "@/hooks/use-merchant-search";
 import { useAddTagSubmit } from "@/hooks/use-add-tag-submit";
 import { useAddTransactionData } from "@/hooks/use-add-transaction-data";
-import { useDeleteTag, useTags, useUpdateTag } from "@/hooks/use-tags";
+import { useAllCategories } from "@/hooks/use-categories";
+import { useBulkSetCategory, useBulkSetExcluded } from "@/hooks/use-bulk-transactions";
+import {
+  useBulkApplyTags,
+  useDeleteTag,
+  useTagOptions,
+  useTags,
+  useUpdateTag,
+} from "@/hooks/use-tags";
 import { logout } from "@/lib/zero-logout";
 
 import { ChatSearchResults, useChatSearch } from "./search-chats";
@@ -171,6 +193,18 @@ function getPlaceholder(activePage: string | undefined): string {
   if (activePage === "search-tickers") {
     return "Search tickers…";
   }
+  if (activePage === "bulk-set-category") {
+    return "Search categories…";
+  }
+  if (activePage === "bulk-add-tags" || activePage === "bulk-remove-tags") {
+    return "Search tags…";
+  }
+  if (activePage === "bulk-actions") {
+    return "Search actions…";
+  }
+  if (activePage === "bulk-export") {
+    return "Export format…";
+  }
   return "Type a command or search…";
 }
 
@@ -226,7 +260,12 @@ function isDefaultCommandView(activePage: string | undefined): boolean {
   return (
     activePage !== "search-chats" &&
     activePage !== "search-transactions" &&
-    activePage !== "search-tickers"
+    activePage !== "search-tickers" &&
+    activePage !== "bulk-actions" &&
+    activePage !== "bulk-set-category" &&
+    activePage !== "bulk-add-tags" &&
+    activePage !== "bulk-remove-tags" &&
+    activePage !== "bulk-export"
   );
 }
 
@@ -247,6 +286,8 @@ interface CommandMenuContextValue {
   openAddTransaction: () => void;
   /** Open palette to the add-tag sub-page, optionally seeded with a name. */
   openAddTag: (opts?: { initialName?: string }) => void;
+  /** Open palette to the bulk-actions sub-page for the given transactions. */
+  openBulkActions: (transactions: readonly TransactionListItem[]) => void;
 }
 
 const CommandMenuContext = createContext<CommandMenuContextValue | null>(null);
@@ -271,6 +312,8 @@ function CommandMenuDialog({
   setSearch,
   addTagInitialName,
   setAddTagInitialName,
+  bulkTargets,
+  onClearBulkTargets,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -280,6 +323,8 @@ function CommandMenuDialog({
   setSearch: React.Dispatch<React.SetStateAction<string>>;
   addTagInitialName: string;
   setAddTagInitialName: React.Dispatch<React.SetStateAction<string>>;
+  bulkTargets: readonly TransactionListItem[];
+  onClearBulkTargets: () => void;
 }) {
   const navigate = useNavigate();
   const router = useRouter();
@@ -301,6 +346,11 @@ function CommandMenuDialog({
   const inAddTransaction = activePage === "add-transaction";
   const inAddTag = activePage === "add-tag";
   const inManageTags = activePage === "manage-tags";
+  const inBulkActions = activePage === "bulk-actions";
+  const inBulkSetCategory = activePage === "bulk-set-category";
+  const inBulkAddTags = activePage === "bulk-add-tags";
+  const inBulkRemoveTags = activePage === "bulk-remove-tags";
+  const inBulkExport = activePage === "bulk-export";
   const inFormPage = isFormPage(activePage);
   const trimmedSearch = search.trim();
 
@@ -367,6 +417,32 @@ function CommandMenuDialog({
         })),
     [allTags],
   );
+
+  // ── Bulk-actions data ───────────────────────────────────────────────────────
+
+  const { data: allCategoriesForBulk } = useAllCategories();
+  const { options: bulkTagOptions } = useTagOptions();
+  const { mutateAsync: bulkSetCategory } = useBulkSetCategory();
+  const { mutateAsync: bulkSetExcluded } = useBulkSetExcluded();
+  const { mutateAsync: bulkApplyTags } = useBulkApplyTags();
+  const bulkCategoryGroups = useMemo(() => {
+    type CatRow = (typeof allCategoriesForBulk)[number];
+    const groups = new Map<string, { groupName: string; items: CatRow[] }>();
+    for (const c of allCategoriesForBulk) {
+      if (c.hidden) {
+        continue;
+      }
+      const groupName = c.group?.name ?? "Other";
+      const key = `${c.group?.systemKey ?? "_custom"}::${groupName}`;
+      const bucket = groups.get(key);
+      if (bucket) {
+        bucket.items.push(c);
+      } else {
+        groups.set(key, { groupName, items: [c] });
+      }
+    }
+    return [...groups.values()];
+  }, [allCategoriesForBulk]);
 
   // ── Theme ───────────────────────────────────────────────────────────────────
 
@@ -447,7 +523,131 @@ function CommandMenuDialog({
     setPages((p) => [...p, "manage-tags"]);
   }, [setPages, setSearch]);
 
+  const enterBulkSetCategory = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "bulk-set-category"]);
+  }, [setPages, setSearch]);
+
+  const enterBulkAddTags = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "bulk-add-tags"]);
+  }, [setPages, setSearch]);
+
+  const enterBulkRemoveTags = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "bulk-remove-tags"]);
+  }, [setPages, setSearch]);
+
+  const enterBulkExport = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "bulk-export"]);
+  }, [setPages, setSearch]);
+
+  const closeAndClearBulk = useCallback(() => {
+    onOpenChange(false);
+    onClearBulkTargets();
+  }, [onClearBulkTargets, onOpenChange]);
+
+  const handleBulkSetCategory = useCallback(
+    (categoryId: string) => {
+      const ids = bulkTargets.map((t) => t.id);
+      if (ids.length === 0) {
+        return;
+      }
+      void (async () => {
+        try {
+          await bulkSetCategory({ categoryId, transactionIds: ids });
+        } catch {
+          // toast already shown
+        } finally {
+          closeAndClearBulk();
+        }
+      })();
+    },
+    [bulkSetCategory, bulkTargets, closeAndClearBulk],
+  );
+
+  const handleBulkApplyTag = useCallback(
+    (tagId: string, mode: "add" | "remove") => {
+      const ids = bulkTargets.map((t) => t.id);
+      if (ids.length === 0) {
+        return;
+      }
+      void (async () => {
+        try {
+          await bulkApplyTags({
+            addTagIds: mode === "add" ? [tagId] : [],
+            removeTagIds: mode === "remove" ? [tagId] : [],
+            transactionIds: ids,
+          });
+        } catch {
+          // toast already shown
+        } finally {
+          closeAndClearBulk();
+        }
+      })();
+    },
+    [bulkApplyTags, bulkTargets, closeAndClearBulk],
+  );
+
+  const handleBulkExport = useCallback(
+    (format: ExportFormat) => {
+      if (bulkTargets.length === 0) {
+        return;
+      }
+      exportTransactions([...bulkTargets], format);
+      closeAndClearBulk();
+    },
+    [bulkTargets, closeAndClearBulk],
+  );
+
+  const handleBulkCopy = useCallback(() => {
+    if (bulkTargets.length === 0) {
+      return;
+    }
+    const tsv = buildTransactionsTsv([...bulkTargets]);
+    void (async () => {
+      try {
+        await navigator.clipboard.writeText(tsv);
+        cobaltToast.bulkSuccess(
+          `Copied ${bulkTargets.length} ${bulkTargets.length === 1 ? "row" : "rows"}`,
+          "Paste into a spreadsheet to keep columns.",
+        );
+      } catch {
+        cobaltToast.error("Couldn't copy to clipboard.");
+      } finally {
+        closeAndClearBulk();
+      }
+    })();
+  }, [bulkTargets, closeAndClearBulk]);
+
+  const handleBulkSetExcluded = useCallback(
+    (excluded: boolean) => {
+      const ids = bulkTargets.map((t) => t.id);
+      if (ids.length === 0) {
+        return;
+      }
+      void (async () => {
+        try {
+          await bulkSetExcluded({ excluded, transactionIds: ids });
+        } catch {
+          // toast already shown
+        } finally {
+          closeAndClearBulk();
+        }
+      })();
+    },
+    [bulkSetExcluded, bulkTargets, closeAndClearBulk],
+  );
+
   const popPage = useCallback(() => {
+    if (pages.length <= 1) {
+      // At the last sub-page: close dialog instead of popping to default.
+      // setOpen defers pages reset until after exit animation so the
+      // sub-page stays visible while closing (no default-palette flash).
+      onOpenChange(false);
+      return;
+    }
     setPages((p) => p.slice(0, -1));
     setSearch("");
     // Sub-page input is unmounting; cmdk's input remount races with body
@@ -458,7 +658,7 @@ function CommandMenuDialog({
         el?.focus();
       });
     });
-  }, [setPages, setSearch]);
+  }, [onOpenChange, pages.length, setPages, setSearch]);
 
   const handleChooseInstitution = useCallback(
     (institution: AddAccountInstitution) => {
@@ -529,15 +729,26 @@ function CommandMenuDialog({
     (e: ReactKeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Backspace" && search.length === 0 && pages.length > 0) {
         e.preventDefault();
+        if (pages.length === 1) {
+          // At the last sub-page: close dialog instead of popping to default.
+          // setOpen defers pages reset until after exit animation so the
+          // sub-page stays visible while closing (no default-palette flash).
+          onOpenChange(false);
+          return;
+        }
         setPages((p) => p.slice(0, -1));
       }
       if (e.key === "Escape" && pages.length > 0) {
         e.preventDefault();
+        if (pages.length === 1) {
+          onOpenChange(false);
+          return;
+        }
         setPages((p) => p.slice(0, -1));
         setSearch("");
       }
     },
-    [pages.length, search.length, setPages, setSearch],
+    [onOpenChange, pages.length, search.length, setPages, setSearch],
   );
 
   // ── Action groups ───────────────────────────────────────────────────────────
@@ -890,6 +1101,178 @@ function CommandMenuDialog({
                   onSelect={handleSelectTicker}
                 />
               )}
+              {inBulkActions && (
+                <>
+                  <CommandEmpty>No actions found.</CommandEmpty>
+                  <CommandGroup heading={`${bulkTargets.length} transactions`}>
+                    <CommandItem
+                      keywords={["category", "categorize"]}
+                      onSelect={enterBulkSetCategory}
+                      value="Set category"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Folder01Icon}
+                        strokeWidth={2}
+                      />
+                      Set category…
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["tag", "label", "add"]}
+                      onSelect={enterBulkAddTags}
+                      value="Add tags"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Tag01Icon}
+                        strokeWidth={2}
+                      />
+                      Add tags…
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["tag", "label", "remove"]}
+                      onSelect={enterBulkRemoveTags}
+                      value="Remove tags"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Tag01Icon}
+                        strokeWidth={2}
+                      />
+                      Remove tags…
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["exclude", "spending", "insights", "hide"]}
+                      onSelect={() => handleBulkSetExcluded(true)}
+                      value="Exclude from spending"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={EyeIcon}
+                        strokeWidth={2}
+                      />
+                      Exclude from spending
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["include", "spending", "insights", "show"]}
+                      onSelect={() => handleBulkSetExcluded(false)}
+                      value="Include in spending"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={EyeIcon}
+                        strokeWidth={2}
+                      />
+                      Include in spending
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["copy", "clipboard", "paste", "tsv"]}
+                      onSelect={handleBulkCopy}
+                      value="Copy"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Copy01Icon}
+                        strokeWidth={2}
+                      />
+                      Copy as table
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["export", "download", "csv", "xlsx", "excel"]}
+                      onSelect={enterBulkExport}
+                      value="Export"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Download02Icon}
+                        strokeWidth={2}
+                      />
+                      Export…
+                    </CommandItem>
+                  </CommandGroup>
+                </>
+              )}
+              {inBulkExport && (
+                <>
+                  <CommandEmpty>No formats found.</CommandEmpty>
+                  <CommandGroup heading="Export format">
+                    <CommandItem
+                      keywords={["csv", "comma", "spreadsheet"]}
+                      onSelect={() => handleBulkExport("csv")}
+                      value="CSV"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Download02Icon}
+                        strokeWidth={2}
+                      />
+                      CSV
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["xlsx", "excel", "spreadsheet"]}
+                      onSelect={() => handleBulkExport("xlsx")}
+                      value="XLSX"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Download02Icon}
+                        strokeWidth={2}
+                      />
+                      XLSX (Excel)
+                    </CommandItem>
+                  </CommandGroup>
+                </>
+              )}
+              {inBulkSetCategory && (
+                <>
+                  <CommandEmpty>No categories found.</CommandEmpty>
+                  {bulkCategoryGroups.map((group) => (
+                    <CommandGroup heading={group.groupName} key={group.groupName}>
+                      {group.items.map((cat) => {
+                        const icon = resolveCategoryIcon(cat.iconKey) ?? UNKNOWN_CATEGORY_ICON;
+                        return (
+                          <CommandItem
+                            key={cat.id}
+                            keywords={[group.groupName]}
+                            onSelect={() => handleBulkSetCategory(cat.id)}
+                            value={`${cat.name} ${group.groupName}`}
+                          >
+                            <CategoryIcon icon={icon} sizeClassName="size-5" />
+                            {cat.name}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  ))}
+                </>
+              )}
+              {(inBulkAddTags || inBulkRemoveTags) && (
+                <>
+                  <CommandEmpty>No tags found.</CommandEmpty>
+                  <CommandGroup heading={inBulkAddTags ? "Add tag" : "Remove tag"}>
+                    {bulkTagOptions.map((tag) => (
+                      <CommandItem
+                        key={tag.id}
+                        onSelect={() =>
+                          handleBulkApplyTag(tag.id, inBulkAddTags ? "add" : "remove")
+                        }
+                        value={tag.name}
+                      >
+                        <TagChip color={tag.color} name={tag.name} size="sm" />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </>
+              )}
               {isDefaultCommandView(activePage) && (
                 <>
                   <CommandEmpty>No results found.</CommandEmpty>
@@ -976,6 +1359,8 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
   const [pages, setPages] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [addTagInitialName, setAddTagInitialName] = useState("");
+  const [bulkTargets, setBulkTargets] = useState<readonly TransactionListItem[]>([]);
+  const clearBulkTargets = useCallback(() => setBulkTargets([]), []);
 
   const setOpen = useCallback((nextOpen: boolean) => {
     setOpenState(nextOpen);
@@ -985,6 +1370,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
       window.setTimeout(() => {
         setPages([]);
         setSearch("");
+        setBulkTargets([]);
       }, 200);
     }
   }, []);
@@ -1006,6 +1392,13 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
     (opts?: { initialName?: string }) => {
       setAddTagInitialName(opts?.initialName ?? "");
       openAt("add-tag");
+    },
+    [openAt],
+  );
+  const openBulkActions = useCallback(
+    (transactions: readonly TransactionListItem[]) => {
+      setBulkTargets([...transactions]);
+      openAt("bulk-actions");
     },
     [openAt],
   );
@@ -1037,6 +1430,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
       openAddManualAccount,
       openAddTag,
       openAddTransaction,
+      openBulkActions,
       openManageCategories,
       openManageTags,
       setOpen,
@@ -1047,6 +1441,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
       openAddManualAccount,
       openAddTag,
       openAddTransaction,
+      openBulkActions,
       openManageCategories,
       openManageTags,
       setOpen,
@@ -1058,6 +1453,8 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
       {children}
       <CommandMenuDialog
         addTagInitialName={addTagInitialName}
+        bulkTargets={bulkTargets}
+        onClearBulkTargets={clearBulkTargets}
         onOpenChange={setOpen}
         open={open}
         pages={pages}

@@ -263,13 +263,14 @@ export async function syncBrokerageAccountStep(
 export async function syncAccountBalancesStep(
   accountId: string,
   userCredentials: UserCredentials,
+  accountDetails?: Account,
 ): Promise<{ success: boolean; data?: Balance[] }> {
   "use step";
 
   try {
     const data = await getUserAccountBalance(accountId, userCredentials);
     if (data && Array.isArray(data)) {
-      await upsertAccountBalances(accountId, userCredentials.appUserId, data);
+      await upsertAccountBalances(accountId, userCredentials.appUserId, data, accountDetails);
       return { data, success: true };
     }
     return { success: false };
@@ -462,27 +463,30 @@ export async function refreshAccountDataStep(
 ): Promise<{ detailsSuccess: boolean; balancesSuccess: boolean }> {
   "use step";
 
-  const [detailsResult, balancesResult] = await Promise.allSettled([
-    (async () => {
-      const data = await getUserAccountDetails(accountId, userCredentials);
-      if (data) {
-        await upsertAccountDetails(accountId, userCredentials.appUserId, data);
-        return true;
-      }
-      return false;
-    })(),
-    (async () => {
-      const data = await getUserAccountBalance(accountId, userCredentials);
-      if (data && Array.isArray(data)) {
-        await upsertAccountBalances(accountId, userCredentials.appUserId, data);
-        return true;
-      }
-      return false;
-    })(),
-  ]);
+  // Fetch details first so balances upsert can use the account-level total.
+  let detailsData: Account | undefined;
+  let detailsSuccess = false;
+  try {
+    const data = await getUserAccountDetails(accountId, userCredentials);
+    if (data) {
+      detailsData = data;
+      await upsertAccountDetails(accountId, userCredentials.appUserId, data);
+      detailsSuccess = true;
+    }
+  } catch {
+    detailsSuccess = false;
+  }
 
-  const detailsSuccess = detailsResult.status === "fulfilled" && detailsResult.value;
-  const balancesSuccess = balancesResult.status === "fulfilled" && balancesResult.value;
+  let balancesSuccess = false;
+  try {
+    const data = await getUserAccountBalance(accountId, userCredentials);
+    if (data && Array.isArray(data)) {
+      await upsertAccountBalances(accountId, userCredentials.appUserId, data, detailsData);
+      balancesSuccess = true;
+    }
+  } catch {
+    balancesSuccess = false;
+  }
 
   return { balancesSuccess, detailsSuccess };
 }

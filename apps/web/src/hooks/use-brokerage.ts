@@ -3,15 +3,11 @@ import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo } from "react";
 
-import type { PortfolioSnapshotRow, PositionRow } from "@/components/brokerage/balance-chart-card";
+import type { PositionRow } from "@/components/brokerage/balance-chart-card";
 import type { ActivityRow } from "@/components/brokerage/recent-activity-card";
 
-import {
-  activityToActivityRow,
-  holdingToPositionRow,
-  snapshotToRow,
-} from "./lib/brokerage-normalizers";
-import type { RawHolding, RawInvestmentActivity, RawSnapshot } from "./lib/brokerage-normalizers";
+import { activityToActivityRow, holdingToPositionRow } from "./lib/brokerage-normalizers";
+import type { RawHolding, RawInvestmentActivity } from "./lib/brokerage-normalizers";
 
 /** Investment account row — both SnapTrade and Plaid investment accounts. */
 export interface InvestmentAccountRow {
@@ -43,24 +39,17 @@ export interface InvestmentAccountRow {
 }
 
 /**
- * Subscribes to brokerage data — SnapTrade + Plaid investment accounts merged
- * into source-agnostic lists. Consumers branch on `source` only when they
- * need a provider-specific reconnect/disconnect path.
+ * Brokerage accounts + positions. Activities live in `useBrokerageActivities`
+ * to keep callers (e.g. the home dashboard) from subscribing to ~50-row
+ * activity feeds they never read.
  */
 export function useBrokerage() {
   const [snaptradeAccounts, snaptradeAccountsResult] = useQuery(queries.brokerage.accounts());
   const [snaptradePositions, snaptradePositionsResult] = useQuery(queries.brokerage.positions());
-  const [snaptradeActivities, snaptradeActivitiesResult] = useQuery(
-    queries.brokerage.recentActivities(),
-  );
-  const [portfolioSnapshotsRaw, portfolioSnapshotsResult] = useQuery(
-    queries.brokerage.portfolioSnapshots(),
-  );
   const [plaidInvestmentAccounts, plaidInvestmentAccountsResult] = useQuery(
     queries.brokerage.plaidInvestmentAccounts(),
   );
   const [plaidPositions, plaidPositionsResult] = useQuery(queries.brokerage.plaidPositions());
-  const [plaidActivities, plaidActivitiesResult] = useQuery(queries.brokerage.plaidActivities());
 
   const accounts = useMemo<InvestmentAccountRow[]>(() => {
     const sn = (snaptradeAccounts as unknown as readonly BrokerageRowWithRelations[]).map(
@@ -101,6 +90,28 @@ export function useBrokerage() {
     return all.map(holdingToPositionRow);
   }, [snaptradePositions, plaidPositions]);
 
+  const accountsComplete =
+    snaptradeAccountsResult.type === "complete" &&
+    plaidInvestmentAccountsResult.type === "complete";
+  const positionsComplete =
+    accountsComplete &&
+    snaptradePositionsResult.type === "complete" &&
+    plaidPositionsResult.type === "complete";
+
+  return {
+    accounts,
+    accountsComplete,
+    positions,
+    positionsComplete,
+  };
+}
+
+export function useBrokerageActivities() {
+  const [snaptradeActivities, snaptradeActivitiesResult] = useQuery(
+    queries.brokerage.recentActivities(),
+  );
+  const [plaidActivities, plaidActivitiesResult] = useQuery(queries.brokerage.plaidActivities());
+
   const activities = useMemo<ActivityRow[]>(() => {
     const all = [
       ...(snaptradeActivities as unknown as readonly RawInvestmentActivity[]),
@@ -111,33 +122,8 @@ export function useBrokerage() {
       .toSorted((a, b) => (b.tradeDate ?? 0) - (a.tradeDate ?? 0));
   }, [snaptradeActivities, plaidActivities]);
 
-  const portfolioSnapshots = useMemo<PortfolioSnapshotRow[]>(
-    () => (portfolioSnapshotsRaw as unknown as readonly RawSnapshot[]).map(snapshotToRow),
-    [portfolioSnapshotsRaw],
-  );
-
-  const accountsComplete =
-    snaptradeAccountsResult.type === "complete" &&
-    plaidInvestmentAccountsResult.type === "complete";
-  const positionsComplete =
-    accountsComplete &&
-    snaptradePositionsResult.type === "complete" &&
-    plaidPositionsResult.type === "complete";
   const activitiesComplete =
-    accountsComplete &&
-    snaptradeActivitiesResult.type === "complete" &&
-    plaidActivitiesResult.type === "complete";
-  const balanceComplete =
-    accountsComplete && portfolioSnapshotsResult.type === "complete" && positionsComplete;
+    snaptradeActivitiesResult.type === "complete" && plaidActivitiesResult.type === "complete";
 
-  return {
-    accounts,
-    accountsComplete,
-    activities,
-    activitiesComplete,
-    balanceComplete,
-    portfolioSnapshots,
-    positions,
-    positionsComplete,
-  };
+  return { activities, activitiesComplete };
 }

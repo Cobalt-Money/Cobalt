@@ -204,7 +204,11 @@ describe("snaptradeHoldingsUpdatedWorkflow", () => {
       credentials,
       expect.objectContaining({ id: "acct-1" }),
     );
-    expect(syncAccountBalancesStep).toHaveBeenCalledWith("acct-1", credentials);
+    expect(syncAccountBalancesStep).toHaveBeenCalledWith(
+      "acct-1",
+      credentials,
+      expect.objectContaining({ id: "acct-1" }),
+    );
     expect(syncAccountPositionsStep).toHaveBeenCalledWith("acct-1", credentials);
     expect(syncAccountOrdersStep).toHaveBeenCalledWith("acct-1", credentials);
     expect(syncRecentActivitiesStep).toHaveBeenCalledWith("acct-1", credentials);

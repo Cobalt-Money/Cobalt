@@ -83,6 +83,8 @@ export interface ManageCategoriesCat {
 export interface ManageCategoriesFormProps {
   groups: readonly ManageCategoriesGroup[];
   catsByGroup: ReadonlyMap<string, readonly ManageCategoriesCat[]>;
+  /** Tx count per category id. Missing key = 0. */
+  txCountById?: ReadonlyMap<string, number>;
   onCreateGroup: () => void;
   onRenameGroup: (groupId: string, name: string) => void;
   onDeleteGroup: (group: ManageCategoriesGroup) => void;
@@ -338,6 +340,7 @@ export function ManageCategoriesForm(props: ManageCategoriesFormProps) {
                 onToggleExcludeFromInsights={props.onToggleExcludeFromInsights}
                 onToggleHidden={props.onToggleHidden}
                 sortable={reorderableGroupId !== null}
+                txCountById={props.txCountById}
               />
             </SortableContext>
           </ResizablePanel>
@@ -619,6 +622,7 @@ function DetailPane({
   onToggleHidden,
   onToggleExcludeFromInsights,
   onChangeIcon,
+  txCountById,
 }: {
   active: RailKey;
   groups: readonly ManageCategoriesGroup[];
@@ -631,6 +635,7 @@ function DetailPane({
   onToggleHidden: (cat: ManageCategoriesCat, hidden: boolean) => void;
   onToggleExcludeFromInsights: (cat: ManageCategoriesCat, excluded: boolean) => void;
   onChangeIcon: (categoryId: string, iconKey: string) => void;
+  txCountById?: ReadonlyMap<string, number>;
 }) {
   const isPseudo = active === HIDDEN_KEY;
   const activeGroup = isPseudo ? null : (groups.find((g) => g.id === active) ?? null);
@@ -682,6 +687,7 @@ function DetailPane({
               onToggleExcludeFromInsights={(excluded) => onToggleExcludeFromInsights(c, excluded)}
               onToggleHidden={(hidden) => onToggleHidden(c, hidden)}
               showGroupBadge={isPseudo}
+              txCount={txCountById?.get(c.id) ?? 0}
             />
           ))}
         </ul>
@@ -700,6 +706,7 @@ function SortableCategoryItem({
   onChangeIcon,
   showGroupBadge,
   groupName,
+  txCount,
 }: {
   cat: ManageCategoriesCat;
   draggable: boolean;
@@ -710,6 +717,7 @@ function SortableCategoryItem({
   onChangeIcon: (iconKey: string) => void;
   showGroupBadge: boolean;
   groupName: string;
+  txCount: number;
 }) {
   const sortable = useSortable({
     data: { groupId: cat.groupId, type: "cat" } satisfies DragData,
@@ -743,6 +751,7 @@ function SortableCategoryItem({
         onToggleExcludeFromInsights={onToggleExcludeFromInsights}
         onToggleHidden={onToggleHidden}
         showGroupBadge={showGroupBadge}
+        txCount={txCount}
       />
     </li>
   );
@@ -760,6 +769,7 @@ function CategoryItemDisplay({
   onChangeIcon,
   showGroupBadge = false,
   groupName = "",
+  txCount,
 }: {
   cat: ManageCategoriesCat;
   dragHandle?: React.ReactNode;
@@ -772,6 +782,7 @@ function CategoryItemDisplay({
   onChangeIcon?: (iconKey: string) => void;
   showGroupBadge?: boolean;
   groupName?: string;
+  txCount?: number;
 }) {
   const resolved = resolveCategoryIcon(cat.iconKey);
   const isSystem = cat.systemKey !== null;
@@ -830,6 +841,14 @@ function CategoryItemDisplay({
       {showGroupBadge && groupName ? (
         <span className="shrink-0 rounded bg-muted/60 px-2 py-0.5 text-muted-foreground text-xs">
           {groupName}
+        </span>
+      ) : null}
+      {typeof txCount === "number" ? (
+        <span
+          aria-label={`${txCount} transaction${txCount === 1 ? "" : "s"}`}
+          className="shrink-0 tabular-nums text-muted-foreground text-xs"
+        >
+          {txCount}
         </span>
       ) : null}
       <CategoryRowActions
