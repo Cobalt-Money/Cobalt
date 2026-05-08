@@ -20,7 +20,7 @@ import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layo
 import { useBankOptions } from "@/hooks/use-bank-options";
 import { useAllCategories } from "@/hooks/use-categories";
 import { useTagOptions, useTags } from "@/hooks/use-tags";
-import { useTransactions } from "@/hooks/use-transactions";
+import { transactionsListQuery, useTransactions } from "@/hooks/use-transactions";
 
 import type { TransactionsSearch } from "./route";
 
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_auth/transactions/")({
   component: TransactionsListPage,
   loader: ({ context, deps }) => {
     context.zero.run(queries.accounts.bankAccounts());
-    context.zero.run(queries.transactions.list(deps));
+    context.zero.run(transactionsListQuery(deps));
     context.zero.run(queries.tags.list());
   },
   loaderDeps: ({ search }): TransactionsSearch => ({
