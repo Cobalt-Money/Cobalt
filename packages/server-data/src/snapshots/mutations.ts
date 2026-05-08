@@ -43,6 +43,18 @@ async function upsertDailySnapshotsForSource(
     if (!b) {
       return [];
     }
+    // For SnapTrade, `current` is the full account market value and
+    // `available` is uninvested cash; positions value = current - cash.
+    // Plaid bank/credit accounts don't carry a positions component.
+    let positionsValue: string | null = null;
+    if (source === "snaptrade") {
+      const total = Number.parseFloat(b.current);
+      const cash = b.available === null ? 0 : Number.parseFloat(b.available);
+      const diff = total - cash;
+      if (Number.isFinite(diff)) {
+        positionsValue = diff.toFixed(4);
+      }
+    }
     return [
       {
         accountId: a.id,
@@ -51,6 +63,7 @@ async function upsertDailySnapshotsForSource(
         creditLimit: b.creditLimit,
         currency: b.currency,
         current: b.current,
+        positionsValue,
       },
     ];
   });
@@ -66,6 +79,7 @@ async function upsertDailySnapshotsForSource(
     creditLimit: r.creditLimit,
     currency: r.currency,
     current: r.current,
+    positionsValue: r.positionsValue,
     snapshotDate,
     source,
     userId,
@@ -83,6 +97,7 @@ async function upsertDailySnapshotsForSource(
           creditLimit: sql`excluded.credit_limit`,
           currency: sql`excluded.currency`,
           current: sql`excluded.current`,
+          positionsValue: sql`excluded.positions_value`,
         },
         target: [snapshot.accountId, snapshot.snapshotDate],
       });

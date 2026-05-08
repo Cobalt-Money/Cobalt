@@ -545,6 +545,7 @@ export function NetWorthSection() {
   const [rawPortfolioSnapshots, portfolioResult] = useQuery(
     queries.brokerage.portfolioSnapshots({ range }),
   );
+<<<<<<< HEAD
   // Account metadata (type/subtype/name + institution chips) — pulled from
   // the small bankAccounts subscription. Snapshot query stays 0-relate so
   // its IVM pipeline is a single stage.
@@ -581,6 +582,14 @@ export function NetWorthSection() {
       }),
     [rawSnapshots, accountById],
   );
+=======
+  // Institution metadata (logo/name/url) for the picker — pulled from the
+  // small bankAccounts subscription, not joined onto every snapshot row.
+  const [rawBankAccounts] = useQuery(queries.accounts.bankAccounts());
+  const allBankSnapshots = rawBankSnapshots as unknown as BankSnapshotRow[];
+  const allPortfolioSnapshots = rawPortfolioSnapshots as unknown as PortfolioSnapshotRow[];
+  const allBankAccounts = rawBankAccounts as unknown as BankAccountRow[];
+>>>>>>> b8f4a23b30d8cf8fa1a0e7b78d48060cab5c7c50
 
   const isDataComplete = bankResult.type === "complete" && portfolioResult.type === "complete";
 

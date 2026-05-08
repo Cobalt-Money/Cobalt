@@ -102,6 +102,21 @@ function TransactionsListPage() {
     tagIds: search.tagIds,
   });
   const canLoadMore = isComplete && items.length >= limit && limit < TRANSACTION_LIST_MAX_LIMIT;
+  const hasActiveFilters = Boolean(
+    (search.amount && search.amount !== "all") ||
+    typeof search.amountMin === "number" ||
+    typeof search.amountMax === "number" ||
+    (search.bank && search.bank.length > 0) ||
+    (search.categoryIds && search.categoryIds.length > 0) ||
+    (search.tagIds && search.tagIds.length > 0) ||
+    (search.status && search.status !== "all") ||
+    (search.query && search.query.length > 0) ||
+    search.dateFrom ||
+    search.dateTo,
+  );
+  const handleClearFilters = useCallback(() => {
+    navigate({ replace: true, search: {}, to: "/transactions" });
+  }, [navigate]);
   const handleEndReached = useCallback(() => {
     setLimit((prev) => Math.min(prev + TRANSACTION_LIST_DEFAULT_LIMIT, TRANSACTION_LIST_MAX_LIMIT));
   }, []);
@@ -191,8 +206,10 @@ function TransactionsListPage() {
     >
       <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">
         <TransactionsTable
+          hasActiveFilters={hasActiveFilters}
           isComplete={isComplete}
           items={items}
+          onClearFilters={handleClearFilters}
           onConnectAccount={openAddAccount}
           onEndReached={canLoadMore ? handleEndReached : undefined}
           onRowSelectionChange={setRowSelection}
