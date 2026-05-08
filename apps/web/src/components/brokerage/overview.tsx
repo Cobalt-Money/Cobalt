@@ -4,11 +4,16 @@ import type {
   ScopeAccount,
 } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
 import { brokerageInstitutionBranding } from "@cobalt-web/ui/cobalt/logos/brokerage-institution-branding";
+import { queries } from "@cobalt-web/zero";
+import { useQuery } from "@rocicorp/zero/react";
 import { useMemo, useState } from "react";
 
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { useBrokerage } from "@/hooks/use-brokerage";
+import { snapshotToRow } from "@/hooks/lib/brokerage-normalizers";
+import type { RawSnapshot } from "@/hooks/lib/brokerage-normalizers";
 
+import type { PortfolioSnapshotRow } from "./balance-chart-card";
 import { BalanceChartCard } from "./balance-chart-card";
 import { PositionsTable } from "./positions-table";
 import { RecentActivityCard } from "./recent-activity-card";
@@ -59,7 +64,12 @@ function accountToScope(a: BrokerageAccount): ScopeAccount {
 
 export function Overview() {
   const { openAddAccount } = useCommandMenu();
-  const { accounts, accountsComplete, activities, portfolioSnapshots, positions } = useBrokerage();
+  const { accounts, accountsComplete, activities, positions } = useBrokerage();
+  const [rawSnapshots] = useQuery(queries.brokerage.portfolioSnapshots());
+  const portfolioSnapshots = useMemo<PortfolioSnapshotRow[]>(
+    () => (rawSnapshots as unknown as readonly RawSnapshot[]).map(snapshotToRow),
+    [rawSnapshots],
+  );
 
   const [brokerageScope, setBrokerageScope] = useState<BrokerageScope>({
     type: "all",

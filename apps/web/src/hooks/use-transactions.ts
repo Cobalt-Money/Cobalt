@@ -22,19 +22,40 @@ interface Filters {
   limit?: number;
 }
 
+/**
+ * Picks between the no-arg and parameterized `transactions.list` query based
+ * on whether the caller has actual filters. Centralized so the loader prefetch
+ * and the hook both produce the same query hash — otherwise we end up with
+ * multiple parallel subscriptions for the same 582-row dataset.
+ */
+export function transactionsListQuery(filters: Filters) {
+  const hasFilters =
+    (filters.amount && filters.amount !== "all") ||
+    filters.amountMin !== undefined ||
+    filters.amountMax !== undefined ||
+    (filters.status && filters.status !== "all") ||
+    (filters.bank && filters.bank.length > 0) ||
+    (filters.tagIds && filters.tagIds.length > 0) ||
+    (filters.categoryIds && filters.categoryIds.length > 0) ||
+    filters.limit !== undefined;
+
+  if (!hasFilters) {
+    return queries.transactions.list();
+  }
+  return queries.transactions.list({
+    amount: filters.amount ?? "all",
+    amountMax: filters.amountMax,
+    amountMin: filters.amountMin,
+    bank: filters.bank ? [...filters.bank] : [],
+    categoryIds: filters.categoryIds ? [...filters.categoryIds] : [],
+    limit: filters.limit,
+    status: filters.status ?? "all",
+    tagIds: filters.tagIds ? [...filters.tagIds] : [],
+  });
+}
+
 export function useTransactions(filters: Filters = {}) {
-  const [rows, result] = useQuery(
-    queries.transactions.list({
-      amount: filters.amount ?? "all",
-      amountMax: filters.amountMax,
-      amountMin: filters.amountMin,
-      bank: filters.bank ? [...filters.bank] : [],
-      categoryIds: filters.categoryIds ? [...filters.categoryIds] : [],
-      limit: filters.limit,
-      status: filters.status ?? "all",
-      tagIds: filters.tagIds ? [...filters.tagIds] : [],
-    }),
-  );
+  const [rows, result] = useQuery(transactionsListQuery(filters));
 
   const items = useMemo(() => {
     const mapped = rows

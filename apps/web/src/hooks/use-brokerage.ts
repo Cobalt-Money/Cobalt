@@ -3,15 +3,11 @@ import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo } from "react";
 
-import type { PortfolioSnapshotRow, PositionRow } from "@/components/brokerage/balance-chart-card";
+import type { PositionRow } from "@/components/brokerage/balance-chart-card";
 import type { ActivityRow } from "@/components/brokerage/recent-activity-card";
 
-import {
-  activityToActivityRow,
-  holdingToPositionRow,
-  snapshotToRow,
-} from "./lib/brokerage-normalizers";
-import type { RawHolding, RawInvestmentActivity, RawSnapshot } from "./lib/brokerage-normalizers";
+import { activityToActivityRow, holdingToPositionRow } from "./lib/brokerage-normalizers";
+import type { RawHolding, RawInvestmentActivity } from "./lib/brokerage-normalizers";
 
 /** Investment account row — both SnapTrade and Plaid investment accounts. */
 export interface InvestmentAccountRow {
@@ -52,9 +48,6 @@ export function useBrokerage() {
   const [snaptradePositions, snaptradePositionsResult] = useQuery(queries.brokerage.positions());
   const [snaptradeActivities, snaptradeActivitiesResult] = useQuery(
     queries.brokerage.recentActivities(),
-  );
-  const [portfolioSnapshotsRaw, portfolioSnapshotsResult] = useQuery(
-    queries.brokerage.portfolioSnapshots(),
   );
   const [plaidInvestmentAccounts, plaidInvestmentAccountsResult] = useQuery(
     queries.brokerage.plaidInvestmentAccounts(),
@@ -111,11 +104,6 @@ export function useBrokerage() {
       .toSorted((a, b) => (b.tradeDate ?? 0) - (a.tradeDate ?? 0));
   }, [snaptradeActivities, plaidActivities]);
 
-  const portfolioSnapshots = useMemo<PortfolioSnapshotRow[]>(
-    () => (portfolioSnapshotsRaw as unknown as readonly RawSnapshot[]).map(snapshotToRow),
-    [portfolioSnapshotsRaw],
-  );
-
   const accountsComplete =
     snaptradeAccountsResult.type === "complete" &&
     plaidInvestmentAccountsResult.type === "complete";
@@ -127,16 +115,12 @@ export function useBrokerage() {
     accountsComplete &&
     snaptradeActivitiesResult.type === "complete" &&
     plaidActivitiesResult.type === "complete";
-  const balanceComplete =
-    accountsComplete && portfolioSnapshotsResult.type === "complete" && positionsComplete;
 
   return {
     accounts,
     accountsComplete,
     activities,
     activitiesComplete,
-    balanceComplete,
-    portfolioSnapshots,
     positions,
     positionsComplete,
   };
