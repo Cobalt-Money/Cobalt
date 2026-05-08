@@ -2,7 +2,7 @@ import { z } from "@hono/zod-openapi";
 
 import type { ImportSource } from "./types";
 
-const IMPORT_SOURCES = ["mint"] as const satisfies readonly ImportSource[];
+const IMPORT_SOURCES = ["csv"] as const satisfies readonly ImportSource[];
 
 /** Per-source-account mapping entry submitted from the mapping UI. */
 export const accountMapEntrySchema = z.discriminatedUnion("kind", [

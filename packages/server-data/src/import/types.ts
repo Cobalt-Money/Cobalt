@@ -7,7 +7,7 @@
  * (sign carriers, milliunit conversions, transfer-pair collapsing) and produces `StagedTransaction`s.
  */
 
-export type ImportSource = "mint";
+export type ImportSource = "csv";
 
 /** Provider-agnostic shape written to `import_staged_transaction`. */
 export interface StagedTransaction {

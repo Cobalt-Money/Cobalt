@@ -2,8 +2,8 @@ import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-or
 
 import { user } from "../users/auth/auth";
 
-/** Provider the import was sourced from. Widens as adapters land (ynab, monarch, copilot, ofx, generic-csv). */
-export const importSource = pgEnum("import_source", ["mint"]);
+/** Provider the import was sourced from. Single value pending the AI-mapped generic CSV adapter. */
+export const importSource = pgEnum("import_source", ["csv"]);
 
 /**
  * Pipeline state. Linear progression: uploaded → parsed → mapped → committed.

@@ -1,11 +1,12 @@
-import { mintAdapter } from "./mint/adapter";
 import type { ImportAdapter, ImportSource } from "./types";
 
 /**
- * Adapter registry. Order doesn't matter for `detectSource` since `detect()` calls are
- * mutually exclusive — header sniffs target each provider's distinct column set.
+ * Adapter registry. Empty pending the AI-mapped generic CSV adapter.
+ * Per-provider adapters were removed in favor of header-name fuzzy match + LLM column
+ * mapping; vendors don't publish stable CSV schemas, so a generic mapper avoids the
+ * maintenance treadmill of chasing format drift.
  */
-const adapters = [mintAdapter] as const satisfies readonly ImportAdapter<unknown>[];
+const adapters: readonly ImportAdapter<unknown>[] = [];
 
 export function getAdapter(source: ImportSource): ImportAdapter<unknown> {
   const found = adapters.find((a) => a.source === source);
