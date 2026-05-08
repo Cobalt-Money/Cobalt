@@ -23,8 +23,10 @@ export function isoDateToZeroDate(iso: string): number {
   return new Date(`${iso}T00:00:00.000Z`).getTime();
 }
 
-/** Row cap for the transactions list — bounded payload regardless of user volume. */
-const TRANSACTION_LIST_LIMIT = 500;
+/** Default page size for the transactions list — caller may bump via `limit` to load more. */
+export const TRANSACTION_LIST_DEFAULT_LIMIT = 500;
+/** Hard ceiling on a single subscription's row count to bound client sync payload. */
+export const TRANSACTION_LIST_MAX_LIMIT = 10_000;
 
 export interface TransactionListFilters {
   amount?: "all" | "income" | "expense";
@@ -39,6 +41,8 @@ export interface TransactionListFilters {
   tagIds?: readonly string[];
   /** Category IDs to include (OR semantics). Empty / undefined = all. */
   categoryIds?: readonly string[];
+  /** Row cap. Defaults to {@link TRANSACTION_LIST_DEFAULT_LIMIT}, clamped to {@link TRANSACTION_LIST_MAX_LIMIT}. */
+  limit?: number;
 }
 
 function applyAmountFilter<Q extends ReturnType<typeof zql.transaction.where>>(
@@ -84,7 +88,12 @@ export function transactionsForUser(userId: string, filters: TransactionListFilt
     bank,
     tagIds,
     categoryIds,
+    limit,
   } = filters;
+  const effectiveLimit = Math.min(
+    typeof limit === "number" && limit > 0 ? Math.floor(limit) : TRANSACTION_LIST_DEFAULT_LIMIT,
+    TRANSACTION_LIST_MAX_LIMIT,
+  );
   const bankIds = bank && bank.length > 0 ? bank : null;
   const tagIdList = tagIds && tagIds.length > 0 ? tagIds : null;
   const categoryIdList = categoryIds && categoryIds.length > 0 ? categoryIds : null;
@@ -120,7 +129,7 @@ export function transactionsForUser(userId: string, filters: TransactionListFilt
     q = q.where("pending", false);
   }
 
-  return q.orderBy("date", "desc").limit(TRANSACTION_LIST_LIMIT);
+  return q.orderBy("date", "desc").limit(effectiveLimit);
 }
 
 export function recurringForUser(userId: string) {
