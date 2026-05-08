@@ -9,7 +9,7 @@ import { useQuery } from "@rocicorp/zero/react";
 import { useMemo, useState } from "react";
 
 import { useCommandMenu } from "@/components/shell/command-menu";
-import { useBrokerage } from "@/hooks/use-brokerage";
+import { useBrokerage, useBrokerageActivities } from "@/hooks/use-brokerage";
 import { snapshotToRow } from "@/hooks/lib/brokerage-normalizers";
 import type { RawSnapshot } from "@/hooks/lib/brokerage-normalizers";
 
@@ -64,7 +64,8 @@ function accountToScope(a: BrokerageAccount): ScopeAccount {
 
 export function Overview() {
   const { openAddAccount } = useCommandMenu();
-  const { accounts, accountsComplete, activities, positions } = useBrokerage();
+  const { accounts, accountsComplete, positions } = useBrokerage();
+  const { activities } = useBrokerageActivities();
   const [rawSnapshots] = useQuery(queries.brokerage.portfolioSnapshots());
   const portfolioSnapshots = useMemo<PortfolioSnapshotRow[]>(
     () => (rawSnapshots as unknown as readonly RawSnapshot[]).map(snapshotToRow),
