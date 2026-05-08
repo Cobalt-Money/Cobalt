@@ -39,21 +39,17 @@ export interface InvestmentAccountRow {
 }
 
 /**
- * Subscribes to brokerage data — SnapTrade + Plaid investment accounts merged
- * into source-agnostic lists. Consumers branch on `source` only when they
- * need a provider-specific reconnect/disconnect path.
+ * Brokerage accounts + positions. Activities live in `useBrokerageActivities`
+ * to keep callers (e.g. the home dashboard) from subscribing to ~50-row
+ * activity feeds they never read.
  */
 export function useBrokerage() {
   const [snaptradeAccounts, snaptradeAccountsResult] = useQuery(queries.brokerage.accounts());
   const [snaptradePositions, snaptradePositionsResult] = useQuery(queries.brokerage.positions());
-  const [snaptradeActivities, snaptradeActivitiesResult] = useQuery(
-    queries.brokerage.recentActivities(),
-  );
   const [plaidInvestmentAccounts, plaidInvestmentAccountsResult] = useQuery(
     queries.brokerage.plaidInvestmentAccounts(),
   );
   const [plaidPositions, plaidPositionsResult] = useQuery(queries.brokerage.plaidPositions());
-  const [plaidActivities, plaidActivitiesResult] = useQuery(queries.brokerage.plaidActivities());
 
   const accounts = useMemo<InvestmentAccountRow[]>(() => {
     const sn = (snaptradeAccounts as unknown as readonly BrokerageRowWithRelations[]).map(
@@ -94,6 +90,28 @@ export function useBrokerage() {
     return all.map(holdingToPositionRow);
   }, [snaptradePositions, plaidPositions]);
 
+  const accountsComplete =
+    snaptradeAccountsResult.type === "complete" &&
+    plaidInvestmentAccountsResult.type === "complete";
+  const positionsComplete =
+    accountsComplete &&
+    snaptradePositionsResult.type === "complete" &&
+    plaidPositionsResult.type === "complete";
+
+  return {
+    accounts,
+    accountsComplete,
+    positions,
+    positionsComplete,
+  };
+}
+
+export function useBrokerageActivities() {
+  const [snaptradeActivities, snaptradeActivitiesResult] = useQuery(
+    queries.brokerage.recentActivities(),
+  );
+  const [plaidActivities, plaidActivitiesResult] = useQuery(queries.brokerage.plaidActivities());
+
   const activities = useMemo<ActivityRow[]>(() => {
     const all = [
       ...(snaptradeActivities as unknown as readonly RawInvestmentActivity[]),
@@ -104,24 +122,8 @@ export function useBrokerage() {
       .toSorted((a, b) => (b.tradeDate ?? 0) - (a.tradeDate ?? 0));
   }, [snaptradeActivities, plaidActivities]);
 
-  const accountsComplete =
-    snaptradeAccountsResult.type === "complete" &&
-    plaidInvestmentAccountsResult.type === "complete";
-  const positionsComplete =
-    accountsComplete &&
-    snaptradePositionsResult.type === "complete" &&
-    plaidPositionsResult.type === "complete";
   const activitiesComplete =
-    accountsComplete &&
-    snaptradeActivitiesResult.type === "complete" &&
-    plaidActivitiesResult.type === "complete";
+    snaptradeActivitiesResult.type === "complete" && plaidActivitiesResult.type === "complete";
 
-  return {
-    accounts,
-    accountsComplete,
-    activities,
-    activitiesComplete,
-    positions,
-    positionsComplete,
-  };
+  return { activities, activitiesComplete };
 }
