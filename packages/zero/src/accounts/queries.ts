@@ -42,10 +42,10 @@ export const accountsQueries = {
   /**
    * Historical balance snapshots for the user's Plaid bank-style accounts.
    *
-   * Institution metadata (logo/name/url) is intentionally NOT joined here —
-   * derive it client-side from `bankAccounts` to keep this query a 1-hop
-   * IVM pipeline. Adding the connection→institution chain here ballooned
-   * hydrate time ~5x because every snapshot row re-walked 4 stages.
+   * No `.related()` joins — account/connection/institution metadata comes
+   * from the existing `bankAccounts` subscription, joined client-side by
+   * accountId. Keeping this a 0-relate query collapses the IVM pipeline to
+   * a single stage and matches the portfolio query's hydrate profile.
    */
   bankBalanceSnapshots: defineQuery(
     z.object({ range: SNAPSHOT_RANGE.optional() }).optional(),
@@ -59,8 +59,7 @@ export const accountsQueries = {
         .where("userId", userId)
         .whereExists("account", (acc) =>
           acc.where("source", "plaid").where("type", "IN", PLAID_ACCOUNT_TYPES),
-        )
-        .related("account");
+        );
       const filtered = cutoff === null ? base : base.where("snapshotDate", ">=", cutoff);
       return filtered.orderBy("snapshotDate", "desc").limit(BANK_SNAPSHOT_LIMIT);
     },

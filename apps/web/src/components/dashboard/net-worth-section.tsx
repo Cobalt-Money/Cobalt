@@ -545,12 +545,42 @@ export function NetWorthSection() {
   const [rawPortfolioSnapshots, portfolioResult] = useQuery(
     queries.brokerage.portfolioSnapshots({ range }),
   );
-  // Institution metadata (logo/name/url) for the picker — pulled from the
-  // small bankAccounts subscription, not joined onto every snapshot row.
+  // Account metadata (type/subtype/name + institution chips) — pulled from
+  // the small bankAccounts subscription. Snapshot query stays 0-relate so
+  // its IVM pipeline is a single stage.
   const [rawBankAccounts] = useQuery(queries.accounts.bankAccounts());
-  const allBankSnapshots = rawBankSnapshots as unknown as BankSnapshotRow[];
+  const rawSnapshots = rawBankSnapshots as unknown as Omit<BankSnapshotRow, "account">[];
   const allPortfolioSnapshots = rawPortfolioSnapshots as unknown as PortfolioSnapshotRow[];
   const allBankAccounts = rawBankAccounts as unknown as BankAccountRow[];
+
+  const accountById = useMemo(() => {
+    const m = new Map<string, BankAccountRow>();
+    for (const a of allBankAccounts) {
+      m.set(a.id, a);
+    }
+    return m;
+  }, [allBankAccounts]);
+
+  // Attach account metadata (type/subtype/name) to each snapshot row by
+  // joining with the bankAccounts map. Equivalent to the `.related("account")`
+  // we used to ship server-side, but free of IVM cost.
+  const allBankSnapshots = useMemo<BankSnapshotRow[]>(
+    () =>
+      rawSnapshots.map((s) => {
+        const acc = accountById.get(s.accountId);
+        return {
+          ...s,
+          account: acc
+            ? {
+                name: acc.name ?? null,
+                subtype: acc.subtype ?? null,
+                type: acc.type ?? null,
+              }
+            : null,
+        };
+      }),
+    [rawSnapshots, accountById],
+  );
 
   const isDataComplete = bankResult.type === "complete" && portfolioResult.type === "complete";
 
