@@ -11,8 +11,8 @@ export const Route = createFileRoute("/_auth/home/")({
   loader: ({ context }) => {
     context.zero.run(queries.accounts.bankAccounts());
     context.zero.run(queries.accounts.brokerageAccounts());
-    context.zero.run(queries.accounts.bankBalanceSnapshots());
-    context.zero.run(queries.brokerage.portfolioSnapshots());
+    context.zero.run(queries.accounts.bankBalanceSnapshots({ range: "1Y" }));
+    context.zero.run(queries.brokerage.portfolioSnapshots({ range: "1Y" }));
     context.zero.run(queries.transactions.list());
     context.zero.run(queries.transactions.recurring());
     context.zero.run(queries.brokerage.accounts());

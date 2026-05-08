@@ -1,4 +1,5 @@
 import { defineQuery } from "@rocicorp/zero";
+import { z } from "zod";
 
 import type { Context } from "../auth.js";
 import { zql } from "../schema.js";
@@ -7,6 +8,20 @@ import { NO_MATCH_ID } from "../transactions/lib.js";
 const BANK_SNAPSHOT_LIMIT = 3000;
 const PLAID_ACCOUNT_TYPES = ["depository", "credit", "loan", "investment"] as const;
 const BANK_ACCOUNT_SOURCES = ["plaid", "manual"] as const;
+
+const SNAPSHOT_RANGE = z.enum(["1W", "1M", "1Y", "All"]);
+const RANGE_DAYS: Record<"1W" | "1M" | "1Y", number> = {
+  "1M": 30,
+  "1W": 7,
+  "1Y": 365,
+};
+
+function snapshotCutoff(range: z.infer<typeof SNAPSHOT_RANGE> | undefined): number | null {
+  if (!range || range === "All") {
+    return null;
+  }
+  return Date.now() - RANGE_DAYS[range] * 24 * 60 * 60 * 1000;
+}
 
 /** Accounts domain — `queries.accounts.*` (bank + brokerage lists). */
 export const accountsQueries = {
@@ -24,21 +39,32 @@ export const accountsQueries = {
       .related("balance");
   }),
 
-  /** Historical balance snapshots for the user's Plaid bank-style accounts. */
-  bankBalanceSnapshots: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.snapshot.where("id", NO_MATCH_ID);
-    }
-    return zql.snapshot
-      .where("userId", userId)
-      .whereExists("account", (acc) =>
-        acc.where("source", "plaid").where("type", "IN", PLAID_ACCOUNT_TYPES),
-      )
-      .related("account", (q) => q.related("plaidConnection", (c) => c.related("institution")))
-      .orderBy("snapshotDate", "desc")
-      .limit(BANK_SNAPSHOT_LIMIT);
-  }),
+  /**
+   * Historical balance snapshots for the user's Plaid bank-style accounts.
+   *
+   * Institution metadata (logo/name/url) is intentionally NOT joined here —
+   * derive it client-side from `bankAccounts` to keep this query a 1-hop
+   * IVM pipeline. Adding the connection→institution chain here ballooned
+   * hydrate time ~5x because every snapshot row re-walked 4 stages.
+   */
+  bankBalanceSnapshots: defineQuery(
+    z.object({ range: SNAPSHOT_RANGE.optional() }).optional(),
+    ({ ctx, args }) => {
+      const userId = ctx?.userId;
+      if (!userId) {
+        return zql.snapshot.where("id", NO_MATCH_ID);
+      }
+      const cutoff = snapshotCutoff(args?.range);
+      const base = zql.snapshot
+        .where("userId", userId)
+        .whereExists("account", (acc) =>
+          acc.where("source", "plaid").where("type", "IN", PLAID_ACCOUNT_TYPES),
+        )
+        .related("account");
+      const filtered = cutoff === null ? base : base.where("snapshotDate", ">=", cutoff);
+      return filtered.orderBy("snapshotDate", "desc").limit(BANK_SNAPSHOT_LIMIT);
+    },
+  ),
 
   /** SnapTrade-linked brokerage accounts. */
   brokerageAccounts: defineQuery(({ ctx }: { ctx: Context }) => {
