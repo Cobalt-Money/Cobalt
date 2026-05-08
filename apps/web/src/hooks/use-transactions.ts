@@ -16,6 +16,9 @@ interface Filters {
   bank?: readonly string[];
   tagIds?: readonly string[];
   categoryIds?: readonly string[];
+  query?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export function useTransactions(filters: Filters = {}) {
@@ -31,13 +34,33 @@ export function useTransactions(filters: Filters = {}) {
     }),
   );
 
-  const items = useMemo(
-    () =>
-      rows
-        .map((row) => mapZeroTransactionListRow(row))
-        .filter((item): item is TransactionListItem => item !== null),
-    [rows],
-  );
+  const items = useMemo(() => {
+    const mapped = rows
+      .map((row) => mapZeroTransactionListRow(row))
+      .filter((item): item is TransactionListItem => item !== null);
+    const q = filters.query?.trim().toLowerCase();
+    const from = filters.dateFrom;
+    const to = filters.dateTo;
+    if (!q && !from && !to) {
+      return mapped;
+    }
+    return mapped.filter((item) => {
+      if (q) {
+        const name = (item.name ?? "").toLowerCase();
+        const merchant = (item.merchantName ?? "").toLowerCase();
+        if (!name.includes(q) && !merchant.includes(q)) {
+          return false;
+        }
+      }
+      if (from && item.date < from) {
+        return false;
+      }
+      if (to && item.date > to) {
+        return false;
+      }
+      return true;
+    });
+  }, [rows, filters.query, filters.dateFrom, filters.dateTo]);
 
   return {
     isComplete: result.type === "complete",

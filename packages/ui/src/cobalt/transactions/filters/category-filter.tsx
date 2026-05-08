@@ -17,6 +17,8 @@ export interface CategoryFilterOption {
   id: string;
   name: string;
   groupName?: string | null;
+  groupSystemKey?: string | null;
+  iconKey?: string | null;
 }
 
 interface CategoryFilterProps {
@@ -25,6 +27,8 @@ interface CategoryFilterProps {
   onChange?: (next: string[]) => void;
   /** Show "Manage categories" footer; fires when picked. */
   onManage?: () => void;
+  autoOpen?: boolean;
+  onClose?: () => void;
 }
 
 /**
@@ -37,8 +41,10 @@ export function CategoryFilter({
   selectedIds = [],
   onChange,
   onManage,
+  autoOpen,
+  onClose,
 }: CategoryFilterProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen ?? false);
   const isActive = selectedIds.length > 0;
   const triggerLabel = isActive ? `Categories · ${selectedIds.length}` : "Categories";
 
@@ -56,7 +62,15 @@ export function CategoryFilter({
   }
 
   return (
-    <Popover onOpenChange={setOpen} open={open}>
+    <Popover
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          onClose?.();
+        }
+      }}
+      open={open}
+    >
       <PopoverTrigger
         render={<Toggle variant="subtle" pressed={isActive} size="sm" type="button" />}
       >
