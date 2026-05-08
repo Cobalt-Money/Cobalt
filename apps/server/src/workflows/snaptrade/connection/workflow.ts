@@ -174,7 +174,7 @@ export async function snaptradeHoldingsUpdatedWorkflow(
     await Promise.all([
       upsertAccountDetailsStep(accountId, userCredentials, accountData),
       shouldSyncBalances
-        ? syncAccountBalancesStep(accountId, userCredentials)
+        ? syncAccountBalancesStep(accountId, userCredentials, accountData)
         : Promise.resolve({ success: false }),
       shouldSyncPositions
         ? syncAccountPositionsStep(accountId, userCredentials)
