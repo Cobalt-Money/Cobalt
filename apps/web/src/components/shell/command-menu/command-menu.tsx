@@ -351,8 +351,6 @@ function CommandMenuDialog({
   const inBulkAddTags = activePage === "bulk-add-tags";
   const inBulkRemoveTags = activePage === "bulk-remove-tags";
   const inBulkExport = activePage === "bulk-export";
-  const inBulk =
-    inBulkActions || inBulkSetCategory || inBulkAddTags || inBulkRemoveTags || inBulkExport;
   const inFormPage = isFormPage(activePage);
   const trimmedSearch = search.trim();
 
@@ -885,7 +883,6 @@ function CommandMenuDialog({
           inLinkOrManual && "sm:max-w-xl",
           inAddTag && "sm:max-w-lg",
           inManageTags && "sm:max-w-md",
-          inBulk && "sm:max-w-lg",
         )}
         description="Search for a page or action"
         onOpenChange={handleOpenChange}

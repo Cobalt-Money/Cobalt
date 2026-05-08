@@ -40,11 +40,15 @@ function formatBound(value: number): string {
 export function AmountFilter({
   value,
   onChange,
+  autoOpen,
+  onClose,
 }: {
   value: AmountFilterValue;
   onChange: (next: AmountFilterValue) => void;
+  autoOpen?: boolean;
+  onClose?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen ?? false);
   const { type, min, max } = value;
   const sliderMin = typeof min === "number" ? min : 0;
   const sliderMax = typeof max === "number" ? max : SLIDER_MAX;
@@ -65,7 +69,15 @@ export function AmountFilter({
   }
 
   return (
-    <Popover onOpenChange={setOpen} open={open}>
+    <Popover
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          onClose?.();
+        }
+      }}
+      open={open}
+    >
       <PopoverTrigger
         render={<Toggle variant="subtle" pressed={isActive} size="sm" type="button" />}
       >

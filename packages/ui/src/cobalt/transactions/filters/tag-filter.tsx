@@ -22,11 +22,20 @@ interface TagFilterProps {
   onChange: (next: string[]) => void;
   /** Show "Manage tags" footer; fires when picked. */
   onManage?: () => void;
+  autoOpen?: boolean;
+  onClose?: () => void;
 }
 
 /** Multi-select tag filter pill. Matches `status-filter.tsx` shape. */
-export function TagFilter({ onChange, onManage, options, selectedIds }: TagFilterProps) {
-  const [open, setOpen] = useState(false);
+export function TagFilter({
+  onChange,
+  onManage,
+  options,
+  selectedIds,
+  autoOpen,
+  onClose,
+}: TagFilterProps) {
+  const [open, setOpen] = useState(autoOpen ?? false);
   const isActive = selectedIds.length > 0;
   const triggerLabel = isActive ? `Tags · ${selectedIds.length}` : "Tags";
 
@@ -41,7 +50,15 @@ export function TagFilter({ onChange, onManage, options, selectedIds }: TagFilte
   }
 
   return (
-    <Popover onOpenChange={setOpen} open={open}>
+    <Popover
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          onClose?.();
+        }
+      }}
+      open={open}
+    >
       <PopoverTrigger
         render={<Toggle variant="subtle" pressed={isActive} size="sm" type="button" />}
       >

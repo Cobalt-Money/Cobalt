@@ -37,6 +37,9 @@ export const Route = createFileRoute("/_auth/transactions/")({
     amountMin: search.amountMin,
     bank: search.bank,
     categoryIds: search.categoryIds,
+    dateFrom: search.dateFrom,
+    dateTo: search.dateTo,
+    query: search.query,
     status: search.status,
     tagIds: search.tagIds,
   }),
@@ -56,6 +59,8 @@ function TransactionsListPage() {
         .filter((c) => !c.hidden)
         .map((c) => ({
           groupName: c.group?.name ?? null,
+          groupSystemKey: c.group?.systemKey ?? null,
+          iconKey: c.iconKey ?? null,
           id: c.id,
           name: c.name,
         })),
@@ -89,7 +94,10 @@ function TransactionsListPage() {
     amountMin: search.amountMin,
     bank: search.bank,
     categoryIds: search.categoryIds,
+    dateFrom: search.dateFrom,
+    dateTo: search.dateTo,
     limit,
+    query: search.query,
     status: search.status,
     tagIds: search.tagIds,
   });
@@ -148,6 +156,7 @@ function TransactionsListPage() {
           bankOptions={bankOptions}
           categoryOptions={categoryOptions}
           filters={search}
+          items={items}
           onAddTransaction={openAddTransaction}
           onExport={handleExport}
           onManageCategories={() => navigate({ to: "/transactions/categories" })}
@@ -168,6 +177,9 @@ function TransactionsListPage() {
                   next.categoryIds && next.categoryIds.length > 0
                     ? [...next.categoryIds]
                     : undefined,
+                dateFrom: next.dateFrom || undefined,
+                dateTo: next.dateTo || undefined,
+                query: next.query && next.query.length > 0 ? next.query : undefined,
                 status: next.status && next.status !== "all" ? next.status : undefined,
                 tagIds: next.tagIds && next.tagIds.length > 0 ? [...next.tagIds] : undefined,
               },
