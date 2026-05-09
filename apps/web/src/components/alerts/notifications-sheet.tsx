@@ -1,4 +1,3 @@
-import { env } from "@cobalt-web/env/web";
 import { Button } from "@cobalt-web/ui/components/button";
 import {
   Empty,
@@ -29,6 +28,7 @@ import { toast } from "sonner";
 
 import type { UserAlertRow } from "@/hooks/use-user-alerts";
 import { useUserAlerts } from "@/hooks/use-user-alerts";
+import { alertsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
 
 import { useOnboarding } from "../accounts/onboarding-context";
 
@@ -139,23 +139,13 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
     setBusyId(alert.id);
     try {
       if (alert.source === "plaid") {
-        const res = await fetch(`${env.VITE_SERVER_URL}/api/plaid/link-token/update`, {
-          body: JSON.stringify({
-            mode: "reauth",
-            plaidItemId: alert.sourceId,
-          }),
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
+        const res = await plaidApi["link-token"].update.$post({
+          json: { mode: "reauth", plaidItemId: alert.sourceId },
         });
-        const data = (await res.json()) as {
-          error?: string;
-          hookToken?: string;
-          link_token?: string;
-          runId?: string;
-        };
-        if (!res.ok || !data.link_token || !data.hookToken || !data.runId) {
-          throw new Error(data.error ?? "Could not start reconnect");
+        const data = await res.json();
+        if (!res.ok || !("link_token" in data)) {
+          const errMsg = "error" in data ? data.error : undefined;
+          throw new Error(errMsg ?? "Could not start reconnect");
         }
         sessionRef.current = {
           hookToken: data.hookToken,
@@ -164,21 +154,13 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
         };
         setPlaidToken(data.link_token);
       } else if (alert.source === "snaptrade") {
-        const res = await fetch(`${env.VITE_SERVER_URL}/api/snaptrade/generate-connection-portal`, {
-          body: JSON.stringify({
-            broker: "",
-            reconnectAuthorizationId: alert.sourceId,
-          }),
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
+        const res = await snaptradeApi.generateConnectionPortal.$post({
+          json: { broker: "", reconnectAuthorizationId: alert.sourceId },
         });
-        const data = (await res.json()) as {
-          error?: string;
-          redirectURI?: string;
-        };
-        if (!res.ok || !data.redirectURI) {
-          throw new Error(data.error ?? "Could not open reconnect");
+        const data = await res.json();
+        if (!res.ok || !("redirectURI" in data) || !data.redirectURI) {
+          const errMsg = "error" in data ? data.error : undefined;
+          throw new Error(errMsg ?? "Could not open reconnect");
         }
         window.location.assign(data.redirectURI);
       }
@@ -192,14 +174,11 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
   const handleDismiss = async (alert: UserAlertRow) => {
     setBusyId(alert.id);
     try {
-      const res = await fetch(
-        `${env.VITE_SERVER_URL}/api/alerts/${encodeURIComponent(alert.id)}/dismiss`,
-        { credentials: "include", method: "POST" },
-      );
+      const res = await alertsApi[":id"].dismiss.$post({
+        param: { id: alert.id },
+      });
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as {
-          error?: string;
-        };
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error ?? "Dismiss failed");
       }
     } catch (error) {
