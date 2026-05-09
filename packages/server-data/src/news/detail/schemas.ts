@@ -2,17 +2,12 @@ import { eventArticles, financialEvents } from "@cobalt-web/db/schema/news";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 
+import { newsSourceSchema } from "../events/schemas.js";
+
 // ── Params ─────────────────────────────────────────────────────────
 
 export const eventIdParamSchema = z.object({
   eventId: z.uuid(),
-});
-
-// ── Source ──────────────────────────────────────────────────────────
-
-const sourceSchema = z.object({
-  logo: z.string(),
-  name: z.string(),
 });
 
 // ── Article ────────────────────────────────────────────────────────
@@ -34,7 +29,8 @@ export const eventArticleSchema = eventArticleRowSchema
     date: z.string().nullable(),
     tickers: z.array(z.string()).nullable(),
     topics: z.array(z.string()).nullable(),
-  });
+  })
+  .openapi("EventArticle");
 
 // ── Video ──────────────────────────────────────────────────────────
 
@@ -48,7 +44,8 @@ export const eventVideoSchema = eventArticleRowSchema
   })
   .extend({
     date: z.string().nullable(),
-  });
+  })
+  .openapi("EventVideo");
 
 // ── Detailed Event ─────────────────────────────────────────────────
 
@@ -68,11 +65,12 @@ export const detailedEventSchema = financialEventRowSchema
     articles: z.array(eventArticleSchema),
     date: z.string().nullable(),
     keyPoints: z.array(z.string()).nullable(),
-    sources: z.array(sourceSchema),
+    sources: z.array(newsSourceSchema),
     tickers: z.array(z.string()).nullable(),
     topics: z.array(z.string()).nullable(),
     videos: z.array(eventVideoSchema),
-  });
+  })
+  .openapi("DetailedFinancialEvent");
 
 // ── Responses ──────────────────────────────────────────────────────
 

@@ -100,16 +100,16 @@ export interface MergedBrokerageActivity {
 
 export interface EnhancedBrokerageAccount {
   accountDetails: {
-    balance: number | string | null;
+    balance: string | null;
     id: string;
     lastSync: string | null;
   } | null;
-  accountStatus: string;
-  accountType: string;
+  accountStatus: string | null;
+  accountType: string | null;
   balanceData: unknown;
   balances: {
-    buyingPower: number | string | null;
-    cash: number | string | null;
+    buyingPower: string | null;
+    cash: string | null;
     currencyCode: string | null;
     currencyName: string | null;
     id: string;
@@ -118,8 +118,8 @@ export interface EnhancedBrokerageAccount {
   cashRestrictions: unknown;
   createdDate: string;
   id: string;
-  institutionName: string;
-  name: string;
+  institutionName: string | null;
+  name: string | null;
   userId: string;
 }
 

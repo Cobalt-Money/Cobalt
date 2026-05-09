@@ -12,10 +12,12 @@ export const eventsQuerySchema = z.object({
 
 // ── Response ──────────────────────────────────────────────────────
 
-const sourceSchema = z.object({
-  logo: z.string(),
-  name: z.string(),
-});
+export const newsSourceSchema = z
+  .object({
+    logo: z.string(),
+    name: z.string(),
+  })
+  .openapi("NewsSource");
 
 const financialEventRowSchema = createSelectSchema(financialEvents);
 
@@ -27,13 +29,14 @@ export const mappedFinancialEventSchema = financialEventRowSchema
     imageUrl: z.string(),
     link: z.string(),
     publishedAt: z.string(),
-    sources: z.array(sourceSchema),
+    sources: z.array(newsSourceSchema),
     summary: z.string(),
     tickers: z.array(z.string()).optional(),
     title: z.string(),
     topics: z.array(z.string()).optional(),
     type: z.enum(["featured", "grid"]),
-  });
+  })
+  .openapi("FinancialEvent");
 
 export const eventsResponseSchema = z.object({
   events: z.array(mappedFinancialEventSchema),
