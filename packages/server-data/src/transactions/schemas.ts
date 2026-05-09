@@ -82,7 +82,6 @@ export const transactionListItemSchema = transactionListItemRowSchema
     name: true,
     pending: true,
     source: true,
-    userOverrideLocation: true,
     website: true,
   })
   .extend({
@@ -177,9 +176,8 @@ export const spendingQuerySchema = z.object({
 /**
  * Sparse partial update for a transaction (RFC 7396 semantics):
  * - Omit a field → unchanged.
- * - Non-null value → update column, add to lockedFields, append transaction_edit row.
+ * - Non-null value → update column(s), add to lockedFields, append transaction_edit row.
  * - `null` → restore original (from transaction_edit old_value), remove from lockedFields.
- * Location is still an override-only field (not tracked in transaction_edit).
  */
 export const transactionPatchBodySchema = z
   .object({
@@ -190,13 +188,14 @@ export const transactionPatchBodySchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .nullable()
       .optional(),
+    /** User-edited merchant location. Writes to flat lat/lon/address cols; `null` resets to original Plaid value. */
+    location: locationJsonSchema.nullable().optional(),
     /** Plaid-normalized merchant name. `null` resets to original Plaid value. */
     merchantName: z.string().min(1).max(255).nullable().optional(),
     name: z.string().min(1).nullable().optional(),
     notes: notesMarkdownSchema.nullable().optional(),
     /** Full id-array replace of tags on the transaction. Pass `[]` to clear. */
     tags: z.array(z.uuid()).optional(),
-    userOverrideLocation: locationJsonSchema.nullable().optional(),
     /**
      * Merchant website. Accepts bare domain (`starbucks.com`) or full URL
      * (`https://www.starbucks.com/`); normalized to bare lowercase domain

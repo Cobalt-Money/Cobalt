@@ -107,7 +107,6 @@ export async function getUserTransactions(userId: string, params: TransactionLis
       region: transaction.region,
       source: transaction.source,
       storeNumber: transaction.storeNumber,
-      userOverrideLocation: transaction.userOverrideLocation,
       website: transaction.website,
     })
     .from(transaction)
@@ -188,7 +187,6 @@ export async function getUserTransactions(userId: string, params: TransactionLis
         source: row.source,
         storeNumber: row.storeNumber,
         tagIds: tagsByTx.get(row.id) ?? [],
-        userOverrideLocation: row.userOverrideLocation,
         website: row.website,
       },
     }),

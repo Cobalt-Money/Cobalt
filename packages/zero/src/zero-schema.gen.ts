@@ -4969,16 +4969,6 @@ const transactionTable = {
       >,
       serverName: "user_id",
     },
-    userOverrideLocation: {
-      type: "json",
-      optional: true,
-      customType: null as unknown as CustomType<
-        typeof drizzleSchema,
-        "transaction",
-        "userOverrideLocation"
-      >,
-      serverName: "user_override_location",
-    },
     website: {
       type: "string",
       optional: true,

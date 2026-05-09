@@ -29,7 +29,7 @@ export const COBALT_SDK_DESCRIPTION = [
   "    - cobalt.tags.setOnTransaction({ transactionId, tagIds }) — full replace; pass [] to clear",
   "  Transactions (user-scoped):",
   "    - cobalt.transactions.list({ startDate?, endDate?, primaryCategory?, accountType?, minAmount?, maxAmount?, searchQuery?, pendingFilter?, page?, pageSize? })",
-  "    - cobalt.transactions.update({ transactionId, patch: { name?, date?, notes?, categoryId?, tags?, merchantName?, website?, userOverrideLocation? } }) — patch only, cannot create. Pass `null` for name/date/notes/categoryId/merchantName to restore the original Plaid value. `website` accepts a bare domain or full URL and is normalized to a bare lowercase domain. patch.tags is a FULL REPLACE of the tag set; to add or remove a single tag use cobalt.tags.addToTransaction / removeFromTransaction instead.",
+  "    - cobalt.transactions.update({ transactionId, patch: { name?, date?, notes?, categoryId?, tags?, merchantName?, website?, location? } }) — patch only, cannot create. Pass `null` for name/date/notes/categoryId/merchantName/location to restore the original Plaid value. `location` is a composite { address, city, region, postal_code, country, lat, lon, store_number } object. `website` accepts a bare domain or full URL and is normalized to a bare lowercase domain. patch.tags is a FULL REPLACE of the tag set; to add or remove a single tag use cobalt.tags.addToTransaction / removeFromTransaction instead.",
   "  Research (global market data):",
   "    - cobalt.research.quote({ symbol })",
   "    - cobalt.research.overview({ symbol })",
