@@ -11,7 +11,7 @@ import type { SQL } from "drizzle-orm";
 import type { z } from "zod";
 
 import { toDateString } from "./lib.js";
-import type { transactionListQuerySchema } from "./schemas.js";
+import type { TransactionListItem, transactionListQuerySchema } from "./schemas.js";
 import { toTransactionListItem } from "./to-transaction-list-item.js";
 
 export type TransactionListQuery = z.infer<typeof transactionListQuerySchema>;
@@ -216,7 +216,7 @@ export async function getUserTransactions(userId: string, params: TransactionLis
         date: row.date,
         id: row.id,
         lat: row.lat,
-        lockedFields: row.lockedFields,
+        lockedFields: row.lockedFields as TransactionListItem["lockedFields"],
         logoUrl: row.logoUrl,
         lon: row.lon,
         merchantName: row.merchantName,

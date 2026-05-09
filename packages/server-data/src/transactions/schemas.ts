@@ -3,6 +3,7 @@ import { category } from "@cobalt-web/db/schema/accounts/banking/categories/cate
 import { categoryGroup } from "@cobalt-web/db/schema/accounts/banking/categories/category-group";
 import { recurring } from "@cobalt-web/db/schema/accounts/banking/transactions/recurring";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
+import { LOCK_KEY_GUARDED_COLUMNS } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction-edit";
 import {
   locationJsonSchema as _locationJsonSchema,
   recurringStreamJsonbSelectRefinements,
@@ -23,9 +24,24 @@ export const locationJsonSchema = _locationJsonSchema.openapi("TransactionLocati
 export const transactionCounterpartySchema =
   _transactionCounterpartyJsonSchema.openapi("TransactionCounterparty");
 
+/**
+ * Per-field user-edit lock keys. Mirrors `LOCK_KEY_GUARDED_COLUMNS` in the DB
+ * schema; presence of a key means subsequent provider syncs must not overwrite
+ * the corresponding column(s).
+ */
+const LOCK_KEYS = Object.keys(LOCK_KEY_GUARDED_COLUMNS) as [
+  keyof typeof LOCK_KEY_GUARDED_COLUMNS,
+  ...(keyof typeof LOCK_KEY_GUARDED_COLUMNS)[],
+];
+
+export const transactionLockedFieldsSchema = z
+  .array(z.enum(LOCK_KEYS))
+  .openapi("TransactionLockedFields");
+
 /** `transaction` row fields exposed on the list (see `getUserTransactions`). */
 const transactionListItemRowSchema = createSelectSchema(transaction, {
   ...transactionJsonbSelectRefinements,
+  lockedFields: transactionLockedFieldsSchema,
 });
 
 /** Joined `financial_account` columns (`account.name` / `account.type` in the mapper). */
