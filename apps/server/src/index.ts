@@ -182,7 +182,7 @@ const app = new Hono()
   .get(
     "/docs",
     Scalar({
-      hideModels: true,
+      hideModels: false,
       pageTitle: "Cobalt API",
       sources: [
         { title: "Cobalt API", url: "/openapi.json" },
