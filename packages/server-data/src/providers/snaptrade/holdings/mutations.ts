@@ -1,7 +1,7 @@
 import { db } from "@cobalt-web/db";
 import { holding } from "@cobalt-web/db/schema/accounts/investments/holding";
 import { security } from "@cobalt-web/db/schema/accounts/investments/security";
-import { sql } from "drizzle-orm";
+import { and, eq, lt, sql } from "drizzle-orm";
 import type { AccountHoldingsAccount } from "snaptrade-typescript-sdk";
 
 import { lookupFinancialAccountsBySnaptradeIds } from "../accounts/queries.js";
@@ -20,7 +20,7 @@ export async function upsertAccountPositions(
   appUserId: string,
   positionsData: AccountHoldingsAccount["positions"],
 ): Promise<void> {
-  if (!positionsData || !Array.isArray(positionsData) || positionsData.length === 0) {
+  if (!positionsData || !Array.isArray(positionsData)) {
     return;
   }
 
@@ -31,6 +31,8 @@ export async function upsertAccountPositions(
       `financial_account not found for SnapTrade account ${snaptradeAccountId} (user ${appUserId})`,
     );
   }
+
+  const syncStart = new Date();
 
   // Step 1: extract security rows (one per position) and upsert.
   const securityRows = positionsData
@@ -65,7 +67,7 @@ export async function upsertAccountPositions(
 
   // Step 3: build holding rows, upsert.
   const holdingRows = positionsData
-    .map((p) => buildHoldingRow(p as AnyRecord, acct.id, acct.userId, securityMap))
+    .map((p) => buildHoldingRow(p as AnyRecord, acct.id, acct.userId, securityMap, syncStart))
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
   for (let i = 0; i < holdingRows.length; i += BATCH_SIZE) {
@@ -78,6 +80,7 @@ export async function upsertAccountPositions(
           averagePrice: sql`excluded.average_price`,
           currency: sql`excluded.currency`,
           institutionPrice: sql`excluded.institution_price`,
+          institutionValue: sql`excluded.institution_value`,
           isQuotable: sql`excluded.is_quotable`,
           isTradable: sql`excluded.is_tradable`,
           lastSyncAt: sql`excluded.last_sync_at`,
@@ -88,6 +91,20 @@ export async function upsertAccountPositions(
         target: [holding.accountId, holding.securityId],
       });
   }
+
+  // Step 4: prune holdings not present in this sync. Scoped to this account +
+  // source so partial position payloads don't leave ghost rows that distort
+  // UI sums. Safe because positionsData is the broker's full picture for
+  // this account on this sync.
+  await db
+    .delete(holding)
+    .where(
+      and(
+        eq(holding.accountId, acct.id),
+        eq(holding.source, "snaptrade"),
+        lt(holding.lastSyncAt, syncStart),
+      ),
+    );
 }
 
 function extractSecurityRow(position: AnyRecord) {
@@ -130,6 +147,7 @@ function buildHoldingRow(
   accountId: string,
   userId: string,
   securityMap: Map<string, string>,
+  lastSyncAt: Date,
 ) {
   const resolved = resolvePositionNestedData(position);
   const { symbolData, currencyData } = resolved;
@@ -142,6 +160,18 @@ function buildHoldingRow(
     return null;
   }
 
+  const units = position.units as number | null | undefined;
+  const price = position.price as number | null | undefined;
+  // SnapTrade Position has no scalar market-value field; compute units * price
+  // so UI sums aren't NULL. Skip if either factor is missing/non-finite.
+  let institutionValue: string | null = null;
+  if (typeof units === "number" && typeof price === "number") {
+    const v = units * price;
+    if (Number.isFinite(v)) {
+      institutionValue = v.toFixed(4);
+    }
+  }
+
   return {
     accountId,
     averagePrice: toDecimalString(position.average_purchase_price as number) || null,
@@ -150,6 +180,7 @@ function buildHoldingRow(
       (position.currency_code as string | undefined) ??
       null,
     institutionPrice: toDecimalString(position.price as number) || null,
+    institutionValue,
     isQuotable:
       (position.is_quotable as boolean | undefined) ??
       ((symbolData as AnyRecord).is_quotable as boolean | undefined) ??
@@ -158,7 +189,7 @@ function buildHoldingRow(
       (position.is_tradable as boolean | undefined) ??
       ((symbolData as AnyRecord).is_tradable as boolean | undefined) ??
       true,
-    lastSyncAt: new Date(),
+    lastSyncAt,
     openPnl: toDecimalString(position.open_pnl as number) || null,
     quantity: toDecimalString(position.units as number) || "0",
     securityId,
