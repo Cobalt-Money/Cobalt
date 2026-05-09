@@ -17,7 +17,7 @@ import {
 import { user } from "../../../users/auth/auth";
 import { financialAccount } from "../../account";
 import { category } from "../categories/category";
-import type { CounterpartiesArrayJson, LocationJson } from "./zod";
+import type { CounterpartiesArrayJson } from "./zod";
 
 export const transactionSource = pgEnum("transaction_source", ["plaid", "manual"]);
 
@@ -98,8 +98,6 @@ export const transaction = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    /** User-edited location override; wins over flat lat/lon/address columns. */
-    userOverrideLocation: jsonb("user_override_location").$type<LocationJson | null>(),
     /** Plaid merchant website. */
     website: text("website"),
     /** Fields the user has explicitly edited; Plaid sync skips these on upsert. */

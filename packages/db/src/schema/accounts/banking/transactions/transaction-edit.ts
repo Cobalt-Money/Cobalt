@@ -3,6 +3,8 @@ import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-or
 import { user } from "../../../users/auth/auth";
 import { transaction } from "./transaction";
 
+type TransactionColumn = keyof typeof transaction.$inferSelect;
+
 export const transactionEditActor = pgEnum("transaction_edit_actor", ["system", "user"]);
 
 /**
@@ -22,6 +24,27 @@ export const TRANSACTION_EDIT_FIELDS = [
   "tags",
 ] as const;
 export type TransactionEditFieldName = (typeof TRANSACTION_EDIT_FIELDS)[number];
+
+/**
+ * Single source of truth: lock-key → `transaction` columns the lock guards.
+ * Plaid upsert reads this to gate `excluded.X` writes; mutators read it
+ * (transitively, via lock-key string) to know what to write+lock together.
+ *
+ * Adding a new editable field MUST add an entry here — `satisfies` enforces
+ * exhaustiveness over `TransactionEditFieldName`. `tags` and `amount` have no
+ * guarded transaction-table cols (tags via join table; amount immutable from
+ * Plaid for posted txns, manual-only edits).
+ */
+export const LOCK_KEY_GUARDED_COLUMNS = {
+  amount: [],
+  category: ["categoryId"],
+  date: ["date"],
+  location: ["address", "city", "country", "lat", "lon", "postalCode", "region", "storeNumber"],
+  merchantName: ["merchantName", "website"],
+  name: ["name"],
+  notes: ["notes"],
+  tags: [],
+} as const satisfies Record<TransactionEditFieldName, readonly TransactionColumn[]>;
 
 export const transactionEdit = pgTable(
   "transaction_edit",

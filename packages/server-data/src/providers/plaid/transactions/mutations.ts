@@ -1,8 +1,10 @@
 import { db } from "@cobalt-web/db";
 import { recurring } from "@cobalt-web/db/schema/accounts/banking/transactions/recurring";
 import { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
+import { LOCK_KEY_GUARDED_COLUMNS } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction-edit";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { and, eq, inArray, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import type { Transaction, TransactionStream } from "plaid";
 
 import { lookupCategoryIdsBySystemKey } from "../../../transactions/categories/lookup.js";
@@ -14,6 +16,82 @@ import { transactionToRecord } from "./lib.js";
 import type { UserOverrides } from "./queries.js";
 
 const externalIdNotNullWhere = sql`external_id IS NOT NULL`;
+
+/**
+ * Inverse of `LOCK_KEY_GUARDED_COLUMNS`: column name → lock key that gates it.
+ * Built once at module load. Adding a new lock-guarded column requires
+ * updating `LOCK_KEY_GUARDED_COLUMNS` in the schema package.
+ */
+const COLUMN_TO_LOCK_KEY: Partial<Record<keyof typeof transactionTable.$inferSelect, string>> =
+  (() => {
+    const out: Record<string, string> = {};
+    for (const [lockKey, cols] of Object.entries(LOCK_KEY_GUARDED_COLUMNS)) {
+      for (const col of cols) {
+        out[col] = lockKey;
+      }
+    }
+    return out;
+  })();
+
+/**
+ * Build the upsert `set` clause for `persistTransactions`. For every Plaid-
+ * managed column, gates the write on `lockedFields ? '<lockKey>'` if the
+ * column is guarded. Otherwise plain `excluded.X`. Driven entirely by
+ * `LOCK_KEY_GUARDED_COLUMNS`, so adding a new lock automatically extends
+ * gating without further edits here.
+ */
+function buildPlaidUpsertSet(): Record<string, SQL> {
+  /**
+   * Plaid-overwritable columns on `transaction`. Excludes: target keys
+   * (source, externalId, id), user-controlled columns (notes, excluded,
+   * lockedFields), audit columns (createdAt, userId), updatedAt (set to
+   * now()).
+   */
+  const plaidWritableColumns: (keyof typeof transactionTable.$inferSelect)[] = [
+    "accountId",
+    "accountOwner",
+    "address",
+    "amount",
+    "authorizedDate",
+    "categoryId",
+    "checkNumber",
+    "city",
+    "counterparties",
+    "country",
+    "currency",
+    "date",
+    "lat",
+    "logoUrl",
+    "lon",
+    "merchantEntityId",
+    "merchantName",
+    "name",
+    "paymentChannel",
+    "pending",
+    "pendingTransactionId",
+    "postalCode",
+    "region",
+    "storeNumber",
+    "transactionCode",
+    "website",
+  ];
+
+  const set: Record<string, SQL> = {};
+  for (const col of plaidWritableColumns) {
+    const snake = transactionTable[col].name;
+    const lockKey = COLUMN_TO_LOCK_KEY[col];
+    set[col] = lockKey
+      ? sql.raw(
+          `CASE WHEN "transaction"."locked_fields" ? '${lockKey}' THEN "transaction"."${snake}" ELSE excluded."${snake}" END`,
+        )
+      : sql.raw(`excluded."${snake}"`);
+  }
+  set.updatedAt = sql`now()`;
+  return set;
+}
+
+/** Exported for tests; otherwise treat as module-private. */
+export const PLAID_UPSERT_SET = buildPlaidUpsertSet();
 
 export async function setTransactionsCursor(
   plaidItemId: string,
@@ -104,36 +182,7 @@ export async function persistTransactions(transactions: Transaction[]): Promise<
     .insert(transactionTable)
     .values(records)
     .onConflictDoUpdate({
-      set: {
-        accountId: sql`excluded.account_id`,
-        accountOwner: sql`excluded.account_owner`,
-        address: sql`excluded.address`,
-        amount: sql`excluded.amount`,
-        authorizedDate: sql`excluded.authorized_date`,
-        // Respect lockedFields: only overwrite if user has not locked the field.
-        categoryId: sql`CASE WHEN ${transactionTable.lockedFields} ? 'category' THEN ${transactionTable.categoryId} ELSE excluded.category_id END`,
-        checkNumber: sql`excluded.check_number`,
-        city: sql`excluded.city`,
-        counterparties: sql`excluded.counterparties`,
-        country: sql`excluded.country`,
-        currency: sql`excluded.currency`,
-        date: sql`CASE WHEN ${transactionTable.lockedFields} ? 'date' THEN ${transactionTable.date} ELSE excluded.date END`,
-        lat: sql`excluded.lat`,
-        logoUrl: sql`excluded.logo_url`,
-        lon: sql`excluded.lon`,
-        merchantEntityId: sql`excluded.merchant_entity_id`,
-        merchantName: sql`excluded.merchant_name`,
-        name: sql`CASE WHEN ${transactionTable.lockedFields} ? 'name' THEN ${transactionTable.name} ELSE excluded.name END`,
-        paymentChannel: sql`excluded.payment_channel`,
-        pending: sql`excluded.pending`,
-        pendingTransactionId: sql`excluded.pending_transaction_id`,
-        postalCode: sql`excluded.postal_code`,
-        region: sql`excluded.region`,
-        storeNumber: sql`excluded.store_number`,
-        transactionCode: sql`excluded.transaction_code`,
-        updatedAt: sql`now()`,
-        website: sql`excluded.website`,
-      },
+      set: PLAID_UPSERT_SET,
       target: [transactionTable.source, transactionTable.externalId],
       targetWhere: externalIdNotNullWhere,
     });
@@ -177,14 +226,27 @@ export async function applyPendingOverrides(
       continue;
     }
 
+    /**
+     * Forward-port every guarded column whose lock key the user actually
+     * locked on the pending row. Driven by `LOCK_KEY_GUARDED_COLUMNS` so a
+     * new editable field auto-extends both the pending → posted handoff
+     * (here) and the upsert gate (in `persistTransactions`).
+     */
+    const carry: Partial<typeof transactionTable.$inferInsert> = {};
+    for (const [lockKey, cols] of Object.entries(LOCK_KEY_GUARDED_COLUMNS)) {
+      if (!override.lockedFields.includes(lockKey)) {
+        continue;
+      }
+      for (const col of cols) {
+        (carry as Record<string, unknown>)[col] = override[col as keyof typeof override];
+      }
+    }
+
     await db
       .update(transactionTable)
       .set({
-        categoryId: override.lockedFields.includes("category")
-          ? (override.categoryId ?? undefined)
-          : undefined,
+        ...carry,
         lockedFields: override.lockedFields,
-        name: override.lockedFields.includes("name") ? override.name : undefined,
         updatedAt: new Date(),
       })
       .where(

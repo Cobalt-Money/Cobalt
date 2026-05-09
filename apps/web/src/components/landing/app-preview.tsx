@@ -128,7 +128,6 @@ function makeTx(
     plaidAccountId: "plaid-acc-1",
     source: "plaid",
     tagIds: [],
-    userOverrideLocation: null,
     website: null,
     ...overrides,
   };
