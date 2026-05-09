@@ -41,7 +41,7 @@ export interface TransactionRowInput {
   postalCode: string | null | undefined;
   country: string | null | undefined;
   lat: number | null | undefined;
-  lockedFields?: string[] | null;
+  lockedFields?: TransactionListItem["lockedFields"] | null;
   lon: number | null | undefined;
   storeNumber: string | null | undefined;
   logoUrl: string | null | undefined;
