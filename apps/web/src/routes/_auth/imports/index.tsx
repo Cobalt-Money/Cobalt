@@ -57,8 +57,8 @@ function ImportsUploadPage() {
         <CardHeader>
           <CardTitle>Import transactions</CardTitle>
           <CardDescription>
-            Upload a Mint CSV export. We&apos;ll parse it, let you map source accounts to your
-            Cobalt accounts, then commit non-duplicate rows.
+            Upload a CSV export from any source. Cobalt&apos;s AI infers column mapping; you confirm
+            accounts and categories, then commit non-duplicate rows.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -72,7 +72,7 @@ function ImportsUploadPage() {
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 type="file"
               />
-              <p className="text-muted-foreground text-xs">Max 5 MB. Mint format only.</p>
+              <p className="text-muted-foreground text-xs">Max 50 MB / 500k rows. CSV only.</p>
             </div>
             <div className="flex justify-end">
               <Button disabled={!file || busy} type="submit">

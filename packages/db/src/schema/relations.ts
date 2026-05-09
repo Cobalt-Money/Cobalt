@@ -12,6 +12,9 @@ import { transactionTag } from "./accounts/banking/tags/transaction-tag";
 import { recurring } from "./accounts/banking/transactions/recurring";
 import { transaction } from "./accounts/banking/transactions/transaction";
 import { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
+import { accountMappingCache } from "./imports/account-mapping-cache";
+import { categoryMappingCache } from "./imports/category-mapping-cache";
+import { csvMappingCache } from "./imports/csv-mapping-cache";
 import { importJob } from "./imports/import-job";
 import { importStagedTransaction } from "./imports/import-staged-transaction";
 import { holding } from "./accounts/investments/holding";
@@ -40,11 +43,14 @@ import { subscription } from "./users/subscriptions/stripe";
 /** Tables referenced by relational queries — must cover every `r.*` use in `defineRelations`. */
 const schema = {
   account,
+  accountMappingCache,
   balance,
   category,
   categoryGroup,
+  categoryMappingCache,
   chats,
   creditLiability,
+  csvMappingCache,
   eventArticles,
   feedback,
   financialAccount,

@@ -44,6 +44,7 @@
     "hono": "^4.8.2",
     "jose": "^6.1.0",
     "mathjs": "^15.1.0",
+    "p-limit": "^6.2.0",
     "pg": "^8.16.3",
     "snaptrade-typescript-sdk": "^9.0.160",
     "uuid": "^14.0.0",

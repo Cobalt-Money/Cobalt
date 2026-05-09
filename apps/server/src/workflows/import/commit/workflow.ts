@@ -1,12 +1,21 @@
-import { commitImportJobStep, failCommitStep } from "./steps";
+import {
+  applyCreatesStep,
+  applyRenamesStep,
+  chunkedInsertStep,
+  failCommitStep,
+  loadJobStep,
+  markCommittedStep,
+} from "./steps";
 import type { CommitWorkflowParams, CommitWorkflowResult } from "./steps";
 
 /**
- * SRI-317 commit workflow.
+ * SRI-321 commit workflow.
  *
- * Triggered when the user confirms the preview screen. Inserts non-duplicate
- * staged rows into `transaction` and finalizes the job. On failure, marks the
- * job `failed` and surfaces the error to the UI via `errorMessage`.
+ * Five durable steps. Each `step()` is a checkpoint — a crash mid-insert
+ * resumes from the last completed chunk because the per-chunk progress is
+ * persisted, and `(userId, importHash)` UNIQUE makes re-insert idempotent.
+ *
+ *   loadJob → applyRenames → applyCreates → chunkedInsert → markCommitted
  */
 export async function importCommitWorkflow(
   params: CommitWorkflowParams,
@@ -14,11 +23,17 @@ export async function importCommitWorkflow(
   "use workflow";
 
   try {
-    const result = await commitImportJobStep(params);
+    const loaded = await loadJobStep(params);
+    await applyRenamesStep(params, loaded);
+    const { resolvedCategoryMap } = await applyCreatesStep(params, loaded);
+    const result = await chunkedInsertStep(params, loaded, resolvedCategoryMap);
+    await markCommittedStep(params, result);
     return {
-      committedCount: result.committed,
+      cancelled: result.cancelled,
+      duplicates: result.duplicates,
+      excluded: result.excluded,
+      imported: result.imported,
       jobId: params.jobId,
-      skippedCount: result.skipped,
       success: true,
     };
   } catch (error) {

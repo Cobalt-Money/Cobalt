@@ -1,4 +1,5 @@
 import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 import { user } from "../users/auth/auth";
 
@@ -6,32 +7,129 @@ import { user } from "../users/auth/auth";
 export const importSource = pgEnum("import_source", ["csv"]);
 
 /**
- * Pipeline state. Linear progression: uploaded → parsed → mapped → committed.
- * `failed` is terminal from any prior state.
+ * Pipeline state.
+ *   uploaded → column_mapped → account_mapped → category_mapped → committing → committed
+ *                                                                          ↘ failed
+ *                                                                          ↘ cancelled
  */
 export const importJobStatus = pgEnum("import_job_status", [
   "uploaded",
-  "parsed",
-  "mapped",
+  "column_mapped",
+  "account_mapped",
+  "category_mapped",
+  "committing",
   "committed",
   "failed",
+  "cancelled",
 ]);
+
+/** AI-inferred CSV column → Cobalt-field mapping persisted on the job after Step 2 confirm. */
+export interface CsvMapping {
+  /** Date column + parse format. `kind: "missing"` falls back to `defaultDate`. */
+  date: { kind: "column"; column: string; format: string } | { kind: "missing" };
+  /** Amount carrier: signed single column, split debit/credit, or magnitude+typeColumn. */
+  amount:
+    | {
+        kind: "signed";
+        column: string;
+        signConvention: "outflow_negative" | "outflow_positive";
+        parensNegative: boolean;
+      }
+    | { kind: "split"; outflowColumn: string; inflowColumn: string }
+    | {
+        kind: "magnitude_type";
+        magnitudeColumn: string;
+        typeColumn: string;
+        debitValues: string[];
+      };
+  merchant: { column: string };
+  account: { column: string } | null;
+  category: { column: string } | null;
+  notes: { column: string } | null;
+  originalDescription: { column: string } | null;
+  tags: { column: string; delimiter: string } | null;
+  /** Optional rule for marking transfers — applied row-wise post-parse. */
+  transferRule:
+    | { kind: "category_match"; values: string[] }
+    | { kind: "type_match"; column: string; values: string[] }
+    | { kind: "merchant_prefix"; prefixes: string[] }
+    | null;
+  excludeRule: { column: string; trueValues: string[] } | null;
+  confidence: number;
+}
+
+/** Step 3 output: source-account-name (or single-shot) → Cobalt accountId resolution. */
+export type AccountResolution =
+  | { kind: "single"; accountId: string }
+  | { kind: "perLabel"; map: Record<string, string | "skip"> };
+
+/** Step 4 output: source category → Cobalt categoryId, plus pending creates/renames applied at commit. */
+export interface CategoryResolution {
+  /** sourceLabel → categoryId (uncategorized fallback already resolved). */
+  map: Record<string, string>;
+  pendingCreates: { color?: string; iconKey: string; name: string; sourceLabel: string }[];
+  pendingRenames: { categoryId: string; newName: string }[];
+}
+
+/** Live progress payload, written per chunk during the commit workflow. */
+export interface ImportProgress {
+  done: number;
+  message?: string;
+  startedAt: string;
+  step: "loading" | "applying_renames" | "applying_creates" | "inserting" | "finalizing";
+  total: number;
+  updatedAt: string;
+}
+
+/** Terminal counts surfaced to the post-commit screen. */
+export interface ImportSummary {
+  duplicates: number;
+  excluded: number;
+  failed: number;
+  imported: number;
+  /** Per-row reject reasons captured during chunked insert. Capped to 50 for UI. */
+  rejected: { row: number; reason: string }[];
+}
 
 export const importJob = pgTable(
   "import_job",
   {
-    /** {sourceAccountName: cobaltAccountId}; populated at the mapping stage. */
-    accountMap: jsonb("account_map").$type<Record<string, string>>(),
+    /**
+     * Step 3 output. Replaces the legacy `accountMap` field. JSON shape:
+     * `{ kind: "single", accountId } | { kind: "perLabel", map: {label: id|"skip"} }`.
+     */
+    accountResolution: jsonb("account_resolution").$type<AccountResolution>(),
+    /** Cancellation timestamp; workflow checks between chunks and exits keeping partial inserts. */
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    /** Step 4 output: resolved map + pending creates/renames applied at commit. */
+    categoryResolution: jsonb("category_resolution").$type<CategoryResolution>(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     /** Set when status=failed; nullable otherwise. */
     errorMessage: text("error_message"),
-    /** Blob storage key (Vercel Blob path); cleared after `committed`. */
+    /** SHA256 of upload bytes. Backs the 30-day duplicate-import guard. */
+    fileHash: text("file_hash"),
+    /** Vercel Blob URL for the uploaded CSV; cleared after `committed`. */
     fileKey: text("file_key"),
+    /** Header row captured at upload, used by Step 2 UI without blob fetch. */
+    headers: text("headers")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     id: uuid("id").defaultRandom().primaryKey(),
     /** Original upload filename for UI display. */
     originalFilename: text("original_filename"),
+    /** Live commit-workflow progress; updated per chunk. */
+    progress: jsonb("progress").$type<ImportProgress>(),
+    /** First 20 parsed rows captured at upload, used by Step 2 UI sample preview. */
+    sampleRows: jsonb("sample_rows").$type<Record<string, string>[]>(),
+    /** When the user accepted the column mapping in Step 2. */
+    schemaConfirmedAt: timestamp("schema_confirmed_at", { withTimezone: true }),
+    /** AI-inferred or user-confirmed column → Cobalt-field mapping. */
+    schemaMapping: jsonb("schema_mapping").$type<CsvMapping>(),
     source: importSource("source").notNull(),
     status: importJobStatus("status").default("uploaded").notNull(),
+    /** Terminal counts written by `markCommittedStep`. */
+    summary: jsonb("summary").$type<ImportSummary>(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull()
@@ -39,10 +137,13 @@ export const importJob = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    /** WDK run handle for cancel/inspect. */
+    workflowRunId: text("workflow_run_id"),
   },
   (t) => [
     index("import_job_user_id_idx").on(t.userId),
     index("import_job_user_status_idx").on(t.userId, t.status),
+    index("import_job_user_file_hash_idx").on(t.userId, t.fileHash),
   ],
 );
 

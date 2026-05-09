@@ -63,6 +63,13 @@ export const transaction = pgTable(
      * NULL for hand-entered manual rows and provider-synced rows. Drives Plaid
      * historical-sync suppression (SRI-318) and "imported from Mint" UI badges.
      */
+    /**
+     * Stable per-row hash for AI-mapped CSV imports (SRI-321):
+     *   sha256(accountId|isoDate|amountCents|normalize(merchant)).
+     * Backed by `transaction_user_import_hash_idx` UNIQUE; commit insert uses
+     * ON CONFLICT DO NOTHING so re-imports of the same export silently skip.
+     */
+    importHash: text("import_hash"),
     importJobId: uuid("import_job_id").references(() => importJob.id, {
       onDelete: "set null",
     }),
@@ -125,6 +132,9 @@ export const transaction = pgTable(
     uniqueIndex("transaction_source_external_id_idx")
       .on(t.source, t.externalId)
       .where(sql`external_id IS NOT NULL`),
+    uniqueIndex("transaction_user_import_hash_idx")
+      .on(t.userId, t.importHash)
+      .where(sql`import_hash IS NOT NULL`),
   ],
 );
 
