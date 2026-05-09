@@ -48,7 +48,7 @@ export type NumbersIbanNullableJson = z.infer<typeof numbersIbanNullableJsonSche
 
 export const counterpartyNumbersInternationalJsonSchema = z.object({
   bic: z.string().nullable().optional(),
-  iban: z.union([numbersIbanNullableJsonSchema, z.null()]).optional(),
+  iban: numbersIbanNullableJsonSchema.nullable().optional(),
 });
 
 export type CounterpartyNumbersInternationalJson = z.infer<

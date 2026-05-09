@@ -26,7 +26,8 @@ export const conversationSchema = chatsRowSchema
     title: z.string(),
     updatedAt: z.string(),
   })
-  .omit({ chatId: true });
+  .omit({ chatId: true })
+  .openapi("Chat");
 
 export const conversationListResponseSchema = z.array(conversationSchema);
 
@@ -44,7 +45,8 @@ export const chatMessageSchema = messagesRowSchema
     id: messageIdShape,
     parts: z.array(chatMessagePartSchema),
   })
-  .omit({ messageId: true });
+  .omit({ messageId: true })
+  .openapi("ChatMessage");
 
 // ── Votes map: messageId → vote (picked from `messageVotes.vote`) ───
 

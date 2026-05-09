@@ -15,13 +15,15 @@ export const rssQuerySchema = z.object({
 
 const rssFeedRowSchema = createSelectSchema(rssFeeds);
 
-export const rssFeedSchema = rssFeedRowSchema.pick({
-  category: true,
-  company: true,
-  description: true,
-  id: true,
-  name: true,
-});
+export const rssFeedSchema = rssFeedRowSchema
+  .pick({
+    category: true,
+    company: true,
+    description: true,
+    id: true,
+    name: true,
+  })
+  .openapi("RssFeed");
 
 // ── Article ───────────────────────────────────────────────────────
 
@@ -40,7 +42,8 @@ export const rssArticleSchema = rssArticleRowSchema
     feeds: z.array(rssFeedSchema),
     metadata: z.unknown().nullable(),
     publishedDate: z.string().nullable(),
-  });
+  })
+  .openapi("RssArticle");
 
 // ── Response ──────────────────────────────────────────────────────
 

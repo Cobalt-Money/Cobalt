@@ -27,7 +27,8 @@ export const categorySchema = categoryRowSchema
   .extend({
     createdAt: z.string(),
     updatedAt: z.string(),
-  });
+  })
+  .openapi("TransactionCategory");
 
 export type CategoryDto = z.infer<typeof categorySchema>;
 
@@ -41,7 +42,8 @@ export const categoryGroupSchema = categoryGroupRowSchema
   .extend({
     createdAt: z.string(),
     updatedAt: z.string(),
-  });
+  })
+  .openapi("TransactionCategoryGroup");
 
 export type CategoryGroupDto = z.infer<typeof categoryGroupSchema>;
 

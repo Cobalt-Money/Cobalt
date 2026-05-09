@@ -12,12 +12,14 @@ export const errorResponseSchema = z.object({
 
 // ── Quote ──────────────────────────────────────────────────────────
 
-export const quoteResponseSchema = z.object({
-  change: z.number(),
-  changePercent: z.number(),
-  companyName: z.string(),
-  currentPrice: z.number(),
-});
+export const quoteResponseSchema = z
+  .object({
+    change: z.number(),
+    changePercent: z.number(),
+    companyName: z.string(),
+    currentPrice: z.number(),
+  })
+  .openapi("Quote");
 
 // ── Overview (FMP profile, normalized in `fmpGetProfile`) ───────────
 
@@ -45,7 +47,7 @@ export const fmpProfileSchema = z.object({
 
 export type FmpProfile = z.infer<typeof fmpProfileSchema>;
 
-export const overviewResponseSchema = fmpProfileSchema.openapi({
+export const overviewResponseSchema = fmpProfileSchema.openapi("Overview", {
   description:
     "Normalized FMP company profile (stable `/profile` + optional P/E and revenue enrichment).",
 });
@@ -64,16 +66,18 @@ export const chartQuerySchema = z.object({
     .openapi({ example: "1D" }),
 });
 
-const priceDataSchema = z.object({
-  close: z.number().optional(),
-  high: z.number().optional(),
-  id: z.string().optional(),
-  low: z.number().optional(),
-  open: z.number().optional(),
-  price: z.number(),
-  time: z.string(),
-  volume: z.number(),
-});
+export const priceDataSchema = z
+  .object({
+    close: z.number().optional(),
+    high: z.number().optional(),
+    id: z.string().optional(),
+    low: z.number().optional(),
+    open: z.number().optional(),
+    price: z.number(),
+    time: z.string(),
+    volume: z.number(),
+  })
+  .openapi("ChartPoint");
 
 export const chartResponseSchema = z.object({
   data: z.array(priceDataSchema),

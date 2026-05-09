@@ -4,8 +4,9 @@ import { categoryGroup } from "@cobalt-web/db/schema/accounts/banking/categories
 import { recurring } from "@cobalt-web/db/schema/accounts/banking/transactions/recurring";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import {
-  locationJsonSchema,
+  locationJsonSchema as _locationJsonSchema,
   recurringStreamJsonbSelectRefinements,
+  transactionCounterpartyJsonSchema as _transactionCounterpartyJsonSchema,
   transactionJsonbSelectRefinements,
   transactionNotesMarkdownSchema,
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
@@ -14,6 +15,13 @@ import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
 
 const notesMarkdownSchema = transactionNotesMarkdownSchema;
+
+/** Plaid `location` jsonb on a transaction (named for OpenAPI components). */
+export const locationJsonSchema = _locationJsonSchema.openapi("TransactionLocation");
+
+/** Plaid `counterparties[]` element (named for OpenAPI components). */
+export const transactionCounterpartySchema =
+  _transactionCounterpartyJsonSchema.openapi("TransactionCounterparty");
 
 /** `transaction` row fields exposed on the list (see `getUserTransactions`). */
 const transactionListItemRowSchema = createSelectSchema(transaction, {
@@ -62,12 +70,14 @@ const categoryGroupRowSlice = createSelectSchema(categoryGroup).pick({
 });
 
 /** Joined category slice exposed on list/detail rows. Null when row not yet backfilled. */
-export const transactionCategorySchema = categoryRowSlice
+const transactionCategoryShape = categoryRowSlice
   .extend({
     groupName: categoryGroupRowSlice.shape.name,
     groupSystemKey: categoryGroupRowSlice.shape.systemKey,
   })
-  .nullable();
+  .openapi("TransactionCategoryRef");
+
+export const transactionCategorySchema = transactionCategoryShape.nullable();
 
 /** List transaction DTO: picked `transaction` columns + joined account / institution (see `getUserTransactions`). */
 export const transactionListItemSchema = transactionListItemRowSchema
@@ -98,7 +108,8 @@ export const transactionListItemSchema = transactionListItemRowSchema
     notes: notesMarkdownSchema.nullable(),
     plaidAccountId: z.string().nullable(),
     tagIds: z.array(z.uuid()).default([]),
-  });
+  })
+  .openapi("Transaction");
 
 export type TransactionListItem = z.infer<typeof transactionListItemSchema>;
 
@@ -133,7 +144,8 @@ export const recurringStreamSchema = recurringStreamListRowSchema
     lastAmount: z.number(),
     streamId: z.string().nullable(),
     updatedAt: z.string().nullable(),
-  });
+  })
+  .openapi("RecurringStream");
 
 export const spendingSchema = z.object({
   averageLabel: z.enum(["daily", "weekly", "monthly", "yearly"]),

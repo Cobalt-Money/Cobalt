@@ -2,11 +2,13 @@ import { mobileSubscription } from "@cobalt-web/db/schema/users/subscriptions/mo
 import { z } from "@hono/zod-openapi";
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 
-export const subscriptionStatusResponseSchema = z.object({
-  hasActiveSubscription: z.boolean(),
-  /** "stripe" | "appstore" | null — null means no active subscription. */
-  subscriptionSource: z.enum(["stripe", "appstore"]).nullable(),
-});
+export const subscriptionStatusResponseSchema = z
+  .object({
+    hasActiveSubscription: z.boolean(),
+    /** "stripe" | "appstore" | null — null means no active subscription. */
+    subscriptionSource: z.enum(["stripe", "appstore"]).nullable(),
+  })
+  .openapi("SubscriptionStatus");
 
 export const billingPortalResponseSchema = z.object({
   url: z.string(),
