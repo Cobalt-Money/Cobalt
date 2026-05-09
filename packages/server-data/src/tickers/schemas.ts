@@ -19,7 +19,9 @@ export const tickerSearchItemSchema = z
   })
   .openapi("TickerSearchResult");
 
-export const tickerSearchResponseSchema = z.object({
-  count: z.number(),
-  tickers: z.array(tickerSearchItemSchema),
-});
+export const tickerSearchResponseSchema = z
+  .object({
+    count: z.number(),
+    tickers: z.array(tickerSearchItemSchema),
+  })
+  .openapi("TickersSearchResponse");

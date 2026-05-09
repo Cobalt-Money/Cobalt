@@ -47,11 +47,13 @@ export const rssArticleSchema = rssArticleRowSchema
 
 // ── Response ──────────────────────────────────────────────────────
 
-export const rssResponseSchema = z.object({
-  articles: z.array(rssArticleSchema),
-  categories: z.array(z.string()),
-  companies: z.array(z.string()),
-});
+export const rssResponseSchema = z
+  .object({
+    articles: z.array(rssArticleSchema),
+    categories: z.array(z.string()),
+    companies: z.array(z.string()),
+  })
+  .openapi("RssNewsResponse");
 
 // ── Inferred types ─────────────────────────────────────────────────
 
