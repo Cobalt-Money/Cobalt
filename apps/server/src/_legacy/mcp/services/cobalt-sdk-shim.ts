@@ -96,8 +96,8 @@ const COBALT_SDK = {
      * Patch an existing transaction owned by the user. Cannot create new
      * transactions. Sparse: only provided fields change.
      * @param args { transactionId, patch: { name?, date?, notes?, category?,
-     *   tags?, userOverrideLocation? } }
-     *   Pass null on a field to reset to its original value (except tags/location).
+     *   tags?, location? } }
+     *   Pass null on a field to reset to its original value (except tags).
      *   WARNING: patch.tags is a FULL REPLACE of the transaction's tag set.
      *   To add or remove a single tag, prefer cobalt.tags.addToTransaction /
      *   removeFromTransaction so existing tags are preserved.

@@ -50,7 +50,6 @@ export interface TransactionRowInput {
   notes: TransactionListItem["notes"];
   pending: boolean | null | undefined;
   tagIds?: readonly string[] | null | undefined;
-  userOverrideLocation: TransactionListItem["location"];
   website: string | null | undefined;
 }
 
@@ -82,7 +81,9 @@ function synthesizeLocation(row: TransactionRowInput): TransactionListItem["loca
 /**
  * Maps joined banking rows to the transaction list DTO (REST + Zero).
  * `date` / `authorizedDate` may be Drizzle date strings or Zero epoch ms.
- * `name`, `category`, `date` are the source of truth — no override fallback needed.
+ * All editable fields (name, category, date, location, …) live directly on
+ * the `transaction` row — user edits overwrite the column and `lockedFields`
+ * gates further Plaid sync. History lives in `transaction_edit`.
  */
 export function toTransactionListItem(input: {
   account: TransactionListItemAccountSlice;
@@ -92,7 +93,6 @@ export function toTransactionListItem(input: {
   const { account, institution: inst, transaction: row } = input;
 
   const normalizedDate = normalizeDateForTransactionList(row.date) ?? "";
-  const synthesizedLocation = synthesizeLocation(row);
 
   return {
     accountLogoDomain: account.logoDomain,
@@ -108,7 +108,7 @@ export function toTransactionListItem(input: {
     institutionLogo: inst?.logo ?? null,
     institutionName: inst?.name ?? null,
     institutionUrl: inst?.url ?? null,
-    location: row.userOverrideLocation ?? synthesizedLocation,
+    location: synthesizeLocation(row),
     lockedFields: row.lockedFields ?? [],
     logoUrl: row.logoUrl ?? null,
     merchantName: row.merchantName ?? null,
@@ -118,7 +118,6 @@ export function toTransactionListItem(input: {
     plaidAccountId: account.plaidAccountId,
     source: row.source,
     tagIds: row.tagIds ? [...row.tagIds] : [],
-    userOverrideLocation: row.userOverrideLocation ?? null,
     website: row.website ?? null,
   };
 }

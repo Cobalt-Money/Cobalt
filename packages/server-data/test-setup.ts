@@ -10,6 +10,7 @@ const REQUIRED_ENV: Record<string, string> = {
   APPLE_TEAM_ID: "test-team-id",
   BETTER_AUTH_SECRET: "test-secret-that-is-at-least-32-characters-long",
   BETTER_AUTH_URL: "http://localhost:3000",
+  BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_test_token",
   CORS_ORIGIN: "http://localhost:3000",
   DATABASE_URL: "postgresql://test:test@localhost:5432/test",
   GOOGLE_CLIENT_ID: "test-google-client",

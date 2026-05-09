@@ -1,3 +1,4 @@
+import type { LocationJson } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import {
   locationJsonSchema,
   transactionNotesMarkdownSchema,
@@ -150,6 +151,43 @@ function isoDateToEpochMs(iso: string): number {
   return new Date(`${iso}T00:00:00.000Z`).getTime();
 }
 
+const LOCATION_FLAT_NULL = {
+  address: null,
+  city: null,
+  country: null,
+  lat: null,
+  lon: null,
+  postalCode: null,
+  region: null,
+  storeNumber: null,
+} as const;
+
+function locationToFlat(loc: LocationJson) {
+  return {
+    address: loc.address,
+    city: loc.city,
+    country: loc.country,
+    lat: loc.lat,
+    lon: loc.lon,
+    postalCode: loc.postal_code,
+    region: loc.region,
+    storeNumber: loc.store_number,
+  };
+}
+
+function flatToLocation(row: Record<string, unknown>): LocationJson {
+  return {
+    address: (row.address as string | null | undefined) ?? null,
+    city: (row.city as string | null | undefined) ?? null,
+    country: (row.country as string | null | undefined) ?? null,
+    lat: (row.lat as number | null | undefined) ?? null,
+    lon: (row.lon as number | null | undefined) ?? null,
+    postal_code: (row.postalCode as string | null | undefined) ?? null,
+    region: (row.region as string | null | undefined) ?? null,
+    store_number: (row.storeNumber as string | null | undefined) ?? null,
+  };
+}
+
 export const transactionMutators = {
   bulkSetCategory: defineMutator(bulkSetCategorySchema, async ({ args, ctx, tx }) => {
     if (!ctx?.userId) {
@@ -226,6 +264,7 @@ export const transactionMutators = {
       throw new Error("Unauthorized");
     }
     const trimmedDesc = args.description?.trim();
+    const flatLocation = args.location ? locationToFlat(args.location) : LOCATION_FLAT_NULL;
     await tx.mutate.transaction.insert({
       accountId: args.accountId,
       amount: args.amount,
@@ -233,14 +272,15 @@ export const transactionMutators = {
       currency: args.currency ?? "USD",
       date: isoDateToEpochMs(args.date),
       id: args.id ?? crypto.randomUUID(),
+      lockedFields: args.location ? ["location"] : [],
       merchantName: args.merchantName?.trim() ?? null,
       name: args.name.trim(),
       notes: trimmedDesc && trimmedDesc.length > 0 ? trimmedDesc : null,
       pending: false,
       source: "manual",
       userId: ctx.userId,
-      userOverrideLocation: args.location ?? null,
       website: args.website?.trim() ?? null,
+      ...flatLocation,
     });
   }),
 
@@ -287,16 +327,26 @@ export const transactionMutators = {
 
   resetLocation: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
     const { row, userId } = await getOwned(tx, ctx, args.id);
+    const earliestEdit = await tx.run(
+      zql.transactionEdit
+        .where("transactionId", args.id)
+        .where("field", "location")
+        .orderBy("createdAt", "asc")
+        .one(),
+    );
+    const original = (earliestEdit?.oldValue as LocationJson | null | undefined) ?? null;
+    const flat = original ? locationToFlat(original) : LOCATION_FLAT_NULL;
     await Promise.all([
       tx.mutate.transaction.update({
         id: args.id,
-        userOverrideLocation: null,
+        lockedFields: removeLocked(row.lockedFields, "location"),
+        ...flat,
       }),
       appendEdit(tx, {
         editId: args.editId,
         field: "location",
         newValue: null,
-        oldValue: row.userOverrideLocation ?? null,
+        oldValue: flatToLocation(row),
         transactionId: args.id,
         userId,
       }),
@@ -384,13 +434,14 @@ export const transactionMutators = {
     await Promise.all([
       tx.mutate.transaction.update({
         id: args.id,
-        userOverrideLocation: args.location,
+        lockedFields: addLocked(row.lockedFields, "location"),
+        ...locationToFlat(args.location),
       }),
       appendEdit(tx, {
         editId: args.editId,
         field: "location",
         newValue: args.location,
-        oldValue: row.userOverrideLocation ?? null,
+        oldValue: flatToLocation(row),
         transactionId: args.id,
         userId,
       }),

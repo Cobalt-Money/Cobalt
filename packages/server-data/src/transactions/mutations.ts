@@ -1,6 +1,7 @@
 import { db } from "@cobalt-web/db";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import { transactionEdit } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction-edit";
+import type { LocationJson } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { eq } from "drizzle-orm";
 import type { z } from "zod";
 
@@ -10,7 +11,7 @@ import { setTransactionTags } from "./tags/mutations.js";
 
 export type TransactionPatchBody = z.infer<typeof transactionPatchBodySchema>;
 
-type EditableField = "category" | "date" | "merchantName" | "name" | "notes";
+type EditableField = "category" | "date" | "location" | "merchantName" | "name" | "notes";
 
 type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -76,30 +77,82 @@ async function applyStringFieldEdit(
   });
 }
 
+const LOCATION_FLAT_COLS = {
+  address: null,
+  city: null,
+  country: null,
+  lat: null,
+  lon: null,
+  postalCode: null,
+  region: null,
+  storeNumber: null,
+} as const;
+
+function locationToFlat(loc: LocationJson): Partial<typeof transaction.$inferInsert> {
+  return {
+    address: loc.address,
+    city: loc.city,
+    country: loc.country,
+    lat: loc.lat,
+    lon: loc.lon,
+    postalCode: loc.postal_code,
+    region: loc.region,
+    storeNumber: loc.store_number,
+  };
+}
+
+function flatToLocation(row: {
+  address: string | null;
+  city: string | null;
+  country: string | null;
+  lat: number | null;
+  lon: number | null;
+  postalCode: string | null;
+  region: string | null;
+  storeNumber: string | null;
+}): LocationJson {
+  return {
+    address: row.address,
+    city: row.city,
+    country: row.country,
+    lat: row.lat,
+    lon: row.lon,
+    postal_code: row.postalCode,
+    region: row.region,
+    store_number: row.storeNumber,
+  };
+}
+
 /**
  * Atomically applies a sparse patch to a transaction:
- * - Non-null field → update column, add to lockedFields, append transaction_edit row.
+ * - Non-null field → update column(s), add to lockedFields, append transaction_edit row.
  * - null field (reset) → restore original from transaction_edit, remove from lockedFields.
- * - userOverrideLocation → plain column update (not tracked in transaction_edit).
  */
 export async function patchTransaction(
   transactionId: string,
   userId: string,
   patch: TransactionPatchBody,
 ): Promise<void> {
-  const { categoryId, date, merchantName, name, notes, tags, userOverrideLocation, website } =
-    patch;
+  const { categoryId, date, location, merchantName, name, notes, tags, website } = patch;
 
   await db.transaction(async (tx) => {
     // Fetch current row once for old_value capture.
     const current = await tx.query.transaction.findFirst({
       columns: {
+        address: true,
         categoryId: true,
+        city: true,
+        country: true,
         date: true,
+        lat: true,
         lockedFields: true,
+        lon: true,
         merchantName: true,
         name: true,
         notes: true,
+        postalCode: true,
+        region: true,
+        storeNumber: true,
       },
       where: { id: { eq: transactionId } },
     });
@@ -170,9 +223,29 @@ export async function patchTransaction(
       ctx.columnUpdates.website = normalizeWebsite(website);
     }
 
-    // ── userOverrideLocation (plain override, no audit log) ────────────────
-    if (userOverrideLocation !== undefined) {
-      ctx.columnUpdates.userOverrideLocation = userOverrideLocation;
+    // ── location (composite; writes 8 flat cols + single "location" lock) ─
+    if (location !== undefined) {
+      const currentLocation = flatToLocation(current);
+      if (location === null) {
+        const original = await restoreOriginalValue(tx, transactionId, "location");
+        if (original && typeof original === "object") {
+          Object.assign(ctx.columnUpdates, locationToFlat(original as LocationJson));
+        } else {
+          Object.assign(ctx.columnUpdates, LOCATION_FLAT_COLS);
+        }
+        ctx.removeFromLocked.push("location");
+      } else {
+        Object.assign(ctx.columnUpdates, locationToFlat(location));
+        ctx.addToLocked.push("location");
+        ctx.editRows.push({
+          actor: "user",
+          field: "location",
+          newValue: location,
+          oldValue: currentLocation,
+          transactionId,
+          userId,
+        });
+      }
     }
 
     const { addToLocked, columnUpdates, editRows, removeFromLocked } = ctx;

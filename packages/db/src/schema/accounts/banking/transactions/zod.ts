@@ -94,7 +94,6 @@ export type RecurringTransactionIdsJson = z.infer<typeof recurringTransactionIds
 /** Refinements for `createSelectSchema(transaction, …)`. */
 export const transactionJsonbSelectRefinements = {
   counterparties: counterpartiesArrayJsonSchema,
-  userOverrideLocation: locationJsonSchema.nullable(),
 } as const;
 
 /** Refinements for `createSelectSchema(recurringStream, …)`. */
