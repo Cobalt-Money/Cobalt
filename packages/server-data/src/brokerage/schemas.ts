@@ -156,6 +156,7 @@ export const portfolioSnapshotItemSchema = z
   .object({
     accountId: z.string(),
     cash: z.number(),
+    id: z.string(),
     positions: z.number(),
     snapshotDate: z.string(),
     value: z.number(),
