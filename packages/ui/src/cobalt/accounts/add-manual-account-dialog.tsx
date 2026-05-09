@@ -182,6 +182,7 @@ function TypePicker({
           onBackspaceWhenEmpty();
         }
       }}
+      role="group"
     >
       {TYPE_META.map((m) => (
         <button
