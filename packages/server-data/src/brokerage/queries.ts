@@ -439,6 +439,7 @@ export async function getPortfolioSnapshotsByUserId(
     columns: {
       accountId: true,
       current: true,
+      id: true,
       positionsValue: true,
       snapshotDate: true,
     },
@@ -462,6 +463,7 @@ export async function getPortfolioSnapshotsByUserId(
       return {
         accountId: s.accountId,
         cash,
+        id: s.id,
         positions,
         snapshotDate: dateStr,
         value: total,
