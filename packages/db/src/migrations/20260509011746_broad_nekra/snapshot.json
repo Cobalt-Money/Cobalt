@@ -2,54 +2,34 @@
   "version": "8",
   "dialect": "postgres",
   "id": "6590e89a-fdaf-4e8b-9280-ff3d523fa6a9",
-  "prevIds": [
-    "9d0c951a-4e13-4768-8e83-b1df548df65b"
-  ],
+  "prevIds": ["9d0c951a-4e13-4768-8e83-b1df548df65b"],
   "ddl": [
     {
-      "values": [
-        "plaid",
-        "snaptrade",
-        "manual"
-      ],
+      "values": ["plaid", "snaptrade", "manual"],
       "name": "account_source",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "plaid",
-        "snaptrade",
-        "manual"
-      ],
+      "values": ["plaid", "snaptrade", "manual"],
       "name": "activity_source",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "plaid",
-        "snaptrade",
-        "manual"
-      ],
+      "values": ["plaid", "snaptrade", "manual"],
       "name": "security_source",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "system",
-        "user"
-      ],
+      "values": ["system", "user"],
       "name": "transaction_edit_actor",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": [
-        "plaid",
-        "manual"
-      ],
+      "values": ["plaid", "manual"],
       "name": "transaction_source",
       "entityType": "enums",
       "schema": "public"
@@ -11654,14 +11634,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "symbol"
-      ],
+      "columns": ["symbol"],
       "schemaTo": "public",
       "tableTo": "tickers",
-      "columnsTo": [
-        "symbol"
-      ],
+      "columnsTo": ["symbol"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "fundamentals_symbol_tickers_symbol_fkey",
@@ -11671,14 +11647,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "client_id"
-      ],
+      "columns": ["client_id"],
       "schemaTo": "public",
       "tableTo": "oauth_client",
-      "columnsTo": [
-        "client_id"
-      ],
+      "columnsTo": ["client_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "oauth_access_token_client_id_oauth_client_client_id_fk",
@@ -11688,14 +11660,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "refresh_id"
-      ],
+      "columns": ["refresh_id"],
       "schemaTo": "public",
       "tableTo": "oauth_refresh_token",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "oauth_access_token_refresh_id_oauth_refresh_token_id_fk",
@@ -11705,14 +11673,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "session_id"
-      ],
+      "columns": ["session_id"],
       "schemaTo": "public",
       "tableTo": "session",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "oauth_access_token_session_id_session_id_fk",
@@ -11722,14 +11686,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "oauth_access_token_user_id_user_id_fk",
@@ -11739,14 +11699,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "oauth_client_user_id_user_id_fk",
@@ -11756,14 +11712,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "client_id"
-      ],
+      "columns": ["client_id"],
       "schemaTo": "public",
       "tableTo": "oauth_client",
-      "columnsTo": [
-        "client_id"
-      ],
+      "columnsTo": ["client_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "oauth_consent_client_id_oauth_client_client_id_fk",
@@ -11773,14 +11725,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "oauth_consent_user_id_user_id_fk",
@@ -11790,14 +11738,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "client_id"
-      ],
+      "columns": ["client_id"],
       "schemaTo": "public",
       "tableTo": "oauth_client",
-      "columnsTo": [
-        "client_id"
-      ],
+      "columnsTo": ["client_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "oauth_refresh_token_client_id_oauth_client_client_id_fk",
@@ -11807,14 +11751,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "session_id"
-      ],
+      "columns": ["session_id"],
       "schemaTo": "public",
       "tableTo": "session",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "oauth_refresh_token_session_id_session_id_fk",
@@ -11824,14 +11764,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "oauth_refresh_token_user_id_user_id_fk",
@@ -11841,14 +11777,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "transaction_id"
-      ],
+      "columns": ["transaction_id"],
       "schemaTo": "public",
       "tableTo": "transaction",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "transaction_edit_transaction_id_transaction_id_fkey",
@@ -11858,14 +11790,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "transaction_edit_user_id_user_id_fkey",
@@ -11875,14 +11803,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "account_user_id_user_id_fk",
@@ -11892,14 +11816,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "financial_account",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "balance_account_id_financial_account_id_fkey",
@@ -11909,14 +11829,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "balance_user_id_user_id_fkey",
@@ -11926,14 +11842,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "group_id"
-      ],
+      "columns": ["group_id"],
       "schemaTo": "public",
       "tableTo": "category_group",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "RESTRICT",
       "name": "category_group_id_category_group_id_fkey",
@@ -11943,14 +11855,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "category_user_id_user_id_fkey",
@@ -11960,14 +11868,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "category_group_user_id_user_id_fkey",
@@ -11977,14 +11881,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "chats_user_id_user_id_fk",
@@ -11994,14 +11894,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "financial_account",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "credit_liability_account_id_financial_account_id_fkey",
@@ -12011,14 +11907,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "credit_liability_user_id_user_id_fkey",
@@ -12028,14 +11920,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "financial_event_id"
-      ],
+      "columns": ["financial_event_id"],
       "schemaTo": "public",
       "tableTo": "financial_events",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "event_articles_financial_event_id_financial_events_id_fk",
@@ -12045,14 +11933,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "feedback_user_id_user_id_fk",
@@ -12062,14 +11946,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "plaid_connection_id"
-      ],
+      "columns": ["plaid_connection_id"],
       "schemaTo": "public",
       "tableTo": "plaid_connection",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "financial_account_plaid_connection_id_plaid_connection_id_fkey",
@@ -12079,14 +11959,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "snaptrade_authorization_id"
-      ],
+      "columns": ["snaptrade_authorization_id"],
       "schemaTo": "public",
       "tableTo": "snaptrade_authorization",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "financial_account_gjEcqbMwVh7T_fkey",
@@ -12096,14 +11972,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "financial_account_user_id_user_id_fkey",
@@ -12113,14 +11985,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "financial_goals_user_id_user_id_fk",
@@ -12130,14 +11998,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "financial_account",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "holding_account_id_financial_account_id_fkey",
@@ -12147,14 +12011,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "security_id"
-      ],
+      "columns": ["security_id"],
       "schemaTo": "public",
       "tableTo": "security",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "holding_security_id_security_id_fkey",
@@ -12164,14 +12024,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "holding_user_id_user_id_fkey",
@@ -12181,14 +12037,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "financial_account",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "investment_activity_account_id_financial_account_id_fkey",
@@ -12198,14 +12050,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "security_id"
-      ],
+      "columns": ["security_id"],
       "schemaTo": "public",
       "tableTo": "security",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "investment_activity_security_id_security_id_fkey",
@@ -12215,14 +12063,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "investment_activity_user_id_user_id_fkey",
@@ -12232,14 +12076,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "kalshi_users_user_id_user_id_fk",
@@ -12249,14 +12089,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "message_id"
-      ],
+      "columns": ["message_id"],
       "schemaTo": "public",
       "tableTo": "messages",
-      "columnsTo": [
-        "message_id"
-      ],
+      "columnsTo": ["message_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "message_votes_message_id_messages_message_id_fk",
@@ -12266,14 +12102,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "message_votes_user_id_user_id_fk",
@@ -12283,14 +12115,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "chat_id"
-      ],
+      "columns": ["chat_id"],
       "schemaTo": "public",
       "tableTo": "chats",
-      "columnsTo": [
-        "chat_id"
-      ],
+      "columnsTo": ["chat_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "messages_chat_id_chats_chat_id_fk",
@@ -12300,14 +12128,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "app_store_subscription_user_id_user_id_fk",
@@ -12317,14 +12141,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "financial_account",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "mortgage_liability_account_id_financial_account_id_fkey",
@@ -12334,14 +12154,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "mortgage_liability_user_id_user_id_fkey",
@@ -12351,14 +12167,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "financial_account",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "orders_account_id_financial_account_id_fkey",
@@ -12368,14 +12180,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "security_id"
-      ],
+      "columns": ["security_id"],
       "schemaTo": "public",
       "tableTo": "security",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "SET NULL",
       "name": "orders_security_id_security_id_fkey",
@@ -12385,14 +12193,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "orders_user_id_user_id_fkey",
@@ -12402,14 +12206,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "message_id"
-      ],
+      "columns": ["message_id"],
       "schemaTo": "public",
       "tableTo": "messages",
-      "columnsTo": [
-        "message_id"
-      ],
+      "columnsTo": ["message_id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "parts_message_id_messages_message_id_fk",
@@ -12419,14 +12219,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "plaid_connection_user_id_user_id_fkey",
@@ -12436,14 +12232,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "financial_account",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "recurring_stream_account_id_financial_account_id_fkey",
@@ -12453,14 +12245,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "category_id"
-      ],
+      "columns": ["category_id"],
       "schemaTo": "public",
       "tableTo": "category",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "RESTRICT",
       "name": "recurring_category_id_category_id_fkey",
@@ -12470,14 +12258,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "recurring_stream_user_id_user_id_fkey",
@@ -12487,14 +12271,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "session_user_id_user_id_fk",
@@ -12504,14 +12284,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "financial_account",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "snapshot_account_id_financial_account_id_fkey",
@@ -12521,14 +12297,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "snapshot_user_id_user_id_fkey",
@@ -12538,14 +12310,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "snaptrade_authorization_user_id_user_id_fkey",
@@ -12555,14 +12323,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "snaptrade_user_user_id_user_id_fkey",
@@ -12572,14 +12336,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "financial_account",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "student_loan_liability_account_id_financial_account_id_fkey",
@@ -12589,14 +12349,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "student_loan_liability_user_id_user_id_fkey",
@@ -12606,14 +12362,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "tag_user_id_user_id_fkey",
@@ -12623,14 +12375,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "schemaTo": "public",
       "tableTo": "financial_account",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "transaction_account_id_financial_account_id_fkey",
@@ -12640,14 +12388,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "category_id"
-      ],
+      "columns": ["category_id"],
       "schemaTo": "public",
       "tableTo": "category",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "RESTRICT",
       "name": "transaction_category_id_category_id_fkey",
@@ -12657,14 +12401,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "transaction_user_id_user_id_fkey",
@@ -12674,14 +12414,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "tag_id"
-      ],
+      "columns": ["tag_id"],
       "schemaTo": "public",
       "tableTo": "tag",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "transaction_tag_tag_id_tag_id_fkey",
@@ -12691,14 +12427,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "transaction_id"
-      ],
+      "columns": ["transaction_id"],
       "schemaTo": "public",
       "tableTo": "transaction",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "transaction_tag_transaction_id_transaction_id_fkey",
@@ -12708,14 +12440,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "user_alerts_user_id_user_id_fkey",
@@ -12724,10 +12452,7 @@
       "table": "user_alerts"
     },
     {
-      "columns": [
-        "transaction_id",
-        "tag_id"
-      ],
+      "columns": ["transaction_id", "tag_id"],
       "nameExplicit": false,
       "name": "transaction_tag_pkey",
       "entityType": "pks",
@@ -12735,9 +12460,7 @@
       "table": "transaction_tag"
     },
     {
-      "columns": [
-        "symbol"
-      ],
+      "columns": ["symbol"],
       "nameExplicit": false,
       "name": "fundamentals_pkey",
       "schema": "public",
@@ -12745,9 +12468,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "jwks_pkey",
       "schema": "public",
@@ -12755,9 +12476,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "oauth_access_token_pkey",
       "schema": "public",
@@ -12765,9 +12484,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "oauth_client_pkey",
       "schema": "public",
@@ -12775,9 +12492,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "oauth_consent_pkey",
       "schema": "public",
@@ -12785,9 +12500,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "oauth_refresh_token_pkey",
       "schema": "public",
@@ -12795,9 +12508,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "symbol"
-      ],
+      "columns": ["symbol"],
       "nameExplicit": false,
       "name": "tickers_pkey",
       "schema": "public",
@@ -12805,9 +12516,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "transaction_edit_pkey",
       "schema": "public",
@@ -12815,9 +12524,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "account_pkey",
       "schema": "public",
@@ -12825,9 +12532,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "balance_pkey",
       "schema": "public",
@@ -12835,9 +12540,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "category_pkey",
       "schema": "public",
@@ -12845,9 +12548,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "category_group_pkey",
       "schema": "public",
@@ -12855,9 +12556,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "chat_id"
-      ],
+      "columns": ["chat_id"],
       "nameExplicit": false,
       "name": "chats_pkey",
       "schema": "public",
@@ -12865,9 +12564,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "plaid_credit_liabilities_pkey",
       "schema": "public",
@@ -12875,9 +12572,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "event_articles_pkey",
       "schema": "public",
@@ -12885,9 +12580,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "feedback_pkey",
       "schema": "public",
@@ -12895,9 +12588,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "financial_account_pkey",
       "schema": "public",
@@ -12905,9 +12596,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "financial_events_pkey",
       "schema": "public",
@@ -12915,9 +12604,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "financial_goals_pkey",
       "schema": "public",
@@ -12925,9 +12612,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "holding_pkey",
       "schema": "public",
@@ -12935,9 +12620,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "plaid_institutions_pkey",
       "schema": "public",
@@ -12945,9 +12628,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "plaid_investment_transactions_pkey",
       "schema": "public",
@@ -12955,9 +12636,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "nameExplicit": false,
       "name": "kalshi_users_pkey",
       "schema": "public",
@@ -12965,9 +12644,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "message_votes_pkey",
       "schema": "public",
@@ -12975,9 +12652,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "message_id"
-      ],
+      "columns": ["message_id"],
       "nameExplicit": false,
       "name": "messages_pkey",
       "schema": "public",
@@ -12985,9 +12660,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "app_store_subscription_pkey",
       "schema": "public",
@@ -12995,9 +12668,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "plaid_mortgage_liabilities_pkey",
       "schema": "public",
@@ -13005,9 +12676,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "orders_pkey",
       "schema": "public",
@@ -13015,9 +12684,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "part_id"
-      ],
+      "columns": ["part_id"],
       "nameExplicit": false,
       "name": "parts_pkey",
       "schema": "public",
@@ -13025,9 +12692,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "plaid_connection_pkey",
       "schema": "public",
@@ -13035,9 +12700,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "plaid_recurring_streams_pkey",
       "schema": "public",
@@ -13045,9 +12708,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "rss_articles_pkey",
       "schema": "public",
@@ -13055,9 +12716,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "rss_feeds_pkey",
       "schema": "public",
@@ -13065,9 +12724,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "security_pkey",
       "schema": "public",
@@ -13075,9 +12732,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "session_pkey",
       "schema": "public",
@@ -13085,9 +12740,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "snapshot_pkey",
       "schema": "public",
@@ -13095,9 +12748,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "snaptrade_authorization_pkey",
       "schema": "public",
@@ -13105,9 +12756,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "nameExplicit": false,
       "name": "snaptrade_user_pkey",
       "schema": "public",
@@ -13115,9 +12764,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "plaid_student_loan_liabilities_pkey",
       "schema": "public",
@@ -13125,9 +12772,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "subscription_pkey",
       "schema": "public",
@@ -13135,9 +12780,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "tag_pkey",
       "schema": "public",
@@ -13145,9 +12788,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "plaid_transactions_pkey",
       "schema": "public",
@@ -13155,9 +12796,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_pkey",
       "schema": "public",
@@ -13165,9 +12804,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_alerts_pkey",
       "schema": "public",
@@ -13175,9 +12812,7 @@
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "verification_pkey",
       "schema": "public",
@@ -13186,10 +12821,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "user_id",
-        "message_id"
-      ],
+      "columns": ["user_id", "message_id"],
       "nullsNotDistinct": false,
       "name": "message_votes_user_message_unique",
       "entityType": "uniques",
@@ -13198,9 +12830,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "token"
-      ],
+      "columns": ["token"],
       "nullsNotDistinct": false,
       "name": "oauth_access_token_token_unique",
       "schema": "public",
@@ -13209,9 +12839,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "client_id"
-      ],
+      "columns": ["client_id"],
       "nullsNotDistinct": false,
       "name": "oauth_client_client_id_unique",
       "schema": "public",
@@ -13220,9 +12848,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "nullsNotDistinct": false,
       "name": "credit_liability_account_id_key",
       "schema": "public",
@@ -13231,9 +12857,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "event_id"
-      ],
+      "columns": ["event_id"],
       "nullsNotDistinct": false,
       "name": "financial_events_event_id_unique",
       "schema": "public",
@@ -13242,9 +12866,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "plaid_institution_id"
-      ],
+      "columns": ["plaid_institution_id"],
       "nullsNotDistinct": false,
       "name": "plaid_institutions_plaid_institution_id_unique",
       "schema": "public",
@@ -13253,9 +12875,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "original_transaction_id"
-      ],
+      "columns": ["original_transaction_id"],
       "nullsNotDistinct": false,
       "name": "app_store_subscription_original_transaction_id_unique",
       "schema": "public",
@@ -13264,9 +12884,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "nullsNotDistinct": false,
       "name": "mortgage_liability_account_id_key",
       "schema": "public",
@@ -13275,9 +12893,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "external_id"
-      ],
+      "columns": ["external_id"],
       "nullsNotDistinct": false,
       "name": "orders_external_id_key",
       "schema": "public",
@@ -13286,9 +12902,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "plaid_item_id"
-      ],
+      "columns": ["plaid_item_id"],
       "nullsNotDistinct": false,
       "name": "plaid_connection_plaid_item_id_key",
       "schema": "public",
@@ -13297,9 +12911,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "link"
-      ],
+      "columns": ["link"],
       "nullsNotDistinct": false,
       "name": "rss_articles_link_unique",
       "schema": "public",
@@ -13308,9 +12920,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "url"
-      ],
+      "columns": ["url"],
       "nullsNotDistinct": false,
       "name": "rss_feeds_url_unique",
       "schema": "public",
@@ -13319,9 +12929,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "token"
-      ],
+      "columns": ["token"],
       "nullsNotDistinct": false,
       "name": "session_token_unique",
       "schema": "public",
@@ -13330,9 +12938,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "authorization_id"
-      ],
+      "columns": ["authorization_id"],
       "nullsNotDistinct": false,
       "name": "snaptrade_authorization_authorization_id_key",
       "schema": "public",
@@ -13341,9 +12947,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "snaptrade_user_id"
-      ],
+      "columns": ["snaptrade_user_id"],
       "nullsNotDistinct": false,
       "name": "snaptrade_user_snaptrade_user_id_key",
       "schema": "public",
@@ -13352,9 +12956,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "account_id"
-      ],
+      "columns": ["account_id"],
       "nullsNotDistinct": false,
       "name": "student_loan_liability_account_id_key",
       "schema": "public",
@@ -13363,9 +12965,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "email"
-      ],
+      "columns": ["email"],
       "nullsNotDistinct": false,
       "name": "user_email_unique",
       "schema": "public",
@@ -13374,9 +12974,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "stripe_customer_id"
-      ],
+      "columns": ["stripe_customer_id"],
       "nullsNotDistinct": false,
       "name": "user_stripe_customer_id_unique",
       "schema": "public",
