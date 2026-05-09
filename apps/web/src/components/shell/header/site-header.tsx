@@ -34,7 +34,7 @@ export function SiteHeader() {
             render={
               <button
                 aria-label="Toggle Sidebar"
-                className="-ml-1 shrink-0 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                className="shrink-0 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 onClick={toggleSidebar}
                 type="button"
               >
