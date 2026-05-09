@@ -148,11 +148,11 @@ export const transactionIdParamSchema = z.object({
 
 export const transactionListQuerySchema = z.object({
   accountType: z.string().optional(),
+  cursor: z.string().optional(),
   endDate: z.string().optional(),
+  limit: z.coerce.number().min(1).max(200).default(50),
   maxAmount: z.coerce.number().optional(),
   minAmount: z.coerce.number().optional(),
-  page: z.coerce.number().min(0).default(0),
-  pageSize: z.coerce.number().min(1).default(50),
   pendingFilter: z.enum(["true", "false"]).optional(),
   primaryCategory: z.string().optional(),
   searchQuery: z.string().optional(),
@@ -160,6 +160,8 @@ export const transactionListQuerySchema = z.object({
 });
 
 export const transactionListResponseSchema = z.object({
+  hasMore: z.boolean(),
+  nextCursor: z.string().nullable(),
   transactions: z.array(transactionListItemSchema),
 });
 

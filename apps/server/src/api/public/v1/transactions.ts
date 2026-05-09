@@ -49,9 +49,9 @@ const recurringRoute = createRoute({
 
 export const transactionsRouter = new OpenAPIHono<AppEnv>()
   .openapi(listRoute, async (c) => {
-    const transactions = await getUserTransactions(c.var.user.id, c.req.valid("query"));
+    const result = await getUserTransactions(c.var.user.id, c.req.valid("query"));
     c.header("Cache-Control", "private, max-age=60");
-    return c.json({ transactions }, 200);
+    return c.json(result, 200);
   })
   .openapi(recurringRoute, async (c) => {
     const streams = await getRecurringStreams(c.var.user.id);

@@ -43,6 +43,8 @@ interface TransactionItem {
 
 interface TransactionListResponse {
   transactions: TransactionItem[];
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 const PAGE_SIZE = 50;
@@ -224,11 +226,11 @@ export default function Command() {
   }, [base]);
 
   const buildUrl = useMemo(
-    () => (options: { page: number }) => {
-      const params = new URLSearchParams({
-        page: String(options.page),
-        pageSize: String(PAGE_SIZE),
-      });
+    () => (options: { page: number; cursor?: string }) => {
+      const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
+      if (options.cursor) {
+        params.set("cursor", options.cursor);
+      }
       if (searchText.trim()) {
         params.set("searchQuery", searchText.trim());
       }
@@ -244,8 +246,9 @@ export default function Command() {
     keepPreviousData: true,
     mapResult(result: TransactionListResponse) {
       return {
+        cursor: result.nextCursor ?? undefined,
         data: result.transactions,
-        hasMore: result.transactions.length === PAGE_SIZE,
+        hasMore: result.hasMore,
       };
     },
   });

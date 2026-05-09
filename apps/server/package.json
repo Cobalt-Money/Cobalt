@@ -4,7 +4,7 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "nitro build",
-    "check-types": "tsc -b",
+    "check-types": "tsc --noEmit",
     "dev": "nitro dev",
     "start": "node .output/server/index.mjs",
     "extract-openapi": "bun ./scripts/extract-openapi.ts",
