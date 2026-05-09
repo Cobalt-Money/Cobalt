@@ -147,12 +147,18 @@ export const recurringStreamSchema = recurringStreamListRowSchema
   })
   .openapi("RecurringStream");
 
-export const spendingSchema = z.object({
-  averageLabel: z.enum(["daily", "weekly", "monthly", "yearly"]),
-  averageSpending: z.number(),
-  spending: z.array(z.object({ amount: z.number(), date: z.string() })),
-  totalSpending: z.number(),
-});
+export const spendingBucketSchema = z
+  .object({ amount: z.number(), date: z.string() })
+  .openapi("SpendingBucket");
+
+export const spendingSchema = z
+  .object({
+    averageLabel: z.enum(["daily", "weekly", "monthly", "yearly"]),
+    averageSpending: z.number(),
+    spending: z.array(spendingBucketSchema),
+    totalSpending: z.number(),
+  })
+  .openapi("CreditSpendingResponse");
 
 export const transactionIdParamSchema = z.object({
   transactionId: z.uuid(),
@@ -171,15 +177,19 @@ export const transactionListQuerySchema = z.object({
   startDate: z.string().optional(),
 });
 
-export const transactionListResponseSchema = z.object({
-  hasMore: z.boolean(),
-  nextCursor: z.string().nullable(),
-  transactions: z.array(transactionListItemSchema),
-});
+export const transactionListResponseSchema = z
+  .object({
+    hasMore: z.boolean(),
+    nextCursor: z.string().nullable(),
+    transactions: z.array(transactionListItemSchema),
+  })
+  .openapi("TransactionsResponse");
 
-export const recurringStreamsResponseSchema = z.object({
-  streams: z.array(recurringStreamSchema),
-});
+export const recurringStreamsResponseSchema = z
+  .object({
+    streams: z.array(recurringStreamSchema),
+  })
+  .openapi("RecurringStreamsResponse");
 
 export const spendingQuerySchema = z.object({
   accountId: z.string().optional(),

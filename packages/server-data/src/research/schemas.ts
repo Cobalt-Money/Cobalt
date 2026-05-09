@@ -79,17 +79,36 @@ export const priceDataSchema = z
   })
   .openapi("ChartPoint");
 
-export const chartResponseSchema = z.object({
-  data: z.array(priceDataSchema),
-});
+export const chartResponseSchema = z
+  .object({
+    data: z.array(priceDataSchema),
+  })
+  .openapi("ChartResponse");
 
 // ── News ───────────────────────────────────────────────────────────
 
-export const newsResponseSchema = z.object({
-  data: z.array(z.unknown()),
-  total_items: z.number(),
-  total_pages: z.number(),
-});
+export const researchArticleSchema = z
+  .object({
+    date: z.string(),
+    image_url: z.string().optional(),
+    news_url: z.string(),
+    sentiment: z.string(),
+    source_name: z.string(),
+    text: z.string(),
+    tickers: z.array(z.string()),
+    title: z.string(),
+    topics: z.array(z.string()),
+    type: z.string(),
+  })
+  .openapi("ResearchArticle");
+
+export const newsResponseSchema = z
+  .object({
+    data: z.array(researchArticleSchema),
+    total_items: z.number(),
+    total_pages: z.number(),
+  })
+  .openapi("ResearchNewsResponse");
 
 // ── Stock screener (FMP company-screener) ───────────────────────────
 

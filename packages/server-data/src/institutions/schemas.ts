@@ -28,17 +28,21 @@ export const institutionSyncBodySchema = z.object({
 // `packages/server-data/src/plaid/actions.ts`. Column types reuse `institutionRowSchema.shape`
 // where they match our table; `id` is Plaid `institution_id` (not our DB uuid).
 
-export const institutionSearchResultSchema = z.object({
-  id: z.string(),
-  logo: institutionRowSchema.shape.logo,
-  name: institutionRowSchema.shape.name,
-  primary_color: institutionRowSchema.shape.primaryColor,
-  url: institutionRowSchema.shape.url,
-});
+export const institutionSearchResultSchema = z
+  .object({
+    id: z.string(),
+    logo: institutionRowSchema.shape.logo,
+    name: institutionRowSchema.shape.name,
+    primary_color: institutionRowSchema.shape.primaryColor,
+    url: institutionRowSchema.shape.url,
+  })
+  .openapi("Institution");
 
-export const institutionSearchResponseSchema = z.object({
-  institutions: z.array(institutionSearchResultSchema),
-});
+export const institutionSearchResponseSchema = z
+  .object({
+    institutions: z.array(institutionSearchResultSchema),
+  })
+  .openapi("SearchInstitutionsResponse");
 
 /** Full institution from Plaid `institutionsGetById` (mapped). `status` may be non-string on Plaid. */
 export const institutionDetailSchema = z.object({

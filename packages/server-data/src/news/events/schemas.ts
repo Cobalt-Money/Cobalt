@@ -38,11 +38,13 @@ export const mappedFinancialEventSchema = financialEventRowSchema
   })
   .openapi("FinancialEvent");
 
-export const eventsResponseSchema = z.object({
-  events: z.array(mappedFinancialEventSchema),
-  hasMore: z.boolean(),
-  nextCursor: z.string().optional(),
-});
+export const eventsResponseSchema = z
+  .object({
+    events: z.array(mappedFinancialEventSchema),
+    hasMore: z.boolean(),
+    nextCursor: z.string().optional(),
+  })
+  .openapi("PaginatedEventsResponse");
 
 // ── Inferred types ─────────────────────────────────────────────────
 
