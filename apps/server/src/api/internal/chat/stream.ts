@@ -120,14 +120,11 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
         {
           tools: [
             "bash",
-            "readFile",
             "executeCode",
             "webSearch",
             "webExtract",
             "renderChart",
             "renderDocument",
-            "compute",
-            "askUser",
           ],
           type: "all",
         },
