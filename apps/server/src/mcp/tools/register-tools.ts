@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { COBALT_SDK_DESCRIPTION } from "../../ai/agents/code-agent/sdk-description.js";
+import { COBALT_SDK_DESCRIPTION } from "../../ai/agents/finance-agent/sdk-description.js";
 import { executeCode } from "./execute-code.js";
 
 export function registerMcpTools(server: McpServer, userId: string): void {

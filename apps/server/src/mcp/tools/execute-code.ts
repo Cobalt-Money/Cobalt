@@ -1,4 +1,4 @@
-import { runCobaltCode } from "../../ai/agents/code-agent/code-runtime.js";
+import { runCobaltCode } from "../../ai/agents/finance-agent/code-runtime.js";
 
 export async function executeCode(
   userId: string,
