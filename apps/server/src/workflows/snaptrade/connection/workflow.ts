@@ -7,6 +7,7 @@ import {
   fetchAccountsStep,
   getAuthorizationDisplayNameStep,
   getSnapTradeUserCredentialsStep,
+  seedTodaySnaptradeSnapshotsStep,
   syncAccountBalancesStep,
   syncAccountDetailsStep,
   syncAccountOrdersStep,
@@ -46,6 +47,7 @@ export async function snaptradeConnectionAddedWorkflow(
     const accounts = await fetchAccountsStep(userCredentials);
 
     await upsertAccountsStep(accounts, authDbId, userCredentials.appUserId);
+    await seedTodaySnaptradeSnapshotsStep(userId);
 
     return { eventType: "CONNECTION_ADDED", success: true, userId };
   } catch (error) {

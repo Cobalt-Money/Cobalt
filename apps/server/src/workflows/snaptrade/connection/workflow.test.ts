@@ -32,6 +32,7 @@ vi.mock(import("./steps"), () => ({
   fetchAccountsStep: vi.fn(),
   getAuthorizationDisplayNameStep: vi.fn(),
   getSnapTradeUserCredentialsStep: vi.fn(),
+  seedTodaySnaptradeSnapshotsStep: vi.fn(),
   syncAccountBalancesStep: vi.fn(),
   syncAccountDetailsStep: vi.fn(),
   syncAccountOrdersStep: vi.fn(),

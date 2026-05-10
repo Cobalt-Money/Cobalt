@@ -23,6 +23,7 @@ import { getUserHoldings } from "@cobalt-web/server-data/providers/snaptrade/hol
 import { upsertAccountPositions } from "@cobalt-web/server-data/providers/snaptrade/holdings/mutations";
 import { getUserAccountOrders } from "@cobalt-web/server-data/providers/snaptrade/orders/actions";
 import { upsertAccountOrders } from "@cobalt-web/server-data/providers/snaptrade/orders/mutations";
+import { upsertSnapTradePortfolioSnapshotsForUser } from "@cobalt-web/server-data/snapshots/mutations";
 import { eq } from "drizzle-orm";
 import type { Account, Balance, UniversalActivity } from "snaptrade-typescript-sdk";
 import { FatalError, RetryableError } from "workflow";
@@ -489,4 +490,14 @@ export async function refreshAccountDataStep(
   }
 
   return { balancesSuccess, detailsSuccess };
+}
+
+/**
+ * Seeds today's portfolio snapshot for every SnapTrade account belonging to a
+ * user. Called once at link / repair time. Cron handles every subsequent day.
+ * Idempotent — re-running just refreshes today's row.
+ */
+export async function seedTodaySnaptradeSnapshotsStep(userId: string): Promise<void> {
+  "use step";
+  await upsertSnapTradePortfolioSnapshotsForUser(userId, "link");
 }
