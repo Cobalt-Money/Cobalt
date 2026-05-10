@@ -35,10 +35,14 @@ export async function insertBalanceSnapshots(rows: BalanceSnapshotInsert[]): Pro
       if (!acct) {
         return null;
       }
+      // Liabilities (credit / loan) stored negative on snapshot — see
+      // upsertDailySnapshotsForSource for the same convention.
+      const liability = acct.type === "credit" || acct.type === "loan";
+      const sign = liability ? -1 : 1;
       return {
         accountId: acct.id,
         available: numToStr(r.availableBalance),
-        current: String(r.currentBalance),
+        current: String(sign * r.currentBalance),
         limit: numToStr(r.creditLimit),
         snapshotDate: r.snapshotDate,
         source: "plaid" as const,

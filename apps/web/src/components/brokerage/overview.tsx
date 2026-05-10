@@ -124,7 +124,6 @@ export function Overview() {
           brokerageScope={brokerageScope}
           onScopeChange={setBrokerageScope}
           portfolioSnapshots={portfolioSnapshots}
-          positions={positions}
           scopedAccountIds={scopedAccountIds}
           scopeAccounts={scopeAccounts}
         />

@@ -440,11 +440,16 @@ export async function getPortfolioSnapshotsByUserId(
       accountId: true,
       current: true,
       id: true,
-      positionsValue: true,
       snapshotDate: true,
     },
     orderBy: { snapshotDate: "asc" },
     where: {
+      account: {
+        OR: [
+          { source: { eq: "snaptrade" } },
+          { AND: [{ source: { eq: "plaid" } }, { type: { eq: "investment" } }] },
+        ],
+      },
       snapshotDate: { gte: startDate, lte: endDate },
       userId: { eq: userId },
       ...(accountId && accountId !== "all-accounts" ? { accountId: { eq: accountId } } : {}),
@@ -457,16 +462,11 @@ export async function getPortfolioSnapshotsByUserId(
       if (!dateStr) {
         return null;
       }
-      const total = Number.parseFloat(s.current ?? "0");
-      const positions = Number.parseFloat(s.positionsValue ?? "0");
-      const cash = total - positions;
       return {
         accountId: s.accountId,
-        cash,
         id: s.id,
-        positions,
         snapshotDate: dateStr,
-        value: total,
+        value: Number.parseFloat(s.current ?? "0"),
       };
     })
     .filter((s): s is NonNullable<typeof s> => s !== null);
