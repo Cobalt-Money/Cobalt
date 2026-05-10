@@ -66,10 +66,9 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
       message?: UIMessage;
       messages?: UIMessage[];
       model?: string;
-      platform?: "web" | "mobile";
     }>();
 
-    const { effort = "high", message, messages, model, platform = "web" } = body ?? {};
+    const { effort = "high", message, messages, model } = body ?? {};
 
     if (!message?.id || !message.parts?.length) {
       return c.json({ error: "message is required" }, 400);
@@ -137,7 +136,7 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
       execute: async ({ writer }) => {
         const result = await financeAgent.stream({
           messages: modelMessages,
-          options: { currentDate, currentDateFormatted, platform },
+          options: { currentDate, currentDateFormatted },
         });
         const uiStream = result.toUIMessageStream({ sendReasoning: true });
         for await (const chunk of uiStream) {

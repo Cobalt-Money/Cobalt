@@ -11,7 +11,7 @@ export interface KnowledgeFile {
   title: string;
 }
 
-function parseFrontmatter(content: string): {
+export function parseFrontmatter(content: string): {
   body: string;
   meta: Record<string, string>;
 } {
@@ -30,7 +30,7 @@ function parseFrontmatter(content: string): {
   return { body: match[2] ?? "", meta };
 }
 
-function keyToPath(key: string): string {
+export function keyToPath(key: string): string {
   return key.replaceAll(":", "/");
 }
 
