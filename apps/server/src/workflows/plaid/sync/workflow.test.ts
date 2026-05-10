@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { syncHoldings, syncInvestmentTransactions } from "../investments/orchestration";
 import { syncLiabilities } from "../liabilities/orchestration";
 import {
-  backfillHistoricalSnapshotsStep,
   closeOnboardingProgressStep,
   duplicateCheckStep,
   emitOnboardingProgressStep,
@@ -13,6 +12,7 @@ import {
   persistOnboardingItemStep,
   reconcileOrphanAccountsStep,
   removeItemStep,
+  seedTodayPlaidSnapshotsStep,
   syncAccountsAndBalancesStep,
   syncBalancesStep,
   syncRecurringStep,
@@ -24,7 +24,6 @@ import { plaidAddAccountWorkflow, plaidOnboardingHookToken } from "./workflow.js
 const HOOK_TOKEN = "plaid:link:user-1:test-hook";
 
 vi.mock(import("./steps.js"), () => ({
-  backfillHistoricalSnapshotsStep: vi.fn(),
   clearItemErrorStep: vi.fn(),
   closeOnboardingProgressStep: vi.fn(),
   dispatchSnapshotWorkflowStep: vi.fn(),
@@ -37,6 +36,7 @@ vi.mock(import("./steps.js"), () => ({
   persistOnboardingItemStep: vi.fn(),
   reconcileOrphanAccountsStep: vi.fn(),
   removeItemStep: vi.fn(),
+  seedTodayPlaidSnapshotsStep: vi.fn(),
   syncAccountsAndBalancesStep: vi.fn(),
   syncBalancesStep: vi.fn(),
   syncRecurringStep: vi.fn(),
@@ -108,7 +108,7 @@ const mockReconcile = vi.mocked(reconcileOrphanAccountsStep);
 const mockTx = vi.mocked(syncTransactionsStep);
 const mockBalances = vi.mocked(syncBalancesStep);
 const mockRecurring = vi.mocked(syncRecurringStep);
-const mockBackfill = vi.mocked(backfillHistoricalSnapshotsStep);
+const mockSeedSnapshots = vi.mocked(seedTodayPlaidSnapshotsStep);
 const mockHoldings = vi.mocked(syncHoldings);
 const mockInvTx = vi.mocked(syncInvestmentTransactions);
 const mockLiabilities = vi.mocked(syncLiabilities);
@@ -202,12 +202,7 @@ describe("plaidAddAccountWorkflow", () => {
       removed: 0,
       success: true,
     });
-    mockBackfill.mockResolvedValue({
-      accountsProcessed: 0,
-      oldestDate: null,
-      snapshotsCreated: 0,
-      snapshotsSkipped: 0,
-    });
+    mockSeedSnapshots.mockResolvedValue();
   });
 
   it("exchanges the public token and runs core sync steps on the happy path", async () => {
@@ -312,7 +307,7 @@ describe("plaidAddAccountWorkflow", () => {
     expect(phases).toContain("liabilities");
   });
 
-  it("skips historical backfill when only initial_update_complete arrives", async () => {
+  it("skips snapshot seed + recurring when only initial_update_complete arrives", async () => {
     mockHookPayloads.current = [
       { historical_update_complete: false, initial_update_complete: true },
     ];
@@ -322,7 +317,7 @@ describe("plaidAddAccountWorkflow", () => {
       userId: USER_ID,
     });
 
-    expect(mockBackfill).not.toHaveBeenCalled();
+    expect(mockSeedSnapshots).not.toHaveBeenCalled();
     expect(mockRecurring).not.toHaveBeenCalled();
   });
 

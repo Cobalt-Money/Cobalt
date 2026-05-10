@@ -21,11 +21,7 @@ import {
   checkForDuplicateAccounts,
   getBankConnectionByItemId,
 } from "@cobalt-web/server-data/providers/plaid/link/queries";
-import { insertBalanceSnapshots } from "@cobalt-web/server-data/providers/plaid/snapshots/mutations";
-import {
-  getPostedTransactionsForAccount,
-  getSnapshotDatesForAccount,
-} from "@cobalt-web/server-data/providers/plaid/snapshots/queries";
+import { upsertBankBalanceSnapshotsForUser } from "@cobalt-web/server-data/snapshots/mutations";
 import { syncTransactionsPage } from "@cobalt-web/server-data/providers/plaid/transactions/actions";
 import {
   applyPendingOverrides,
@@ -86,14 +82,6 @@ export async function closeOnboardingProgressStep() {
   await getWritable<PlaidOnboardingProgress>({
     namespace: "progress",
   }).close();
-}
-
-function getTodayDateOnly(): string {
-  return new Date().toISOString().split("T").at(0) ?? "";
-}
-
-function toDateOnlyString(date: Date): string {
-  return date.toISOString().split("T").at(0) ?? "";
 }
 
 function isPlaidRateLimited(error: unknown): boolean {
@@ -484,122 +472,15 @@ export async function syncRecurringStep(accessToken: string, itemId: string) {
   }
 }
 
-export async function backfillHistoricalSnapshotsStep(
-  accounts: {
-    plaidAccountId: string;
-    currentBalance: number;
-    availableBalance: number | null;
-    creditLimit: number | null;
-  }[],
-) {
+/**
+ * Seeds today's snapshot row for every Plaid account belonging to a user.
+ * Called once at link / reauth / update-mode time so the chart has a starting
+ * point. Cron handles every subsequent day. Idempotent — re-running just
+ * refreshes today's row.
+ */
+export async function seedTodayPlaidSnapshotsStep(userId: string): Promise<void> {
   "use step";
-
-  let totalCreated = 0;
-  let totalSkipped = 0;
-  let oldestDate: string | null = null;
-
-  for (const account of accounts) {
-    try {
-      const result = await backfillAccountSnapshots(account);
-      totalCreated += result.created;
-      totalSkipped += result.skipped;
-
-      if (result.oldestDate && (!oldestDate || result.oldestDate < oldestDate)) {
-        ({ oldestDate } = result);
-      }
-    } catch {
-      /* skip account on backfill failure */
-    }
-  }
-
-  return {
-    accountsProcessed: accounts.length,
-    oldestDate,
-    snapshotsCreated: totalCreated,
-    snapshotsSkipped: totalSkipped,
-  };
-}
-
-async function backfillAccountSnapshots(account: {
-  plaidAccountId: string;
-  currentBalance: number;
-  availableBalance: number | null;
-  creditLimit: number | null;
-}): Promise<{ created: number; skipped: number; oldestDate: string | null }> {
-  const { plaidAccountId, currentBalance, availableBalance, creditLimit } = account;
-
-  const transactions = await getPostedTransactionsForAccount(plaidAccountId);
-
-  if (transactions.length === 0) {
-    return { created: 0, oldestDate: null, skipped: 0 };
-  }
-
-  const oldestTxDate = transactions.at(-1)?.date;
-  if (!oldestTxDate) {
-    return { created: 0, oldestDate: null, skipped: 0 };
-  }
-
-  const dailyTotals = new Map<string, number>();
-  for (const tx of transactions) {
-    dailyTotals.set(tx.date, (dailyTotals.get(tx.date) ?? 0) + tx.amount);
-  }
-
-  const dates = getDateRange(new Date(oldestTxDate), new Date());
-  const historicalBalances = calculateHistoricalBalances(currentBalance, dailyTotals, dates);
-
-  const existingDates = new Set(await getSnapshotDatesForAccount(plaidAccountId));
-  const snapshotsToInsert = historicalBalances.filter((snap) => !existingDates.has(snap.date));
-  const skipped = historicalBalances.length - snapshotsToInsert.length;
-
-  const todayStr = getTodayDateOnly();
-  const created = await insertBalanceSnapshots(
-    snapshotsToInsert.map((snap) => ({
-      availableBalance: snap.date === todayStr ? availableBalance : null,
-      creditLimit,
-      currentBalance: snap.balance,
-      plaidAccountId,
-      snapshotDate: snap.date,
-      snapshotSource: snap.date === todayStr ? "webhook" : "backfill",
-    })),
-  );
-
-  return {
-    created,
-    oldestDate: historicalBalances[0]?.date ?? null,
-    skipped,
-  };
-}
-
-function getDateRange(startDate: Date, endDate: Date): string[] {
-  const dates: string[] = [];
-  const endTime = endDate.getTime();
-  let cur = new Date(startDate);
-  while (cur.getTime() <= endTime) {
-    dates.push(toDateOnlyString(cur));
-    const next = new Date(cur);
-    next.setDate(next.getDate() + 1);
-    cur = next;
-  }
-  return dates;
-}
-
-function calculateHistoricalBalances(
-  currentBalance: number,
-  dailyTransactions: Map<string, number>,
-  dates: string[],
-): { date: string; balance: number }[] {
-  const balances: { date: string; balance: number }[] = [];
-  let runningBalance = currentBalance;
-
-  const sortedDates = [...dates].toSorted((a, b) => b.localeCompare(a));
-
-  for (const date of sortedDates) {
-    balances.push({ balance: runningBalance, date });
-    const dayTotal = dailyTransactions.get(date) ?? 0;
-    runningBalance += dayTotal;
-  }
-
-  return balances.toReversed();
+  await upsertBankBalanceSnapshotsForUser(userId, "link");
 }
 
 export async function dispatchSnapshotWorkflowStep(_userId: string): Promise<void> {
