@@ -217,7 +217,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         streamStartedAt: new Date(),
       });
 
-      const { effort, model, mode, reasoning } = settings;
+      const { effort, model, reasoning } = settings;
       const baseModel = normalizeGatewayModelId(model);
       const modelId = reasoning ? `${baseModel}+reasoning` : baseModel;
 
@@ -246,7 +246,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             effort,
             message,
             messages,
-            mode,
             model: modelId,
           }),
           credentials: "include",

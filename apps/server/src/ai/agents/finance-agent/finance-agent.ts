@@ -26,7 +26,7 @@ const WORKSPACE = "/workspace";
 const MUTATING_COMMAND_RE =
   /(?:^|[\s;&|`(])(?:rm|mv|cp|touch|mkdir|rmdir|ln|chmod|chown|dd|sed\s+-i|install|truncate|shred)\b|(?:^|[^>])>(?!&|\s*\/dev\/null)|>>|\|\s*tee\b/;
 
-export async function createCodeAgent(
+export async function createFinanceAgent(
   model: string | undefined,
   userId: string,
   effort: ReasoningEffort = "high",
@@ -67,7 +67,7 @@ export async function createCodeAgent(
 
   const agent = new ToolLoopAgent({
     experimental_telemetry: {
-      functionId: "code-agent-analyst",
+      functionId: "finance-agent",
       isEnabled: true,
     },
     instructions: `Your name is Cobalt, an intelligent financial analyst assistant focused on helping users explore and understand their financial data through direct database analysis.
@@ -186,5 +186,5 @@ WORKFLOW: optionally discover schema/knowledge (bash: ls/cat/grep) → write pla
   return agent;
 }
 
-type CodeAgentInstance = Awaited<ReturnType<typeof createCodeAgent>>;
-export type CodeAgentUIMessage = InferAgentUIMessage<CodeAgentInstance>;
+type FinanceAgentInstance = Awaited<ReturnType<typeof createFinanceAgent>>;
+export type FinanceAgentUIMessage = InferAgentUIMessage<FinanceAgentInstance>;
