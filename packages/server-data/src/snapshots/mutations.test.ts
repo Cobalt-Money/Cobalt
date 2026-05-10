@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 interface FakeAccount {
   id: string;
+  type?: string | null;
   balance: {
     available: string | null;
     buyingPower: string | null;
@@ -149,6 +150,7 @@ describe("upsertBankBalanceSnapshotsForUser", () => {
           current: "150.0000",
         },
         id: "plaid-1",
+        type: "depository",
       },
     ]);
 
@@ -160,5 +162,88 @@ describe("upsertBankBalanceSnapshotsForUser", () => {
       positionsValue: null,
       source: "plaid",
     });
+  });
+
+  it("negates current for credit accounts (liability convention)", async () => {
+    findManyMock.mockResolvedValue([
+      {
+        balance: {
+          available: null,
+          buyingPower: null,
+          creditLimit: "10000.0000",
+          currency: "USD",
+          current: "5154.0000",
+        },
+        id: "credit-1",
+        type: "credit",
+      },
+    ]);
+
+    await upsertBankBalanceSnapshotsForUser("user-1", "cron");
+
+    expect(lastInsertRows()[0]).toMatchObject({
+      accountId: "credit-1",
+      current: "-5154.0000",
+    });
+  });
+
+  it("negates current for loan accounts", async () => {
+    findManyMock.mockResolvedValue([
+      {
+        balance: {
+          available: null,
+          buyingPower: null,
+          creditLimit: null,
+          currency: "USD",
+          current: "13545.9600",
+        },
+        id: "loan-1",
+        type: "loan",
+      },
+    ]);
+
+    await upsertBankBalanceSnapshotsForUser("user-1", "cron");
+
+    expect(lastInsertRows()[0]?.current).toBe("-13545.9600");
+  });
+
+  it("flips a naturally-negative credit balance back to positive (overpaid card)", async () => {
+    findManyMock.mockResolvedValue([
+      {
+        balance: {
+          available: null,
+          buyingPower: null,
+          creditLimit: "10000.0000",
+          currency: "USD",
+          current: "-50.0000",
+        },
+        id: "credit-2",
+        type: "credit",
+      },
+    ]);
+
+    await upsertBankBalanceSnapshotsForUser("user-1", "cron");
+
+    expect(lastInsertRows()[0]?.current).toBe("50.0000");
+  });
+
+  it("preserves overdrawn checking as negative (asset, sign untouched)", async () => {
+    findManyMock.mockResolvedValue([
+      {
+        balance: {
+          available: "-100.0000",
+          buyingPower: null,
+          creditLimit: null,
+          currency: "USD",
+          current: "-100.0000",
+        },
+        id: "checking-1",
+        type: "depository",
+      },
+    ]);
+
+    await upsertBankBalanceSnapshotsForUser("user-1", "cron");
+
+    expect(lastInsertRows()[0]?.current).toBe("-100.0000");
   });
 });

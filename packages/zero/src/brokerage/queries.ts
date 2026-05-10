@@ -94,7 +94,11 @@ export const brokerageQueries = {
       const cutoff = snapshotCutoff(args?.range);
       const base = zql.snapshot
         .where("userId", userId)
-        .whereExists("account", (acc) => acc.where("source", "snaptrade"));
+        .whereExists("account", (acc) =>
+          acc.where(({ or, cmp, and }) =>
+            or(cmp("source", "snaptrade"), and(cmp("source", "plaid"), cmp("type", "investment"))),
+          ),
+        );
       const filtered = cutoff === null ? base : base.where("snapshotDate", ">=", cutoff);
       return filtered.orderBy("snapshotDate", "desc").limit(PORTFOLIO_SNAPSHOT_LIMIT);
     },
