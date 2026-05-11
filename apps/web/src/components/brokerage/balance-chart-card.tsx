@@ -20,16 +20,12 @@ import {
   YAxis,
 } from "recharts";
 
-import type { PositionRow } from "./positions-table";
-
 export interface PortfolioSnapshotRow {
   id: string;
   accountId: string;
   snapshotDate: number;
   totalValue?: number | null;
 }
-
-export type { PositionRow } from "./positions-table";
 
 interface ChartPoint {
   display: string;
@@ -98,14 +94,12 @@ function ChartHoverSync({
 
 export function BalanceChartCard({
   portfolioSnapshots,
-  positions,
   scopedAccountIds,
   scopeAccounts,
   brokerageScope,
   onScopeChange,
 }: {
   portfolioSnapshots: readonly PortfolioSnapshotRow[];
-  positions: readonly PositionRow[];
   scopedAccountIds: ReadonlySet<string> | null;
   scopeAccounts: ScopeAccount[];
   brokerageScope: BrokerageScope;
@@ -136,38 +130,27 @@ export function BalanceChartCard({
     }
   }, []);
 
+  // Resting headline = sum of the most-recent snapshot row per scoped account.
+  // snapshot.current already includes both cash + positions for snaptrade and
+  // total account value for plaid investment, so don't add live position
+  // values on top — that double-counts the positions component.
   const latestValue = useMemo(() => {
     const scopedSnaps =
       scopedAccountIds === null
         ? portfolioSnapshots
         : portfolioSnapshots.filter((s) => scopedAccountIds.has(s.accountId));
-    let snaptradePart = 0;
-    if (scopedSnaps.length > 0) {
-      const maxDate = Math.max(...scopedSnaps.map((s) => s.snapshotDate));
-      for (const s of scopedSnaps) {
-        if (s.snapshotDate === maxDate) {
-          snaptradePart += s.totalValue ?? 0;
-        }
-      }
-    }
-    let livePart = 0;
-    for (const p of positions) {
-      const acctId = p.accountId ?? p.brokerageAccount?.id ?? null;
-      if (acctId === null) {
-        continue;
-      }
-      if (scopedAccountIds !== null && !scopedAccountIds.has(acctId)) {
-        continue;
-      }
-      if (typeof p.institutionValue === "number") {
-        livePart += p.institutionValue;
-      }
-    }
-    if (scopedSnaps.length === 0 && livePart === 0) {
+    if (scopedSnaps.length === 0) {
       return null;
     }
-    return snaptradePart + livePart;
-  }, [portfolioSnapshots, positions, scopedAccountIds]);
+    const maxDate = Math.max(...scopedSnaps.map((s) => s.snapshotDate));
+    let total = 0;
+    for (const s of scopedSnaps) {
+      if (s.snapshotDate === maxDate) {
+        total += s.totalValue ?? 0;
+      }
+    }
+    return total;
+  }, [portfolioSnapshots, scopedAccountIds]);
 
   const chartPoints = useMemo(() => {
     const cutoff = rangeStartEpoch(balanceChartRange);

@@ -142,12 +142,11 @@ function buildHistory(bank: BankSnap[], port: PortSnap[]): { date: string; value
     for (const s of portByDate.get(date) ?? []) {
       portByAcct.set(s.accountId, s);
     }
+    // snapshot.current is signed at write time (liabilities negative); plain
+    // sum yields net worth without per-row sign logic.
     let total = 0;
     for (const s of bankByAcct.values()) {
-      const cat = categorize(s);
-      if (cat === "credit" || cat === "loan") {
-        total -= s.currentBalance;
-      } else if (cat) {
+      if (categorize(s)) {
         total += s.currentBalance;
       }
     }
@@ -208,9 +207,14 @@ export const networthRouter = new OpenAPIHono<AppEnv>().openapi(networthRoute, a
     investments += s.value;
   }
 
+  // snapshot.current is signed (liabilities negative). Net worth = plain sum.
+  // Surface credit / loans / liabilities as positive magnitudes for the
+  // public API (consumer-friendly "you owe $X" framing).
+  const netWorth = checking + savings + investments + credit + loans;
   const assets = checking + savings + investments;
+  credit = Math.abs(credit);
+  loans = Math.abs(loans);
   const liabilities = credit + loans;
-  const netWorth = assets - liabilities;
 
   const history = buildHistory(bank, port);
   const asOf = history.length > 0 ? (history.at(-1)?.date ?? null) : null;

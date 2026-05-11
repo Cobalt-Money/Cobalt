@@ -3,9 +3,11 @@ import { category } from "@cobalt-web/db/schema/accounts/banking/categories/cate
 import { categoryGroup } from "@cobalt-web/db/schema/accounts/banking/categories/category-group";
 import { recurring } from "@cobalt-web/db/schema/accounts/banking/transactions/recurring";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
+import { LOCK_KEY_GUARDED_COLUMNS } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction-edit";
 import {
-  locationJsonSchema,
+  locationJsonSchema as _locationJsonSchema,
   recurringStreamJsonbSelectRefinements,
+  transactionCounterpartyJsonSchema as _transactionCounterpartyJsonSchema,
   transactionJsonbSelectRefinements,
   transactionNotesMarkdownSchema,
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
@@ -15,9 +17,31 @@ import { createSelectSchema } from "drizzle-orm/zod";
 
 const notesMarkdownSchema = transactionNotesMarkdownSchema;
 
+/** Plaid `location` jsonb on a transaction (named for OpenAPI components). */
+export const locationJsonSchema = _locationJsonSchema.openapi("TransactionLocation");
+
+/** Plaid `counterparties[]` element (named for OpenAPI components). */
+export const transactionCounterpartySchema =
+  _transactionCounterpartyJsonSchema.openapi("TransactionCounterparty");
+
+/**
+ * Per-field user-edit lock keys. Mirrors `LOCK_KEY_GUARDED_COLUMNS` in the DB
+ * schema; presence of a key means subsequent provider syncs must not overwrite
+ * the corresponding column(s).
+ */
+const LOCK_KEYS = Object.keys(LOCK_KEY_GUARDED_COLUMNS) as [
+  keyof typeof LOCK_KEY_GUARDED_COLUMNS,
+  ...(keyof typeof LOCK_KEY_GUARDED_COLUMNS)[],
+];
+
+export const transactionLockedFieldsSchema = z
+  .array(z.enum(LOCK_KEYS))
+  .openapi("TransactionLockedFields");
+
 /** `transaction` row fields exposed on the list (see `getUserTransactions`). */
 const transactionListItemRowSchema = createSelectSchema(transaction, {
   ...transactionJsonbSelectRefinements,
+  lockedFields: transactionLockedFieldsSchema,
 });
 
 /** Joined `financial_account` columns (`account.name` / `account.type` in the mapper). */
@@ -62,12 +86,14 @@ const categoryGroupRowSlice = createSelectSchema(categoryGroup).pick({
 });
 
 /** Joined category slice exposed on list/detail rows. Null when row not yet backfilled. */
-export const transactionCategorySchema = categoryRowSlice
+const transactionCategoryShape = categoryRowSlice
   .extend({
     groupName: categoryGroupRowSlice.shape.name,
     groupSystemKey: categoryGroupRowSlice.shape.systemKey,
   })
-  .nullable();
+  .openapi("TransactionCategoryRef");
+
+export const transactionCategorySchema = transactionCategoryShape.nullable();
 
 /** List transaction DTO: picked `transaction` columns + joined account / institution (see `getUserTransactions`). */
 export const transactionListItemSchema = transactionListItemRowSchema
@@ -98,7 +124,8 @@ export const transactionListItemSchema = transactionListItemRowSchema
     notes: notesMarkdownSchema.nullable(),
     plaidAccountId: z.string().nullable(),
     tagIds: z.array(z.uuid()).default([]),
-  });
+  })
+  .openapi("Transaction");
 
 export type TransactionListItem = z.infer<typeof transactionListItemSchema>;
 
@@ -133,14 +160,21 @@ export const recurringStreamSchema = recurringStreamListRowSchema
     lastAmount: z.number(),
     streamId: z.string().nullable(),
     updatedAt: z.string().nullable(),
-  });
+  })
+  .openapi("RecurringStream");
 
-export const spendingSchema = z.object({
-  averageLabel: z.enum(["daily", "weekly", "monthly", "yearly"]),
-  averageSpending: z.number(),
-  spending: z.array(z.object({ amount: z.number(), date: z.string() })),
-  totalSpending: z.number(),
-});
+export const spendingBucketSchema = z
+  .object({ amount: z.number(), date: z.string() })
+  .openapi("SpendingBucket");
+
+export const spendingSchema = z
+  .object({
+    averageLabel: z.enum(["daily", "weekly", "monthly", "yearly"]),
+    averageSpending: z.number(),
+    spending: z.array(spendingBucketSchema),
+    totalSpending: z.number(),
+  })
+  .openapi("CreditSpendingResponse");
 
 export const transactionIdParamSchema = z.object({
   transactionId: z.uuid(),
@@ -148,24 +182,30 @@ export const transactionIdParamSchema = z.object({
 
 export const transactionListQuerySchema = z.object({
   accountType: z.string().optional(),
+  cursor: z.string().optional(),
   endDate: z.string().optional(),
+  limit: z.coerce.number().min(1).max(200).default(50),
   maxAmount: z.coerce.number().optional(),
   minAmount: z.coerce.number().optional(),
-  page: z.coerce.number().min(0).default(0),
-  pageSize: z.coerce.number().min(1).default(50),
   pendingFilter: z.enum(["true", "false"]).optional(),
   primaryCategory: z.string().optional(),
   searchQuery: z.string().optional(),
   startDate: z.string().optional(),
 });
 
-export const transactionListResponseSchema = z.object({
-  transactions: z.array(transactionListItemSchema),
-});
+export const transactionListResponseSchema = z
+  .object({
+    hasMore: z.boolean(),
+    nextCursor: z.string().nullable(),
+    transactions: z.array(transactionListItemSchema),
+  })
+  .openapi("TransactionsResponse");
 
-export const recurringStreamsResponseSchema = z.object({
-  streams: z.array(recurringStreamSchema),
-});
+export const recurringStreamsResponseSchema = z
+  .object({
+    streams: z.array(recurringStreamSchema),
+  })
+  .openapi("RecurringStreamsResponse");
 
 export const spendingQuerySchema = z.object({
   accountId: z.string().optional(),
@@ -229,27 +269,31 @@ export const geocodeSearchQuerySchema = z.object({
 });
 
 /** Single row from `transaction_edit`. */
-export const transactionActivityItemSchema = z.object({
-  actor: z.enum(["user", "system"]),
-  createdAt: z.string(),
-  field: z.enum([
-    "amount",
-    "category",
-    "date",
-    "location",
-    "merchantName",
-    "name",
-    "notes",
-    "tags",
-  ]),
-  id: z.string(),
-  /** Native value, type discriminated by `field`: name/date=string, amount=number, category={primary,detailed,confidence?}, notes=markdown string (historical rows may still hold Tiptap JSON). */
-  newValue: z.unknown().nullable(),
-  oldValue: z.unknown().nullable(),
-});
+export const transactionActivityItemSchema = z
+  .object({
+    actor: z.enum(["user", "system"]),
+    createdAt: z.string(),
+    field: z.enum([
+      "amount",
+      "category",
+      "date",
+      "location",
+      "merchantName",
+      "name",
+      "notes",
+      "tags",
+    ]),
+    id: z.string(),
+    /** Native value, type discriminated by `field`: name/date=string, amount=number, category={primary,detailed,confidence?}, notes=markdown string (historical rows may still hold Tiptap JSON). */
+    newValue: z.unknown().nullable(),
+    oldValue: z.unknown().nullable(),
+  })
+  .openapi("TransactionActivityEvent");
 
-export const transactionActivityResponseSchema = z.object({
-  events: z.array(transactionActivityItemSchema),
-});
+export const transactionActivityResponseSchema = z
+  .object({
+    events: z.array(transactionActivityItemSchema),
+  })
+  .openapi("TransactionActivityResponse");
 
 export type TransactionActivityItem = z.infer<typeof transactionActivityItemSchema>;

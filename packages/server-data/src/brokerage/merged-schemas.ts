@@ -1,6 +1,10 @@
 import { z } from "@hono/zod-openapi";
 
-import { eventsQuerySchema, eventsResponseSchema } from "../news/events/schemas.js";
+import {
+  eventsQuerySchema,
+  eventsResponseSchema,
+  mappedFinancialEventSchema,
+} from "../news/events/schemas.js";
 import {
   activitiesResponseSchema,
   balancesResponseSchema,
@@ -10,7 +14,9 @@ import {
   positionsResponseSchema,
 } from "./schemas.js";
 
-const mappedFinancialEventsList = eventsResponseSchema.shape.events;
+export const holdingsNewsItemSchema = mappedFinancialEventSchema.openapi("HoldingsNewsItem");
+
+const mappedFinancialEventsList = z.array(holdingsNewsItemSchema);
 
 // ── Merged brokerage bundle (SnapTrade tables + adapted Plaid data) ─
 
@@ -32,7 +38,8 @@ export const mergedBrokerageDataSchema = balancesResponseSchema
     holdingsNews: mappedFinancialEventsList,
     portfolioSnapshots: z.array(portfolioSnapshotItemSchema),
     userBrokerages: z.array(z.string()),
-  });
+  })
+  .openapi("BrokerageData");
 
 // ── Holdings news (financial events for holding tickers) ───────────
 

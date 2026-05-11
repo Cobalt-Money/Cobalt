@@ -3,7 +3,7 @@ import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo } from "react";
 
-import type { PositionRow } from "@/components/brokerage/balance-chart-card";
+import type { PositionRow } from "@/components/brokerage/positions-table";
 import type { ActivityRow } from "@/components/brokerage/recent-activity-card";
 
 import { activityToActivityRow, holdingToPositionRow } from "./lib/brokerage-normalizers";

@@ -273,19 +273,18 @@ function buildNetWorthSeries(
   return [...allKeys]
     .toSorted() // lexicographic = chronological for all key formats
     .map((key) => {
-      let bankNet = 0;
-      for (const { balance, type } of bankByBucket.get(key)?.values() ?? []) {
-        bankNet += type === "credit" || type === "loan" ? -balance : balance;
+      // snapshot.current is signed at write time (liabilities negative).
+      // Net worth = plain sum across every account.
+      let total = 0;
+      for (const { balance } of bankByBucket.get(key)?.values() ?? []) {
+        total += balance;
       }
-
-      let portfolioTotal = 0;
       for (const { totalValue } of portfolioByBucket.get(key)?.values() ?? []) {
-        portfolioTotal += totalValue;
+        total += totalValue;
       }
-
       return {
         ...bucketLabels(key, range),
-        value: bankNet + portfolioTotal,
+        value: total,
       };
     });
 }
@@ -738,7 +737,12 @@ export function NetWorthSection() {
     [latestPortfolioSnapshots],
   );
 
-  const totalNetWorth = depositoryTotal + investmentTotal - creditTotal - loanTotal;
+  // snapshot.current is signed: assets positive, liabilities negative.
+  // Net worth = plain sum across every category.
+  const totalNetWorth = depositoryTotal + investmentTotal + creditTotal + loanTotal;
+  // Liability magnitudes for "you owe $X" displays + donut percentages.
+  const creditOwed = Math.abs(creditTotal);
+  const loanOwed = Math.abs(loanTotal);
 
   // ── Historical chart ─────────────────────────────────────────
 
@@ -760,7 +764,10 @@ export function NetWorthSection() {
 
   // ── Categories donut ─────────────────────────────────────────
 
-  const categoryBase = checkingTotal + savingsTotal + investmentTotal + creditTotal + loanTotal;
+  // Donut shows category share by magnitude — liabilities use absolute value
+  // so credit / loan slices have positive width even though their snapshot
+  // sign is negative.
+  const categoryBase = checkingTotal + savingsTotal + investmentTotal + creditOwed + loanOwed;
 
   const categories = useMemo(() => {
     if (categoryBase === 0) {
@@ -793,20 +800,20 @@ export function NetWorthSection() {
         color: ACCOUNT_CATEGORY_COLORS.credit,
         key: "credit",
         label: "Credit",
-        pct: pct(creditTotal),
-        value: creditTotal,
+        pct: pct(creditOwed),
+        value: creditOwed,
       },
       {
         color: ACCOUNT_CATEGORY_COLORS.loans,
         key: "loans",
         label: "Loans",
-        pct: pct(loanTotal),
-        value: loanTotal,
+        pct: pct(loanOwed),
+        value: loanOwed,
       },
     ]
       .filter((c) => c.value > 0)
       .toSorted((a, b) => b.pct - a.pct);
-  }, [checkingTotal, savingsTotal, investmentTotal, creditTotal, loanTotal, categoryBase]);
+  }, [checkingTotal, savingsTotal, investmentTotal, creditOwed, loanOwed, categoryBase]);
 
   const categoryDonutConfig = useMemo((): ChartConfig => {
     const out: Record<string, { color: string; label: string }> = {};

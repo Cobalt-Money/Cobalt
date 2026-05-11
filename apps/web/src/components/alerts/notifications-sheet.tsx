@@ -1,4 +1,3 @@
-import { env } from "@cobalt-web/env/web";
 import { Button } from "@cobalt-web/ui/components/button";
 import {
   Empty,
@@ -15,13 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@cobalt-web/ui/components/sheet";
-import { cn } from "@cobalt-web/ui/lib/utils";
-import {
-  AlertCircleIcon,
-  BellDotIcon,
-  Cancel01Icon,
-  RefreshIcon,
-} from "@hugeicons/core-free-icons";
+import { AlertCircleIcon, BellDotIcon, RefreshIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
@@ -29,14 +22,10 @@ import { toast } from "sonner";
 
 import type { UserAlertRow } from "@/hooks/use-user-alerts";
 import { useUserAlerts } from "@/hooks/use-user-alerts";
+import { plaidApi, snaptradeApi } from "@/lib/clients/api-client";
 
 import { useOnboarding } from "../accounts/onboarding-context";
-
-interface ReauthSession {
-  hookToken: string;
-  runId: string;
-  linkToken: string;
-}
+import type { ReauthSession } from "../accounts/reauth-session";
 
 interface NotificationsSheetProps {
   open: boolean;
@@ -56,11 +45,6 @@ function getAlertMetadata(alert: UserAlertRow): AlertMetadata {
   return (raw && typeof raw === "object" ? raw : {}) as AlertMetadata;
 }
 
-function getAlertDisplayName(alert: UserAlertRow): string {
-  const meta = getAlertMetadata(alert);
-  return meta.institutionName ?? meta.brokerageName ?? "Connection";
-}
-
 function getAlertCtaLabel(type: string): string {
   if (type === "new_accounts") {
     return "Refresh connection";
@@ -71,8 +55,8 @@ function getAlertCtaLabel(type: string): string {
 /**
  * Renders a list of active user alerts in a right-side sheet. Each alert
  * exposes a source-aware reconnect CTA (Plaid Link update-mode or the
- * SnapTrade connection portal) plus a dismiss action that hits the server;
- * Zero syncs the row's new status back into the list automatically.
+ * SnapTrade connection portal). Alerts persist until the underlying
+ * connection is repaired — there is no user-facing dismiss.
  */
 export function NotificationsSheet({ open, onOpenChange, previewAlerts }: NotificationsSheetProps) {
   const live = useUserAlerts();
@@ -139,23 +123,13 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
     setBusyId(alert.id);
     try {
       if (alert.source === "plaid") {
-        const res = await fetch(`${env.VITE_SERVER_URL}/api/plaid/link-token/update`, {
-          body: JSON.stringify({
-            mode: "reauth",
-            plaidItemId: alert.sourceId,
-          }),
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
+        const res = await plaidApi["link-token"].update.$post({
+          json: { mode: "reauth", plaidItemId: alert.sourceId },
         });
-        const data = (await res.json()) as {
-          error?: string;
-          hookToken?: string;
-          link_token?: string;
-          runId?: string;
-        };
-        if (!res.ok || !data.link_token || !data.hookToken || !data.runId) {
-          throw new Error(data.error ?? "Could not start reconnect");
+        const data = await res.json();
+        if (!res.ok || !("link_token" in data)) {
+          const errMsg = "error" in data ? data.error : undefined;
+          throw new Error(errMsg ?? "Could not start reconnect");
         }
         sessionRef.current = {
           hookToken: data.hookToken,
@@ -164,46 +138,18 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
         };
         setPlaidToken(data.link_token);
       } else if (alert.source === "snaptrade") {
-        const res = await fetch(`${env.VITE_SERVER_URL}/api/snaptrade/generate-connection-portal`, {
-          body: JSON.stringify({
-            broker: "",
-            reconnectAuthorizationId: alert.sourceId,
-          }),
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
+        const res = await snaptradeApi.generateConnectionPortal.$post({
+          json: { broker: "", reconnectAuthorizationId: alert.sourceId },
         });
-        const data = (await res.json()) as {
-          error?: string;
-          redirectURI?: string;
-        };
-        if (!res.ok || !data.redirectURI) {
-          throw new Error(data.error ?? "Could not open reconnect");
+        const data = await res.json();
+        if (!res.ok || !("redirectURI" in data) || !data.redirectURI) {
+          const errMsg = "error" in data ? data.error : undefined;
+          throw new Error(errMsg ?? "Could not open reconnect");
         }
         window.location.assign(data.redirectURI);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Reconnect failed");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const handleDismiss = async (alert: UserAlertRow) => {
-    setBusyId(alert.id);
-    try {
-      const res = await fetch(
-        `${env.VITE_SERVER_URL}/api/alerts/${encodeURIComponent(alert.id)}/dismiss`,
-        { credentials: "include", method: "POST" },
-      );
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        throw new Error(data.error ?? "Dismiss failed");
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Dismiss failed");
     } finally {
       setBusyId(null);
     }
@@ -232,16 +178,9 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
             <ul className="flex flex-col divide-y">
               {alerts.map((alert) => {
                 const meta = getAlertMetadata(alert);
-                const name = getAlertDisplayName(alert);
                 const isBusy = busyId === alert.id;
                 return (
-                  <li
-                    className={cn(
-                      "flex flex-col gap-3 px-6 py-4",
-                      alert.status === "unread" && "bg-muted/30",
-                    )}
-                    key={alert.id}
-                  >
+                  <li className="flex flex-col gap-3 px-6 py-4" key={alert.id}>
                     <div className="flex items-start gap-3">
                       {meta.institutionLogo ? (
                         <img
@@ -280,17 +219,6 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
                       >
                         <HugeiconsIcon className="size-4" icon={RefreshIcon} strokeWidth={2} />
                         {isBusy ? "…" : getAlertCtaLabel(alert.type)}
-                      </Button>
-                      <Button
-                        aria-label={`Dismiss alert for ${name}`}
-                        disabled={isBusy}
-                        onClick={() => handleDismiss(alert)}
-                        size="sm"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <HugeiconsIcon className="size-4" icon={Cancel01Icon} strokeWidth={2} />
-                        Dismiss
                       </Button>
                     </div>
                   </li>

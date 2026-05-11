@@ -6,6 +6,7 @@ import { matchesDuplicateAccountMask } from "./lib.js";
 export interface AccountRef {
   id: string;
   userId: string;
+  type: string | null;
 }
 
 /**
@@ -19,7 +20,7 @@ export async function lookupFinancialAccountsByPlaidIds(
     return new Map();
   }
   const rows = await db.query.financialAccount.findMany({
-    columns: { externalId: true, id: true, userId: true },
+    columns: { externalId: true, id: true, type: true, userId: true },
     where: {
       externalId: { in: plaidAccountIds },
       source: { eq: "plaid" },
@@ -28,7 +29,7 @@ export async function lookupFinancialAccountsByPlaidIds(
   const map = new Map<string, AccountRef>();
   for (const r of rows) {
     if (r.externalId !== null) {
-      map.set(r.externalId, { id: r.id, userId: r.userId });
+      map.set(r.externalId, { id: r.id, type: r.type, userId: r.userId });
     }
   }
   return map;

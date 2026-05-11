@@ -22,13 +22,16 @@ export const tagSchema = tagRowSchema
     createdAt: z.string(),
     updatedAt: z.string(),
     usageCount: z.number().int().nonnegative(),
-  });
+  })
+  .openapi("Tag");
 
 export type TagDto = z.infer<typeof tagSchema>;
 
-export const tagsListResponseSchema = z.object({
-  tags: z.array(tagSchema),
-});
+export const tagsListResponseSchema = z
+  .object({
+    tags: z.array(tagSchema),
+  })
+  .openapi("TagsResponse");
 
 /** Body for `POST /tags` — pick of insert columns the user owns. */
 export const createTagBodySchema = tagRowSchema.pick({

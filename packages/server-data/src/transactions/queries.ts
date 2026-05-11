@@ -6,22 +6,47 @@ import { transactionTag } from "@cobalt-web/db/schema/accounts/banking/tags/tran
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
-import { and, desc, eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, lt, lte, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { z } from "zod";
 
 import { toDateString } from "./lib.js";
-import type { transactionListQuerySchema } from "./schemas.js";
+import type { TransactionListItem, transactionListQuerySchema } from "./schemas.js";
 import { toTransactionListItem } from "./to-transaction-list-item.js";
 
 export type TransactionListQuery = z.infer<typeof transactionListQuerySchema>;
+
+interface CursorPayload {
+  d: string;
+  i: string;
+}
+
+function decodeCursor(cursor: string | undefined): CursorPayload | null {
+  if (!cursor) {
+    return null;
+  }
+  try {
+    const json = Buffer.from(cursor, "base64url").toString("utf-8");
+    const parsed = JSON.parse(json) as Partial<CursorPayload>;
+    if (typeof parsed.d !== "string" || typeof parsed.i !== "string") {
+      return null;
+    }
+    return { d: parsed.d, i: parsed.i };
+  } catch {
+    return null;
+  }
+}
+
+function encodeCursor(payload: CursorPayload): string {
+  return Buffer.from(JSON.stringify(payload), "utf-8").toString("base64url");
+}
 
 // ── Queries ─────────────────────────────────────────────────────────
 
 export async function getUserTransactions(userId: string, params: TransactionListQuery) {
   const {
-    page = 0,
-    pageSize = 50,
+    limit = 50,
+    cursor,
     accountType,
     pendingFilter,
     startDate,
@@ -31,6 +56,7 @@ export async function getUserTransactions(userId: string, params: TransactionLis
     maxAmount,
     primaryCategory,
   } = params;
+  const cursorPayload = decodeCursor(cursor);
 
   const search = searchQuery?.trim();
   const searchPattern = search ? `%${search}%` : undefined;
@@ -66,6 +92,14 @@ export async function getUserTransactions(userId: string, params: TransactionLis
     if (orClause) {
       conditions.push(orClause);
     }
+  }
+  if (cursorPayload) {
+    conditions.push(
+      or(
+        lt(transaction.date, cursorPayload.d),
+        and(eq(transaction.date, cursorPayload.d), lt(transaction.id, cursorPayload.i)),
+      ) as SQL,
+    );
   }
 
   const rows = await db
@@ -116,9 +150,16 @@ export async function getUserTransactions(userId: string, params: TransactionLis
     .leftJoin(plaidConnection, eq(financialAccount.plaidConnectionId, plaidConnection.id))
     .leftJoin(institution, eq(institution.plaidInstitutionId, plaidConnection.institutionId))
     .where(and(...conditions))
-    .orderBy(desc(transaction.date))
-    .limit(pageSize)
-    .offset(page * pageSize);
+    .orderBy(desc(transaction.date), desc(transaction.id))
+    .limit(limit + 1);
+
+  const hasMore = rows.length > limit;
+  if (hasMore) {
+    rows.pop();
+  }
+  const lastRow = rows.at(-1);
+  const nextCursor =
+    hasMore && lastRow ? encodeCursor({ d: String(lastRow.date), i: lastRow.id }) : null;
 
   const txIds = rows.map((r) => r.id);
   const tagRows =
@@ -138,7 +179,7 @@ export async function getUserTransactions(userId: string, params: TransactionLis
     }
   }
 
-  return rows.map((row) =>
+  const transactions = rows.map((row) =>
     toTransactionListItem({
       account: {
         logoDomain: row.account.logoDomain,
@@ -175,7 +216,7 @@ export async function getUserTransactions(userId: string, params: TransactionLis
         date: row.date,
         id: row.id,
         lat: row.lat,
-        lockedFields: row.lockedFields,
+        lockedFields: row.lockedFields as TransactionListItem["lockedFields"],
         logoUrl: row.logoUrl,
         lon: row.lon,
         merchantName: row.merchantName,
@@ -191,6 +232,8 @@ export async function getUserTransactions(userId: string, params: TransactionLis
       },
     }),
   );
+
+  return { hasMore, nextCursor, transactions };
 }
 
 export async function getRecurringStreams(userId: string) {

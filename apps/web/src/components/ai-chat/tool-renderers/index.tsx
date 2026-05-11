@@ -4,9 +4,9 @@ import { memo } from "react";
 
 import { AskUserToolRenderer } from "./ask-user/ask-user-renderer";
 import { RenderChartToolRenderer } from "./charts/render-chart";
-import { BashToolRenderer } from "./code-agent/bash-renderer";
-import { ReadFileToolRenderer } from "./code-agent/readfile-renderer";
-import { SqlToolRenderer } from "./code-agent/sql-renderer";
+import { BashToolRenderer } from "./finance-agent/bash-renderer";
+import { ReadFileToolRenderer } from "./finance-agent/readfile-renderer";
+import { SqlToolRenderer } from "./finance-agent/sql-renderer";
 import { RenderDocumentToolRenderer } from "./documents/render-document";
 import type { ToolRendererContext } from "./types";
 import { toolRendererKey } from "./types";

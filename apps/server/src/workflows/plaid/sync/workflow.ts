@@ -7,7 +7,6 @@ import { plaidInitialInvestmentSyncWorkflow } from "../investments/workflow";
 import { syncLiabilities } from "../liabilities/orchestration";
 import { plaidLiabilitiesSyncWorkflow } from "../liabilities/workflow";
 import {
-  backfillHistoricalSnapshotsStep,
   clearItemErrorStep,
   closeOnboardingProgressStep,
   duplicateCheckStep,
@@ -19,6 +18,7 @@ import {
   persistOnboardingItemStep,
   reconcileOrphanAccountsStep,
   removeItemStep,
+  seedTodayPlaidSnapshotsStep,
   syncAccountsAndBalancesStep,
   syncBalancesStep,
   syncRecurringStep,
@@ -67,22 +67,15 @@ export async function plaidSyncWorkflow(webhook: SyncUpdatesWebhook): Promise<Pl
     await syncAccountsAndBalancesStep(item.plaidAccessToken, item.plaidItemId);
     await reconcileOrphanAccountsStep(item.plaidAccessToken, item.plaidItemId);
 
-    const [, balanceResult] = await Promise.all([
+    await Promise.all([
       syncTransactionsStep(item.plaidAccessToken, item.plaidItemId, item.transactionsCursor),
       syncBalancesStep(item.plaidAccessToken, item.plaidItemId),
     ]);
 
+    // Snapshots are written by cron + at account creation only — recurring
+    // webhooks update live balances and let the next cron tick capture state.
     if (webhook.historical_update_complete) {
-      const backfillAccounts = balanceResult.accounts.map((a) => ({
-        availableBalance: a.balances.available ?? null,
-        creditLimit: a.balances.limit ?? null,
-        currentBalance: a.balances.current ?? 0,
-        plaidAccountId: a.account_id,
-      }));
-      await Promise.all([
-        backfillHistoricalSnapshotsStep(backfillAccounts),
-        syncRecurringStep(item.plaidAccessToken, item.plaidItemId),
-      ]);
+      await syncRecurringStep(item.plaidAccessToken, item.plaidItemId);
     }
 
     return { itemId: webhook.item_id, success: true };
@@ -228,7 +221,7 @@ export async function plaidAddAccountWorkflow(
 
       const item = await getPlaidItemStep(plaidItemId);
       await emit("transactions", "start");
-      const [txResult, balanceResult] = await Promise.all([
+      const [txResult] = await Promise.all([
         syncTransactionsStep(accessToken, plaidItemId, item.transactionsCursor),
         syncBalancesStep(accessToken, plaidItemId),
       ]);
@@ -237,16 +230,10 @@ export async function plaidAddAccountWorkflow(
         modified: txResult.modified,
       });
 
-      const backfillAccounts = balanceResult.accounts.map((a) => ({
-        availableBalance: a.balances.available ?? null,
-        creditLimit: a.balances.limit ?? null,
-        currentBalance: a.balances.current ?? 0,
-        plaidAccountId: a.account_id,
-      }));
       await emit("historical", "start");
       await Promise.all([
-        backfillHistoricalSnapshotsStep(backfillAccounts),
         syncRecurringStep(accessToken, plaidItemId),
+        seedTodayPlaidSnapshotsStep(input.userId),
       ]);
       await emit("historical", "done");
 
@@ -275,6 +262,7 @@ export async function plaidAddAccountWorkflow(
         syncTransactionsStep(accessToken, plaidItemId, item.transactionsCursor),
         syncBalancesStep(accessToken, plaidItemId),
       ]);
+      await seedTodayPlaidSnapshotsStep(input.userId);
       await emit("transactions", "done", {
         added: txResult.added,
         modified: txResult.modified,
@@ -343,7 +331,7 @@ export async function plaidAddAccountWorkflow(
     await emit("waiting_for_plaid", "start");
 
     await Promise.all([
-      handleSyncBranch(syncHook, accessToken, itemId, emit),
+      handleSyncBranch(syncHook, accessToken, itemId, input.userId, emit),
       hasInvestments ? handleHoldingsBranch(accessToken, emit) : Promise.resolve(),
       hasInvestments ? handleInvestmentsTxBranch(accessToken, emit) : Promise.resolve(),
       hasLiabilities ? handleLiabilitiesBranch(accessToken, itemId, emit) : Promise.resolve(),
@@ -365,6 +353,7 @@ async function handleSyncBranch(
   hook: AsyncIterable<PlaidOnboardingHookPayload>,
   accessToken: string,
   itemId: string,
+  userId: string,
   emit: (
     phase: PlaidOnboardingPhase,
     status: "start" | "done",
@@ -373,7 +362,6 @@ async function handleSyncBranch(
 ) {
   let initialDone = false;
   let historicalDone = false;
-  let cachedBalances: Awaited<ReturnType<typeof syncBalancesStep>> | null = null;
 
   for await (const payload of hook) {
     if (payload.initial_update_complete && !initialDone) {
@@ -385,7 +373,7 @@ async function handleSyncBranch(
       await emit("accounts", "done");
 
       await emit("transactions", "start");
-      const [txResult, balanceResult] = await Promise.all([
+      const [txResult] = await Promise.all([
         syncTransactionsStep(accessToken, itemId, null),
         syncBalancesStep(accessToken, itemId),
       ]);
@@ -394,21 +382,15 @@ async function handleSyncBranch(
         modified: txResult.modified,
       });
 
-      cachedBalances = balanceResult;
       initialDone = true;
     }
 
-    if (payload.historical_update_complete && cachedBalances) {
-      const backfillAccounts = cachedBalances.accounts.map((a) => ({
-        availableBalance: a.balances.available ?? null,
-        creditLimit: a.balances.limit ?? null,
-        currentBalance: a.balances.current ?? 0,
-        plaidAccountId: a.account_id,
-      }));
+    if (payload.historical_update_complete) {
+      // Snapshots are seeded once at link time; cron handles nightly updates.
       await emit("historical", "start");
       await Promise.all([
-        backfillHistoricalSnapshotsStep(backfillAccounts),
         syncRecurringStep(accessToken, itemId),
+        seedTodayPlaidSnapshotsStep(userId),
       ]);
       await emit("historical", "done");
       historicalDone = true;

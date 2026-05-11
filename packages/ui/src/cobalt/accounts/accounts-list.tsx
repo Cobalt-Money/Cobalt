@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 
 import { ConnectAccountEmpty } from "../empty/connect-account-empty";
 import { AccountCard } from "./account-card";
@@ -16,12 +17,15 @@ export function AccountsList({
   items,
   onConnectAccount,
   onRenameAccount,
+  renderActions,
 }: {
   activeFilter: AccountsFilter;
   isComplete: boolean;
   items: AccountCardViewModel[];
   onConnectAccount?: () => void;
   onRenameAccount?: (id: string, customName: string) => void;
+  /** App supplies the reconnect/disconnect controls per card. */
+  renderActions?: (account: AccountCardViewModel) => ReactNode;
 }) {
   const visible = useMemo(
     () => filterAccountCardsForToolbar(items, activeFilter),
@@ -75,6 +79,7 @@ export function AccountsList({
                     <AccountCard
                       key={account.id}
                       account={account}
+                      actions={renderActions ? renderActions(account) : null}
                       onRename={onRenameAccount}
                       institutionLogo={
                         <AccountLogo

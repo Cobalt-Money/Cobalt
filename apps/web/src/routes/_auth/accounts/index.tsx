@@ -5,6 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
+import { AccountConnectionActions } from "@/components/accounts/account-connection-actions";
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { useAccounts } from "@/hooks/use-accounts";
 
@@ -55,6 +56,7 @@ function AccountsListPage() {
       items={items}
       onConnectAccount={openAddAccount}
       onRenameAccount={onRenameAccount}
+      renderActions={(account) => <AccountConnectionActions account={account} />}
     />
   );
 }

@@ -89,7 +89,8 @@ const COBALT_SDK = {
   transactions: {
     /**
      * @param args { startDate?, endDate?, primaryCategory?, accountType?,
-     *   minAmount?, maxAmount?, searchQuery?, pendingFilter?, page?, pageSize? }
+     *   minAmount?, maxAmount?, searchQuery?, pendingFilter?, limit?, cursor? }
+     * @returns { transactions, nextCursor, hasMore }
      */
     list: (args) => __cobaltCall("transactions.list", args),
     /**

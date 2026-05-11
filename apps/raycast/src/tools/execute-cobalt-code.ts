@@ -18,7 +18,7 @@ interface Input {
    * Always destructure or access the wrapper key before calling .map / .filter.
    *
    * Example:
-   *   const { transactions } = await cobalt.transactions.list({ pageSize: 10 });
+   *   const { transactions, nextCursor, hasMore } = await cobalt.transactions.list({ limit: 10 });
    *   console.log(transactions.map(t => `${t.name} ${t.amount}`).join("\n"));
    */
   code: string;

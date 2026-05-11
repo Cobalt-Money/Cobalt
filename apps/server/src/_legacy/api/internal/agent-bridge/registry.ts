@@ -188,9 +188,7 @@ export const BRIDGE_ROUTES = {
     }),
   }),
   "transactions.list": defineRoute({
-    handler: async (userId, args) => ({
-      transactions: await getUserTransactions(userId, args),
-    }),
+    handler: (userId, args) => getUserTransactions(userId, args),
     schema: transactionListQuerySchema,
   }),
   "transactions.update": defineRoute({

@@ -221,9 +221,7 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
   }),
   route({
     description: "List the user's transactions (paginated, filterable).",
-    handler: async (userId, args) => ({
-      transactions: await getUserTransactions(userId, args),
-    }),
+    handler: (userId, args) => getUserTransactions(userId, args),
     name: "transactions_list",
     schema: transactionListQuerySchema,
   }),
