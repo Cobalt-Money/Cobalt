@@ -3,7 +3,14 @@ import { MockLanguageModelV3 } from "ai/test";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { MUTATING_COMMAND_RE, composeFinanceAgentInstructions } from "./finance-agent.js";
+import type { ModelMessage } from "ai";
+
+import {
+  MUTATING_COMMAND_RE,
+  applyTailCacheBreakpoints,
+  composeDynamicSystemMessage,
+  composeStableSystemPrefix,
+} from "./finance-agent.js";
 import type { FinanceAgentCallOptions } from "./finance-agent.js";
 
 // Re-derive the result type from MockLanguageModelV3's constructor signature
@@ -82,21 +89,10 @@ describe("MUTATING_COMMAND_RE", () => {
   });
 });
 
-describe("composeFinanceAgentInstructions", () => {
-  const baseOptions: FinanceAgentCallOptions = {
-    currentDate: "2026-05-10",
-    currentDateFormatted: "May 10, 2026",
-  };
-
-  it("appends the formatted date sentence", () => {
-    const out = composeFinanceAgentInstructions("BASE", baseOptions, "TOC", "CHART", "DOC");
-    expect(out).toContain("Today is May 10, 2026 (2026-05-10).");
-  });
-
+describe("composeStableSystemPrefix", () => {
   it("includes knowledge TOC, chart prompt, and document prompt sections", () => {
-    const out = composeFinanceAgentInstructions(
+    const out = composeStableSystemPrefix(
       "BASE",
-      baseOptions,
       "KNOWLEDGE_TOC_MARKER",
       "CHART_PROMPT_MARKER",
       "DOCUMENT_PROMPT_MARKER",
@@ -107,21 +103,102 @@ describe("composeFinanceAgentInstructions", () => {
   });
 
   it("preserves the base instructions at the top", () => {
-    const out = composeFinanceAgentInstructions(
-      "BASE_INSTRUCTIONS_MARKER",
-      baseOptions,
-      "TOC",
-      "CHART",
-      "DOC",
-    );
+    const out = composeStableSystemPrefix("BASE_INSTRUCTIONS_MARKER", "TOC", "CHART", "DOC");
     expect(out.startsWith("BASE_INSTRUCTIONS_MARKER")).toBeTruthy();
+  });
+
+  it("excludes any per-call dynamic content (date stays out of the cached prefix)", () => {
+    const out = composeStableSystemPrefix("BASE", "TOC", "CHART", "DOC");
+    expect(out).not.toMatch(/Today is/);
+  });
+
+  it("is byte-identical across invocations with identical inputs (cache stability)", () => {
+    const a = composeStableSystemPrefix("BASE", "TOC", "CHART", "DOC");
+    const b = composeStableSystemPrefix("BASE", "TOC", "CHART", "DOC");
+    expect(a).toBe(b);
   });
 
   describe("emoji rule", () => {
     it("tells the model to avoid emojis unless the user asks", () => {
-      const out = composeFinanceAgentInstructions("BASE", baseOptions, "TOC", "CHART", "DOC");
+      const out = composeStableSystemPrefix("BASE", "TOC", "CHART", "DOC");
       expect(out).toContain("Only use emojis if the user explicitly requests it");
     });
+  });
+});
+
+const EPHEMERAL = { cacheControl: { type: "ephemeral" } };
+const userMsg = (text: string): ModelMessage => ({ content: text, role: "user" });
+const assistantMsg = (text: string): ModelMessage => ({ content: text, role: "assistant" });
+const systemMsg = (text: string): ModelMessage => ({ content: text, role: "system" });
+
+describe("applyTailCacheBreakpoints", () => {
+  it("marks the last two non-system messages with anthropic cacheControl", () => {
+    const out = applyTailCacheBreakpoints([
+      systemMsg("sys"),
+      userMsg("u1"),
+      assistantMsg("a1"),
+      userMsg("u2"),
+      assistantMsg("a2"),
+    ]);
+    expect(out[3]?.providerOptions?.anthropic).toStrictEqual(EPHEMERAL);
+    expect(out[4]?.providerOptions?.anthropic).toStrictEqual(EPHEMERAL);
+    expect(out[1]?.providerOptions?.anthropic).toBeUndefined();
+    expect(out[2]?.providerOptions?.anthropic).toBeUndefined();
+    expect(out[0]?.providerOptions?.anthropic).toBeUndefined();
+  });
+
+  it("skips system messages when picking the tail", () => {
+    const out = applyTailCacheBreakpoints([
+      systemMsg("sys"),
+      userMsg("u1"),
+      assistantMsg("a1"),
+      systemMsg("sys2"),
+    ]);
+    expect(out[1]?.providerOptions?.anthropic).toStrictEqual(EPHEMERAL);
+    expect(out[2]?.providerOptions?.anthropic).toStrictEqual(EPHEMERAL);
+    expect(out[0]?.providerOptions?.anthropic).toBeUndefined();
+    expect(out[3]?.providerOptions?.anthropic).toBeUndefined();
+  });
+
+  it("handles fewer than two non-system messages", () => {
+    const out = applyTailCacheBreakpoints([systemMsg("sys"), userMsg("u1")]);
+    expect(out[1]?.providerOptions?.anthropic).toStrictEqual(EPHEMERAL);
+  });
+
+  it("does not mutate the input array", () => {
+    const input: ModelMessage[] = [userMsg("u1"), assistantMsg("a1")];
+    applyTailCacheBreakpoints(input);
+    expect(input[0]?.providerOptions).toBeUndefined();
+    expect(input[1]?.providerOptions).toBeUndefined();
+  });
+
+  it("preserves existing providerOptions on tail messages", () => {
+    const out = applyTailCacheBreakpoints([
+      {
+        content: "u1",
+        providerOptions: { anthropic: { sendReasoning: true } },
+        role: "user",
+      },
+    ]);
+    expect(out[0]?.providerOptions?.anthropic).toStrictEqual({
+      cacheControl: { type: "ephemeral" },
+      sendReasoning: true,
+    });
+  });
+
+  it("returns empty array when input is empty", () => {
+    expect(applyTailCacheBreakpoints([])).toStrictEqual([]);
+  });
+});
+
+describe("composeDynamicSystemMessage", () => {
+  const baseOptions: FinanceAgentCallOptions = {
+    currentDate: "2026-05-10",
+    currentDateFormatted: "May 10, 2026",
+  };
+
+  it("returns the formatted date sentence", () => {
+    expect(composeDynamicSystemMessage(baseOptions)).toBe("Today is May 10, 2026 (2026-05-10).");
   });
 });
 
