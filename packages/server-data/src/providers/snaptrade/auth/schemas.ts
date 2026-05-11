@@ -10,6 +10,4 @@ export const connectionPortalResponseSchema = z.object({
   sessionId: z.string().optional(),
 });
 
-export const errorResponseSchema = z.object({
-  error: z.string(),
-});
+export { errorResponseSchema } from "../../../_shared/schemas.js";

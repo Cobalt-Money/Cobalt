@@ -6,24 +6,10 @@ import { mutators, queries } from "@cobalt-web/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import { useCallback, useMemo } from "react";
 
-interface TagRow {
-  id: string;
-  name: string;
-  color: string;
-  archivedAt: number | null;
-  transactionTags?: readonly { tagId: string }[];
-}
-
-interface TransactionTagRow {
-  tagId: string;
-  transactionId: string;
-}
-
 /** Active + archived tags for the signed-in user (Zero replicated). */
 export function useTags() {
-  const [rawTags] = useQuery(queries.tags.list());
-  const tags = rawTags as unknown as TagRow[];
-  return { data: tags };
+  const [data] = useQuery(queries.tags.list());
+  return { data };
 }
 
 /** Active (not archived) tags shaped for the picker. */
@@ -114,8 +100,7 @@ export function useDeleteTag() {
 }
 
 export function useTransactionTagIds(transactionId: string | undefined) {
-  const [raw] = useQuery(queries.tags.forTransaction({ transactionId: transactionId ?? "" }));
-  const rows = raw as unknown as TransactionTagRow[];
+  const [rows] = useQuery(queries.tags.forTransaction({ transactionId: transactionId ?? "" }));
   const data = useMemo(() => rows.map((r) => r.tagId), [rows]);
   return { data };
 }

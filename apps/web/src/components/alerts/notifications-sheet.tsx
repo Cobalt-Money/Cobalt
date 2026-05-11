@@ -128,7 +128,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
         });
         const data = await res.json();
         if (!res.ok || !("link_token" in data)) {
-          const errMsg = "error" in data ? data.error : undefined;
+          const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
           throw new Error(errMsg ?? "Could not start reconnect");
         }
         sessionRef.current = {
@@ -143,7 +143,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
         });
         const data = await res.json();
         if (!res.ok || !("redirectURI" in data) || !data.redirectURI) {
-          const errMsg = "error" in data ? data.error : undefined;
+          const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
           throw new Error(errMsg ?? "Could not open reconnect");
         }
         window.location.assign(data.redirectURI);

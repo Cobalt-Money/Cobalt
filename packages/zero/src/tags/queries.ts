@@ -1,10 +1,9 @@
 import { defineQuery } from "@rocicorp/zero";
 import { z } from "zod";
 
+import { NO_MATCH_ID } from "../auth.js";
 import type { Context } from "../auth.js";
 import { zql } from "../schema.js";
-
-const NO_MATCH_ID = "00000000-0000-0000-0000-000000000000";
 
 /** Tag named queries (`queries.tags.*`). */
 export const tagsQueries = {
@@ -12,11 +11,10 @@ export const tagsQueries = {
     zql.transactionTag.where("transactionId", args.transactionId),
   ),
 
-  list: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.tag.where("id", NO_MATCH_ID);
-    }
-    return zql.tag.where("userId", userId).related("transactionTags").orderBy("name", "asc");
-  }),
+  list: defineQuery(({ ctx }: { ctx: Context }) =>
+    zql.tag
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
+      .related("transactionTags")
+      .orderBy("name", "asc"),
+  ),
 };

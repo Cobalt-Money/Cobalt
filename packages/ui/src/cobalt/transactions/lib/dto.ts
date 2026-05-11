@@ -4,12 +4,10 @@ import type {
 } from "@cobalt-web/server-data/transactions/schemas";
 import { toTransactionListItem } from "@cobalt-web/server-data/transactions/to-transaction-list-item";
 import type { TransactionRowInput } from "@cobalt-web/server-data/transactions/to-transaction-list-item";
+import type { queries, Row } from "@cobalt-web/zero";
 
-/** Zero `useQuery` row for `transactions.activity` — `createdAt` is epoch ms. */
-export type ZeroTransactionEditRow = Record<string, unknown> & {
-  readonly id: string;
-  readonly createdAt: number | string;
-};
+/** Zero `useQuery` row for `transactions.activity`. */
+export type ZeroTransactionEditRow = Row<typeof queries.transactions.activity>;
 
 export function mapZeroTransactionEditRow(row: ZeroTransactionEditRow): TransactionActivityItem {
   return {
@@ -25,37 +23,8 @@ export function mapZeroTransactionEditRow(row: ZeroTransactionEditRow): Transact
   };
 }
 
-/**
- * Zero `useQuery` rows for `transactions.list` — named-query typings omit `related()` fields;
- * json columns are `unknown` until asserted into {@link TransactionRowInput}.
- */
-export type ZeroTransactionListRow = Record<string, unknown> & {
-  readonly account?: {
-    readonly plaidConnection?: {
-      readonly institution?: {
-        readonly logo?: string | null;
-        readonly name?: string | null;
-        readonly url?: string | null;
-      };
-    } | null;
-    readonly name: string;
-    readonly externalId: string | null;
-    readonly type: string;
-    readonly subtype?: string | null;
-    readonly logoDomain?: string | null;
-  };
-  readonly category?: {
-    readonly id: string;
-    readonly name: string;
-    readonly iconKey: string;
-    readonly systemKey: string | null;
-    readonly group?: {
-      readonly name: string;
-      readonly systemKey: string | null;
-    };
-  } | null;
-  readonly transactionTags?: readonly { readonly tagId: string }[];
-};
+/** Zero `useQuery` row for `transactions.list` — full relations baked in by drizzle-zero gen. */
+export type ZeroTransactionListRow = Row<typeof queries.transactions.list>;
 
 export function mapZeroTransactionListRow(row: ZeroTransactionListRow): TransactionListItem | null {
   const { account, category: cat, transactionTags, ...txRest } = row;

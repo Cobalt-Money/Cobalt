@@ -1,48 +1,29 @@
 import { defineQuery } from "@rocicorp/zero";
+import { z } from "zod";
 
+import { NO_MATCH_ID } from "../auth.js";
 import type { Context } from "../auth.js";
 import { zql } from "../schema.js";
 
-const NO_MATCH_ID = "00000000-0000-0000-0000-000000000000";
+const listArgs = z.object({ includeHidden: z.boolean().optional() }).optional();
 
 /** Category named queries (`queries.categories.*`). */
 export const categoriesQueries = {
-  /** Visible (non-hidden) cats — picker / browse views. */
-  list: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.category.where("id", NO_MATCH_ID);
-    }
-    return zql.category
-      .where("userId", userId)
-      .where("deletedAt", "IS", null)
-      .where("hidden", false)
-      .related("group")
-      .orderBy("order", "asc");
-  }),
-
-  /** All non-deleted cats incl hidden — settings management view. */
-  listAll: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.category.where("id", NO_MATCH_ID);
-    }
-    return zql.category
-      .where("userId", userId)
+  /** Non-deleted categories. Pass `{ includeHidden: true }` to include hidden (settings view). */
+  list: defineQuery(listArgs, ({ args, ctx }: { args: z.infer<typeof listArgs>; ctx: Context }) => {
+    const q = zql.category
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
       .where("deletedAt", "IS", null)
       .related("group")
       .orderBy("order", "asc");
+    return args?.includeHidden ? q : q.where("hidden", false);
   }),
 
   /** All non-deleted groups for current user. */
-  listGroups: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.categoryGroup.where("id", NO_MATCH_ID);
-    }
-    return zql.categoryGroup
-      .where("userId", userId)
+  listGroups: defineQuery(({ ctx }: { ctx: Context }) =>
+    zql.categoryGroup
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
       .where("deletedAt", "IS", null)
-      .orderBy("order", "asc");
-  }),
+      .orderBy("order", "asc"),
+  ),
 };

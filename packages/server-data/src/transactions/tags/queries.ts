@@ -3,15 +3,11 @@ import type { TagColor } from "@cobalt-web/db/tag-palette";
 
 import type { TagDto } from "./schemas.js";
 
-interface TagRowWithCount {
-  archivedAt: Date | null;
-  color: string;
-  createdAt: Date;
-  id: string;
-  name: string;
-  updatedAt: Date;
-  transactionTags: { tagId: string }[];
-}
+type TagRowWithCount = Awaited<
+  ReturnType<
+    typeof db.query.tag.findMany<{ with: { transactionTags: { columns: { tagId: true } } } }>
+  >
+>[number];
 
 function toDto(row: TagRowWithCount): TagDto {
   return {

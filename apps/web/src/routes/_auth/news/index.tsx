@@ -17,30 +17,20 @@ export const Route = createFileRoute("/_auth/news/")({
     context.zero.run(queries.news.events());
     context.zero.run(queries.news.rssSidebar());
     context.zero.run(queries.brokerage.positions());
-    context.zero.run(queries.brokerage.plaidPositions());
   },
   staticData: { title: "News" },
 });
 
-interface HoldingWithSymbol {
-  security?: { tickerSymbol?: string | null } | null;
-}
-
 function NewsIndexPage() {
   const { events } = useFinancialEvents();
   const { items: rssItems } = useNewsRssSidebar();
-  const [snaptradePositions] = useQuery(queries.brokerage.positions());
-  const [plaidPositions] = useQuery(queries.brokerage.plaidPositions());
+  const [allPositions] = useQuery(queries.brokerage.positions());
   const { openAddAccount } = useCommandMenu();
   const { activeTab } = useNewsLayout();
 
   const holdingSymbols = useMemo(() => {
     const s = new Set<string>();
-    const all = [
-      ...(snaptradePositions as readonly HoldingWithSymbol[]),
-      ...(plaidPositions as readonly HoldingWithSymbol[]),
-    ];
-    for (const p of all) {
+    for (const p of allPositions) {
       const raw = p.security?.tickerSymbol;
       const sym = typeof raw === "string" ? raw.trim().toUpperCase() : "";
       if (sym) {
@@ -48,7 +38,7 @@ function NewsIndexPage() {
       }
     }
     return s;
-  }, [snaptradePositions, plaidPositions]);
+  }, [allPositions]);
 
   const eventsForYou = useMemo(() => {
     if (holdingSymbols.size === 0) {

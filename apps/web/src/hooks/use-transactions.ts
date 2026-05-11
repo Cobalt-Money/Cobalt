@@ -3,7 +3,6 @@ import {
   mapZeroTransactionEditRow,
   mapZeroTransactionListRow,
 } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
-import type { ZeroTransactionEditRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo } from "react";
@@ -93,5 +92,5 @@ export function useTransactions(filters: Filters = {}) {
 
 export function useHistory(transactionId: string) {
   const [rows] = useQuery(queries.transactions.activity({ transactionId }));
-  return useMemo(() => (rows as ZeroTransactionEditRow[]).map(mapZeroTransactionEditRow), [rows]);
+  return useMemo(() => rows.map(mapZeroTransactionEditRow), [rows]);
 }

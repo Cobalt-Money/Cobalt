@@ -66,7 +66,7 @@ export interface ManageCategoriesGroup {
   id: string;
   name: string;
   systemKey: string | null;
-  order: number;
+  order: number | null;
 }
 
 export interface ManageCategoriesCat {
@@ -74,10 +74,10 @@ export interface ManageCategoriesCat {
   name: string;
   iconKey: string;
   groupId: string;
-  hidden: boolean;
-  order: number;
+  hidden: boolean | null;
+  order: number | null;
   systemKey: string | null;
-  excludeFromInsights: boolean;
+  excludeFromInsights: boolean | null;
 }
 
 export interface ManageCategoriesFormProps {
@@ -888,7 +888,7 @@ function CategoryRowActions({
                     : `Exclude ${cat.name} from insights`
                 }
                 icon={ChartLineData01Icon}
-                muted={cat.excludeFromInsights}
+                muted={cat.excludeFromInsights ?? undefined}
                 onClick={() => onToggleExcludeFromInsights(!cat.excludeFromInsights)}
               />
             }

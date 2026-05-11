@@ -2,6 +2,7 @@
   "name": "@cobalt-web/server-data",
   "type": "module",
   "exports": {
+    "./_shared/*": "./src/_shared/*.ts",
     "./accounts/*": "./src/accounts/*.ts",
     "./alerts/*": "./src/alerts/*.ts",
     "./brokerage/*": "./src/brokerage/*.ts",

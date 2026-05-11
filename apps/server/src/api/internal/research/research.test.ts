@@ -90,13 +90,13 @@ describe("research routes", () => {
       const res = await quoteRouter.request("/quote?symbol=AAPL");
       expect(res.status).toBe(500);
       await expect(res.json()).resolves.toStrictEqual({
-        error: "Failed to fetch quote data",
+        error: "Internal server error",
       });
     });
 
-    it("400s on missing symbol", async () => {
+    it("422s on missing symbol", async () => {
       const res = await quoteRouter.request("/quote");
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(422);
       expect(mockQuote).not.toHaveBeenCalled();
     });
   });

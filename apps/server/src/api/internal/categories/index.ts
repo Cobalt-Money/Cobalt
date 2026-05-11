@@ -30,9 +30,10 @@ import {
   updateCategoryBodySchema,
   updateCategoryGroupBodySchema,
 } from "@cobalt-web/server-data/transactions/categories/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const errorResponseSchema = z.object({ code: z.string(), error: z.string() });
@@ -45,10 +46,7 @@ const listCategoriesRoute = createRoute({
   middleware: [requirePaidUser] as const,
   path: "/",
   responses: {
-    200: {
-      content: { "application/json": { schema: categoriesListResponseSchema } },
-      description: "User's categories + groups",
-    },
+    200: jsonContent(categoriesListResponseSchema, "User's categories + groups"),
   },
   summary: "List categories",
   tags: [...TAGS],
@@ -65,14 +63,9 @@ const createCategoryRoute = createRoute({
     },
   },
   responses: {
-    201: {
-      content: { "application/json": { schema: createCategoryResponseSchema } },
-      description: "Category created",
-    },
-    404: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Group not found",
-    },
+    201: jsonContent(createCategoryResponseSchema, "Category created"),
+    404: jsonContent(errorResponseSchema, "Group not found"),
+    422: validationErrorResponse(createCategoryBodySchema),
   },
   summary: "Create category",
   tags: [...TAGS],
@@ -90,14 +83,9 @@ const updateCategoryRoute = createRoute({
     params: categoryIdParamSchema,
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: categorySuccessResponse } },
-      description: "Category updated",
-    },
-    404: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Category or group not found",
-    },
+    200: jsonContent(categorySuccessResponse, "Category updated"),
+    404: jsonContent(errorResponseSchema, "Category or group not found"),
+    422: validationErrorResponse(updateCategoryBodySchema),
   },
   summary: "Update category",
   tags: [...TAGS],
@@ -111,18 +99,10 @@ const deleteCategoryRoute = createRoute({
   path: "/{categoryId}",
   request: { params: categoryIdParamSchema },
   responses: {
-    200: {
-      content: { "application/json": { schema: categorySuccessResponse } },
-      description: "Category deleted",
-    },
-    404: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Category not found",
-    },
-    409: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "System category cannot be deleted",
-    },
+    200: jsonContent(categorySuccessResponse, "Category deleted"),
+    404: jsonContent(errorResponseSchema, "Category not found"),
+    409: jsonContent(errorResponseSchema, "System category cannot be deleted"),
+    422: validationErrorResponse(categoryIdParamSchema),
   },
   summary: "Delete category",
   tags: [...TAGS],
@@ -139,18 +119,10 @@ const hideCategoryRoute = createRoute({
     params: categoryIdParamSchema,
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: categorySuccessResponse } },
-      description: "Category hidden",
-    },
-    404: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Category or reassign target not found",
-    },
-    409: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Reassign target invalid",
-    },
+    200: jsonContent(categorySuccessResponse, "Category hidden"),
+    404: jsonContent(errorResponseSchema, "Category or reassign target not found"),
+    409: jsonContent(errorResponseSchema, "Reassign target invalid"),
+    422: validationErrorResponse(hideCategoryBodySchema),
   },
   summary: "Hide category",
   tags: [...TAGS],
@@ -167,14 +139,9 @@ const reorderCategoriesRoute = createRoute({
     },
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: categorySuccessResponse } },
-      description: "Reordered",
-    },
-    404: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Group not found",
-    },
+    200: jsonContent(categorySuccessResponse, "Reordered"),
+    404: jsonContent(errorResponseSchema, "Group not found"),
+    422: validationErrorResponse(reorderCategoriesBodySchema),
   },
   summary: "Reorder categories",
   tags: [...TAGS],
@@ -193,12 +160,8 @@ const createGroupRoute = createRoute({
     },
   },
   responses: {
-    201: {
-      content: {
-        "application/json": { schema: createCategoryGroupResponseSchema },
-      },
-      description: "Group created",
-    },
+    201: jsonContent(createCategoryGroupResponseSchema, "Group created"),
+    422: validationErrorResponse(createCategoryGroupBodySchema),
   },
   summary: "Create category group",
   tags: [...TAGS],
@@ -218,10 +181,8 @@ const updateGroupRoute = createRoute({
     params: categoryGroupIdParamSchema,
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: categorySuccessResponse } },
-      description: "Group updated",
-    },
+    200: jsonContent(categorySuccessResponse, "Group updated"),
+    422: validationErrorResponse(updateCategoryGroupBodySchema),
   },
   summary: "Update category group",
   tags: [...TAGS],
@@ -235,18 +196,10 @@ const deleteGroupRoute = createRoute({
   path: "/groups/{groupId}",
   request: { params: categoryGroupIdParamSchema },
   responses: {
-    200: {
-      content: { "application/json": { schema: categorySuccessResponse } },
-      description: "Group deleted",
-    },
-    404: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Group not found",
-    },
-    409: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Group has categories or is system-locked",
-    },
+    200: jsonContent(categorySuccessResponse, "Group deleted"),
+    404: jsonContent(errorResponseSchema, "Group not found"),
+    409: jsonContent(errorResponseSchema, "Group has categories or is system-locked"),
+    422: validationErrorResponse(categoryGroupIdParamSchema),
   },
   summary: "Delete category group",
   tags: [...TAGS],
@@ -265,10 +218,8 @@ const reorderGroupsRoute = createRoute({
     },
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: categorySuccessResponse } },
-      description: "Reordered",
-    },
+    200: jsonContent(categorySuccessResponse, "Reordered"),
+    422: validationErrorResponse(reorderCategoryGroupsBodySchema),
   },
   summary: "Reorder category groups",
   tags: [...TAGS],
@@ -280,7 +231,7 @@ const NOT_FOUND_CODES: ReadonlySet<CategoryMutationError["code"]> = new Set([
   "uncategorized_missing",
 ]);
 
-export const categoriesRouter = new OpenAPIHono<AppEnv>()
+export const categoriesRouter = createApp()
   .openapi(listCategoriesRoute, async (c) => {
     const data = await listCategories(c.var.user.id);
     return c.json(data, 200);

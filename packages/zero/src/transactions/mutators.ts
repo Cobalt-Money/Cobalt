@@ -4,7 +4,7 @@ import {
   transactionNotesMarkdownSchema,
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { defineMutator } from "@rocicorp/zero";
-import type { Transaction } from "@rocicorp/zero";
+import type { ReadonlyJSONValue, Transaction } from "@rocicorp/zero";
 import { z } from "zod";
 
 import type { Context } from "../auth.js";
@@ -140,8 +140,8 @@ async function appendEdit(
     createdAt: Date.now(),
     field: params.field,
     id: params.editId,
-    newValue: params.newValue ?? null,
-    oldValue: params.oldValue ?? null,
+    newValue: (params.newValue ?? null) as ReadonlyJSONValue,
+    oldValue: (params.oldValue ?? null) as ReadonlyJSONValue,
     transactionId: params.transactionId,
     userId: params.userId,
   });

@@ -1,8 +1,9 @@
 import { getActiveAlerts } from "@cobalt-web/server-data/alerts/queries";
 import { alertListResponseSchema } from "@cobalt-web/server-data/alerts/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent } from "../../../lib/openapi-helpers.js";
 import { requireAuth } from "../middleware.js";
 
 const list = createRoute({
@@ -10,16 +11,13 @@ const list = createRoute({
   middleware: [requireAuth] as const,
   path: "/",
   responses: {
-    200: {
-      content: { "application/json": { schema: alertListResponseSchema } },
-      description: "Active alerts for the signed-in user",
-    },
+    200: jsonContent(alertListResponseSchema, "Active alerts for the signed-in user"),
   },
   summary: "List active user alerts",
   tags: ["Alerts"],
 });
 
-export const alertsRouter = new OpenAPIHono<AppEnv>().openapi(list, async (c) => {
+export const alertsRouter = createApp().openapi(list, async (c) => {
   const alerts = await getActiveAlerts(c.var.user.id);
   c.header("Cache-Control", "private, max-age=30");
   return c.json({ alerts }, 200);
