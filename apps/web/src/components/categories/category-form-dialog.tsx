@@ -19,8 +19,9 @@ import { ChartLineData01Icon, Folder02Icon, Tick02Icon } from "@hugeicons/core-f
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 
+import type { ManageCategoriesGroup } from "@cobalt-web/ui/cobalt/transactions/categories/manage-categories-form";
+
 import { useCreateCategory } from "@/hooks/use-categories";
-import type { GroupRow } from "@/hooks/use-categories";
 
 export interface CategoryFormInitial {
   /** Pre-select group when invoked from a group's "+ New" button. */
@@ -33,7 +34,7 @@ export interface CategoryFormInitial {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  groups: readonly GroupRow[];
+  groups: readonly ManageCategoriesGroup[];
   initial: CategoryFormInitial | null;
 }
 

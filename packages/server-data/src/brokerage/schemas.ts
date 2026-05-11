@@ -2,11 +2,7 @@ import { z } from "@hono/zod-openapi";
 
 import { successResponseSchema } from "../accounts/schemas.js";
 
-// ── Error ───────────────────────────────────────────────────────────
-
-export const errorResponseSchema = z.object({
-  error: z.string(),
-});
+export { errorResponseSchema } from "../_shared/schemas.js";
 
 // ── Balances / positions / activities (flat list DTOs) ─────────────
 
@@ -148,16 +144,13 @@ export const activitiesResponseSchema = z.object({
 });
 
 /**
- * Snapshot DTO. Sourced from `snapshot` (accounts/snapshot); `cash` /
- * `positions` / `value` correspond to the coerced `current - positions_value` /
- * `positions_value` / `current` columns surfaced by snapshot queries.
+ * Snapshot DTO. `value` = the snapshot row's `current` column — total account
+ * value at end-of-day. Single value, no client-side math.
  */
 export const portfolioSnapshotItemSchema = z
   .object({
     accountId: z.string(),
-    cash: z.number(),
     id: z.string(),
-    positions: z.number(),
     snapshotDate: z.string(),
     value: z.number(),
   })

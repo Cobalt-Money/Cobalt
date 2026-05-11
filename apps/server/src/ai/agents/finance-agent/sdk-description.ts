@@ -1,7 +1,7 @@
 /**
  * Single source of truth for the `cobalt.*` SDK surface description.
  * Consumed by both the MCP `cobalt_execute_code` tool and the internal
- * code-agent's `executeCode` tool so their tool descriptions cannot drift.
+ * finance-agent's `executeCode` tool so their tool descriptions cannot drift.
  *
  * Keep this in sync with `bindings.ts` — every route bound there should be
  * documented here. Do not include sandbox/runtime details (those live with

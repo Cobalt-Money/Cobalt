@@ -5,17 +5,19 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-import { AccountConnectionActions } from "./account-connection-actions";
 import { formatLastSyncedLabel, formatLastSyncedTitle } from "./lib/format-last-synced";
 import type { AccountCardViewModel } from "./lib/map-zero-to-account-cards";
 
 /** Ghost-style panel: soft fill, no stroke/shadow; compact padding; actions pinned to bottom. */
 export function AccountCard({
   account,
+  actions,
   institutionLogo,
   onRename,
 }: {
   account: AccountCardViewModel;
+  /** App-provided reconnect/disconnect controls (uses RPC client, lives in apps/web). */
+  actions?: ReactNode;
   /** App-provided institution mark (logo component or image). */
   institutionLogo: ReactNode;
   /** Empty string clears the override and falls back to provider name. */
@@ -121,9 +123,7 @@ export function AccountCard({
           "px-5 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6",
         )}
       >
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-1">
-          <AccountConnectionActions account={account} />
-        </div>
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-1">{actions}</div>
         <p
           aria-label={
             account.lastSyncedAt === null

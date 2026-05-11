@@ -1,4 +1,3 @@
-import { env } from "@cobalt-web/env/web";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,13 +9,28 @@ import {
   AlertDialogTitle,
 } from "@cobalt-web/ui/components/alert-dialog";
 import { Button } from "@cobalt-web/ui/components/button";
+import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
+import type { AccountCardViewModel } from "@cobalt-web/ui/cobalt/accounts/lib/map-zero-to-account-cards";
+import { useOptionalOnboardingHost } from "@cobalt-web/ui/cobalt/accounts/onboarding-host";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import { toast } from "sonner";
 
-import { cobaltToast } from "../toasts";
-import type { AccountCardViewModel } from "./lib/map-zero-to-account-cards";
-import { useOptionalOnboardingHost } from "./onboarding-host";
+import { accountsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
+
+import type { ReauthSession } from "./reauth-session";
+
+async function disconnectBank(plaidAccountId: string | null | undefined) {
+  if (!plaidAccountId) {
+    throw new Error("Missing account id");
+  }
+  const res = await accountsApi.bank[":id"].$delete({ param: { id: plaidAccountId } });
+  const data = await res.json();
+  if (!res.ok || !("success" in data) || !data.success) {
+    const msg = "message" in data ? data.message : undefined;
+    throw new Error(msg ?? "Disconnect failed");
+  }
+}
 
 interface AccountConnectionActionsProps {
   account: Pick<
@@ -32,12 +46,6 @@ interface AccountConnectionActionsProps {
     | "snaptradeAuthorizationId"
     | "source"
   >;
-}
-
-interface ReauthSession {
-  hookToken: string;
-  runId: string;
-  linkToken: string;
 }
 
 export function AccountConnectionActions({ account }: AccountConnectionActionsProps) {
@@ -57,14 +65,10 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
       return;
     }
     if (!onboardingHost) {
-      // Component is rendered outside `<OnboardingHostContext.Provider>`.
-      // No way to resolve the workflow; surface the error so the user knows.
       toast.error("Cannot finish reconnect — onboarding host not mounted");
       return;
     }
     try {
-      // Resume the parked workflow — its reauth branch clears error state,
-      // resolves alerts, and runs the full sync (accounts/tx/snapshots).
       await onboardingHost.resolveLink({
         hookToken: session.hookToken,
         publicToken: "reauth",
@@ -94,8 +98,6 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
     if (!(session && onboardingHost)) {
       return;
     }
-    // User abandoned reauth — terminate the parked workflow so the run
-    // doesn't sit waiting until its hook expires.
     void (async () => {
       try {
         await onboardingHost.resolveLink({
@@ -126,23 +128,13 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
     }
     setBusy("reconnect");
     try {
-      const res = await fetch(`${env.VITE_SERVER_URL}/api/plaid/link-token/update`, {
-        body: JSON.stringify({
-          mode: "reauth",
-          plaidItemId: account.plaidItemId,
-        }),
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
+      const res = await plaidApi["link-token"].update.$post({
+        json: { mode: "reauth", plaidItemId: account.plaidItemId },
       });
-      const data = (await res.json()) as {
-        error?: string;
-        hookToken?: string;
-        link_token?: string;
-        runId?: string;
-      };
-      if (!res.ok || !data.link_token || !data.hookToken || !data.runId) {
-        throw new Error(data.error ?? "Could not start reconnect");
+      const data = await res.json();
+      if (!res.ok || !("link_token" in data)) {
+        const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
+        throw new Error(errMsg ?? "Could not start reconnect");
       }
       sessionRef.current = {
         hookToken: data.hookToken,
@@ -163,25 +155,18 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
     }
     setBusy("reconnect");
     try {
-      const res = await fetch(`${env.VITE_SERVER_URL}/api/snaptrade/generateConnectionPortal`, {
-        body: JSON.stringify({
+      const res = await snaptradeApi.generateConnectionPortal.$post({
+        json: {
           broker: "",
           reconnectAuthorizationId: account.snaptradeAuthorizationId,
-        }),
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
+        },
       });
-      const data = (await res.json()) as {
-        error?: string;
-        redirectURI?: string;
-      };
-      if (!res.ok) {
-        throw new Error(data.error ?? "Could not open reconnect");
+      const data = await res.json();
+      if (!res.ok || !("redirectURI" in data)) {
+        const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
+        throw new Error(errMsg ?? "Could not open reconnect");
       }
-      if (data.redirectURI) {
-        window.location.assign(data.redirectURI);
-      }
+      window.location.assign(data.redirectURI);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Reconnect failed");
     } finally {
@@ -204,36 +189,20 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
         await deleteFn(account.id);
         cobaltToast.accountDisconnected(account);
       } else if (account.kind === "bank") {
-        if (!account.plaidAccountId) {
-          throw new Error("Missing account id");
-        }
-        const res = await fetch(
-          `${env.VITE_SERVER_URL}/api/accounts/bank/${encodeURIComponent(account.plaidAccountId)}`,
-          { credentials: "include", method: "DELETE" },
-        );
-        const data = (await res.json()) as {
-          message?: string;
-          success?: boolean;
-        };
-        if (!res.ok || !data.success) {
-          throw new Error(data.message ?? "Disconnect failed");
-        }
+        await disconnectBank(account.plaidAccountId);
         cobaltToast.accountDisconnected(account);
       } else {
-        const res = await fetch(
-          `${env.VITE_SERVER_URL}/api/accounts/brokerage/${encodeURIComponent(account.id)}`,
-          { credentials: "include", method: "DELETE" },
-        );
+        const res = await accountsApi.brokerage[":accountId"].$delete({
+          param: { accountId: account.id },
+        });
+        const data = await res.json();
         if (res.status === 403) {
-          const err = (await res.json()) as { error?: string };
-          throw new Error(err.error ?? "Subscription required");
+          const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
+          throw new Error(errMsg ?? "Subscription required");
         }
-        const data = (await res.json()) as {
-          message?: string;
-          success?: boolean;
-        };
-        if (!res.ok || data.success === false) {
-          throw new Error(data.message ?? "Disconnect failed");
+        if (!res.ok || ("success" in data && data.success === false)) {
+          const msg = "message" in data ? data.message : undefined;
+          throw new Error(msg ?? "Disconnect failed");
         }
         cobaltToast.accountDisconnected(account);
       }

@@ -1,8 +1,10 @@
 import { getBankAccounts, getCreditCards } from "@cobalt-web/server-data/accounts/queries";
 import { getPortfolioSnapshotsByUserId } from "@cobalt-web/server-data/brokerage/queries";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
+
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 
 const networthResponseSchema = z.object({
   asOf: z.string().nullable(),
@@ -35,10 +37,8 @@ const networthRoute = createRoute({
   path: "/",
   request: { query: querySchema },
   responses: {
-    200: {
-      content: { "application/json": { schema: networthResponseSchema } },
-      description: "Net worth totals and history",
-    },
+    200: jsonContent(networthResponseSchema, "Net worth totals and history"),
+    422: validationErrorResponse(querySchema),
   },
   summary: "Get net worth",
   tags: ["Net Worth"],
@@ -142,12 +142,11 @@ function buildHistory(bank: BankSnap[], port: PortSnap[]): { date: string; value
     for (const s of portByDate.get(date) ?? []) {
       portByAcct.set(s.accountId, s);
     }
+    // snapshot.current is signed at write time (liabilities negative); plain
+    // sum yields net worth without per-row sign logic.
     let total = 0;
     for (const s of bankByAcct.values()) {
-      const cat = categorize(s);
-      if (cat === "credit" || cat === "loan") {
-        total -= s.currentBalance;
-      } else if (cat) {
+      if (categorize(s)) {
         total += s.currentBalance;
       }
     }
@@ -159,7 +158,7 @@ function buildHistory(bank: BankSnap[], port: PortSnap[]): { date: string; value
   return series;
 }
 
-export const networthRouter = new OpenAPIHono<AppEnv>().openapi(networthRoute, async (c) => {
+export const networthRouter = createApp().openapi(networthRoute, async (c) => {
   const userId = c.var.user.id;
   const { range } = c.req.valid("query");
   const startDate = rangeStart(range);
@@ -208,9 +207,14 @@ export const networthRouter = new OpenAPIHono<AppEnv>().openapi(networthRoute, a
     investments += s.value;
   }
 
+  // snapshot.current is signed (liabilities negative). Net worth = plain sum.
+  // Surface credit / loans / liabilities as positive magnitudes for the
+  // public API (consumer-friendly "you owe $X" framing).
+  const netWorth = checking + savings + investments + credit + loans;
   const assets = checking + savings + investments;
+  credit = Math.abs(credit);
+  loans = Math.abs(loans);
   const liabilities = credit + loans;
-  const netWorth = assets - liabilities;
 
   const history = buildHistory(bank, port);
   const asOf = history.length > 0 ? (history.at(-1)?.date ?? null) : null;

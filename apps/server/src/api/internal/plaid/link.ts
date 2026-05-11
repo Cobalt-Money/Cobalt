@@ -10,11 +10,12 @@ import {
   resolveLinkBodySchema,
   successResponseSchema,
 } from "@cobalt-web/server-data/providers/plaid/link/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 import { v7 as uuidv7 } from "uuid";
 import { resumeHook, start } from "workflow/api";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { plaidAddAccountWorkflow } from "../../../workflows/plaid/sync/workflow.js";
 import { requireAuth } from "../middleware.js";
 
@@ -31,15 +32,12 @@ const createLinkTokenRoute = createRoute({
     },
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: linkTokenResponseSchema } },
-      description:
-        "Link token minted; workflow parked on hook. Client must echo the Plaid Link outcome via /resolveLink",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
+    200: jsonContent(
+      linkTokenResponseSchema,
+      "Link token minted; workflow parked on hook. Client must echo the Plaid Link outcome via /resolveLink",
+    ),
+    422: validationErrorResponse(createLinkTokenBodySchema),
+    500: jsonContent(errorResponseSchema, "Server error"),
   },
   summary: "Mint a Plaid link token and start the parked add-account workflow",
   tags: ["Plaid"],
@@ -55,18 +53,10 @@ const resolveLinkRoute = createRoute({
     },
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: successResponseSchema } },
-      description: "Workflow resumed",
-    },
-    400: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Invalid payload or foreign hook token",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
+    200: jsonContent(successResponseSchema, "Workflow resumed"),
+    400: jsonContent(errorResponseSchema, "Invalid payload or foreign hook token"),
+    422: validationErrorResponse(resolveLinkBodySchema),
+    500: jsonContent(errorResponseSchema, "Server error"),
   },
   summary: "Resolve a parked add-account workflow (Plaid onSuccess or onExit)",
   tags: ["Plaid"],
@@ -78,7 +68,7 @@ const resolveLinkRoute = createRoute({
 // routing info embedded — the workflow run holds that, and the token never
 // leaves the server↔client trust boundary.
 
-const linkRouter = new OpenAPIHono<AppEnv>()
+const linkRouter = createApp()
   .openapi(createLinkTokenRoute, async (c) => {
     try {
       // Body is optional. New client posts `{ institutionId }` (Plaid `ins_X`,

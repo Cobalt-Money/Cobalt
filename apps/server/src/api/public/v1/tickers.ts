@@ -1,6 +1,7 @@
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { errorResponse } from "./shared/schemas.js";
 
 // NOTE: `requireOAuth` is intentionally NOT imported or attached here.
@@ -61,10 +62,8 @@ const getQuote = createRoute({
   path: "/{symbol}/quote",
   request: { params: tickerParamSchema },
   responses: {
-    200: {
-      content: { "application/json": { schema: tickerQuoteSchema } },
-      description: "Ticker quote",
-    },
+    200: jsonContent(tickerQuoteSchema, "Ticker quote"),
+    422: validationErrorResponse(tickerParamSchema),
     ...errorResponse(404, "Ticker not found"),
   },
   summary: "Get ticker quote",
@@ -77,10 +76,8 @@ const searchTickers = createRoute({
   path: "/search",
   request: { query: searchQuerySchema },
   responses: {
-    200: {
-      content: { "application/json": { schema: searchResultSchema } },
-      description: "Search results",
-    },
+    200: jsonContent(searchResultSchema, "Search results"),
+    422: validationErrorResponse(searchQuerySchema),
   },
   summary: "Search tickers",
   tags: ["Tickers"],
@@ -88,7 +85,7 @@ const searchTickers = createRoute({
 
 // ── Router ──────────────────────────────────────────────────────────
 
-export const tickersRouter = new OpenAPIHono<AppEnv>()
+export const tickersRouter = createApp()
   .openapi(getQuote, (c) => {
     const { symbol } = c.req.valid("param");
 

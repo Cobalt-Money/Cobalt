@@ -139,7 +139,6 @@ export function BalanceChartCardFixture() {
       brokerageScope={FIXTURE_SCOPE}
       onScopeChange={NOOP}
       portfolioSnapshots={FIXTURE_PORTFOLIO_SNAPSHOTS}
-      positions={FIXTURE_POSITIONS}
       scopedAccountIds={null}
       scopeAccounts={FIXTURE_SCOPE_ACCOUNTS}
     />

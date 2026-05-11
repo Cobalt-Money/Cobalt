@@ -5,9 +5,10 @@ import {
   transactionPatchBodySchema,
 } from "@cobalt-web/server-data/transactions/schemas";
 import { getTagIdsForTransaction } from "@cobalt-web/server-data/transactions/tags/queries";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const patchTransactionRoute = createRoute({
@@ -27,10 +28,8 @@ const patchTransactionRoute = createRoute({
     params: transactionIdParamSchema,
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: successResponse } },
-      description: "Transaction updated",
-    },
+    200: jsonContent(successResponse, "Transaction updated"),
+    422: validationErrorResponse(transactionPatchBodySchema),
   },
   summary: "Update a transaction",
   tags: ["Transactions"],
@@ -43,20 +42,14 @@ const getTransactionTagsRoute = createRoute({
   path: "/{transactionId}/tags",
   request: { params: transactionIdParamSchema },
   responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: z.object({ tagIds: z.array(z.uuid()) }),
-        },
-      },
-      description: "Tag ids on this transaction",
-    },
+    200: jsonContent(z.object({ tagIds: z.array(z.uuid()) }), "Tag ids on this transaction"),
+    422: validationErrorResponse(transactionIdParamSchema),
   },
   summary: "List tags on a transaction",
   tags: ["Transactions"],
 });
 
-export const overridesRouter = new OpenAPIHono<AppEnv>()
+export const overridesRouter = createApp()
   .openapi(patchTransactionRoute, async (c) => {
     const { transactionId } = c.req.valid("param");
     const body = c.req.valid("json");

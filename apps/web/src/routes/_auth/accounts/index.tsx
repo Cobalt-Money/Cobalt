@@ -5,6 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
+import { AccountConnectionActions } from "@/components/accounts/account-connection-actions";
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { useAccounts } from "@/hooks/use-accounts";
 
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/_auth/accounts/")({
   component: AccountsListPage,
   loader: ({ context }) => {
     context.zero.run(queries.accounts.bankAccounts());
-    context.zero.run(queries.accounts.brokerageAccounts());
+    context.zero.run(queries.brokerage.accounts());
   },
   staticData: { title: "Accounts" },
 });
@@ -55,6 +56,7 @@ function AccountsListPage() {
       items={items}
       onConnectAccount={openAddAccount}
       onRenameAccount={onRenameAccount}
+      renderActions={(account) => <AccountConnectionActions account={account} />}
     />
   );
 }

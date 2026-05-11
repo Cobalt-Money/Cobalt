@@ -1,5 +1,3 @@
-import { db } from "@cobalt-web/db";
-import { snaptradeAuthorization } from "@cobalt-web/db/schema/providers/snaptrade/authorization";
 import {
   getUserAccountDetails,
   listUserAccounts,
@@ -14,6 +12,7 @@ import { getLastActivitySyncDate } from "@cobalt-web/server-data/providers/snapt
 import { getSnapTradeUserCredentials } from "@cobalt-web/server-data/providers/snaptrade/auth/queries";
 import {
   deleteSnaptradeAuthorization,
+  getSnaptradeAuthorizationDbId,
   updateSnaptradeAuthorizationStatus,
   upsertSnaptradeAuthorization,
 } from "@cobalt-web/server-data/providers/snaptrade/authorizations/mutations";
@@ -23,7 +22,7 @@ import { getUserHoldings } from "@cobalt-web/server-data/providers/snaptrade/hol
 import { upsertAccountPositions } from "@cobalt-web/server-data/providers/snaptrade/holdings/mutations";
 import { getUserAccountOrders } from "@cobalt-web/server-data/providers/snaptrade/orders/actions";
 import { upsertAccountOrders } from "@cobalt-web/server-data/providers/snaptrade/orders/mutations";
-import { eq } from "drizzle-orm";
+import { upsertSnapTradePortfolioSnapshotsForUser } from "@cobalt-web/server-data/snapshots/mutations";
 import type { Account, Balance, UniversalActivity } from "snaptrade-typescript-sdk";
 import { FatalError, RetryableError } from "workflow";
 
@@ -143,6 +142,25 @@ export async function upsertSnaptradeAuthorizationStep(
   return authDbId;
 }
 
+/**
+ * Read-only lookup of the internal auth DB id. Used by workflows (holdings
+ * sync) that need the FK to attach accounts but must not overwrite the
+ * brokerage/name fields set at connection time.
+ */
+export async function getSnaptradeAuthorizationDbIdStep(
+  brokerageAuthorizationId: string,
+): Promise<string> {
+  "use step";
+
+  const dbId = await getSnaptradeAuthorizationDbId(brokerageAuthorizationId);
+  if (!dbId) {
+    throw new FatalError(
+      `snaptrade_authorization row missing for authorizationId=${brokerageAuthorizationId}`,
+    );
+  }
+  return dbId;
+}
+
 export async function updateAuthorizationStatusStep(
   brokerageAuthorizationId: string,
   isDisabled: boolean,
@@ -150,23 +168,6 @@ export async function updateAuthorizationStatusStep(
   "use step";
 
   await updateSnaptradeAuthorizationStatus(brokerageAuthorizationId, isDisabled);
-}
-
-export async function getAuthorizationDisplayNameStep(
-  brokerageAuthorizationId: string,
-): Promise<string> {
-  "use step";
-
-  const [auth] = await db
-    .select({
-      brokerage: snaptradeAuthorization.brokerage,
-      name: snaptradeAuthorization.name,
-    })
-    .from(snaptradeAuthorization)
-    .where(eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId))
-    .limit(1);
-
-  return auth?.brokerage ?? auth?.name ?? "Brokerage";
 }
 
 export async function deleteSnaptradeAuthorizationStep(
@@ -489,4 +490,14 @@ export async function refreshAccountDataStep(
   }
 
   return { balancesSuccess, detailsSuccess };
+}
+
+/**
+ * Seeds today's portfolio snapshot for every SnapTrade account belonging to a
+ * user. Called once at link / repair time. Cron handles every subsequent day.
+ * Idempotent — re-running just refreshes today's row.
+ */
+export async function seedTodaySnaptradeSnapshotsStep(userId: string): Promise<void> {
+  "use step";
+  await upsertSnapTradePortfolioSnapshotsForUser(userId, "link");
 }

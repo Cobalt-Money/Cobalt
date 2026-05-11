@@ -12,7 +12,7 @@ import { ArrowDown01Icon, SparklesIcon, Tick02Icon } from "@hugeicons/core-free-
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { useAgentSettings } from "../state/agent-settings-context";
-import type { AgentEffort, AgentMode } from "../state/agent-settings-context";
+import type { AgentEffort } from "../state/agent-settings-context";
 
 interface ModelDef {
   id: string;
@@ -60,11 +60,6 @@ const EFFORT_ORDER: Record<AgentEffort, number> = {
   medium: 1,
 };
 
-const MODES: { id: AgentMode; label: string }[] = [
-  { id: "analyst", label: "Analyst" },
-  { id: "standard", label: "Standard" },
-];
-
 function useModelPickerState() {
   const { settings, setSettings } = useAgentSettings();
   const currentModel = MODELS.find((m) => m.id === settings.model) ?? MODELS[0];
@@ -86,8 +81,6 @@ function useModelPickerState() {
     });
   };
 
-  const selectMode = (mode: AgentMode) => setSettings({ mode });
-
   const selectEffort = (effort: AgentEffort) => setSettings({ effort });
 
   const toggleReasoning = () => {
@@ -101,7 +94,6 @@ function useModelPickerState() {
     canReason,
     currentModel,
     selectEffort,
-    selectMode,
     selectModel,
     settings,
     toggleReasoning,
@@ -120,7 +112,6 @@ export function ModelChip({ isStreaming }: ModelPickerProps) {
     currentModel,
     selectEffort,
     selectModel,
-    selectMode,
     settings,
     toggleReasoning,
   } = useModelPickerState();
@@ -135,8 +126,6 @@ export function ModelChip({ isStreaming }: ModelPickerProps) {
         disabled={isStreaming}
       >
         {currentModel?.shortLabel}
-        <span className="text-muted-foreground/60">·</span>
-        <span>{settings.mode === "analyst" ? "Analyst" : "Standard"}</span>
         {settings.reasoning && canReason && (
           <>
             <span className="text-muted-foreground/60">·</span>
@@ -152,7 +141,6 @@ export function ModelChip({ isStreaming }: ModelPickerProps) {
           canReason={canReason}
           selectEffort={selectEffort}
           selectModel={selectModel}
-          selectMode={selectMode}
           settings={settings}
           toggleReasoning={toggleReasoning}
         />
@@ -169,33 +157,12 @@ export function ModelPicker({ isStreaming }: ModelPickerProps) {
     currentModel,
     selectEffort,
     selectModel,
-    selectMode,
     settings,
     toggleReasoning,
   } = useModelPickerState();
 
   return (
     <div className="flex items-center gap-1">
-      {/* Mode toggle */}
-      <div className="flex items-center rounded-full border border-input bg-background p-0.5">
-        {MODES.map((m) => (
-          <button
-            key={m.id}
-            className={cn(
-              "rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
-              settings.mode === m.id
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-            disabled={isStreaming}
-            type="button"
-            onClick={() => selectMode(m.id)}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
-
       {/* Model picker */}
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -211,7 +178,6 @@ export function ModelPicker({ isStreaming }: ModelPickerProps) {
             canReason={canReason}
             selectEffort={selectEffort}
             selectModel={selectModel}
-            selectMode={selectMode}
             settings={settings}
             toggleReasoning={toggleReasoning}
           />
@@ -248,7 +214,6 @@ interface ModelMenuContentsProps {
   canReason: boolean;
   selectEffort: (effort: AgentEffort) => void;
   selectModel: (id: string) => void;
-  selectMode: (mode: AgentMode) => void;
   settings: ReturnType<typeof useModelPickerState>["settings"];
   toggleReasoning: () => void;
 }
@@ -258,7 +223,6 @@ function ModelMenuContents({
   canReason,
   selectEffort,
   selectModel,
-  selectMode,
   settings,
   toggleReasoning,
 }: ModelMenuContentsProps) {
@@ -274,22 +238,6 @@ function ModelMenuContents({
           >
             {m.label}
             {settings.model === m.id && (
-              <HugeiconsIcon className="size-3.5 text-primary" icon={Tick02Icon} strokeWidth={2} />
-            )}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuGroup>
-      <DropdownMenuSeparator />
-      <DropdownMenuGroup>
-        <DropdownMenuLabel className="text-xs text-muted-foreground">Mode</DropdownMenuLabel>
-        {MODES.map((m) => (
-          <DropdownMenuItem
-            key={m.id}
-            className="flex items-center justify-between text-sm"
-            onClick={() => selectMode(m.id)}
-          >
-            {m.label}
-            {settings.mode === m.id && (
               <HugeiconsIcon className="size-3.5 text-primary" icon={Tick02Icon} strokeWidth={2} />
             )}
           </DropdownMenuItem>

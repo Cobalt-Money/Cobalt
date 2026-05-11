@@ -1,8 +1,9 @@
 import { getSpending } from "@cobalt-web/server-data/transactions/queries";
 import { spendingQuerySchema, spendingSchema } from "@cobalt-web/server-data/transactions/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
@@ -15,18 +16,14 @@ const route = createRoute({
     query: spendingQuerySchema,
   },
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: spendingSchema },
-      },
-      description: "Aggregated spending",
-    },
+    200: jsonContent(spendingSchema, "Aggregated spending"),
+    422: validationErrorResponse(spendingQuerySchema),
   },
   summary: "Spending",
   tags: ["Transactions"],
 });
 
-export const spendingRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+export const spendingRouter = createApp().openapi(route, async (c) => {
   const { period, accountType, accountId } = c.req.valid("query");
   const result = await getSpending(c.var.user.id, period, accountType, accountId);
   return c.json(result, 200);

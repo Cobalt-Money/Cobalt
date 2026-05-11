@@ -3,35 +3,15 @@ import { Card } from "@cobalt-web/ui/components/card";
 import { EventArticleContent } from "@cobalt-web/ui/cobalt/news/event-article-content";
 import type { EventArticleSource } from "@cobalt-web/ui/cobalt/news/event-article-content";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import type { queries, Row } from "@cobalt-web/zero";
 import { LinkSquare01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { Link } from "@/components/links";
 import { useFinancialEventDetail } from "@/hooks/use-financial-event-detail";
 
-/** Narrow shape for synced financial event + articles (Zero row typing is permissive). */
-interface EventArticleRow {
-  readonly id: string;
-  readonly title: string;
-  readonly newsUrl: string;
-  readonly imageUrl?: string | null;
-  readonly sourceName?: string | null;
-  readonly text?: string | null;
-  readonly type?: string | null;
-}
-
-interface FinancialEventDetailRow {
-  readonly id: string;
-  readonly eventName: string;
-  readonly summary?: string | null;
-  readonly eventText?: string | null;
-  readonly sentiment?: string | null;
-  readonly keyPoints?: unknown;
-  readonly tickers?: unknown;
-  readonly date?: number | null;
-  readonly createdAt?: number | null;
-  readonly articles?: readonly EventArticleRow[];
-}
+type FinancialEventDetailRow = Row<typeof queries.news.eventById>;
+type EventArticleRow = NonNullable<FinancialEventDetailRow["articles"]>[number];
 
 function parseTickers(raw: unknown): string[] {
   if (!Array.isArray(raw)) {
@@ -299,9 +279,9 @@ function renderArticleBody({
 }
 
 export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
-  const { event: raw } = useFinancialEventDetail(eventId);
+  const { event } = useFinancialEventDetail(eventId);
 
-  if (raw === undefined) {
+  if (event === undefined) {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
         <p className="text-muted-foreground text-sm">
@@ -311,7 +291,6 @@ export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
     );
   }
 
-  const event = raw as FinancialEventDetailRow;
   const articles = event.articles ?? [];
   const tickers = parseTickers(event.tickers);
   const summary = event.summary?.trim() || null;

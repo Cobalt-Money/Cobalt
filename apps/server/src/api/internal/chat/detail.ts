@@ -4,9 +4,10 @@ import {
   chatErrorResponseSchema,
   chatIdParamSchema,
 } from "@cobalt-web/server-data/chat/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
@@ -17,30 +18,16 @@ const route = createRoute({
   path: "/{chatId}",
   request: { params: chatIdParamSchema },
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: chatDetailResponseSchema },
-      },
-      description: "Chat detail",
-    },
-    404: {
-      content: {
-        "application/json": { schema: chatDetailResponseSchema },
-      },
-      description: "Not found — empty messages",
-    },
-    500: {
-      content: {
-        "application/json": { schema: chatErrorResponseSchema },
-      },
-      description: "Server error",
-    },
+    200: jsonContent(chatDetailResponseSchema, "Chat detail"),
+    404: jsonContent(chatDetailResponseSchema, "Not found — empty messages"),
+    422: validationErrorResponse(chatIdParamSchema),
+    500: jsonContent(chatErrorResponseSchema, "Server error"),
   },
   summary: "Get chat messages",
   tags: ["Chat"],
 });
 
-export const chatDetailRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+export const chatDetailRouter = createApp().openapi(route, async (c) => {
   const { chatId } = c.req.valid("param");
   const userId = c.var.user.id;
 

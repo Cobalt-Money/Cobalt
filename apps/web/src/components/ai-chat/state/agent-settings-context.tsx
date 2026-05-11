@@ -1,19 +1,16 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
-export type AgentMode = "standard" | "analyst";
 export type AgentEffort = "low" | "medium" | "high" | "max";
 
 export interface AgentSettings {
   effort: AgentEffort;
   model: string;
-  mode: AgentMode;
   reasoning: boolean;
 }
 
 const DEFAULT_SETTINGS: AgentSettings = {
   effort: "high",
-  mode: "analyst",
   model: "anthropic/claude-opus-4.7",
   reasoning: false,
 };

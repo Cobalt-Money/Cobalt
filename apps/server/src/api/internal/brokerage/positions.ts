@@ -1,12 +1,12 @@
 import { getPositionsByUserId } from "@cobalt-web/server-data/brokerage/queries";
 import {
-  errorResponseSchema,
   positionsQuerySchema,
   positionsResponseSchema,
 } from "@cobalt-web/server-data/brokerage/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
@@ -15,25 +15,15 @@ const route = createRoute({
   path: "/positions",
   request: { query: positionsQuerySchema },
   responses: {
-    200: {
-      content: { "application/json": { schema: positionsResponseSchema } },
-      description: "Brokerage positions",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
+    200: jsonContent(positionsResponseSchema, "Brokerage positions"),
+    422: validationErrorResponse(positionsQuerySchema),
   },
   summary: "Get brokerage positions",
   tags: ["Brokerage"],
 });
 
-export const positionsRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
-  try {
-    const result = await getPositionsByUserId(c.var.user.id, c.req.valid("query"));
-    c.header("Cache-Control", "private, max-age=60");
-    return c.json(result, 200);
-  } catch {
-    return c.json({ error: "Failed to fetch brokerage positions" }, 500);
-  }
+export const positionsRouter = createApp().openapi(route, async (c) => {
+  const result = await getPositionsByUserId(c.var.user.id, c.req.valid("query"));
+  c.header("Cache-Control", "private, max-age=60");
+  return c.json(result, 200);
 });

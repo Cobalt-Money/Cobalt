@@ -4,7 +4,7 @@ import { useStorage } from "nitro/storage";
 
 const EXCLUDE = new Set(["index.ts", "relations.ts"]);
 
-function extractTableNames(content: string): string[] {
+export function extractTableNames(content: string): string[] {
   const names: string[] = [];
   const regex = /pgTable\s*\(\s*["']([^"']+)["']/g;
   let m: RegExpExecArray | null;

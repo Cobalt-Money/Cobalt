@@ -7,27 +7,16 @@ import {
   createUIMessageStream,
   createUIMessageStreamResponse,
   pruneMessages,
-  streamText,
 } from "ai";
 import type { UIMessage } from "ai";
 import { Hono } from "hono";
 import { start } from "workflow/api";
 
-import { createCodeAgent } from "../../../ai/agents/code-agent/code-agent.js";
-import {
-  gatewayModel,
-  getProviderOptions,
-  parseModelWithReasoning,
-} from "../../../ai/model-provider.js";
+import { createFinanceAgent } from "../../../ai/agents/finance-agent/finance-agent.js";
+import { parseModelWithReasoning } from "../../../ai/model-provider.js";
 import type { ReasoningEffort } from "../../../ai/model-provider.js";
 import { generateChatTitleWorkflow } from "../../../workflows/chat-title/workflow.js";
 import { requirePaidUser } from "../middleware.js";
-
-const SYSTEM_PROMPT = [
-  "You are Cobalt, a personal financial AI assistant.",
-  "You help users understand their finances, spending, investments, and financial goals.",
-  "Be concise, clear, and actionable.",
-].join(" ");
 
 const MAX_HISTORY = 20;
 
@@ -76,19 +65,10 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
       effort?: ReasoningEffort;
       message?: UIMessage;
       messages?: UIMessage[];
-      mode?: "standard" | "analyst";
       model?: string;
-      platform?: "web" | "mobile";
     }>();
 
-    const {
-      effort = "high",
-      message,
-      messages,
-      mode = "standard",
-      model,
-      platform = "web",
-    } = body ?? {};
+    const { effort = "high", message, messages, model } = body ?? {};
 
     if (!message?.id || !message.parts?.length) {
       return c.json({ error: "message is required" }, 400);
@@ -109,7 +89,6 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
     console.log("[chat-stream]", {
       chatId,
       effort: loggedUseReasoning ? effort : undefined,
-      mode,
       model: loggedBaseModel,
       reasoning: loggedUseReasoning,
       userId,
@@ -124,100 +103,57 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
         ? allModelMessages.slice(-MAX_HISTORY)
         : allModelMessages;
 
-    if (mode === "analyst") {
-      const now = new Date();
-      const currentDate = now.toLocaleDateString("en-CA");
-      const currentDateFormatted = now.toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "long",
-        weekday: "long",
-        year: "numeric",
-      });
+    const now = new Date();
+    const currentDate = now.toLocaleDateString("en-CA");
+    const currentDateFormatted = now.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      weekday: "long",
+      year: "numeric",
+    });
 
-      const modelMessages = pruneMessages({
-        messages: trimmed,
-        reasoning: "all",
-        toolCalls: [
-          {
-            tools: [
-              "bash",
-              "readFile",
-              "executeCode",
-              "webSearch",
-              "webExtract",
-              "renderChart",
-              "renderDocument",
-              "compute",
-              "askUser",
-            ],
-            type: "all",
-          },
-        ],
-      });
-
-      const codeAgent = await createCodeAgent(model, userId, effort);
-
-      const stream = createUIMessageStream({
-        execute: async ({ writer }) => {
-          const result = await codeAgent.stream({
-            messages: modelMessages,
-            options: { currentDate, currentDateFormatted, platform },
-          });
-          const uiStream = result.toUIMessageStream({ sendReasoning: true });
-          for await (const chunk of uiStream) {
-            writer.write(chunk as Parameters<typeof writer.write>[0]);
-          }
-        },
-        onError: (error) => {
-          console.error("[analyst stream error]", error);
-          return error instanceof Error ? error.message : "Stream error";
-        },
-        onFinish: async ({ responseMessage }) => {
-          const assistantMessage = responseMessage as UIMessage;
-          await upsertMessage({ chatId, message: assistantMessage });
-        },
-        originalMessages: messages,
-      });
-
-      return createUIMessageStreamResponse({ stream });
-    }
-
-    // Standard mode
-    const rawStandardModel = model ?? env.AI_GATEWAY_MODEL;
-    const { baseModel: standardBaseModel, useReasoning: standardUseReasoning } =
-      parseModelWithReasoning(rawStandardModel);
-    const standardProviderOptions = getProviderOptions(
-      standardBaseModel,
-      standardUseReasoning,
-      effort,
-    );
     const modelMessages = pruneMessages({
       messages: trimmed,
       reasoning: "all",
-    });
-    const assistantMessageId = crypto.randomUUID();
-    const result = streamText({
-      messages: modelMessages,
-      model: gatewayModel(standardBaseModel),
-      onFinish: async ({ text, reasoningText }) => {
-        const parts: UIMessage["parts"] = [];
-        if (reasoningText) {
-          parts.push({ text: reasoningText, type: "reasoning" });
-        }
-        parts.push({ text, type: "text" });
-        const assistantMessage: UIMessage = {
-          id: assistantMessageId,
-          parts,
-          role: "assistant",
-        };
-        await upsertMessage({ chatId, message: assistantMessage });
-      },
-      ...(standardProviderOptions && {
-        providerOptions: standardProviderOptions,
-      }),
-      system: SYSTEM_PROMPT,
+      toolCalls: [
+        {
+          tools: [
+            "bash",
+            "executeCode",
+            "webSearch",
+            "webExtract",
+            "renderChart",
+            "renderDocument",
+          ],
+          type: "all",
+        },
+      ],
     });
 
-    return result.toUIMessageStreamResponse({ sendReasoning: true });
+    const financeAgent = await createFinanceAgent(model, userId, effort);
+
+    const stream = createUIMessageStream({
+      execute: async ({ writer }) => {
+        const result = await financeAgent.stream({
+          messages: modelMessages,
+          options: { currentDate, currentDateFormatted },
+        });
+        const uiStream = result.toUIMessageStream({ sendReasoning: true });
+        for await (const chunk of uiStream) {
+          writer.write(chunk as Parameters<typeof writer.write>[0]);
+        }
+      },
+      onError: (error) => {
+        console.error("[chat stream error]", error);
+        return error instanceof Error ? error.message : "Stream error";
+      },
+      onFinish: async ({ responseMessage }) => {
+        const assistantMessage = responseMessage as UIMessage;
+        await upsertMessage({ chatId, message: assistantMessage });
+      },
+      originalMessages: messages,
+    });
+
+    return createUIMessageStreamResponse({ stream });
   },
 );
