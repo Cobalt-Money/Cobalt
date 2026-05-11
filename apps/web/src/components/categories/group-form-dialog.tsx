@@ -11,13 +11,14 @@ import { Icon } from "@cobalt-web/ui/components/icon";
 import { Folder01Icon } from "@hugeicons/core-free-icons";
 import { useEffect, useRef, useState } from "react";
 
+import type { ManageCategoriesGroup } from "@cobalt-web/ui/cobalt/transactions/categories/manage-categories-form";
+
 import { useCreateGroup, useUpdateGroup } from "@/hooks/use-categories";
-import type { GroupRow } from "@/hooks/use-categories";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initial: GroupRow | null;
+  initial: ManageCategoriesGroup | null;
 }
 
 export function GroupFormDialog({ open, onOpenChange, initial }: Props) {

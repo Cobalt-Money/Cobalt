@@ -11,13 +11,14 @@ import { Button } from "@cobalt-web/ui/components/button";
 import { Delete02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
+import type { ManageCategoriesGroup } from "@cobalt-web/ui/cobalt/transactions/categories/manage-categories-form";
+
 import { useDeleteGroup } from "@/hooks/use-categories";
-import type { GroupRow } from "@/hooks/use-categories";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  group: GroupRow | null;
+  group: ManageCategoriesGroup | null;
   hasChildren: boolean;
 }
 

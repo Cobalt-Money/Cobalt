@@ -527,8 +527,8 @@ export function NetWorthSection() {
   // the small bankAccounts subscription. Snapshot query stays 0-relate so
   // its IVM pipeline is a single stage.
   const [allBankAccounts] = useQuery(queries.accounts.bankAccounts());
-  const rawSnapshots = rawBankSnapshots;
-  const allPortfolioSnapshots: readonly PortfolioSnapshotRow[] = rawPortfolioSnapshots;
+  const [snaptradeAccounts] = useQuery(queries.brokerage.accounts());
+  const [plaidInvestmentAccounts] = useQuery(queries.brokerage.plaidInvestmentAccounts());
 
   const accountById = useMemo(() => {
     const m = new Map<string, BankAccountRow>();
@@ -538,12 +538,29 @@ export function NetWorthSection() {
     return m;
   }, [allBankAccounts]);
 
+  /** id → {name, institutionName} for snaptrade + plaid investment accounts. */
+  const brokerageMetaById = useMemo(() => {
+    const m = new Map<string, { name: string | null; institutionName: string | null }>();
+    for (const a of snaptradeAccounts) {
+      m.set(a.id, { institutionName: a.institutionName ?? null, name: a.name ?? null });
+    }
+    for (const a of plaidInvestmentAccounts) {
+      const inst =
+        a.plaidConnection?.institution?.name ??
+        a.plaidConnection?.institutionName ??
+        a.institutionName ??
+        null;
+      m.set(a.id, { institutionName: inst, name: a.name ?? null });
+    }
+    return m;
+  }, [snaptradeAccounts, plaidInvestmentAccounts]);
+
   // Attach account metadata (type/subtype/name) to each snapshot row by
   // joining with the bankAccounts map. Equivalent to the `.related("account")`
   // we used to ship server-side, but free of IVM cost.
   const allBankSnapshots = useMemo<BankSnapshotRow[]>(
     () =>
-      rawSnapshots.map((s) => {
+      rawBankSnapshots.map((s) => {
         const acc = accountById.get(s.accountId);
         return {
           ...s,
@@ -556,7 +573,21 @@ export function NetWorthSection() {
             : null,
         };
       }),
-    [rawSnapshots, accountById],
+    [rawBankSnapshots, accountById],
+  );
+
+  /** Portfolio snapshots enriched with brokerage account name + institution from the join map. */
+  const allPortfolioSnapshots = useMemo<PortfolioSnapshotRow[]>(
+    () =>
+      rawPortfolioSnapshots.map((s) => {
+        const meta = brokerageMetaById.get(s.accountId);
+        return {
+          ...s,
+          accountName: meta?.name ?? null,
+          institutionName: meta?.institutionName ?? null,
+        };
+      }),
+    [rawPortfolioSnapshots, brokerageMetaById],
   );
 
   const isDataComplete = bankResult.type === "complete" && portfolioResult.type === "complete";

@@ -20,14 +20,15 @@ import { ArrowRight01Icon, ViewIcon, ViewOffIcon } from "@hugeicons/core-free-ic
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useState } from "react";
 
+import type { ManageCategoriesCat } from "@cobalt-web/ui/cobalt/transactions/categories/manage-categories-form";
+
 import { useAllCategories, useHideCategory } from "@/hooks/use-categories";
-import type { CategoryRow } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  category: CategoryRow | null;
+  category: ManageCategoriesCat | null;
 }
 
 export function HideCategoryDialog({ open, onOpenChange, category }: Props) {
