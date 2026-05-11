@@ -2,27 +2,18 @@ import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import type { TagOption } from "@cobalt-web/ui/cobalt/transactions/tags/tag-picker";
+import type { Tag, TransactionTag } from "@cobalt-web/zero";
 import { mutators, queries } from "@cobalt-web/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import { useCallback, useMemo } from "react";
 
-interface TagRow {
-  id: string;
-  name: string;
-  color: string;
-  archivedAt: number | null;
-  transactionTags?: readonly { tagId: string }[];
-}
-
-interface TransactionTagRow {
-  tagId: string;
-  transactionId: string;
-}
+type TagRow = Tag & { transactionTags?: readonly Pick<TransactionTag, "tagId">[] };
+type TransactionTagRow = TransactionTag;
 
 /** Active + archived tags for the signed-in user (Zero replicated). */
 export function useTags() {
   const [rawTags] = useQuery(queries.tags.list());
-  const tags = rawTags as unknown as TagRow[];
+  const tags: TagRow[] = rawTags;
   return { data: tags };
 }
 
@@ -115,7 +106,7 @@ export function useDeleteTag() {
 
 export function useTransactionTagIds(transactionId: string | undefined) {
   const [raw] = useQuery(queries.tags.forTransaction({ transactionId: transactionId ?? "" }));
-  const rows = raw as unknown as TransactionTagRow[];
+  const rows: TransactionTagRow[] = raw;
   const data = useMemo(() => rows.map((r) => r.tagId), [rows]);
   return { data };
 }

@@ -3,31 +3,15 @@ import type {
   BrokerageRowWithRelations,
 } from "@cobalt-web/ui/cobalt/accounts/lib/map-zero-to-account-cards";
 import { formatAlert } from "@cobalt-web/server-data/alerts/formatter";
+import type { UserAlert } from "@cobalt-web/zero";
 import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo } from "react";
 
-/**
- * Mirror of the `user_alerts` Zero table columns. Hand-declared because
- * drizzle-zero emits `customType: null as unknown as CustomType<...>`
- * placeholders that don't flow concrete column types through Zero's
- * `Row<>` generic. Same pattern as `use-tags.ts`, `use-transactions.ts`.
- */
-interface AlertRowFromZero {
-  id: string;
-  userId: string;
-  type: string;
-  source: string;
-  sourceId: string | null;
-  metadata: unknown;
-  createdAt: number;
-  resolvedAt: number | null;
-}
-
-export interface UserAlertRow extends AlertRowFromZero {
+export type UserAlertRow = UserAlert & {
   title: string;
   message: string;
-}
+};
 
 /**
  * Live-synced list of active alerts for the current user. Rows drop out
@@ -41,11 +25,11 @@ export interface UserAlertRow extends AlertRowFromZero {
 export function useUserAlerts() {
   const [rawAlerts, result] = useQuery(queries.alerts.active());
   const [rawBank] = useQuery(queries.accounts.bankAccounts());
-  const [rawBrokerage] = useQuery(queries.accounts.brokerageAccounts());
+  const [rawBrokerage] = useQuery(queries.brokerage.accounts());
 
-  const alertRows = rawAlerts as unknown as readonly AlertRowFromZero[];
-  const bankRows = rawBank as unknown as readonly BankAccountRowWithRelations[];
-  const brokerageRows = rawBrokerage as unknown as readonly BrokerageRowWithRelations[];
+  const alertRows: readonly UserAlert[] = rawAlerts;
+  const bankRows: readonly BankAccountRowWithRelations[] = rawBank;
+  const brokerageRows: readonly BrokerageRowWithRelations[] = rawBrokerage;
 
   const plaidNameByItemId = useMemo(() => {
     const map = new Map<string, string>();

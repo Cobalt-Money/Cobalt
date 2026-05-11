@@ -52,7 +52,7 @@ export function useManageCategoriesProps() {
   const [sub, setSub] = useState<SubDialogState>(INITIAL_SUB);
 
   const sortedGroups = useMemo<readonly ManageCategoriesGroup[]>(
-    () => [...groups].toSorted((a, b) => a.order - b.order),
+    () => [...groups].toSorted((a, b) => (a.order ?? 0) - (b.order ?? 0)),
     [groups],
   );
 
@@ -76,7 +76,7 @@ export function useManageCategoriesProps() {
       map.set(c.groupId, arr);
     }
     for (const arr of map.values()) {
-      arr.sort((a, b) => a.order - b.order);
+      arr.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     }
     return map as ReadonlyMap<string, readonly ManageCategoriesCat[]>;
   }, [categories]);

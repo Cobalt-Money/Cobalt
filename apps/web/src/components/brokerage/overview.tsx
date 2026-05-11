@@ -11,7 +11,7 @@ import { useMemo, useState } from "react";
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { useBrokerage, useBrokerageActivities } from "@/hooks/use-brokerage";
 import { snapshotToRow } from "@/hooks/lib/brokerage-normalizers";
-import type { RawSnapshot } from "@/hooks/lib/brokerage-normalizers";
+import type { Snapshot } from "@cobalt-web/zero";
 
 import type { PortfolioSnapshotRow } from "./balance-chart-card";
 import { BalanceChartCard } from "./balance-chart-card";
@@ -67,9 +67,10 @@ export function Overview() {
   const { accounts, accountsComplete, positions } = useBrokerage();
   const { activities } = useBrokerageActivities();
   const [rawSnapshots] = useQuery(queries.brokerage.portfolioSnapshots());
+  const snapshots: readonly Snapshot[] = rawSnapshots;
   const portfolioSnapshots = useMemo<PortfolioSnapshotRow[]>(
-    () => (rawSnapshots as unknown as readonly RawSnapshot[]).map(snapshotToRow),
-    [rawSnapshots],
+    () => snapshots.map(snapshotToRow),
+    [snapshots],
   );
 
   const [brokerageScope, setBrokerageScope] = useState<BrokerageScope>({

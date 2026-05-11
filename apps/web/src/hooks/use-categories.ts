@@ -1,37 +1,24 @@
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
+import type { Category, CategoryGroup } from "@cobalt-web/zero";
 import { mutators, queries } from "@cobalt-web/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import { useCallback } from "react";
 
-export interface CategoryRow {
-  id: string;
-  name: string;
-  iconKey: string;
-  groupId: string;
-  hidden: boolean;
-  order: number;
-  systemKey: string | null;
-  excludeFromInsights: boolean;
-  group?: GroupRow | null;
-}
-
-export interface GroupRow {
-  id: string;
-  name: string;
-  order: number;
-  systemKey: string | null;
-}
+export type CategoryRow = Category & { group?: CategoryGroup | null };
+export type GroupRow = CategoryGroup;
 
 /** All non-deleted cats incl hidden — settings/management view. */
 export function useAllCategories(): { data: readonly CategoryRow[] } {
-  const [raw] = useQuery(queries.categories.listAll());
-  return { data: raw as unknown as readonly CategoryRow[] };
+  const [raw] = useQuery(queries.categories.list({ includeHidden: true }));
+  const data: readonly CategoryRow[] = raw;
+  return { data };
 }
 
 /** All non-deleted groups for the user. */
 export function useCategoryGroups(): { data: readonly GroupRow[] } {
   const [raw] = useQuery(queries.categories.listGroups());
-  return { data: raw as unknown as readonly GroupRow[] };
+  const data: readonly GroupRow[] = raw;
+  return { data };
 }
 
 function fireAndForget(

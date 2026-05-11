@@ -82,13 +82,7 @@ export function useAddTransactionData(): AddTransactionData {
   const [categoryRows] = useQuery(queries.categories.list());
   const categoryOptions = useMemo<readonly CategoryPickerOption[]>(
     () =>
-      (categoryRows ?? []).map((c) => {
-        const cat = c as unknown as {
-          id: string;
-          name: string;
-          iconKey: string;
-          group?: { name?: string | null; systemKey?: string | null };
-        };
+      (categoryRows ?? []).map((cat) => {
         const groupSystemKey = cat.group?.systemKey ?? null;
         return {
           groupName: cat.group?.name ?? "",

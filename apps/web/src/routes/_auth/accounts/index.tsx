@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_auth/accounts/")({
   component: AccountsListPage,
   loader: ({ context }) => {
     context.zero.run(queries.accounts.bankAccounts());
-    context.zero.run(queries.accounts.brokerageAccounts());
+    context.zero.run(queries.brokerage.accounts());
   },
   staticData: { title: "Accounts" },
 });

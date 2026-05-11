@@ -1,3 +1,4 @@
+import type { Recurring } from "@cobalt-web/zero";
 import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo } from "react";
@@ -8,21 +9,10 @@ export interface Subscription {
   amount: number;
   billingDay: number;
   billingCycle: "monthly" | "yearly";
-  /** 0 = Jan … 11 = Dec — only for yearly billing. */
   billingMonth?: number;
 }
 
-/** Typed shape for the fields we read off a Zero recurringStream row. */
-interface RecurringStreamRow {
-  id: string;
-  streamType: string;
-  merchantName: string | null | undefined;
-  description: string;
-  lastAmount: number;
-  frequency: string;
-  predictedNextDate: number | null | undefined;
-  lastDate: number;
-}
+type RecurringStreamRow = Recurring;
 
 export function useSubscriptions() {
   const [rows, result] = useQuery(queries.transactions.recurring());

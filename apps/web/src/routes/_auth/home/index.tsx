@@ -19,7 +19,6 @@ export const Route = createFileRoute("/_auth/home/")({
     context.zero.run(queries.brokerage.accounts());
     context.zero.run(queries.brokerage.positions());
     context.zero.run(queries.brokerage.plaidInvestmentAccounts());
-    context.zero.run(queries.brokerage.plaidPositions());
   },
   staticData: { title: "Home" },
 });

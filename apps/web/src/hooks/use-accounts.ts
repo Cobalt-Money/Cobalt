@@ -9,7 +9,7 @@ import { useMemo } from "react";
 
 export function useAccounts() {
   const [bankRows, bankResult] = useQuery(queries.accounts.bankAccounts());
-  const [brokerageRows, brokerageResult] = useQuery(queries.accounts.brokerageAccounts());
+  const [brokerageRows, brokerageResult] = useQuery(queries.brokerage.accounts());
 
   const items = useMemo(
     () =>

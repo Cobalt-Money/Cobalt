@@ -6,11 +6,14 @@ import { zql } from "../schema.js";
 import { NO_MATCH_ID } from "../transactions/lib.js";
 
 const RECENT_ACTIVITY_LIMIT = 50;
-const RECENT_ORDER_LIMIT = 50;
 const PORTFOLIO_SNAPSHOT_LIMIT = 1000;
 
 const SNAPSHOT_RANGE = z.enum(["1W", "1M", "1Y", "All"]);
 const RANGE_DAYS: Record<"1W" | "1M" | "1Y", number> = { "1M": 30, "1W": 7, "1Y": 365 };
+
+const SOURCE_FILTER = z
+  .object({ source: z.enum(["plaid", "snaptrade", "all"]).optional() })
+  .optional();
 
 function snapshotCutoff(range: z.infer<typeof SNAPSHOT_RANGE> | undefined): number | null {
   if (!range || range === "All") {
@@ -25,60 +28,24 @@ function snapshotCutoff(range: z.infer<typeof SNAPSHOT_RANGE> | undefined): numb
  */
 export const brokerageQueries = {
   /** Linked SnapTrade brokerage accounts with balance, holdings, and authorization metadata. */
-  accounts: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.financialAccount.where("id", NO_MATCH_ID);
-    }
-    return zql.financialAccount
-      .where("userId", userId)
+  accounts: defineQuery(({ ctx }: { ctx: Context }) =>
+    zql.financialAccount
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
       .where("source", "snaptrade")
       .related("balance")
       .related("holdings")
-      .related("snaptradeAuthorization");
-  }),
-
-  /** Plaid investment transaction feed, newest first. */
-  plaidActivities: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.investmentActivity.where("id", NO_MATCH_ID);
-    }
-    return zql.investmentActivity
-      .where("userId", userId)
-      .whereExists("account", (acc) => acc.where("source", "plaid"))
-      .related("account")
-      .related("security")
-      .orderBy("date", "desc")
-      .limit(RECENT_ACTIVITY_LIMIT);
-  }),
+      .related("snaptradeAuthorization"),
+  ),
 
   /** Plaid investment-type accounts. */
-  plaidInvestmentAccounts: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.financialAccount.where("id", NO_MATCH_ID);
-    }
-    return zql.financialAccount
-      .where("userId", userId)
+  plaidInvestmentAccounts: defineQuery(({ ctx }: { ctx: Context }) =>
+    zql.financialAccount
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
       .where("source", "plaid")
       .where("type", "investment")
       .related("plaidConnection", (q) => q.related("institution"))
-      .related("balance");
-  }),
-
-  /** Plaid investment holdings across all linked Plaid investment accounts. */
-  plaidPositions: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.holding.where("id", NO_MATCH_ID);
-    }
-    return zql.holding
-      .where("userId", userId)
-      .whereExists("account", (acc) => acc.where("source", "plaid"))
-      .related("account")
-      .related("security");
-  }),
+      .related("balance"),
+  ),
 
   /**
    * Historical SnapTrade portfolio snapshots for the signed-in user.
@@ -87,13 +54,9 @@ export const brokerageQueries = {
   portfolioSnapshots: defineQuery(
     z.object({ range: SNAPSHOT_RANGE.optional() }).optional(),
     ({ ctx, args }) => {
-      const userId = ctx?.userId;
-      if (!userId) {
-        return zql.snapshot.where("id", NO_MATCH_ID);
-      }
       const cutoff = snapshotCutoff(args?.range);
       const base = zql.snapshot
-        .where("userId", userId)
+        .where("userId", ctx?.userId ?? NO_MATCH_ID)
         .whereExists("account", (acc) =>
           acc.where(({ or, cmp, and }) =>
             or(cmp("source", "snaptrade"), and(cmp("source", "plaid"), cmp("type", "investment"))),
@@ -104,45 +67,35 @@ export const brokerageQueries = {
     },
   ),
 
-  /** Flat SnapTrade holdings list across accounts (sorted by symbol). */
-  positions: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.holding.where("id", NO_MATCH_ID);
-    }
-    return zql.holding
-      .where("userId", userId)
-      .whereExists("account", (acc) => acc.where("source", "snaptrade"))
-      .related("account")
-      .related("security");
-  }),
+  /** Holdings across linked investment accounts. `source` filters Plaid vs SnapTrade (default: all). */
+  positions: defineQuery(
+    SOURCE_FILTER,
+    ({ args, ctx }: { args: z.infer<typeof SOURCE_FILTER>; ctx: Context }) => {
+      const src = args?.source;
+      const base = zql.holding.where("userId", ctx?.userId ?? NO_MATCH_ID);
+      const scoped =
+        src && src !== "all"
+          ? base.whereExists("account", (acc) => acc.where("source", src))
+          : base;
+      return scoped.related("account").related("security");
+    },
+  ),
 
-  /** Cross-account SnapTrade activity feed, newest trade date first. */
-  recentActivities: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.investmentActivity.where("id", NO_MATCH_ID);
-    }
-    return zql.investmentActivity
-      .where("userId", userId)
-      .whereExists("account", (acc) => acc.where("source", "snaptrade"))
-      .related("account")
-      .related("security")
-      .orderBy("date", "desc")
-      .limit(RECENT_ACTIVITY_LIMIT);
-  }),
-
-  /** Recent SnapTrade orders across linked accounts, newest placement time first. */
-  recentOrders: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.orders.where("id", NO_MATCH_ID);
-    }
-    return zql.orders
-      .where("userId", userId)
-      .related("account")
-      .related("security")
-      .orderBy("timePlaced", "desc")
-      .limit(RECENT_ORDER_LIMIT);
-  }),
+  /** Investment activity feed across linked accounts. `source` filters Plaid vs SnapTrade. */
+  recentActivities: defineQuery(
+    SOURCE_FILTER,
+    ({ args, ctx }: { args: z.infer<typeof SOURCE_FILTER>; ctx: Context }) => {
+      const src = args?.source;
+      const base = zql.investmentActivity.where("userId", ctx?.userId ?? NO_MATCH_ID);
+      const scoped =
+        src && src !== "all"
+          ? base.whereExists("account", (acc) => acc.where("source", src))
+          : base;
+      return scoped
+        .related("account")
+        .related("security")
+        .orderBy("date", "desc")
+        .limit(RECENT_ACTIVITY_LIMIT);
+    },
+  ),
 };

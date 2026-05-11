@@ -13,6 +13,7 @@ import {
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import type { FinancialAccount, Institution, PlaidConnection, Snapshot } from "@cobalt-web/zero";
 import { queries } from "@cobalt-web/zero";
 import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -54,40 +55,23 @@ const MONTH_LABELS = [
 const TIME_RANGES = ["1W", "1M", "1Y", "All"] as const;
 type TimeRange = (typeof TIME_RANGES)[number];
 
-interface BankSnapshotRow {
-  accountId: string;
-  snapshotDate: number;
-  current?: number | null;
-  account?: {
-    type?: string | null;
-    subtype?: string | null;
-    name?: string | null;
-  } | null;
-}
+type BankSnapshotRow = Pick<Snapshot, "accountId" | "snapshotDate" | "current"> & {
+  account?: Pick<FinancialAccount, "type" | "subtype" | "name"> | null;
+};
 
-interface BankAccountRow {
-  id: string;
-  name?: string | null;
-  type?: string | null;
-  subtype?: string | null;
-  plaidConnection?: {
-    institutionName?: string | null;
-    institutionLogo?: string | null;
-    institution?: {
-      logo?: string | null;
-      url?: string | null;
-      name?: string | null;
-    } | null;
-  } | null;
-}
+type BankAccountRow = Pick<FinancialAccount, "id" | "name" | "type" | "subtype"> & {
+  plaidConnection?:
+    | (Pick<PlaidConnection, "institutionName" | "institutionLogo"> & {
+        institution?: Pick<Institution, "logo" | "url" | "name"> | null;
+      })
+    | null;
+};
 
-interface PortfolioSnapshotRow {
+type PortfolioSnapshotRow = Pick<Snapshot, "snapshotDate" | "current"> & {
   accountId?: string | null;
-  snapshotDate: number;
-  current?: number | null;
   accountName?: string | null;
   institutionName?: string | null;
-}
+};
 
 // ── Account scope ─────────────────────────────────────────────────
 
@@ -548,9 +532,9 @@ export function NetWorthSection() {
   // the small bankAccounts subscription. Snapshot query stays 0-relate so
   // its IVM pipeline is a single stage.
   const [rawBankAccounts] = useQuery(queries.accounts.bankAccounts());
-  const rawSnapshots = rawBankSnapshots as unknown as Omit<BankSnapshotRow, "account">[];
-  const allPortfolioSnapshots = rawPortfolioSnapshots as unknown as PortfolioSnapshotRow[];
-  const allBankAccounts = rawBankAccounts as unknown as BankAccountRow[];
+  const rawSnapshots: Omit<BankSnapshotRow, "account">[] = rawBankSnapshots;
+  const allPortfolioSnapshots: PortfolioSnapshotRow[] = rawPortfolioSnapshots;
+  const allBankAccounts: BankAccountRow[] = rawBankAccounts;
 
   const accountById = useMemo(() => {
     const m = new Map<string, BankAccountRow>();

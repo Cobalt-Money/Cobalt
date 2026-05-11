@@ -30,7 +30,7 @@ export function DashboardSubscriptionsCalendar() {
   const [selected, setSelected] = useState<Date | undefined>(() => new Date());
 
   const [rawStreams, result] = useQuery(queries.transactions.recurring());
-  const streams = rawStreams as unknown as RecurringRow[];
+  const streams: RecurringRow[] = rawStreams;
   const isComplete = result.type === "complete";
 
   const outflows = useMemo(() => streams.filter((s) => s.streamType === "outflow"), [streams]);
