@@ -5,11 +5,12 @@ import {
   linkTokenResponseSchema,
   updateLinkTokenBodySchema,
 } from "@cobalt-web/server-data/providers/plaid/link/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 import { v7 as uuidv7 } from "uuid";
 import { start } from "workflow/api";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { plaidAddAccountWorkflow } from "../../../workflows/plaid/sync/workflow.js";
 import { requireAuth } from "../middleware.js";
 
@@ -25,25 +26,19 @@ const updateLinkTokenRoute = createRoute({
     },
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: linkTokenResponseSchema } },
-      description:
-        "Link token minted; workflow parked on hook. Client must echo the Plaid Link outcome via /resolveLink",
-    },
-    404: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Item not found",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
+    200: jsonContent(
+      linkTokenResponseSchema,
+      "Link token minted; workflow parked on hook. Client must echo the Plaid Link outcome via /resolveLink",
+    ),
+    404: jsonContent(errorResponseSchema, "Item not found"),
+    422: validationErrorResponse(updateLinkTokenBodySchema),
+    500: jsonContent(errorResponseSchema, "Server error"),
   },
   summary: "Mint an update-mode link token and start the parked workflow",
   tags: ["Plaid"],
 });
 
-const updateRouter = new OpenAPIHono<AppEnv>().openapi(updateLinkTokenRoute, async (c) => {
+const updateRouter = createApp().openapi(updateLinkTokenRoute, async (c) => {
   const { mode, plaidItemId } = c.req.valid("json");
   const userId = c.var.user.id;
 

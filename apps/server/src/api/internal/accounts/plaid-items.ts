@@ -9,9 +9,10 @@ import {
   plaidItemAlertListResponseSchema,
   plaidItemListResponseSchema,
 } from "@cobalt-web/server-data/accounts/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requireAuth } from "../middleware.js";
 
 const listAccountsForItem = createRoute({
@@ -20,12 +21,8 @@ const listAccountsForItem = createRoute({
   path: "/items/{itemId}",
   request: { params: itemIdParamSchema },
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: plaidAccountsForItemResponseSchema },
-      },
-      description: "Accounts for Plaid item",
-    },
+    200: jsonContent(plaidAccountsForItemResponseSchema, "Accounts for Plaid item"),
+    422: validationErrorResponse(itemIdParamSchema),
   },
   summary: "Get accounts for a Plaid item",
   tags: ["Accounts"],
@@ -36,12 +33,7 @@ const listItems = createRoute({
   middleware: [requireAuth] as const,
   path: "/plaid-items",
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: plaidItemListResponseSchema },
-      },
-      description: "List of Plaid items",
-    },
+    200: jsonContent(plaidItemListResponseSchema, "List of Plaid items"),
   },
   summary: "List Plaid items",
   tags: ["Accounts"],
@@ -52,18 +44,13 @@ const listAlerts = createRoute({
   middleware: [requireAuth] as const,
   path: "/plaid-items/alerts",
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: plaidItemAlertListResponseSchema },
-      },
-      description: "Plaid items needing attention",
-    },
+    200: jsonContent(plaidItemAlertListResponseSchema, "Plaid items needing attention"),
   },
   summary: "List Plaid item alerts",
   tags: ["Accounts"],
 });
 
-const plaidItemsRouter = new OpenAPIHono<AppEnv>()
+const plaidItemsRouter = createApp()
   .openapi(listAccountsForItem, async (c) => {
     const { itemId } = c.req.valid("param");
     const accounts = await getPlaidAccountsForItem(c.var.user.id, itemId);

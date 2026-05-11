@@ -9,9 +9,10 @@ import {
   screenerResponseSchema,
 } from "@cobalt-web/server-data/research/schemas";
 import { screenerQueryToCompanyParams } from "@cobalt-web/server-data/research/screener-query";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
@@ -20,26 +21,16 @@ const route = createRoute({
   path: "/screener",
   request: { query: screenerQuerySchema },
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: screenerResponseSchema },
-      },
-      description: "FMP company screener results",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
-    503: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "FMP not configured or unavailable",
-    },
+    200: jsonContent(screenerResponseSchema, "FMP company screener results"),
+    422: validationErrorResponse(screenerQuerySchema),
+    500: jsonContent(errorResponseSchema, "Server error"),
+    503: jsonContent(errorResponseSchema, "FMP not configured or unavailable"),
   },
   summary: "Screen stocks (FMP screener + revenue + P/E from `fundamentals` table)",
   tags: ["Research"],
 });
 
-export const screenerRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+export const screenerRouter = createApp().openapi(route, async (c) => {
   const query = c.req.valid("query");
   const mergedParams = {
     ...DEFAULT_COMPANY_SCREENER,

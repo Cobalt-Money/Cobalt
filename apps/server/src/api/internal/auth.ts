@@ -1,6 +1,7 @@
 import { auth } from "@cobalt-web/auth";
 import { env } from "@cobalt-web/env/server";
-import { OpenAPIHono } from "@hono/zod-openapi";
+
+import { createApp } from "../../lib/create-app.js";
 
 /**
  * Better Auth's oauth-provider only issues a JWT access token when
@@ -14,7 +15,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
  */
 const mcpAudience = `${new URL(env.BETTER_AUTH_URL).origin}/api/mcp`;
 
-const authRouter = new OpenAPIHono()
+const authRouter = createApp()
   .post("/oauth2/token", async (c) => {
     const req = c.req.raw;
     const contentType = req.headers.get("content-type") ?? "";

@@ -4,9 +4,10 @@ import {
   eventIdParamSchema,
   eventNotFoundSchema,
 } from "@cobalt-web/server-data/news/detail/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
@@ -15,24 +16,15 @@ const route = createRoute({
   path: "/events/{eventId}",
   request: { params: eventIdParamSchema },
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: eventDetailResponseSchema },
-      },
-      description: "Event details",
-    },
-    404: {
-      content: {
-        "application/json": { schema: eventNotFoundSchema },
-      },
-      description: "Event not found",
-    },
+    200: jsonContent(eventDetailResponseSchema, "Event details"),
+    404: jsonContent(eventNotFoundSchema, "Event not found"),
+    422: validationErrorResponse(eventIdParamSchema),
   },
   summary: "Get event details",
   tags: ["News"],
 });
 
-export const eventDetailRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+export const eventDetailRouter = createApp().openapi(route, async (c) => {
   const { eventId } = c.req.valid("param");
   const event = await getFinancialEventDetails(c.var.user.id, eventId);
 

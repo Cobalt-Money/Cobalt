@@ -3,9 +3,10 @@ import {
   transactionListQuerySchema,
   transactionListResponseSchema,
 } from "@cobalt-web/server-data/transactions/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
@@ -17,20 +18,14 @@ const route = createRoute({
     query: transactionListQuerySchema,
   },
   responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: transactionListResponseSchema,
-        },
-      },
-      description: "List of transactions",
-    },
+    200: jsonContent(transactionListResponseSchema, "List of transactions"),
+    422: validationErrorResponse(transactionListQuerySchema),
   },
   summary: "List transactions",
   tags: ["Transactions"],
 });
 
-export const listRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+export const listRouter = createApp().openapi(route, async (c) => {
   const result = await getUserTransactions(c.var.user.id, c.req.valid("query"));
   c.header("Cache-Control", "private, max-age=60");
   return c.json(result, 200);

@@ -3,9 +3,10 @@ import {
   geocodeSearchQuerySchema,
   geocodeSearchResponseSchema,
 } from "@cobalt-web/server-data/transactions/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const search = createRoute({
@@ -15,16 +16,14 @@ const search = createRoute({
   path: "/geocode",
   request: { query: geocodeSearchQuerySchema },
   responses: {
-    200: {
-      content: { "application/json": { schema: geocodeSearchResponseSchema } },
-      description: "Geocoding candidates",
-    },
+    200: jsonContent(geocodeSearchResponseSchema, "Geocoding candidates"),
+    422: validationErrorResponse(geocodeSearchQuerySchema),
   },
   summary: "Search for a location by free-text query",
   tags: ["Transactions"],
 });
 
-export const geocodeRouter = new OpenAPIHono<AppEnv>().openapi(search, async (c) => {
+export const geocodeRouter = createApp().openapi(search, async (c) => {
   const { q } = c.req.valid("query");
   const results = await geocodeSearch(q);
   return c.json({ results }, 200);

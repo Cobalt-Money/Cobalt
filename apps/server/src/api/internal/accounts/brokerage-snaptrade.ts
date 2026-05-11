@@ -8,9 +8,10 @@ import {
 } from "@cobalt-web/server-data/brokerage/schemas";
 import { disconnectBrokerageAccountByUserId } from "@cobalt-web/server-data/providers/snaptrade/disconnect";
 import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requireAuth } from "../middleware.js";
 
 const listRoute = createRoute({
@@ -20,20 +21,7 @@ const listRoute = createRoute({
   middleware: [requireAuth] as const,
   path: "/brokerage",
   responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: brokerageAccountsListResponseSchema,
-        },
-      },
-      description: "Brokerage accounts",
-    },
-    500: {
-      content: {
-        "application/json": { schema: errorResponseSchema },
-      },
-      description: "Server error",
-    },
+    200: jsonContent(brokerageAccountsListResponseSchema, "Brokerage accounts"),
   },
   summary: "List SnapTrade brokerage accounts",
   tags: ["Accounts"],
@@ -47,41 +35,20 @@ const deleteRoute = createRoute({
   path: "/brokerage/{accountId}",
   request: { params: brokerageAccountIdParamSchema },
   responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: disconnectBrokerageAccountResponseSchema,
-        },
-      },
-      description: "Disconnect result",
-    },
-    403: {
-      content: {
-        "application/json": { schema: errorResponseSchema },
-      },
-      description: "Subscription required",
-    },
-    500: {
-      content: {
-        "application/json": { schema: errorResponseSchema },
-      },
-      description: "Server error",
-    },
+    200: jsonContent(disconnectBrokerageAccountResponseSchema, "Disconnect result"),
+    403: jsonContent(errorResponseSchema, "Subscription required"),
+    422: validationErrorResponse(brokerageAccountIdParamSchema),
   },
   summary: "Disconnect SnapTrade brokerage account",
   tags: ["Accounts"],
 });
 
-export const brokerageSnaptradeRouter = new OpenAPIHono<AppEnv>()
+export const brokerageSnaptradeRouter = createApp()
   .openapi(listRoute, async (c) => {
-    try {
-      const accounts = await getBrokerageAccountsByUserId(c.var.user.id);
-      const items = accounts.map(toBrokerageAccountListItem);
-      c.header("Cache-Control", "private, max-age=60");
-      return c.json({ accounts: items }, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch brokerage accounts" }, 500);
-    }
+    const accounts = await getBrokerageAccountsByUserId(c.var.user.id);
+    const items = accounts.map(toBrokerageAccountListItem);
+    c.header("Cache-Control", "private, max-age=60");
+    return c.json({ accounts: items }, 200);
   })
   .openapi(deleteRoute, async (c) => {
     const entitled = await userHasActiveSubscription(c.var.user.id);
@@ -90,11 +57,6 @@ export const brokerageSnaptradeRouter = new OpenAPIHono<AppEnv>()
     }
 
     const { accountId } = c.req.valid("param");
-
-    try {
-      const result = await disconnectBrokerageAccountByUserId(c.var.user.id, accountId);
-      return c.json(result, 200);
-    } catch {
-      return c.json({ error: "Failed to disconnect account. Please try again." }, 500);
-    }
+    const result = await disconnectBrokerageAccountByUserId(c.var.user.id, accountId);
+    return c.json(result, 200);
   });
