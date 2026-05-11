@@ -1,4 +1,3 @@
-import type { Recurring } from "@cobalt-web/zero";
 import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo } from "react";
@@ -12,14 +11,12 @@ export interface Subscription {
   billingMonth?: number;
 }
 
-type RecurringStreamRow = Recurring;
-
 export function useSubscriptions() {
   const [rows, result] = useQuery(queries.transactions.recurring());
 
   const subscriptions = useMemo(
     () =>
-      (rows as readonly RecurringStreamRow[])
+      rows
         .filter((row) => row.streamType === "outflow")
         .map((row): Subscription | null => {
           const refDate = row.predictedNextDate ?? row.lastDate;

@@ -13,8 +13,8 @@ import {
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import type { FinancialAccount, Institution, PlaidConnection, Snapshot } from "@cobalt-web/zero";
 import { queries } from "@cobalt-web/zero";
+import type { Row, Snapshot } from "@cobalt-web/zero";
 import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@rocicorp/zero/react";
@@ -55,20 +55,15 @@ const MONTH_LABELS = [
 const TIME_RANGES = ["1W", "1M", "1Y", "All"] as const;
 type TimeRange = (typeof TIME_RANGES)[number];
 
-type BankSnapshotRow = Pick<Snapshot, "accountId" | "snapshotDate" | "current"> & {
-  account?: Pick<FinancialAccount, "type" | "subtype" | "name"> | null;
+type BankAccountRow = Row<typeof queries.accounts.bankAccounts>;
+
+/** Snapshot row after client-side join with `bankAccounts` adds the `account` metadata. */
+type BankSnapshotRow = Snapshot & {
+  account?: Pick<BankAccountRow, "type" | "subtype" | "name"> | null;
 };
 
-type BankAccountRow = Pick<FinancialAccount, "id" | "name" | "type" | "subtype"> & {
-  plaidConnection?:
-    | (Pick<PlaidConnection, "institutionName" | "institutionLogo"> & {
-        institution?: Pick<Institution, "logo" | "url" | "name"> | null;
-      })
-    | null;
-};
-
-type PortfolioSnapshotRow = Pick<Snapshot, "snapshotDate" | "current"> & {
-  accountId?: string | null;
+/** Portfolio snapshot post client-side enrichment with brokerage account name/institution. */
+type PortfolioSnapshotRow = Snapshot & {
   accountName?: string | null;
   institutionName?: string | null;
 };
@@ -195,7 +190,7 @@ function bucketLabels(key: string, range: TimeRange): { label: string; fullLabel
 type BankBucketMap = Map<string, Map<string, { balance: number; type: string; date: number }>>;
 type PortfolioBucketMap = Map<string, Map<string, { totalValue: number; date: number }>>;
 
-function buildBankBuckets(snapshots: BankSnapshotRow[], range: TimeRange): BankBucketMap {
+function buildBankBuckets(snapshots: readonly BankSnapshotRow[], range: TimeRange): BankBucketMap {
   const byBucket: BankBucketMap = new Map();
   for (const snap of snapshots) {
     const key = getBucketKey(snap.snapshotDate, range);
@@ -216,7 +211,7 @@ function buildBankBuckets(snapshots: BankSnapshotRow[], range: TimeRange): BankB
 }
 
 function buildPortfolioBuckets(
-  snapshots: PortfolioSnapshotRow[],
+  snapshots: readonly PortfolioSnapshotRow[],
   range: TimeRange,
 ): PortfolioBucketMap {
   const byBucket: PortfolioBucketMap = new Map();
@@ -239,8 +234,8 @@ function buildPortfolioBuckets(
 }
 
 function buildNetWorthSeries(
-  bankSnapshots: BankSnapshotRow[],
-  portfolioSnapshots: PortfolioSnapshotRow[],
+  bankSnapshots: readonly BankSnapshotRow[],
+  portfolioSnapshots: readonly PortfolioSnapshotRow[],
   since: number | null,
   range: TimeRange,
 ): ChartPoint[] {
@@ -531,10 +526,9 @@ export function NetWorthSection() {
   // Account metadata (type/subtype/name + institution chips) — pulled from
   // the small bankAccounts subscription. Snapshot query stays 0-relate so
   // its IVM pipeline is a single stage.
-  const [rawBankAccounts] = useQuery(queries.accounts.bankAccounts());
-  const rawSnapshots: Omit<BankSnapshotRow, "account">[] = rawBankSnapshots;
-  const allPortfolioSnapshots: PortfolioSnapshotRow[] = rawPortfolioSnapshots;
-  const allBankAccounts: BankAccountRow[] = rawBankAccounts;
+  const [allBankAccounts] = useQuery(queries.accounts.bankAccounts());
+  const rawSnapshots = rawBankSnapshots;
+  const allPortfolioSnapshots: readonly PortfolioSnapshotRow[] = rawPortfolioSnapshots;
 
   const accountById = useMemo(() => {
     const m = new Map<string, BankAccountRow>();

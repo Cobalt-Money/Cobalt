@@ -15,16 +15,7 @@ export function useBankOptions(): BankOption[] {
   const [rows] = useQuery(queries.accounts.bankAccounts());
   return useMemo(() => {
     const byId = new Map<string, BankOption>();
-    for (const row of rows as readonly {
-      plaidConnection?: {
-        institutionId?: string | null;
-        institution?: {
-          logo?: string | null;
-          name?: string | null;
-          url?: string | null;
-        } | null;
-      } | null;
-    }[]) {
+    for (const row of rows) {
       const id = row.plaidConnection?.institutionId;
       if (!id || byId.has(id)) {
         continue;

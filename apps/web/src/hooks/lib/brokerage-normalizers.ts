@@ -1,24 +1,11 @@
-import type {
-  FinancialAccount,
-  Holding,
-  InvestmentActivity,
-  Security,
-  Snapshot,
-} from "@cobalt-web/zero";
+import type { queries, Row, Snapshot } from "@cobalt-web/zero";
 
 import type { PortfolioSnapshotRow } from "@/components/brokerage/balance-chart-card";
 import type { PositionRow } from "@/components/brokerage/positions-table";
 import type { ActivityRow } from "@/components/brokerage/recent-activity-card";
 
-export type RawHolding = Holding & {
-  account?: Pick<FinancialAccount, "id" | "name"> | null;
-  security?: Pick<Security, "tickerSymbol" | "name"> | null;
-};
-
-export type RawInvestmentActivity = InvestmentActivity & {
-  account?: Pick<FinancialAccount, "name"> | null;
-  security?: Pick<Security, "tickerSymbol" | "name"> | null;
-};
+export type RawHolding = Row<typeof queries.brokerage.positions>;
+export type RawInvestmentActivity = Row<typeof queries.brokerage.recentActivities>;
 
 /**
  * Normalize a Holding row to the shape the positions table renders. Handles

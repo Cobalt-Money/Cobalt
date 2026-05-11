@@ -1,7 +1,3 @@
-import type {
-  BankAccountRowWithRelations,
-  BrokerageRowWithRelations,
-} from "@cobalt-web/ui/cobalt/accounts/lib/map-zero-to-account-cards";
 import { formatAlert } from "@cobalt-web/server-data/alerts/formatter";
 import type { UserAlert } from "@cobalt-web/zero";
 import { queries } from "@cobalt-web/zero";
@@ -23,13 +19,9 @@ export type UserAlertRow = UserAlert & {
  * (or a renamed institution) can't permanently corrupt the rendered copy.
  */
 export function useUserAlerts() {
-  const [rawAlerts, result] = useQuery(queries.alerts.active());
-  const [rawBank] = useQuery(queries.accounts.bankAccounts());
-  const [rawBrokerage] = useQuery(queries.brokerage.accounts());
-
-  const alertRows: readonly UserAlert[] = rawAlerts;
-  const bankRows: readonly BankAccountRowWithRelations[] = rawBank;
-  const brokerageRows: readonly BrokerageRowWithRelations[] = rawBrokerage;
+  const [alertRows, result] = useQuery(queries.alerts.active());
+  const [bankRows] = useQuery(queries.accounts.bankAccounts());
+  const [brokerageRows] = useQuery(queries.brokerage.accounts());
 
   const plaidNameByItemId = useMemo(() => {
     const map = new Map<string, string>();
@@ -62,7 +54,10 @@ export function useUserAlerts() {
         } else if (row.source === "snaptrade" && row.sourceId) {
           institutionName = snaptradeNameByAuthId.get(row.sourceId) ?? null;
         }
-        const { title, message } = formatAlert({ institutionName, type: row.type });
+        const { title, message } = formatAlert({
+          institutionName,
+          type: row.type,
+        });
         return { ...row, message, title };
       }),
     [alertRows, plaidNameByItemId, snaptradeNameByAuthId],

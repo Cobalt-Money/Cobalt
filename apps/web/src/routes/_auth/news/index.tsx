@@ -21,10 +21,6 @@ export const Route = createFileRoute("/_auth/news/")({
   staticData: { title: "News" },
 });
 
-interface HoldingWithSymbol {
-  security?: { tickerSymbol?: string | null } | null;
-}
-
 function NewsIndexPage() {
   const { events } = useFinancialEvents();
   const { items: rssItems } = useNewsRssSidebar();
@@ -34,7 +30,7 @@ function NewsIndexPage() {
 
   const holdingSymbols = useMemo(() => {
     const s = new Set<string>();
-    for (const p of allPositions as readonly HoldingWithSymbol[]) {
+    for (const p of allPositions) {
       const raw = p.security?.tickerSymbol;
       const sym = typeof raw === "string" ? raw.trim().toUpperCase() : "";
       if (sym) {

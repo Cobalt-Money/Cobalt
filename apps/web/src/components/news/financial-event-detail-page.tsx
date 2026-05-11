@@ -3,15 +3,15 @@ import { Card } from "@cobalt-web/ui/components/card";
 import { EventArticleContent } from "@cobalt-web/ui/cobalt/news/event-article-content";
 import type { EventArticleSource } from "@cobalt-web/ui/cobalt/news/event-article-content";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import type { EventArticle, FinancialEvent } from "@cobalt-web/zero";
+import type { queries, Row } from "@cobalt-web/zero";
 import { LinkSquare01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { Link } from "@/components/links";
 import { useFinancialEventDetail } from "@/hooks/use-financial-event-detail";
 
-type EventArticleRow = EventArticle;
-type FinancialEventDetailRow = FinancialEvent & { articles?: readonly EventArticleRow[] };
+type FinancialEventDetailRow = Row<typeof queries.news.eventById>;
+type EventArticleRow = NonNullable<FinancialEventDetailRow["articles"]>[number];
 
 function parseTickers(raw: unknown): string[] {
   if (!Array.isArray(raw)) {
@@ -279,9 +279,9 @@ function renderArticleBody({
 }
 
 export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
-  const { event: raw } = useFinancialEventDetail(eventId);
+  const { event } = useFinancialEventDetail(eventId);
 
-  if (raw === undefined) {
+  if (event === undefined) {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
         <p className="text-muted-foreground text-sm">
@@ -291,7 +291,6 @@ export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
     );
   }
 
-  const event = raw as FinancialEventDetailRow;
   const articles = event.articles ?? [];
   const tickers = parseTickers(event.tickers);
   const summary = event.summary?.trim() || null;

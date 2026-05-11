@@ -5,6 +5,7 @@ export type { Schema } from "./schema";
 export { queries } from "./queries";
 export { mutators } from "./mutators";
 export type { Context } from "./auth";
+export type { Row } from "@rocicorp/zero";
 export type {
   Account,
   Balance,

@@ -78,7 +78,7 @@ function TransactionDetailRoute() {
   const [categoryRows] = useQuery(queries.categories.list());
   const categoryOptions = useMemo(
     () =>
-      (categoryRows ?? []).map((cat) => {
+      categoryRows.map((cat) => {
         const groupSystemKey = cat.group?.systemKey ?? null;
         return {
           groupName: cat.group?.name ?? "",

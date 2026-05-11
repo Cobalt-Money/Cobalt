@@ -4,7 +4,7 @@ import { useQuery } from "@rocicorp/zero/react";
 
 export type ChatRow = Pick<Chat, "chatId" | "title" | "updatedAt" | "createdAt">;
 
-export function useChats() {
+export function useChats(): readonly ChatRow[] {
   const [rows] = useQuery(queries.chats.list());
-  return rows as readonly ChatRow[];
+  return rows;
 }

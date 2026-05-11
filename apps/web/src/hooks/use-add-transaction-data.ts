@@ -31,23 +31,18 @@ export function useAddTransactionData(): AddTransactionData {
   const zero = useZero();
 
   const [bankAccounts] = useQuery(queries.accounts.bankAccounts());
-  const manualAccounts = useMemo<readonly AddTransactionAccountOption[]>(() => {
-    const rows = (bankAccounts ?? []) as readonly {
-      id: unknown;
-      name: unknown;
-      source: unknown;
-      subtype?: unknown;
-      logoDomain?: unknown;
-    }[];
-    return rows
-      .filter((a) => a.source === "manual")
-      .map((a) => ({
-        id: String(a.id),
-        logoDomain: typeof a.logoDomain === "string" ? a.logoDomain : null,
-        name: String(a.name),
-        subtype: typeof a.subtype === "string" ? a.subtype : null,
-      }));
-  }, [bankAccounts]);
+  const manualAccounts = useMemo<readonly AddTransactionAccountOption[]>(
+    () =>
+      bankAccounts
+        .filter((a) => a.source === "manual")
+        .map((a) => ({
+          id: a.id,
+          logoDomain: a.logoDomain ?? null,
+          name: a.name,
+          subtype: a.subtype ?? null,
+        })),
+    [bankAccounts],
+  );
 
   const [locationQuery, setLocationQuery] = useState("");
   const { data: locationResults = [], isFetching: locationLoading } =
@@ -82,7 +77,7 @@ export function useAddTransactionData(): AddTransactionData {
   const [categoryRows] = useQuery(queries.categories.list());
   const categoryOptions = useMemo<readonly CategoryPickerOption[]>(
     () =>
-      (categoryRows ?? []).map((cat) => {
+      categoryRows.map((cat) => {
         const groupSystemKey = cat.group?.systemKey ?? null;
         return {
           groupName: cat.group?.name ?? "",

@@ -55,15 +55,18 @@ export const brokerageQueries = {
     z.object({ range: SNAPSHOT_RANGE.optional() }).optional(),
     ({ ctx, args }) => {
       const cutoff = snapshotCutoff(args?.range);
-      const base = zql.snapshot
+      return zql.snapshot
         .where("userId", ctx?.userId ?? NO_MATCH_ID)
         .whereExists("account", (acc) =>
           acc.where(({ or, cmp, and }) =>
             or(cmp("source", "snaptrade"), and(cmp("source", "plaid"), cmp("type", "investment"))),
           ),
-        );
-      const filtered = cutoff === null ? base : base.where("snapshotDate", ">=", cutoff);
-      return filtered.orderBy("snapshotDate", "desc").limit(PORTFOLIO_SNAPSHOT_LIMIT);
+        )
+        .where(({ and, cmp }) =>
+          and(cutoff === null ? undefined : cmp("snapshotDate", ">=", cutoff)),
+        )
+        .orderBy("snapshotDate", "desc")
+        .limit(PORTFOLIO_SNAPSHOT_LIMIT);
     },
   ),
 
@@ -72,12 +75,15 @@ export const brokerageQueries = {
     SOURCE_FILTER,
     ({ args, ctx }: { args: z.infer<typeof SOURCE_FILTER>; ctx: Context }) => {
       const src = args?.source;
-      const base = zql.holding.where("userId", ctx?.userId ?? NO_MATCH_ID);
-      const scoped =
-        src && src !== "all"
-          ? base.whereExists("account", (acc) => acc.where("source", src))
-          : base;
-      return scoped.related("account").related("security");
+      return zql.holding
+        .where("userId", ctx?.userId ?? NO_MATCH_ID)
+        .where(({ and, exists }) =>
+          and(
+            src && src !== "all" ? exists("account", (acc) => acc.where("source", src)) : undefined,
+          ),
+        )
+        .related("account")
+        .related("security");
     },
   ),
 
@@ -86,12 +92,13 @@ export const brokerageQueries = {
     SOURCE_FILTER,
     ({ args, ctx }: { args: z.infer<typeof SOURCE_FILTER>; ctx: Context }) => {
       const src = args?.source;
-      const base = zql.investmentActivity.where("userId", ctx?.userId ?? NO_MATCH_ID);
-      const scoped =
-        src && src !== "all"
-          ? base.whereExists("account", (acc) => acc.where("source", src))
-          : base;
-      return scoped
+      return zql.investmentActivity
+        .where("userId", ctx?.userId ?? NO_MATCH_ID)
+        .where(({ and, exists }) =>
+          and(
+            src && src !== "all" ? exists("account", (acc) => acc.where("source", src)) : undefined,
+          ),
+        )
         .related("account")
         .related("security")
         .orderBy("date", "desc")
