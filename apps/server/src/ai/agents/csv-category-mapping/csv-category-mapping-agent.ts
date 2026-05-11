@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { gatewayModel } from "../../model-provider.js";
 
-const HAIKU = "anthropic/claude-haiku-4.5";
+const MODEL = "anthropic/claude-opus-4.7";
 const SINGLE_CALL_THRESHOLD = 20;
 const BATCH_SIZE = 12;
 const PARALLEL = 5;
@@ -52,7 +52,7 @@ function makeCategoryLabelSchema(categoryIds: string[]) {
               return d.targetCategoryId !== "__none__";
             }
             if (d.action === "create") {
-              return d.newCategory !== undefined;
+              return true;
             }
             return true;
           },
@@ -109,11 +109,12 @@ async function callBatch(
       functionId: "csv-category-mapping-agent",
       isEnabled: true,
     },
-    model: gatewayModel(HAIKU),
+    maxOutputTokens: 10_000,
+    model: gatewayModel(MODEL),
     prompt: [
       "Map each source category label to a Cobalt category.",
       'Use action="link" to map to an existing category. Use action="linkRename" if the label suggests renaming the Cobalt category for clarity (provide newName).',
-      'Use action="create" with newCategory if no existing category fits — pick an iconKey (e.g. "shopping-bag", "utensils", "home") and optional color hex.',
+      'Use action="create" when no existing category fits. REQUIRED with action="create": set targetCategoryId="__none__" AND populate newCategory={name, iconKey, color?}. name should mirror the sourceLabel (e.g. "Software"). iconKey examples: "shopping-bag", "utensils", "home", "wrench". Omitting newCategory is invalid.',
       'Use action="skip" only when the label is meaningless (blank, "", "--").',
       "",
       `Source labels: ${JSON.stringify(labels)}`,
@@ -126,7 +127,10 @@ async function callBatch(
     .map((d) => ({
       action: d.action,
       confidence: d.confidence,
-      newCategory: d.newCategory,
+      newCategory:
+        d.action === "create" && !d.newCategory
+          ? { iconKey: "tag", name: d.sourceLabel }
+          : d.newCategory,
       newName: d.newName,
       sourceLabel: d.sourceLabel,
       targetCategoryId: d.targetCategoryId === "__none__" ? null : d.targetCategoryId,

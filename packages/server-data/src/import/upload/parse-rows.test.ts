@@ -39,7 +39,7 @@ describe("parseRows", () => {
     });
     expect(rejected).toStrictEqual([]);
     expect(staged[0]).toMatchObject({
-      amount: -4.5,
+      amount: 4.5,
       date: "2026-01-01",
       merchant: "Coffee",
       sourceAccountName: "Chase",
@@ -56,7 +56,7 @@ describe("parseRows", () => {
     expect(rejected[0]?.reason).toMatch(/Date/);
   });
 
-  it("flips sign when convention is outflow_positive", () => {
+  it("passes through when convention is outflow_positive", () => {
     const m: CsvMapping = {
       ...baseMapping,
       amount: {
@@ -73,10 +73,10 @@ describe("parseRows", () => {
         { Account: "Chase", Amount: "10", Category: "", Date: "2026-01-01", Description: "x" },
       ],
     });
-    expect(staged[0]?.amount).toBe(-10);
+    expect(staged[0]?.amount).toBe(10);
   });
 
-  it("handles parens-as-negative", () => {
+  it("flips parens-as-negative under outflow_negative source", () => {
     const { staged } = parseRows({
       defaultAccountName: "x",
       mapping: baseMapping,
@@ -84,7 +84,7 @@ describe("parseRows", () => {
         { Account: "Chase", Amount: "(10.50)", Category: "", Date: "2026-01-01", Description: "x" },
       ],
     });
-    expect(staged[0]?.amount).toBe(-10.5);
+    expect(staged[0]?.amount).toBe(10.5);
   });
 
   it("handles split debit/credit columns", () => {
@@ -114,8 +114,8 @@ describe("parseRows", () => {
         },
       ],
     });
-    expect(staged[0]?.amount).toBe(-5);
-    expect(staged[1]?.amount).toBe(20);
+    expect(staged[0]?.amount).toBe(5);
+    expect(staged[1]?.amount).toBe(-20);
   });
 
   it("uses defaultAccountName when account column is null", () => {

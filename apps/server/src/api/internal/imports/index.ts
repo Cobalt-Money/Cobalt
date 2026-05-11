@@ -222,10 +222,32 @@ const importsRouter = new OpenAPIHono<AppEnv>()
     }
     const path = job.schemaMapping?.account ? "A" : "B";
     const labels = path === "A" ? await getStagedAccountLabels(id) : ["Default"];
-    const userAccounts = await db.query.financialAccount.findMany({
-      columns: { id: true, name: true, type: true },
+    const accountRows = await db.query.financialAccount.findMany({
+      columns: {
+        customName: true,
+        id: true,
+        institutionName: true,
+        mask: true,
+        name: true,
+        officialName: true,
+        subtype: true,
+        type: true,
+      },
       where: { userId: { eq: c.var.user.id } },
+      with: {
+        plaidConnection: { columns: { institutionName: true } },
+      },
     });
+    const userAccounts = accountRows.map((a) => ({
+      customName: a.customName,
+      id: a.id,
+      institutionName: a.institutionName ?? a.plaidConnection?.institutionName ?? null,
+      mask: a.mask,
+      name: a.name,
+      officialName: a.officialName,
+      subtype: a.subtype,
+      type: a.type,
+    }));
     const suggestions =
       path === "A" ? await suggestAccountLabels(c.var.user.id, labels, userAccounts) : [];
     return c.json({ path, sourceLabels: labels, suggestions }, 200);
@@ -244,7 +266,7 @@ const importsRouter = new OpenAPIHono<AppEnv>()
       where: { userId: { eq: c.var.user.id } },
     });
     const suggestions = await suggestCategoryLabels(c.var.user.id, labels, userCategories);
-    return c.json({ sourceLabels: labels, suggestions }, 200);
+    return c.json({ sourceLabels: labels, suggestions, userCategories }, 200);
   })
   .openapi(categoryMappingConfirm, async (c) => {
     const { id } = c.req.valid("param");
@@ -308,7 +330,16 @@ const importsRouter = new OpenAPIHono<AppEnv>()
 async function suggestAccountLabels(
   userId: string,
   sourceLabels: string[],
-  userAccounts: { id: string; name: string; type: string }[],
+  userAccounts: {
+    customName: string | null;
+    id: string;
+    institutionName: string | null;
+    mask: string | null;
+    name: string;
+    officialName: string | null;
+    subtype: string | null;
+    type: string;
+  }[],
 ): Promise<(AccountSuggestion & { fromCache: boolean })[]> {
   const cacheMap = await lookupAccountMappingCache(userId, sourceLabels);
   const cached: (AccountSuggestion & { fromCache: boolean })[] = [];

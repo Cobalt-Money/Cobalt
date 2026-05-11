@@ -5,8 +5,8 @@ import { z } from "zod";
 
 import { gatewayModel } from "../../model-provider.js";
 
-const HAIKU = "anthropic/claude-haiku-4.5";
-const SONNET = "anthropic/claude-sonnet-4.6";
+const PRIMARY = "anthropic/claude-opus-4.7";
+const FALLBACK = "anthropic/claude-opus-4.7";
 
 const csvMappingAiSchema = z.object({
   /**
@@ -112,9 +112,9 @@ export async function runCsvColumnMappingAgent({
 
   let result;
   try {
-    result = await tryOnce(HAIKU);
+    result = await tryOnce(PRIMARY);
   } catch {
-    result = await tryOnce(SONNET);
+    result = await tryOnce(FALLBACK);
   }
 
   const ai = result.object;
@@ -192,7 +192,9 @@ function buildPrompt(headers: string[], samples: Record<string, string>[]): stri
     `Sample rows: ${JSON.stringify(samples)}`,
     "",
     "Use the exact header strings as `column` values. For `date.format` use a Luxon format token (e.g. yyyy-MM-dd, MM/dd/yyyy).",
-    "If amounts are in a single signed column, use kind=signed. If outflows/inflows are in two columns, use kind=split.",
-    "If sign is encoded by a separate type column (Debit/Credit), use kind=magnitude_type with debitValues listing the strings that mean outflow.",
+    "AMOUNT KIND SELECTION RULES (apply in order):",
+    "  1. If you see ANY column whose header or sample values look like a debit/credit indicator (header named 'Transaction Type', 'Type', 'Tx Type', 'DR/CR', 'Debit/Credit', 'Direction', or values like 'debit'/'credit'/'DR'/'CR'/'withdrawal'/'deposit'/'+/-'), YOU MUST use kind=magnitude_type. Set typeColumn to that header, magnitudeColumn to the amount column, and debitValues to the lowercase strings that mean outflow (e.g. ['debit','dr','withdrawal']). The sample amount values will be unsigned/positive in this case — do NOT use kind=signed even if amounts look unsigned.",
+    "  2. Else if outflows and inflows are in two SEPARATE columns (e.g. 'Debit' and 'Credit', 'Withdrawal' and 'Deposit', 'Money Out' and 'Money In'), use kind=split.",
+    "  3. Else (single column with signed numbers) use kind=signed. Pick signConvention by inspecting samples: if outflows are negative numbers use 'outflow_negative'; if outflows are positive use 'outflow_positive'.",
   ].join("\n");
 }

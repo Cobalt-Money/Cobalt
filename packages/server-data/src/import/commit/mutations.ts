@@ -1,14 +1,17 @@
 import { db } from "@cobalt-web/db";
 import { category } from "@cobalt-web/db/schema/accounts/banking/categories/category";
+import { tag } from "@cobalt-web/db/schema/accounts/banking/tags/tag";
+import { transactionTag } from "@cobalt-web/db/schema/accounts/banking/tags/transaction-tag";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import type {
   AccountResolution,
   CategoryResolution,
 } from "@cobalt-web/db/schema/imports/import-job";
 import { importJob } from "@cobalt-web/db/schema/imports/import-job";
+import { TAG_COLORS } from "@cobalt-web/db/tag-palette";
 import { env } from "@cobalt-web/env/server";
 import { del } from "@vercel/blob";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { hashImportRow } from "../shared/dedupe-hash";
 
@@ -96,6 +99,7 @@ export async function insertCommitChunks({
     }
     const slice = staged.slice(offset, offset + CHUNK);
     const inserts: NonNullable<ReturnType<typeof buildInsert>>[] = [];
+    const tagsByHash = new Map<string, string[]>();
     for (const row of slice) {
       const built = buildInsert(
         row,
@@ -109,6 +113,9 @@ export async function insertCommitChunks({
         excluded += 1;
       } else {
         inserts.push(built);
+        if (row.tags && row.tags.length > 0) {
+          tagsByHash.set(built.importHash, row.tags);
+        }
       }
     }
 
@@ -116,10 +123,16 @@ export async function insertCommitChunks({
       const inserted = await db
         .insert(transaction)
         .values(inserts)
-        .onConflictDoNothing({ target: [transaction.userId, transaction.importHash] })
-        .returning({ id: transaction.id });
+        .onConflictDoNothing({
+          target: [transaction.userId, transaction.importHash],
+          where: sql`${transaction.importHash} is not null`,
+        })
+        .returning({ id: transaction.id, importHash: transaction.importHash });
       imported += inserted.length;
       duplicates += inserts.length - inserted.length;
+      if (tagsByHash.size > 0) {
+        await wireTags(userId, inserted, tagsByHash);
+      }
     }
     await onProgress(offset + slice.length, total);
   }
@@ -181,12 +194,104 @@ function buildInsert(
     importHash,
     importJobId: jobId,
     merchantName: row.merchant,
-    name: row.merchant || row.originalDescription || "Untitled",
+    name: row.originalDescription || row.merchant || "Untitled",
     notes: row.notes,
     pending: false,
     source: "manual",
     userId,
   };
+}
+
+async function wireTags(
+  userId: string,
+  inserted: { id: string; importHash: string | null }[],
+  tagsByHash: Map<string, string[]>,
+): Promise<void> {
+  const idByHash = new Map<string, string>();
+  for (const i of inserted) {
+    if (i.importHash) {
+      idByHash.set(i.importHash, i.id);
+    }
+  }
+  const distinctNames = new Set<string>();
+  for (const [hash, names] of tagsByHash) {
+    if (!idByHash.has(hash)) {
+      continue;
+    }
+    for (const n of names) {
+      const trimmed = n.trim();
+      if (trimmed.length > 0 && trimmed.length <= 50) {
+        distinctNames.add(trimmed);
+      }
+    }
+  }
+  if (distinctNames.size === 0) {
+    return;
+  }
+  const lowerNames = [...distinctNames].map((n) => n.toLowerCase());
+
+  // Look up existing tags first; only insert ones we don't have yet.
+  const existing = await db
+    .select({ id: tag.id, lowerName: sql<string>`lower(${tag.name})`.as("lower_name") })
+    .from(tag)
+    .where(and(eq(tag.userId, userId), inArray(sql`lower(${tag.name})`, lowerNames)));
+  const tagIdByLower = new Map(existing.map((r) => [r.lowerName, r.id]));
+
+  const missing = [...distinctNames].filter((n) => !tagIdByLower.has(n.toLowerCase()));
+  if (missing.length > 0) {
+    const inserts = missing.map((name) => ({
+      color: TAG_COLORS[hashName(name) % TAG_COLORS.length] as string,
+      name,
+      userId,
+    }));
+    const created = await db
+      .insert(tag)
+      .values(inserts)
+      .returning({ id: tag.id, lowerName: sql<string>`lower(${tag.name})`.as("lower_name") });
+    for (const r of created) {
+      tagIdByLower.set(r.lowerName, r.id);
+    }
+  }
+
+  const joins: { transactionId: string; tagId: string }[] = [];
+  for (const [hash, names] of tagsByHash) {
+    const txId = idByHash.get(hash);
+    if (!txId) {
+      continue;
+    }
+    const seen = new Set<string>();
+    for (const raw of names) {
+      const trimmed = raw.trim();
+      if (trimmed.length === 0 || trimmed.length > 50) {
+        continue;
+      }
+      const lower = trimmed.toLowerCase();
+      if (seen.has(lower)) {
+        continue;
+      }
+      seen.add(lower);
+      const tagId = tagIdByLower.get(lower);
+      if (tagId) {
+        joins.push({ tagId, transactionId: txId });
+      }
+    }
+  }
+  if (joins.length > 0) {
+    await db
+      .insert(transactionTag)
+      .values(joins)
+      .onConflictDoNothing({ target: [transactionTag.transactionId, transactionTag.tagId] });
+  }
+}
+
+function hashName(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i += 1) {
+    h *= 31;
+    h += s.codePointAt(i) ?? 0;
+    h %= 2_147_483_647;
+  }
+  return h;
 }
 
 function resolveAccountId(sourceAccountName: string, resolution: AccountResolution): string | null {

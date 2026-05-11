@@ -175,6 +175,8 @@ function parseDate(cell: string, format: string): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
+// Cobalt convention (matches Plaid): positive = outflow/spending, negative = inflow/income.
+// Source CSVs use varied conventions; normalize to Cobalt's here.
 function extractAmount(raw: Record<string, string>, mapping: CsvMapping): number {
   const a = mapping.amount;
   if (a.kind === "signed") {
@@ -183,7 +185,7 @@ function extractAmount(raw: Record<string, string>, mapping: CsvMapping): number
       throw new Error("Amount cell empty");
     }
     let n = parseAmount(cell as string, a.parensNegative);
-    if (a.signConvention === "outflow_positive") {
+    if (a.signConvention === "outflow_negative") {
       n = -n;
     }
     return n;
@@ -198,7 +200,7 @@ function extractAmount(raw: Record<string, string>, mapping: CsvMapping): number
     if (out === 0 && inn === 0) {
       throw new Error("Both outflow and inflow empty");
     }
-    return inn - Math.abs(out);
+    return Math.abs(out) - inn;
   }
   // magnitude_type
   const mag = raw[a.magnitudeColumn];
@@ -208,7 +210,7 @@ function extractAmount(raw: Record<string, string>, mapping: CsvMapping): number
   const magnitude = Math.abs(parseAmount(mag as string, false));
   const typeCell = (raw[a.typeColumn] ?? "").trim().toLowerCase();
   const isDebit = a.debitValues.some((v) => v.toLowerCase() === typeCell);
-  return isDebit ? -magnitude : magnitude;
+  return isDebit ? magnitude : -magnitude;
 }
 
 function parseAmount(cell: string, parensNegative: boolean): number {

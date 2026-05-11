@@ -10,7 +10,7 @@
 export type ImportSource = "csv";
 
 export interface StagedTransaction {
-  /** Signed amount in Cobalt convention: negative = outflow, positive = inflow. */
+  /** Signed amount in Cobalt convention (matches Plaid): positive = outflow, negative = inflow. */
   amount: number;
   /** ISO date (yyyy-MM-dd). */
   date: string;

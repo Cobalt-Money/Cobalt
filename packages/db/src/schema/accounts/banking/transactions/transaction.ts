@@ -61,7 +61,7 @@ export const transaction = pgTable(
     /**
      * FK to `import_job` when this row was created via CSV/file import (SRI-317).
      * NULL for hand-entered manual rows and provider-synced rows. Drives Plaid
-     * historical-sync suppression (SRI-318) and "imported from Mint" UI badges.
+     * historical-sync suppression (SRI-318) and "imported from CSV" UI badges.
      */
     /**
      * Stable per-row hash for AI-mapped CSV imports (SRI-321):

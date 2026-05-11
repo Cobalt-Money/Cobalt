@@ -2,7 +2,7 @@ import { db } from "@cobalt-web/db";
 import { importJob } from "@cobalt-web/db/schema/imports/import-job";
 import { env } from "@cobalt-web/env/server";
 import { put } from "@vercel/blob";
-import { and, eq, gte } from "drizzle-orm";
+import { and, eq, gte, isNotNull } from "drizzle-orm";
 
 import { ImportGateError, runGates } from "./gates";
 
@@ -41,6 +41,7 @@ export async function uploadAndStageImport({
         eq(importJob.userId, userId),
         eq(importJob.fileHash, gate.fileHash),
         gte(importJob.createdAt, cutoff),
+        isNotNull(importJob.fileKey),
       ),
     )
     .limit(1);
@@ -67,11 +68,17 @@ export async function uploadAndStageImport({
     throw new Error("Failed to create import job");
   }
 
-  const blob = await put(`${userId}/imports/${job.id}.csv`, buffer, {
-    access: "public",
-    contentType: "text/csv",
-    token: env.BLOB_READ_WRITE_TOKEN,
-  });
+  let blob;
+  try {
+    blob = await put(`${userId}/imports/${job.id}.csv`, buffer, {
+      access: "private",
+      contentType: "text/csv",
+      token: env.BLOB_READ_WRITE_TOKEN,
+    });
+  } catch (error) {
+    await db.delete(importJob).where(eq(importJob.id, job.id));
+    throw error;
+  }
 
   await db.update(importJob).set({ fileKey: blob.url }).where(eq(importJob.id, job.id));
 

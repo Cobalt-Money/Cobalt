@@ -71,6 +71,7 @@ export const columnMappingResponseSchema = z.object({
   mapping: csvMappingSchema,
   sampleRows: z.array(z.record(z.string(), z.string())),
 });
+export type ColumnMappingResponse = z.infer<typeof columnMappingResponseSchema>;
 
 /* ------------------------------------------------------------------ */
 /* Step 3 — account mapping                                           */
@@ -110,10 +111,13 @@ export const accountSuggestionsResponseSchema = z.object({
       fromCache: z.boolean(),
       newName: z.string().optional(),
       sourceLabel: z.string(),
+      suggestedSubtype: z.string().optional(),
+      suggestedType: z.enum(["depository", "credit", "investment", "loan"]).optional(),
       target: z.string(),
     }),
   ),
 });
+export type AccountSuggestionsResponse = z.infer<typeof accountSuggestionsResponseSchema>;
 
 /* ------------------------------------------------------------------ */
 /* Step 4 — category mapping                                          */
@@ -156,7 +160,15 @@ export const categorySuggestionsResponseSchema = z.object({
       targetCategoryId: z.string().nullable(),
     }),
   ),
+  userCategories: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      systemKey: z.string().nullable(),
+    }),
+  ),
 });
+export type CategorySuggestionsResponse = z.infer<typeof categorySuggestionsResponseSchema>;
 
 /* ------------------------------------------------------------------ */
 /* Status / generic responses                                         */

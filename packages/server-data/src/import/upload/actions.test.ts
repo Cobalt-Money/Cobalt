@@ -107,7 +107,7 @@ describe("uploadAndStageImport", () => {
     expect(path).toBe("u-1/imports/job-123.csv");
     expect(Buffer.isBuffer(body)).toBeTruthy();
     expect(opts).toMatchObject({
-      access: "public",
+      access: "private",
       contentType: "text/csv",
       token: "test-token",
     });

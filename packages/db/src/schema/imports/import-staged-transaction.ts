@@ -16,7 +16,7 @@ export const importStagedTransaction = pgTable(
     dedupeMatchId: uuid("dedupe_match_id").references(() => transaction.id, {
       onDelete: "set null",
     }),
-    /** Provider-supplied stable id (YNAB UUID, OFX FITID). Mint has none. */
+    /** Provider-supplied stable id (e.g. OFX FITID). Null when source has no per-row id. */
     externalId: text("external_id"),
     id: uuid("id").defaultRandom().primaryKey(),
     importJobId: uuid("import_job_id")
@@ -26,7 +26,7 @@ export const importStagedTransaction = pgTable(
     isTransfer: boolean("is_transfer").default(false).notNull(),
     merchant: text("merchant").notNull(),
     notes: text("notes"),
-    /** Raw bank-feed string (Mint "Original Description"); preserved separately from user-edited merchant. */
+    /** Raw bank-feed string from source CSV (e.g. an "Original Description" column); preserved separately from user-edited merchant. */
     originalDescription: text("original_description"),
     /** Per-row parse error; row is skipped at commit. */
     parseError: text("parse_error"),

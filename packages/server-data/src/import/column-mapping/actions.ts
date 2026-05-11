@@ -1,6 +1,8 @@
 import { db } from "@cobalt-web/db";
 import { importJob } from "@cobalt-web/db/schema/imports/import-job";
 import { importStagedTransaction } from "@cobalt-web/db/schema/imports/import-staged-transaction";
+import { env } from "@cobalt-web/env/server";
+import { get } from "@vercel/blob";
 import { eq } from "drizzle-orm";
 
 import type { ConfirmColumnMappingBody } from "../shared/schemas";
@@ -23,11 +25,14 @@ export async function confirmColumnMapping(
   if (!job.fileKey) {
     throw new Error("Import job has no uploaded file");
   }
-  const response = await fetch(job.fileKey);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch upload blob: ${String(response.status)}`);
+  const result = await get(job.fileKey, {
+    access: "private",
+    token: env.BLOB_READ_WRITE_TOKEN,
+  });
+  if (!result || result.statusCode !== 200) {
+    throw new Error(`Failed to fetch upload blob: ${String(result?.statusCode ?? "no result")}`);
   }
-  const text = await response.text();
+  const text = await new Response(result.stream).text();
   const rows = await parseFullCsv(text);
 
   const { rejected, staged } = parseRows({

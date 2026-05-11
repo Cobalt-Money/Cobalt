@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "b5431a49-b651-4f7d-821f-2ad2d7e299ba",
-  "prevIds": ["7e95dc79-cbc3-4e47-a819-6f5b3d866a13"],
+  "id": "a577a80f-2ce2-4594-a4eb-c76ad9bfa7b3",
+  "prevIds": ["6590e89a-fdaf-4e8b-9280-ff3d523fa6a9"],
   "ddl": [
     {
       "values": ["plaid", "snaptrade", "manual"],
@@ -17,13 +17,22 @@
       "schema": "public"
     },
     {
-      "values": ["uploaded", "parsed", "mapped", "committed", "failed"],
+      "values": [
+        "uploaded",
+        "column_mapped",
+        "account_mapped",
+        "category_mapped",
+        "committing",
+        "committed",
+        "failed",
+        "cancelled"
+      ],
       "name": "import_job_status",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": ["mint", "monarch", "ynab"],
+      "values": ["csv"],
       "name": "import_source",
       "entityType": "enums",
       "schema": "public"
@@ -44,6 +53,24 @@
       "values": ["plaid", "manual"],
       "name": "transaction_source",
       "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "account_mapping_cache",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "category_mapping_cache",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "csv_mapping_cache",
+      "entityType": "tables",
       "schema": "public"
     },
     {
@@ -333,6 +360,188 @@
       "name": "verification",
       "entityType": "tables",
       "schema": "public"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "cobalt_account_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "account_mapping_cache"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "confirmed_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "account_mapping_cache"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "source_label",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "account_mapping_cache"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "account_mapping_cache"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "action",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "category_mapping_cache"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "confirmed_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "category_mapping_cache"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "new_name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "category_mapping_cache"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "source_label",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "category_mapping_cache"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "target_category_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "category_mapping_cache"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "category_mapping_cache"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "confirmed_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "csv_mapping_cache"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "header_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "csv_mapping_cache"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "mapping",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "csv_mapping_cache"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "csv_mapping_cache"
     },
     {
       "type": "integer",
@@ -784,7 +993,33 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "account_map",
+      "name": "account_resolution",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "cancelled_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "category_resolution",
       "entityType": "columns",
       "schema": "public",
       "table": "import_job"
@@ -823,7 +1058,33 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "file_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "file_key",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "headers",
       "entityType": "columns",
       "schema": "public",
       "table": "import_job"
@@ -855,6 +1116,58 @@
       "table": "import_job"
     },
     {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "progress",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sample_rows",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "schema_confirmed_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "schema_mapping",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
       "type": "import_source",
       "typeSchema": "public",
       "notNull": true,
@@ -881,6 +1194,19 @@
       "table": "import_job"
     },
     {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "summary",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -902,6 +1228,19 @@
       "generated": null,
       "identity": null,
       "name": "user_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workflow_run_id",
       "entityType": "columns",
       "schema": "public",
       "table": "import_job"
@@ -8291,6 +8630,19 @@
       "table": "transaction"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "import_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "transaction"
+    },
+    {
       "type": "uuid",
       "typeSchema": null,
       "notNull": false,
@@ -8533,19 +8885,6 @@
       "generated": null,
       "identity": null,
       "name": "user_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "transaction"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "user_override_location",
       "entityType": "columns",
       "schema": "public",
       "table": "transaction"
@@ -8985,6 +9324,34 @@
       "method": "btree",
       "concurrently": false,
       "name": "import_job_user_status_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "file_hash",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "import_job_user_file_hash_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "import_job"
@@ -11982,6 +12349,34 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "user_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "import_hash",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "import_hash IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "transaction_user_import_hash_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "transaction"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "tag_id",
           "isExpression": false,
           "asc": true,
@@ -12131,6 +12526,71 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "verification"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["cobalt_account_id"],
+      "schemaTo": "public",
+      "tableTo": "financial_account",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "SET NULL",
+      "name": "account_mapping_cache_QIANh4m9DjQ9_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "account_mapping_cache"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["user_id"],
+      "schemaTo": "public",
+      "tableTo": "user",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "account_mapping_cache_user_id_user_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "account_mapping_cache"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["target_category_id"],
+      "schemaTo": "public",
+      "tableTo": "category",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "SET NULL",
+      "name": "category_mapping_cache_target_category_id_category_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "category_mapping_cache"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["user_id"],
+      "schemaTo": "public",
+      "tableTo": "user",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "category_mapping_cache_user_id_user_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "category_mapping_cache"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["user_id"],
+      "schemaTo": "public",
+      "tableTo": "user",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "csv_mapping_cache_user_id_user_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "csv_mapping_cache"
     },
     {
       "nameExplicit": false,
@@ -13002,6 +13462,30 @@
       "entityType": "fks",
       "schema": "public",
       "table": "user_alerts"
+    },
+    {
+      "columns": ["user_id", "source_label"],
+      "nameExplicit": false,
+      "name": "account_mapping_cache_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "account_mapping_cache"
+    },
+    {
+      "columns": ["user_id", "source_label"],
+      "nameExplicit": false,
+      "name": "category_mapping_cache_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "category_mapping_cache"
+    },
+    {
+      "columns": ["user_id", "header_hash"],
+      "nameExplicit": false,
+      "name": "csv_mapping_cache_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "csv_mapping_cache"
     },
     {
       "columns": ["transaction_id", "tag_id"],
