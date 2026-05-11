@@ -1,3 +1,4 @@
+import { formatAlert } from "@cobalt-web/server-data/alerts/formatter";
 import { Button } from "@cobalt-web/ui/components/button";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -11,69 +12,59 @@ export const Route = createFileRoute("/_auth/alerts-preview")({
 
 const baseTime = Date.parse("2026-04-19T12:00:00Z");
 
-const MOCK_ALERTS: readonly UserAlertRow[] = [
+type MockSeed = Omit<UserAlertRow, "title" | "message"> & { institutionName: string };
+
+const MOCK_SEEDS: readonly MockSeed[] = [
   {
     createdAt: baseTime,
     id: "mock-alert-1",
-    message: "Reconnect Chase to resume syncing transactions and balances.",
-    metadata: {
-      institutionLogo: null,
-      institutionName: "Chase",
-    },
+    institutionName: "Chase",
+    metadata: { institutionLogo: null },
     resolvedAt: null,
     source: "plaid",
     sourceId: "mock-plaid-item-1",
-    status: "unread",
-    title: "Chase needs re-authentication",
     type: "reauth_needed",
     userId: "mock-user",
   },
   {
     createdAt: baseTime - 3_600_000,
     id: "mock-alert-2",
-    message: "Reconnect Bank of America now to avoid losing access.",
-    metadata: {
-      institutionLogo: null,
-      institutionName: "Bank of America",
-    },
+    institutionName: "Bank of America",
+    metadata: { institutionLogo: null },
     resolvedAt: null,
     source: "plaid",
     sourceId: "mock-plaid-item-2",
-    status: "unread",
-    title: "Bank of America is about to disconnect",
     type: "pending_disconnect",
     userId: "mock-user",
   },
   {
     createdAt: baseTime - 86_400_000,
     id: "mock-alert-3",
-    message: "New accounts were added at Wells Fargo. Refresh to sync them.",
-    metadata: {
-      institutionLogo: null,
-      institutionName: "Wells Fargo",
-    },
+    institutionName: "Wells Fargo",
+    metadata: { institutionLogo: null },
     resolvedAt: null,
     source: "plaid",
     sourceId: "mock-plaid-item-3",
-    status: "read",
-    title: "New accounts available at Wells Fargo",
     type: "new_accounts",
     userId: "mock-user",
   },
   {
     createdAt: baseTime - 2 * 86_400_000,
     id: "mock-alert-4",
-    message: "Reconnect Robinhood to resume syncing positions and activity.",
-    metadata: { brokerageName: "Robinhood" },
+    institutionName: "Robinhood",
+    metadata: { institutionLogo: null },
     resolvedAt: null,
     source: "snaptrade",
     sourceId: "mock-snaptrade-auth-1",
-    status: "read",
-    title: "Robinhood connection broken",
     type: "connection_broken",
     userId: "mock-user",
   },
 ];
+
+const MOCK_ALERTS: readonly UserAlertRow[] = MOCK_SEEDS.map(({ institutionName, ...seed }) => {
+  const { title, message } = formatAlert({ institutionName, type: seed.type });
+  return { ...seed, message, title };
+});
 
 function AlertsPreviewPage() {
   const [open, setOpen] = useState(true);

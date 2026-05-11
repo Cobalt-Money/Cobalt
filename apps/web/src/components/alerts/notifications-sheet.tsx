@@ -14,13 +14,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@cobalt-web/ui/components/sheet";
-import { cn } from "@cobalt-web/ui/lib/utils";
-import {
-  AlertCircleIcon,
-  BellDotIcon,
-  Cancel01Icon,
-  RefreshIcon,
-} from "@hugeicons/core-free-icons";
+import { AlertCircleIcon, BellDotIcon, RefreshIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
@@ -28,15 +22,10 @@ import { toast } from "sonner";
 
 import type { UserAlertRow } from "@/hooks/use-user-alerts";
 import { useUserAlerts } from "@/hooks/use-user-alerts";
-import { alertsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
+import { plaidApi, snaptradeApi } from "@/lib/clients/api-client";
 
 import { useOnboarding } from "../accounts/onboarding-context";
-
-interface ReauthSession {
-  hookToken: string;
-  runId: string;
-  linkToken: string;
-}
+import type { ReauthSession } from "../accounts/reauth-session";
 
 interface NotificationsSheetProps {
   open: boolean;
@@ -56,11 +45,6 @@ function getAlertMetadata(alert: UserAlertRow): AlertMetadata {
   return (raw && typeof raw === "object" ? raw : {}) as AlertMetadata;
 }
 
-function getAlertDisplayName(alert: UserAlertRow): string {
-  const meta = getAlertMetadata(alert);
-  return meta.institutionName ?? meta.brokerageName ?? "Connection";
-}
-
 function getAlertCtaLabel(type: string): string {
   if (type === "new_accounts") {
     return "Refresh connection";
@@ -71,8 +55,8 @@ function getAlertCtaLabel(type: string): string {
 /**
  * Renders a list of active user alerts in a right-side sheet. Each alert
  * exposes a source-aware reconnect CTA (Plaid Link update-mode or the
- * SnapTrade connection portal) plus a dismiss action that hits the server;
- * Zero syncs the row's new status back into the list automatically.
+ * SnapTrade connection portal). Alerts persist until the underlying
+ * connection is repaired — there is no user-facing dismiss.
  */
 export function NotificationsSheet({ open, onOpenChange, previewAlerts }: NotificationsSheetProps) {
   const live = useUserAlerts();
@@ -171,23 +155,6 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
     }
   };
 
-  const handleDismiss = async (alert: UserAlertRow) => {
-    setBusyId(alert.id);
-    try {
-      const res = await alertsApi[":id"].dismiss.$post({
-        param: { id: alert.id },
-      });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Dismiss failed");
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Dismiss failed");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent className="flex w-full flex-col gap-0 sm:max-w-md">
@@ -211,16 +178,9 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
             <ul className="flex flex-col divide-y">
               {alerts.map((alert) => {
                 const meta = getAlertMetadata(alert);
-                const name = getAlertDisplayName(alert);
                 const isBusy = busyId === alert.id;
                 return (
-                  <li
-                    className={cn(
-                      "flex flex-col gap-3 px-6 py-4",
-                      alert.status === "unread" && "bg-muted/30",
-                    )}
-                    key={alert.id}
-                  >
+                  <li className="flex flex-col gap-3 px-6 py-4" key={alert.id}>
                     <div className="flex items-start gap-3">
                       {meta.institutionLogo ? (
                         <img
@@ -259,17 +219,6 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
                       >
                         <HugeiconsIcon className="size-4" icon={RefreshIcon} strokeWidth={2} />
                         {isBusy ? "…" : getAlertCtaLabel(alert.type)}
-                      </Button>
-                      <Button
-                        aria-label={`Dismiss alert for ${name}`}
-                        disabled={isBusy}
-                        onClick={() => handleDismiss(alert)}
-                        size="sm"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <HugeiconsIcon className="size-4" icon={Cancel01Icon} strokeWidth={2} />
-                        Dismiss
                       </Button>
                     </div>
                   </li>
