@@ -18,6 +18,8 @@ import { toast } from "sonner";
 
 import { accountsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
 
+import type { ReauthSession } from "./reauth-session";
+
 interface AccountConnectionActionsProps {
   account: Pick<
     AccountCardViewModel,
@@ -32,12 +34,6 @@ interface AccountConnectionActionsProps {
     | "snaptradeAuthorizationId"
     | "source"
   >;
-}
-
-interface ReauthSession {
-  hookToken: string;
-  runId: string;
-  linkToken: string;
 }
 
 export function AccountConnectionActions({ account }: AccountConnectionActionsProps) {

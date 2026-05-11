@@ -8,30 +8,30 @@ const userAlertRowSchema = createSelectSchema(userAlerts, {
   metadata: z.record(z.string(), z.unknown()).nullable(),
 });
 
-/** Single alert DTO — timestamps serialized as ISO strings. */
+/**
+ * Alert DTO — `title` and `message` are computed at read time by
+ * `formatAlert(type, institutionName)`, not stored. Institution name is
+ * resolved live in `getActiveAlerts` by joining `plaid_connection` and
+ * `financial_account` on the alert's `sourceId`.
+ */
 export const alertSchema = userAlertRowSchema
   .pick({
     id: true,
-    message: true,
     metadata: true,
     source: true,
     sourceId: true,
-    status: true,
-    title: true,
     type: true,
     userId: true,
   })
   .extend({
     createdAt: z.string(),
+    message: z.string(),
     resolvedAt: z.string().nullable(),
+    title: z.string(),
   });
 
 export const alertListResponseSchema = z.object({
   alerts: z.array(alertSchema),
-});
-
-export const alertIdParamSchema = z.object({
-  id: z.string().uuid(),
 });
 
 export type AlertDTO = z.infer<typeof alertSchema>;

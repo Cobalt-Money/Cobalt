@@ -53,20 +53,14 @@ export async function plaidItemWebhookWorkflow(
     }
 
     if (itemId && itemUserId && itemData) {
-      const institutionName = itemData.institutionName ?? "Bank";
-      const alertMetadata = {
-        institutionLogo: itemData.institutionLogo ?? null,
-        institutionName,
-      };
+      const alertMetadata = { institutionLogo: itemData.institutionLogo ?? null };
 
       switch (webhook.webhook_code) {
         case "ERROR": {
           await insertAlertStep({
-            message: `Reconnect ${institutionName} to resume syncing transactions and balances.`,
             metadata: alertMetadata,
             source: ALERT_SOURCES.PLAID,
             sourceId: itemId,
-            title: `${institutionName} needs re-authentication`,
             type: ALERT_TYPES.REAUTH_NEEDED,
             userId: itemUserId,
           });
@@ -75,11 +69,9 @@ export async function plaidItemWebhookWorkflow(
 
         case "PENDING_DISCONNECT": {
           await insertAlertStep({
-            message: `Reconnect ${institutionName} now to avoid losing access.`,
             metadata: alertMetadata,
             source: ALERT_SOURCES.PLAID,
             sourceId: itemId,
-            title: `${institutionName} is about to disconnect`,
             type: ALERT_TYPES.PENDING_DISCONNECT,
             userId: itemUserId,
           });
@@ -88,11 +80,9 @@ export async function plaidItemWebhookWorkflow(
 
         case "NEW_ACCOUNTS_AVAILABLE": {
           await insertAlertStep({
-            message: `New accounts were added at ${institutionName}. Refresh to sync them.`,
             metadata: alertMetadata,
             source: ALERT_SOURCES.PLAID,
             sourceId: itemId,
-            title: `New accounts available at ${institutionName}`,
             type: ALERT_TYPES.NEW_ACCOUNTS,
             userId: itemUserId,
           });

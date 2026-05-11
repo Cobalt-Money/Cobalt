@@ -94,11 +94,7 @@ async function dispatchSnaptradeEvent(payload: SnaptradeEventPayload): Promise<v
   switch (eventType) {
     case "CONNECTION_ADDED": {
       await start(snaptradeConnectionAddedWorkflow, [
-        {
-          brokerageAuthorizationId,
-          brokerageId,
-          userId,
-        },
+        { brokerageAuthorizationId, brokerageId, userId },
       ]);
       console.log(`[snaptrade] Triggered CONNECTION_ADDED workflow for user: ${userId}`);
       break;

@@ -2,6 +2,23 @@ import { db } from "@cobalt-web/db";
 import { snaptradeAuthorization } from "@cobalt-web/db/schema/providers/snaptrade/authorization";
 import { eq } from "drizzle-orm";
 
+/**
+ * Look up the internal DB id for an existing SnapTrade authorization by its
+ * external authorizationId. Returns null when no row exists. Used both by
+ * `upsertSnaptradeAuthorization` to detect upsert vs insert and by workflows
+ * (e.g. holdings sync) that need the FK to attach accounts without touching
+ * the auth row.
+ */
+export async function getSnaptradeAuthorizationDbId(
+  brokerageAuthorizationId: string,
+): Promise<string | null> {
+  const row = await db.query.snaptradeAuthorization.findFirst({
+    columns: { id: true },
+    where: { authorizationId: { eq: brokerageAuthorizationId } },
+  });
+  return row?.id ?? null;
+}
+
 export async function upsertSnaptradeAuthorization(
   brokerageAuthorizationId: string,
   appUserId: string,
@@ -10,12 +27,9 @@ export async function upsertSnaptradeAuthorization(
   name: string,
   type = "read",
 ): Promise<string> {
-  const existing = await db.query.snaptradeAuthorization.findFirst({
-    columns: { id: true },
-    where: { authorizationId: { eq: brokerageAuthorizationId } },
-  });
+  const existingId = await getSnaptradeAuthorizationDbId(brokerageAuthorizationId);
 
-  if (existing) {
+  if (existingId) {
     await db
       .update(snaptradeAuthorization)
       .set({
@@ -29,7 +43,7 @@ export async function upsertSnaptradeAuthorization(
       })
       .where(eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId));
 
-    return existing.id;
+    return existingId;
   }
 
   const [inserted] = await db

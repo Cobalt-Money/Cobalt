@@ -5,8 +5,8 @@ import { insertAlertStep, resolveAlertsStep } from "../../shared/alert-steps";
 import {
   deleteSnaptradeAuthorizationStep,
   fetchAccountsStep,
-  getAuthorizationDisplayNameStep,
   getSnapTradeUserCredentialsStep,
+  getSnaptradeAuthorizationDbIdStep,
   syncAccountBalancesStep,
   syncAccountDetailsStep,
   syncAccountOrdersStep,
@@ -30,8 +30,8 @@ import {
 vi.mock(import("./steps"), () => ({
   deleteSnaptradeAuthorizationStep: vi.fn(),
   fetchAccountsStep: vi.fn(),
-  getAuthorizationDisplayNameStep: vi.fn(),
   getSnapTradeUserCredentialsStep: vi.fn(),
+  getSnaptradeAuthorizationDbIdStep: vi.fn(),
   seedTodaySnaptradeSnapshotsStep: vi.fn(),
   syncAccountBalancesStep: vi.fn(),
   syncAccountDetailsStep: vi.fn(),
@@ -124,7 +124,6 @@ describe("snaptradeConnectionUpdatedWorkflow / FixedWorkflow", () => {
 describe("snaptradeConnectionBrokenWorkflow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getAuthorizationDisplayNameStep).mockResolvedValue("Schwab");
   });
 
   it("disables auth + opens connection-broken alert", async () => {
@@ -165,7 +164,7 @@ describe("snaptradeHoldingsUpdatedWorkflow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getSnapTradeUserCredentialsStep).mockResolvedValue(credentials);
-    vi.mocked(upsertSnaptradeAuthorizationStep).mockResolvedValue("auth-db-2");
+    vi.mocked(getSnaptradeAuthorizationDbIdStep).mockResolvedValue("auth-db-2");
     vi.mocked(syncAccountDetailsStep).mockResolvedValue({
       data: { id: "acct-1", name: "Brokerage" },
       success: true,
