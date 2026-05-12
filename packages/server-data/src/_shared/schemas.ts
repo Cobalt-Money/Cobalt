@@ -6,6 +6,13 @@ export const errorResponseSchema = z
   })
   .openapi("ErrorResponse");
 
+export const errorResponseWithCodeSchema = z
+  .object({
+    code: z.string(),
+    error: z.string(),
+  })
+  .openapi("ErrorResponseWithCode");
+
 export const idParamsSchema = z.object({
   id: z.string().min(1),
 });

@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getMergedBrokerageDataByUserId } from "@cobalt-web/server-data/brokerage/merged";
 import {
   mergedBrokerageDataSchema,
@@ -18,6 +19,8 @@ const route = createRoute({
   request: { query: mergedBrokerageQuerySchema },
   responses: {
     200: jsonContent(mergedBrokerageDataSchema, "Merged brokerage payload"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     422: validationErrorResponse(mergedBrokerageQuerySchema),
   },
   summary: "Get merged brokerage data (SnapTrade + Plaid investments)",

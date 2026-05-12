@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   subscriptionStatusResponseSchema,
   userSubscriptionSource,
@@ -15,6 +16,7 @@ const route = createRoute({
   path: "/",
   responses: {
     200: jsonContent(subscriptionStatusResponseSchema, "Subscription status"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Get subscription status",
   tags: ["Subscriptions"],

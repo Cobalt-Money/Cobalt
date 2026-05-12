@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
 import {
   balanceSnapshotListResponseSchema,
@@ -16,6 +17,7 @@ const getBalanceSnapshots = createRoute({
   request: { query: balanceSnapshotQuerySchema },
   responses: {
     200: jsonContent(balanceSnapshotListResponseSchema, "Balance snapshots"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     422: validationErrorResponse(balanceSnapshotQuerySchema),
   },
   summary: "Get balance snapshots",

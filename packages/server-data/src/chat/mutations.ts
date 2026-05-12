@@ -3,6 +3,7 @@ import { chats, messages, parts } from "@cobalt-web/db/schema/schema";
 import type { UIMessage } from "ai";
 import { and, eq } from "drizzle-orm";
 
+import { ApiError } from "../_shared/api-error.js";
 import { mapUIMessagePartsToDbParts } from "./lib.js";
 
 export async function createChat(userId: string, title?: string): Promise<string> {
@@ -16,19 +17,22 @@ export async function updateChatTitle(chatId: string, title: string): Promise<vo
 }
 
 /**
- * Delete a chat owned by `userId`. Returns `true` if a row was deleted.
- * Messages and parts cascade via Postgres foreign keys.
+ * Delete a chat owned by `userId`. Throws `ApiError(404, "chat_not_found")`
+ * if the chat is missing or not owned by the caller (single neutral message
+ * to prevent enumeration). Messages and parts cascade via Postgres foreign keys.
  *
  * Used by the REST endpoint (mobile clients). The web app deletes through
  * the Zero `chats.delete` mutator for optimistic UX; both paths ultimately
  * remove the same row and benefit from the same FK cascade.
  */
-export async function deleteChat(userId: string, chatId: string): Promise<boolean> {
+export async function deleteChat(userId: string, chatId: string): Promise<void> {
   const deleted = await db
     .delete(chats)
     .where(and(eq(chats.chatId, chatId), eq(chats.userId, userId)))
     .returning({ chatId: chats.chatId });
-  return deleted.length > 0;
+  if (deleted.length === 0) {
+    throw new ApiError(404, "chat_not_found", "Chat not found");
+  }
 }
 
 /**

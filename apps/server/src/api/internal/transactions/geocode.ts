@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { geocodeSearch } from "@cobalt-web/server-data/transactions/geocode";
 import {
   geocodeSearchQuerySchema,
@@ -17,7 +18,10 @@ const search = createRoute({
   request: { query: geocodeSearchQuerySchema },
   responses: {
     200: jsonContent(geocodeSearchResponseSchema, "Geocoding candidates"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     422: validationErrorResponse(geocodeSearchQuerySchema),
+    502: jsonContent(errorResponseWithCodeSchema, "Geocoder upstream failed"),
   },
   summary: "Search for a location by free-text query",
   tags: ["Transactions"],

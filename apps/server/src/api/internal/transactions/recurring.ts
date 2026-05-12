@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getRecurringStreams } from "@cobalt-web/server-data/transactions/queries";
 import { recurringStreamsResponseSchema } from "@cobalt-web/server-data/transactions/schemas";
 import { createRoute } from "@hono/zod-openapi";
@@ -13,6 +14,8 @@ const route = createRoute({
   path: "/recurring",
   responses: {
     200: jsonContent(recurringStreamsResponseSchema, "Recurring streams"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
   },
   summary: "List recurring transactions",
   tags: ["Transactions"],

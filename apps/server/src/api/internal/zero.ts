@@ -37,7 +37,7 @@ const zeroRouter = createApp()
   })
   .post("/mutate", requirePaidUser, async (c) => {
     if (!dbProvider) {
-      return c.json({ error: "Zero not configured" }, 500);
+      return c.json({ code: "zero_not_configured", error: "Zero not configured" }, 503);
     }
     const zeroContext = c.get("zeroContext");
 

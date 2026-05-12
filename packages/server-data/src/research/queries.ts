@@ -1,6 +1,8 @@
 import { stockNewsRequest } from "@cobalt-web/clients/stock-news";
 import type { StockNewsArticle } from "@cobalt-web/clients/stock-news";
 
+import { withStockNewsUpstream } from "../news/upstream-errors.js";
+
 // ── Research news ──────────────────────────────────────────────────
 
 interface StockNewsTickerArticlesResponse {
@@ -10,10 +12,12 @@ interface StockNewsTickerArticlesResponse {
 }
 
 export function getResearchNews(symbol: string): Promise<StockNewsTickerArticlesResponse> {
-  return stockNewsRequest<StockNewsTickerArticlesResponse>("", {
-    items: "50",
-    sourceexclude: "Benzinga,The Motley Fool,Zacks Investment Research",
-    tickers: symbol,
-    type: "Article",
-  });
+  return withStockNewsUpstream(() =>
+    stockNewsRequest<StockNewsTickerArticlesResponse>("", {
+      items: "50",
+      sourceexclude: "Benzinga,The Motley Fool,Zacks Investment Research",
+      tickers: symbol,
+      type: "Article",
+    }),
+  );
 }

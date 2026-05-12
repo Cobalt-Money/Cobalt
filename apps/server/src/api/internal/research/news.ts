@@ -1,5 +1,6 @@
 import { getResearchNews } from "@cobalt-web/server-data/research/queries";
 import { newsResponseSchema, symbolQuerySchema } from "@cobalt-web/server-data/research/schemas";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -13,7 +14,9 @@ const route = createRoute({
   request: { query: symbolQuerySchema },
   responses: {
     200: jsonContent(newsResponseSchema, "News articles"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     422: validationErrorResponse(symbolQuerySchema),
+    502: jsonContent(errorResponseWithCodeSchema, "Stock News upstream failed"),
   },
   summary: "Get ticker-specific news",
   tags: ["Research"],
