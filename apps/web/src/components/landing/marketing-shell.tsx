@@ -32,9 +32,9 @@ export function MarketingNav() {
         </Link>
         <div className="flex items-center gap-6">
           <nav className="hidden items-center gap-6 text-muted-foreground text-sm sm:flex">
-            <a className="transition-colors hover:text-foreground" href="/#features">
+            <Link className="transition-colors hover:text-foreground" hash="features" to="/">
               Features
-            </a>
+            </Link>
             <Link className="transition-colors hover:text-foreground" to="/pricing">
               Pricing
             </Link>
