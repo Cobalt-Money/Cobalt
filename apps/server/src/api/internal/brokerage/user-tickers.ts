@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getUserTickersByUserId } from "@cobalt-web/server-data/brokerage/queries";
 import { userTickersResponseSchema } from "@cobalt-web/server-data/brokerage/schemas";
 import { createRoute } from "@hono/zod-openapi";
@@ -12,6 +13,8 @@ const route = createRoute({
   path: "/user-tickers",
   responses: {
     200: jsonContent(userTickersResponseSchema, "List of held stock tickers"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
   },
   summary: "Get user tickers",
   tags: ["Brokerage"],

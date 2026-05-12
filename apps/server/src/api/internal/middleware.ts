@@ -11,7 +11,7 @@ export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
     headers: c.req.raw.headers,
   });
   if (!session) {
-    return c.json({ error: "Unauthorized" }, 401);
+    return c.json({ code: "unauthorized", error: "Unauthorized" }, 401);
   }
   c.set("user", session.user);
   c.set("session", session.session);
@@ -30,7 +30,7 @@ export const requirePaidUser = createMiddleware<AppEnv>(async (c, next) => {
     headers: c.req.raw.headers,
   });
   if (!session) {
-    return c.json({ error: "Unauthorized" }, 401);
+    return c.json({ code: "unauthorized", error: "Unauthorized" }, 401);
   }
   c.set("user", session.user);
   c.set("session", session.session);
@@ -38,7 +38,7 @@ export const requirePaidUser = createMiddleware<AppEnv>(async (c, next) => {
 
   const entitled = await userHasActiveSubscription(session.user.id);
   if (!entitled) {
-    return c.json({ error: "Subscription required" }, 403);
+    return c.json({ code: "subscription_required", error: "Subscription required" }, 403);
   }
   await next();
 });

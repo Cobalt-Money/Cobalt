@@ -2,6 +2,7 @@ import { db } from "@cobalt-web/db";
 import { mobileSubscription } from "@cobalt-web/db/schema/users/subscriptions/mobile";
 import { eq } from "drizzle-orm";
 
+import { ApiError } from "../_shared/api-error.js";
 import type {
   AppStoreNotificationInput,
   AppStoreNotificationResult,
@@ -20,7 +21,7 @@ export async function syncAppStoreSubscription(
   const now = new Date();
   let expiresAt = new Date(input.expiresAt);
   if (Number.isNaN(expiresAt.getTime())) {
-    throw new TypeError("Invalid expiresAt");
+    throw new ApiError(400, "invalid_expires_at", "Invalid expiresAt");
   }
 
   // Sandbox: Apple may send stale expiration times on re-purchase; treat sync as fresh.
@@ -84,7 +85,7 @@ export async function syncAppStoreSubscription(
     .returning({ id: mobileSubscription.id });
 
   if (!row) {
-    throw new Error("Failed to upsert mobile subscription");
+    throw new ApiError(502, "appstore_upstream_failed", "Failed to upsert mobile subscription");
   }
 
   return {

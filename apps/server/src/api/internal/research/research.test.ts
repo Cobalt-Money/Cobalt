@@ -225,10 +225,13 @@ describe("research routes", () => {
       });
     });
 
-    it("returns 503 when FMP_API_KEY missing", async () => {
-      mockScreener.mockRejectedValue(new Error("FMP_API_KEY not set"));
+    it("returns 502 when FMP_API_KEY missing", async () => {
+      const { ApiError } = await import("@cobalt-web/server-data/_shared/api-error");
+      mockScreener.mockRejectedValue(
+        new ApiError(502, "fmp_upstream_failed", "FMP_API_KEY not set"),
+      );
       const res = await screenerRouter.request("/screener");
-      expect(res.status).toBe(503);
+      expect(res.status).toBe(502);
     });
   });
 });

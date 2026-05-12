@@ -3,6 +3,7 @@ import {
   overviewResponseSchema,
   symbolQuerySchema,
 } from "@cobalt-web/server-data/research/schemas";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -16,7 +17,10 @@ const route = createRoute({
   request: { query: symbolQuerySchema },
   responses: {
     200: jsonContent(overviewResponseSchema, "Company overview"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Ticker not found"),
     422: validationErrorResponse(symbolQuerySchema),
+    502: jsonContent(errorResponseWithCodeSchema, "FMP upstream failed"),
   },
   summary: "Get company overview",
   tags: ["Research"],

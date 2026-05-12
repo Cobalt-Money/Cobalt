@@ -2,8 +2,8 @@ import { getFinancialEventDetails } from "@cobalt-web/server-data/news/detail/qu
 import {
   eventDetailResponseSchema,
   eventIdParamSchema,
-  eventNotFoundSchema,
 } from "@cobalt-web/server-data/news/detail/schemas";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -17,7 +17,9 @@ const route = createRoute({
   request: { params: eventIdParamSchema },
   responses: {
     200: jsonContent(eventDetailResponseSchema, "Event details"),
-    404: jsonContent(eventNotFoundSchema, "Event not found"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Event not found"),
     422: validationErrorResponse(eventIdParamSchema),
   },
   summary: "Get event details",
@@ -27,11 +29,6 @@ const route = createRoute({
 export const eventDetailRouter = createApp().openapi(route, async (c) => {
   const { eventId } = c.req.valid("param");
   const event = await getFinancialEventDetails(c.var.user.id, eventId);
-
-  if (!event) {
-    return c.json({ error: "Event not found" }, 404);
-  }
-
   c.header("Cache-Control", "private, max-age=60");
   return c.json({ event }, 200);
 });

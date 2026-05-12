@@ -1,6 +1,6 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   clearCreditLimitOverride,
-  getAccountOwner,
   setCreditLimitOverride,
 } from "@cobalt-web/server-data/accounts/mutations";
 import { getCreditCards } from "@cobalt-web/server-data/accounts/queries";
@@ -22,6 +22,7 @@ const list = createRoute({
   path: "/credit-cards",
   responses: {
     200: jsonContent(creditCardListResponseSchema, "List of credit cards"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "List credit cards",
   tags: ["Accounts"],
@@ -39,8 +40,8 @@ const patchLimit = createRoute({
   },
   responses: {
     200: jsonContent(successResponseSchema, "Credit limit updated"),
-    403: { description: "Unauthorized" },
-    404: { description: "Account not found" },
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Account not found"),
     422: validationErrorResponse(creditLimitBodySchema),
   },
   summary: "Set credit limit override",
@@ -54,8 +55,8 @@ const deleteLimit = createRoute({
   request: { params: accountIdParamSchema },
   responses: {
     200: jsonContent(successResponseSchema, "Credit limit reset"),
-    403: { description: "Unauthorized" },
-    404: { description: "Account not found" },
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Account not found"),
     422: validationErrorResponse(accountIdParamSchema),
   },
   summary: "Reset credit limit override",
@@ -71,30 +72,12 @@ const creditCardsRouter = createApp()
   .openapi(patchLimit, async (c) => {
     const { id } = c.req.valid("param");
     const { creditLimit } = c.req.valid("json");
-
-    const account = await getAccountOwner(id);
-    if (!account) {
-      return c.json({ error: "Account not found" }, 404);
-    }
-    if (account.userId !== c.var.user.id) {
-      return c.json({ error: "Unauthorized" }, 403);
-    }
-
-    await setCreditLimitOverride(id, creditLimit);
+    await setCreditLimitOverride(id, c.var.user.id, creditLimit);
     return c.json({ success: true }, 200);
   })
   .openapi(deleteLimit, async (c) => {
     const { id } = c.req.valid("param");
-
-    const account = await getAccountOwner(id);
-    if (!account) {
-      return c.json({ error: "Account not found" }, 404);
-    }
-    if (account.userId !== c.var.user.id) {
-      return c.json({ error: "Unauthorized" }, 403);
-    }
-
-    await clearCreditLimitOverride(id);
+    await clearCreditLimitOverride(id, c.var.user.id);
     return c.json({ success: true }, 200);
   });
 

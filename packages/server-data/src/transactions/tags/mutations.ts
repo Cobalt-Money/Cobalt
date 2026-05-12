@@ -5,6 +5,7 @@ import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions
 import { transactionEdit } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction-edit";
 import { and, eq, inArray, sql } from "drizzle-orm";
 
+import { ApiError } from "../errors.js";
 import type { BulkApplyTagsBody, CreateTagBody, UpdateTagBody } from "./schemas.js";
 
 export async function createTag(userId: string, body: CreateTagBody): Promise<{ id: string }> {
@@ -35,17 +36,35 @@ export async function updateTag(userId: string, tagId: string, body: UpdateTagBo
     updates.archivedAt = body.archived ? new Date() : null;
   }
   if (Object.keys(updates).length === 0) {
+    const owned = await db
+      .select({ id: tag.id })
+      .from(tag)
+      .where(and(eq(tag.id, tagId), eq(tag.userId, userId)))
+      .limit(1);
+    if (owned.length === 0) {
+      throw new ApiError(404, "tag_not_found", "Tag not found");
+    }
     return;
   }
 
-  await db
+  const updated = await db
     .update(tag)
     .set(updates)
-    .where(and(eq(tag.id, tagId), eq(tag.userId, userId)));
+    .where(and(eq(tag.id, tagId), eq(tag.userId, userId)))
+    .returning({ id: tag.id });
+  if (updated.length === 0) {
+    throw new ApiError(404, "tag_not_found", "Tag not found");
+  }
 }
 
 export async function deleteTag(userId: string, tagId: string): Promise<void> {
-  await db.delete(tag).where(and(eq(tag.id, tagId), eq(tag.userId, userId)));
+  const deleted = await db
+    .delete(tag)
+    .where(and(eq(tag.id, tagId), eq(tag.userId, userId)))
+    .returning({ id: tag.id });
+  if (deleted.length === 0) {
+    throw new ApiError(404, "tag_not_found", "Tag not found");
+  }
 }
 
 /**
@@ -86,7 +105,7 @@ export async function setTransactionTags(
         .from(tag)
         .where(and(inArray(tag.id, newIds), eq(tag.userId, userId)));
       if (owned.length !== newIds.length) {
-        throw new Error("One or more tags not owned by user");
+        throw new ApiError(404, "tag_not_found", "One or more tags not found");
       }
     }
 
@@ -144,7 +163,7 @@ export function bulkApplyTags(
         .from(tag)
         .where(and(inArray(tag.id, allTagIds), eq(tag.userId, userId)));
       if (owned.length !== allTagIds.length) {
-        throw new Error("One or more tags not owned by user");
+        throw new ApiError(404, "tag_not_found", "One or more tags not found");
       }
     }
 

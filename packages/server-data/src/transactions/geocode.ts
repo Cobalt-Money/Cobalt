@@ -1,5 +1,7 @@
 import type { LocationJson } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 
+import { ApiError } from "./errors.js";
+
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 // Nominatim usage policy requires an identifying User-Agent with contact info.
 const USER_AGENT = "Cobalt-Web (contact: sriketk5@gmail.com)";
@@ -60,7 +62,7 @@ export async function geocodeSearch(query: string, limit = 5): Promise<GeocodeRe
     },
   });
   if (!res.ok) {
-    throw new Error(`Nominatim error: ${res.status}`);
+    throw new ApiError(502, "geocode_upstream_failed", `Nominatim returned ${res.status}`);
   }
   const data = (await res.json()) as NominatimResult[];
   return data.map((r) => ({

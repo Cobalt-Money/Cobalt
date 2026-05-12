@@ -1,5 +1,6 @@
 import { db } from "@cobalt-web/db";
 
+import { ApiError } from "../_shared/api-error.js";
 import {
   isBankAccountListType,
   isCreditCardAccount,
@@ -159,9 +160,13 @@ export async function getCreditCards(userId: string): Promise<BankAccountListIte
 export async function getBankAccountById(
   userId: string,
   accountId: string,
-): Promise<BankAccountDTO | null> {
+): Promise<BankAccountDTO> {
   const all = await getAllAccountsWithInstitutions(userId);
-  return all.find(matchesPlaidAccountId(accountId)) ?? null;
+  const found = all.find(matchesPlaidAccountId(accountId));
+  if (!found) {
+    throw new ApiError(404, "account_not_found", "Account not found");
+  }
+  return found;
 }
 
 // ── Plaid items ─────────────────────────────────────────────────────
@@ -192,6 +197,19 @@ export async function getPlaidAccountsForItem(
   userId: string,
   plaidItemId: string,
 ): Promise<PlaidAccountForItemDTO[]> {
+  // Verify the item exists and is owned by the caller before returning accounts.
+  // Single neutral 404 — never distinguish missing from unowned (anti-enumeration).
+  const item = await db.query.plaidConnection.findFirst({
+    columns: { id: true },
+    where: {
+      plaidItemId: { eq: plaidItemId },
+      userId: { eq: userId },
+    },
+  });
+  if (!item) {
+    throw new ApiError(404, "plaid_item_not_found", "Plaid item not found");
+  }
+
   const accounts = await db.query.financialAccount.findMany({
     columns: {
       createdAt: true,

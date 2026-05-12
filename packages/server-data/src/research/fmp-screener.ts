@@ -1,5 +1,7 @@
 import { fmpStableGet } from "@cobalt-web/clients/fmp";
 
+import { withFmpUpstream } from "./fmp-errors.js";
+
 /** Parameters for `GET /stable/company-screener` (see FMP docs). */
 export interface CompanyScreenerParams {
   betaLowerThan?: number;
@@ -71,10 +73,12 @@ export async function fmpCompanyScreenerNasdaqNyse(
   const { exchange: _ignored, limit: lim, ...rest } = params;
   const limit = typeof lim === "number" && lim > 0 ? lim : 100;
 
-  const [rawNasdaq, rawNyse] = await Promise.all([
-    fmpCompanyScreener({ ...rest, exchange: "NASDAQ", limit }),
-    fmpCompanyScreener({ ...rest, exchange: "NYSE", limit }),
-  ]);
+  const [rawNasdaq, rawNyse] = await withFmpUpstream(() =>
+    Promise.all([
+      fmpCompanyScreener({ ...rest, exchange: "NASDAQ", limit }),
+      fmpCompanyScreener({ ...rest, exchange: "NYSE", limit }),
+    ]),
+  );
 
   const bySym = new Map<string, Record<string, unknown>>();
   for (const row of [...parseScreenerRows(rawNasdaq), ...parseScreenerRows(rawNyse)]) {

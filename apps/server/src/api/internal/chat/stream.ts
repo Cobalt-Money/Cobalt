@@ -1,5 +1,6 @@
 import { db } from "@cobalt-web/db";
 import { env } from "@cobalt-web/env/server";
+import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { upsertMessage } from "@cobalt-web/server-data/chat/mutations";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import {
@@ -10,6 +11,8 @@ import {
 } from "ai";
 import type { UIMessage } from "ai";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { start } from "workflow/api";
 
 import { createFinanceAgent } from "../../../ai/agents/finance-agent/finance-agent.js";
@@ -50,12 +53,28 @@ async function startChatTitle(
   }
 }
 
-export const chatStreamRouter = new Hono<AppEnv>().post(
-  "/:chatId/stream",
-  requirePaidUser,
-  async (c) => {
+/**
+ * SSE streaming endpoint. Preconditions (config, body shape, ownership) are
+ * checked BEFORE the stream starts and surface as JSON errors with stable codes.
+ * Once the stream begins, errors are delivered as SSE events via the AI SDK's
+ * `onError` hook — HTTP status cannot change after headers are flushed.
+ */
+export const chatStreamRouter = new Hono<AppEnv>()
+  // biome-ignore lint/suspicious/useAwait: hono onError callback signature
+  // oxlint-disable-next-line prefer-await-to-callbacks
+  .onError((err, c) => {
+    if (err instanceof HTTPException) {
+      return err.getResponse();
+    }
+    if (err instanceof ApiError) {
+      return c.json({ code: err.code, error: err.message }, err.status as ContentfulStatusCode);
+    }
+    console.error("[chat-stream error]", { method: c.req.method, path: c.req.path }, err);
+    return c.json({ error: "Internal server error" }, 500);
+  })
+  .post("/:chatId/stream", requirePaidUser, async (c) => {
     if (!env.AI_GATEWAY_API_KEY) {
-      return c.json({ error: "AI not configured" }, 503);
+      throw new ApiError(503, "ai_not_configured", "AI provider is not configured");
     }
 
     const chatId = c.req.param("chatId");
@@ -71,17 +90,18 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
     const { effort = "high", message, messages, model } = body ?? {};
 
     if (!message?.id || !message.parts?.length) {
-      return c.json({ error: "message is required" }, 400);
+      throw new ApiError(400, "message_required", "message is required");
     }
     if (!Array.isArray(messages) || messages.length === 0) {
-      return c.json({ error: "messages history is required" }, 400);
+      throw new ApiError(400, "messages_required", "messages history is required");
     }
 
     const chat = await db.query.chats.findFirst({
       where: { chatId: { eq: chatId }, userId: { eq: userId } },
     });
     if (!chat) {
-      return c.json({ error: "Chat not found" }, 404);
+      // Single neutral code — never differentiate missing vs unowned.
+      throw new ApiError(404, "chat_not_found", "Chat not found");
     }
 
     const { baseModel: loggedBaseModel, useReasoning: loggedUseReasoning } =
@@ -134,17 +154,30 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
 
     const stream = createUIMessageStream({
       execute: async ({ writer }) => {
-        const result = await financeAgent.stream({
-          messages: modelMessages,
-          options: { currentDate, currentDateFormatted },
-        });
-        const uiStream = result.toUIMessageStream({ sendReasoning: true });
-        for await (const chunk of uiStream) {
-          writer.write(chunk as Parameters<typeof writer.write>[0]);
+        try {
+          const result = await financeAgent.stream({
+            messages: modelMessages,
+            options: { currentDate, currentDateFormatted },
+          });
+          const uiStream = result.toUIMessageStream({ sendReasoning: true });
+          for await (const chunk of uiStream) {
+            writer.write(chunk as Parameters<typeof writer.write>[0]);
+          }
+        } catch (error) {
+          // Wrap upstream AI provider errors with a stable code so the
+          // SSE `onError` callback below can surface "ai_upstream_failed".
+          throw new ApiError(
+            502,
+            "ai_upstream_failed",
+            error instanceof Error ? error.message : "AI provider failed",
+          );
         }
       },
       onError: (error) => {
         console.error("[chat stream error]", error);
+        if (error instanceof ApiError) {
+          return `${error.code}: ${error.message}`;
+        }
         return error instanceof Error ? error.message : "Stream error";
       },
       onFinish: async ({ responseMessage }) => {
@@ -155,5 +188,4 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
     });
 
     return createUIMessageStreamResponse({ stream });
-  },
-);
+  });

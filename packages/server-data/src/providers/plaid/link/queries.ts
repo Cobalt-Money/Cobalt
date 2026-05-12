@@ -1,5 +1,6 @@
 import { db } from "@cobalt-web/db";
 
+import { ApiError } from "../../../_shared/api-error.js";
 import type { DuplicateCheckCandidate } from "./lib.js";
 import { matchesDuplicateAccountMask } from "./lib.js";
 
@@ -72,7 +73,8 @@ export async function getAccessTokenForItem(userId: string, plaidItemId: string)
   });
 
   if (!row) {
-    throw new Error("Item not found or access denied");
+    // Neutral error: do not distinguish "missing" from "not owned by caller".
+    throw new ApiError(404, "plaid_item_not_found", "Plaid item not found");
   }
 
   return row.plaidAccessToken;

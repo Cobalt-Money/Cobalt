@@ -1,8 +1,12 @@
+import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { getRun } from "workflow/api";
 
 import { createApp } from "../../../lib/create-app.js";
 import { requireAuth } from "../middleware.js";
 
+// Plain (non-OpenAPI) route: streams NDJSON, so it can't return a JSON
+// response schema. Auth + missing-run still emit the standard
+// `{code, error}` shape via ApiError (401 from middleware, 404 here).
 export const progressRouter = createApp().get("/progress/:runId", requireAuth, async (c) => {
   const runId = c.req.param("runId");
   const startIndexParam = c.req.query("startIndex");
@@ -11,7 +15,7 @@ export const progressRouter = createApp().get("/progress/:runId", requireAuth, a
 
   const run = getRun(runId);
   if (!(await run.exists)) {
-    return c.json({ error: "run not found" }, 404);
+    throw new ApiError(404, "plaid_run_not_found", "Workflow run not found");
   }
   const readable = run.getReadable({ namespace: "progress", startIndex });
 

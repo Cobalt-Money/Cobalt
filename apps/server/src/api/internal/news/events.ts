@@ -3,6 +3,7 @@ import {
   eventsQuerySchema,
   eventsResponseSchema,
 } from "@cobalt-web/server-data/news/events/schemas";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -19,6 +20,8 @@ const route = createRoute({
   },
   responses: {
     200: jsonContent(eventsResponseSchema, "Paginated financial events"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     422: validationErrorResponse(eventsQuerySchema),
   },
   summary: "List financial events",

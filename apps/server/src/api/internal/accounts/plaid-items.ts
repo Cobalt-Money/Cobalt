@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   getPlaidAccountsForItem,
   getPlaidItemsWithAlerts,
@@ -22,6 +23,8 @@ const listAccountsForItem = createRoute({
   request: { params: itemIdParamSchema },
   responses: {
     200: jsonContent(plaidAccountsForItemResponseSchema, "Accounts for Plaid item"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Plaid item not found"),
     422: validationErrorResponse(itemIdParamSchema),
   },
   summary: "Get accounts for a Plaid item",
@@ -34,6 +37,7 @@ const listItems = createRoute({
   path: "/plaid-items",
   responses: {
     200: jsonContent(plaidItemListResponseSchema, "List of Plaid items"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "List Plaid items",
   tags: ["Accounts"],
@@ -45,6 +49,7 @@ const listAlerts = createRoute({
   path: "/plaid-items/alerts",
   responses: {
     200: jsonContent(plaidItemAlertListResponseSchema, "Plaid items needing attention"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "List Plaid item alerts",
   tags: ["Accounts"],

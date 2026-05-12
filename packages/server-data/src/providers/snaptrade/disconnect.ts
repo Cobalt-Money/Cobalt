@@ -2,6 +2,7 @@ import { db } from "@cobalt-web/db";
 import { snaptradeAuthorization } from "@cobalt-web/db/schema/providers/snaptrade/authorization";
 import { eq } from "drizzle-orm";
 
+import { ApiError } from "../../_shared/api-error.js";
 import { removeBrokerageAuthorization } from "./authorizations/actions.js";
 
 export async function disconnectSnaptradeAuthorizationByUserId(
@@ -69,56 +70,58 @@ export async function disconnectBrokerageAccountByUserId(
   userId: string,
   accountId: string,
 ): Promise<{ message: string; success: boolean }> {
-  try {
-    const account = await db.query.financialAccount.findFirst({
-      columns: {
-        id: true,
-        institutionName: true,
-        snaptradeAuthorizationId: true,
-        userId: true,
-      },
-      where: { id: { eq: accountId } },
-    });
+  // Inline userId filter — neutral 404 for missing OR unowned.
+  const account = await db.query.financialAccount.findFirst({
+    columns: {
+      id: true,
+      institutionName: true,
+      snaptradeAuthorizationId: true,
+      userId: true,
+    },
+    where: { id: { eq: accountId }, userId: { eq: userId } },
+  });
 
-    if (!account) {
-      return { message: "Account not found", success: false };
-    }
-
-    if (account.userId !== userId) {
-      return { message: "Unauthorized", success: false };
-    }
-
-    if (!account.snaptradeAuthorizationId) {
-      return { message: "Invalid account data", success: false };
-    }
-
-    const auth = await db.query.snaptradeAuthorization.findFirst({
-      columns: { authorizationId: true, id: true },
-      where: { id: { eq: account.snaptradeAuthorizationId } },
-    });
-
-    if (!auth) {
-      return { message: "Invalid account data", success: false };
-    }
-
-    const result = await disconnectSnaptradeAuthorizationByUserId(
-      userId,
-      auth.authorizationId,
-      auth.id,
-    );
-
-    if (result.success) {
-      return {
-        message: `Successfully disconnected ${account.institutionName || "brokerage account"}`,
-        success: true,
-      };
-    }
-
-    return { message: result.message, success: false };
-  } catch {
-    return {
-      message: "Failed to disconnect account. Please try again.",
-      success: false,
-    };
+  if (!account) {
+    throw new ApiError(404, "brokerage_account_not_found", "Brokerage account not found");
   }
+
+  if (!account.snaptradeAuthorizationId) {
+    throw new ApiError(
+      409,
+      "brokerage_account_not_snaptrade",
+      "Account is not a SnapTrade-connected brokerage account",
+    );
+  }
+
+  const auth = await db.query.snaptradeAuthorization.findFirst({
+    columns: { authorizationId: true, id: true },
+    where: { id: { eq: account.snaptradeAuthorizationId } },
+  });
+
+  if (!auth) {
+    throw new ApiError(
+      409,
+      "brokerage_authorization_missing",
+      "SnapTrade authorization is missing",
+    );
+  }
+
+  const result = await disconnectSnaptradeAuthorizationByUserId(
+    userId,
+    auth.authorizationId,
+    auth.id,
+  );
+
+  if (!result.success) {
+    throw new ApiError(
+      502,
+      "snaptrade_upstream_failed",
+      result.message || "Failed to disconnect brokerage with upstream provider",
+    );
+  }
+
+  return {
+    message: `Successfully disconnected ${account.institutionName || "brokerage account"}`,
+    success: true,
+  };
 }

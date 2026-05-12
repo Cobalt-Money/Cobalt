@@ -1,6 +1,6 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   appStoreSyncBodySchema,
-  appStoreSyncErrorSchema,
   appStoreSyncResponseSchema,
   syncAppStoreSubscription,
 } from "@cobalt-web/server-data/subscriptions";
@@ -23,10 +23,10 @@ const syncRoute = createRoute({
   },
   responses: {
     200: jsonContent(appStoreSyncResponseSchema, "Subscription created or updated"),
-    400: jsonContent(appStoreSyncErrorSchema, "Invalid body or dates"),
-    401: jsonContent(appStoreSyncErrorSchema, "Unauthorized"),
+    400: jsonContent(errorResponseWithCodeSchema, "Invalid body or dates"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     422: validationErrorResponse(appStoreSyncBodySchema),
-    500: jsonContent(appStoreSyncErrorSchema, "Server error"),
+    502: jsonContent(errorResponseWithCodeSchema, "App Store upstream failed"),
   },
   summary: "Sync App Store subscription (StoreKit)",
   tags: ["App Store"],
@@ -34,35 +34,20 @@ const syncRoute = createRoute({
 
 export const appstoreRouter = createApp().openapi(syncRoute, async (c) => {
   const body = c.req.valid("json");
-  const userId = c.var.user.id;
+  const result = await syncAppStoreSubscription(c.var.user.id, {
+    environment: body.environment,
+    expiresAt: body.expiresAt,
+    latestTransactionId: body.latestTransactionId,
+    originalTransactionId: body.originalTransactionId,
+    productId: body.productId,
+  });
 
-  try {
-    const result = await syncAppStoreSubscription(userId, {
-      environment: body.environment,
-      expiresAt: body.expiresAt,
-      latestTransactionId: body.latestTransactionId,
-      originalTransactionId: body.originalTransactionId,
-      productId: body.productId,
-    });
-
-    return c.json(
-      {
-        action: result.action,
-        subscriptionId: result.subscriptionId,
-        success: true as const,
-      },
-      200,
-    );
-  } catch (error) {
-    if (error instanceof TypeError) {
-      return c.json({ error: error.message || "Invalid request" }, 400);
-    }
-    return c.json(
-      {
-        details: error instanceof Error ? error.message : "Unknown error",
-        error: "Failed to sync subscription",
-      },
-      500,
-    );
-  }
+  return c.json(
+    {
+      action: result.action,
+      subscriptionId: result.subscriptionId,
+      success: true as const,
+    },
+    200,
+  );
 });
