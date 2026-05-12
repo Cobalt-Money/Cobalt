@@ -1,9 +1,7 @@
+import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getChatMessagesForUser, getVotesForChat } from "@cobalt-web/server-data/chat/queries";
-import {
-  chatDetailResponseSchema,
-  chatErrorResponseSchema,
-  chatIdParamSchema,
-} from "@cobalt-web/server-data/chat/schemas";
+import { chatDetailResponseSchema, chatIdParamSchema } from "@cobalt-web/server-data/chat/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -19,9 +17,10 @@ const route = createRoute({
   request: { params: chatIdParamSchema },
   responses: {
     200: jsonContent(chatDetailResponseSchema, "Chat detail"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     404: jsonContent(chatDetailResponseSchema, "Not found — empty messages"),
     422: validationErrorResponse(chatIdParamSchema),
-    500: jsonContent(chatErrorResponseSchema, "Server error"),
   },
   summary: "Get chat messages",
   tags: ["Chat"],
@@ -37,7 +36,12 @@ export const chatDetailRouter = createApp().openapi(route, async (c) => {
       getVotesForChat(userId, chatId),
     ]);
     return c.json({ id: chatId, messages, votes }, 200);
-  } catch {
-    return c.json({ id: chatId, messages: [], votes: {} }, 404);
+  } catch (error) {
+    // Preserve legacy client behavior: missing/unowned chat → 404 with empty envelope.
+    // Other errors bubble to the central onError handler.
+    if (error instanceof ApiError && error.code === "chat_not_found") {
+      return c.json({ id: chatId, messages: [], votes: {} }, 404);
+    }
+    throw error;
   }
 });

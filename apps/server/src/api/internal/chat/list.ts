@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getChatsByUserId } from "@cobalt-web/server-data/chat/queries";
 import { conversationListResponseSchema } from "@cobalt-web/server-data/chat/schemas";
 import { createRoute } from "@hono/zod-openapi";
@@ -13,6 +14,8 @@ const route = createRoute({
   path: "/list",
   responses: {
     200: jsonContent(conversationListResponseSchema, "Chat list"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
   },
   summary: "List chats",
   tags: ["Chat"],

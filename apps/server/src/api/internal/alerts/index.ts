@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getActiveAlerts } from "@cobalt-web/server-data/alerts/queries";
 import { alertListResponseSchema } from "@cobalt-web/server-data/alerts/schemas";
 import { createRoute } from "@hono/zod-openapi";
@@ -12,6 +13,7 @@ const list = createRoute({
   path: "/",
   responses: {
     200: jsonContent(alertListResponseSchema, "Active alerts for the signed-in user"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "List active user alerts",
   tags: ["Alerts"],

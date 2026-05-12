@@ -1,5 +1,6 @@
 import { db } from "@cobalt-web/db";
 
+import { ApiError } from "../_shared/api-error.js";
 import { partDbToUi } from "./lib.js";
 import type { ChatMessage, Conversation } from "./schemas.js";
 
@@ -40,7 +41,7 @@ export async function getChatMessagesForUser(
   });
 
   if (!row) {
-    throw new Error("Chat not found or access denied");
+    throw new ApiError(404, "chat_not_found", "Chat not found");
   }
 
   return row.messages.map((msg) => ({

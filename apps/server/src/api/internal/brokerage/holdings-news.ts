@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   holdingsNewsQuerySchema,
   holdingsNewsResponseSchema,
@@ -21,6 +22,8 @@ const route = createRoute({
   request: { query: holdingsNewsQuerySchema },
   responses: {
     200: jsonContent(holdingsNewsResponseSchema, "Holdings-linked news"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     422: validationErrorResponse(holdingsNewsQuerySchema),
   },
   summary: "Get news for holding tickers",

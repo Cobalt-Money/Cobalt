@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { generateConnectionPortal } from "@cobalt-web/server-data/providers/snaptrade/auth/actions";
 import {
   connectionPortalResponseSchema,
@@ -22,7 +23,9 @@ const route = createRoute({
   },
   responses: {
     200: jsonContent(connectionPortalResponseSchema, "Connection portal URL"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     422: validationErrorResponse(generatePortalQuerySchema),
+    502: jsonContent(errorResponseWithCodeSchema, "SnapTrade upstream failed"),
   },
   summary: "Generate SnapTrade connection portal URL",
   tags: ["SnapTrade"],

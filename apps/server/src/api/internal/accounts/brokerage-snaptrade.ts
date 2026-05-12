@@ -1,10 +1,11 @@
+import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { toBrokerageAccountListItem } from "@cobalt-web/server-data/brokerage/lib";
 import { getBrokerageAccountsByUserId } from "@cobalt-web/server-data/brokerage/queries";
 import {
   brokerageAccountIdParamSchema,
-  disconnectBrokerageAccountResponseSchema,
-  errorResponseSchema,
   brokerageAccountsListResponseSchema,
+  disconnectBrokerageAccountResponseSchema,
 } from "@cobalt-web/server-data/brokerage/schemas";
 import { disconnectBrokerageAccountByUserId } from "@cobalt-web/server-data/providers/snaptrade/disconnect";
 import { userHasActiveSubscription } from "@cobalt-web/server-data/subscriptions";
@@ -22,6 +23,7 @@ const listRoute = createRoute({
   path: "/brokerage",
   responses: {
     200: jsonContent(brokerageAccountsListResponseSchema, "Brokerage accounts"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "List SnapTrade brokerage accounts",
   tags: ["Accounts"],
@@ -36,8 +38,12 @@ const deleteRoute = createRoute({
   request: { params: brokerageAccountIdParamSchema },
   responses: {
     200: jsonContent(disconnectBrokerageAccountResponseSchema, "Disconnect result"),
-    403: jsonContent(errorResponseSchema, "Subscription required"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Brokerage account not found"),
+    409: jsonContent(errorResponseWithCodeSchema, "Account is not a SnapTrade brokerage"),
     422: validationErrorResponse(brokerageAccountIdParamSchema),
+    502: jsonContent(errorResponseWithCodeSchema, "SnapTrade upstream failure"),
   },
   summary: "Disconnect SnapTrade brokerage account",
   tags: ["Accounts"],
@@ -53,7 +59,7 @@ export const brokerageSnaptradeRouter = createApp()
   .openapi(deleteRoute, async (c) => {
     const entitled = await userHasActiveSubscription(c.var.user.id);
     if (!entitled) {
-      return c.json({ error: "Subscription required" }, 403);
+      throw new ApiError(403, "subscription_required", "Subscription required");
     }
 
     const { accountId } = c.req.valid("param");

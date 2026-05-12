@@ -1,6 +1,7 @@
 import { fmpGetChart } from "@cobalt-web/server-data/research/fmp-ticker";
 import type { TimePeriod } from "@cobalt-web/server-data/research/fmp-ticker";
 import { chartQuerySchema, chartResponseSchema } from "@cobalt-web/server-data/research/schemas";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -14,7 +15,10 @@ const route = createRoute({
   request: { query: chartQuerySchema },
   responses: {
     200: jsonContent(chartResponseSchema, "Chart data"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Ticker not found"),
     422: validationErrorResponse(chartQuerySchema),
+    502: jsonContent(errorResponseWithCodeSchema, "FMP upstream failed"),
   },
   summary: "Get price chart data",
   tags: ["Research"],

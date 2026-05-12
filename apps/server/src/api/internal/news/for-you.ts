@@ -6,6 +6,7 @@ import {
   forYouQuerySchema,
   forYouResponseSchema,
 } from "@cobalt-web/server-data/news/for-you/schemas";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -19,6 +20,8 @@ const route = createRoute({
   request: { query: forYouQuerySchema },
   responses: {
     200: jsonContent(forYouResponseSchema, "Personalized financial events based on user holdings"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     422: validationErrorResponse(forYouQuerySchema),
   },
   summary: "Get personalized financial events",

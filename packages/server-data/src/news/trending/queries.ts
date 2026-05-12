@@ -1,4 +1,5 @@
 import { formatPublishDate, getCleanSourceName, getNewsSourceLogo } from "../lib.js";
+import { withStockNewsUpstream } from "../upstream-errors.js";
 import type { TrendingHeadline } from "./schemas.js";
 import { stockNewsAPI } from "./stock-news-api.js";
 
@@ -11,12 +12,14 @@ export const getTrendingHeadlines = async (
 ): Promise<TrendingHeadline[]> => {
   const tickerString = userTickers.join(",");
 
-  const response = await stockNewsAPI.getAlerts({
-    category: "ticker",
-    items: limit,
-    page: 1,
-    tickers: tickerString,
-  });
+  const response = await withStockNewsUpstream(() =>
+    stockNewsAPI.getAlerts({
+      category: "ticker",
+      items: limit,
+      page: 1,
+      tickers: tickerString,
+    }),
+  );
 
   return response.data.map((article, index) => ({
     id: `trending-${Date.now()}-${index}`,

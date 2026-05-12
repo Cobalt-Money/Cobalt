@@ -1,4 +1,5 @@
 import { auth } from "@cobalt-web/auth";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { deleteAccountResponseSchema, deleteUserAccount } from "@cobalt-web/server-data/user";
 import { createRoute } from "@hono/zod-openapi";
 
@@ -13,6 +14,8 @@ const route = createRoute({
   path: "/deleteAccount",
   responses: {
     200: jsonContent(deleteAccountResponseSchema, "Account deleted"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    500: jsonContent(errorResponseWithCodeSchema, "Account deletion failed"),
   },
   summary: "Delete user account",
   tags: ["User"],

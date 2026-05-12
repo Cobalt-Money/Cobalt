@@ -1,4 +1,5 @@
 import { env } from "@cobalt-web/env/server";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   billingPortalResponseSchema,
   createBillingPortalSession,
@@ -16,6 +17,9 @@ const route = createRoute({
   path: "/billingPortal",
   responses: {
     200: jsonContent(billingPortalResponseSchema, "Billing portal URL"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    409: jsonContent(errorResponseWithCodeSchema, "User has no Stripe customer"),
+    502: jsonContent(errorResponseWithCodeSchema, "Stripe upstream failed"),
   },
   summary: "Create billing portal session",
   tags: ["Subscriptions"],

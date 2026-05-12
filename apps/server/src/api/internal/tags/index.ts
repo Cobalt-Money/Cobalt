@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   bulkApplyTags,
   createTag,
@@ -27,6 +28,8 @@ const listTagsRoute = createRoute({
   path: "/",
   responses: {
     200: jsonContent(tagsListResponseSchema, "User's tags"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
   },
   summary: "List tags",
   tags: ["Tags"],
@@ -44,6 +47,8 @@ const createTagRoute = createRoute({
   },
   responses: {
     201: jsonContent(createTagResponseSchema, "Tag created"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     422: validationErrorResponse(createTagBodySchema),
   },
   summary: "Create tag",
@@ -61,6 +66,9 @@ const updateTagRoute = createRoute({
   },
   responses: {
     200: jsonContent(tagSuccessResponse, "Tag updated"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Tag not found"),
     422: validationErrorResponse(updateTagBodySchema),
   },
   summary: "Update tag",
@@ -75,6 +83,9 @@ const deleteTagRoute = createRoute({
   request: { params: tagIdParamSchema },
   responses: {
     200: jsonContent(tagSuccessResponse, "Tag deleted"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Tag not found"),
     422: validationErrorResponse(tagIdParamSchema),
   },
   summary: "Delete tag",
@@ -99,6 +110,9 @@ const bulkApplyRoute = createRoute({
       }),
       "Bulk apply complete",
     ),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "One or more tags not found"),
     422: validationErrorResponse(bulkApplyTagsBodySchema),
   },
   summary: "Bulk apply tags",

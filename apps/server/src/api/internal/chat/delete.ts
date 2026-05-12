@@ -1,9 +1,6 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { deleteChat } from "@cobalt-web/server-data/chat/mutations";
-import {
-  chatDeleteResponseSchema,
-  chatErrorResponseSchema,
-  chatIdParamSchema,
-} from "@cobalt-web/server-data/chat/schemas";
+import { chatDeleteResponseSchema, chatIdParamSchema } from "@cobalt-web/server-data/chat/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -19,7 +16,9 @@ const route = createRoute({
   request: { params: chatIdParamSchema },
   responses: {
     200: jsonContent(chatDeleteResponseSchema, "Chat deleted"),
-    404: jsonContent(chatErrorResponseSchema, "Chat not found or not owned by the caller"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Chat not found"),
     422: validationErrorResponse(chatIdParamSchema),
   },
   summary: "Delete chat",
@@ -30,9 +29,6 @@ export const chatDeleteRouter = createApp().openapi(route, async (c) => {
   const { chatId } = c.req.valid("param");
   const userId = c.var.user.id;
 
-  const deleted = await deleteChat(userId, chatId);
-  if (!deleted) {
-    return c.json({ error: "Chat not found" }, 404);
-  }
+  await deleteChat(userId, chatId);
   return c.json({ chatId, success: true }, 200);
 });

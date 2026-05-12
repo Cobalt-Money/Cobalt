@@ -4,6 +4,7 @@ import {
   trendingQuerySchema,
   trendingResponseSchema,
 } from "@cobalt-web/server-data/news/trending/schemas";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -17,7 +18,10 @@ const route = createRoute({
   request: { query: trendingQuerySchema },
   responses: {
     200: jsonContent(trendingResponseSchema, "Trending headlines based on user holdings"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     422: validationErrorResponse(trendingQuerySchema),
+    502: jsonContent(errorResponseWithCodeSchema, "Stock News upstream failed"),
   },
   summary: "Trending headlines",
   tags: ["News"],

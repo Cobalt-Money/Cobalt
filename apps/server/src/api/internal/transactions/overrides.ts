@@ -1,3 +1,5 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { assertCategoryOwned } from "@cobalt-web/server-data/transactions/errors";
 import { patchTransaction } from "@cobalt-web/server-data/transactions/mutations";
 import {
   successResponse,
@@ -29,6 +31,9 @@ const patchTransactionRoute = createRoute({
   },
   responses: {
     200: jsonContent(successResponse, "Transaction updated"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Transaction, category, or tag not found"),
     422: validationErrorResponse(transactionPatchBodySchema),
   },
   summary: "Update a transaction",
@@ -43,6 +48,9 @@ const getTransactionTagsRoute = createRoute({
   request: { params: transactionIdParamSchema },
   responses: {
     200: jsonContent(z.object({ tagIds: z.array(z.uuid()) }), "Tag ids on this transaction"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Transaction not found"),
     422: validationErrorResponse(transactionIdParamSchema),
   },
   summary: "List tags on a transaction",
@@ -53,6 +61,9 @@ export const overridesRouter = createApp()
   .openapi(patchTransactionRoute, async (c) => {
     const { transactionId } = c.req.valid("param");
     const body = c.req.valid("json");
+    if (body.categoryId) {
+      await assertCategoryOwned(body.categoryId, c.var.user.id);
+    }
     await patchTransaction(transactionId, c.var.user.id, body);
     return c.json({ success: true }, 200);
   })

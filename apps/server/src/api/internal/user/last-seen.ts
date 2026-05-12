@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   getUserLastSeen,
   lastSeenResponseSchema,
@@ -17,6 +18,7 @@ const getRoute = createRoute({
   path: "/lastSeen",
   responses: {
     200: jsonContent(lastSeenResponseSchema, "Last seen status"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Get last seen",
   tags: ["User"],
@@ -30,6 +32,7 @@ const postRoute = createRoute({
   path: "/lastSeen",
   responses: {
     200: jsonContent(lastSeenResponseSchema, "Last seen updated"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Update last seen",
   tags: ["User"],

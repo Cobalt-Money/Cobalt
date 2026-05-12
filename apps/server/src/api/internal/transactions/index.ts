@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { activityRouter } from "./activity.js";
+import { detailRouter } from "./detail.js";
 import { spendingRouter } from "./spending.js";
 import { geocodeRouter } from "./geocode.js";
 import { listRouter } from "./list.js";
@@ -14,4 +15,5 @@ export const transactionsRouter = new OpenAPIHono()
   .route("/", spendingRouter)
   .route("/", overridesRouter)
   .route("/", activityRouter)
-  .route("/", geocodeRouter);
+  .route("/", geocodeRouter)
+  .route("/", detailRouter);

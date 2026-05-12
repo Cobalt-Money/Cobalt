@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { disconnectBankConnection } from "@cobalt-web/server-data/accounts/mutations";
 import { getBankAccountById, getBankAccounts } from "@cobalt-web/server-data/accounts/queries";
 import {
@@ -19,6 +20,7 @@ const list = createRoute({
   path: "/",
   responses: {
     200: jsonContent(bankAccountListResponseSchema, "List of bank accounts"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "List bank accounts",
   tags: ["Accounts"],
@@ -31,7 +33,8 @@ const detail = createRoute({
   request: { params: accountIdParamSchema },
   responses: {
     200: jsonContent(bankAccountDetailResponseSchema, "Bank account details"),
-    404: { description: "Account not found" },
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Account not found"),
     422: validationErrorResponse(accountIdParamSchema),
   },
   summary: "Get bank account details",
@@ -45,6 +48,9 @@ const disconnect = createRoute({
   request: { params: accountIdParamSchema },
   responses: {
     200: jsonContent(successResponseSchema, "Account disconnected"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Account not found"),
+    409: jsonContent(errorResponseWithCodeSchema, "Plaid connection in invalid state"),
     422: validationErrorResponse(accountIdParamSchema),
   },
   summary: "Disconnect bank account",
@@ -60,16 +66,14 @@ const bankAccountsRouter = createApp()
   .openapi(detail, async (c) => {
     const { id } = c.req.valid("param");
     const account = await getBankAccountById(c.var.user.id, id);
-    if (!account) {
-      return c.json({ error: "Account not found" }, 404);
-    }
     c.header("Cache-Control", "private, max-age=60");
     return c.json(account, 200);
   })
   .openapi(disconnect, async (c) => {
     const { id } = c.req.valid("param");
     const result = await disconnectBankConnection(c.var.user.id, id);
-    if (result.success && result.accessToken) {
+    if (result.accessToken) {
+      // Best-effort upstream cleanup; failure here doesn't undo local disconnect.
       try {
         await removeItem(result.accessToken);
       } catch (error) {

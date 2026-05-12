@@ -1,5 +1,6 @@
 import { searchTickers } from "@cobalt-web/server-data/tickers/queries";
 import { tickerSearchResponseSchema } from "@cobalt-web/server-data/tickers/schemas";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -12,6 +13,7 @@ const route = createRoute({
   path: "/search",
   responses: {
     200: jsonContent(tickerSearchResponseSchema, "All cached tickers for client-side search"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Search tickers (cached NASDAQ + NYSE list)",
   tags: ["Research"],

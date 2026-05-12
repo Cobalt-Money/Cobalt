@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getBalancesByUserId } from "@cobalt-web/server-data/brokerage/queries";
 import { balancesResponseSchema } from "@cobalt-web/server-data/brokerage/schemas";
 import { createRoute } from "@hono/zod-openapi";
@@ -12,6 +13,8 @@ const route = createRoute({
   path: "/balances",
   responses: {
     200: jsonContent(balancesResponseSchema, "Account balances"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
   },
   summary: "Get brokerage balances",
   tags: ["Brokerage"],
