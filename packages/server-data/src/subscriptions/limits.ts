@@ -11,32 +11,20 @@ export const MODELS = {
 export type ModelSlug = (typeof MODELS)[keyof typeof MODELS];
 
 export interface TierLimits {
-  readonly analystMode: boolean;
   readonly connections: number;
-  readonly csvExport: boolean;
-  readonly documents: number;
   readonly extendedThinking: boolean;
-  readonly mcpEnabled: boolean;
   readonly models: readonly ModelSlug[];
 }
 
 export const FREE_LIMITS: TierLimits = {
-  analystMode: false,
   connections: 1,
-  csvExport: false,
-  documents: 5,
   extendedThinking: false,
-  mcpEnabled: true,
   models: [MODELS.haiku],
 };
 
 export const PRO_LIMITS: TierLimits = {
-  analystMode: true,
   connections: Number.POSITIVE_INFINITY,
-  csvExport: true,
-  documents: Number.POSITIVE_INFINITY,
   extendedThinking: true,
-  mcpEnabled: true,
   models: [MODELS.haiku, MODELS.sonnet, MODELS.opus],
 };
 

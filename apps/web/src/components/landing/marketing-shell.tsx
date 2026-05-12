@@ -31,19 +31,19 @@ export function MarketingNav() {
           Cobalt
         </Link>
         <div className="flex items-center gap-6">
-          <nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex">
+          <nav className="hidden items-center gap-6 text-muted-foreground text-sm sm:flex">
             <a className="transition-colors hover:text-foreground" href="/#features">
               Features
             </a>
-            <a className="transition-colors hover:text-foreground" href="/pricing">
+            <Link className="transition-colors hover:text-foreground" to="/pricing">
               Pricing
-            </a>
-            <a className="transition-colors hover:text-foreground" href="/privacy">
+            </Link>
+            <Link className="transition-colors hover:text-foreground" to="/privacy">
               Privacy
-            </a>
-            <a className="transition-colors hover:text-foreground" href="/terms">
+            </Link>
+            <Link className="transition-colors hover:text-foreground" to="/terms">
               Terms
-            </a>
+            </Link>
           </nav>
           <div className="flex items-center gap-2">
             <Button onClick={() => setTheme(isDark ? "light" : "dark")} size="icon" variant="ghost">

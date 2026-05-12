@@ -81,11 +81,7 @@ describe("subscription tier limits", () => {
     it("FREE_LIMITS exposes only Haiku and blocks every paid capability", () => {
       expect(FREE_LIMITS.models).toStrictEqual(["anthropic/claude-haiku-4.5"]);
       expect(FREE_LIMITS.extendedThinking).toBeFalsy();
-      expect(FREE_LIMITS.analystMode).toBeFalsy();
-      expect(FREE_LIMITS.mcpEnabled).toBeTruthy();
-      expect(FREE_LIMITS.csvExport).toBeFalsy();
       expect(FREE_LIMITS.connections).toBe(1);
-      expect(FREE_LIMITS.documents).toBe(5);
     });
 
     it("PRO_LIMITS exposes Haiku + Sonnet + Opus and unlocks every capability", () => {
@@ -95,11 +91,7 @@ describe("subscription tier limits", () => {
         "anthropic/claude-opus-4.7",
       ]);
       expect(PRO_LIMITS.extendedThinking).toBeTruthy();
-      expect(PRO_LIMITS.analystMode).toBeTruthy();
-      expect(PRO_LIMITS.mcpEnabled).toBeTruthy();
-      expect(PRO_LIMITS.csvExport).toBeTruthy();
       expect(PRO_LIMITS.connections).toBe(Number.POSITIVE_INFINITY);
-      expect(PRO_LIMITS.documents).toBe(Number.POSITIVE_INFINITY);
     });
 
     it("free user is gated to Haiku at runtime", async () => {
