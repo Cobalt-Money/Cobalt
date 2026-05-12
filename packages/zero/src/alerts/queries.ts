@@ -12,14 +12,10 @@ export const alertsQueries = {
    * `user_alerts_dedup_idx` keeps duplicate webhooks from spawning extra
    * rows here.
    */
-  active: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.userAlerts.where("id", NO_MATCH_ID);
-    }
-    return zql.userAlerts
-      .where("userId", userId)
+  active: defineQuery(({ ctx }: { ctx: Context }) =>
+    zql.userAlerts
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
       .where("resolvedAt", "IS", null)
-      .orderBy("createdAt", "desc");
-  }),
+      .orderBy("createdAt", "desc"),
+  ),
 };

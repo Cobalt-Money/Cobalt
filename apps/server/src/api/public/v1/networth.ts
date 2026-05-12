@@ -1,8 +1,10 @@
 import { getBankAccounts, getCreditCards } from "@cobalt-web/server-data/accounts/queries";
 import { getPortfolioSnapshotsByUserId } from "@cobalt-web/server-data/brokerage/queries";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
+
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 
 const networthResponseSchema = z.object({
   asOf: z.string().nullable(),
@@ -35,10 +37,8 @@ const networthRoute = createRoute({
   path: "/",
   request: { query: querySchema },
   responses: {
-    200: {
-      content: { "application/json": { schema: networthResponseSchema } },
-      description: "Net worth totals and history",
-    },
+    200: jsonContent(networthResponseSchema, "Net worth totals and history"),
+    422: validationErrorResponse(querySchema),
   },
   summary: "Get net worth",
   tags: ["Net Worth"],
@@ -158,7 +158,7 @@ function buildHistory(bank: BankSnap[], port: PortSnap[]): { date: string; value
   return series;
 }
 
-export const networthRouter = new OpenAPIHono<AppEnv>().openapi(networthRoute, async (c) => {
+export const networthRouter = createApp().openapi(networthRoute, async (c) => {
   const userId = c.var.user.id;
   const { range } = c.req.valid("query");
   const startDate = rangeStart(range);

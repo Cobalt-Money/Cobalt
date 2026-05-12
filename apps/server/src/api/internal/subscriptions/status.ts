@@ -1,10 +1,12 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   subscriptionStatusResponseSchema,
   userSubscriptionSource,
 } from "@cobalt-web/server-data/subscriptions";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent } from "../../../lib/openapi-helpers.js";
 import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
@@ -13,18 +15,14 @@ const route = createRoute({
   middleware: [requireAuth] as const,
   path: "/",
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: subscriptionStatusResponseSchema },
-      },
-      description: "Subscription status",
-    },
+    200: jsonContent(subscriptionStatusResponseSchema, "Subscription status"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Get subscription status",
   tags: ["Subscriptions"],
 });
 
-export const statusRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+export const statusRouter = createApp().openapi(route, async (c) => {
   const source = await userSubscriptionSource(c.var.user.id);
   c.header("Cache-Control", "private, no-store");
   return c.json(

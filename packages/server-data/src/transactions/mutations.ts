@@ -5,6 +5,7 @@ import type { LocationJson } from "@cobalt-web/db/schema/accounts/banking/transa
 import { eq } from "drizzle-orm";
 import type { z } from "zod";
 
+import { ApiError } from "./errors.js";
 import { normalizeWebsite } from "./lib.js";
 import type { transactionPatchBodySchema } from "./schemas.js";
 import { setTransactionTags } from "./tags/mutations.js";
@@ -154,11 +155,11 @@ export async function patchTransaction(
         region: true,
         storeNumber: true,
       },
-      where: { id: { eq: transactionId } },
+      where: { id: { eq: transactionId }, userId: { eq: userId } },
     });
 
     if (!current) {
-      return;
+      throw new ApiError(404, "transaction_not_found", "Transaction not found");
     }
 
     const ctx: FieldEditContext = {

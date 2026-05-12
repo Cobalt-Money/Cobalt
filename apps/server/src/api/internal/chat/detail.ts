@@ -1,12 +1,11 @@
+import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getChatMessagesForUser, getVotesForChat } from "@cobalt-web/server-data/chat/queries";
-import {
-  chatDetailResponseSchema,
-  chatErrorResponseSchema,
-  chatIdParamSchema,
-} from "@cobalt-web/server-data/chat/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { chatDetailResponseSchema, chatIdParamSchema } from "@cobalt-web/server-data/chat/schemas";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
@@ -17,30 +16,17 @@ const route = createRoute({
   path: "/{chatId}",
   request: { params: chatIdParamSchema },
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: chatDetailResponseSchema },
-      },
-      description: "Chat detail",
-    },
-    404: {
-      content: {
-        "application/json": { schema: chatDetailResponseSchema },
-      },
-      description: "Not found — empty messages",
-    },
-    500: {
-      content: {
-        "application/json": { schema: chatErrorResponseSchema },
-      },
-      description: "Server error",
-    },
+    200: jsonContent(chatDetailResponseSchema, "Chat detail"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(chatDetailResponseSchema, "Not found — empty messages"),
+    422: validationErrorResponse(chatIdParamSchema),
   },
   summary: "Get chat messages",
   tags: ["Chat"],
 });
 
-export const chatDetailRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+export const chatDetailRouter = createApp().openapi(route, async (c) => {
   const { chatId } = c.req.valid("param");
   const userId = c.var.user.id;
 
@@ -50,7 +36,12 @@ export const chatDetailRouter = new OpenAPIHono<AppEnv>().openapi(route, async (
       getVotesForChat(userId, chatId),
     ]);
     return c.json({ id: chatId, messages, votes }, 200);
-  } catch {
-    return c.json({ id: chatId, messages: [], votes: {} }, 404);
+  } catch (error) {
+    // Preserve legacy client behavior: missing/unowned chat → 404 with empty envelope.
+    // Other errors bubble to the central onError handler.
+    if (error instanceof ApiError && error.code === "chat_not_found") {
+      return c.json({ id: chatId, messages: [], votes: {} }, 404);
+    }
+    throw error;
   }
 });

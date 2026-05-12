@@ -1,3 +1,5 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { assertCategoryOwned } from "@cobalt-web/server-data/transactions/errors";
 import { patchTransaction } from "@cobalt-web/server-data/transactions/mutations";
 import {
   successResponse,
@@ -5,9 +7,10 @@ import {
   transactionPatchBodySchema,
 } from "@cobalt-web/server-data/transactions/schemas";
 import { getTagIdsForTransaction } from "@cobalt-web/server-data/transactions/tags/queries";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const patchTransactionRoute = createRoute({
@@ -27,10 +30,11 @@ const patchTransactionRoute = createRoute({
     params: transactionIdParamSchema,
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: successResponse } },
-      description: "Transaction updated",
-    },
+    200: jsonContent(successResponse, "Transaction updated"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Transaction, category, or tag not found"),
+    422: validationErrorResponse(transactionPatchBodySchema),
   },
   summary: "Update a transaction",
   tags: ["Transactions"],
@@ -43,23 +47,23 @@ const getTransactionTagsRoute = createRoute({
   path: "/{transactionId}/tags",
   request: { params: transactionIdParamSchema },
   responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: z.object({ tagIds: z.array(z.uuid()) }),
-        },
-      },
-      description: "Tag ids on this transaction",
-    },
+    200: jsonContent(z.object({ tagIds: z.array(z.uuid()) }), "Tag ids on this transaction"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Transaction not found"),
+    422: validationErrorResponse(transactionIdParamSchema),
   },
   summary: "List tags on a transaction",
   tags: ["Transactions"],
 });
 
-export const overridesRouter = new OpenAPIHono<AppEnv>()
+export const overridesRouter = createApp()
   .openapi(patchTransactionRoute, async (c) => {
     const { transactionId } = c.req.valid("param");
     const body = c.req.valid("json");
+    if (body.categoryId) {
+      await assertCategoryOwned(body.categoryId, c.var.user.id);
+    }
     await patchTransaction(transactionId, c.var.user.id, body);
     return c.json({ success: true }, 200);
   })

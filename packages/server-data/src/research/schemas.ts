@@ -1,13 +1,11 @@
 import { z } from "@hono/zod-openapi";
 
+export { errorResponseSchema } from "../_shared/schemas.js";
+
 // ── Shared ─────────────────────────────────────────────────────────
 
 export const symbolQuerySchema = z.object({
   symbol: z.string().min(1).openapi({ example: "AAPL" }),
-});
-
-export const errorResponseSchema = z.object({
-  error: z.string(),
 });
 
 // ── Quote ──────────────────────────────────────────────────────────

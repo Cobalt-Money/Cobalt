@@ -1,12 +1,13 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
 import {
   balanceSnapshotListResponseSchema,
   balanceSnapshotQuerySchema,
-  errorResponseSchema,
 } from "@cobalt-web/server-data/snapshots/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requireAuth } from "../middleware.js";
 
 const getBalanceSnapshots = createRoute({
@@ -15,30 +16,19 @@ const getBalanceSnapshots = createRoute({
   path: "/balance-snapshots",
   request: { query: balanceSnapshotQuerySchema },
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: balanceSnapshotListResponseSchema },
-      },
-      description: "Balance snapshots",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
+    200: jsonContent(balanceSnapshotListResponseSchema, "Balance snapshots"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    422: validationErrorResponse(balanceSnapshotQuerySchema),
   },
   summary: "Get balance snapshots",
   tags: ["Plaid"],
 });
 
-const balanceSnapshotsRouter = new OpenAPIHono<AppEnv>().openapi(getBalanceSnapshots, async (c) => {
-  try {
-    const query = c.req.valid("query");
-    const snapshots = await getBalanceSnapshotsByUserId(c.var.user.id, query);
-    c.header("Cache-Control", "private, max-age=86400");
-    return c.json({ snapshots }, 200);
-  } catch {
-    return c.json({ error: "Failed to fetch balance snapshots" }, 500);
-  }
+const balanceSnapshotsRouter = createApp().openapi(getBalanceSnapshots, async (c) => {
+  const query = c.req.valid("query");
+  const snapshots = await getBalanceSnapshotsByUserId(c.var.user.id, query);
+  c.header("Cache-Control", "private, max-age=86400");
+  return c.json({ snapshots }, 200);
 });
 
 export { balanceSnapshotsRouter };

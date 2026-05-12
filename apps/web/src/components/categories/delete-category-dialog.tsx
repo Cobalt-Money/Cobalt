@@ -11,13 +11,14 @@ import { Button } from "@cobalt-web/ui/components/button";
 import { Delete02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
+import type { ManageCategoriesCat } from "@cobalt-web/ui/cobalt/transactions/categories/manage-categories-form";
+
 import { useDeleteCategory } from "@/hooks/use-categories";
-import type { CategoryRow } from "@/hooks/use-categories";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  category: CategoryRow | null;
+  category: ManageCategoriesCat | null;
 }
 
 export function DeleteCategoryDialog({ open, onOpenChange, category }: Props) {

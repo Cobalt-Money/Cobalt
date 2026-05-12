@@ -1,17 +1,14 @@
 import { db } from "@cobalt-web/db";
 import type { TagColor } from "@cobalt-web/db/tag-palette";
 
+import { ApiError } from "../errors.js";
 import type { TagDto } from "./schemas.js";
 
-interface TagRowWithCount {
-  archivedAt: Date | null;
-  color: string;
-  createdAt: Date;
-  id: string;
-  name: string;
-  updatedAt: Date;
-  transactionTags: { tagId: string }[];
-}
+type TagRowWithCount = Awaited<
+  ReturnType<
+    typeof db.query.tag.findMany<{ with: { transactionTags: { columns: { tagId: true } } } }>
+  >
+>[number];
 
 function toDto(row: TagRowWithCount): TagDto {
   return {
@@ -57,7 +54,7 @@ export async function getTagIdsForTransaction(
     where: { id: { eq: transactionId }, userId: { eq: userId } },
   });
   if (!txn) {
-    return [];
+    throw new ApiError(404, "transaction_not_found", "Transaction not found");
   }
   const rows = await db.query.transactionTag.findMany({
     columns: { tagId: true },

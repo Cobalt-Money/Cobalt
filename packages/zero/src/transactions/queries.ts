@@ -26,44 +26,27 @@ const listArgsSchema = z
 
 /** Transaction-related named queries (`queries.transactions.*`). Composed in root `queries.ts`. */
 export const transactionsQueries = {
-  activity: defineQuery(z.object({ transactionId: z.string() }), ({ ctx, args }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.transactionEdit.where("id", NO_MATCH_ID);
-    }
-    return zql.transactionEdit
+  activity: defineQuery(z.object({ transactionId: z.string() }), ({ ctx, args }) =>
+    zql.transactionEdit
       .where("transactionId", args.transactionId)
-      .where("userId", userId)
-      .orderBy("createdAt", "asc");
-  }),
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
+      .orderBy("createdAt", "asc"),
+  ),
 
-  list: defineQuery(listArgsSchema, ({ ctx, args }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.transaction.where("id", NO_MATCH_ID);
-    }
-    return transactionsForUser(userId, args ?? {});
-  }),
+  list: defineQuery(listArgsSchema, ({ ctx, args }) =>
+    transactionsForUser(ctx?.userId ?? NO_MATCH_ID, args ?? {}),
+  ),
 
-  recurring: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.recurring.where("id", NO_MATCH_ID);
-    }
-    return recurringForUser(userId);
-  }),
+  recurring: defineQuery(({ ctx }: { ctx: Context }) =>
+    recurringForUser(ctx?.userId ?? NO_MATCH_ID),
+  ),
 
   spending: defineQuery(
     z.object({
       accountType: z.enum(["credit", "depository", "all"]).default("all"),
       period: z.enum(["1w", "1m", "3m", "6m", "1y", "all"]),
     }),
-    ({ ctx, args }) => {
-      const userId = ctx?.userId;
-      if (!userId) {
-        return zql.transaction.where("id", NO_MATCH_ID);
-      }
-      return spendingTransactionsForUser(userId, args.period, args.accountType);
-    },
+    ({ ctx, args }) =>
+      spendingTransactionsForUser(ctx?.userId ?? NO_MATCH_ID, args.period, args.accountType),
   ),
 };

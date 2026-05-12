@@ -65,9 +65,10 @@ export function useChatSearch(trimmedSearch: string, enabled: boolean) {
     { enabled },
   );
 
+  const typedRows: ChatSearchRow[] = chatRows;
   const filteredChats = useMemo<ChatSearchRow[]>(
-    () => (enabled ? (chatRows as unknown as ChatSearchRow[]) : []),
-    [enabled, chatRows],
+    () => (enabled ? typedRows : []),
+    [enabled, typedRows],
   );
 
   const prefetchedRef = useRef<Set<string>>(new Set());

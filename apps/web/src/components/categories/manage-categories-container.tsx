@@ -13,7 +13,6 @@ import {
   useUpdateCategory,
   useUpdateGroup,
 } from "@/hooks/use-categories";
-import type { CategoryRow, GroupRow } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 
 import { CategoryFormDialog } from "./category-form-dialog";
@@ -25,10 +24,10 @@ import { HideCategoryDialog } from "./hide-category-dialog";
 
 interface SubDialogState {
   catForm: { open: boolean; initial: CategoryFormInitial | null };
-  groupForm: { open: boolean; initial: GroupRow | null };
-  deleteCat: CategoryRow | null;
-  deleteGroup: GroupRow | null;
-  hideCat: CategoryRow | null;
+  groupForm: { open: boolean; initial: ManageCategoriesGroup | null };
+  deleteCat: ManageCategoriesCat | null;
+  deleteGroup: ManageCategoriesGroup | null;
+  hideCat: ManageCategoriesCat | null;
 }
 
 const INITIAL_SUB: SubDialogState = {
@@ -52,7 +51,7 @@ export function useManageCategoriesProps() {
   const [sub, setSub] = useState<SubDialogState>(INITIAL_SUB);
 
   const sortedGroups = useMemo<readonly ManageCategoriesGroup[]>(
-    () => [...groups].toSorted((a, b) => a.order - b.order),
+    () => [...groups].toSorted((a, b) => (a.order ?? 0) - (b.order ?? 0)),
     [groups],
   );
 
@@ -76,7 +75,7 @@ export function useManageCategoriesProps() {
       map.set(c.groupId, arr);
     }
     for (const arr of map.values()) {
-      arr.sort((a, b) => a.order - b.order);
+      arr.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     }
     return map as ReadonlyMap<string, readonly ManageCategoriesCat[]>;
   }, [categories]);
@@ -91,10 +90,8 @@ export function useManageCategoriesProps() {
         catForm: { initial: groupId ? { groupId } : null, open: true },
       })),
     onCreateGroup: () => setSub((s) => ({ ...s, groupForm: { initial: null, open: true } })),
-    onDeleteCategory: (c: ManageCategoriesCat) =>
-      setSub((s) => ({ ...s, deleteCat: c as CategoryRow })),
-    onDeleteGroup: (g: ManageCategoriesGroup) =>
-      setSub((s) => ({ ...s, deleteGroup: g as GroupRow })),
+    onDeleteCategory: (c: ManageCategoriesCat) => setSub((s) => ({ ...s, deleteCat: c })),
+    onDeleteGroup: (g: ManageCategoriesGroup) => setSub((s) => ({ ...s, deleteGroup: g })),
     onMoveCategoryToGroup: (categoryId: string, groupId: string) =>
       updateCat({ categoryId, groupId }),
     onRenameCategory: (categoryId: string, name: string) => updateCat({ categoryId, name }),
@@ -110,7 +107,7 @@ export function useManageCategoriesProps() {
         updateCat({ categoryId: c.id, hidden: false });
         return;
       }
-      setSub((s) => ({ ...s, hideCat: c as CategoryRow }));
+      setSub((s) => ({ ...s, hideCat: c }));
     },
     txCountById,
   };
@@ -118,7 +115,7 @@ export function useManageCategoriesProps() {
   const subDialogs = (
     <>
       <CategoryFormDialog
-        groups={sortedGroups as readonly GroupRow[]}
+        groups={sortedGroups}
         initial={sub.catForm.initial}
         onOpenChange={(open) =>
           setSub((s) => ({

@@ -7,8 +7,10 @@ import {
   transactionListQuerySchema,
   transactionListResponseSchema,
 } from "@cobalt-web/server-data/transactions/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
+
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 
 // NOTE: middleware is intentionally NOT imported here. Auth for the public
 // API is applied at the parent `v1Router` via `.use("/*", requireOAuth)`.
@@ -20,12 +22,8 @@ const listRoute = createRoute({
   path: "/",
   request: { query: transactionListQuerySchema },
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: transactionListResponseSchema },
-      },
-      description: "List of transactions",
-    },
+    200: jsonContent(transactionListResponseSchema, "List of transactions"),
+    422: validationErrorResponse(transactionListQuerySchema),
   },
   summary: "List transactions",
   tags: ["Transactions"],
@@ -36,18 +34,13 @@ const recurringRoute = createRoute({
   method: "get",
   path: "/recurring",
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: recurringStreamsResponseSchema },
-      },
-      description: "Recurring streams",
-    },
+    200: jsonContent(recurringStreamsResponseSchema, "Recurring streams"),
   },
   summary: "List recurring transactions",
   tags: ["Transactions"],
 });
 
-export const transactionsRouter = new OpenAPIHono<AppEnv>()
+export const transactionsRouter = createApp()
   .openapi(listRoute, async (c) => {
     const result = await getUserTransactions(c.var.user.id, c.req.valid("query"));
     c.header("Cache-Control", "private, max-age=60");

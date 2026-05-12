@@ -1,12 +1,13 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { generateConnectionPortal } from "@cobalt-web/server-data/providers/snaptrade/auth/actions";
 import {
   connectionPortalResponseSchema,
-  errorResponseSchema,
   generatePortalQuerySchema,
 } from "@cobalt-web/server-data/providers/snaptrade/auth/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
@@ -21,36 +22,17 @@ const route = createRoute({
     },
   },
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: connectionPortalResponseSchema },
-      },
-      description: "Connection portal URL",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
+    200: jsonContent(connectionPortalResponseSchema, "Connection portal URL"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    422: validationErrorResponse(generatePortalQuerySchema),
+    502: jsonContent(errorResponseWithCodeSchema, "SnapTrade upstream failed"),
   },
   summary: "Generate SnapTrade connection portal URL",
   tags: ["SnapTrade"],
 });
 
-export const generateConnectionPortalRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const { broker, reconnectAuthorizationId } = c.req.valid("json");
-
-    try {
-      const result = await generateConnectionPortal(
-        c.var.user.id,
-        broker,
-        reconnectAuthorizationId,
-      );
-      return c.json(result, 200);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Error generating connection portal";
-      return c.json({ error: message }, 500);
-    }
-  },
-);
+export const generateConnectionPortalRouter = createApp().openapi(route, async (c) => {
+  const { broker, reconnectAuthorizationId } = c.req.valid("json");
+  const result = await generateConnectionPortal(c.var.user.id, broker, reconnectAuthorizationId);
+  return c.json(result, 200);
+});
