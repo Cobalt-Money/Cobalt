@@ -19,23 +19,29 @@ const ANNUAL_PRICE = 70;
 const ANNUAL_EFFECTIVE_MONTHLY = +(ANNUAL_PRICE / 12).toFixed(2);
 
 const freeFeatures = [
-  "1 synced bank or brokerage",
-  "Unlimited manual accounts + transactions",
-  "Full transaction history",
-  "5 document uploads",
-  "AI chat (Claude Haiku 4.5)",
-  "MCP / extensions",
+  "Unlimited manual connections",
+  "AI chat on Claude Haiku 4.5",
+  "Use Cobalt from your favorite AI chatbot",
+  "Curated news, research, and market insights",
 ];
 
 const proFeatures = [
   "Unlimited synced bank + brokerage",
-  "Unlimited document uploads",
   "All AI models (Sonnet, Opus) + extended thinking",
   "Analyst mode (code agent, SQL, charts)",
-  "CSV export + data portability",
-  "Priority email & chat support",
   "Early access to new features",
 ];
+
+function CheckBullet({ label }: { label: string }) {
+  return (
+    <li className="flex items-center gap-3 text-sm">
+      <span className="flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-foreground/15">
+        <HugeiconsIcon className="size-3 text-background" icon={Tick02Icon} strokeWidth={3} />
+      </span>
+      <span>{label}</span>
+    </li>
+  );
+}
 
 function PricingPage() {
   const [yearly, setYearly] = useState(true);
@@ -49,7 +55,7 @@ function PricingPage() {
       const { data, error } = await authClient.subscription.upgrade({
         cancelUrl: `${window.location.origin}/pricing`,
         plan,
-        successUrl: `${window.location.origin}/dashboard`,
+        successUrl: `${window.location.origin}/`,
       });
       if (error) {
         throw new Error(error.message ?? "Failed to start checkout");
@@ -63,36 +69,26 @@ function PricingPage() {
     }
   };
 
-  const proPlan = yearly ? "cobalt-annual" : "cobalt-monthly";
+  const proPlan: "cobalt-monthly" | "cobalt-annual" = yearly ? "cobalt-annual" : "cobalt-monthly";
   const proPrice = yearly ? ANNUAL_EFFECTIVE_MONTHLY : MONTHLY_PRICE;
-  const proPriceLabel = yearly ? "per month, billed yearly" : "per month";
 
   return (
-    <main className="flex h-svh flex-col overflow-auto bg-background no-scrollbar">
+    <main className="flex h-svh flex-col overflow-auto no-scrollbar">
       <MarketingNav />
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-16 px-6 py-20">
-        <h1 className="text-5xl font-semibold tracking-tight sm:text-6xl">Pricing</h1>
+        <h1 className="font-semibold text-5xl tracking-tight sm:text-6xl md:pl-10">Pricing</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-border/40">
           {/* Free */}
           <div className="flex flex-col px-0 md:px-10">
-            <h2 className="text-2xl font-semibold tracking-tight">Free</h2>
-            <p className="mt-2 text-2xl font-medium">$0</p>
+            <h2 className="font-semibold text-2xl tracking-tight">Free</h2>
+            <p className="mt-2 font-medium text-2xl">$0</p>
             <div className="my-6 h-px w-full bg-border/40" />
-            <p className="text-sm text-muted-foreground">Free for everyone</p>
+            <p className="text-muted-foreground text-sm">Free for everyone</p>
             <div className="my-6 h-px w-full bg-border/40" />
             <ul className="flex flex-col gap-4">
               {freeFeatures.map((label) => (
-                <li className="flex items-center gap-3 text-sm" key={label}>
-                  <span className="flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
-                    <HugeiconsIcon
-                      className="size-3 text-muted-foreground"
-                      icon={Tick02Icon}
-                      strokeWidth={3}
-                    />
-                  </span>
-                  <span>{label}</span>
-                </li>
+                <CheckBullet key={label} label={label} />
               ))}
             </ul>
             <div className="mt-10 flex-1" />
@@ -109,21 +105,23 @@ function PricingPage() {
 
           {/* Pro */}
           <div className="mt-12 flex flex-col px-0 md:mt-0 md:px-10">
-            <h2 className="text-2xl font-semibold tracking-tight">Pro</h2>
-            <p className="mt-2 text-2xl font-medium">
+            <h2 className="font-semibold text-2xl tracking-tight">Pro</h2>
+            <p className="mt-2 font-medium text-2xl">
               ${proPrice}{" "}
-              <span className="text-base font-normal text-muted-foreground">{proPriceLabel}</span>
+              <span className="font-normal text-base text-muted-foreground">
+                {yearly ? "per month, billed yearly" : "per month"}
+              </span>
             </p>
             <div className="my-6 h-px w-full bg-border/40" />
             <div className="flex items-center gap-3">
               <Switch checked={yearly} onCheckedChange={setYearly} />
-              <span className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 Billed yearly{yearly ? ` ($${ANNUAL_PRICE}/yr)` : ""}
               </span>
             </div>
             <div className="my-6 h-px w-full bg-border/40" />
             <ul className="flex flex-col gap-4">
-              <li className="flex items-center gap-3 text-sm font-medium">
+              <li className="flex items-center gap-3 font-medium text-sm">
                 <span className="flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
                   <HugeiconsIcon
                     className="size-3 text-primary"
@@ -134,16 +132,7 @@ function PricingPage() {
                 <span>All Free features +</span>
               </li>
               {proFeatures.map((label) => (
-                <li className="flex items-center gap-3 text-sm" key={label}>
-                  <span className="flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
-                    <HugeiconsIcon
-                      className="size-3 text-muted-foreground"
-                      icon={Tick02Icon}
-                      strokeWidth={3}
-                    />
-                  </span>
-                  <span>{label}</span>
-                </li>
+                <CheckBullet key={label} label={label} />
               ))}
             </ul>
             <div className="mt-10 flex-1" />
@@ -168,7 +157,7 @@ function PricingPage() {
           </div>
         </div>
 
-        <p className="max-w-xl text-xs text-muted-foreground">
+        <p className="max-w-xl text-muted-foreground text-xs">
           Bank-level security. Data encrypted at rest with AES-256 and in transit with TLS 1.2+.
         </p>
       </div>
