@@ -10,6 +10,7 @@ import {
   resolveLinkBodySchema,
   successResponseSchema,
 } from "@cobalt-web/server-data/providers/plaid/link/schemas";
+import { userCanAddConnection } from "@cobalt-web/server-data/subscriptions";
 import { createRoute } from "@hono/zod-openapi";
 import { v7 as uuidv7 } from "uuid";
 import { resumeHook, start } from "workflow/api";
@@ -37,6 +38,10 @@ const createLinkTokenRoute = createRoute({
       "Link token minted; workflow parked on hook. Client must echo the Plaid Link outcome via /resolveLink",
     ),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    402: jsonContent(
+      errorResponseWithCodeSchema,
+      "Free-tier connection limit reached — upgrade required",
+    ),
     422: validationErrorResponse(createLinkTokenBodySchema),
     502: jsonContent(errorResponseWithCodeSchema, "Plaid API failed"),
   },
@@ -117,6 +122,18 @@ const linkRouter = createApp()
           200,
         );
       }
+    }
+
+    // Fresh link path adds a new connection to the user's pooled count.
+    // Scenario C above is exempt — update-mode reuses an existing item.
+    if (!(await userCanAddConnection(userId))) {
+      return c.json(
+        {
+          code: "connection_limit_reached",
+          error: "Free tier allows 1 synced connection. Upgrade to Pro for unlimited.",
+        },
+        402,
+      );
     }
 
     // ── Fresh link. ApiError thrown from createLinkToken bubbles to onError
