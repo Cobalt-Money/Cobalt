@@ -1,3 +1,4 @@
+import { expect, describe, it } from "vitest";
 import { AURORA_FALLBACK_BACKGROUND, deriveAuroraThemeFromHex } from "./derive-aurora-theme";
 
 describe(deriveAuroraThemeFromHex, () => {

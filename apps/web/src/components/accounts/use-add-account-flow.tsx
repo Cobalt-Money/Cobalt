@@ -7,6 +7,7 @@ import type { PlaidLinkOnExitMetadata, PlaidLinkOnSuccessMetadata } from "react-
 import { toast } from "sonner";
 
 import { institutionsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
+import { handleTierGateResponse } from "@/lib/upgrade-prompt";
 
 import { useOnboarding } from "./onboarding-context";
 
@@ -164,6 +165,9 @@ export function useAccountLauncher(onDismiss: () => void) {
           json: { institutionId },
         });
         if (!res.ok) {
+          if (await handleTierGateResponse(res)) {
+            return;
+          }
           throw new Error("Failed to start Plaid");
         }
         const data = await res.json();
@@ -204,6 +208,10 @@ export function useAccountLauncher(onDismiss: () => void) {
           json: { broker },
         });
         if (!res.ok) {
+          if (await handleTierGateResponse(res)) {
+            toast.dismiss(loadingId);
+            return;
+          }
           throw new Error("Failed to open portal");
         }
         const { redirectURI } = await res.json();

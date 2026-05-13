@@ -11,6 +11,8 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowDown01Icon, SparklesIcon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
+import { useSubscriptionStatus } from "@/hooks/use-subscription-status";
+
 import { useAgentSettings } from "../state/agent-settings-context";
 import type { AgentEffort } from "../state/agent-settings-context";
 
@@ -18,15 +20,19 @@ interface ModelDef {
   id: string;
   label: string;
   maxEffort: AgentEffort;
+  proOnly: boolean;
   shortLabel: string;
   supportsReasoning: boolean;
 }
+
+const HAIKU_MODEL_ID = "anthropic/claude-haiku-4.5";
 
 const MODELS: ModelDef[] = [
   {
     id: "anthropic/claude-opus-4.7",
     label: "Claude Opus 4.7",
     maxEffort: "max",
+    proOnly: true,
     shortLabel: "Opus 4.7",
     supportsReasoning: true,
   },
@@ -34,13 +40,15 @@ const MODELS: ModelDef[] = [
     id: "anthropic/claude-sonnet-4.6",
     label: "Claude Sonnet 4.6",
     maxEffort: "high",
+    proOnly: true,
     shortLabel: "Sonnet 4.6",
     supportsReasoning: true,
   },
   {
-    id: "anthropic/claude-haiku-4.5",
+    id: HAIKU_MODEL_ID,
     label: "Claude Haiku 4.5",
     maxEffort: "high",
+    proOnly: false,
     shortLabel: "Haiku 4.5",
     supportsReasoning: false,
   },
@@ -62,22 +70,34 @@ const EFFORT_ORDER: Record<AgentEffort, number> = {
 
 function useModelPickerState() {
   const { settings, setSettings } = useAgentSettings();
-  const currentModel = MODELS.find((m) => m.id === settings.model) ?? MODELS[0];
-  const canReason = currentModel?.supportsReasoning ?? false;
+  const { hasActiveSubscription } = useSubscriptionStatus();
+
+  const isModelAllowed = (model: ModelDef) => hasActiveSubscription || !model.proOnly;
+
+  const requestedModel = MODELS.find((m) => m.id === settings.model) ?? MODELS[0];
+  const currentModel =
+    requestedModel && isModelAllowed(requestedModel)
+      ? requestedModel
+      : (MODELS.find((m) => m.id === HAIKU_MODEL_ID) ?? MODELS[0]);
+
+  const canReason = (currentModel?.supportsReasoning ?? false) && hasActiveSubscription;
   const availableEfforts = ALL_EFFORTS.filter(
     (e) => EFFORT_ORDER[e.id] <= EFFORT_ORDER[currentModel?.maxEffort ?? "high"],
   );
 
   const selectModel = (modelId: string) => {
     const model = MODELS.find((m) => m.id === modelId);
+    if (!model || !isModelAllowed(model)) {
+      return;
+    }
     const clampedEffort =
-      model?.supportsReasoning && EFFORT_ORDER[settings.effort] > EFFORT_ORDER[model.maxEffort]
+      model.supportsReasoning && EFFORT_ORDER[settings.effort] > EFFORT_ORDER[model.maxEffort]
         ? model.maxEffort
         : settings.effort;
     setSettings({
       effort: clampedEffort,
       model: modelId,
-      reasoning: model?.supportsReasoning ? settings.reasoning : false,
+      reasoning: model.supportsReasoning && hasActiveSubscription ? settings.reasoning : false,
     });
   };
 
@@ -93,6 +113,8 @@ function useModelPickerState() {
     availableEfforts,
     canReason,
     currentModel,
+    hasActiveSubscription,
+    isModelAllowed,
     selectEffort,
     selectModel,
     settings,
@@ -110,6 +132,8 @@ export function ModelChip({ isStreaming }: ModelPickerProps) {
     availableEfforts,
     canReason,
     currentModel,
+    hasActiveSubscription,
+    isModelAllowed,
     selectEffort,
     selectModel,
     settings,
@@ -139,6 +163,8 @@ export function ModelChip({ isStreaming }: ModelPickerProps) {
         <ModelMenuContents
           availableEfforts={availableEfforts}
           canReason={canReason}
+          hasActiveSubscription={hasActiveSubscription}
+          isModelAllowed={isModelAllowed}
           selectEffort={selectEffort}
           selectModel={selectModel}
           settings={settings}
@@ -155,6 +181,8 @@ export function ModelPicker({ isStreaming }: ModelPickerProps) {
     availableEfforts,
     canReason,
     currentModel,
+    hasActiveSubscription,
+    isModelAllowed,
     selectEffort,
     selectModel,
     settings,
@@ -176,6 +204,8 @@ export function ModelPicker({ isStreaming }: ModelPickerProps) {
           <ModelMenuContents
             availableEfforts={availableEfforts}
             canReason={canReason}
+            hasActiveSubscription={hasActiveSubscription}
+            isModelAllowed={isModelAllowed}
             selectEffort={selectEffort}
             selectModel={selectModel}
             settings={settings}
@@ -212,6 +242,8 @@ export function ModelPicker({ isStreaming }: ModelPickerProps) {
 interface ModelMenuContentsProps {
   availableEfforts: { id: AgentEffort; label: string }[];
   canReason: boolean;
+  hasActiveSubscription: boolean;
+  isModelAllowed: (model: ModelDef) => boolean;
   selectEffort: (effort: AgentEffort) => void;
   selectModel: (id: string) => void;
   settings: ReturnType<typeof useModelPickerState>["settings"];
@@ -221,6 +253,8 @@ interface ModelMenuContentsProps {
 function ModelMenuContents({
   availableEfforts,
   canReason,
+  hasActiveSubscription,
+  isModelAllowed,
   selectEffort,
   selectModel,
   settings,
@@ -230,18 +264,36 @@ function ModelMenuContents({
     <>
       <DropdownMenuGroup>
         <DropdownMenuLabel className="text-xs text-muted-foreground">Model</DropdownMenuLabel>
-        {MODELS.map((m) => (
-          <DropdownMenuItem
-            key={m.id}
-            className="flex items-center justify-between text-sm"
-            onClick={() => selectModel(m.id)}
-          >
-            {m.label}
-            {settings.model === m.id && (
-              <HugeiconsIcon className="size-3.5 text-primary" icon={Tick02Icon} strokeWidth={2} />
-            )}
-          </DropdownMenuItem>
-        ))}
+        {MODELS.map((m) => {
+          const allowed = isModelAllowed(m);
+          return (
+            <DropdownMenuItem
+              key={m.id}
+              className={cn(
+                "flex items-center justify-between text-sm",
+                !allowed && "cursor-not-allowed opacity-50",
+              )}
+              disabled={!allowed}
+              onClick={() => selectModel(m.id)}
+            >
+              <span className="flex items-center gap-2">
+                {m.label}
+                {!allowed && (
+                  <span className="rounded-sm bg-primary/10 px-1 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+                    Pro
+                  </span>
+                )}
+              </span>
+              {settings.model === m.id && (
+                <HugeiconsIcon
+                  className="size-3.5 text-primary"
+                  icon={Tick02Icon}
+                  strokeWidth={2}
+                />
+              )}
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
       <DropdownMenuGroup>
@@ -256,6 +308,11 @@ function ModelMenuContents({
           <span className="flex items-center gap-2">
             <HugeiconsIcon className="size-3.5" icon={SparklesIcon} strokeWidth={2} />
             Extended thinking
+            {!hasActiveSubscription && (
+              <span className="rounded-sm bg-primary/10 px-1 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+                Pro
+              </span>
+            )}
           </span>
           {settings.reasoning && canReason && (
             <HugeiconsIcon className="size-3.5 text-primary" icon={Tick02Icon} strokeWidth={2} />

@@ -2,6 +2,7 @@ import { db } from "@cobalt-web/db";
 import { env } from "@cobalt-web/env/server";
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { upsertMessage } from "@cobalt-web/server-data/chat/mutations";
+import { getUserLimits } from "@cobalt-web/server-data/subscriptions";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import {
   convertToModelMessages,
@@ -19,7 +20,7 @@ import { createFinanceAgent } from "../../../ai/agents/finance-agent/finance-age
 import { parseModelWithReasoning } from "../../../ai/model-provider.js";
 import type { ReasoningEffort } from "../../../ai/model-provider.js";
 import { generateChatTitleWorkflow } from "../../../workflows/chat-title/workflow.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const MAX_HISTORY = 20;
 
@@ -72,7 +73,7 @@ export const chatStreamRouter = new Hono<AppEnv>()
     console.error("[chat-stream error]", { method: c.req.method, path: c.req.path }, err);
     return c.json({ error: "Internal server error" }, 500);
   })
-  .post("/:chatId/stream", requirePaidUser, async (c) => {
+  .post("/:chatId/stream", requireAuth, async (c) => {
     if (!env.AI_GATEWAY_API_KEY) {
       throw new ApiError(503, "ai_not_configured", "AI provider is not configured");
     }
@@ -113,6 +114,25 @@ export const chatStreamRouter = new Hono<AppEnv>()
       reasoning: loggedUseReasoning,
       userId,
     });
+
+    // Tier gate: free users get Haiku only and no extended thinking.
+    // Returns a stable 403 with the allowed model list so the client can
+    // surface an upgrade prompt instead of guessing at the cause.
+    const limits = await getUserLimits(userId);
+    if (!(limits.models as readonly string[]).includes(loggedBaseModel)) {
+      throw new ApiError(
+        403,
+        "model_not_allowed",
+        "Upgrade to Pro to use this model. Free tier is limited to Claude Haiku 4.5.",
+      );
+    }
+    if (loggedUseReasoning && !limits.extendedThinking) {
+      throw new ApiError(
+        403,
+        "extended_thinking_not_allowed",
+        "Upgrade to Pro to enable extended thinking.",
+      );
+    }
 
     await upsertMessage({ chatId, message });
     await startChatTitle(chat.title, chatId, message);

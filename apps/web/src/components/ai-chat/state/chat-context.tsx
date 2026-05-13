@@ -14,6 +14,8 @@ import {
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
+import { handleTierGateResponse } from "@/lib/upgrade-prompt";
+
 import { normalizeGatewayModelId, useAgentSettings } from "./agent-settings-context";
 
 // Shape of a Zero-synced message part. Fields match the zero schema; any can be
@@ -255,9 +257,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
 
         if (!res.ok || !res.body) {
-          const errorText = await res.text().catch(() => "(unreadable)");
-          console.error(`[chat-stream] ${res.status} ${res.statusText}:`, errorText);
-          toast.error(getToastMessage(res.status));
+          const gated = res.body ? await handleTierGateResponse(res) : false;
+          if (!gated) {
+            const errorText = await res.text().catch(() => "(unreadable)");
+            console.error(`[chat-stream] ${res.status} ${res.statusText}:`, errorText);
+            toast.error(getToastMessage(res.status));
+          }
           setState((prev) => ({ ...prev, isStreaming: false }));
           return;
         }

@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import { buildItemMetadata, parseDate, parseRssXml } from "./actions.js";
 
 describe("parseRssXml", () => {

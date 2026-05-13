@@ -6,6 +6,7 @@ import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanst
 import { useEffect } from "react";
 // import { Agentation } from "agentation";
 
+import { UpgradePromptHost } from "../components/upgrade/upgrade-prompt-host";
 import { AppSessionProvider } from "../lib/providers/app-session";
 import type { RouterContext } from "../router";
 import "../bones/registry";
@@ -80,6 +81,7 @@ function RootDocument() {
                 <div className="flex h-svh min-h-0 flex-col overflow-hidden">
                   <Outlet />
                 </div>
+                <UpgradePromptHost />
               </TooltipProvider>
             </AppSessionProvider>
           </QueryClientProvider>

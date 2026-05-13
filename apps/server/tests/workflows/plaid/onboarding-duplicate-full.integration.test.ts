@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 /**
  * Scenario A — full overlap duplicate detection.
  *

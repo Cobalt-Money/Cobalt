@@ -72,7 +72,7 @@ export const priceDataSchema = z
     low: z.number().optional(),
     open: z.number().optional(),
     price: z.number(),
-    time: z.string(),
+    time: z.string().openapi({ example: "2025-05-13T14:30:00.000Z", format: "date-time" }),
     volume: z.number(),
   })
   .openapi("ChartPoint");

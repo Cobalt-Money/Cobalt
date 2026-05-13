@@ -26,7 +26,7 @@ function getDriver(): SandboxDriver | null {
   return cachedDriver;
 }
 
-export function runUserCode(bindings: Binding[], userCode: string): Promise<RunResult> {
+function runUserCode(bindings: Binding[], userCode: string): Promise<RunResult> {
   return runWithBindings(bindings, userCode, {
     driver: getDriver(),
     timeoutMs: TIMEOUT_MS,

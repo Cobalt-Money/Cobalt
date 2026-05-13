@@ -12,7 +12,7 @@ import {
   upsertFinancialEventHeader,
 } from "@cobalt-web/server-data/news/events/mutations";
 import { createInsertSchema } from "drizzle-orm/zod";
-import { beforeEach, vi } from "vitest";
+import { beforeEach, vi, describe, expect, it } from "vitest";
 
 import { summarizeEventArticles } from "../../../ai/agents/financial-events-summary/financial-events-summary-agent.js";
 import { processFinancialEventWorkflow } from "./workflow.js";

@@ -69,7 +69,7 @@ async function readAsset(file: string): Promise<string | null> {
   return typeof content === "string" ? content : null;
 }
 
-export async function getKnowledgeRegistry(): Promise<KnowledgeFile[]> {
+async function getKnowledgeRegistry(): Promise<KnowledgeFile[]> {
   const entries = await listKnowledgeEntries();
   const out: KnowledgeFile[] = [];
   for (const { file, folder } of entries) {

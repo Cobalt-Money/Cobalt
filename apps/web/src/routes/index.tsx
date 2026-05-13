@@ -1,12 +1,9 @@
 import { LogoCDN } from "@cobalt-web/ui/cobalt/logos/logo-cdn";
-import { Sun02Icon, MoonIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
 
 import { AppPreview } from "@/components/landing/app-preview";
-import { Button } from "@/components/ui/button";
+import { Container, MarketingFooter, MarketingNav } from "@/components/landing/marketing-shell";
 import { Cursor, CursorProvider } from "@/components/ui/cursor";
 
 export const Route = createFileRoute("/")({
@@ -42,69 +39,18 @@ function LandingStyles() {
   );
 }
 
-function Container({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={`mx-auto w-full max-w-7xl px-6 2xl:max-w-[100rem] ${className}`}>
-      {children}
-    </div>
-  );
-}
-
 function LandingPage() {
   return (
     <>
       <LandingStyles />
       <main className="flex h-svh flex-col overflow-auto no-scrollbar">
-        <Nav />
+        <MarketingNav />
         <Hero />
         <FeatureShowcase />
         <FinalCTA />
-        <Footer />
+        <MarketingFooter />
       </main>
     </>
-  );
-}
-
-function Nav() {
-  const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark";
-
-  return (
-    <header className="sticky top-0 z-50 py-4 bg-background/80 backdrop-blur-sm">
-      <Container className="flex items-center justify-between">
-        <span className="text-xl">Cobalt</span>
-        <div className="flex items-center gap-6">
-          <nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex">
-            <a href="#features" className="hover:text-foreground transition-colors">
-              Features
-            </a>
-            <a href="/privacy" className="hover:text-foreground transition-colors">
-              Privacy
-            </a>
-            <a href="/terms" className="hover:text-foreground transition-colors">
-              Terms
-            </a>
-          </nav>
-          <div className="flex items-center gap-2">
-            <Button size="icon" variant="ghost" onClick={() => setTheme(isDark ? "light" : "dark")}>
-              <HugeiconsIcon icon={isDark ? Sun02Icon : MoonIcon} size={18} strokeWidth={2} />
-            </Button>
-            <Link
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-              to="/login"
-            >
-              Sign in
-            </Link>
-          </div>
-        </div>
-      </Container>
-    </header>
   );
 }
 
@@ -1131,13 +1077,5 @@ function FinalCTA() {
         </Link>
       </div>
     </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="px-6 py-8 text-center text-sm text-muted-foreground">
-      &copy; {new Date().getFullYear()} Cobalt. All rights reserved.
-    </footer>
   );
 }

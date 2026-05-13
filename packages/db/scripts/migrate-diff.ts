@@ -1,12 +1,11 @@
 import crypto from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import dotenv from "dotenv";
 import { Client } from "pg";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = import.meta.dirname;
 const monorepoRoot = path.resolve(__dirname, "../../..");
 
 dotenv.config({ path: path.resolve(monorepoRoot, "apps/server/.env") });
