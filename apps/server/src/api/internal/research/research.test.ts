@@ -168,7 +168,7 @@ describe("research routes", () => {
         close: 100,
         id: "2026-04-01",
         price: 100,
-        time: "2026-04-01",
+        time: "2026-04-01T00:00:00.000Z",
       });
       expect(res.headers.get("cache-control")).toContain("s-maxage=86400");
     });
