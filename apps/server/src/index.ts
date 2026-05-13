@@ -10,7 +10,6 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
-import { agentBridgeRouter } from "./_legacy/api/internal/agent-bridge/exec.js";
 import { accountsRouter } from "./api/internal/accounts/index.js";
 import { alertsRouter } from "./api/internal/alerts/index.js";
 import { appstoreRouter } from "./api/internal/appstore.js";
@@ -100,7 +99,6 @@ base.route("/api/user", userRouter);
 base.route("/api/institutions", institutionsRouter);
 base.route("/api/plaid", plaidRouter);
 base.route("/api/appstore", appstoreRouter);
-base.route("/api/agent-bridge", agentBridgeRouter);
 base.doc31("/openapi.json", {
   info: {
     description: "Cobalt financial platform API",
