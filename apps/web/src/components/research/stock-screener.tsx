@@ -17,6 +17,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@/components/links";
 import { sectorHugeiconForValue } from "@/components/research/sector-icons";
 import { StockScreenerSkeleton } from "@/components/research/skeletons/stock-screener-skeleton";
+import type { ScreenerRow } from "@/hooks/research-queries";
 import { screenerUniverseQuery } from "@/hooks/research-queries";
 
 declare module "@tanstack/react-table" {
@@ -25,8 +26,6 @@ declare module "@tanstack/react-table" {
     headerTitle?: string;
   }
 }
-
-type ScreenerRow = Record<string, unknown>;
 
 const EMPTY_SCREENER_ROWS: ScreenerRow[] = [];
 
@@ -41,22 +40,14 @@ const VIRTUAL_OVERSCAN = 8;
 const GRID_TEMPLATE_COLUMNS = "2.75rem 8rem minmax(8rem, 14rem) repeat(6, minmax(0, 1fr))";
 
 function rawTickerSymbol(row: ScreenerRow): string {
-  const s = row.symbol ?? row.ticker;
-  return typeof s === "string" ? s.trim() : "";
+  return row.symbol.trim();
 }
 
-function firstString(row: ScreenerRow, keys: readonly string[]): string {
-  for (const key of keys) {
-    const v = row[key];
-    if (typeof v === "string" && v.trim()) {
-      return v.trim();
-    }
-  }
-  return "";
+function nameOf(row: ScreenerRow): string {
+  return row.companyName?.trim() ?? "";
 }
 
-function num(row: ScreenerRow, key: string): number | null {
-  const v = row[key];
+function numOrNull(v: number | null | undefined): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
@@ -200,7 +191,7 @@ function buildColumns({ pinnedSymbols, togglePin }: BuildColumnsArgs): ColumnDef
       meta: { className: "pl-1" },
     },
     {
-      accessorFn: (r) => firstString(r, ["companyName", "name"]),
+      accessorFn: (r) => nameOf(r),
       cell: ({ getValue }) => {
         const text = String(getValue() ?? "");
         const display = text || "—";
@@ -215,7 +206,7 @@ function buildColumns({ pinnedSymbols, togglePin }: BuildColumnsArgs): ColumnDef
       meta: { className: "min-w-0" },
     },
     {
-      accessorFn: (r) => num(r, "price"),
+      accessorFn: (r) => numOrNull(r.price),
       cell: ({ getValue }) => (
         <NumberCell format={formatPrice} value={getValue() as number | null} />
       ),
@@ -224,7 +215,7 @@ function buildColumns({ pinnedSymbols, togglePin }: BuildColumnsArgs): ColumnDef
       sortUndefined: "last",
     },
     {
-      accessorFn: (r) => num(r, "peRatio"),
+      accessorFn: (r) => numOrNull(r.peRatio),
       cell: ({ getValue }) => <NumberCell format={formatPe} value={getValue() as number | null} />,
       header: "P/E",
       id: "peRatio",
@@ -234,7 +225,7 @@ function buildColumns({ pinnedSymbols, togglePin }: BuildColumnsArgs): ColumnDef
       sortUndefined: "last",
     },
     {
-      accessorFn: (r) => num(r, "marketCap"),
+      accessorFn: (r) => numOrNull(r.marketCap),
       cell: ({ getValue }) => (
         <NumberCell format={formatMarketCap} value={getValue() as number | null} />
       ),
@@ -243,7 +234,7 @@ function buildColumns({ pinnedSymbols, togglePin }: BuildColumnsArgs): ColumnDef
       sortUndefined: "last",
     },
     {
-      accessorFn: (r) => num(r, "revenue"),
+      accessorFn: (r) => numOrNull(r.revenue),
       cell: ({ getValue }) => (
         <NumberCell format={formatMarketCap} value={getValue() as number | null} />
       ),
@@ -253,7 +244,7 @@ function buildColumns({ pinnedSymbols, togglePin }: BuildColumnsArgs): ColumnDef
       sortUndefined: "last",
     },
     {
-      accessorFn: (r) => num(r, "volume"),
+      accessorFn: (r) => numOrNull(r.volume),
       cell: ({ getValue }) => (
         <NumberCell format={formatVolume} value={getValue() as number | null} />
       ),
@@ -262,7 +253,7 @@ function buildColumns({ pinnedSymbols, togglePin }: BuildColumnsArgs): ColumnDef
       sortUndefined: "last",
     },
     {
-      accessorFn: (r) => (typeof r.sector === "string" ? r.sector : ""),
+      accessorFn: (r) => r.sector ?? "",
       cell: ({ row, getValue }) => {
         const text = String(getValue() ?? "") || "—";
         const Icon = sectorHugeiconForValue(row.original.sector);
