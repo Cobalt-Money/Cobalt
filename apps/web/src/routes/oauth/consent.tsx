@@ -19,6 +19,7 @@ import {
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import type { ReactNode } from "react";
@@ -73,6 +74,90 @@ function describeScope(scope: string): string {
   return SCOPE_LABELS[scope] ?? scope;
 }
 
+interface PublicClient {
+  client_id: string;
+  client_name?: string | null;
+  client_uri?: string | null;
+  logo_uri?: string | null;
+}
+
+async function fetchPublicClient(clientId: string): Promise<PublicClient | null> {
+  const url = new URL("/api/auth/oauth2/public-client", env.VITE_SERVER_URL);
+  url.searchParams.set("client_id", clientId);
+  const res = await fetch(url.href, { credentials: "include" });
+  if (!res.ok) {
+    return null;
+  }
+  return (await res.json()) as PublicClient;
+}
+
+function ClientCard({
+  clientId,
+  isPending,
+  client,
+}: {
+  clientId: string;
+  isPending: boolean;
+  client: PublicClient | null;
+}) {
+  const displayName = client?.client_name?.trim() || clientId;
+  const initial = displayName.slice(0, 1).toUpperCase();
+  return (
+    <div className="bg-muted/50 ring-foreground/10 flex items-center gap-3 rounded-lg p-3 ring-1">
+      <div className="bg-background ring-foreground/10 flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md ring-1">
+        {client?.logo_uri ? (
+          <img alt="" className="size-full object-cover" src={client.logo_uri} />
+        ) : (
+          <span className="font-medium text-sm">{initial}</span>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-muted-foreground text-xs">Application</p>
+        {isPending ? (
+          <p className="bg-muted h-4 w-32 animate-pulse rounded" />
+        ) : (
+          <p className="truncate font-medium text-sm">{displayName}</p>
+        )}
+        {client?.client_uri ? (
+          <a
+            className="text-muted-foreground block truncate text-xs underline-offset-4 hover:underline"
+            href={client.client_uri}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {client.client_uri}
+          </a>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ScopeList({ scopes }: { scopes: string[] }) {
+  return (
+    <div>
+      <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+        This app will be able to
+      </p>
+      <ul className="space-y-2">
+        {scopes.map((scope) => (
+          <li className="flex items-start gap-2 text-sm" key={scope}>
+            <HugeiconsIcon
+              className="text-foreground/70 mt-0.5 shrink-0"
+              icon={CheckmarkCircle02Icon}
+              size={16}
+            />
+            <div className="min-w-0">
+              <span>{describeScope(scope)}</span>
+              <code className="text-muted-foreground ml-1.5 text-xs">{scope}</code>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function RouteComponent() {
   const [status, setStatus] = useState<"idle" | "submitting" | "redirect" | "error">("idle");
   /** Which action is in flight — drives the post-click message before redirect. */
@@ -88,6 +173,14 @@ function RouteComponent() {
     const params = new URLSearchParams(window.location.search);
     return params.get("client_id");
   }, []);
+
+  const clientQuery = useQuery({
+    enabled: !!clientId,
+    queryFn: () => fetchPublicClient(clientId as string),
+    queryKey: ["oauth-public-client", clientId],
+    staleTime: 5 * 60 * 1000,
+  });
+  const client = clientQuery.data ?? null;
 
   const scopes = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
@@ -205,39 +298,10 @@ function RouteComponent() {
 
           <CardContent className="space-y-4">
             {clientId ? (
-              <div className="bg-muted/50 ring-foreground/10 flex items-center gap-3 rounded-lg p-3 ring-1">
-                <div className="bg-background ring-foreground/10 flex size-9 shrink-0 items-center justify-center rounded-md ring-1">
-                  <span className="font-medium text-sm">{clientId.slice(0, 1).toUpperCase()}</span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-muted-foreground text-xs">Application</p>
-                  <p className="truncate font-medium text-sm">{clientId}</p>
-                </div>
-              </div>
+              <ClientCard client={client} clientId={clientId} isPending={clientQuery.isPending} />
             ) : null}
 
-            {scopes.length > 0 ? (
-              <div>
-                <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-                  This app will be able to
-                </p>
-                <ul className="space-y-2">
-                  {scopes.map((scope) => (
-                    <li className="flex items-start gap-2 text-sm" key={scope}>
-                      <HugeiconsIcon
-                        className="text-foreground/70 mt-0.5 shrink-0"
-                        icon={CheckmarkCircle02Icon}
-                        size={16}
-                      />
-                      <div className="min-w-0">
-                        <span>{describeScope(scope)}</span>
-                        <code className="text-muted-foreground ml-1.5 text-xs">{scope}</code>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
+            {scopes.length > 0 ? <ScopeList scopes={scopes} /> : null}
 
             <Separator />
 
