@@ -1,5 +1,6 @@
-import { Badge } from "@cobalt-web/ui/components/badge";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { BundledLanguage, ThemedToken } from "shiki";
+import { codeToTokens } from "shiki";
 
 type Lang = "curl" | "ts" | "python";
 
@@ -8,6 +9,62 @@ const LANG_LABEL: Record<Lang, string> = {
   python: "Python",
   ts: "TypeScript",
 };
+
+const SHIKI_LANG: Record<Lang | "json", BundledLanguage> = {
+  curl: "bash",
+  json: "json",
+  python: "python",
+  ts: "typescript",
+};
+
+function HighlightedCode({ code, language }: { code: string; language: BundledLanguage }) {
+  const [tokens, setTokens] = useState<ThemedToken[][] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const result = await codeToTokens(code, {
+          lang: language,
+          theme: "github-dark-default",
+        });
+        if (!cancelled) {
+          setTokens(result.tokens);
+        }
+      } catch {
+        if (!cancelled) {
+          setTokens(null);
+        }
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [code, language]);
+
+  if (!tokens) {
+    return <code>{code}</code>;
+  }
+
+  return (
+    <code>
+      {tokens.map((line, lineIdx) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: stable per render
+        <span className="block" key={lineIdx}>
+          {line.length === 0
+            ? "\n"
+            : line.map((token, tokenIdx) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: stable per render
+                <span key={tokenIdx} style={{ color: token.color }}>
+                  {token.content}
+                </span>
+              ))}
+        </span>
+      ))}
+    </code>
+  );
+}
 
 const SNIPPETS: Record<Lang, string> = {
   curl: `curl https://api.cobaltpf.com/v1/transactions \\
@@ -52,8 +109,7 @@ export function ApiSection() {
     <section className="px-6 py-24 lg:py-32">
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
-          <Badge variant="secondary">Cobalt API</Badge>
-          <h2 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+          <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
             Your money, as an API.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
@@ -84,7 +140,7 @@ export function ApiSection() {
               className="overflow-x-auto px-5 py-4 text-[13px] leading-[1.7] text-[#e6e4dd]"
               style={{ fontFamily: "'JetBrains Mono', 'SF Mono', Menlo, monospace" }}
             >
-              <code>{SNIPPETS[lang]}</code>
+              <HighlightedCode code={SNIPPETS[lang]} language={SHIKI_LANG[lang]} />
             </pre>
           </div>
 
@@ -101,7 +157,7 @@ export function ApiSection() {
               className="overflow-x-auto px-5 py-4 text-[12px] leading-[1.6] text-[#e6e4dd]"
               style={{ fontFamily: "'JetBrains Mono', 'SF Mono', Menlo, monospace" }}
             >
-              <code>{RESPONSE}</code>
+              <HighlightedCode code={RESPONSE} language={SHIKI_LANG.json} />
             </pre>
           </div>
         </div>

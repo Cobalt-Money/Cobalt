@@ -1,7 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ApiSection } from "@/components/landing/api-section";
 import { AppPreview } from "@/components/landing/app-preview";
-import { BuildOnCobaltSection } from "@/components/landing/build-on-cobalt-section";
 import { Container, MarketingFooter, MarketingNav } from "@/components/landing/marketing-shell";
 import { MobileSection } from "@/components/landing/mobile-section";
 import { SurfaceSwitcher } from "@/components/landing/surface-switcher";
@@ -50,7 +49,6 @@ function LandingPage() {
         <Hero />
         <IntegrationsSection />
         <ApiSection />
-        <BuildOnCobaltSection />
         <MobileSection />
         <FinalCTA />
         <MarketingFooter />

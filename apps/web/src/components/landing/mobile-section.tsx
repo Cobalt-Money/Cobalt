@@ -1,5 +1,4 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { Badge } from "@cobalt-web/ui/components/badge";
 import {
   BatteryCharging01Icon,
   CreditCardIcon,
@@ -30,19 +29,12 @@ const RECENT = [
   { action: "Buy", amt: "−$112.40", day: "Yesterday", qty: "+5 sh", sym: "MNKD" },
 ];
 
-const FEATURES = [
-  { sub: "Biometric gate on every open.", title: "Face ID lock" },
-  { sub: "Glance at net worth without unlocking.", title: "Home & lock screen widgets" },
-  { sub: "Cards & transactions, in real time.", title: "Apple Wallet sync" },
-  { sub: '"Hey Siri, what did I spend today?"', title: "Siri Shortcuts" },
-];
-
 export function MobileSection() {
   return (
     <section className="px-6 py-24 lg:py-32">
-      <div className="mx-auto grid max-w-6xl items-center gap-16 lg:grid-cols-2">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-16 text-center">
         {/* Phone */}
-        <div className="relative mx-auto flex justify-center">
+        <div className="relative order-2 mx-auto flex justify-center">
           <div className="relative">
             {/* iPhone frame */}
             <div className="relative h-[640px] w-[310px] rounded-[52px] bg-[#ededed] p-[8px] shadow-2xl ring-1 ring-black/10 dark:bg-[#0f0f0f] dark:ring-white/10">
@@ -191,33 +183,13 @@ export function MobileSection() {
         </div>
 
         {/* Copy */}
-        <div>
-          <Badge variant="secondary">iOS app</Badge>
-          <h2 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+        <div className="order-1 flex flex-col items-center">
+          <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
             Your money,
             <br />
             in your pocket.
           </h2>
-          <p className="mt-4 max-w-md text-lg text-muted-foreground">
-            Cobalt for iPhone keeps your full financial picture one tap away — and pings you the
-            moment something matters.
-          </p>
-
-          <ul className="mt-8 space-y-4">
-            {FEATURES.map((f) => (
-              <li className="flex items-start gap-3" key={f.title}>
-                <span className="mt-1 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] text-background">
-                  ✓
-                </span>
-                <div>
-                  <div className="text-sm font-medium text-foreground">{f.title}</div>
-                  <div className="text-sm text-muted-foreground">{f.sub}</div>
-                </div>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="mt-8">
             <a
               className="inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-3 text-background hover:opacity-90"
               href="https://apps.apple.com/app/id6757945133"
@@ -230,7 +202,6 @@ export function MobileSection() {
                 <span className="block text-base font-semibold leading-tight">App Store</span>
               </span>
             </a>
-            <span className="text-sm text-muted-foreground">iOS 17+ · iPad ready</span>
           </div>
         </div>
       </div>

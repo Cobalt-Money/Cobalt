@@ -35,6 +35,14 @@ export function MarketingNav() {
             <Link className="transition-colors hover:text-foreground" hash="features" to="/">
               Features
             </Link>
+            <a
+              className="transition-colors hover:text-foreground"
+              href="https://docs.cobaltpf.com"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Docs
+            </a>
             <Link className="transition-colors hover:text-foreground" to="/pricing">
               Pricing
             </Link>
@@ -72,8 +80,19 @@ export function MarketingNav() {
 
 export function MarketingFooter() {
   return (
-    <footer className="px-6 py-8 text-center text-sm text-muted-foreground">
-      &copy; {new Date().getFullYear()} Cobalt. All rights reserved.
+    <footer className="shrink-0 overflow-hidden border-t">
+      <div className="mx-auto flex max-w-7xl items-end justify-between px-6 pt-12">
+        <p className="text-sm text-muted-foreground">
+          &copy; {new Date().getFullYear()} Cobalt. All rights reserved.
+        </p>
+      </div>
+      <div
+        aria-hidden="true"
+        className="select-none text-center font-semibold tracking-tighter text-foreground"
+        style={{ fontSize: "min(28vw, 28rem)", lineHeight: "0.85" }}
+      >
+        Cobalt
+      </div>
     </footer>
   );
 }
