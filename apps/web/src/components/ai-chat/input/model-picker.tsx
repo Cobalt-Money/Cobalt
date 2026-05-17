@@ -1,12 +1,4 @@
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@cobalt-web/ui/components/dropdown-menu";
+import { CobaltSelectPopover } from "@cobalt-web/ui/cobalt/select-popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowDown01Icon, SparklesIcon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -68,6 +60,26 @@ const EFFORT_ORDER: Record<AgentEffort, number> = {
   medium: 1,
 };
 
+/** All current models are served by Anthropic via the Vercel AI Gateway. */
+function ProviderLogo({ className }: { className?: string }) {
+  return (
+    <img
+      alt=""
+      aria-hidden
+      className={cn("size-4 shrink-0", className)}
+      src="/landing/agents/Claude_AI_symbol.svg"
+    />
+  );
+}
+
+function ProBadge() {
+  return (
+    <span className="rounded-sm bg-primary/10 px-1 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+      Pro
+    </span>
+  );
+}
+
 function useModelPickerState() {
   const { settings, setSettings } = useAgentSettings();
   const { hasActiveSubscription } = useSubscriptionStatus();
@@ -122,224 +134,149 @@ function useModelPickerState() {
   };
 }
 
+/** Reasoning toggle + effort sub-list, rendered in the select-popover footer. */
+function ReasoningFooter({ state }: { state: ReturnType<typeof useModelPickerState> }) {
+  const {
+    availableEfforts,
+    canReason,
+    hasActiveSubscription,
+    selectEffort,
+    settings,
+    toggleReasoning,
+  } = state;
+
+  return (
+    <div>
+      <button
+        className={cn(
+          "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40",
+          !canReason && "cursor-not-allowed opacity-50 hover:bg-transparent",
+        )}
+        disabled={!canReason}
+        onClick={toggleReasoning}
+        type="button"
+      >
+        <span className="flex size-5 shrink-0 items-center justify-center">
+          <HugeiconsIcon className="size-4" icon={SparklesIcon} strokeWidth={2} />
+        </span>
+        <span className="min-w-0 flex-1 truncate">Extended thinking</span>
+        {!hasActiveSubscription && <ProBadge />}
+        {settings.reasoning && canReason && (
+          <HugeiconsIcon className="size-4 text-primary" icon={Tick02Icon} strokeWidth={2} />
+        )}
+      </button>
+      {settings.reasoning && canReason && (
+        <div className="mt-0.5">
+          <div className="px-2.5 pt-1 pb-0.5 text-xs font-medium text-muted-foreground">Effort</div>
+          {availableEfforts.map((e) => (
+            <button
+              className="flex w-full items-center gap-2 rounded-md py-1.5 pr-2.5 pl-9 text-left text-sm transition-colors hover:bg-input/40"
+              key={e.id}
+              onClick={() => selectEffort(e.id)}
+              type="button"
+            >
+              <span className="min-w-0 flex-1 truncate">{e.label}</span>
+              {settings.effort === e.id && (
+                <HugeiconsIcon className="size-4 text-primary" icon={Tick02Icon} strokeWidth={2} />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface ModelPickerProps {
   isStreaming: boolean;
 }
 
-/** Compact single-chip dropdown for the collapsed pill input. */
-export function ModelChip({ isStreaming }: ModelPickerProps) {
-  const {
-    availableEfforts,
-    canReason,
-    currentModel,
-    hasActiveSubscription,
-    isModelAllowed,
-    selectEffort,
-    selectModel,
-    settings,
-    toggleReasoning,
-  } = useModelPickerState();
+function ModelSelect({ isStreaming, trigger }: ModelPickerProps & { trigger: React.ReactElement }) {
+  const state = useModelPickerState();
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        className={cn(
-          "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50",
-          isStreaming && "pointer-events-none opacity-50",
-        )}
-        disabled={isStreaming}
-      >
-        {currentModel?.shortLabel}
-        {settings.reasoning && canReason && (
-          <>
-            <span className="text-muted-foreground/60">·</span>
-            <HugeiconsIcon className="size-3 text-primary" icon={SparklesIcon} strokeWidth={2} />
-            <span className="capitalize text-primary">{settings.effort}</span>
-          </>
-        )}
-        <HugeiconsIcon className="size-3" icon={ArrowDown01Icon} strokeWidth={2} />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
-        <ModelMenuContents
-          availableEfforts={availableEfforts}
-          canReason={canReason}
-          hasActiveSubscription={hasActiveSubscription}
-          isModelAllowed={isModelAllowed}
-          selectEffort={selectEffort}
-          selectModel={selectModel}
-          settings={settings}
-          toggleReasoning={toggleReasoning}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <CobaltSelectPopover<ModelDef>
+      contentClassName="w-auto min-w-56"
+      footer={<ReasoningFooter state={state} />}
+      itemKey={(m) => m.id}
+      itemMatch={(m, q) => m.label.toLowerCase().includes(q)}
+      items={MODELS}
+      onSelect={(m) => {
+        if (!isStreaming) {
+          state.selectModel(m.id);
+        }
+      }}
+      renderIcon={() => <ProviderLogo />}
+      renderLabel={(m) => (
+        <>
+          <span className="min-w-0 flex-1 truncate">{m.label}</span>
+          {!state.isModelAllowed(m) && <ProBadge />}
+        </>
+      )}
+      searchPlaceholder="Search models…"
+      selectedKey={state.currentModel?.id ?? null}
+      trigger={trigger}
+    />
+  );
+}
+
+/** Compact single-chip dropdown for the collapsed pill input. */
+export function ModelChip({ isStreaming }: ModelPickerProps) {
+  const { canReason, currentModel, settings } = useModelPickerState();
+
+  return (
+    <ModelSelect
+      isStreaming={isStreaming}
+      trigger={
+        <button
+          className={cn(
+            "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50",
+            isStreaming && "pointer-events-none opacity-50",
+          )}
+          disabled={isStreaming}
+          type="button"
+        >
+          <ProviderLogo className="size-3.5" />
+          {currentModel?.shortLabel}
+          {settings.reasoning && canReason && (
+            <>
+              <span className="text-muted-foreground/60">·</span>
+              <HugeiconsIcon className="size-3 text-primary" icon={SparklesIcon} strokeWidth={2} />
+              <span className="capitalize text-primary">{settings.effort}</span>
+            </>
+          )}
+          <HugeiconsIcon className="size-3" icon={ArrowDown01Icon} strokeWidth={2} />
+        </button>
+      }
+    />
   );
 }
 
 /** Expanded toolbar version for the open input. */
 export function ModelPicker({ isStreaming }: ModelPickerProps) {
-  const {
-    availableEfforts,
-    canReason,
-    currentModel,
-    hasActiveSubscription,
-    isModelAllowed,
-    selectEffort,
-    selectModel,
-    settings,
-    toggleReasoning,
-  } = useModelPickerState();
+  const { canReason, currentModel, settings } = useModelPickerState();
 
   return (
-    <div className="flex items-center gap-1">
-      {/* Model picker */}
-      <DropdownMenu>
-        <DropdownMenuTrigger
+    <ModelSelect
+      isStreaming={isStreaming}
+      trigger={
+        <button
           className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
           disabled={isStreaming}
+          type="button"
         >
+          <ProviderLogo className="size-3.5" />
           {currentModel?.shortLabel}
-          <HugeiconsIcon className="size-3" icon={ArrowDown01Icon} strokeWidth={2} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-52">
-          <ModelMenuContents
-            availableEfforts={availableEfforts}
-            canReason={canReason}
-            hasActiveSubscription={hasActiveSubscription}
-            isModelAllowed={isModelAllowed}
-            selectEffort={selectEffort}
-            selectModel={selectModel}
-            settings={settings}
-            toggleReasoning={toggleReasoning}
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {/* Reasoning toggle — shows effort when active */}
-      <button
-        className={cn(
-          "flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
-          settings.reasoning && canReason
-            ? "bg-primary/10 text-primary"
-            : "text-muted-foreground hover:text-foreground",
-          !canReason && "cursor-not-allowed opacity-40",
-        )}
-        disabled={!canReason || isStreaming}
-        title={canReason ? "Toggle extended thinking" : "Not available for this model"}
-        type="button"
-        onClick={toggleReasoning}
-      >
-        <HugeiconsIcon className="size-3" icon={SparklesIcon} strokeWidth={2} />
-        {settings.reasoning && canReason ? (
-          <span className="capitalize">{settings.effort}</span>
-        ) : (
-          "Think"
-        )}
-      </button>
-    </div>
-  );
-}
-
-interface ModelMenuContentsProps {
-  availableEfforts: { id: AgentEffort; label: string }[];
-  canReason: boolean;
-  hasActiveSubscription: boolean;
-  isModelAllowed: (model: ModelDef) => boolean;
-  selectEffort: (effort: AgentEffort) => void;
-  selectModel: (id: string) => void;
-  settings: ReturnType<typeof useModelPickerState>["settings"];
-  toggleReasoning: () => void;
-}
-
-function ModelMenuContents({
-  availableEfforts,
-  canReason,
-  hasActiveSubscription,
-  isModelAllowed,
-  selectEffort,
-  selectModel,
-  settings,
-  toggleReasoning,
-}: ModelMenuContentsProps) {
-  return (
-    <>
-      <DropdownMenuGroup>
-        <DropdownMenuLabel className="text-xs text-muted-foreground">Model</DropdownMenuLabel>
-        {MODELS.map((m) => {
-          const allowed = isModelAllowed(m);
-          return (
-            <DropdownMenuItem
-              key={m.id}
-              className={cn(
-                "flex items-center justify-between text-sm",
-                !allowed && "cursor-not-allowed opacity-50",
-              )}
-              disabled={!allowed}
-              onClick={() => selectModel(m.id)}
-            >
-              <span className="flex items-center gap-2">
-                {m.label}
-                {!allowed && (
-                  <span className="rounded-sm bg-primary/10 px-1 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
-                    Pro
-                  </span>
-                )}
-              </span>
-              {settings.model === m.id && (
-                <HugeiconsIcon
-                  className="size-3.5 text-primary"
-                  icon={Tick02Icon}
-                  strokeWidth={2}
-                />
-              )}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuGroup>
-      <DropdownMenuSeparator />
-      <DropdownMenuGroup>
-        <DropdownMenuItem
-          className={cn(
-            "flex items-center justify-between text-sm",
-            !canReason && "cursor-not-allowed opacity-40",
-          )}
-          disabled={!canReason}
-          onClick={toggleReasoning}
-        >
-          <span className="flex items-center gap-2">
-            <HugeiconsIcon className="size-3.5" icon={SparklesIcon} strokeWidth={2} />
-            Extended thinking
-            {!hasActiveSubscription && (
-              <span className="rounded-sm bg-primary/10 px-1 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
-                Pro
-              </span>
-            )}
-          </span>
           {settings.reasoning && canReason && (
-            <HugeiconsIcon className="size-3.5 text-primary" icon={Tick02Icon} strokeWidth={2} />
+            <>
+              <span className="text-muted-foreground/60">·</span>
+              <HugeiconsIcon className="size-3 text-primary" icon={SparklesIcon} strokeWidth={2} />
+              <span className="capitalize text-primary">{settings.effort}</span>
+            </>
           )}
-        </DropdownMenuItem>
-        {settings.reasoning && canReason && (
-          <>
-            <DropdownMenuLabel className="text-xs text-muted-foreground">Effort</DropdownMenuLabel>
-            {availableEfforts.map((e) => (
-              <DropdownMenuItem
-                key={e.id}
-                className="flex items-center justify-between pl-7 text-sm"
-                onClick={() => selectEffort(e.id)}
-              >
-                {e.label}
-                {settings.effort === e.id && (
-                  <HugeiconsIcon
-                    className="size-3.5 text-primary"
-                    icon={Tick02Icon}
-                    strokeWidth={2}
-                  />
-                )}
-              </DropdownMenuItem>
-            ))}
-          </>
-        )}
-      </DropdownMenuGroup>
-    </>
+          <HugeiconsIcon className="size-3" icon={ArrowDown01Icon} strokeWidth={2} />
+        </button>
+      }
+    />
   );
 }

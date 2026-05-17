@@ -12,7 +12,10 @@
     "test:watch": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts --exclude '**/*.happy.integration.test.ts'",
     "test:integration:happy": "vitest run --config vitest.integration.config.ts tests/workflows/news/financial-events.happy.integration.test.ts",
-    "test:integration:all": "vitest run --config vitest.integration.config.ts"
+    "test:integration:all": "vitest run --config vitest.integration.config.ts",
+    "eval": "evalite watch \"src/ai/agents/**/*.eval.ts\"",
+    "eval:run": "evalite \"src/ai/agents/**/*.eval.ts\"",
+    "eval:ci": "RUN_EVALS=1 evalite \"src/ai/agents/**/*.eval.ts\" --threshold=70"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.84",
@@ -42,6 +45,7 @@
     "hono": "^4.8.2",
     "jose": "^6.1.0",
     "mathjs": "^15.1.0",
+    "p-limit": "^6.2.0",
     "pg": "^8.16.3",
     "snaptrade-typescript-sdk": "^9.0.160",
     "uuid": "^14.0.0",
@@ -52,6 +56,8 @@
     "@types/bun": "catalog:",
     "@types/pg": "^8.16.0",
     "@types/uuid": "^11.0.0",
+    "autoevals": "^0.0.132",
+    "evalite": "^0.19.0",
     "nitro": "^3.0.260415-beta",
     "rollup": "^4.60.1",
     "typescript": "^5",

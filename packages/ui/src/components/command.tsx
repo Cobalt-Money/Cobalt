@@ -69,12 +69,12 @@ function CommandDialog({
       </DialogHeader>
       <DialogContent
         className={cn(
-          "max-h-[min(55vh,35rem)] gap-0 rounded-3xl p-0 sm:max-w-2xl dark:bg-sidebar-accent",
+          "max-h-[min(55vh,35rem)] gap-0 rounded-3xl border border-border p-0 shadow-xs sm:max-w-2xl dark:bg-sidebar-accent",
           "data-open:animate-none! data-closed:animate-none!",
           className
         )}
         overlayClassName={cn(
-          "bg-black/25 supports-backdrop-filter:backdrop-blur-none",
+          "bg-transparent supports-backdrop-filter:backdrop-blur-none",
           "data-open:animate-none! data-closed:animate-none!",
           overlayClassName
         )}

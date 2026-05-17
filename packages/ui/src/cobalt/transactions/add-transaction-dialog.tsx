@@ -579,7 +579,7 @@ export function AddTransactionForm({
                 </button>
               }
             />
-            <PopoverContent align="start" className="w-72 gap-0 bg-popover p-1 dark:bg-popover">
+            <PopoverContent align="start" className="w-auto gap-0 bg-popover p-1 dark:bg-popover">
               <div className="flex items-center px-2.5 py-1.5">
                 <input
                   autoFocus
@@ -655,7 +655,7 @@ export function AddTransactionForm({
                 </button>
               }
             />
-            <PopoverContent align="start" className="gap-0 bg-popover p-1 dark:bg-popover w-72">
+            <PopoverContent align="start" className="gap-0 bg-popover p-1 dark:bg-popover w-auto">
               <div className="flex items-center px-2.5 py-1.5">
                 <input
                   autoFocus

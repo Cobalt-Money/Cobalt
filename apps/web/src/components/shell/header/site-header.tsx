@@ -1,4 +1,5 @@
 import { Button } from "@cobalt-web/ui/components/button";
+import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
 import { useSidebar } from "@cobalt-web/ui/components/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@cobalt-web/ui/components/tooltip";
@@ -49,14 +50,10 @@ export function SiteHeader() {
           />
           <TooltipContent>
             <span className="inline-flex items-center gap-1.5">
-              <span className="inline-flex items-center gap-0.5">
-                <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-border/60 bg-muted/40 px-1.5 font-sans font-medium text-[0.7rem] text-foreground/90 shadow-sm">
-                  ⌘
-                </kbd>
-                <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-border/60 bg-muted/40 px-1.5 font-sans font-medium text-[0.7rem] text-foreground/90 shadow-sm">
-                  B
-                </kbd>
-              </span>
+              <KbdGroup>
+                <Kbd>⌘</Kbd>
+                <Kbd>B</Kbd>
+              </KbdGroup>
               <span>to {sidebarState === "expanded" ? "collapse" : "expand"} sidebar</span>
             </span>
           </TooltipContent>
@@ -79,21 +76,28 @@ export function SiteHeader() {
           <CommandMenuSearchShortcut />
         </button>
         <div className="ml-auto flex shrink-0 items-center gap-0.5">
-          <Button
-            aria-label={privacyHidden ? "Show amounts" : "Hide amounts"}
-            aria-pressed={privacyHidden}
-            className="text-muted-foreground"
-            onClick={togglePrivacy}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <HugeiconsIcon
-              className="size-5"
-              icon={privacyHidden ? ViewOffSlashIcon : EyeIcon}
-              strokeWidth={2}
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label={privacyHidden ? "Show amounts" : "Hide amounts"}
+                  aria-pressed={privacyHidden}
+                  className="text-muted-foreground"
+                  onClick={togglePrivacy}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  <HugeiconsIcon
+                    className="size-5"
+                    icon={privacyHidden ? ViewOffSlashIcon : EyeIcon}
+                    strokeWidth={2}
+                  />
+                </Button>
+              }
             />
-          </Button>
+            <TooltipContent>{privacyHidden ? "Show amounts" : "Hide amounts"}</TooltipContent>
+          </Tooltip>
           <Button
             aria-label={
               hasAlerts ? `Notifications (${alerts.length} need attention)` : "Notifications"

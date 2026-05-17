@@ -1,6 +1,6 @@
 import type { ProcessedArticle } from "@cobalt-web/server-data/news/events/lib";
 import { generateText } from "ai";
-import { beforeEach, vi } from "vitest";
+import { beforeEach, vi, describe, expect, it } from "vitest";
 
 import { summarizeEventArticles, TransientSummaryError } from "./financial-events-summary-agent.js";
 

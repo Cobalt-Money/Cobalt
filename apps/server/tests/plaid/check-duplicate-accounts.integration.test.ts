@@ -1,3 +1,4 @@
+import { beforeEach, afterEach, describe, expect, it } from "vitest";
 /**
  * DB-level unit test for `checkForDuplicateAccounts`.
  *

@@ -38,6 +38,8 @@ export const env = createEnv({
     APP_URL: z.url().default("https://www.try-cobalt.com"),
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
+    /** Vercel Blob read/write token. Required for CSV import file storage. */
+    BLOB_READ_WRITE_TOKEN: z.string().min(1),
     /** Cookie domain for cross-subdomain auth (e.g. `.cobaltpf.com`). Omit in dev. */
     COOKIE_DOMAIN: z.string().min(1).optional(),
     CORS_ORIGIN: z.url(),

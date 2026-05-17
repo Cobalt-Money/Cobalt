@@ -18,7 +18,7 @@ import { requireAuth } from "../middleware.js";
 const updateLinkTokenRoute = createRoute({
   method: "post",
   middleware: [requireAuth] as const,
-  path: "/link-token/update",
+  path: "/linkToken/update",
   request: {
     body: {
       content: {

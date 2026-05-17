@@ -25,7 +25,7 @@ export interface AccountCardViewModel {
   category: AccountCategory;
   /** Plaid — `DELETE /api/accounts/bank/:id` uses `plaidAccountId`. */
   plaidAccountId: string | null;
-  /** Plaid — `POST /api/plaid/link-token/update` for reconnect. */
+  /** Plaid — `POST /api/plaid/linkToken/update` for reconnect. */
   plaidItemId: string | null;
   /** SnapTrade — `POST /api/snaptrade/generateConnectionPortal` reconnect. */
   snaptradeAuthorizationId: string | null;

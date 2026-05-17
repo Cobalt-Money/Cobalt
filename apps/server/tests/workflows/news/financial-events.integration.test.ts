@@ -1,3 +1,4 @@
+import { expect, describe, it } from "vitest";
 /**
  * End-to-end smoke test for `processFinancialEventWorkflow`.
  *

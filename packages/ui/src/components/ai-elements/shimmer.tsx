@@ -1,7 +1,7 @@
 import { cn } from "@cobalt-web/ui/lib/utils";
 import type { MotionProps } from "motion/react";
 import { motion } from "motion/react";
-import type { CSSProperties, ElementType, JSX } from "react";
+import type { CSSProperties, ElementType, JSX, ReactNode } from "react";
 import { memo, useMemo } from "react";
 
 type MotionHTMLProps = MotionProps & Record<string, unknown>;
@@ -22,7 +22,9 @@ const getMotionComponent = (element: keyof JSX.IntrinsicElements) => {
 };
 
 export interface TextShimmerProps {
-  children: string;
+  // ReactNode so callers can pass animated text components (TextSwap, etc.);
+  // string length still drives the gradient spread, plain length(0) fallback otherwise.
+  children: ReactNode;
   as?: ElementType;
   className?: string;
   duration?: number;
@@ -41,7 +43,7 @@ const ShimmerComponent = ({
   );
 
   const dynamicSpread = useMemo(
-    () => (children?.length ?? 0) * spread,
+    () => (typeof children === "string" ? children.length : 0) * spread,
     [children, spread]
   );
 

@@ -1,35 +1,13 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { getTransactionDisplayName } from "@cobalt-web/ui/cobalt/transactions/lib/helpers";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@cobalt-web/ui/components/alert-dialog";
-import { Button, buttonVariants } from "@cobalt-web/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@cobalt-web/ui/components/dropdown-menu";
+import { buttonVariants } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { mutators, queries } from "@cobalt-web/zero";
-import {
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
-  Delete02Icon,
-  Settings01Icon,
-} from "@hugeicons/core-free-icons";
+import { queries } from "@cobalt-web/zero";
+import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useQuery, useZero } from "@rocicorp/zero/react";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useQuery } from "@rocicorp/zero/react";
+import { useRouterState } from "@tanstack/react-router";
+import { useMemo } from "react";
 import type { ReactNode } from "react";
 
 import { Link } from "@/components/links";
@@ -41,29 +19,11 @@ import { useShellRouteTitle } from "./header/use-shell-route-title";
 
 function TransactionDetailBreadcrumb({ transactionId }: { transactionId: string }) {
   const { items } = useTransactions();
-  const zero = useZero();
-  const navigate = useNavigate();
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const transaction = useMemo(
     () => items.find((t) => t.id === transactionId),
     [items, transactionId],
   );
   const label = transaction ? getTransactionDisplayName(transaction) : null;
-  const canDelete = transaction?.source === "manual";
-
-  const handleDelete = () => {
-    const { server } = zero.mutate(mutators.transaction.deleteTransaction({ id: transactionId }));
-    cobaltToast.transactionDeleted();
-    navigate({ replace: true, to: "/transactions" });
-    void (async () => {
-      try {
-        await server;
-      } catch (error) {
-        console.error("Failed to delete transaction", error);
-        cobaltToast.error("Couldn't delete transaction. Please try again.");
-      }
-    })();
-  };
 
   return (
     <nav
@@ -85,50 +45,6 @@ function TransactionDetailBreadcrumb({ transactionId }: { transactionId: string 
       <span className="min-w-0 truncate text-foreground">
         {label ?? <span className="text-muted-foreground">Loading…</span>}
       </span>
-      {canDelete ? (
-        <>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  aria-label="Transaction options"
-                  className="ml-1 shrink-0"
-                  size="icon-sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <HugeiconsIcon className="size-5" icon={Settings01Icon} strokeWidth={2} />
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => setConfirmOpen(true)} variant="destructive">
-                <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
-                Delete transaction
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <AlertDialog onOpenChange={setConfirmOpen} open={confirmOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This permanently removes the transaction. This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={handleDelete}
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </>
-      ) : null}
     </nav>
   );
 }

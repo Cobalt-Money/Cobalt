@@ -18,8 +18,15 @@ export function DeleteTransactionDialog({ onConfirm }: { onConfirm: () => void }
     <AlertDialog>
       <AlertDialogTrigger
         render={
-          <Button aria-label="Delete transaction" size="sm" type="button" variant="ghost">
-            <HugeiconsIcon className="size-4 text-destructive" icon={Delete02Icon} />
+          <Button
+            aria-label="Delete transaction"
+            className="-ml-3 rounded-lg border border-transparent text-destructive hover:border-destructive/30 hover:text-destructive"
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
+            <HugeiconsIcon className="size-4" icon={Delete02Icon} />
+            Delete transaction
           </Button>
         }
       />

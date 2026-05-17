@@ -130,6 +130,21 @@ export const MessagePartsRenderer = memo(function MessagePartsRenderer({
       );
     }
 
+    if (part.type === "file") {
+      if (!part.mediaType.startsWith("image/")) {
+        return null;
+      }
+      return (
+        <img
+          alt={part.filename ?? "attachment"}
+          className="my-2 max-h-80 rounded-lg"
+          // eslint-disable-next-line react/no-array-index-key
+          key={`${message.id}-file-${partIndex}`}
+          src={part.url}
+        />
+      );
+    }
+
     return (
       <ToolPartRenderer
         // eslint-disable-next-line react/no-array-index-key

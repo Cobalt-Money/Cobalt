@@ -79,6 +79,23 @@ const FREQUENCY_LABEL: Record<string, string> = {
   WEEKLY: "Weekly",
 };
 
+function SubscriptionRow({ sub }: { sub: Subscription }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3 rounded-xl px-1.5 py-2">
+      <SubLogo sub={sub} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-sm font-medium leading-snug">{displayName(sub.name)}</span>
+        <span className="text-xs text-muted-foreground">
+          {FREQUENCY_LABEL[sub.billingCycle === "yearly" ? "ANNUALLY" : "MONTHLY"] ?? "Recurring"}
+        </span>
+      </div>
+      <span className="shrink-0 text-sm font-semibold tabular-nums">
+        <PrivateAmount>{USD.format(sub.amount)}</PrivateAmount>
+      </span>
+    </div>
+  );
+}
+
 function DayDialog({
   date,
   billers,
@@ -103,28 +120,15 @@ function DayDialog({
         {billers.length === 0 ? (
           <p className="text-sm text-muted-foreground">No payments due on this date.</p>
         ) : (
-          <div className="flex min-w-0 flex-col gap-1">
-            {billers.map((sub) => (
-              <div
-                key={sub.id}
-                className="flex min-w-0 items-center gap-3 overflow-hidden rounded-2xl bg-input/30 px-3 py-2.5"
-              >
-                <SubLogo sub={sub} />
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-sm font-medium leading-snug">{sub.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {FREQUENCY_LABEL[sub.billingCycle === "yearly" ? "ANNUALLY" : "MONTHLY"] ??
-                      "Recurring"}
-                  </span>
-                </div>
-                <span className="shrink-0 text-sm font-semibold tabular-nums">
-                  <PrivateAmount>{USD.format(sub.amount)}</PrivateAmount>
-                </span>
-              </div>
-            ))}
+          <div className="flex min-w-0 flex-col">
+            <div className="flex min-w-0 flex-col">
+              {billers.map((sub) => (
+                <SubscriptionRow key={sub.id} sub={sub} />
+              ))}
+            </div>
 
             {billers.length > 1 && (
-              <div className="mt-1 flex items-center justify-between px-1 pt-2 border-t border-border/50">
+              <div className="mt-1 flex items-center justify-between border-t border-border px-1.5 pt-3">
                 <span className="text-xs text-muted-foreground">Total due</span>
                 <span className="text-sm font-semibold tabular-nums">
                   <PrivateAmount>{USD.format(dayTotal)}</PrivateAmount>
@@ -164,6 +168,13 @@ function logoLookupName(raw: string): string {
     } // cap at 2 words — enough for name matching
   }
   return kept.join(" ") || raw.trim();
+}
+
+/** Cleaned, title-cased name for display. "AMEX EPAYMENT ACH PMT 260420 ..." → "Amex Epayment" */
+function displayName(raw: string): string {
+  return logoLookupName(raw)
+    .toLowerCase()
+    .replaceAll(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function SubLogo({ sub }: { sub: Subscription }) {
