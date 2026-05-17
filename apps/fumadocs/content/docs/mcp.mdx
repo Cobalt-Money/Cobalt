@@ -18,17 +18,22 @@ import {
   McpClientCards,
   McpSectionHeader,
   OpenCodeIcon,
+  PiIcon,
   TerminalIcon,
   VSCodeIcon,
+  ZedIcon,
 } from "@/components/mcp-client-cards";
 
 ## What is the Cobalt MCP server?
 
-A hosted [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that gives AI agents read-only access to your Cobalt financial data — accounts, transactions, investments, brokerage positions, and more.
+A hosted [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that gives AI agents programmatic access to your Cobalt financial data — accounts, transactions, investments, brokerage positions, tags, and market research.
 
-- Authenticated via **OAuth** for secure, scoped access to your account.
-- All queries are scoped to the authenticated user via **Postgres row-level security**.
-- Accessible from any MCP client that supports HTTP-hosted servers.
+Instead of one-tool-per-endpoint, the server exposes a single `cobalt_execute_code` tool. The agent writes a short JavaScript program that calls the `cobalt.*` SDK (accounts, transactions, brokerage, tags, research) and the program runs in a sandboxed V8 isolate. One turn replaces what used to take many round-trip tool calls.
+
+- Authenticated via **OAuth** — the access token is bound to one Cobalt user.
+- All `cobalt.*` calls are auto-scoped to that user; sandboxed code cannot supply or override `userId`.
+- Mostly read; `cobalt.transactions.update` and the `cobalt.tags.*` mutators are the only write paths.
+- Accessible from any MCP client that supports Streamable HTTP transport.
 
 **Server URL:**
 
@@ -50,14 +55,15 @@ The MCP server uses **OAuth** via Better Auth. When you connect for the first ti
 
 ## Security
 
-- The agent database role has **SELECT-only** permissions. Write operations are rejected at both the application and database level.
-- Row-level security (RLS) policies scope every query to the authenticated user.
-- Queries have a **10-second timeout** to prevent runaway operations.
-- Dangerous SQL patterns (write keywords, `SET ROLE`, unsafe functions) are rejected before execution.
+- Code runs in a **Cloudflare V8 isolate** — no filesystem, no network, no access to host secrets. Only the `cobalt.*` SDK is exposed.
+- The OAuth subject is captured server-side and injected into every `cobalt.*` call. Sandboxed code cannot pass or spoof a `userId`.
+- Execution timeout is **180 seconds**.
+- Write surface is limited to `cobalt.transactions.update` (patch only — cannot create) and `cobalt.tags.*` (create / update / archive / attach to transactions). Everything else is read-only.
 
-<Callout type="info">
-  The Cobalt MCP server is read-only. There are no write tools — your data
-  cannot be modified through MCP.
+<Callout type="warn">
+  `cobalt.transactions.update` and `cobalt.tags.*` can modify your data. Review
+  what your agent plans to run before approving destructive edits. Tag deletes
+  are soft (archived), so history is preserved.
 </Callout>
 
 ## Installation instructions
@@ -353,6 +359,55 @@ Manual installation:
   </Step>
 </Steps>
 
+### <McpSectionHeader icon={<ZedIcon />}>Zed</McpSectionHeader>
+
+Zed talks to remote MCP servers directly from `settings.json` — no Rust extension required. Rust is only needed when packaging a locally-spawned MCP server as a Zed extension; Cobalt's MCP is hosted and uses OAuth, so JSON config is enough.
+
+<Steps>
+  <Step>
+    Open the Command Palette (`Cmd+Shift+P` on macOS, `Ctrl+Shift+P` on Windows/Linux) and run **`zed: open settings`**.
+  </Step>
+  <Step>
+    Add Cobalt under `context_servers`:
+
+    ```json
+    {
+      "context_servers": {
+        "cobalt": {
+          "url": "https://api.cobaltpf.com/api/mcp"
+        }
+      }
+    }
+    ```
+
+  </Step>
+  <Step>
+    Save the file. Zed picks up the change immediately and opens the OAuth flow in your browser — sign in with your Cobalt account.
+  </Step>
+  <Step>
+    Open the Agent Panel and confirm `cobalt` appears under available context servers. Cobalt's tools are now usable from any Zed agent.
+  </Step>
+</Steps>
+
+<Callout type="info">
+  Zed forwards `context_servers` to external agents (Claude Agent, Codex) via
+  ACP. Remote OAuth-based MCP servers occasionally hit forwarding issues with
+  external agents — if a tool call fails there, run it from Zed's built-in
+  Agent Panel instead.
+</Callout>
+
+### <McpSectionHeader icon={<PiIcon />}>Pi</McpSectionHeader>
+
+[Pi](https://pi.dev) is a minimal terminal coding agent from earendil-works. Pi does **not** speak MCP — tools are registered as TypeScript extensions, so there is no transport for Cobalt's hosted MCP server to plug into.
+
+Support is planned via a dedicated `cobalt-pi` extension that runs the OAuth2 authorization-code + PKCE flow against `https://api.cobaltpf.com/api/auth/oauth2/*`, caches the resulting access token, and registers `cobalt.*` tools that call the Cobalt API on your behalf. No tokens to paste.
+
+<Callout type="info">
+  Track progress on the [Cobalt
+  GitHub](https://github.com/Sriketk/cobalt-v2/issues). Once `cobalt-pi`
+  ships, install instructions land here.
+</Callout>
+
 ### <McpSectionHeader icon={<TerminalIcon />}>Other clients</McpSectionHeader>
 
 Any MCP client that supports Streamable HTTP transport can connect to:
@@ -389,251 +444,156 @@ For local development, point to your dev server:
   </Tab>
 </Tabs>
 
-## Code execution with Executor
-
-[Executor](https://github.com/RhysSullivan/executor) is a local AI agent runtime that lets your AI write and run TypeScript code against Cobalt's MCP tools — rather than calling them one at a time. Instead of multiple round-trip tool calls, the AI writes a program that orchestrates all the logic in one shot.
-
-**Normal MCP flow:**
-
-```
-AI calls cobalt_list_tables → AI calls cobalt_query → AI calls cobalt_query again → synthesizes answer
-```
-
-**With Executor:**
-
-```ts
-const tables = await tools.cobalt_list_tables();
-const spending = await tools.cobalt_query({
-  query: "SELECT category, SUM(amount) FROM transaction GROUP BY category",
-});
-const income = await tools.cobalt_query({
-  query: "SELECT SUM(amount) FROM transaction WHERE amount > 0",
-});
-return { savingsRate: (income[0].sum - spending.total) / income[0].sum };
-```
-
-One turn. The logic runs in a sandboxed QuickJS environment on your machine.
-
-### Setup
-
-<Steps>
-  <Step>
-    Install Executor globally:
-
-    ```bash
-    bun add -g executor
-    ```
-
-    Or run it directly without installing:
-
-    ```bash
-    bunx executor web
-    ```
-
-  </Step>
-  <Step>
-    Create an `executor.jsonc` file in your project directory:
-
-    ```jsonc
-    {
-      "sources": [
-        {
-          "kind": "mcp",
-          "transport": "remote",
-          "name": "cobalt",
-          "endpoint": "https://api.cobaltpf.com/api/mcp"
-        }
-      ]
-    }
-    ```
-
-  </Step>
-  <Step>
-    Start the Executor web server from the executor directory:
-
-    ```bash
-    bunx executor web
-    ```
-
-    This starts Executor at `http://127.0.0.1:8788`. Keep this terminal running.
-
-  </Step>
-  <Step>
-    Add Executor as an MCP server in your AI tool:
-
-    **Claude Code:**
-    ```bash
-    claude mcp add executor --transport http http://127.0.0.1:8788/mcp
-    ```
-
-    **Cursor** — add to your MCP config:
-    ```json
-    {
-      "mcpServers": {
-        "executor": {
-          "url": "http://127.0.0.1:8788/mcp"
-        }
-      }
-    }
-    ```
-
-  </Step>
-  <Step>
-    Authenticate with Cobalt through the Executor web UI at `http://127.0.0.1:8788`. Add Cobalt as a source and complete the OAuth flow.
-  </Step>
-</Steps>
-
-Your AI tool now has an `execute` tool that can write and run code against all your Cobalt data in a single turn.
-
 ## Available tools
 
-The Cobalt MCP server exposes 5 tools for schema discovery and data querying:
+The server exposes two tools. Almost all real work happens through `cobalt_execute_code`.
 
-### 1. `cobalt_list_tables`
+### `cobalt_execute_code`
 
-Returns all available database tables and their descriptions. **Call this first** to discover what data is available.
+Runs a JavaScript program against the `cobalt.*` SDK inside a sandboxed V8 isolate. Top-level `await` is supported. `cobalt` is pre-injected — do not import it.
 
-**Input:** None
+| Parameter | Type   | Description                                                       |
+| --------- | ------ | ----------------------------------------------------------------- |
+| `code`    | string | JavaScript source (no TypeScript syntax). Pre-injected `cobalt.*` |
 
-**Example response:**
+Return value of the program is serialized back as the tool result. Use `console.log` for intermediate output.
 
-```json
-{
-  "tables": [
-    {
-      "name": "transaction",
-      "description": "Bank transactions (posted and pending)"
-    },
-    {
-      "name": "bank_account",
-      "description": "Individual bank accounts within connections"
-    },
-    {
-      "name": "investment_position",
-      "description": "Current investment holdings per account"
-    }
-  ]
+**Example — savings rate this month:**
+
+```js
+const txns = await cobalt.transactions.list({
+  startDate: "2026-05-01",
+  endDate: "2026-05-31",
+  limit: 500,
+});
+
+let spent = 0, earned = 0;
+for (const t of txns.transactions) {
+  if (t.amount > 0) spent += t.amount;
+  else earned += -t.amount;
 }
+
+return { spent, earned, savingsRate: (earned - spent) / earned };
 ```
 
-### 2. `cobalt_describe_table`
+### `cobalt_get_session_subject`
 
-Get column names, data types, and nullability for a specific table. Use after `cobalt_list_tables` to understand table structure before writing queries.
-
-| Parameter | Type   | Description                          |
-| --------- | ------ | ------------------------------------ |
-| `table`   | string | Table name from `cobalt_list_tables` |
-
-### 3. `cobalt_get_relationships`
-
-Get foreign key relationships between tables. Useful for understanding how to JOIN tables in queries.
+Returns the Cobalt user id (`sub`) for the current OAuth access token. Useful for debugging auth.
 
 **Input:** None
 
-### 4. `cobalt_query`
+## The `cobalt.*` SDK
 
-Execute a read-only SQL query against your financial data. Results are automatically scoped to the authenticated user via row-level security.
+All calls below are auto-scoped to the authenticated user.
 
-| Parameter | Type   | Description                               |
-| --------- | ------ | ----------------------------------------- |
-| `query`   | string | SQL query (SELECT or WITH only)           |
-| `limit`   | number | Max rows to return (default 100, max 500) |
+### Accounts
 
-**Example:**
-
-```sql
-SELECT name, amount, date
-FROM transaction
-WHERE date >= '2026-01-01'
-ORDER BY date DESC
-LIMIT 10
+```ts
+cobalt.accounts.list({ type?, subtype? })
+cobalt.accounts.getById({ accountId })
 ```
 
-**Query safeguards:**
+`type` is a Plaid type (`"depository" | "credit" | "loan" | "investment" | "other"`). `subtype` is the Plaid subtype (`"checking" | "savings" | "mortgage" | "401k" | ...`). Omit both for everything. SnapTrade brokerage data lives under `cobalt.brokerage.*`.
 
-- Only `SELECT` and `WITH` (CTE) queries are allowed
-- Write operations (`INSERT`, `UPDATE`, `DELETE`, `DROP`, etc.) are rejected
-- Multi-statement queries are rejected
-- Dangerous functions (`pg_read_file`, `dblink`, `pg_sleep`, etc.) are blocked
-- `SET ROLE` escalation is blocked
-- A `LIMIT` is automatically appended if missing (default 500)
-- Queries have a 10-second timeout
+### Transactions
 
-### 5. `cobalt_get_session_subject`
+```ts
+cobalt.transactions.list({
+  startDate?, endDate?, primaryCategory?, accountType?,
+  minAmount?, maxAmount?, searchQuery?, pendingFilter?,
+  limit?, cursor?,
+})
+// returns { transactions, nextCursor, hasMore }
 
-Returns the Cobalt user ID for the current OAuth session. Useful for debugging authentication.
+cobalt.transactions.update({
+  transactionId,
+  patch: { name?, date?, notes?, categoryId?, tags?,
+           merchantName?, website?, location? },
+})
+```
 
-**Input:** None
+Cursor-paginate by passing `nextCursor` back as `cursor`. `update` is patch-only — pass `null` for `name` / `date` / `notes` / `categoryId` / `merchantName` / `location` to restore the original Plaid value. `website` accepts a bare domain or full URL and is normalized to bare lowercase. `patch.tags` is a **full replace** of the tag set — for single-tag add/remove use the tag helpers below. `location` is a composite object: `{ address, city, region, postal_code, country, lat, lon, store_number }`.
 
-## Available tables
+### Tags
 
-| Table                      | Description                                   |
-| -------------------------- | --------------------------------------------- |
-| `bank_connection`          | Linked bank connections (Plaid items)         |
-| `bank_account`             | Individual bank accounts within connections   |
-| `bank_balance`             | Latest balance for each bank account          |
-| `bank_balance_snapshot`    | Historical daily balance snapshots            |
-| `transaction`              | Bank transactions (posted and pending)        |
-| `recurring_stream`         | Detected recurring transactions/subscriptions |
-| `credit_liability`         | Credit card liability details                 |
-| `mortgage_liability`       | Mortgage loan details                         |
-| `student_loan_liability`   | Student loan details                          |
-| `investment_security`      | Investment securities reference data          |
-| `investment_position`      | Current investment holdings per account       |
-| `investment_activity`      | Investment transaction history                |
-| `brokerage_account`        | Brokerage accounts (SnapTrade)                |
-| `brokerage_account_detail` | Brokerage account details and metadata        |
-| `brokerage_activity`       | Brokerage transaction history                 |
-| `brokerage_authorization`  | Brokerage connection authorizations           |
-| `brokerage_balance`        | Brokerage account balances                    |
-| `brokerage_order`          | Brokerage orders                              |
-| `brokerage_position`       | Current brokerage holdings                    |
-| `brokerage_user`           | Brokerage user profiles (SnapTrade)           |
-| `institution`              | Bank/institution reference data               |
-| `financial_goals`          | User-defined financial goals                  |
-| `portfolio_snapshot`       | Historical portfolio value snapshots          |
+```ts
+cobalt.tags.list()
+cobalt.tags.get({ tagId })
+cobalt.tags.create({ name, color })          // returns { id }
+cobalt.tags.update({ tagId, patch: { name?, color?, archived? } })
+
+cobalt.tags.forTransaction({ transactionId })
+cobalt.tags.addToTransaction({ transactionId, tagIds })       // merge
+cobalt.tags.removeFromTransaction({ transactionId, tagIds })
+cobalt.tags.setOnTransaction({ transactionId, tagIds })       // full replace; [] clears
+```
+
+`archived: true` is a soft delete — hidden from the picker, history preserved. Hard delete is not exposed.
+
+### Brokerage (SnapTrade)
+
+```ts
+cobalt.brokerage.balances()
+cobalt.brokerage.accounts()
+cobalt.brokerage.userBrokerages()
+cobalt.brokerage.userTickers()
+cobalt.brokerage.positions({ accountId?, limit?, offset? })
+cobalt.brokerage.activities({ accountId?, limit?, offset? })
+cobalt.brokerage.portfolioSnapshots({ accountId?, startDate?, endDate? })
+```
+
+### Snapshots
+
+```ts
+cobalt.snapshots.balances({ accountId?, startDate?, endDate? })
+```
+
+### Research (global market data, not user-scoped)
+
+```ts
+cobalt.research.quote({ symbol })
+cobalt.research.overview({ symbol })
+cobalt.research.news({ symbol })
+```
 
 ## Example workflows
 
 Once connected, try asking your AI agent:
 
 - "What are my top 10 largest transactions this month?"
-- "Show me my total balance across all bank accounts"
+- "Show me my total balance across all bank accounts."
+- "Tag every Whole Foods transaction this year as `groceries`."
 - "What recurring subscriptions do I have and how much do they cost?"
-- "Break down my spending by category for the last 3 months"
-- "What's my current investment portfolio allocation?"
-- "Compare my spending this month vs last month"
-- "Which bank accounts have the highest fees?"
-- "Show me all pending transactions"
+- "Break down my spending by category for the last 3 months."
+- "What's my current brokerage allocation by ticker?"
+- "Compare my spending this month vs last month."
+- "Rename the merchant on transaction `txn_…` to `Costco Wholesale`."
 
 ## Help your agent target your data
 
-To reduce unnecessary tool calls, add context to your project's `CLAUDE.md` or `.cursorrules`:
+Add a hint to your `CLAUDE.md` / `.cursorrules`:
 
 ```markdown
 ## Cobalt MCP
 
-- Always call `cobalt_list_tables` first to discover available tables
-- Use `cobalt_describe_table` to understand column types before writing queries
-- Use `cobalt_get_relationships` to find JOIN paths between tables
+- Use `cobalt_execute_code` — write one program, not many tool calls.
+- The `cobalt.*` SDK is pre-injected; do not import it.
+- `cobalt.transactions.list` returns `{ transactions, nextCursor, hasMore }`. Paginate with `cursor: nextCursor`.
+- `cobalt.transactions.update.patch.tags` is a full replace — use `cobalt.tags.addToTransaction` / `removeFromTransaction` for single-tag edits.
 ```
 
 ## Troubleshooting
 
-If your MCP client cannot connect or tools fail to run:
+**Restart your client** — After installation, you may need to restart your client or CLI to load the new MCP configuration.
 
-**Restart your client** — After installation, you may need to restart your client or CLI tool to load the new MCP configuration.
-
-**Check the server URL** — Make sure the URL is set to `https://api.cobaltpf.com/api/mcp`.
+**Check the server URL** — `https://api.cobaltpf.com/api/mcp`.
 
 **Re-authenticate** — If your token has expired, re-authenticate by restarting the MCP connection in your client.
 
-**Query rejected** — Only `SELECT`/`WITH` queries are allowed. Check for accidental write keywords in your query.
+**Code errored** — The tool result contains `error` (with `name` + `message`) and any `stdout` your program produced before the throw. `console.log` your intermediate values to debug.
 
-**Empty results** — Row-level security scopes data to your user. Verify you have financial accounts linked to your Cobalt account.
+**Empty results** — All `cobalt.*` calls are scoped to your user. Verify you actually have data linked to your Cobalt account.
 
-**Timeout** — Queries have a 10-second limit. Add `WHERE` filters or reduce the result set with `LIMIT`.
+**Timeout** — Execution is capped at 180 seconds. Narrow your `startDate` / `endDate` window, lower `limit`, or paginate with `cursor`.
 
-```
-
-```
+**`userId` rejected** — Sandboxed code cannot pass a `userId` to `cobalt.*`. The subject is injected server-side.
