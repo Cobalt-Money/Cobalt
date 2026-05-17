@@ -24,8 +24,7 @@ export function BuildOnCobaltSection() {
     <section className="px-6 py-24 lg:py-32">
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
-          <Badge variant="secondary">Build on top of Cobalt</Badge>
-          <h2 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+          <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
             Ship what we haven't.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
