@@ -1,36 +1,13 @@
 ---
 title: Getting Started
-description: Welcome to the Cobalt API documentation.
+description: Welcome to the Cobalt documentation.
 icon: Rocket
 ---
 
 ## Introduction
 
-Cobalt is a financial platform that provides APIs for managing accounts, transactions, brokerage data, and more.
-
-## API Reference
-
-Browse the full [API Reference](/docs/api-reference) to see all available endpoints, request/response schemas, and try out requests interactively.
-
-## Authentication
-
-All API endpoints require authentication via Google OAuth. See the [Authentication guide](/docs/authentication) for setup instructions and examples.
+Cobalt is a financial platform that connects your accounts, transactions, brokerage data, and market research in one place.
 
 ## MCP Server
 
-Connect AI agents (Claude, Cursor, VS Code) to your financial data via the [Model Context Protocol](/docs/mcp). Agents can query your accounts, transactions, investments, and more using natural language.
-
-## Base URL
-
-```
-https://api.cobaltpf.com/v1
-```
-
-## Available Resources
-
-- **Accounts** — Bank, brokerage, and credit card account management
-- **Transactions** — Transaction history with filtering and pagination
-- **Brokerage** — Portfolio positions, activities, and snapshots
-- **Research** — Company quotes, financials, and market data
-- **Tickers** — Ticker search and price data
-- **News** — Financial news and events
+Connect AI agents (Claude, Cursor, VS Code, Zed, Codex, Gemini, Amp, OpenCode) to your financial data via the [Model Context Protocol](/docs/mcp). Agents call a single `cobalt_execute_code` tool to run JavaScript against the `cobalt.*` SDK in a sandboxed V8 isolate — accounts, transactions, brokerage positions, tags, and market research, all auto-scoped to the authenticated user.
