@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import type { BundledLanguage, ThemedToken } from "shiki";
-import { codeToTokens } from "shiki";
 
 type Lang = "curl" | "ts" | "python";
 
@@ -24,6 +23,7 @@ function HighlightedCode({ code, language }: { code: string; language: BundledLa
     let cancelled = false;
     const run = async () => {
       try {
+        const { codeToTokens } = await import("shiki");
         const result = await codeToTokens(code, {
           lang: language,
           theme: "github-dark-default",
