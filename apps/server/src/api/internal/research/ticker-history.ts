@@ -1,32 +1,14 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { fmpGetHistoricalRange } from "@cobalt-web/server-data/research/fmp-ticker";
 import {
-  errorResponseSchema,
   tickerHistoryQuerySchema,
   tickerHistoryResponseSchema,
 } from "@cobalt-web/server-data/research/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requireAuth } from "../middleware.js";
-
-const route = createRoute({
-  method: "get",
-  middleware: [requireAuth] as const,
-  path: "/ticker-history",
-  request: { query: tickerHistoryQuerySchema },
-  responses: {
-    200: {
-      content: { "application/json": { schema: tickerHistoryResponseSchema } },
-      description: "Daily closes around the requested date",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
-  },
-  summary: "Get daily closes around a date (cost-basis picker)",
-  tags: ["Research"],
-});
 
 function shiftDate(iso: string, days: number): string {
   const parts = iso.split("-").map(Number);
@@ -38,23 +20,34 @@ function shiftDate(iso: string, days: number): string {
   return dt.toISOString().slice(0, 10);
 }
 
-export const tickerHistoryRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
-  try {
-    const { symbol, date, window } = c.req.valid("query");
-    const w = window ?? 7;
-    const from = shiftDate(date, -w);
-    const to = shiftDate(date, w);
-    const points = await fmpGetHistoricalRange(symbol, from, to);
-    c.header("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=3600");
-    return c.json(
-      {
-        points: points.map((p) => ({ close: p.close, date: p.date })),
-        requested: date,
-        symbol,
-      },
-      200,
-    );
-  } catch {
-    return c.json({ error: "Failed to fetch ticker history" }, 500);
-  }
+const route = createRoute({
+  method: "get",
+  middleware: [requireAuth] as const,
+  path: "/ticker-history",
+  request: { query: tickerHistoryQuerySchema },
+  responses: {
+    200: jsonContent(tickerHistoryResponseSchema, "Daily closes around the requested date"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    422: validationErrorResponse(tickerHistoryQuerySchema),
+    502: jsonContent(errorResponseWithCodeSchema, "FMP upstream failed"),
+  },
+  summary: "Get daily closes around a date (cost-basis picker)",
+  tags: ["Research"],
+});
+
+export const tickerHistoryRouter = createApp().openapi(route, async (c) => {
+  const { symbol, date, window } = c.req.valid("query");
+  const w = window ?? 7;
+  const from = shiftDate(date, -w);
+  const to = shiftDate(date, w);
+  const points = await fmpGetHistoricalRange(symbol, from, to);
+  c.header("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=3600");
+  return c.json(
+    {
+      points: points.map((p) => ({ close: p.close, date: p.date })),
+      requested: date,
+      symbol,
+    },
+    200,
+  );
 });

@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import type { StockNewsArticle } from "@cobalt-web/clients/stock-news";
 import { eventArticles } from "@cobalt-web/db/schema/news";
 import { createInsertSchema } from "drizzle-orm/zod";

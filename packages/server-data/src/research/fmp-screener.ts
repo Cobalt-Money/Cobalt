@@ -1,5 +1,7 @@
 import { fmpStableGet } from "@cobalt-web/clients/fmp";
 
+import { withFmpUpstream } from "./fmp-errors.js";
+
 /** Parameters for `GET /stable/company-screener` (see FMP docs). */
 export interface CompanyScreenerParams {
   betaLowerThan?: number;
@@ -32,26 +34,44 @@ export const DEFAULT_COMPANY_SCREENER: CompanyScreenerParams = {
   marketCapMoreThan: 1_000_000_000,
 };
 
+const NUMERIC_FIELDS = ["price", "marketCap", "beta", "volume"] as const;
+
+function coerceNumber(v: unknown): number | null {
+  if (typeof v === "number") {
+    return Number.isFinite(v) ? v : null;
+  }
+  if (typeof v === "string") {
+    const n = Number.parseFloat(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function normalizeScreenerRow(row: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...row };
+  for (const key of NUMERIC_FIELDS) {
+    if (key in out) {
+      out[key] = coerceNumber(out[key]);
+    }
+  }
+  return out;
+}
+
 function parseScreenerRows(raw: unknown): Record<string, unknown>[] {
   if (!Array.isArray(raw)) {
     return [];
   }
-  return raw.filter(
-    (row): row is Record<string, unknown> =>
-      row !== null && typeof row === "object" && !Array.isArray(row),
-  );
+  return raw
+    .filter(
+      (row): row is Record<string, unknown> =>
+        row !== null && typeof row === "object" && !Array.isArray(row),
+    )
+    .map(normalizeScreenerRow);
 }
 
 function marketCapOf(row: Record<string, unknown>): number {
-  const v = row.marketCap;
-  if (typeof v === "number" && Number.isFinite(v)) {
-    return v;
-  }
-  if (typeof v === "string") {
-    const n = Number.parseFloat(v);
-    return Number.isFinite(n) ? n : 0;
-  }
-  return 0;
+  const n = coerceNumber(row.marketCap);
+  return n ?? 0;
 }
 
 function rowSymbolUpper(row: Record<string, unknown>): string {
@@ -71,10 +91,12 @@ export async function fmpCompanyScreenerNasdaqNyse(
   const { exchange: _ignored, limit: lim, ...rest } = params;
   const limit = typeof lim === "number" && lim > 0 ? lim : 100;
 
-  const [rawNasdaq, rawNyse] = await Promise.all([
-    fmpCompanyScreener({ ...rest, exchange: "NASDAQ", limit }),
-    fmpCompanyScreener({ ...rest, exchange: "NYSE", limit }),
-  ]);
+  const [rawNasdaq, rawNyse] = await withFmpUpstream(() =>
+    Promise.all([
+      fmpCompanyScreener({ ...rest, exchange: "NASDAQ", limit }),
+      fmpCompanyScreener({ ...rest, exchange: "NYSE", limit }),
+    ]),
+  );
 
   const bySym = new Map<string, Record<string, unknown>>();
   for (const row of [...parseScreenerRows(rawNasdaq), ...parseScreenerRows(rawNyse)]) {

@@ -1,9 +1,9 @@
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 
-import { APIPage } from "@/components/api-page";
 import {
   AmpIcon,
+  ChatGPTIcon,
   ClaudeIcon,
   CodexIcon,
   CursorIcon,
@@ -11,15 +11,17 @@ import {
   McpClientCards,
   McpSectionHeader,
   OpenCodeIcon,
+  PiIcon,
   TerminalIcon,
   VSCodeIcon,
+  ZedIcon,
 } from "@/components/mcp-client-cards";
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
-    APIPage,
     AmpIcon,
+    ChatGPTIcon,
     ClaudeIcon,
     CodexIcon,
     CursorIcon,
@@ -27,8 +29,10 @@ export function getMDXComponents(components?: MDXComponents) {
     McpClientCards,
     McpSectionHeader,
     OpenCodeIcon,
+    PiIcon,
     TerminalIcon,
     VSCodeIcon,
+    ZedIcon,
     ...components,
   } satisfies MDXComponents;
 }

@@ -1,6 +1,6 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   clearCreditLimitOverride,
-  getAccountOwner,
   setCreditLimitOverride,
 } from "@cobalt-web/server-data/accounts/mutations";
 import { getCreditCards } from "@cobalt-web/server-data/accounts/queries";
@@ -10,9 +10,10 @@ import {
   creditLimitBodySchema,
   successResponseSchema,
 } from "@cobalt-web/server-data/accounts/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requireAuth } from "../middleware.js";
 
 const list = createRoute({
@@ -20,12 +21,8 @@ const list = createRoute({
   middleware: [requireAuth] as const,
   path: "/credit-cards",
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: creditCardListResponseSchema },
-      },
-      description: "List of credit cards",
-    },
+    200: jsonContent(creditCardListResponseSchema, "List of credit cards"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "List credit cards",
   tags: ["Accounts"],
@@ -42,12 +39,10 @@ const patchLimit = createRoute({
     params: accountIdParamSchema,
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: successResponseSchema } },
-      description: "Credit limit updated",
-    },
-    403: { description: "Unauthorized" },
-    404: { description: "Account not found" },
+    200: jsonContent(successResponseSchema, "Credit limit updated"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Account not found"),
+    422: validationErrorResponse(creditLimitBodySchema),
   },
   summary: "Set credit limit override",
   tags: ["Accounts"],
@@ -59,18 +54,16 @@ const deleteLimit = createRoute({
   path: "/credit-cards/{id}/credit-limit",
   request: { params: accountIdParamSchema },
   responses: {
-    200: {
-      content: { "application/json": { schema: successResponseSchema } },
-      description: "Credit limit reset",
-    },
-    403: { description: "Unauthorized" },
-    404: { description: "Account not found" },
+    200: jsonContent(successResponseSchema, "Credit limit reset"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Account not found"),
+    422: validationErrorResponse(accountIdParamSchema),
   },
   summary: "Reset credit limit override",
   tags: ["Accounts"],
 });
 
-const creditCardsRouter = new OpenAPIHono<AppEnv>()
+const creditCardsRouter = createApp()
   .openapi(list, async (c) => {
     const accounts = await getCreditCards(c.var.user.id);
     c.header("Cache-Control", "private, max-age=60");
@@ -79,30 +72,12 @@ const creditCardsRouter = new OpenAPIHono<AppEnv>()
   .openapi(patchLimit, async (c) => {
     const { id } = c.req.valid("param");
     const { creditLimit } = c.req.valid("json");
-
-    const account = await getAccountOwner(id);
-    if (!account) {
-      return c.json({ error: "Account not found" }, 404);
-    }
-    if (account.userId !== c.var.user.id) {
-      return c.json({ error: "Unauthorized" }, 403);
-    }
-
-    await setCreditLimitOverride(id, creditLimit);
+    await setCreditLimitOverride(id, c.var.user.id, creditLimit);
     return c.json({ success: true }, 200);
   })
   .openapi(deleteLimit, async (c) => {
     const { id } = c.req.valid("param");
-
-    const account = await getAccountOwner(id);
-    if (!account) {
-      return c.json({ error: "Account not found" }, 404);
-    }
-    if (account.userId !== c.var.user.id) {
-      return c.json({ error: "Unauthorized" }, 403);
-    }
-
-    await clearCreditLimitOverride(id);
+    await clearCreditLimitOverride(id, c.var.user.id);
     return c.json({ success: true }, 200);
   });
 

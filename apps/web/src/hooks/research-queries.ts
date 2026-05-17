@@ -1,10 +1,14 @@
-import type { FmpProfile } from "@cobalt-web/server-data/research/schemas";
-import { queryOptions } from "@tanstack/react-query";
+import type {
+  FmpProfile,
+  ScreenerResponse,
+  ScreenerRow,
+} from "@cobalt-web/server-data/research/schemas";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import type { ChartPeriod } from "@/components/research/ticker/lightweight-price-chart";
 import { researchApi } from "@/lib/clients/api-client";
 
-export type { FmpProfile };
+export type { FmpProfile, ScreenerResponse, ScreenerRow };
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -31,13 +35,6 @@ export interface ChartPoint {
   value: number;
 }
 
-export type ScreenerRow = Record<string, unknown>;
-
-export interface ScreenerResponse {
-  count: number;
-  results: ScreenerRow[];
-}
-
 /** Command K row (from screener universe). */
 export interface TickerSearchItem {
   name: string;
@@ -48,12 +45,8 @@ export interface TickerSearchItem {
 }
 
 export function screenerRowToTickerSearchItem(row: ScreenerRow): TickerSearchItem {
-  const sym = row.symbol ?? row.ticker;
-  const symbol = typeof sym === "string" ? sym.trim() : "";
-  const name =
-    (typeof row.companyName === "string" && row.companyName.trim()) ||
-    (typeof row.name === "string" && row.name.trim()) ||
-    symbol;
+  const symbol = row.symbol.trim();
+  const name = row.companyName?.trim() || symbol;
   const type = row.isEtf === true ? "ETF" : "Equity";
   const price = typeof row.price === "number" && Number.isFinite(row.price) ? row.price : undefined;
   return { name, price, symbol, type };
@@ -124,6 +117,7 @@ export const tickerOverview = (symbol: string) =>
 
 export const chartQuery = (symbol: string, timePeriod: ChartPeriod) =>
   queryOptions({
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       const res = await researchApi.chart.$get({
         query: { symbol, timePeriod },

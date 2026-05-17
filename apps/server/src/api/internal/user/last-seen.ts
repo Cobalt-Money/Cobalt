@@ -1,11 +1,13 @@
-import type { AppEnv } from "@cobalt-web/server-data/types";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   getUserLastSeen,
   lastSeenResponseSchema,
   updateLastSeen,
 } from "@cobalt-web/server-data/user";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent } from "../../../lib/openapi-helpers.js";
 import { requireAuth } from "../middleware.js";
 
 const getRoute = createRoute({
@@ -15,12 +17,8 @@ const getRoute = createRoute({
   middleware: [requireAuth] as const,
   path: "/lastSeen",
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: lastSeenResponseSchema },
-      },
-      description: "Last seen status",
-    },
+    200: jsonContent(lastSeenResponseSchema, "Last seen status"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Get last seen",
   tags: ["User"],
@@ -33,18 +31,14 @@ const postRoute = createRoute({
   middleware: [requireAuth] as const,
   path: "/lastSeen",
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: lastSeenResponseSchema },
-      },
-      description: "Last seen updated",
-    },
+    200: jsonContent(lastSeenResponseSchema, "Last seen updated"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Update last seen",
   tags: ["User"],
 });
 
-export const lastSeenRouter = new OpenAPIHono<AppEnv>()
+export const lastSeenRouter = createApp()
   .openapi(getRoute, async (c) => {
     const result = await getUserLastSeen(c.var.user.id);
     return c.json(result, 200);

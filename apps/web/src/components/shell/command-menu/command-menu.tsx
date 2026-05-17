@@ -1,5 +1,6 @@
 import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-grid";
 import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/types";
+import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
 import { AddManualAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-manual-account-dialog";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { AddTransactionForm } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
@@ -63,6 +64,9 @@ import {
   useAccountLauncher,
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
+import { useOpenImportWizard } from "@/components/imports/import-wizard";
+import { useQuery } from "@tanstack/react-query";
+import { importsApi } from "@/lib/clients/api-client";
 import { SettingsGrid } from "@/components/settings/settings-grid";
 import type { SettingsSection } from "@/components/settings/settings-grid";
 import { useAddManualAccountSubmit } from "@/hooks/use-add-manual-account-submit";
@@ -328,6 +332,7 @@ function CommandMenuDialog({
 }) {
   const navigate = useNavigate();
   const router = useRouter();
+  const openImportWizard = useOpenImportWizard();
   const { resolvedTheme, setTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("profile");
@@ -358,16 +363,12 @@ function CommandMenuDialog({
 
   // ── Search hooks ────────────────────────────────────────────────────────────
 
-  const { filteredTransactions, prefetch: prefetchTransactions } = useTransactionSearch(
-    trimmedSearch,
-    inSearchTransactions,
-  );
+  const { filteredTransactions } = useTransactionSearch(trimmedSearch, open);
 
-  const {
-    filteredChats,
-    handleHighlight: handleChatHighlight,
-    prefetch: prefetchChats,
-  } = useChatSearch(trimmedSearch, inSearchChats);
+  const { filteredChats, handleHighlight: handleChatHighlight } = useChatSearch(
+    trimmedSearch,
+    open,
+  );
 
   const { filteredTickers, isLoadingUniverse, tickerRows } = useTickerSearch(
     trimmedSearch,
@@ -478,16 +479,14 @@ function CommandMenuDialog({
   // ── Sub-page entry ──────────────────────────────────────────────────────────
 
   const enterSearchTransactions = useCallback(() => {
-    prefetchTransactions();
     setSearch("");
     setPages((p) => [...p, "search-transactions"]);
-  }, [prefetchTransactions, setPages, setSearch]);
+  }, [setPages, setSearch]);
 
   const enterSearchChats = useCallback(() => {
-    prefetchChats();
     setSearch("");
     setPages((p) => [...p, "search-chats"]);
-  }, [prefetchChats, setPages, setSearch]);
+  }, [setPages, setSearch]);
 
   const enterSearchTickers = useCallback(() => {
     setSearch("");
@@ -664,6 +663,11 @@ function CommandMenuDialog({
 
   const handleChooseInstitution = useCallback(
     (institution: AddAccountInstitution) => {
+      if (institution.id === "manual:import-csv") {
+        handleOpenChange(false);
+        openImportWizard();
+        return;
+      }
       if (institution.provider === "manual") {
         // Cash tile — no intermediate step, no institution prefill, lock type to depository.
         setSelectedInstitution(null);
@@ -680,7 +684,7 @@ function CommandMenuDialog({
       setSearch("");
       setPages((p) => [...p.slice(0, -1), "link-or-manual"]);
     },
-    [setPages, setSearch],
+    [handleOpenChange, openImportWizard, setPages, setSearch],
   );
 
   const enterSettings = useCallback(
@@ -772,6 +776,42 @@ function CommandMenuDialog({
     },
   ];
 
+  const resumableImports = useQuery<{
+    jobs: {
+      id: string;
+      originalFilename: string;
+      status: "uploaded" | "column_mapped" | "account_mapped" | "category_mapped" | "committing";
+    }[];
+  }>({
+    enabled: open,
+    queryFn: async () => {
+      const res = await importsApi.list.$get();
+      if (!res.ok) {
+        throw new Error("Failed to load imports");
+      }
+      return (await res.json()) as {
+        jobs: {
+          id: string;
+          originalFilename: string;
+          status:
+            | "uploaded"
+            | "column_mapped"
+            | "account_mapped"
+            | "category_mapped"
+            | "committing";
+        }[];
+      };
+    },
+    queryKey: ["resumable-imports"],
+  });
+  const resumableStepLabel: Record<string, string> = {
+    account_mapped: "Map categories",
+    category_mapped: "Review & commit",
+    column_mapped: "Map accounts",
+    committing: "Importing…",
+    uploaded: "Map columns",
+  };
+
   const transactionActions: CommandAction[] = [
     {
       handleSelect: enterSearchTransactions,
@@ -785,6 +825,24 @@ function CommandMenuDialog({
       keywords: ["create", "new", "add", "manual"],
       label: "Add Manual Transaction",
     },
+    {
+      handleSelect: () => {
+        handleOpenChange(false);
+        openImportWizard();
+      },
+      icon: File02Icon,
+      keywords: ["import", "csv", "upload", "mint", "ynab", "monarch", "bulk"],
+      label: "Import Transactions",
+    },
+    ...(resumableImports.data?.jobs ?? []).map<CommandAction>((j) => ({
+      handleSelect: () => {
+        handleOpenChange(false);
+        openImportWizard(j.id);
+      },
+      icon: File02Icon,
+      keywords: ["import", "resume", j.originalFilename],
+      label: `Resume: ${j.originalFilename} (${resumableStepLabel[j.status] ?? j.status})`,
+    })),
     {
       handleSelect: enterAddTag,
       icon: Edit02Icon,
@@ -917,20 +975,18 @@ function CommandMenuDialog({
           {inLinkOrManual && selectedInstitution !== null && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-3 font-semibold text-foreground text-lg leading-none">
-                {selectedInstitution.logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt=""
-                    className="size-8 shrink-0 rounded-lg object-contain"
-                    src={selectedInstitution.logo}
-                  />
-                ) : null}
+                <InstitutionLogo
+                  className="size-10 shrink-0 overflow-hidden rounded-lg"
+                  institutionLogo={selectedInstitution.logo}
+                  institutionName={selectedInstitution.name}
+                  institutionUrl={selectedInstitution.url}
+                />
                 <span>{selectedInstitution.name}</span>
               </h2>
               <p className="text-muted-foreground text-sm">
                 How would you like to add this account?
               </p>
-              <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
+              <div className="flex flex-col gap-2 pt-1">
                 <button
                   className="flex flex-col items-start gap-1 rounded-lg border border-foreground/10 bg-foreground/[0.03] p-4 text-left transition-colors hover:bg-foreground/[0.07]"
                   onClick={() => {
@@ -1481,9 +1537,9 @@ export function CommandMenuSearchShortcut() {
   const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
   return (
-    <KbdGroup aria-hidden className="pointer-events-none hidden shrink-0 gap-0.5 sm:inline-flex">
-      <Kbd className="min-w-6 px-1">{isMac ? "⌘" : "Ctrl"}</Kbd>
-      <Kbd className="min-w-6 px-1">K</Kbd>
+    <KbdGroup aria-hidden className="pointer-events-none hidden shrink-0 sm:inline-flex">
+      <Kbd>{isMac ? "⌘" : "Ctrl"}</Kbd>
+      <Kbd>K</Kbd>
     </KbdGroup>
   );
 }

@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   bulkApplyTags,
   createTag,
@@ -14,9 +15,10 @@ import {
   tagSuccessResponse,
   updateTagBodySchema,
 } from "@cobalt-web/server-data/transactions/tags/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const listTagsRoute = createRoute({
@@ -25,10 +27,9 @@ const listTagsRoute = createRoute({
   middleware: [requirePaidUser] as const,
   path: "/",
   responses: {
-    200: {
-      content: { "application/json": { schema: tagsListResponseSchema } },
-      description: "User's tags",
-    },
+    200: jsonContent(tagsListResponseSchema, "User's tags"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
   },
   summary: "List tags",
   tags: ["Tags"],
@@ -45,10 +46,10 @@ const createTagRoute = createRoute({
     },
   },
   responses: {
-    201: {
-      content: { "application/json": { schema: createTagResponseSchema } },
-      description: "Tag created",
-    },
+    201: jsonContent(createTagResponseSchema, "Tag created"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    422: validationErrorResponse(createTagBodySchema),
   },
   summary: "Create tag",
   tags: ["Tags"],
@@ -64,10 +65,11 @@ const updateTagRoute = createRoute({
     params: tagIdParamSchema,
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: tagSuccessResponse } },
-      description: "Tag updated",
-    },
+    200: jsonContent(tagSuccessResponse, "Tag updated"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Tag not found"),
+    422: validationErrorResponse(updateTagBodySchema),
   },
   summary: "Update tag",
   tags: ["Tags"],
@@ -80,10 +82,11 @@ const deleteTagRoute = createRoute({
   path: "/{tagId}",
   request: { params: tagIdParamSchema },
   responses: {
-    200: {
-      content: { "application/json": { schema: tagSuccessResponse } },
-      description: "Tag deleted",
-    },
+    200: jsonContent(tagSuccessResponse, "Tag deleted"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Tag not found"),
+    422: validationErrorResponse(tagIdParamSchema),
   },
   summary: "Delete tag",
   tags: ["Tags"],
@@ -100,23 +103,23 @@ const bulkApplyRoute = createRoute({
     },
   },
   responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: z.object({
-            success: z.boolean(),
-            updatedCount: z.number().int(),
-          }),
-        },
-      },
-      description: "Bulk apply complete",
-    },
+    200: jsonContent(
+      z.object({
+        success: z.boolean(),
+        updatedCount: z.number().int(),
+      }),
+      "Bulk apply complete",
+    ),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "One or more tags not found"),
+    422: validationErrorResponse(bulkApplyTagsBodySchema),
   },
   summary: "Bulk apply tags",
   tags: ["Tags"],
 });
 
-export const tagsRouter = new OpenAPIHono<AppEnv>()
+export const tagsRouter = createApp()
   .openapi(listTagsRoute, async (c) => {
     const tags = await listTags(c.var.user.id);
     return c.json({ tags }, 200);

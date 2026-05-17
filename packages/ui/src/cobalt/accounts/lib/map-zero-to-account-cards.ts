@@ -1,3 +1,5 @@
+import type { queries, Row } from "@cobalt-web/zero";
+
 import { brokerageInstitutionBranding } from "../../logos/brokerage-institution-branding";
 
 export type AccountCategory = "banking" | "savings" | "brokerage" | "credit" | "loan";
@@ -23,7 +25,7 @@ export interface AccountCardViewModel {
   category: AccountCategory;
   /** Plaid — `DELETE /api/accounts/bank/:id` uses `plaidAccountId`. */
   plaidAccountId: string | null;
-  /** Plaid — `POST /api/plaid/link-token/update` for reconnect. */
+  /** Plaid — `POST /api/plaid/linkToken/update` for reconnect. */
   plaidItemId: string | null;
   /** SnapTrade — `POST /api/snaptrade/generateConnectionPortal` reconnect. */
   snaptradeAuthorizationId: string | null;
@@ -71,56 +73,11 @@ function maskDigits(mask: string | null | undefined, fallback: string): string {
   return last4.length >= 4 ? last4 : last4.padStart(4, "0");
 }
 
-/** Shape returned by `queries.accounts.bankAccounts()` (financialAccount with plaidConnection→institution + balance). */
-export interface BankAccountRowWithRelations {
-  id: string;
-  name: string;
-  customName: string | null;
-  officialName: string | null;
-  mask: string | null;
-  externalId: string | null;
-  type: string;
-  subtype: string | null;
-  source: "plaid" | "snaptrade" | "manual";
-  institutionName?: string | null;
-  logoDomain?: string | null;
-  plaidConnection?: {
-    plaidItemId?: string | null;
-    institutionLogo?: string | null;
-    institutionName?: string | null;
-    institution?: {
-      logo?: string | null;
-      name?: string | null;
-      url?: string | null;
-    } | null;
-  } | null;
-  updatedAt?: number | null;
-  balance?: {
-    updatedAt?: number | null;
-  } | null;
-}
+/** Row from `queries.accounts.bankAccounts()` — financialAccount with plaidConnection→institution + balance. */
+export type BankAccountRowWithRelations = Row<typeof queries.accounts.bankAccounts>;
 
-/** Shape returned by `queries.accounts.brokerageAccounts()` (financialAccount source='snaptrade' with balance + snaptradeAuthorization). */
-export interface BrokerageRowWithRelations {
-  id: string;
-  externalId: string | null;
-  accountNumber: string | null;
-  institutionName: string | null;
-  subtype: string | null;
-  type: string;
-  name: string | null;
-  customName: string | null;
-  snaptradeAuthorization?: {
-    authorizationId?: string | null;
-    brokerage?: string | null;
-    brokerageSlug?: string | null;
-    name?: string | null;
-    meta?: unknown | null;
-  } | null;
-  balance?: {
-    updatedAt?: number | null;
-  } | null;
-}
+/** Row from `queries.brokerage.accounts()` — financialAccount source='snaptrade' with balance + snaptradeAuthorization. */
+export type BrokerageRowWithRelations = Row<typeof queries.brokerage.accounts>;
 
 function institutionFieldsFromBankConnection(
   conn: BankAccountRowWithRelations["plaidConnection"],

@@ -1,13 +1,11 @@
 import { z } from "@hono/zod-openapi";
 
+export { errorResponseSchema } from "../_shared/schemas.js";
+
 // ── Shared ─────────────────────────────────────────────────────────
 
 export const symbolQuerySchema = z.object({
   symbol: z.string().min(1).openapi({ example: "AAPL" }),
-});
-
-export const errorResponseSchema = z.object({
-  error: z.string(),
 });
 
 // ── Quote ──────────────────────────────────────────────────────────
@@ -74,7 +72,7 @@ export const priceDataSchema = z
     low: z.number().optional(),
     open: z.number().optional(),
     price: z.number(),
-    time: z.string(),
+    time: z.string().openapi({ example: "2025-05-13T14:30:00.000Z", format: "date-time" }),
     volume: z.number(),
   })
   .openapi("ChartPoint");
@@ -172,9 +170,31 @@ export const screenerQuerySchema = z.object({
   volumeMoreThan: z.coerce.number().optional(),
 });
 
-export const screenerRowSchema = z.record(z.string(), z.unknown());
+export const screenerRowSchema = z
+  .object({
+    beta: z.number().nullable().optional(),
+    companyName: z.string().nullable().optional(),
+    country: z.string().nullable().optional(),
+    exchange: z.string().nullable().optional(),
+    exchangeShortName: z.string().nullable().optional(),
+    industry: z.string().nullable().optional(),
+    isActivelyTrading: z.boolean().nullable().optional(),
+    isEtf: z.boolean().nullable().optional(),
+    marketCap: z.number().nullable().optional(),
+    peRatio: z.number().nullable().optional(),
+    price: z.number().nullable().optional(),
+    revenue: z.number().nullable().optional(),
+    sector: z.string().nullable().optional(),
+    symbol: z.string(),
+    volume: z.number().nullable().optional(),
+  })
+  .loose()
+  .openapi("ScreenerRow");
 
 export const screenerResponseSchema = z.object({
   count: z.number(),
   results: z.array(screenerRowSchema),
 });
+
+export type ScreenerRow = z.infer<typeof screenerRowSchema>;
+export type ScreenerResponse = z.infer<typeof screenerResponseSchema>;

@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 
 import { TransactionNotes } from "./transaction-notes";

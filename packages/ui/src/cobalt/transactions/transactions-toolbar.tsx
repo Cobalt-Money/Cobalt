@@ -329,7 +329,7 @@ export function TransactionsToolbar({
 
   return (
     <div className="flex w-full min-w-0 flex-col bg-sidebar-inset">
-      <div className="flex w-full min-w-0 flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+      <div className="flex w-full min-w-0 flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between lg:px-6">
         <div className="flex shrink-0 items-center gap-2">
           <ToolbarSearch
             onChange={(v) => onFiltersChange({ ...filters, query: v })}

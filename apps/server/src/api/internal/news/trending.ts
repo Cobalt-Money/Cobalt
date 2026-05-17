@@ -4,9 +4,11 @@ import {
   trendingQuerySchema,
   trendingResponseSchema,
 } from "@cobalt-web/server-data/news/trending/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
@@ -15,16 +17,17 @@ const route = createRoute({
   path: "/trending",
   request: { query: trendingQuerySchema },
   responses: {
-    200: {
-      content: { "application/json": { schema: trendingResponseSchema } },
-      description: "Trending headlines based on user holdings",
-    },
+    200: jsonContent(trendingResponseSchema, "Trending headlines based on user holdings"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    422: validationErrorResponse(trendingQuerySchema),
+    502: jsonContent(errorResponseWithCodeSchema, "Stock News upstream failed"),
   },
   summary: "Trending headlines",
   tags: ["News"],
 });
 
-export const trendingRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+export const trendingRouter = createApp().openapi(route, async (c) => {
   const { limit } = c.req.valid("query");
   const tickers = await getUserStockTickers(c.var.user.id);
 

@@ -10,6 +10,7 @@ import { and, desc, eq, gte, ilike, inArray, lt, lte, or, sql } from "drizzle-or
 import type { SQL } from "drizzle-orm";
 import type { z } from "zod";
 
+import { ApiError } from "./errors.js";
 import { toDateString } from "./lib.js";
 import type { TransactionListItem, transactionListQuerySchema } from "./schemas.js";
 import { toTransactionListItem } from "./to-transaction-list-item.js";
@@ -236,6 +237,122 @@ export async function getUserTransactions(userId: string, params: TransactionLis
   return { hasMore, nextCursor, transactions };
 }
 
+export async function getTransactionById(
+  userId: string,
+  transactionId: string,
+): Promise<TransactionListItem> {
+  const [row] = await db
+    .select({
+      account: {
+        externalId: financialAccount.externalId,
+        institutionName: financialAccount.institutionName,
+        logoDomain: financialAccount.logoDomain,
+        name: financialAccount.name,
+        subtype: financialAccount.subtype,
+        type: financialAccount.type,
+      },
+      address: transaction.address,
+      amount: transaction.amount,
+      authorizedDate: transaction.authorizedDate,
+      categoryGroupName: categoryGroup.name,
+      categoryGroupSystemKey: categoryGroup.systemKey,
+      categoryIconKey: category.iconKey,
+      categoryId: transaction.categoryId,
+      categoryName: category.name,
+      categorySystemKey: category.systemKey,
+      city: transaction.city,
+      counterparties: transaction.counterparties,
+      country: transaction.country,
+      date: transaction.date,
+      id: transaction.id,
+      institutionLogo: institution.logo,
+      institutionName: institution.name,
+      institutionUrl: institution.url,
+      lat: transaction.lat,
+      lockedFields: transaction.lockedFields,
+      logoUrl: transaction.logoUrl,
+      lon: transaction.lon,
+      merchantName: transaction.merchantName,
+      name: transaction.name,
+      notes: transaction.notes,
+      pending: transaction.pending,
+      postalCode: transaction.postalCode,
+      region: transaction.region,
+      source: transaction.source,
+      storeNumber: transaction.storeNumber,
+      website: transaction.website,
+    })
+    .from(transaction)
+    .innerJoin(financialAccount, eq(transaction.accountId, financialAccount.id))
+    .leftJoin(category, eq(transaction.categoryId, category.id))
+    .leftJoin(categoryGroup, eq(category.groupId, categoryGroup.id))
+    .leftJoin(plaidConnection, eq(financialAccount.plaidConnectionId, plaidConnection.id))
+    .leftJoin(institution, eq(institution.plaidInstitutionId, plaidConnection.institutionId))
+    .where(and(eq(transaction.id, transactionId), eq(transaction.userId, userId)))
+    .limit(1);
+
+  if (!row) {
+    throw new ApiError(404, "transaction_not_found", "Transaction not found");
+  }
+
+  const tagRows = await db
+    .select({ tagId: transactionTag.tagId })
+    .from(transactionTag)
+    .where(eq(transactionTag.transactionId, row.id));
+
+  return toTransactionListItem({
+    account: {
+      logoDomain: row.account.logoDomain,
+      name: row.account.name,
+      plaidAccountId: row.account.externalId,
+      subtype: row.account.subtype,
+      type: row.account.type,
+    },
+    institution:
+      row.institutionName || row.institutionUrl || row.account.institutionName
+        ? {
+            logo: row.institutionLogo ?? null,
+            name: row.institutionName ?? row.account.institutionName ?? null,
+            url: row.institutionUrl ?? null,
+          }
+        : null,
+    transaction: {
+      address: row.address,
+      amount: Number(row.amount),
+      authorizedDate: row.authorizedDate,
+      category: row.categoryId
+        ? {
+            groupName: row.categoryGroupName ?? "",
+            groupSystemKey: row.categoryGroupSystemKey,
+            iconKey: row.categoryIconKey ?? "",
+            id: row.categoryId,
+            name: row.categoryName ?? "",
+            systemKey: row.categorySystemKey,
+          }
+        : null,
+      city: row.city,
+      counterparties: row.counterparties,
+      country: row.country,
+      date: row.date,
+      id: row.id,
+      lat: row.lat,
+      lockedFields: row.lockedFields as TransactionListItem["lockedFields"],
+      logoUrl: row.logoUrl,
+      lon: row.lon,
+      merchantName: row.merchantName,
+      name: row.name,
+      notes: row.notes ?? null,
+      pending: row.pending,
+      postalCode: row.postalCode,
+      region: row.region,
+      source: row.source,
+      storeNumber: row.storeNumber,
+      tagIds: tagRows.map((t) => t.tagId),
+      website: row.website,
+    },
+  });
+}
+
 export async function getRecurringStreams(userId: string) {
   const rows = await db.query.recurring.findMany({
     orderBy: { lastDate: "desc" },
@@ -401,7 +518,15 @@ export async function getSpending(
   return { averageLabel, averageSpending, spending, totalSpending };
 }
 
-export async function getTransactionActivity(transactionId: string) {
+export async function getTransactionActivity(userId: string, transactionId: string) {
+  const owned = await db.query.transaction.findFirst({
+    columns: { id: true },
+    where: { id: { eq: transactionId }, userId: { eq: userId } },
+  });
+  if (!owned) {
+    throw new ApiError(404, "transaction_not_found", "Transaction not found");
+  }
+
   const rows = await db.query.transactionEdit.findMany({
     columns: {
       actor: true,

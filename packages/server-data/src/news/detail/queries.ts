@@ -1,5 +1,6 @@
 import { db } from "@cobalt-web/db";
 
+import { ApiError } from "../../_shared/api-error.js";
 import type { DetailedFinancialEvent, EventArticleDTO, EventVideoDTO } from "./schemas.js";
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ const getAllSources = (
 export async function getFinancialEventDetails(
   _userId: string,
   eventId: string,
-): Promise<DetailedFinancialEvent | null> {
+): Promise<DetailedFinancialEvent> {
   const row = await db.query.financialEvents.findFirst({
     where: { id: { eq: eventId } },
     with: {
@@ -50,7 +51,7 @@ export async function getFinancialEventDetails(
   });
 
   if (!row) {
-    return null;
+    throw new ApiError(404, "event_not_found", "Event not found");
   }
 
   const allArticles: EventArticleDTO[] = [];

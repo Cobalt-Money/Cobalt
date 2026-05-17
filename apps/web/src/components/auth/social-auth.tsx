@@ -66,7 +66,7 @@ export default function SocialAuth({ callbackURL: callbackURLProp }: { callbackU
       </div>
 
       <div className="space-y-4">
-        <ItemGroup className="flex w-full flex-col items-center space-y-4">
+        <ItemGroup className="flex w-full flex-col items-center space-y-2">
           <Button
             className="flex h-10 w-60 items-center py-4 text-sm"
             disabled={loading}

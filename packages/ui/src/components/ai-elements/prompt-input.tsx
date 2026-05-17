@@ -39,11 +39,11 @@ import {
 } from "@cobalt-web/ui/components/tooltip";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
-  ArrowTurnDownIcon,
   Cancel01Icon,
   ComputerIcon,
   Image01Icon,
   PlusSignIcon,
+  SentIcon,
   StopIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -1250,7 +1250,7 @@ export const PromptInputSubmit = ({
 
   let Icon = (
     <HugeiconsIcon
-      icon={ArrowTurnDownIcon}
+      icon={SentIcon}
       className="size-4"
       strokeWidth={2}
     />

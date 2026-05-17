@@ -1,10 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
-// ── Shared ─────────────────────────────────────────────────────────
-
-export const errorResponseSchema = z.object({
-  error: z.string(),
-});
+export { errorResponseSchema } from "../_shared/schemas.js";
 
 // ── Search ─────────────────────────────────────────────────────────
 

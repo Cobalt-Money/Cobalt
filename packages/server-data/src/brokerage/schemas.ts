@@ -2,11 +2,7 @@ import { z } from "@hono/zod-openapi";
 
 import { successResponseSchema } from "../accounts/schemas.js";
 
-// ── Error ───────────────────────────────────────────────────────────
-
-export const errorResponseSchema = z.object({
-  error: z.string(),
-});
+export { errorResponseSchema } from "../_shared/schemas.js";
 
 // ── Balances / positions / activities (flat list DTOs) ─────────────
 

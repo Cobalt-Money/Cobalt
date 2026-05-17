@@ -14,6 +14,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { importJob } from "../../../imports/import-job";
 import { user } from "../../../users/auth/auth";
 import { financialAccount } from "../../account";
 import { category } from "../categories/category";
@@ -57,6 +58,21 @@ export const transaction = pgTable(
     /** Provider's transaction ID; for upsert dedupe via (source, external_id). */
     externalId: text("external_id"),
     id: uuid("id").defaultRandom().primaryKey(),
+    /**
+     * FK to `import_job` when this row was created via CSV/file import (SRI-317).
+     * NULL for hand-entered manual rows and provider-synced rows. Drives Plaid
+     * historical-sync suppression (SRI-318) and "imported from CSV" UI badges.
+     */
+    /**
+     * Stable per-row hash for AI-mapped CSV imports (SRI-321):
+     *   sha256(accountId|isoDate|amountCents|normalize(merchant)).
+     * Backed by `transaction_user_import_hash_idx` UNIQUE; commit insert uses
+     * ON CONFLICT DO NOTHING so re-imports of the same export silently skip.
+     */
+    importHash: text("import_hash"),
+    importJobId: uuid("import_job_id").references(() => importJob.id, {
+      onDelete: "set null",
+    }),
     /** Merchant latitude (degrees). */
     lat: doublePrecision("lat"),
     /** Plaid merchant logo URL. */
@@ -110,9 +126,13 @@ export const transaction = pgTable(
     index("transaction_account_date_idx").on(t.accountId, t.date),
     index("transaction_pending_idx").on(t.pending),
     index("transaction_date_pending_idx").on(t.date, t.pending),
+    index("transaction_import_job_id_idx").on(t.importJobId),
     uniqueIndex("transaction_source_external_id_idx")
       .on(t.source, t.externalId)
       .where(sql`external_id IS NOT NULL`),
+    uniqueIndex("transaction_user_import_hash_idx")
+      .on(t.userId, t.importHash)
+      .where(sql`import_hash IS NOT NULL`),
   ],
 );
 

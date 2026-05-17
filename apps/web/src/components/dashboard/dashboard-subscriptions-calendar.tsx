@@ -30,7 +30,7 @@ export function DashboardSubscriptionsCalendar() {
   const [selected, setSelected] = useState<Date | undefined>(() => new Date());
 
   const [rawStreams, result] = useQuery(queries.transactions.recurring());
-  const streams = rawStreams as unknown as RecurringRow[];
+  const streams: RecurringRow[] = rawStreams;
   const isComplete = result.type === "complete";
 
   const outflows = useMemo(() => streams.filter((s) => s.streamType === "outflow"), [streams]);
@@ -139,7 +139,7 @@ export function DashboardSubscriptionsCalendar() {
               modifiers={{ subscription: subscriptionDays }}
               modifiersClassNames={{
                 subscription:
-                  "after:absolute after:bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full after:bg-[#ffffff] after:content-['']",
+                  "after:absolute after:bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full after:bg-primary after:content-['']",
               }}
               mode="single"
               onSelect={setSelected}

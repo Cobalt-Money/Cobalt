@@ -34,44 +34,8 @@ export { snaptradeAuthorization } from "./providers/snaptrade/authorization";
 export { snaptradeUser } from "./providers/snaptrade/user";
 export { mobileSubscription } from "./users/subscriptions/mobile";
 export { subscription } from "./users/subscriptions/stripe";
+export { fundamentals } from "./research/fundamentals";
+export { tickers } from "./research/tickers";
 
-// Legacy v1 `relations()` exports for drizzle-zero code generation only.
-// Runtime DB uses Relational Queries v2 from `./relations`.
-export {
-  accountRelations,
-  balanceRelations,
-  categoryGroupRelations,
-  categoryRelations,
-  chatsRelations,
-  creditLiabilityRelations,
-  eventArticlesRelations,
-  feedbackRelations,
-  financialAccountRelations,
-  financialEventsRelations,
-  financialGoalsRelations,
-  holdingRelations,
-  institutionRelations,
-  investmentActivityRelations,
-  kalshiUserRelations,
-  messageVotesRelations,
-  messagesRelations,
-  mobileSubscriptionRelations,
-  mortgageLiabilityRelations,
-  ordersRelations,
-  partsRelations,
-  plaidConnectionRelations,
-  recurringStreamRelations,
-  securityRelations,
-  sessionRelations,
-  snapshotRelations,
-  snaptradeAuthorizationRelations,
-  snaptradeUserRelations,
-  studentLoanLiabilityRelations,
-  subscriptionRelations,
-  tagRelations,
-  transactionEditRelations,
-  transactionRelations,
-  transactionTagRelations,
-  userAlertsRelations,
-  userRelations,
-} from "./zero-relations";
+// v2 `defineRelations` for drizzle-zero@1.0-beta. Same source as DB runtime.
+export { relations } from "./relations";

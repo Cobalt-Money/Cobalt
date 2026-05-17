@@ -1,8 +1,10 @@
 import { auth } from "@cobalt-web/auth";
-import type { AppEnv } from "@cobalt-web/server-data/types";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { deleteAccountResponseSchema, deleteUserAccount } from "@cobalt-web/server-data/user";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent } from "../../../lib/openapi-helpers.js";
 import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
@@ -11,18 +13,15 @@ const route = createRoute({
   middleware: [requireAuth] as const,
   path: "/deleteAccount",
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: deleteAccountResponseSchema },
-      },
-      description: "Account deleted",
-    },
+    200: jsonContent(deleteAccountResponseSchema, "Account deleted"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    500: jsonContent(errorResponseWithCodeSchema, "Account deletion failed"),
   },
   summary: "Delete user account",
   tags: ["User"],
 });
 
-export const deleteAccountRouter = new OpenAPIHono<AppEnv>().openapi(route, async (c) => {
+export const deleteAccountRouter = createApp().openapi(route, async (c) => {
   const result = await deleteUserAccount(c.var.user.id);
 
   // Invalidate the session server-side. Done after the row delete (which

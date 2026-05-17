@@ -2,8 +2,10 @@ import { getBankAccounts, getCreditCards } from "@cobalt-web/server-data/account
 import { bankAccountListResponseSchema } from "@cobalt-web/server-data/accounts/schemas";
 import type { BankAccountListItem } from "@cobalt-web/server-data/accounts/schemas";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
+
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent } from "../../../lib/openapi-helpers.js";
 
 const listRoute = createRoute({
   description:
@@ -11,12 +13,7 @@ const listRoute = createRoute({
   method: "get",
   path: "/",
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: bankAccountListResponseSchema },
-      },
-      description: "List of accounts",
-    },
+    200: jsonContent(bankAccountListResponseSchema, "List of accounts"),
   },
   summary: "List accounts",
   tags: ["Accounts"],
@@ -67,7 +64,7 @@ function applySnapshotBalance(
   };
 }
 
-export const accountsRouter = new OpenAPIHono<AppEnv>().openapi(listRoute, async (c) => {
+export const accountsRouter = createApp().openapi(listRoute, async (c) => {
   const userId = c.var.user.id;
   const [bank, credit, snapshots] = await Promise.all([
     getBankAccounts(userId),

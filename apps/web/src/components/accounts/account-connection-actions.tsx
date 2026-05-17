@@ -18,6 +18,22 @@ import { toast } from "sonner";
 
 import { accountsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
 
+import type { ReauthSession } from "./reauth-session";
+
+async function disconnectBank(plaidAccountId: string | null | undefined) {
+  if (!plaidAccountId) {
+    throw new Error("Missing account id");
+  }
+  const res = await accountsApi.bank[":id"].$delete({
+    param: { id: plaidAccountId },
+  });
+  const data = await res.json();
+  if (!res.ok || !("success" in data) || !data.success) {
+    const msg = "message" in data ? data.message : undefined;
+    throw new Error(msg ?? "Disconnect failed");
+  }
+}
+
 interface AccountConnectionActionsProps {
   account: Pick<
     AccountCardViewModel,
@@ -34,17 +50,11 @@ interface AccountConnectionActionsProps {
   >;
 }
 
-interface ReauthSession {
-  hookToken: string;
-  runId: string;
-  linkToken: string;
-}
-
 export function AccountConnectionActions({ account }: AccountConnectionActionsProps) {
   const [plaidToken, setPlaidToken] = useState<string | null>(null);
   const [busy, setBusy] = useState<"disconnect" | "reconnect" | null>(null);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
-  // Active reauth session — holds the hookToken/runId from /link-token/update.
+  // Active reauth session — holds the hookToken/runId from /linkToken/update.
   // Cleared on success or exit so a stale session can't resolve a later flow.
   const sessionRef = useRef<ReauthSession | null>(null);
   const onboardingHost = useOptionalOnboardingHost();
@@ -120,12 +130,12 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
     }
     setBusy("reconnect");
     try {
-      const res = await plaidApi["link-token"].update.$post({
+      const res = await plaidApi.linkToken.update.$post({
         json: { mode: "reauth", plaidItemId: account.plaidItemId },
       });
       const data = await res.json();
       if (!res.ok || !("link_token" in data)) {
-        const errMsg = "error" in data ? data.error : undefined;
+        const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
         throw new Error(errMsg ?? "Could not start reconnect");
       }
       sessionRef.current = {
@@ -155,7 +165,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
       });
       const data = await res.json();
       if (!res.ok || !("redirectURI" in data)) {
-        const errMsg = "error" in data ? data.error : undefined;
+        const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
         throw new Error(errMsg ?? "Could not open reconnect");
       }
       window.location.assign(data.redirectURI);
@@ -181,16 +191,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
         await deleteFn(account.id);
         cobaltToast.accountDisconnected(account);
       } else if (account.kind === "bank") {
-        if (!account.plaidAccountId) {
-          throw new Error("Missing account id");
-        }
-        const res = await accountsApi.bank[":id"].$delete({
-          param: { id: account.plaidAccountId },
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data.message ?? "Disconnect failed");
-        }
+        await disconnectBank(account.plaidAccountId);
         cobaltToast.accountDisconnected(account);
       } else {
         const res = await accountsApi.brokerage[":accountId"].$delete({
@@ -198,7 +199,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
         });
         const data = await res.json();
         if (res.status === 403) {
-          const errMsg = "error" in data ? data.error : undefined;
+          const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
           throw new Error(errMsg ?? "Subscription required");
         }
         if (!res.ok || ("success" in data && data.success === false)) {
@@ -250,7 +251,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
           <AlertDialogHeader>
             <AlertDialogTitle>Disconnect account?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the account from Cobalt. You can connect it again later.
+              This removes the account and all its transactions from Cobalt
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

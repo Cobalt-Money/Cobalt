@@ -1,9 +1,7 @@
 import type { BalanceSnapshot } from "./schemas.js";
 
-/**
- * Joined row shape (snapshot ⨝ financial_account) for `toBalanceSnapshotDTO`.
- */
-export interface BalanceSnapshotJoinedRow {
+/** Map a joined snapshot row (`snapshot` + `with: { account: {...} }`) to the HTTP DTO. */
+export function toBalanceSnapshotDTO(row: {
   account: {
     externalId: string | null;
     institutionName: string | null;
@@ -17,10 +15,7 @@ export interface BalanceSnapshotJoinedRow {
   current: string;
   id: string;
   snapshotDate: string;
-}
-
-/** Map a joined snapshot row to the HTTP DTO. */
-export function toBalanceSnapshotDTO(row: BalanceSnapshotJoinedRow): BalanceSnapshot {
+}): BalanceSnapshot {
   const { account } = row;
   return {
     accountName: account.name,

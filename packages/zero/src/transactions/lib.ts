@@ -1,7 +1,6 @@
 import { zql } from "../schema.js";
 
-/** UUID that never matches real rows — used when there is no authenticated user. */
-export const NO_MATCH_ID = "00000000-0000-0000-0000-000000000000";
+export { NO_MATCH_ID } from "../auth.js";
 
 export function periodStartIso(period: "1w" | "1m" | "3m" | "6m" | "1y" | "all"): string | null {
   if (period === "all") {
@@ -24,7 +23,7 @@ export function isoDateToZeroDate(iso: string): number {
 }
 
 /** Default page size for the transactions list — caller may bump via `limit` to load more. */
-export const TRANSACTION_LIST_DEFAULT_LIMIT = 500;
+export const TRANSACTION_LIST_DEFAULT_LIMIT = 1000;
 /** Hard ceiling on a single subscription's row count to bound client sync payload. */
 export const TRANSACTION_LIST_MAX_LIMIT = 10_000;
 
@@ -45,40 +44,6 @@ export interface TransactionListFilters {
   limit?: number;
 }
 
-function applyAmountFilter<Q extends ReturnType<typeof zql.transaction.where>>(
-  q: Q,
-  amount: "all" | "income" | "expense",
-  amountMin: number | undefined,
-  amountMax: number | undefined,
-) {
-  const hasMin = typeof amountMin === "number" && amountMin > 0;
-  const hasMax = typeof amountMax === "number";
-  if (amount === "expense") {
-    let next = hasMin ? q.where("amount", ">=", amountMin) : q.where("amount", ">", 0);
-    if (hasMax) {
-      next = next.where("amount", "<=", amountMax);
-    }
-    return next as Q;
-  }
-  if (amount === "income") {
-    let next = hasMin ? q.where("amount", "<=", -amountMin) : q.where("amount", "<", 0);
-    if (hasMax) {
-      next = next.where("amount", ">=", -amountMax);
-    }
-    return next as Q;
-  }
-  if (!(hasMin || hasMax)) {
-    return q;
-  }
-  const min = hasMin ? amountMin : 0;
-  return q.where(({ cmp, or, and }) =>
-    or(
-      and(cmp("amount", ">=", min), ...(hasMax ? [cmp("amount", "<=", amountMax)] : [])),
-      and(cmp("amount", "<=", -min), ...(hasMax ? [cmp("amount", ">=", -amountMax)] : [])),
-    ),
-  ) as Q;
-}
-
 export function transactionsForUser(userId: string, filters: TransactionListFilters = {}) {
   const {
     amount = "all",
@@ -97,39 +62,83 @@ export function transactionsForUser(userId: string, filters: TransactionListFilt
   const bankIds = bank && bank.length > 0 ? bank : null;
   const tagIdList = tagIds && tagIds.length > 0 ? tagIds : null;
   const categoryIdList = categoryIds && categoryIds.length > 0 ? categoryIds : null;
+  const hasMin = typeof amountMin === "number" && amountMin > 0;
+  const hasMax = typeof amountMax === "number";
 
-  let q = zql.transaction
+  return zql.transaction
     .where("userId", userId)
+    .where(({ and, cmp, exists, or }) => {
+      // Plaid convention: positive amount = outflow (expense), negative = inflow (income).
+      const amountExpr = () => {
+        if (amount === "expense") {
+          return and(
+            hasMin ? cmp("amount", ">=", amountMin) : cmp("amount", ">", 0),
+            hasMax ? cmp("amount", "<=", amountMax) : undefined,
+          );
+        }
+        if (amount === "income") {
+          return and(
+            hasMin ? cmp("amount", "<=", -amountMin) : cmp("amount", "<", 0),
+            hasMax ? cmp("amount", ">=", -amountMax) : undefined,
+          );
+        }
+        if (!(hasMin || hasMax)) {
+          return;
+        }
+        const min = hasMin ? amountMin : 0;
+        return or(
+          and(cmp("amount", ">=", min), hasMax ? cmp("amount", "<=", amountMax) : undefined),
+          and(cmp("amount", "<=", -min), hasMax ? cmp("amount", ">=", -amountMax) : undefined),
+        );
+      };
+      const statusExpr = () => {
+        if (status === "pending") {
+          return cmp("pending", true);
+        }
+        if (status === "posted") {
+          return cmp("pending", false);
+        }
+      };
+      // Bank options are deduped by lower-cased institution name (see
+      // `useBankOptions`). Filter ids look like `bank:<name>` — we match the
+      // name against both `plaid_connection.institutionName` (Plaid accounts)
+      // and `financial_account.institutionName` (manual / CSV-imported), so
+      // selecting "American Express" catches transactions from either source.
+      const bankNames = bankIds
+        ?.filter((b) => b.startsWith("bank:"))
+        .map((b) => b.slice("bank:".length));
+      return and(
+        bankNames && bankNames.length > 0
+          ? exists("account", (acc) =>
+              acc.where(({ or: orInner, cmp: cmpInner, exists: existsInner }) =>
+                orInner(
+                  existsInner("plaidConnection", (conn) =>
+                    conn.where(({ cmp: cmpConn }) =>
+                      // Zero doesn't expose lower() — pass both raw and
+                      // already-lower-cased forms so common casings match.
+                      cmpConn("institutionName", "IN", bankNames),
+                    ),
+                  ),
+                  cmpInner("institutionName", "IN", bankNames),
+                ),
+              ),
+            )
+          : undefined,
+        tagIdList
+          ? exists("transactionTags", (tt) => tt.where("tagId", "IN", tagIdList))
+          : undefined,
+        categoryIdList ? cmp("categoryId", "IN", categoryIdList) : undefined,
+        amountExpr(),
+        statusExpr(),
+      );
+    })
     .related("account", (q2) =>
       q2.related("plaidConnection", (conn) => conn.related("institution")),
     )
     .related("category", (c) => c.related("group"))
-    .related("transactionTags");
-
-  if (bankIds) {
-    q = q.whereExists("account", (acc) =>
-      acc.whereExists("plaidConnection", (conn) => conn.where("institutionId", "IN", bankIds)),
-    );
-  }
-
-  if (tagIdList) {
-    q = q.whereExists("transactionTags", (tt) => tt.where("tagId", "IN", tagIdList));
-  }
-
-  if (categoryIdList) {
-    q = q.where("categoryId", "IN", categoryIdList);
-  }
-
-  // Plaid convention: positive amount = outflow (expense), negative = inflow (income).
-  q = applyAmountFilter(q, amount, amountMin, amountMax);
-
-  if (status === "pending") {
-    q = q.where("pending", true);
-  } else if (status === "posted") {
-    q = q.where("pending", false);
-  }
-
-  return q.orderBy("date", "desc").limit(effectiveLimit);
+    .related("transactionTags")
+    .orderBy("date", "desc")
+    .limit(effectiveLimit);
 }
 
 export function recurringForUser(userId: string) {
@@ -146,7 +155,7 @@ export function spendingTransactionsForUser(
   accountType: "credit" | "depository" | "all",
 ) {
   const start = periodStartIso(period);
-  let q = zql.transaction
+  return zql.transaction
     .where("userId", userId)
     .where("excluded", false)
     .where("amount", ">", 0)
@@ -155,9 +164,8 @@ export function spendingTransactionsForUser(
         ? acc.where(({ cmp, or }) => or(cmp("type", "credit"), cmp("type", "depository")))
         : acc.where("type", accountType),
     )
-    .related("category", (c) => c.related("group"));
-  if (start) {
-    q = q.where("date", ">=", isoDateToZeroDate(start));
-  }
-  return q.orderBy("date", "desc").limit(500);
+    .where(({ and, cmp }) => and(start ? cmp("date", ">=", isoDateToZeroDate(start)) : undefined))
+    .related("category", (c) => c.related("group"))
+    .orderBy("date", "desc")
+    .limit(500);
 }

@@ -5,7 +5,6 @@ import { insertAlertStep, resolveAlertsStep } from "../../shared/alert-steps";
 import {
   deleteSnaptradeAuthorizationStep,
   fetchAccountsStep,
-  getAuthorizationDisplayNameStep,
   getSnapTradeUserCredentialsStep,
   seedTodaySnaptradeSnapshotsStep,
   syncAccountBalancesStep,
@@ -17,6 +16,7 @@ import {
   updateAuthorizationStatusStep,
   upsertAccountDetailsStep,
   upsertAccountsStep,
+  getSnaptradeAuthorizationDbIdStep,
   upsertSnaptradeAuthorizationStep,
 } from "./steps";
 import type {
@@ -114,13 +114,9 @@ export async function snaptradeConnectionBrokenWorkflow(
   try {
     await updateAuthorizationStatusStep(brokerageAuthorizationId, true);
 
-    const brokerageName = await getAuthorizationDisplayNameStep(brokerageAuthorizationId);
     await insertAlertStep({
-      message: `Reconnect ${brokerageName} to resume syncing positions and activity.`,
-      metadata: { brokerageName },
       source: ALERT_SOURCES.SNAPTRADE,
       sourceId: brokerageAuthorizationId,
-      title: `${brokerageName} connection broken`,
       type: ALERT_TYPES.CONNECTION_BROKEN,
       userId,
     });
@@ -148,11 +144,7 @@ export async function snaptradeHoldingsUpdatedWorkflow(
   try {
     const userCredentials = await getSnapTradeUserCredentialsStep(userId);
 
-    const authDbId = await upsertSnaptradeAuthorizationStep(
-      brokerageAuthorizationId,
-      userCredentials.appUserId,
-      "",
-    );
+    const authDbId = await getSnaptradeAuthorizationDbIdStep(brokerageAuthorizationId);
 
     const detailsResult = await syncAccountDetailsStep(accountId, userCredentials);
 

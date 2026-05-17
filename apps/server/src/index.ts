@@ -10,7 +10,6 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
-import { agentBridgeRouter } from "./_legacy/api/internal/agent-bridge/exec.js";
 import { accountsRouter } from "./api/internal/accounts/index.js";
 import { alertsRouter } from "./api/internal/alerts/index.js";
 import { appstoreRouter } from "./api/internal/appstore.js";
@@ -18,6 +17,7 @@ import { authRouter } from "./api/internal/auth.js";
 import { brokerageRouter } from "./api/internal/brokerage/index.js";
 import { categoriesRouter } from "./api/internal/categories/index.js";
 import { chatRouter } from "./api/internal/chat/index.js";
+import { importsRouter } from "./api/internal/imports/index.js";
 import { institutionsRouter } from "./api/internal/institutions.js";
 import { newsRouter } from "./api/internal/news.js";
 import { plaidRouter } from "./api/internal/plaid/index.js";
@@ -98,9 +98,9 @@ base.route("/api/snaptrade", snaptradeRouter);
 base.route("/api/subscriptions", subscriptionsRouter);
 base.route("/api/user", userRouter);
 base.route("/api/institutions", institutionsRouter);
+base.route("/api/imports", importsRouter);
 base.route("/api/plaid", plaidRouter);
 base.route("/api/appstore", appstoreRouter);
-base.route("/api/agent-bridge", agentBridgeRouter);
 base.doc31("/openapi.json", {
   info: {
     description: "Cobalt financial platform API",
@@ -209,6 +209,7 @@ export type AppstoreRouter = typeof appstoreRouter;
 export type BrokerageRouter = typeof brokerageRouter;
 export type CategoriesRouter = typeof categoriesRouter;
 export type ChatRouter = typeof chatRouter;
+export type ImportsRouter = typeof importsRouter;
 export type InstitutionsRouter = typeof institutionsRouter;
 export type NewsRouter = typeof newsRouter;
 export type PlaidRouter = typeof plaidRouter;

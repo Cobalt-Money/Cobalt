@@ -232,8 +232,14 @@ function BillingSection() {
     const run = async () => {
       try {
         const res = await subscriptionsApi.index.$get();
+        if (!res.ok) {
+          if (!cancelled) {
+            setSource(null);
+          }
+          return;
+        }
         const data = await res.json();
-        if (!cancelled) {
+        if (!cancelled && "subscriptionSource" in data) {
           setSource(data.subscriptionSource);
         }
       } catch {
