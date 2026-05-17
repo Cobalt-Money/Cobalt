@@ -183,7 +183,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionName: "Fidelity",
     institutionUrl: "fidelity.com",
     name: "Spotify",
-    notes: note("Premium family plan — split with Alex."),
+    notes: note("Premium family plan — split with Rust."),
     website: "spotify.com",
   }),
   makeTx({
@@ -765,7 +765,7 @@ function MiniSidebar({
       {/* User row */}
       <div className="flex items-center gap-2.5 rounded-md px-2 py-2">
         <div className="size-6 flex-shrink-0 rounded-full bg-gradient-to-br from-blue-400 to-violet-500" />
-        <span className="truncate text-sm font-medium text-foreground">Alex Johnson</span>
+        <span className="truncate text-sm font-medium text-foreground">Rust Cohle</span>
       </div>
 
       {/* Nav */}

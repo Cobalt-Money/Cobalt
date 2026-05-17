@@ -1,4 +1,4 @@
-import { MoonIcon, Sun02Icon } from "@hugeicons/core-free-icons";
+import { Github01Icon, MoonIcon, Sun02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
@@ -46,6 +46,14 @@ export function MarketingNav() {
             </Link>
           </nav>
           <div className="flex items-center gap-2">
+            <a
+              className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              href="https://github.com/cobalt-pf"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <HugeiconsIcon icon={Github01Icon} size={18} strokeWidth={2} />
+            </a>
             <Button onClick={() => setTheme(isDark ? "light" : "dark")} size="icon" variant="ghost">
               <HugeiconsIcon icon={isDark ? Sun02Icon : MoonIcon} size={18} strokeWidth={2} />
             </Button>
