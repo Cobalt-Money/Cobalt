@@ -178,14 +178,45 @@ export async function persistTransactions(transactions: Transaction[]): Promise<
     return;
   }
 
+  // Gap-fill guard: if an account has `csv_coverage_through` set, the user
+  // imported CSV history before linking Plaid. Drop any Plaid txn dated
+  // `<=` that watermark so we don't re-write history already on file.
+  const filtered = await dropTxnsCoveredByCsv(records);
+  if (filtered.length === 0) {
+    return;
+  }
+
   await db
     .insert(transactionTable)
-    .values(records)
+    .values(filtered)
     .onConflictDoUpdate({
       set: PLAID_UPSERT_SET,
       target: [transactionTable.source, transactionTable.externalId],
       targetWhere: externalIdNotNullWhere,
     });
+}
+
+async function dropTxnsCoveredByCsv<R extends { accountId: string; date: string }>(
+  records: R[],
+): Promise<R[]> {
+  const accountIds = [...new Set(records.map((r) => r.accountId))];
+  const accounts = await db.query.financialAccount.findMany({
+    columns: { csvCoverageThrough: true, id: true },
+    where: { id: { in: accountIds } },
+  });
+  const cutoff = new Map<string, string>();
+  for (const a of accounts) {
+    if (a.csvCoverageThrough) {
+      cutoff.set(a.id, a.csvCoverageThrough);
+    }
+  }
+  if (cutoff.size === 0) {
+    return records;
+  }
+  return records.filter((r) => {
+    const c = cutoff.get(r.accountId);
+    return !c || r.date > c;
+  });
 }
 
 export async function removeTransactionsByIds(transactionIds: string[]): Promise<void> {

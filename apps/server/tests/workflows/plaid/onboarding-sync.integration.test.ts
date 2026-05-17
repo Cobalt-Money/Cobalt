@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 /**
  * End-to-end integration test for the Plaid onboarding streaming flow.
  *

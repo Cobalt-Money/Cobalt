@@ -38,7 +38,9 @@ if (!src) {
   process.exit(1);
 }
 
-const defaultExcludeSchemas = ["zero", "zero_0", "zero_0/cdc", "zero_0/cvr"] as const;
+// Glob covers every Zero app-id + shard combo (zero, zero_0, zero_dev, zero_dev_0,
+// zero_prod_0/cdc, etc). pg_dump's --exclude-schema accepts shell-style patterns.
+const defaultExcludeSchemas = ["zero*"] as const;
 
 const extraExcludeSchemas = (process.env.DUMP_EXCLUDE_SCHEMAS ?? "")
   .split(",")
@@ -107,7 +109,7 @@ BEGIN
   SELECT 'TRUNCATE TABLE ' || string_agg(format('%I.%I', schemaname, tablename), ', ' ORDER BY schemaname, tablename) || ' RESTART IDENTITY CASCADE'
   INTO stmt
   FROM pg_tables
-  WHERE schemaname IN ('public', 'drizzle')
+  WHERE schemaname IN ('public', 'drizzle', 'archive')
   AND tablename <> '__drizzle_migrations';
   IF stmt IS NOT NULL THEN
     EXECUTE stmt;

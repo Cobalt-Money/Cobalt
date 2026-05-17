@@ -23,7 +23,7 @@ export function isoDateToZeroDate(iso: string): number {
 }
 
 /** Default page size for the transactions list — caller may bump via `limit` to load more. */
-export const TRANSACTION_LIST_DEFAULT_LIMIT = 500;
+export const TRANSACTION_LIST_DEFAULT_LIMIT = 1000;
 /** Hard ceiling on a single subscription's row count to bound client sync payload. */
 export const TRANSACTION_LIST_MAX_LIMIT = 10_000;
 
@@ -99,11 +99,28 @@ export function transactionsForUser(userId: string, filters: TransactionListFilt
           return cmp("pending", false);
         }
       };
+      // Bank options are deduped by lower-cased institution name (see
+      // `useBankOptions`). Filter ids look like `bank:<name>` — we match the
+      // name against both `plaid_connection.institutionName` (Plaid accounts)
+      // and `financial_account.institutionName` (manual / CSV-imported), so
+      // selecting "American Express" catches transactions from either source.
+      const bankNames = bankIds
+        ?.filter((b) => b.startsWith("bank:"))
+        .map((b) => b.slice("bank:".length));
       return and(
-        bankIds
+        bankNames && bankNames.length > 0
           ? exists("account", (acc) =>
-              acc.whereExists("plaidConnection", (conn) =>
-                conn.where("institutionId", "IN", bankIds),
+              acc.where(({ or: orInner, cmp: cmpInner, exists: existsInner }) =>
+                orInner(
+                  existsInner("plaidConnection", (conn) =>
+                    conn.where(({ cmp: cmpConn }) =>
+                      // Zero doesn't expose lower() — pass both raw and
+                      // already-lower-cased forms so common casings match.
+                      cmpConn("institutionName", "IN", bankNames),
+                    ),
+                  ),
+                  cmpInner("institutionName", "IN", bankNames),
+                ),
               ),
             )
           : undefined,

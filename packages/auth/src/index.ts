@@ -123,32 +123,11 @@ export const auth = betterAuth({
           return referenceId === user.id;
         },
         enabled: true,
-        getCheckoutSessionParams: ({ plan }) => {
-          const hasTrial = plan.freeTrial && plan.freeTrial.days > 0;
-
-          if (hasTrial && plan.freeTrial) {
-            return {
-              params: {
-                allow_promotion_codes: true,
-                payment_method_collection: "if_required" as const,
-                subscription_data: {
-                  trial_period_days: plan.freeTrial.days,
-                  trial_settings: {
-                    end_behavior: {
-                      missing_payment_method: "cancel" as const,
-                    },
-                  },
-                },
-              },
-            };
-          }
-
-          return {
-            params: {
-              allow_promotion_codes: true,
-            },
-          };
-        },
+        getCheckoutSessionParams: () => ({
+          params: {
+            allow_promotion_codes: true,
+          },
+        }),
         onSubscriptionUpdate: async ({ subscription }) => {
           await Promise.resolve();
           if (subscription.status === "past_due" || subscription.status === "unpaid") {
@@ -163,9 +142,6 @@ export const auth = betterAuth({
             name: "cobalt-monthly",
           },
           {
-            freeTrial: {
-              days: 30,
-            },
             lookupKey: "cobalt_annual",
             name: "cobalt-annual",
           },

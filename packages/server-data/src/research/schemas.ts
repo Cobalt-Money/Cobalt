@@ -138,9 +138,31 @@ export const screenerQuerySchema = z.object({
   volumeMoreThan: z.coerce.number().optional(),
 });
 
-export const screenerRowSchema = z.record(z.string(), z.unknown());
+export const screenerRowSchema = z
+  .object({
+    beta: z.number().nullable().optional(),
+    companyName: z.string().nullable().optional(),
+    country: z.string().nullable().optional(),
+    exchange: z.string().nullable().optional(),
+    exchangeShortName: z.string().nullable().optional(),
+    industry: z.string().nullable().optional(),
+    isActivelyTrading: z.boolean().nullable().optional(),
+    isEtf: z.boolean().nullable().optional(),
+    marketCap: z.number().nullable().optional(),
+    peRatio: z.number().nullable().optional(),
+    price: z.number().nullable().optional(),
+    revenue: z.number().nullable().optional(),
+    sector: z.string().nullable().optional(),
+    symbol: z.string(),
+    volume: z.number().nullable().optional(),
+  })
+  .loose()
+  .openapi("ScreenerRow");
 
 export const screenerResponseSchema = z.object({
   count: z.number(),
   results: z.array(screenerRowSchema),
 });
+
+export type ScreenerRow = z.infer<typeof screenerRowSchema>;
+export type ScreenerResponse = z.infer<typeof screenerResponseSchema>;

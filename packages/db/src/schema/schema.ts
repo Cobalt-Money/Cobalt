@@ -42,3 +42,14 @@ export {
   transactionEdit,
   transactionEditActor,
 } from "./accounts/banking/transactions/transaction-edit";
+
+// SRI-317 — import pipeline tables. Server-only: staged rows are transient
+// (wiped post-commit) and the UI polls job status via REST rather than Zero.
+export { importJob, importJobStatus, importSource } from "./imports/import-job";
+export { importStagedTransaction } from "./imports/import-staged-transaction";
+
+// SRI-321 — AI-mapped CSV import caches. Server-only.
+export { csvMappingCache } from "./imports/csv-mapping-cache";
+export { csvColumnRoleCache } from "./imports/csv-column-role-cache";
+export { accountMappingCache } from "./imports/account-mapping-cache";
+export { categoryMappingCache } from "./imports/category-mapping-cache";

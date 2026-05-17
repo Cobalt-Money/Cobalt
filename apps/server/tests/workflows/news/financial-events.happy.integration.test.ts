@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 /**
  * Happy-path integration test for `processFinancialEventWorkflow`.
  *

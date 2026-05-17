@@ -89,7 +89,7 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
         {priceRow}
 
         <LightweightPriceChart
-          chartClassName="-mx-4 min-w-0 w-auto lg:-mx-6"
+          chartClassName="-mr-4 -ml-[calc(2rem+0.5rem-0.25rem+1rem)] min-w-0 w-auto sm:-ml-[calc(2rem+0.625rem-0.25rem+1rem)] lg:-mr-6 lg:-ml-[calc(2rem+0.625rem-0.25rem+1.5rem)]"
           data={chartPoints ?? []}
           lineColor={chartColor}
           onCrosshairHover={setChartCrosshair}

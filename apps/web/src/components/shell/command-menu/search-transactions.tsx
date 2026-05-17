@@ -8,8 +8,8 @@ import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { zql } from "@cobalt-web/zero";
-import { useQuery, useZero } from "@rocicorp/zero/react";
-import { useCallback, useMemo } from "react";
+import { useQuery } from "@rocicorp/zero/react";
+import { useMemo } from "react";
 import type { MouseEvent } from "react";
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
@@ -56,12 +56,6 @@ const buildRecentQuery = () =>
     .orderBy("date", "desc")
     .limit(30);
 
-const buildPrefetchQuery = () =>
-  zql.transaction
-    .related("account", (q) => q.related("plaidConnection", (c) => c.related("institution")))
-    .orderBy("date", "desc")
-    .limit(300);
-
 const buildSearchQuery = (trimmedSearch: string) => {
   const pattern = ILIKE_WILDCARD(trimmedSearch);
   return zql.transaction
@@ -81,8 +75,6 @@ const isNotNull = <T,>(value: T | null): value is T => value !== null;
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useTransactionSearch(trimmedSearch: string, enabled: boolean) {
-  const zero = useZero();
-
   const [transactionRows] = useQuery(
     trimmedSearch.length > 0 ? buildSearchQuery(trimmedSearch) : buildRecentQuery(),
     { enabled },
@@ -93,11 +85,7 @@ export function useTransactionSearch(trimmedSearch: string, enabled: boolean) {
     [enabled, transactionRows],
   );
 
-  const prefetch = useCallback(() => {
-    zero.run(buildPrefetchQuery());
-  }, [zero]);
-
-  return { filteredTransactions, prefetch };
+  return { filteredTransactions };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────

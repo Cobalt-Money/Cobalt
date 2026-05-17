@@ -1,6 +1,11 @@
 import { Queue } from "@cobalt-web/ui/components/ai-elements/queue";
 import { cobaltGhostSurfaceClass } from "@cobalt-web/ui/cobalt/prompt-input";
-import { Cancel01Icon, CheckmarkCircle02Icon, ClockIcon } from "@hugeicons/core-free-icons";
+import {
+  Cancel01Icon,
+  CheckmarkCircle02Icon,
+  ClockIcon,
+  Image01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -125,7 +130,15 @@ function QueueRow({ item, onRemove, onUpdate }: QueueRowProps) {
         onClick={() => setEditing(true)}
         type="button"
       />
-      <span className="pointer-events-none flex-1 truncate text-muted-foreground">{item.text}</span>
+      {item.files && item.files.length > 0 && (
+        <span className="pointer-events-none flex shrink-0 items-center gap-0.5 text-muted-foreground">
+          <HugeiconsIcon icon={Image01Icon} className="size-3.5" strokeWidth={2} />
+          {item.files.length}
+        </span>
+      )}
+      <span className="pointer-events-none flex-1 truncate text-muted-foreground">
+        {item.text || "Image attached"}
+      </span>
       <button
         aria-label="Remove queued message"
         className="relative rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-foreground/5 hover:text-foreground group-hover:opacity-100"

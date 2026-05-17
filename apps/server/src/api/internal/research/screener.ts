@@ -38,6 +38,7 @@ export const screenerRouter = createApp().openapi(route, async (c) => {
   };
   const results = await fmpCompanyScreenerNasdaqNyse(mergedParams);
   const enriched = await enrichScreenerRowsWithRevenueAndRating(results);
+  const body = screenerResponseSchema.parse({ count: enriched.length, results: enriched });
   c.header("Cache-Control", "private, s-maxage=60, stale-while-revalidate=300");
-  return c.json({ count: enriched.length, results: enriched }, 200);
+  return c.json(body, 200);
 });

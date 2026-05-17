@@ -1,3 +1,4 @@
+import { Badge } from "@cobalt-web/ui/components/badge";
 import { Button } from "@cobalt-web/ui/components/button";
 import {
   Empty,
@@ -14,6 +15,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@cobalt-web/ui/components/sheet";
+import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
 import { AlertCircleIcon, BellDotIcon, RefreshIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -123,7 +125,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
     setBusyId(alert.id);
     try {
       if (alert.source === "plaid") {
-        const res = await plaidApi["link-token"].update.$post({
+        const res = await plaidApi.linkToken.update.$post({
           json: { mode: "reauth", plaidItemId: alert.sourceId },
         });
         const data = await res.json();
@@ -159,7 +161,10 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
     <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent className="flex w-full flex-col gap-0 sm:max-w-md">
         <SheetHeader className="border-b">
-          <SheetTitle>Notifications</SheetTitle>
+          <div className="flex items-center gap-2">
+            <SheetTitle>Notifications</SheetTitle>
+            {alerts.length > 0 ? <Badge variant="destructive">{alerts.length}</Badge> : null}
+          </div>
           <SheetDescription>Connections that need your attention.</SheetDescription>
         </SheetHeader>
 
@@ -175,21 +180,25 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
           </Empty>
         ) : (
           <ScrollArea className="flex-1">
-            <ul className="flex flex-col divide-y">
+            <ul className="flex flex-col gap-3 p-4">
               {alerts.map((alert) => {
                 const meta = getAlertMetadata(alert);
                 const isBusy = busyId === alert.id;
                 return (
-                  <li className="flex flex-col gap-3 px-6 py-4" key={alert.id}>
+                  <li
+                    className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/10"
+                    key={alert.id}
+                  >
                     <div className="flex items-start gap-3">
-                      {meta.institutionLogo ? (
-                        <img
-                          alt=""
-                          className="mt-0.5 size-9 shrink-0 rounded-lg border bg-background object-contain"
-                          src={meta.institutionLogo}
+                      {meta.institutionLogo || meta.institutionName ? (
+                        <InstitutionLogo
+                          className="size-10 shrink-0 overflow-hidden rounded-lg"
+                          institutionLogo={meta.institutionLogo}
+                          institutionName={meta.institutionName ?? null}
+                          institutionUrl={null}
                         />
                       ) : (
-                        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
                           <HugeiconsIcon
                             className="size-5"
                             icon={AlertCircleIcon}
@@ -198,9 +207,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
                         </span>
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="truncate font-medium text-foreground text-sm">
-                          {alert.title}
-                        </div>
+                        <div className="font-medium text-foreground text-sm">{alert.title}</div>
                         {alert.message ? (
                           <div className="mt-0.5 text-muted-foreground text-xs">
                             {alert.message}
@@ -209,18 +216,17 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 pl-12">
-                      <Button
-                        disabled={isBusy || !alert.sourceId}
-                        onClick={() => handleReconnect(alert)}
-                        size="sm"
-                        type="button"
-                        variant="default"
-                      >
-                        <HugeiconsIcon className="size-4" icon={RefreshIcon} strokeWidth={2} />
-                        {isBusy ? "…" : getAlertCtaLabel(alert.type)}
-                      </Button>
-                    </div>
+                    <Button
+                      className="w-full"
+                      disabled={isBusy || !alert.sourceId}
+                      onClick={() => handleReconnect(alert)}
+                      size="sm"
+                      type="button"
+                      variant="default"
+                    >
+                      <HugeiconsIcon className="size-4" icon={RefreshIcon} strokeWidth={2} />
+                      {isBusy ? "…" : getAlertCtaLabel(alert.type)}
+                    </Button>
                   </li>
                 );
               })}

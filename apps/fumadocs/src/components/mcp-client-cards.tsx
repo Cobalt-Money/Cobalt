@@ -121,6 +121,35 @@ export const ChatGPTIcon = () => (
   </svg>
 );
 
+export const PiIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="size-5"
+  >
+    <path
+      d="M3 7h18v2.5h-3.5L16 21h-2.5l1.5-11.5H9L7.5 21H5L6.5 9.5H3z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+export const ZedIcon = () => (
+  <svg
+    viewBox="0 0 256 256"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="size-5"
+  >
+    <circle cx="128" cy="128" r="128" fill="#0E0E0E" />
+    <path
+      d="M76 76h104v22h-78l78 60v22H76v-22h78L76 98z"
+      fill="#D8B36A"
+    />
+  </svg>
+);
+
 export const TerminalIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -185,6 +214,12 @@ export function McpClientCards() {
       </Card>
       <Card icon={<AmpIcon />} title="Amp CLI" href="#amp-cli">
         See instructions
+      </Card>
+      <Card icon={<ZedIcon />} title="Zed" href="#zed">
+        See instructions
+      </Card>
+      <Card icon={<PiIcon />} title="Pi" href="#pi">
+        Coming soon
       </Card>
       <Card icon={<TerminalIcon />} title="Other clients" href="#other-clients">
         See all options

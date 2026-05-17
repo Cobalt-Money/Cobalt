@@ -24,7 +24,9 @@ async function disconnectBank(plaidAccountId: string | null | undefined) {
   if (!plaidAccountId) {
     throw new Error("Missing account id");
   }
-  const res = await accountsApi.bank[":id"].$delete({ param: { id: plaidAccountId } });
+  const res = await accountsApi.bank[":id"].$delete({
+    param: { id: plaidAccountId },
+  });
   const data = await res.json();
   if (!res.ok || !("success" in data) || !data.success) {
     const msg = "message" in data ? data.message : undefined;
@@ -52,7 +54,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
   const [plaidToken, setPlaidToken] = useState<string | null>(null);
   const [busy, setBusy] = useState<"disconnect" | "reconnect" | null>(null);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
-  // Active reauth session — holds the hookToken/runId from /link-token/update.
+  // Active reauth session — holds the hookToken/runId from /linkToken/update.
   // Cleared on success or exit so a stale session can't resolve a later flow.
   const sessionRef = useRef<ReauthSession | null>(null);
   const onboardingHost = useOptionalOnboardingHost();
@@ -128,7 +130,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
     }
     setBusy("reconnect");
     try {
-      const res = await plaidApi["link-token"].update.$post({
+      const res = await plaidApi.linkToken.update.$post({
         json: { mode: "reauth", plaidItemId: account.plaidItemId },
       });
       const data = await res.json();
@@ -249,7 +251,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
           <AlertDialogHeader>
             <AlertDialogTitle>Disconnect account?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the account from Cobalt. You can connect it again later.
+              This removes the account and all its transactions from Cobalt
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  date,
   index,
   pgEnum,
   pgTable,
@@ -22,6 +23,12 @@ export const financialAccount = pgTable(
     /** Full account number; rarely populated by providers. */
     accountNumber: text("account_number"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    /**
+     * Watermark (latest CSV-imported transaction date) for this account.
+     * Plaid sync uses it to skip txns dated `<=` this — gap-fill semantics on
+     * CSV-then-Plaid promotion. NULL = no CSV import ever touched this row.
+     */
+    csvCoverageThrough: date("csv_coverage_through"),
     /** User-edited display name override. Plaid sync never writes this. Falls back to `name` when null. */
     customName: text("custom_name"),
     /** Provider's account ID (Plaid account_id / SnapTrade account id). */

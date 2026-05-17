@@ -3,6 +3,8 @@ import { Location01Icon, Refresh01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 
+import type { GeocodeSearchState } from "../add-transaction-dialog";
+
 type LocationJson = NonNullable<TransactionListItem["location"]>;
 
 export interface GeocodeResult {
@@ -18,6 +20,87 @@ interface EditableLocationProps {
   onReset: () => void;
   onSubmit: (location: LocationJson) => void;
   results: GeocodeResult[];
+}
+
+interface LocationPickerListProps {
+  locationSearch: GeocodeSearchState;
+  onSubmit: (location: LocationJson) => void;
+  /** Host hook fired right after a pick (e.g. close the popover/menu). */
+  onAfterSubmit?: () => void;
+  /** Popover hosts want the search focused on open; menu sub-content does not. */
+  autoFocusSearch?: boolean;
+}
+
+/**
+ * Search + results body for picking a transaction location. Used by the
+ * transactions table's context menu; mirrors the category/tag/merchant picker
+ * lists so location editing looks consistent.
+ */
+export function LocationPickerList({
+  locationSearch,
+  onSubmit,
+  onAfterSubmit,
+  autoFocusSearch = true,
+}: LocationPickerListProps) {
+  const [query, setQuery] = useState("");
+  const trimmed = query.trim();
+
+  function renderResults() {
+    if (trimmed.length < 2) {
+      return (
+        <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Type to search</div>
+      );
+    }
+    if (locationSearch.loading && locationSearch.results.length === 0) {
+      return (
+        <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Searching…</div>
+      );
+    }
+    if (locationSearch.results.length === 0) {
+      return (
+        <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">No matches</div>
+      );
+    }
+    return locationSearch.results.map((r) => (
+      <button
+        className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+        key={r.displayName}
+        onClick={() => {
+          onSubmit(r.location);
+          setQuery("");
+          locationSearch.onQueryChange("");
+          onAfterSubmit?.();
+        }}
+        type="button"
+      >
+        <span className="min-w-0 truncate text-foreground">{r.displayName}</span>
+      </button>
+    ));
+  }
+
+  return (
+    <>
+      <div className="flex items-center px-2.5 py-1.5">
+        <input
+          autoComplete="off"
+          autoFocus={autoFocusSearch}
+          className="min-w-0 flex-1 cursor-text bg-transparent text-foreground text-sm outline-none placeholder:text-muted-foreground"
+          onChange={(e) => {
+            const v = e.target.value;
+            setQuery(v);
+            locationSearch.onQueryChange(v);
+          }}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+          }}
+          placeholder="Search location…"
+          spellCheck={false}
+          value={query}
+        />
+      </div>
+      <div className="scrollbar-thin max-h-72 overflow-y-auto">{renderResults()}</div>
+    </>
+  );
 }
 
 function summarize(loc: LocationJson | null): string {

@@ -36,7 +36,7 @@ export function AccountsToolbar({
   onAddAccount?: () => void;
 }) {
   return (
-    <div className="flex w-full min-w-0 flex-col gap-4 bg-sidebar-inset px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+    <div className="flex w-full min-w-0 flex-col gap-4 bg-sidebar-inset px-4 py-3 md:flex-row md:items-center md:justify-between lg:px-6">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         {FILTERS.map((f) => (
           <Toggle
@@ -58,7 +58,7 @@ export function AccountsToolbar({
       {onAddAccount ? (
         <div className="flex shrink-0 items-center gap-2">
           <Button
-            className="shrink-0"
+            className="shrink-0 font-normal"
             onClick={onAddAccount}
             size="sm"
             type="button"

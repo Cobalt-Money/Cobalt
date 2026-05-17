@@ -18,10 +18,6 @@ export const env = createEnv({
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,
   server: {
-    /** HMAC secret for short-lived bridge JWTs minted to sandboxes (MCP execute_code). */
-    AGENT_BRIDGE_SECRET: z.string().min(32).optional(),
-    /** Public origin used by sandbox to reach the bridge endpoint. Defaults to BETTER_AUTH_URL. */
-    AGENT_BRIDGE_URL: z.url().optional(),
     /** Dedicated connection URI for the agent_readonly Postgres role (SELECT-only + RLS). Falls back to DATABASE_URL in dev. */
     AGENT_DATABASE_URL: z.string().min(1).optional(),
     AGENT_DB_POOL_MAX: z.coerce.number().int().min(1).max(20).default(3),
@@ -42,6 +38,8 @@ export const env = createEnv({
     APP_URL: z.url().default("https://www.try-cobalt.com"),
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
+    /** Vercel Blob read/write token. Required for CSV import file storage. */
+    BLOB_READ_WRITE_TOKEN: z.string().min(1),
     /** Cookie domain for cross-subdomain auth (e.g. `.cobaltpf.com`). Omit in dev. */
     COOKIE_DOMAIN: z.string().min(1).optional(),
     CORS_ORIGIN: z.url(),
@@ -50,8 +48,6 @@ export const env = createEnv({
     /** Cap @cobalt-web/db pool size — default 10 per `pg` is too high for small Postgres (Neon free, etc.). */
     DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(5),
     DATABASE_URL: z.string().min(1),
-    /** Daytona API key — required when SANDBOX_RUNTIME=daytona. */
-    DAYTONA_API_KEY: z.string().min(1).optional(),
     /** Financial Modeling Prep — market data / fundamentals. */
     FMP_API_KEY: z.string().min(1).optional(),
     GOOGLE_CLIENT_ID: z.string().min(1),
@@ -67,8 +63,6 @@ export const env = createEnv({
     PLAID_CLIENT_SECRET: z.string().min(1),
     PLAID_ENV: z.string().min(1).default("sandbox"),
     PLAID_WEBHOOK_URL: z.url().optional(),
-    /** Sandbox runtime backend for MCP execute_code. Default: vercel. */
-    SANDBOX_RUNTIME: z.enum(["vercel", "daytona"]).default("vercel"),
     /** Authorization token sent in the `Authorization` header to the sandbox CF Worker. Must match the Worker's `AUTH_TOKEN` secret. */
     SANDBOX_WORKER_AUTH_TOKEN: z.string().min(32).optional(),
     /** URL of the deployed sandbox Cloudflare Worker (e.g. https://cobalt-sandbox.workers.dev). When unset, sandbox runs are disabled. */
@@ -79,12 +73,6 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     TRUSTED_ORIGINS_EXTRA: commaList,
-    /** Vercel project ID — required when SANDBOX_RUNTIME=vercel. */
-    VERCEL_PROJECT_ID: z.string().min(1).optional(),
-    /** Vercel team ID — required when SANDBOX_RUNTIME=vercel. */
-    VERCEL_TEAM_ID: z.string().min(1).optional(),
-    /** Vercel personal access token — required when SANDBOX_RUNTIME=vercel. */
-    VERCEL_TOKEN: z.string().min(1).optional(),
     /** Pool for Zero mutate adapter (keep small if same DB as `DATABASE_URL`). */
     ZERO_DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(2),
   },

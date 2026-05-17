@@ -5,7 +5,7 @@ export default function HomePage() {
     <main className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
       <h1 className="text-4xl font-bold">Cobalt Docs</h1>
       <p className="text-fd-muted-foreground max-w-md">
-        Documentation and API reference for the Cobalt financial platform.
+        Documentation for the Cobalt financial platform.
       </p>
       <div className="flex gap-4">
         <Link
@@ -15,10 +15,10 @@ export default function HomePage() {
           Get Started
         </Link>
         <Link
-          href="/docs/api-reference"
+          href="/docs/mcp"
           className="rounded-lg border border-fd-border px-4 py-2"
         >
-          API Reference
+          MCP Server
         </Link>
       </div>
     </main>
