@@ -153,6 +153,8 @@ export interface AddManualAccountFormProps {
   /** Prefill from upstream institution selection (e.g. user picked Chase, opted to add manually). */
   initialName?: string;
   initialLogoDomain?: string | null;
+  /** Lock the account type and skip the type picker. Used by the Cash entry path. */
+  initialType?: ManualAccountType;
 }
 
 export interface AddManualAccountDialogProps {
@@ -164,6 +166,7 @@ export interface AddManualAccountDialogProps {
   brandSearch?: BrandSearchState;
   initialName?: string;
   initialLogoDomain?: string | null;
+  initialType?: ManualAccountType;
 }
 
 function TypePicker({
@@ -448,8 +451,9 @@ export function AddManualAccountForm({
   brandSearch,
   initialName,
   initialLogoDomain,
+  initialType,
 }: AddManualAccountFormProps) {
-  const [type, setType] = useState<ManualAccountType | null>(null);
+  const [type, setType] = useState<ManualAccountType | null>(initialType ?? null);
 
   if (type === null) {
     return (
@@ -465,9 +469,13 @@ export function AddManualAccountForm({
       brandSearch={brandSearch}
       initialLogoDomain={initialLogoDomain}
       initialName={initialName}
-      onBackspaceWhenEmpty={() => {
-        setType(null);
-      }}
+      onBackspaceWhenEmpty={
+        initialType
+          ? onBackspaceWhenEmpty
+          : () => {
+              setType(null);
+            }
+      }
       onSubmit={onSubmit}
       submitLabel={submitLabel}
       submitting={submitting}
@@ -485,6 +493,7 @@ export function AddManualAccountDialog({
   brandSearch,
   initialName,
   initialLogoDomain,
+  initialType,
 }: AddManualAccountDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -497,6 +506,7 @@ export function AddManualAccountDialog({
             brandSearch={brandSearch}
             initialLogoDomain={initialLogoDomain}
             initialName={initialName}
+            initialType={initialType}
             key={open ? "open" : "closed"}
             onBackspaceWhenEmpty={onBackspaceWhenEmpty}
             onSubmit={onSubmit}

@@ -334,6 +334,8 @@ function CommandMenuDialog({
   const [selectedInstitution, setSelectedInstitution] = useState<AddAccountInstitution | null>(
     null,
   );
+  /** True when manual-account form was entered via the Cash tile or "Create cash account" — locks type to depository. */
+  const [cashEntry, setCashEntry] = useState(false);
 
   const activePage = pages.at(-1);
   const inSearchTransactions = activePage === "search-transactions";
@@ -663,8 +665,9 @@ function CommandMenuDialog({
   const handleChooseInstitution = useCallback(
     (institution: AddAccountInstitution) => {
       if (institution.provider === "manual") {
-        // Cash tile — no intermediate step, no institution prefill.
+        // Cash tile — no intermediate step, no institution prefill, lock type to depository.
         setSelectedInstitution(null);
+        setCashEntry(true);
         setSearch("");
         setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
         return;
@@ -673,6 +676,7 @@ function CommandMenuDialog({
       // tracking it manually. Stash the institution so the manual form can
       // prefill name + logoDomain if they pick "Add manually".
       setSelectedInstitution(institution);
+      setCashEntry(false);
       setSearch("");
       setPages((p) => [...p.slice(0, -1), "link-or-manual"]);
     },
@@ -944,6 +948,7 @@ function CommandMenuDialog({
                 <button
                   className="flex flex-col items-start gap-1 rounded-lg border border-foreground/10 bg-foreground/[0.03] p-4 text-left transition-colors hover:bg-foreground/[0.07]"
                   onClick={() => {
+                    setCashEntry(false);
                     setSearch("");
                     setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
                   }}
@@ -971,6 +976,7 @@ function CommandMenuDialog({
                 }}
                 initialLogoDomain={domainFromUrl(selectedInstitution?.url ?? null)}
                 initialName={selectedInstitution?.name}
+                initialType={cashEntry ? "depository" : undefined}
                 onBackspaceWhenEmpty={popPage}
                 onSubmit={(values) => {
                   void (async () => {
@@ -1001,6 +1007,8 @@ function CommandMenuDialog({
                 onBackspaceWhenEmpty={popPage}
                 onRequestCreateTag={addTxOnRequestCreateTag}
                 onCreateCashAccount={() => {
+                  setSelectedInstitution(null);
+                  setCashEntry(true);
                   setSearch("");
                   setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
                 }}
