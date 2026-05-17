@@ -66,7 +66,7 @@ import {
 } from "@/components/accounts/use-add-account-flow";
 import { useOpenImportWizard } from "@/components/imports/import-wizard";
 import { useQuery } from "@tanstack/react-query";
-import { importsApi } from "@/lib/clients/api-client";
+import { importsApi, researchApi } from "@/lib/clients/api-client";
 import { SettingsGrid } from "@/components/settings/settings-grid";
 import type { SettingsSection } from "@/components/settings/settings-grid";
 import { useAddManualAccountSubmit } from "@/hooks/use-add-manual-account-submit";
@@ -374,6 +374,41 @@ function CommandMenuDialog({
     trimmedSearch,
     inSearchTickers,
   );
+
+  // Separate ticker search wired into the manual investment account form's
+  // PositionsCard — own query string, enabled only on that page so the
+  // universe is fetched lazily.
+  const [manualAccountTickerQuery, setManualAccountTickerQuery] = useState("");
+  const { filteredTickers: manualAccountTickerMatches } = useTickerSearch(
+    manualAccountTickerQuery,
+    inAddManualAccount,
+  );
+  const manualAccountTickerSearch = useMemo(
+    () => ({
+      loading: false,
+      onQueryChange: setManualAccountTickerQuery,
+      results: manualAccountTickerMatches.map((t) => ({
+        name: t.name,
+        price: t.price,
+        symbol: t.symbol,
+      })),
+    }),
+    [manualAccountTickerMatches],
+  );
+  const loadTickerHistory = useCallback(async (ticker: string, date: string) => {
+    const res = await researchApi["ticker-history"].$get({
+      query: { date, symbol: ticker },
+    });
+    if (!res.ok) {
+      return { history: [], latestPrice: null };
+    }
+    const json = (await res.json()) as {
+      points: { close: number; date: string }[];
+    };
+    const history = json.points;
+    const latestPrice = history.length > 0 ? (history.at(-1)?.close ?? null) : null;
+    return { history, latestPrice };
+  }, []);
 
   // ── Add-account ─────────────────────────────────────────────────────────────
 
@@ -1034,6 +1069,7 @@ function CommandMenuDialog({
                 initialName={selectedInstitution?.name}
                 initialType={cashEntry ? "depository" : undefined}
                 onBackspaceWhenEmpty={popPage}
+                onLoadHistory={loadTickerHistory}
                 onSubmit={(values) => {
                   void (async () => {
                     try {
@@ -1045,6 +1081,7 @@ function CommandMenuDialog({
                   })();
                 }}
                 submitting={false}
+                tickerSearch={manualAccountTickerSearch}
               />
             </div>
           )}
