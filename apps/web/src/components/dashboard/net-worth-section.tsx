@@ -529,6 +529,7 @@ export function NetWorthSection() {
   const [allBankAccounts] = useQuery(queries.accounts.bankAccounts());
   const [snaptradeAccounts] = useQuery(queries.brokerage.accounts());
   const [plaidInvestmentAccounts] = useQuery(queries.brokerage.plaidInvestmentAccounts());
+  const [manualInvestmentAccounts] = useQuery(queries.brokerage.manualInvestmentAccounts());
 
   const accountById = useMemo(() => {
     const m = new Map<string, BankAccountRow>();
@@ -538,7 +539,7 @@ export function NetWorthSection() {
     return m;
   }, [allBankAccounts]);
 
-  /** id → {name, institutionName} for snaptrade + plaid investment accounts. */
+  /** id → {name, institutionName} for snaptrade + plaid + manual investment accounts. */
   const brokerageMetaById = useMemo(() => {
     const m = new Map<string, { name: string | null; institutionName: string | null }>();
     for (const a of snaptradeAccounts) {
@@ -552,8 +553,11 @@ export function NetWorthSection() {
         null;
       m.set(a.id, { institutionName: inst, name: a.name ?? null });
     }
+    for (const a of manualInvestmentAccounts) {
+      m.set(a.id, { institutionName: a.institutionName ?? null, name: a.name ?? null });
+    }
     return m;
-  }, [snaptradeAccounts, plaidInvestmentAccounts]);
+  }, [snaptradeAccounts, plaidInvestmentAccounts, manualInvestmentAccounts]);
 
   // Attach account metadata (type/subtype/name) to each snapshot row by
   // joining with the bankAccounts map. Equivalent to the `.related("account")`

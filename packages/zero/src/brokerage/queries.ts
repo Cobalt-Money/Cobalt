@@ -37,6 +37,16 @@ export const brokerageQueries = {
       .related("snaptradeAuthorization"),
   ),
 
+  /** Manual investment-type accounts created by the user. */
+  manualInvestmentAccounts: defineQuery(({ ctx }: { ctx: Context }) =>
+    zql.financialAccount
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
+      .where("source", "manual")
+      .where("type", "investment")
+      .related("balance")
+      .related("holdings"),
+  ),
+
   /** Plaid investment-type accounts. */
   plaidInvestmentAccounts: defineQuery(({ ctx }: { ctx: Context }) =>
     zql.financialAccount
@@ -59,7 +69,11 @@ export const brokerageQueries = {
         .where("userId", ctx?.userId ?? NO_MATCH_ID)
         .whereExists("account", (acc) =>
           acc.where(({ or, cmp, and }) =>
-            or(cmp("source", "snaptrade"), and(cmp("source", "plaid"), cmp("type", "investment"))),
+            or(
+              cmp("source", "snaptrade"),
+              and(cmp("source", "plaid"), cmp("type", "investment")),
+              and(cmp("source", "manual"), cmp("type", "investment")),
+            ),
           ),
         )
         .where(({ and, cmp }) =>
