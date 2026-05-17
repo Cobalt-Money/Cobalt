@@ -9,12 +9,6 @@ export const gitConfig = {
 export function baseOptions(): BaseLayoutProps {
   return {
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
-    links: [
-      {
-        text: "API Reference",
-        url: "/docs/api-reference",
-      },
-    ],
     nav: {
       title: "Cobalt Docs",
     },
