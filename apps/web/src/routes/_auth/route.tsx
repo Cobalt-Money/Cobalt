@@ -5,6 +5,7 @@ import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 
 import { OnboardingProgressProvider } from "@/components/accounts/onboarding-context";
 import { OnboardingProgress } from "@/components/accounts/onboarding-progress";
+import { ImportWizardHost } from "@/components/imports/import-wizard";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
 import { AppSidebar } from "@/components/shell/sidebar/app-sidebar";
@@ -33,14 +34,16 @@ function AuthShellWithOutlet() {
       <OnboardingProgressProvider>
         <PrivacyProvider>
           <SettingsDialogProvider>
-            <CommandMenuProvider>
-              <SidebarProvider className="min-h-0 flex-1">
-                <AppSidebar />
-                <AmbientInsetProvider>
-                  <Outlet />
-                </AmbientInsetProvider>
-              </SidebarProvider>
-            </CommandMenuProvider>
+            <ImportWizardHost>
+              <CommandMenuProvider>
+                <SidebarProvider className="min-h-0 flex-1">
+                  <AppSidebar />
+                  <AmbientInsetProvider>
+                    <Outlet />
+                  </AmbientInsetProvider>
+                </SidebarProvider>
+              </CommandMenuProvider>
+            </ImportWizardHost>
           </SettingsDialogProvider>
         </PrivacyProvider>
         <OnboardingProgress />

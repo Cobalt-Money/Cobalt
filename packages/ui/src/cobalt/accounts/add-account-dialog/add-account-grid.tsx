@@ -3,6 +3,7 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 import { useDeferredValue, useMemo, useState } from "react";
 
 import {
+  IMPORT_CSV_OPTION,
   MANUAL_CASH_OPTION,
   PLAID_DEFAULT_BANKS,
   PLAID_DEFAULT_CREDIT,
@@ -98,6 +99,7 @@ export function AddAccountGrid({
     let pool: AddAccountInstitution[];
     if (activeFilter === "all") {
       pool = [
+        IMPORT_CSV_OPTION,
         MANUAL_CASH_OPTION,
         ...SNAPTRADE_INSTITUTIONS,
         ...PLAID_DEFAULT_BANKS,
@@ -107,7 +109,7 @@ export function AddAccountGrid({
     } else if (activeFilter === "bank") {
       pool = [...PLAID_DEFAULT_BANKS, ...PLAID_DEFAULT_CREDIT, ...plaidMapped];
     } else if (activeFilter === "cash") {
-      pool = [MANUAL_CASH_OPTION];
+      pool = [IMPORT_CSV_OPTION, MANUAL_CASH_OPTION];
     } else {
       pool = [...SNAPTRADE_INSTITUTIONS];
     }

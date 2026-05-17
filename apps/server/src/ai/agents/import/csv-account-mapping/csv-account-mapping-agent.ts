@@ -1,8 +1,9 @@
 import { env } from "@cobalt-web/env/server";
-import { generateObject } from "ai";
+import { Output, generateText } from "ai";
+import type { LanguageModel } from "ai";
 import { z } from "zod";
 
-import { gatewayModel } from "../../model-provider.js";
+import { gatewayModel } from "../../../model-provider.js";
 
 const PRIMARY_MODEL = "anthropic/claude-opus-4.7";
 
@@ -18,6 +19,10 @@ export interface AccountSuggestion {
   suggestedType?: SuggestedAccountType;
   /** Inferred account subtype (e.g. "Checking", "Credit Card", "Roth IRA"). */
   suggestedSubtype?: string;
+  /** Canonical institution display name (e.g. "Chase Bank"). */
+  suggestedInstitutionName?: string;
+  /** Bare domain for the institution's website (e.g. "chase.com") — used to render logo via Brandfetch. */
+  suggestedInstitutionDomain?: string;
   confidence: number;
 }
 
@@ -33,8 +38,13 @@ function makeAccountLabelSchema(accountIds: string[]) {
     decisions: z.array(
       z.object({
         confidence: z.number().min(0).max(1),
-        newName: z.string().optional(),
+        newName: z.string().nullable(),
         sourceLabel: z.string(),
+        // nullable not optional: model has to commit to a value (real or null),
+        // can't silently omit. Anthropic structured-output respects required-with-null
+        // far more reliably than `.optional()` for soft-required fields.
+        suggestedInstitutionDomain: z.string().nullable(),
+        suggestedInstitutionName: z.string().nullable(),
         suggestedSubtype: z.string(),
         suggestedType: z.enum(["depository", "credit", "investment", "loan"]),
         target: targetEnum,
@@ -50,6 +60,7 @@ function makeAccountLabelSchema(accountIds: string[]) {
 export async function runCsvAccountMappingAgent({
   sourceLabels,
   userAccounts,
+  model,
 }: {
   sourceLabels: string[];
   userAccounts: {
@@ -62,11 +73,13 @@ export async function runCsvAccountMappingAgent({
     subtype: string | null;
     type: string;
   }[];
+  /** Override model. Defaults to gateway primary. Used by tests. */
+  model?: LanguageModel;
 }): Promise<AccountSuggestion[]> {
   if (sourceLabels.length === 0) {
     return [];
   }
-  if (!env.AI_GATEWAY_API_KEY) {
+  if (!model && !env.AI_GATEWAY_API_KEY) {
     throw new Error("AI_GATEWAY_API_KEY not configured");
   }
 
@@ -80,12 +93,13 @@ export async function runCsvAccountMappingAgent({
     subtype: a.subtype,
     type: a.type,
   }));
-  const result = await generateObject({
+  const result = await generateText({
     experimental_telemetry: {
       functionId: "csv-account-mapping-agent",
       isEnabled: true,
     },
-    model: gatewayModel(PRIMARY_MODEL),
+    model: model ?? gatewayModel(PRIMARY_MODEL),
+    output: Output.object({ schema }),
     prompt: [
       "Match each source-account label from a CSV import to one of the user's existing Cobalt accounts, OR create a new account, OR skip the label.",
       "",
@@ -100,7 +114,9 @@ export async function runCsvAccountMappingAgent({
       "  - 0.5-0.7: ambiguous label, weak signal — prefer create_new instead",
       "  - <0.5: don't return existing id, use create_new",
       "",
-      "ALWAYS set suggestedType AND suggestedSubtype for every decision (including link/skip — for skip, just pick the most plausible type from the label). For create_new, also set newName to the source label as-is.",
+      "ALWAYS set EVERY field on every decision. For target='link', set newName=null but still fill suggestedType+suggestedSubtype consistent with the matched account. For target='skip', set newName=null and pick the most plausible type/subtype from the label. For target='create_new', set newName to the source label as-is.",
+      "",
+      "suggestedInstitutionName + suggestedInstitutionDomain are REQUIRED on every decision. Use null ONLY when the label clearly identifies no institution (e.g. 'Cash', 'Default', 'Other', 'Wallet', '-'). For ANY branded label — bank, card, brokerage, lender — fill both with your best guess, even at low confidence. Examples: 'Chase Bank' + 'chase.com', 'Bank of America' + 'bankofamerica.com', 'Wells Fargo' + 'wellsfargo.com', 'American Express' + 'americanexpress.com' (NOT 'amex.com'), 'Fidelity' + 'fidelity.com', 'Charles Schwab' + 'schwab.com', 'Vanguard' + 'vanguard.com', 'Robinhood' + 'robinhood.com', 'Citibank' + 'citi.com', 'Capital One' + 'capitalone.com', 'Discover' + 'discover.com', 'US Bank' + 'usbank.com', 'PNC' + 'pnc.com'. suggestedInstitutionDomain MUST be a bare hostname (no protocol, no path, no www.).",
       "",
       "Type/subtype inference rules:",
       "  - Credit cards: any well-known card product name (Amex Gold/Platinum/Green, Chase Sapphire/Freedom, Citi Double Cash, Capital One Venture, Discover It, etc.) → type='credit', subtype='Credit Card'. The word 'Card' or institution+product-line is also a credit signal.",
@@ -112,17 +128,18 @@ export async function runCsvAccountMappingAgent({
       `Source labels: ${JSON.stringify(sourceLabels)}`,
       `User Cobalt accounts: ${JSON.stringify(accountSummary)}`,
     ].join("\n"),
-    schema,
   });
 
   console.log(
     "[csv-account-mapping-agent] decisions:",
-    JSON.stringify(result.object.decisions, null, 2),
+    JSON.stringify(result.output.decisions, null, 2),
   );
-  return result.object.decisions.map((d) => ({
+  return result.output.decisions.map((d) => ({
     confidence: d.confidence,
-    newName: d.newName,
+    newName: d.newName ?? undefined,
     sourceLabel: d.sourceLabel,
+    suggestedInstitutionDomain: d.suggestedInstitutionDomain ?? undefined,
+    suggestedInstitutionName: d.suggestedInstitutionName ?? undefined,
     suggestedSubtype: d.suggestedSubtype,
     suggestedType: d.suggestedType,
     target: d.target as string,

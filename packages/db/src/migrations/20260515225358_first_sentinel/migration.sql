@@ -18,6 +18,15 @@ CREATE TABLE "category_mapping_cache" (
 	CONSTRAINT "category_mapping_cache_pkey" PRIMARY KEY("user_id","source_label")
 );
 --> statement-breakpoint
+CREATE TABLE "csv_column_role_cache" (
+	"confirmed_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"header_name" text,
+	"meta" jsonb,
+	"role" text NOT NULL,
+	"user_id" text,
+	CONSTRAINT "csv_column_role_cache_pkey" PRIMARY KEY("user_id","header_name")
+);
+--> statement-breakpoint
 CREATE TABLE "csv_mapping_cache" (
 	"confirmed_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"header_hash" text,
@@ -28,8 +37,10 @@ CREATE TABLE "csv_mapping_cache" (
 --> statement-breakpoint
 CREATE TABLE "import_job" (
 	"account_resolution" jsonb,
+	"account_suggestions" jsonb,
 	"cancelled_at" timestamp with time zone,
 	"category_resolution" jsonb,
+	"category_suggestions" jsonb,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"error_message" text,
 	"file_hash" text,
@@ -68,6 +79,7 @@ CREATE TABLE "import_staged_transaction" (
 	"tags" text[]
 );
 --> statement-breakpoint
+ALTER TABLE "financial_account" ADD COLUMN "csv_coverage_through" date;--> statement-breakpoint
 ALTER TABLE "transaction" ADD COLUMN "import_hash" text;--> statement-breakpoint
 ALTER TABLE "transaction" ADD COLUMN "import_job_id" uuid;--> statement-breakpoint
 CREATE INDEX "import_job_user_id_idx" ON "import_job" ("user_id");--> statement-breakpoint
@@ -81,6 +93,7 @@ ALTER TABLE "account_mapping_cache" ADD CONSTRAINT "account_mapping_cache_QIANh4
 ALTER TABLE "account_mapping_cache" ADD CONSTRAINT "account_mapping_cache_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "category_mapping_cache" ADD CONSTRAINT "category_mapping_cache_target_category_id_category_id_fkey" FOREIGN KEY ("target_category_id") REFERENCES "category"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "category_mapping_cache" ADD CONSTRAINT "category_mapping_cache_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "csv_column_role_cache" ADD CONSTRAINT "csv_column_role_cache_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "csv_mapping_cache" ADD CONSTRAINT "csv_mapping_cache_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "import_job" ADD CONSTRAINT "import_job_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "import_staged_transaction" ADD CONSTRAINT "import_staged_transaction_dedupe_match_id_transaction_id_fkey" FOREIGN KEY ("dedupe_match_id") REFERENCES "transaction"("id") ON DELETE SET NULL;--> statement-breakpoint

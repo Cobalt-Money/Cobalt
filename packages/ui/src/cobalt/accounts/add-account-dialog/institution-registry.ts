@@ -421,3 +421,17 @@ export const MANUAL_CASH_OPTION: AddAccountInstitution = {
   provider: "manual",
   url: null,
 };
+
+/**
+ * CSV import option — appears in the Add Account grid alongside MANUAL_CASH_OPTION.
+ * Selecting this opens the import wizard dialog. Lets new users onboard with
+ * historical data from Mint / YNAB / Monarch / bank exports.
+ */
+export const IMPORT_CSV_OPTION: AddAccountInstitution = {
+  categories: ["cash", "bank"],
+  id: "manual:import-csv",
+  logo: null,
+  name: "Import CSV",
+  provider: "manual",
+  url: null,
+};

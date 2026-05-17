@@ -13,11 +13,13 @@ const findFirstMock = vi.fn<() => Promise<{ fileKey: string | null } | null>>();
 const whereMock = vi.fn<() => Promise<void>>().mockResolvedValue();
 const setMock = vi.fn(() => ({ where: whereMock }));
 const updateMock = vi.fn(() => ({ set: setMock }));
+const executeMock = vi.fn<() => Promise<void>>().mockResolvedValue();
 vi.mock(
   import("@cobalt-web/db"),
   () =>
     ({
       db: {
+        execute: executeMock,
         query: { importJob: { findFirst: findFirstMock } },
         update: updateMock,
       },

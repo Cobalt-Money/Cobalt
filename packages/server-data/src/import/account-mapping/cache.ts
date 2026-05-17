@@ -1,5 +1,6 @@
 import { db } from "@cobalt-web/db";
 import { accountMappingCache } from "@cobalt-web/db/schema/imports/account-mapping-cache";
+import { sql } from "drizzle-orm";
 
 export async function lookupAccountMappingCache(
   userId: string,
@@ -15,7 +16,12 @@ export async function lookupAccountMappingCache(
       userId: { eq: userId },
     },
   });
-  return new Map(cached.map((c) => [c.sourceLabel, c.cobaltAccountId]));
+  const map = new Map(cached.map((c) => [c.sourceLabel, c.cobaltAccountId]));
+  const hits = sourceLabels.filter((l) => map.has(l));
+  console.log(
+    `[import.accountMappingCache] lookup user=${userId} labels=${JSON.stringify(sourceLabels)} hits=${hits.length}/${sourceLabels.length} (${JSON.stringify(hits)})`,
+  );
+  return map;
 }
 
 export async function cacheAccountChoice(
@@ -23,11 +29,26 @@ export async function cacheAccountChoice(
   sourceLabel: string,
   cobaltAccountId: string | null,
 ): Promise<void> {
+  await cacheAccountChoices(userId, [{ cobaltAccountId, sourceLabel }]);
+}
+
+/** Bulk upsert — one INSERT for the whole batch instead of N round-trips. */
+export async function cacheAccountChoices(
+  userId: string,
+  choices: { sourceLabel: string; cobaltAccountId: string | null }[],
+): Promise<void> {
+  if (choices.length === 0) {
+    return;
+  }
   await db
     .insert(accountMappingCache)
-    .values({ cobaltAccountId, sourceLabel, userId })
+    .values(choices.map((c) => ({ ...c, userId })))
     .onConflictDoUpdate({
-      set: { cobaltAccountId, confirmedAt: new Date() },
+      set: {
+        cobaltAccountId: sql`excluded.cobalt_account_id`,
+        confirmedAt: new Date(),
+      },
       target: [accountMappingCache.userId, accountMappingCache.sourceLabel],
     });
+  console.log(`[import.accountMappingCache] write user=${userId} batch=${choices.length}`);
 }

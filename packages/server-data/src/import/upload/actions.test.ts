@@ -122,8 +122,10 @@ describe("uploadAndStageImport", () => {
     });
   });
 
-  it("rejects duplicate uploads within the 30-day window without calling put", async () => {
-    limitMock.mockResolvedValueOnce([{ id: "prior-job" }]);
+  it("rejects duplicate uploads in terminal state within the 30-day window without calling put", async () => {
+    // Only terminal-state prior jobs (committed/cancelled/failed) throw; non-terminal
+    // jobs return the resumed jobId so the UI continues an in-flight import.
+    limitMock.mockResolvedValueOnce([{ id: "prior-job", status: "committed" } as never]);
     await expect(
       uploadAndStageImport({ buffer: csvBuffer(), filename: "test.csv", userId: "u-1" }),
     ).rejects.toThrow(/already imported/);

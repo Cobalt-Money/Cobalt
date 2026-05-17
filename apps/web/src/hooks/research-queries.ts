@@ -3,7 +3,7 @@ import type {
   ScreenerResponse,
   ScreenerRow,
 } from "@cobalt-web/server-data/research/schemas";
-import { queryOptions } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import type { ChartPeriod } from "@/components/research/ticker/lightweight-price-chart";
 import { researchApi } from "@/lib/clients/api-client";
@@ -117,6 +117,7 @@ export const tickerOverview = (symbol: string) =>
 
 export const chartQuery = (symbol: string, timePeriod: ChartPeriod) =>
   queryOptions({
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       const res = await researchApi.chart.$get({
         query: { symbol, timePeriod },

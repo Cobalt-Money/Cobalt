@@ -1,6 +1,6 @@
 import {
+  applyAccountCreatesStep,
   applyCreatesStep,
-  applyRenamesStep,
   chunkedInsertStep,
   failCommitStep,
   loadJobStep,
@@ -15,7 +15,7 @@ import type { CommitWorkflowParams, CommitWorkflowResult } from "./steps";
  * resumes from the last completed chunk because the per-chunk progress is
  * persisted, and `(userId, importHash)` UNIQUE makes re-insert idempotent.
  *
- *   loadJob → applyRenames → applyCreates → chunkedInsert → markCommitted
+ *   loadJob → applyAccountCreates → applyCreates → chunkedInsert → markCommitted
  */
 export async function importCommitWorkflow(
   params: CommitWorkflowParams,
@@ -24,9 +24,9 @@ export async function importCommitWorkflow(
 
   try {
     const loaded = await loadJobStep(params);
-    await applyRenamesStep(params, loaded);
+    const { resolvedAccountResolution } = await applyAccountCreatesStep(params, loaded);
     const { resolvedCategoryMap } = await applyCreatesStep(params, loaded);
-    const result = await chunkedInsertStep(params, loaded, resolvedCategoryMap);
+    const result = await chunkedInsertStep(params, resolvedCategoryMap, resolvedAccountResolution);
     await markCommittedStep(params, result);
     return {
       cancelled: result.cancelled,

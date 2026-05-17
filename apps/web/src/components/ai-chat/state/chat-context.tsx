@@ -1,7 +1,8 @@
 import { env } from "@cobalt-web/env/web";
+import type { Message as ChatMessage, Part } from "@cobalt-web/zero";
 import { useNavigate } from "@tanstack/react-router";
 import { DefaultChatTransport, readUIMessageStream } from "ai";
-import type { UIMessage, UIMessageChunk } from "ai";
+import type { FileUIPart, UIMessage, UIMessageChunk } from "ai";
 import {
   createContext,
   useCallback,
@@ -18,43 +19,41 @@ import { handleTierGateResponse } from "@/lib/upgrade-prompt";
 
 import { normalizeGatewayModelId, useAgentSettings } from "./agent-settings-context";
 
-// Shape of a Zero-synced message part. Fields match the zero schema; any can be
-// null for parts that don't use that field.
-interface ZeroMessagePart {
-  type: unknown;
-  text_text: unknown;
-  reasoning_text: unknown;
-  tool_state: unknown;
-  tool_toolCallId: unknown;
-  tool_input: unknown;
-  tool_output: unknown;
-  tool_errorText: unknown;
-  data: unknown;
+type ZeroMessagePart = Part;
+type ZeroMessageRow = ChatMessage & { readonly parts: readonly Part[] };
+
+function isNullish<T>(v: T | null | undefined): v is null | undefined {
+  return v === null || v === undefined;
 }
 
-interface ZeroMessageRow {
-  messageId: unknown;
-  role: unknown;
-  createdAt: unknown;
-  parts: readonly ZeroMessagePart[];
+function filePartFromRow(p: ZeroMessagePart): UIMessage["parts"][number] | null {
+  if (isNullish(p.file_url) || isNullish(p.file_mediaType)) {
+    return null;
+  }
+  const filePart: Record<string, unknown> = {
+    mediaType: p.file_mediaType,
+    type: "file",
+    url: p.file_url,
+  };
+  if (!isNullish(p.file_filename)) {
+    filePart.filename = p.file_filename;
+  }
+  return filePart as UIMessage["parts"][number];
 }
 
 function partRowToUIPart(p: ZeroMessagePart): UIMessage["parts"][number] | null {
-  const type = typeof p.type === "string" ? p.type : null;
-  if (!type) {
-    return null;
-  }
+  const { type } = p;
   if (type === "text") {
-    if (p.text_text === null || p.text_text === undefined) {
+    if (isNullish(p.text_text)) {
       return null;
     }
-    return { text: String(p.text_text), type: "text" };
+    return { text: p.text_text, type: "text" };
   }
   if (type === "reasoning") {
-    if (p.reasoning_text === null || p.reasoning_text === undefined) {
+    if (isNullish(p.reasoning_text)) {
       return null;
     }
-    return { text: String(p.reasoning_text), type: "reasoning" };
+    return { text: p.reasoning_text, type: "reasoning" };
   }
   if (type.startsWith("tool-")) {
     if (!p.tool_toolCallId || !p.tool_state) {
@@ -65,10 +64,10 @@ function partRowToUIPart(p: ZeroMessagePart): UIMessage["parts"][number] | null 
       toolCallId: p.tool_toolCallId,
       type,
     };
-    if (p.tool_input) {
+    if (!isNullish(p.tool_input)) {
       toolPart.input = p.tool_input;
     }
-    if (p.tool_output) {
+    if (!isNullish(p.tool_output)) {
       toolPart.output = p.tool_output;
     }
     if (p.tool_errorText) {
@@ -76,7 +75,10 @@ function partRowToUIPart(p: ZeroMessagePart): UIMessage["parts"][number] | null 
     }
     return toolPart as UIMessage["parts"][number];
   }
-  if (type.startsWith("data-") && p.data) {
+  if (type === "file") {
+    return filePartFromRow(p);
+  }
+  if (type.startsWith("data-") && !isNullish(p.data)) {
     return { data: p.data, type } as UIMessage["parts"][number];
   }
   if (type === "step-start") {
@@ -87,11 +89,11 @@ function partRowToUIPart(p: ZeroMessagePart): UIMessage["parts"][number] | null 
 
 function zeroRowToFullUIMessage(row: ZeroMessageRow): UIMessage {
   return {
-    id: String(row.messageId),
+    id: row.messageId,
     parts: row.parts
       .map(partRowToUIPart)
       .filter((p): p is UIMessage["parts"][number] => p !== null),
-    role: String(row.role) as "user" | "assistant",
+    role: row.role as "user" | "assistant",
   };
 }
 
@@ -112,6 +114,7 @@ export interface QueuedMessage {
   id: string;
   text: string;
   chatId: string;
+  files?: FileUIPart[];
 }
 
 interface StreamState {
@@ -123,7 +126,11 @@ interface StreamState {
 }
 
 interface ChatContextValue extends StreamState {
-  submit: (chatId: string | undefined, content: string) => Promise<void>;
+  submit: (
+    chatId: string | undefined,
+    content: string,
+    files?: readonly FileUIPart[],
+  ) => Promise<void>;
   /** Abort the in-flight stream (does nothing if not streaming). */
   stop: () => void;
   /** Resolve a pending tool call (e.g. askUser) and resume the agent. */
@@ -315,7 +322,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   );
 
   const submit = useCallback(
-    async (chatId: string | undefined, content: string) => {
+    async (chatId: string | undefined, content: string, files?: readonly FileUIPart[]) => {
       let activeChatId = chatId;
 
       if (!activeChatId) {
@@ -343,14 +350,31 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (abortRef.current && !abortRef.current.signal.aborted) {
         setQueuedMessages((prev) => [
           ...prev,
-          { chatId: activeChatId, id: crypto.randomUUID(), text: content },
+          {
+            chatId: activeChatId,
+            files: files ? [...files] : undefined,
+            id: crypto.randomUUID(),
+            text: content,
+          },
         ]);
+        return;
+      }
+
+      const fileParts: UIMessage["parts"] = (files ?? []).map((f) => ({
+        filename: f.filename,
+        mediaType: f.mediaType,
+        type: "file",
+        url: f.url,
+      }));
+      const textParts: UIMessage["parts"] = content.trim() ? [{ text: content, type: "text" }] : [];
+      const parts = [...fileParts, ...textParts];
+      if (parts.length === 0) {
         return;
       }
 
       const userMessage: UIMessage = {
         id: crypto.randomUUID(),
-        parts: [{ text: content, type: "text" }],
+        parts,
         role: "user",
       };
 
@@ -458,7 +482,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setQueuedMessages((prev) => prev.slice(1));
     const run = async () => {
       try {
-        await submit(next.chatId, next.text);
+        await submit(next.chatId, next.text, next.files);
       } finally {
         forceDispatchRef.current = false;
       }

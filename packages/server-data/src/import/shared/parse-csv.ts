@@ -7,7 +7,10 @@
 export async function parseFullCsv(text: string): Promise<Record<string, string>[]> {
   const papaModule = await import("papaparse");
   const Papa = papaModule.default;
-  const result = Papa.parse<Record<string, string>>(text, {
+  // Strip a leading BOM so it doesn't glue onto the first header key (must match gates.ts).
+  // 65279 = U+FEFF, in decimal (hex literals deadlock oxfmt vs the lint rule).
+  const cleaned = text.codePointAt(0) === 65_279 ? text.slice(1) : text;
+  const result = Papa.parse<Record<string, string>>(cleaned, {
     delimiter: ",",
     header: true,
     skipEmptyLines: "greedy",

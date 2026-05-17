@@ -89,8 +89,16 @@ function toggleInstitution(
 ): BrokerageScope {
   const allIds = allAccounts.map((a) => a.id);
   const instIds = new Set(institutionAccounts.map((a) => a.id));
-  const currentIds: Set<string> =
-    scope.type === "all" ? new Set(allIds) : new Set(scope.accountIds);
+
+  // From "all", clicking an institution narrows to just that institution rather
+  // than de-selecting it out of everything.
+  if (scope.type === "all") {
+    return instIds.size === allIds.length
+      ? { type: "all" }
+      : { accountIds: [...instIds], type: "include" };
+  }
+
+  const currentIds = new Set(scope.accountIds);
 
   const allActive = institutionAccounts.every((a) => currentIds.has(a.id));
 
@@ -116,9 +124,10 @@ function toggleAccount(
   id: string,
 ): BrokerageScope {
   const allIds = accounts.map((a) => a.id);
+  // From "all", clicking an account narrows to just that account rather than
+  // de-selecting it out of everything.
   if (scope.type === "all") {
-    const next = allIds.filter((aid) => aid !== id);
-    return next.length === 0 ? { type: "all" } : { accountIds: next, type: "include" };
+    return allIds.length === 1 ? { type: "all" } : { accountIds: [id], type: "include" };
   }
   const set = new Set(scope.accountIds);
   if (set.has(id)) {
@@ -187,7 +196,7 @@ export function BrokerageScopePicker({
       <DropdownMenuContent
         align="end"
         className={cn(
-          "max-h-[min(340px,55vh)] w-[min(17rem,calc(100vw-1.5rem))] min-w-[12.5rem] overflow-y-auto rounded-2xl border border-border/50 bg-popover/98 p-1 shadow-md ring-0 backdrop-blur-sm",
+          "max-h-[min(340px,55vh)] w-[min(17rem,calc(100vw-1.5rem))] min-w-[12.5rem] overflow-y-auto rounded-3xl border border-border bg-popover p-1 shadow-xs ring-0 dark:bg-sidebar-accent",
           "data-open:zoom-in-100 data-closed:zoom-out-100",
         )}
         side="bottom"
@@ -197,7 +206,7 @@ export function BrokerageScopePicker({
         <div className="flex flex-wrap gap-1 px-2 pt-2 pb-1">
           <button
             className={cn(
-              "inline-flex h-6 cursor-pointer items-center rounded-full bg-input/30 px-2.5 text-xs transition-colors hover:bg-input/50",
+              "inline-flex h-6 cursor-pointer items-center rounded-full border border-border bg-input/30 px-2.5 text-xs transition-colors hover:bg-input/50",
               isAll ? "text-foreground font-medium" : "text-muted-foreground",
             )}
             onClick={() => onScopeChange({ type: "all" })}
@@ -210,7 +219,7 @@ export function BrokerageScopePicker({
             return (
               <button
                 className={cn(
-                  "inline-flex h-6 cursor-pointer items-center gap-1 rounded-full bg-input/30 px-2.5 text-xs transition-colors hover:bg-input/50",
+                  "inline-flex h-6 cursor-pointer items-center gap-1 rounded-full border border-border bg-input/30 px-2.5 text-xs transition-colors hover:bg-input/50",
                   active ? "text-foreground font-medium" : "text-muted-foreground",
                 )}
                 key={g.name}

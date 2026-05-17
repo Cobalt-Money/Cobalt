@@ -4,9 +4,9 @@ import { user } from "../users/auth/auth";
 import type { CsvMapping } from "./import-job";
 
 /**
- * Per-user cache of confirmed column mappings keyed by header signature.
- * One Haiku call per (user × unique header layout) lifetime — re-imports of the
- * same export format hit cache and skip AI entirely.
+ * Per-user confirmed column mapping override — written when the user confirms
+ * Step 2 of the import wizard. Looked up first for a header signature; falls
+ * back to `csv_mapping_baseline` (global AI baseline) on miss.
  */
 export const csvMappingCache = pgTable(
   "csv_mapping_cache",

@@ -7,7 +7,7 @@ import type { StagedTransaction } from "../shared/types";
  *
  * Per-row null policy (mirrors SRI-321 spec):
  *   - empty `date` or unparseable `amount`     → row.parseError set (commit skips)
- *   - empty `merchant`                         → "Unknown" placeholder
+ *   - empty `merchant`                         → row.parseError set (name is essential)
  *   - empty `account` (when account column mapped) → row.parseError set
  *   - empty `category` (when column mapped)    → null sourceCategoryName → uncategorized at commit
  *   - empty notes/tags                         → null / []
@@ -15,6 +15,53 @@ import type { StagedTransaction } from "../shared/types";
  */
 
 const EMPTY_TOKENS = new Set(["", "null", "n/a"]);
+
+/**
+ * Strip characters that are dangerous or meaningless in a transaction field:
+ *   - C0/C1 control chars incl. NUL — Postgres `text`/`jsonb` reject NUL bytes
+ *     outright, so an unstripped cell would crash the commit insert.
+ *   - bidi/format overrides (RTL-override etc.) — used for UI display spoofing.
+ */
+// Code-point ranges, in decimal (hex literals deadlock oxfmt vs the lint rule):
+//   C0 controls 0–31, DEL+C1 127–159, ARABIC LETTER MARK 1564,
+//   LRM/RLM 8206/8207, bidi embeddings/overrides 8234–8238, isolates 8294–8297.
+const CONTROL_MAX = 31;
+const C1_START = 127;
+const C1_END = 159;
+const ARABIC_LETTER_MARK = 1564;
+const LRM = 8206;
+const RLM = 8207;
+const BIDI_EMBED_START = 8234;
+const BIDI_EMBED_END = 8238;
+const BIDI_ISOLATE_START = 8294;
+const BIDI_ISOLATE_END = 8297;
+
+function sanitizeCell(v: string): string {
+  let out = "";
+  for (const ch of v) {
+    const c = ch.codePointAt(0) ?? 0;
+    const isControl = c <= CONTROL_MAX || (c >= C1_START && c <= C1_END);
+    const isBidi =
+      c === ARABIC_LETTER_MARK ||
+      c === LRM ||
+      c === RLM ||
+      (c >= BIDI_EMBED_START && c <= BIDI_EMBED_END) ||
+      (c >= BIDI_ISOLATE_START && c <= BIDI_ISOLATE_END);
+    if (!isControl && !isBidi) {
+      out += ch;
+    }
+  }
+  return out;
+}
+
+/** Sanitize every value in a raw CSV row before it touches the parser or the DB. */
+function sanitizeRow(raw: Record<string, string>): Record<string, string> {
+  const clean: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    clean[k] = typeof v === "string" ? sanitizeCell(v) : v;
+  }
+  return clean;
+}
 
 function isEmptyCell(v: string | undefined | null): boolean {
   if (v === undefined || v === null) {
@@ -47,9 +94,16 @@ export function parseRows({
   defaultDate?: string;
 }): ParseRowsResult {
   const staged: StagedTransaction[] = [];
-  const rejected: { row: number; reason: string; raw: Record<string, string> }[] = [];
+  const rejected: {
+    row: number;
+    reason: string;
+    raw: Record<string, string>;
+  }[] = [];
 
-  for (const [idx, raw] of rows.entries()) {
+  for (const [idx, rawRow] of rows.entries()) {
+    // Sanitize once up front so both the parsed fields and the stored `rawBlob`
+    // are free of NUL/control/bidi chars.
+    const raw = sanitizeRow(rawRow);
     try {
       staged.push(parseOne(raw, mapping, defaultAccountName, defaultDate));
     } catch (error) {
@@ -72,7 +126,11 @@ function parseOne(
 ): StagedTransaction {
   const date = extractDate(raw, mapping, defaultDate);
   const amount = extractAmount(raw, mapping);
-  const merchant = takeOrFallback(raw[mapping.merchant.column], "Unknown");
+  const merchantCell = raw[mapping.merchant.column];
+  if (isEmptyCell(merchantCell)) {
+    throw new Error("Merchant cell empty");
+  }
+  const merchant = (merchantCell ?? "").trim();
   const sourceAccountName = mapping.account
     ? (raw[mapping.account.column] ?? "")
     : defaultAccountName;
@@ -110,10 +168,6 @@ function takeOptionalCell(raw: Record<string, string>, column: string | undefine
     return null;
   }
   return (raw[column] ?? "").trim();
-}
-
-function takeOrFallback(v: string | undefined, fallback: string): string {
-  return isEmptyCell(v) ? fallback : (v ?? fallback);
 }
 
 function extractDate(raw: Record<string, string>, mapping: CsvMapping, fallback?: string): string {

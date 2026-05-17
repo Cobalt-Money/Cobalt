@@ -41,6 +41,37 @@ function applyRecentZoomForPeriod(
   requestAnimationFrame(apply);
 }
 
+/**
+ * Framerate-independent lerp (technique from the `liveline` package).
+ * `speed` is the fraction closed per ~16.67ms frame; `dt` is the actual elapsed ms.
+ */
+function lerp(current: number, target: number, speed: number, dt: number): number {
+  const factor = 1 - (1 - speed) ** (dt / 16.67);
+  return current + (target - current) * factor;
+}
+
+/**
+ * Sample `values` at a normalized position `f` ∈ [0,1] by linearly interpolating
+ * the index. Lets us resample a previous dataset onto a new one's point count so
+ * two series with different lengths / time domains can be morphed point-for-point.
+ */
+function sampleValueAtFraction(values: readonly number[], f: number): number {
+  if (values.length === 0) {
+    return 0;
+  }
+  if (values.length === 1) {
+    return values[0] ?? 0;
+  }
+  const pos = Math.min(1, Math.max(0, f)) * (values.length - 1);
+  const lo = Math.floor(pos);
+  const hi = Math.min(values.length - 1, lo + 1);
+  const t = pos - lo;
+  return (values[lo] ?? 0) + ((values[hi] ?? 0) - (values[lo] ?? 0)) * t;
+}
+
+/** Per-frame fraction closed during a period-switch morph. */
+const MORPH_SPEED = 0.2;
+
 export interface ChartDataPoint {
   time: number;
   value: number;
@@ -227,6 +258,11 @@ export function LightweightPriceChart({
 
   /** Tracks whether the crosshair is currently over the chart. */
   const isHoveringRef = useRef(false);
+
+  /** Values currently rendered on the series — the live morph state between datasets. */
+  const renderedValuesRef = useRef<number[] | null>(null);
+  /** rAF id for the in-flight period-switch morph (0 = none). */
+  const morphRafRef = useRef(0);
 
   const onCrosshairHoverRef = useRef(onCrosshairHover);
   onCrosshairHoverRef.current = onCrosshairHover;
@@ -501,25 +537,106 @@ export function LightweightPriceChart({
       return;
     }
 
-    const formatted = data.map((d) => ({
-      time: d.time as Time,
-      value: d.value,
-    }));
-    bs.setData(formatted);
-    cs.setData(formatted);
-    bc.timeScale().fitContent();
-    // Colored chart syncs via subscribeVisibleLogicalRangeChange, but also call
-    // fitContent directly so both start from the same initial range.
-    cc.timeScale().fitContent();
-    applyRecentZoomForPeriod(bc, cc, period);
+    const targetTimes = data.map((d) => d.time as Time);
+    const targetValues = data.map((d) => d.value);
+    const n = targetValues.length;
 
-    // Reset any active hover state.
+    // Cancel any morph still running from a previous period switch.
+    if (morphRafRef.current !== 0) {
+      cancelAnimationFrame(morphRafRef.current);
+      morphRafRef.current = 0;
+    }
+
+    // Reset any active hover state — the dataset underneath is changing.
     isHoveringRef.current = false;
     if (coloredContainerRef.current) {
       coloredContainerRef.current.style.clipPath = "";
     }
     bs.applyOptions({ lineColor: "transparent" });
-  }, [data, period]);
+
+    const commitTarget = () => {
+      const formatted = data.map((d) => ({ time: d.time as Time, value: d.value }));
+      bs.setData(formatted);
+      cs.setData(formatted);
+      renderedValuesRef.current = [...targetValues];
+    };
+
+    const prev = renderedValuesRef.current;
+
+    // First paint (or empty data) — nothing to morph from, just set it.
+    if (!prev || prev.length === 0 || n === 0) {
+      commitTarget();
+      bc.timeScale().fitContent();
+      cc.timeScale().fitContent();
+      applyRecentZoomForPeriod(bc, cc, periodRef.current);
+      return;
+    }
+
+    // Resample the previous dataset onto the new one's point count so we can
+    // morph value-for-value even though the two periods have different domains.
+    const current = Array.from({ length: n }, (_, i) =>
+      sampleValueAtFraction(prev, n === 1 ? 0 : i / (n - 1)),
+    );
+
+    // The time axis is fixed for the whole morph (real target times every frame),
+    // so fit + zoom once up front rather than per frame.
+    const seed = targetTimes.map((time, i) => ({ time, value: current[i] ?? 0 }));
+    bs.setData(seed);
+    cs.setData(seed);
+    bc.timeScale().fitContent();
+    cc.timeScale().fitContent();
+    applyRecentZoomForPeriod(bc, cc, periodRef.current);
+
+    // Converge once every point is within 0.1% of the target value range.
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const v of targetValues) {
+      if (v < lo) {
+        lo = v;
+      }
+      if (v > hi) {
+        hi = v;
+      }
+    }
+    const epsilon = Math.max((hi - lo) * 1e-3, 1e-6);
+
+    let lastTs = performance.now();
+    const step = () => {
+      const now = performance.now();
+      const dt = Math.min(50, now - lastTs);
+      lastTs = now;
+
+      let maxDelta = 0;
+      for (let i = 0; i < n; i += 1) {
+        const target = targetValues[i] ?? 0;
+        const next = lerp(current[i] ?? 0, target, MORPH_SPEED, dt);
+        current[i] = next;
+        const d = Math.abs(next - target);
+        if (d > maxDelta) {
+          maxDelta = d;
+        }
+      }
+
+      const frame = targetTimes.map((time, i) => ({ time, value: current[i] ?? 0 }));
+      bs.setData(frame);
+      cs.setData(frame);
+
+      if (maxDelta < epsilon) {
+        morphRafRef.current = 0;
+        commitTarget();
+        return;
+      }
+      morphRafRef.current = requestAnimationFrame(step);
+    };
+    morphRafRef.current = requestAnimationFrame(step);
+
+    return () => {
+      if (morphRafRef.current !== 0) {
+        cancelAnimationFrame(morphRafRef.current);
+        morphRafRef.current = 0;
+      }
+    };
+  }, [data]);
 
   // ── Height changes ───────────────────────────────────────────────
 

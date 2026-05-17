@@ -350,7 +350,9 @@ export function AddFilterMenu({
                         >
                           <CheckSquare checked={checked} />
                           <TagChip color={opt.color} name={opt.name} size="sm" />
-                          <CountBadge count={counts.byTag.get(opt.id) ?? 0} />
+                          <CountBadge
+                            count={opt.transactionCount ?? counts.byTag.get(opt.id) ?? 0}
+                          />
                         </DropdownMenuCheckboxItem>
                       );
                     })
@@ -444,7 +446,7 @@ function SearchableSubContent({
   placeholder,
   empty,
   children,
-  width = "w-auto",
+  width = "w-64",
 }: {
   placeholder: string;
   empty: string;

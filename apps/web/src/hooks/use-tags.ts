@@ -22,7 +22,12 @@ export function useTagOptions(): {
     () =>
       data
         .filter((t) => t.archivedAt === null && isTagColor(t.color))
-        .map((t) => ({ color: t.color as TagColor, id: t.id, name: t.name })),
+        .map((t) => ({
+          color: t.color as TagColor,
+          id: t.id,
+          name: t.name,
+          transactionCount: t.transactionTags?.length ?? 0,
+        })),
     [data],
   );
   return { isLoading: false, options };

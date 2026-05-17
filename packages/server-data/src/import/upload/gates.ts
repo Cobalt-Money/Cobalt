@@ -19,7 +19,16 @@ export type ImportGateCode =
   | "ROW_COUNT"
   | "COL_COUNT"
   | "HEADER_SANITY"
+  | "DUPLICATE_HEADERS"
   | "DUPLICATE_FILE";
+
+/** U+FEFF byte-order mark, in decimal (hex literals deadlock oxfmt vs the lint rule). */
+const BOM_CODE_POINT = 65_279;
+
+/** Strip a leading UTF-8/UTF-16 BOM so it doesn't glue onto the first header cell. */
+function stripBom(text: string): string {
+  return text.codePointAt(0) === BOM_CODE_POINT ? text.slice(1) : text;
+}
 
 export class ImportGateError extends Error {
   readonly code: ImportGateCode;
@@ -69,9 +78,16 @@ function detectMagic(buffer: Buffer): { binary: false } | { binary: true; label:
  * Decode bytes to text. Try UTF-8, then UTF-16-LE, then latin1. Reject if no
  * encoding produces clean output (replacement chars >1% of stream).
  */
-function decode(buffer: Buffer): { encoding: "utf-8" | "utf-16le" | "latin1"; text: string } {
+function decode(buffer: Buffer): {
+  encoding: "utf-8" | "utf-16le" | "latin1";
+  text: string;
+} {
   const candidates: ("utf-8" | "utf-16le" | "latin1")[] = ["utf-8", "utf-16le", "latin1"];
-  let best: { encoding: (typeof candidates)[number]; text: string; bad: number } | null = null;
+  let best: {
+    encoding: (typeof candidates)[number];
+    text: string;
+    bad: number;
+  } | null = null;
   for (const encoding of candidates) {
     const text = buffer.toString(encoding);
     const bad = (text.match(/�/g)?.length ?? 0) / Math.max(text.length, 1);
@@ -126,52 +142,119 @@ export interface ParsedSample {
   totalRows: number;
 }
 
-/** Parse + validate row/col sanity. Returns headers + capped sample. */
+const DRIFT_SAMPLE_ROWS = 50;
+const PREVIEW_SAMPLE_ROWS = 20;
+
+function isBlankRow(row: string[]): boolean {
+  return !row.some((v) => ((v ?? "") as string).trim() !== "");
+}
+
+/**
+ * Parse + validate row/col sanity. Returns headers + capped sample.
+ *
+ * Streams via Papa's `step` callback so the full row set is never buffered in
+ * memory — only the header, a column-usage bitmap, drift counters, a 20-row
+ * preview, and a running count are retained. Bounds heap use under concurrent
+ * uploads on serverless.
+ */
 function parseAndValidate(text: string): ParsedSample {
-  const result = Papa.parse<string[]>(text, {
+  // Object holder so TS keeps the union type through the closure-mutated assignment.
+  const state: {
+    header: string[] | null;
+    dataRowCount: number;
+    driftSeen: number;
+    driftBad: number;
+  } = { dataRowCount: 0, driftBad: 0, driftSeen: 0, header: null };
+  const colHasData: boolean[] = [];
+  const sampleRaw: string[][] = [];
+
+  Papa.parse<string[]>(text, {
     delimiter: ",",
     skipEmptyLines: "greedy",
+    step: (res) => {
+      const row = res.data;
+      // `skipEmptyLines: greedy` misses rows of only-whitespace cells — drop those too.
+      if (!Array.isArray(row) || isBlankRow(row)) {
+        return;
+      }
+      // row is a non-blank string[] past this point
+      const currentHeader = state.header;
+      if (currentHeader === null) {
+        state.header = row.map((h) => (h ?? "").trim());
+        return;
+      }
+      state.dataRowCount += 1;
+      for (let i = 0; i < currentHeader.length; i += 1) {
+        if (((row[i] ?? "") as string).trim() !== "") {
+          colHasData[i] = true;
+        }
+      }
+      if (state.driftSeen < DRIFT_SAMPLE_ROWS) {
+        state.driftSeen += 1;
+        if (Math.abs(row.length - currentHeader.length) > 1) {
+          state.driftBad += 1;
+        }
+      }
+      if (sampleRaw.length < PREVIEW_SAMPLE_ROWS) {
+        sampleRaw.push(row);
+      }
+    },
   });
-  if (result.errors.length > 0 && result.errors[0]?.code === "TooFewFields") {
-    // Tolerate ragged trailing rows; only fail on hard parser errors.
-  }
-  const data = result.data.filter(
-    (r) => Array.isArray(r) && r.some((v) => (v ?? "").trim() !== ""),
-  );
-  if (data.length < 2) {
+
+  const { dataRowCount, driftBad, driftSeen } = state;
+  if (state.header === null) {
     throw new ImportGateError("ROW_COUNT", "File needs at least a header row and one data row.");
   }
-  if (data.length - 1 > MAX_ROWS) {
+  if (dataRowCount < 1) {
+    throw new ImportGateError("ROW_COUNT", "File needs at least a header row and one data row.");
+  }
+  if (dataRowCount > MAX_ROWS) {
     throw new ImportGateError("ROW_COUNT", `File exceeds ${String(MAX_ROWS)} data-row limit.`);
   }
-  const headerRow = (data[0] ?? []).map((h) => (h ?? "").trim());
-  if (headerRow.filter((h) => h.length > 0).length < 3) {
+  const { header } = state;
+  if (header.filter((h) => h.length > 0).length < 3) {
     throw new ImportGateError("HEADER_SANITY", "Header row needs at least 3 named columns.");
   }
-  if (headerRow.every((h) => /^[\d\s.,-]*$/.test(h))) {
+  if (header.every((h) => /^[\d\s.,-]*$/.test(h))) {
     throw new ImportGateError(
       "HEADER_SANITY",
       "Header row looks numeric — headerless files unsupported.",
     );
   }
-  const dataRows = data.slice(1);
-  // Column-count drift check across first 50 rows.
-  const colCounts = dataRows.slice(0, 50).map((r) => r.length);
-  const expected = headerRow.length;
-  const driftRatio =
-    colCounts.filter((c) => Math.abs(c - expected) > 1).length / Math.max(colCounts.length, 1);
-  if (driftRatio > 0.3) {
+  if (driftBad / Math.max(driftSeen, 1) > 0.3) {
     throw new ImportGateError("COL_COUNT", "Column count varies wildly across rows.");
   }
-  const rows: Record<string, string>[] = dataRows.slice(0, 20).map((r) => {
+  // Prune columns that are blank-named OR entirely empty across all data rows — they
+  // carry no mappable signal. Must stay aligned with `parseFullCsv` (which keys by
+  // header name, so pruned columns simply never get referenced by the mapping).
+  const keepIndices = header
+    .map((_, i) => i)
+    .filter((i) => (header[i] ?? "").length > 0 && colHasData[i] === true);
+  const headerRow = keepIndices.map((i) => header[i] ?? "");
+  if (headerRow.length < 3) {
+    throw new ImportGateError("HEADER_SANITY", "Header row needs at least 3 named columns.");
+  }
+  // Duplicate headers silently drop data (last column wins) — hard-stop instead.
+  const seen = new Set<string>();
+  for (const h of headerRow) {
+    const key = h.toLowerCase();
+    if (seen.has(key)) {
+      throw new ImportGateError(
+        "DUPLICATE_HEADERS",
+        `Duplicate column header "${h}". Rename or remove the duplicate and re-upload.`,
+      );
+    }
+    seen.add(key);
+  }
+  const rows: Record<string, string>[] = sampleRaw.map((r) => {
     const row: Record<string, string> = {};
-    for (let i = 0; i < headerRow.length; i += 1) {
-      const key = headerRow[i] ?? `col_${String(i)}`;
+    for (const [col, i] of keepIndices.entries()) {
+      const key = headerRow[col] ?? `col_${String(col)}`;
       row[key] = (r[i] ?? "").toString();
     }
     return row;
   });
-  return { headers: headerRow, rows, totalRows: dataRows.length };
+  return { headers: headerRow, rows, totalRows: dataRowCount };
 }
 
 export function hashFileBytes(buffer: Buffer): string {
@@ -201,7 +284,8 @@ export function runGates(buffer: Buffer, filename: string): GateResult {
   if (magic.binary) {
     throw new ImportGateError("MAGIC_BYTES", `File looks like a ${magic.label} file, not CSV.`);
   }
-  const { encoding, text } = decode(buffer);
+  const { encoding, text: decoded } = decode(buffer);
+  const text = stripBom(decoded);
   checkDelimiter(text);
   const sample = parseAndValidate(text);
   const fileHash = hashFileBytes(buffer);

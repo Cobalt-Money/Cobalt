@@ -32,9 +32,17 @@ export async function uploadAndStageImport({
   const gate = runGates(buffer, filename);
 
   // 30-day duplicate-import guard. Surfaces the prior job so the UI can link to it.
+  // If the prior job is still in-progress (non-terminal status), resume it instead
+  // of failing — same CSV re-uploaded mid-flow should pick up where it left off.
   const cutoff = new Date(Date.now() - DUPLICATE_WINDOW_MS);
   const prior = await db
-    .select({ id: importJob.id })
+    .select({
+      filename: importJob.originalFilename,
+      headers: importJob.headers,
+      id: importJob.id,
+      sampleRows: importJob.sampleRows,
+      status: importJob.status,
+    })
     .from(importJob)
     .where(
       and(
@@ -45,11 +53,27 @@ export async function uploadAndStageImport({
       ),
     )
     .limit(1);
-  if (prior.length > 0) {
-    throw new ImportGateError(
-      "DUPLICATE_FILE",
-      `This file was already imported in the last 30 days (job ${prior[0]?.id ?? ""}).`,
-    );
+  const [priorJob] = prior;
+  if (priorJob) {
+    const isTerminal =
+      priorJob.status === "committed" ||
+      priorJob.status === "cancelled" ||
+      priorJob.status === "failed";
+    if (isTerminal) {
+      const label = priorJob.filename ?? filename;
+      throw new ImportGateError(
+        "DUPLICATE_FILE",
+        `"${label}" was already imported in the last 30 days.`,
+      );
+    }
+    // Non-terminal prior job — return its id so the UI resumes the existing flow.
+    // totalRows isn't relevant on the resumed upload response; UI jumps past upload step.
+    return {
+      headers: priorJob.headers,
+      jobId: priorJob.id,
+      sampleRows: priorJob.sampleRows ?? [],
+      totalRows: 0,
+    };
   }
 
   const [job] = await db

@@ -1,0 +1,502 @@
+[
+  {
+    "name": "Mint",
+    "headers": [
+      "Date",
+      "Description",
+      "Original Description",
+      "Amount",
+      "Transaction Type",
+      "Category",
+      "Account Name",
+      "Labels",
+      "Notes"
+    ],
+    "rows": [
+      {
+        "Date": "01/15/2025",
+        "Description": "Starbucks",
+        "Original Description": "STARBUCKS #1234",
+        "Amount": "5.75",
+        "Transaction Type": "debit",
+        "Category": "Food & Dining",
+        "Account Name": "Chase Checking",
+        "Labels": "",
+        "Notes": ""
+      },
+      {
+        "Date": "01/16/2025",
+        "Description": "Paycheck",
+        "Original Description": "EMPLOYER ACH",
+        "Amount": "2500.00",
+        "Transaction Type": "credit",
+        "Category": "Income",
+        "Account Name": "Chase Checking",
+        "Labels": "",
+        "Notes": ""
+      },
+      {
+        "Date": "01/17/2025",
+        "Description": "Whole Foods",
+        "Original Description": "WHOLEFDS NYC",
+        "Amount": "62.40",
+        "Transaction Type": "debit",
+        "Category": "Groceries",
+        "Account Name": "Amex Gold",
+        "Labels": "",
+        "Notes": ""
+      }
+    ],
+    "expected": {
+      "amountKind": "magnitude_type",
+      "dateKind": "column",
+      "dateFormat": "MM/dd/yyyy",
+      "accountNull": false,
+      "typeColumn": "Transaction Type",
+      "magnitudeColumn": "Amount",
+      "debitValues": ["debit"]
+    }
+  },
+  {
+    "name": "YNAB",
+    "headers": [
+      "Account",
+      "Flag",
+      "Date",
+      "Payee",
+      "Category Group/Category",
+      "Category Group",
+      "Category",
+      "Memo",
+      "Outflow",
+      "Inflow",
+      "Cleared"
+    ],
+    "rows": [
+      {
+        "Account": "Checking",
+        "Flag": "",
+        "Date": "2025-01-15",
+        "Payee": "Starbucks",
+        "Category Group/Category": "Immediate: Coffee",
+        "Category Group": "Immediate",
+        "Category": "Coffee",
+        "Memo": "",
+        "Outflow": "$5.75",
+        "Inflow": "$0.00",
+        "Cleared": "Cleared"
+      },
+      {
+        "Account": "Checking",
+        "Flag": "",
+        "Date": "2025-01-16",
+        "Payee": "Employer",
+        "Category Group/Category": "Inflow: Ready to Assign",
+        "Category Group": "Inflow",
+        "Category": "Ready to Assign",
+        "Memo": "",
+        "Outflow": "$0.00",
+        "Inflow": "$2,500.00",
+        "Cleared": "Cleared"
+      }
+    ],
+    "expected": {
+      "amountKind": "split",
+      "dateKind": "column",
+      "dateFormat": "yyyy-MM-dd",
+      "accountNull": false
+    }
+  },
+  {
+    "name": "Monarch",
+    "headers": [
+      "Date",
+      "Merchant",
+      "Category",
+      "Account",
+      "Original Statement",
+      "Notes",
+      "Amount",
+      "Tags"
+    ],
+    "rows": [
+      {
+        "Date": "2025-01-15",
+        "Merchant": "Starbucks",
+        "Category": "Coffee Shops",
+        "Account": "Chase Checking",
+        "Original Statement": "STARBUCKS #1234",
+        "Notes": "",
+        "Amount": "-5.75",
+        "Tags": ""
+      },
+      {
+        "Date": "2025-01-16",
+        "Merchant": "Employer",
+        "Category": "Paychecks",
+        "Account": "Chase Checking",
+        "Original Statement": "EMPLOYER ACH",
+        "Notes": "",
+        "Amount": "2500.00",
+        "Tags": ""
+      }
+    ],
+    "expected": {
+      "amountKind": "signed",
+      "dateKind": "column",
+      "dateFormat": "yyyy-MM-dd",
+      "accountNull": false
+    }
+  },
+  {
+    "name": "Chase",
+    "headers": [
+      "Transaction Date",
+      "Post Date",
+      "Description",
+      "Category",
+      "Type",
+      "Amount",
+      "Memo"
+    ],
+    "rows": [
+      {
+        "Transaction Date": "01/15/2025",
+        "Post Date": "01/16/2025",
+        "Description": "STARBUCKS #1234",
+        "Category": "Food & Drink",
+        "Type": "Sale",
+        "Amount": "-5.75",
+        "Memo": ""
+      },
+      {
+        "Transaction Date": "01/17/2025",
+        "Post Date": "01/17/2025",
+        "Description": "PAYMENT THANK YOU",
+        "Category": "",
+        "Type": "Payment",
+        "Amount": "150.00",
+        "Memo": ""
+      }
+    ],
+    "expected": { "amountKind": "signed", "dateKind": "column", "accountNull": true }
+  },
+  {
+    "name": "BankOfAmerica",
+    "headers": [
+      "Status",
+      "Date",
+      "Original Description",
+      "Split Type",
+      "Category",
+      "Currency",
+      "Amount",
+      "User Description",
+      "Memo",
+      "Classification",
+      "Account Name"
+    ],
+    "rows": [
+      {
+        "Status": "Posted",
+        "Date": "01/15/2025",
+        "Original Description": "STARBUCKS",
+        "Split Type": "",
+        "Category": "Restaurants",
+        "Currency": "USD",
+        "Amount": "-5.75",
+        "User Description": "",
+        "Memo": "",
+        "Classification": "Personal",
+        "Account Name": "BofA Checking"
+      }
+    ],
+    "expected": { "amountKind": "signed", "dateKind": "column", "accountNull": false }
+  },
+  {
+    "name": "AppleCard",
+    "headers": [
+      "Transaction Date",
+      "Clearing Date",
+      "Description",
+      "Merchant",
+      "Category",
+      "Type",
+      "Amount (USD)",
+      "Purchased By"
+    ],
+    "rows": [
+      {
+        "Transaction Date": "01/15/2025",
+        "Clearing Date": "01/16/2025",
+        "Description": "Starbucks",
+        "Merchant": "Starbucks",
+        "Category": "Restaurants",
+        "Type": "Purchase",
+        "Amount (USD)": "5.75",
+        "Purchased By": "Sriket"
+      },
+      {
+        "Transaction Date": "01/20/2025",
+        "Clearing Date": "01/20/2025",
+        "Description": "Payment",
+        "Merchant": "Apple Card Payment",
+        "Category": "Payment",
+        "Type": "Payment",
+        "Amount (USD)": "-200.00",
+        "Purchased By": "Sriket"
+      }
+    ],
+    "expected": {
+      "amountKind": "magnitude_type",
+      "dateKind": "column",
+      "typeColumn": "Type",
+      "magnitudeColumn": "Amount (USD)",
+      "debitValues": ["purchase"]
+    }
+  },
+  {
+    "name": "WellsFargo",
+    "headers": ["Date", "Amount", "*", "*", "Description"],
+    "rows": [
+      {
+        "Date": "01/15/2025",
+        "Amount": "-5.75",
+        "*": "",
+        "*": "",
+        "Description": "STARBUCKS #1234"
+      }
+    ],
+    "expected": { "amountKind": "signed", "dateKind": "column", "accountNull": true }
+  },
+  {
+    "name": "Ambiguous",
+    "headers": ["dt", "amt", "desc", "txn_type"],
+    "rows": [
+      { "dt": "2025-01-15", "amt": "5.75", "desc": "Starbucks", "txn_type": "DR" },
+      { "dt": "2025-01-16", "amt": "2500.00", "desc": "Paycheck", "txn_type": "CR" }
+    ],
+    "expected": {
+      "amountKind": "magnitude_type",
+      "dateKind": "column",
+      "typeColumn": "txn_type",
+      "magnitudeColumn": "amt",
+      "debitValues": ["dr"]
+    }
+  },
+  {
+    "name": "MissingDate",
+    "headers": ["Description", "Amount", "Category"],
+    "rows": [
+      { "Description": "Starbucks", "Amount": "-5.75", "Category": "Food" },
+      { "Description": "Paycheck", "Amount": "2500.00", "Category": "Income" }
+    ],
+    "expected": { "dateKind": "missing" }
+  },
+  {
+    "name": "ParensNegative",
+    "headers": ["Date", "Description", "Amount"],
+    "rows": [
+      { "Date": "2025-01-15", "Description": "Starbucks", "Amount": "(5.75)" },
+      { "Date": "2025-01-16", "Description": "Paycheck", "Amount": "2500.00" }
+    ],
+    "expected": { "amountKind": "signed", "parensNegative": true }
+  },
+  {
+    "name": "ForeignLocale",
+    "headers": ["Date", "Description", "Amount"],
+    "rows": [
+      { "Date": "15-01-2025", "Description": "Starbucks", "Amount": "-5.75" },
+      { "Date": "16-01-2025", "Description": "Paycheck", "Amount": "2500.00" }
+    ],
+    "expected": { "amountKind": "signed", "dateKind": "column" }
+  },
+  {
+    "name": "ExcelQuotedHeaders",
+    "headers": ["\"Date, Posted\"", "\"Description\"", "\"Amount, USD\""],
+    "rows": [
+      {
+        "\"Date, Posted\"": "2025-01-15",
+        "\"Description\"": "Starbucks",
+        "\"Amount, USD\"": "-5.75"
+      }
+    ],
+    "expected": { "amountKind": "signed", "dateKind": "column" }
+  },
+  {
+    "name": "WithdrawalDepositColumn",
+    "headers": ["Date", "Description", "Amount", "Direction"],
+    "rows": [
+      { "Date": "2025-01-15", "Description": "ATM", "Amount": "40.00", "Direction": "withdrawal" },
+      {
+        "Date": "2025-01-16",
+        "Description": "Payroll",
+        "Amount": "2500.00",
+        "Direction": "deposit"
+      },
+      { "Date": "2025-01-17", "Description": "Coffee", "Amount": "5.75", "Direction": "withdrawal" }
+    ],
+    "expected": {
+      "amountKind": "magnitude_type",
+      "typeColumn": "Direction",
+      "magnitudeColumn": "Amount",
+      "debitValues": ["withdrawal"]
+    }
+  },
+  {
+    "name": "DebitCreditFlagPlus",
+    "headers": ["Posted", "Memo", "Value", "D/C"],
+    "rows": [
+      { "Posted": "2025-01-15", "Memo": "Starbucks", "Value": "5.75", "D/C": "+" },
+      { "Posted": "2025-01-16", "Memo": "Refund", "Value": "20.00", "D/C": "-" },
+      { "Posted": "2025-01-17", "Memo": "Whole Foods", "Value": "62.40", "D/C": "+" }
+    ],
+    "expected": {
+      "amountKind": "magnitude_type",
+      "typeColumn": "D/C",
+      "magnitudeColumn": "Value",
+      "debitValues": ["+"]
+    }
+  },
+  {
+    "name": "CapitalOneStyle",
+    "headers": [
+      "Transaction Date",
+      "Posted Date",
+      "Card No.",
+      "Description",
+      "Category",
+      "Debit",
+      "Credit"
+    ],
+    "rows": [
+      {
+        "Transaction Date": "2025-01-15",
+        "Posted Date": "2025-01-16",
+        "Card No.": "1234",
+        "Description": "STARBUCKS",
+        "Category": "Dining",
+        "Debit": "5.75",
+        "Credit": ""
+      },
+      {
+        "Transaction Date": "2025-01-20",
+        "Posted Date": "2025-01-20",
+        "Card No.": "1234",
+        "Description": "PAYMENT",
+        "Category": "",
+        "Debit": "",
+        "Credit": "200.00"
+      }
+    ],
+    "expected": { "amountKind": "split" }
+  },
+  {
+    "name": "RegionsBank",
+    "headers": ["Date", "Amount", "Type", "Balance", "Memo"],
+    "rows": [
+      {
+        "Date": "2025-01-15",
+        "Amount": "5.75",
+        "Type": "Withdrawal",
+        "Balance": "994.25",
+        "Memo": "Coffee"
+      },
+      {
+        "Date": "2025-01-16",
+        "Amount": "2500.00",
+        "Type": "Deposit",
+        "Balance": "3494.25",
+        "Memo": "Payroll"
+      },
+      {
+        "Date": "2025-01-17",
+        "Amount": "100.00",
+        "Type": "Withdrawal",
+        "Balance": "3394.25",
+        "Memo": "Gas"
+      }
+    ],
+    "expected": {
+      "amountKind": "magnitude_type",
+      "typeColumn": "Type",
+      "magnitudeColumn": "Amount",
+      "debitValues": ["withdrawal"]
+    }
+  },
+  {
+    "name": "ZelleStyleTransfer",
+    "headers": ["Date", "Description", "Amount", "Transaction Type"],
+    "rows": [
+      {
+        "Date": "2025-01-15",
+        "Description": "Zelle to Jane",
+        "Amount": "50.00",
+        "Transaction Type": "DEBIT"
+      },
+      {
+        "Date": "2025-01-16",
+        "Description": "Zelle from John",
+        "Amount": "75.00",
+        "Transaction Type": "CREDIT"
+      }
+    ],
+    "expected": {
+      "amountKind": "magnitude_type",
+      "typeColumn": "Transaction Type",
+      "magnitudeColumn": "Amount",
+      "debitValues": ["debit"]
+    }
+  },
+  {
+    "name": "MoneyOutInDirection",
+    "headers": ["Date", "Counterparty", "Amount", "Money In/Out"],
+    "rows": [
+      { "Date": "2025-01-15", "Counterparty": "Costco", "Amount": "120.50", "Money In/Out": "Out" },
+      { "Date": "2025-01-16", "Counterparty": "Salary", "Amount": "3000.00", "Money In/Out": "In" },
+      { "Date": "2025-01-17", "Counterparty": "Uber", "Amount": "12.30", "Money In/Out": "Out" }
+    ],
+    "expected": {
+      "amountKind": "magnitude_type",
+      "typeColumn": "Money In/Out",
+      "magnitudeColumn": "Amount",
+      "debitValues": ["out"]
+    }
+  },
+  {
+    "name": "TypeColumnLooksLikeCategory",
+    "headers": ["Date", "Description", "Amount", "Type"],
+    "rows": [
+      { "Date": "2025-01-15", "Description": "Starbucks", "Amount": "5.75", "Type": "Purchase" },
+      { "Date": "2025-01-16", "Description": "Refund Target", "Amount": "20.00", "Type": "Return" },
+      { "Date": "2025-01-17", "Description": "Payroll", "Amount": "2500.00", "Type": "Deposit" },
+      {
+        "Date": "2025-01-18",
+        "Description": "ATM withdrawal",
+        "Amount": "40.00",
+        "Type": "Withdrawal"
+      }
+    ],
+    "expected": {
+      "amountKind": "magnitude_type",
+      "typeColumn": "Type",
+      "magnitudeColumn": "Amount",
+      "debitValues": ["purchase", "withdrawal"]
+    }
+  },
+  {
+    "name": "BinaryFlag10",
+    "headers": ["Date", "Description", "Amount", "IsDebit"],
+    "rows": [
+      { "Date": "2025-01-15", "Description": "Starbucks", "Amount": "5.75", "IsDebit": "1" },
+      { "Date": "2025-01-16", "Description": "Refund", "Amount": "20.00", "IsDebit": "0" },
+      { "Date": "2025-01-17", "Description": "Gas", "Amount": "30.00", "IsDebit": "1" }
+    ],
+    "expected": {
+      "amountKind": "magnitude_type",
+      "typeColumn": "IsDebit",
+      "magnitudeColumn": "Amount",
+      "debitValues": ["1"]
+    }
+  }
+]

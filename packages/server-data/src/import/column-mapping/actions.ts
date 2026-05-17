@@ -5,11 +5,13 @@ import { env } from "@cobalt-web/env/server";
 import { get } from "@vercel/blob";
 import { eq } from "drizzle-orm";
 
+import { resolveAccountChoice } from "../account-mapping/actions";
 import type { ConfirmColumnMappingBody } from "../shared/schemas";
 import { parseFullCsv } from "../shared/parse-csv";
 import { assertOwnedJob } from "../shared/queries";
 import { parseRows } from "../upload/parse-rows";
 import { cacheConfirmedMapping } from "./cache";
+import { cacheRolesFromMapping } from "./per-name-cache";
 
 /**
  * Persist confirmed `CsvMapping`, re-parse the upload from blob storage into
@@ -23,6 +25,12 @@ export async function confirmColumnMapping(
 ): Promise<{ staged: number; rejected: number }> {
   const job = await assertOwnedJob(userId, jobId);
   if (!job.fileKey) {
+    console.error("[confirmColumnMapping] job loaded without fileKey", {
+      hasFileKey: "fileKey" in job,
+      jobId,
+      keys: Object.keys(job),
+      status: job.status,
+    });
     throw new Error("Import job has no uploaded file");
   }
   const result = await get(job.fileKey, {
@@ -83,8 +91,39 @@ export async function confirmColumnMapping(
       .where(eq(importJob.id, jobId));
   });
 
+  // Pre-resolved single-account path: skip Step 3 entirely and write accountResolution now.
+  // Honored only when mapping.account === null (Path B). When account column exists (Path A),
+  // we still need per-label resolution in Step 3 even if the user picked a default account.
+  if (body.singleAccountChoice && body.mapping.account === null) {
+    const resolved = await resolveAccountChoice(
+      userId,
+      body.singleAccountChoice.kind === "existing"
+        ? { accountId: body.singleAccountChoice.accountId, kind: "existing" }
+        : {
+            institutionLogoDomain: body.singleAccountChoice.institutionLogoDomain,
+            institutionName: body.singleAccountChoice.institutionName,
+            kind: "create",
+            name: body.singleAccountChoice.name,
+            subtype: "Checking",
+            type: "depository",
+          },
+    );
+    const resolution =
+      resolved.kind === "existing"
+        ? { accountId: resolved.accountId, kind: "single" as const }
+        : { kind: "single" as const, pendingCreate: resolved.create };
+    await db
+      .update(importJob)
+      .set({
+        accountResolution: resolution,
+        status: "account_mapped",
+      })
+      .where(eq(importJob.id, jobId));
+  }
+
   if (job.originalFilename && job.headers.length > 0) {
     await cacheConfirmedMapping(userId, job.headers, body.mapping);
+    await cacheRolesFromMapping(userId, job.headers, body.mapping);
   }
 
   return { rejected: rejected.length, staged: staged.length };

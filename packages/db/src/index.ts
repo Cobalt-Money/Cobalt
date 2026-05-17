@@ -23,6 +23,7 @@ import * as snapshotSchema from "./schema/accounts/snapshot";
 import * as importJobSchema from "./schema/imports/import-job";
 import * as importStagedTransactionSchema from "./schema/imports/import-staged-transaction";
 import * as csvMappingCacheSchema from "./schema/imports/csv-mapping-cache";
+import * as csvColumnRoleCacheSchema from "./schema/imports/csv-column-role-cache";
 import * as accountMappingCacheSchema from "./schema/imports/account-mapping-cache";
 import * as categoryMappingCacheSchema from "./schema/imports/category-mapping-cache";
 import * as chatSchema from "./schema/ai/chat";
@@ -85,6 +86,7 @@ export const db = drizzle({
     ...importJobSchema,
     ...importStagedTransactionSchema,
     ...csvMappingCacheSchema,
+    ...csvColumnRoleCacheSchema,
     ...accountMappingCacheSchema,
     ...categoryMappingCacheSchema,
   },

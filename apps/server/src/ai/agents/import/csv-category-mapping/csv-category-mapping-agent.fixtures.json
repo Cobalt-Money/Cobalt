@@ -1,0 +1,186 @@
+[
+  {
+    "name": "StockCategoriesMintLabels",
+    "sourceLabels": [
+      "Food & Dining",
+      "Groceries",
+      "Gas & Fuel",
+      "Coffee Shops",
+      "Restaurants",
+      "Entertainment",
+      "Movies",
+      "Music",
+      "Bills & Utilities",
+      "Mobile Phone",
+      "Internet",
+      "Home",
+      "Mortgage",
+      "Rent",
+      "Auto",
+      "Auto Insurance",
+      "Health & Fitness",
+      "Doctor",
+      "Pharmacy",
+      "Shopping"
+    ],
+    "userCategories": [
+      { "id": "cat_food", "name": "Food", "systemKey": "food" },
+      { "id": "cat_restaurants", "name": "Restaurants", "systemKey": "restaurants" },
+      { "id": "cat_groceries", "name": "Groceries", "systemKey": "groceries" },
+      { "id": "cat_gas", "name": "Gas", "systemKey": "gas" },
+      { "id": "cat_coffee", "name": "Coffee", "systemKey": "coffee" },
+      { "id": "cat_entertainment", "name": "Entertainment", "systemKey": "entertainment" },
+      { "id": "cat_utilities", "name": "Utilities", "systemKey": "utilities" },
+      { "id": "cat_phone", "name": "Phone", "systemKey": "phone" },
+      { "id": "cat_internet", "name": "Internet", "systemKey": "internet" },
+      { "id": "cat_home", "name": "Home", "systemKey": "home" },
+      { "id": "cat_rent", "name": "Rent", "systemKey": "rent" },
+      { "id": "cat_auto", "name": "Auto", "systemKey": "auto" },
+      { "id": "cat_health", "name": "Health", "systemKey": "health" },
+      { "id": "cat_shopping", "name": "Shopping", "systemKey": "shopping" }
+    ],
+    "expected": {
+      "byLabel": {
+        "Groceries": { "action": "link", "targetCategoryId": "cat_groceries" },
+        "Restaurants": { "action": "link", "targetCategoryId": "cat_restaurants" },
+        "Coffee Shops": { "action": "link", "targetCategoryId": "cat_coffee" },
+        "Entertainment": { "action": "link", "targetCategoryId": "cat_entertainment" },
+        "Internet": { "action": "link", "targetCategoryId": "cat_internet" },
+        "Shopping": { "action": "link", "targetCategoryId": "cat_shopping" }
+      }
+    }
+  },
+  {
+    "name": "EmptyUserCategories",
+    "sourceLabels": [
+      "Food",
+      "Rent",
+      "Gas",
+      "Utilities",
+      "Entertainment",
+      "Travel",
+      "Health",
+      "Shopping",
+      "Income",
+      "Misc"
+    ],
+    "userCategories": [],
+    "expected": {
+      "byLabel": {
+        "Food": { "action": "create" },
+        "Rent": { "action": "create" },
+        "Gas": { "action": "create" },
+        "Travel": { "action": "create" },
+        "Health": { "action": "create" }
+      }
+    }
+  },
+  {
+    "name": "DomainSpecificCreates",
+    "sourceLabels": ["Crypto Staking", "Pet Insurance", "Babysitting", "Plant Subscription"],
+    "userCategories": [{ "id": "cat_other", "name": "Other", "systemKey": "other" }],
+    "expected": {
+      "byLabel": {
+        "Crypto Staking": { "action": "create" },
+        "Pet Insurance": { "action": "create" },
+        "Babysitting": { "action": "create" },
+        "Plant Subscription": { "action": "create" }
+      }
+    }
+  },
+  {
+    "name": "LinkRenameJudgement",
+    "sourceLabels": ["Food & Dining"],
+    "userCategories": [
+      { "id": "cat_restaurants", "name": "Restaurants", "systemKey": "restaurants" }
+    ],
+    "expected": {
+      "byLabel": {
+        "Food & Dining": { "action": "link", "targetCategoryId": "cat_restaurants" }
+      }
+    }
+  },
+  {
+    "name": "SkipCases",
+    "sourceLabels": ["--", "", "Transfer"],
+    "userCategories": [{ "id": "cat_food", "name": "Food", "systemKey": "food" }],
+    "expected": {
+      "byLabel": {
+        "--": { "action": "skip" },
+        "": { "action": "skip" }
+      }
+    }
+  },
+  {
+    "name": "MixedBatch",
+    "sourceLabels": ["Groceries", "Food & Dining", "Crypto Staking", "--", "Travel"],
+    "userCategories": [
+      { "id": "cat_groceries", "name": "Groceries", "systemKey": "groceries" },
+      { "id": "cat_restaurants", "name": "Restaurants", "systemKey": "restaurants" }
+    ],
+    "expected": {
+      "byLabel": {
+        "Groceries": { "action": "link", "targetCategoryId": "cat_groceries" },
+        "Crypto Staking": { "action": "create" },
+        "--": { "action": "skip" }
+      }
+    }
+  },
+  {
+    "name": "ThirtyPlusLabelsBatching",
+    "sourceLabels": [
+      "Food",
+      "Restaurants",
+      "Coffee",
+      "Groceries",
+      "Gas",
+      "Auto",
+      "Auto Insurance",
+      "Mortgage",
+      "Rent",
+      "Utilities",
+      "Phone",
+      "Internet",
+      "Cable",
+      "Streaming",
+      "Subscriptions",
+      "Health",
+      "Pharmacy",
+      "Dental",
+      "Vision",
+      "Gym",
+      "Travel",
+      "Hotels",
+      "Flights",
+      "Rideshare",
+      "Public Transit",
+      "Parking",
+      "Shopping",
+      "Clothing",
+      "Electronics",
+      "Gifts",
+      "Donations",
+      "Education",
+      "Books",
+      "Software",
+      "Crypto Staking",
+      "Pet Care",
+      "Childcare"
+    ],
+    "userCategories": [
+      { "id": "cat_food", "name": "Food", "systemKey": "food" },
+      { "id": "cat_health", "name": "Health", "systemKey": "health" }
+    ],
+    "expected": { "byLabel": {} }
+  },
+  {
+    "name": "CreateMustHaveNewCategory",
+    "sourceLabels": ["Software"],
+    "userCategories": [],
+    "expected": {
+      "byLabel": {
+        "Software": { "action": "create" }
+      }
+    }
+  }
+]

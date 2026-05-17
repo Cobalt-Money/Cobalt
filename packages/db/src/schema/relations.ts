@@ -14,6 +14,7 @@ import { transaction } from "./accounts/banking/transactions/transaction";
 import { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
 import { accountMappingCache } from "./imports/account-mapping-cache";
 import { categoryMappingCache } from "./imports/category-mapping-cache";
+import { csvColumnRoleCache } from "./imports/csv-column-role-cache";
 import { csvMappingCache } from "./imports/csv-mapping-cache";
 import { importJob } from "./imports/import-job";
 import { importStagedTransaction } from "./imports/import-staged-transaction";
@@ -50,6 +51,7 @@ const schema = {
   categoryMappingCache,
   chats,
   creditLiability,
+  csvColumnRoleCache,
   csvMappingCache,
   eventArticles,
   feedback,

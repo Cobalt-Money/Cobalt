@@ -31,7 +31,18 @@ export function mapZeroTransactionListRow(row: ZeroTransactionListRow): Transact
   if (!account) {
     return null;
   }
-  const inst = account.plaidConnection?.institution;
+  const plaidInst = account.plaidConnection?.institution;
+  const manualBankName = account.institutionName ?? account.customName ?? account.name;
+  let inst: { logo: string | null; name: string | null; url: string | null } | null = null;
+  if (plaidInst) {
+    inst = {
+      logo: plaidInst.logo ?? null,
+      name: plaidInst.name ?? null,
+      url: plaidInst.url ?? null,
+    };
+  } else if (manualBankName) {
+    inst = { logo: null, name: manualBankName, url: account.logoDomain ?? null };
+  }
 
   const flatCategory = cat
     ? {
@@ -54,13 +65,7 @@ export function mapZeroTransactionListRow(row: ZeroTransactionListRow): Transact
       subtype: account.subtype ?? null,
       type: account.type,
     },
-    institution: inst
-      ? {
-          logo: inst.logo ?? null,
-          name: inst.name ?? null,
-          url: inst.url ?? null,
-        }
-      : null,
+    institution: inst,
     transaction: {
       ...txRest,
       category: flatCategory,

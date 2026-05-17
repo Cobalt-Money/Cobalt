@@ -1,9 +1,10 @@
 import { env } from "@cobalt-web/env/server";
-import { generateObject } from "ai";
+import { Output, generateText } from "ai";
+import type { LanguageModel } from "ai";
 import pLimit from "p-limit";
 import { z } from "zod";
 
-import { gatewayModel } from "../../model-provider.js";
+import { gatewayModel } from "../../../model-provider.js";
 
 const MODEL = "anthropic/claude-opus-4.7";
 const SINGLE_CALL_THRESHOLD = 20;
@@ -12,19 +13,15 @@ const PARALLEL = 5;
 
 export interface CategorySuggestion {
   sourceLabel: string;
-  action: "link" | "linkRename" | "create" | "skip";
+  action: "link" | "skip";
   targetCategoryId: string | null;
-  newName?: string;
-  newCategory?: { name: string; iconKey: string; color?: string };
   confidence: number;
 }
 
 /**
  * Build the per-call AI schema for category label resolution.
- *   action="link"        → targetCategoryId required, must be a real id
- *   action="linkRename"  → targetCategoryId required + newName for category.name override
- *   action="create"      → newCategory required (will be inserted at commit)
- *   action="skip"        → no target; rows fall through to "uncategorized"
+ *   action="link" → targetCategoryId required, must be a real id
+ *   action="skip" → no target; rows fall through to "uncategorized"
  */
 function makeCategoryLabelSchema(categoryIds: string[]) {
   const values: [string, ...string[]] = ["__none__", ...categoryIds];
@@ -33,30 +30,19 @@ function makeCategoryLabelSchema(categoryIds: string[]) {
     decisions: z.array(
       z
         .object({
-          action: z.enum(["link", "linkRename", "create", "skip"]),
+          action: z.enum(["link", "skip"]),
           confidence: z.number().min(0).max(1),
-          newCategory: z
-            .object({
-              color: z.string().optional(),
-              iconKey: z.string(),
-              name: z.string(),
-            })
-            .optional(),
-          newName: z.string().optional(),
           sourceLabel: z.string(),
           targetCategoryId: targetEnum,
         })
         .refine(
           (d) => {
-            if (d.action === "link" || d.action === "linkRename") {
+            if (d.action === "link") {
               return d.targetCategoryId !== "__none__";
-            }
-            if (d.action === "create") {
-              return true;
             }
             return true;
           },
-          { message: "Action requires the matching target/newCategory field." },
+          { message: "Action=link requires a real targetCategoryId." },
         ),
     ),
   });
@@ -74,19 +60,22 @@ function makeCategoryLabelSchema(categoryIds: string[]) {
 export async function runCsvCategoryMappingAgent({
   sourceLabels,
   userCategories,
+  model,
 }: {
   sourceLabels: string[];
   userCategories: { id: string; name: string; systemKey: string | null }[];
+  /** Override model. Defaults to gateway primary. Used by tests. */
+  model?: LanguageModel;
 }): Promise<CategorySuggestion[]> {
   if (sourceLabels.length === 0) {
     return [];
   }
-  if (!env.AI_GATEWAY_API_KEY) {
+  if (!model && !env.AI_GATEWAY_API_KEY) {
     throw new Error("AI_GATEWAY_API_KEY not configured");
   }
 
   if (sourceLabels.length <= SINGLE_CALL_THRESHOLD) {
-    return await callBatch(sourceLabels, userCategories);
+    return await callBatch(sourceLabels, userCategories, model);
   }
 
   const batches: string[][] = [];
@@ -94,44 +83,43 @@ export async function runCsvCategoryMappingAgent({
     batches.push(sourceLabels.slice(i, i + BATCH_SIZE));
   }
   const limit = pLimit(PARALLEL);
-  const settled = await Promise.all(batches.map((b) => limit(() => callBatch(b, userCategories))));
+  const settled = await Promise.all(
+    batches.map((b) => limit(() => callBatch(b, userCategories, model))),
+  );
   return settled.flat();
 }
 
 async function callBatch(
   labels: string[],
   userCategories: { id: string; name: string; systemKey: string | null }[],
+  model?: LanguageModel,
 ): Promise<CategorySuggestion[]> {
   const ids = userCategories.map((c) => c.id);
   const schema = makeCategoryLabelSchema(ids.length > 0 ? ids : ["__none__"]);
-  const result = await generateObject({
+  const result = await generateText({
     experimental_telemetry: {
       functionId: "csv-category-mapping-agent",
       isEnabled: true,
     },
     maxOutputTokens: 10_000,
-    model: gatewayModel(MODEL),
+    model: model ?? gatewayModel(MODEL),
+    output: Output.object({ schema }),
     prompt: [
-      "Map each source category label to a Cobalt category.",
-      'Use action="link" to map to an existing category. Use action="linkRename" if the label suggests renaming the Cobalt category for clarity (provide newName).',
-      'Use action="create" when no existing category fits. REQUIRED with action="create": set targetCategoryId="__none__" AND populate newCategory={name, iconKey, color?}. name should mirror the sourceLabel (e.g. "Software"). iconKey examples: "shopping-bag", "utensils", "home", "wrench". Omitting newCategory is invalid.',
-      'Use action="skip" only when the label is meaningless (blank, "", "--").',
+      "Map each source category label to an existing Cobalt category.",
+      'Use action="link" for EVERY label — pick the closest-fit existing category, even if the match is loose.',
+      'If no specific category fits, link to the user\'s "Uncategorized" system category (systemKey="uncategorized"). This is the catch-all for unmappable labels.',
+      'Use action="skip" ONLY for empty strings or literal placeholders ("", "--", "n/a").',
+      "Do NOT invent new categories. The available category list is fixed; choose from it.",
       "",
       `Source labels: ${JSON.stringify(labels)}`,
       `User Cobalt categories: ${JSON.stringify(userCategories)}`,
     ].join("\n"),
-    schema,
   });
-  return result.object.decisions
+  return result.output.decisions
     .filter((d) => labels.includes(d.sourceLabel))
     .map((d) => ({
       action: d.action,
       confidence: d.confidence,
-      newCategory:
-        d.action === "create" && !d.newCategory
-          ? { iconKey: "tag", name: d.sourceLabel }
-          : d.newCategory,
-      newName: d.newName,
       sourceLabel: d.sourceLabel,
       targetCategoryId: d.targetCategoryId === "__none__" ? null : d.targetCategoryId,
     }));

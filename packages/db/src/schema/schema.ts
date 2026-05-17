@@ -50,5 +50,6 @@ export { importStagedTransaction } from "./imports/import-staged-transaction";
 
 // SRI-321 — AI-mapped CSV import caches. Server-only.
 export { csvMappingCache } from "./imports/csv-mapping-cache";
+export { csvColumnRoleCache } from "./imports/csv-column-role-cache";
 export { accountMappingCache } from "./imports/account-mapping-cache";
 export { categoryMappingCache } from "./imports/category-mapping-cache";

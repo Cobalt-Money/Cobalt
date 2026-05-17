@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "a577a80f-2ce2-4594-a4eb-c76ad9bfa7b3",
-  "prevIds": ["6590e89a-fdaf-4e8b-9280-ff3d523fa6a9"],
+  "id": "10d1afe9-bfa3-454f-946d-e9debf386a85",
+  "prevIds": ["0a27cc2a-1b60-42b7-9ba9-b27e394d6032"],
   "ddl": [
     {
       "values": ["plaid", "snaptrade", "manual"],
@@ -64,6 +64,12 @@
     {
       "isRlsEnabled": false,
       "name": "category_mapping_cache",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "csv_column_role_cache",
       "entityType": "tables",
       "schema": "public"
     },
@@ -490,6 +496,71 @@
       "entityType": "columns",
       "schema": "public",
       "table": "category_mapping_cache"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "confirmed_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "csv_column_role_cache"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "header_name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "csv_column_role_cache"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "meta",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "csv_column_role_cache"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "role",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "csv_column_role_cache"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "csv_column_role_cache"
     },
     {
       "type": "timestamp with time zone",
@@ -999,6 +1070,19 @@
       "table": "import_job"
     },
     {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "account_suggestions",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": false,
@@ -1020,6 +1104,19 @@
       "generated": null,
       "identity": null,
       "name": "category_resolution",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "import_job"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "category_suggestions",
       "entityType": "columns",
       "schema": "public",
       "table": "import_job"
@@ -3607,6 +3704,19 @@
       "generated": null,
       "identity": null,
       "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "financial_account"
+    },
+    {
+      "type": "date",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "csv_coverage_through",
       "entityType": "columns",
       "schema": "public",
       "table": "financial_account"
@@ -9085,19 +9195,6 @@
       "table": "user_alerts"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "message",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "user_alerts"
-    },
-    {
       "type": "jsonb",
       "typeSchema": null,
       "notNull": false,
@@ -9145,32 +9242,6 @@
       "generated": null,
       "identity": null,
       "name": "source_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "user_alerts"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'unread'",
-      "generated": null,
-      "identity": null,
-      "name": "status",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "user_alerts"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "title",
       "entityType": "columns",
       "schema": "public",
       "table": "user_alerts"
@@ -12426,7 +12497,7 @@
           "opclass": null
         },
         {
-          "value": "status",
+          "value": "resolved_at",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -12438,7 +12509,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "user_alerts_user_id_status_idx",
+      "name": "user_alerts_active_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "user_alerts"
@@ -12466,7 +12537,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "user_alerts_source_source_id_idx",
+      "name": "user_alerts_source_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "user_alerts"
@@ -12497,11 +12568,11 @@
         }
       ],
       "isUnique": true,
-      "where": "status NOT IN ('resolved', 'dismissed')",
+      "where": "resolved_at IS NULL",
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "user_alerts_active_dedup_idx",
+      "name": "user_alerts_dedup_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "user_alerts"
@@ -12578,6 +12649,19 @@
       "entityType": "fks",
       "schema": "public",
       "table": "category_mapping_cache"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["user_id"],
+      "schemaTo": "public",
+      "tableTo": "user",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "csv_column_role_cache_user_id_user_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "csv_column_role_cache"
     },
     {
       "nameExplicit": false,
@@ -13478,6 +13562,14 @@
       "entityType": "pks",
       "schema": "public",
       "table": "category_mapping_cache"
+    },
+    {
+      "columns": ["user_id", "header_name"],
+      "nameExplicit": false,
+      "name": "csv_column_role_cache_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "csv_column_role_cache"
     },
     {
       "columns": ["user_id", "header_hash"],

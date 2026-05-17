@@ -58,17 +58,72 @@ export interface CsvMapping {
   confidence: number;
 }
 
-/** Step 3 output: source-account-name (or single-shot) → Cobalt accountId resolution. */
+/**
+ * Pending-account-create intent stored on `accountResolution` before commit.
+ * The actual `financial_account` row is inserted by `applyAccountCreatesStep`
+ * so abandoned imports don't leave orphan accounts on the user's /accounts page.
+ */
+export interface PendingAccountCreate {
+  kind: "pendingCreate";
+  name: string;
+  type: "depository" | "credit" | "investment" | "loan";
+  subtype: string;
+  institutionName?: string;
+  institutionLogoDomain?: string;
+}
+
+/**
+ * Step 3 output: source-account-name (or single-shot) → resolved entry.
+ * Map values are either an existing `accountId`, the string `"skip"`, or a
+ * `PendingAccountCreate` that gets materialised at commit time.
+ */
 export type AccountResolution =
   | { kind: "single"; accountId: string }
-  | { kind: "perLabel"; map: Record<string, string | "skip"> };
+  | { kind: "single"; pendingCreate: PendingAccountCreate }
+  | {
+      kind: "perLabel";
+      map: Record<string, string | "skip" | PendingAccountCreate>;
+    };
 
-/** Step 4 output: source category → Cobalt categoryId, plus pending creates/renames applied at commit. */
+/** Step 4 output: source category → Cobalt categoryId, plus pending creates applied at commit. */
 export interface CategoryResolution {
   /** sourceLabel → categoryId (uncategorized fallback already resolved). */
   map: Record<string, string>;
-  pendingCreates: { color?: string; iconKey: string; name: string; sourceLabel: string }[];
-  pendingRenames: { categoryId: string; newName: string }[];
+  pendingCreates: {
+    color?: string;
+    groupId: string;
+    iconKey: string;
+    name: string;
+    sourceLabel: string;
+  }[];
+}
+
+/** Cached AI account-mapping suggestions, persisted on first GET so resume skips re-inference. */
+export interface AccountSuggestionPersisted {
+  sourceLabel: string;
+  target: string | "create_new" | "skip";
+  newName?: string;
+  suggestedType?: string;
+  suggestedSubtype?: string;
+  suggestedInstitutionName?: string;
+  suggestedInstitutionDomain?: string;
+  confidence: number;
+  fromCache: boolean;
+}
+
+/** Cached AI category-mapping suggestions, persisted on first GET so resume skips re-inference. */
+export interface CategorySuggestionPersisted {
+  sourceLabel: string;
+  action: "link" | "create" | "skip";
+  targetCategoryId: string | null;
+  newCategory?: {
+    name: string;
+    iconKey: string;
+    groupId: string;
+    color?: string;
+  };
+  confidence: number;
+  fromCache: boolean;
 }
 
 /** Live progress payload, written per chunk during the commit workflow. */
@@ -76,7 +131,7 @@ export interface ImportProgress {
   done: number;
   message?: string;
   startedAt: string;
-  step: "loading" | "applying_renames" | "applying_creates" | "inserting" | "finalizing";
+  step: "loading" | "applying_creates" | "inserting" | "finalizing";
   total: number;
   updatedAt: string;
 }
@@ -99,10 +154,14 @@ export const importJob = pgTable(
      * `{ kind: "single", accountId } | { kind: "perLabel", map: {label: id|"skip"} }`.
      */
     accountResolution: jsonb("account_resolution").$type<AccountResolution>(),
+    /** Cached AI account-mapping suggestions; populated on first GET to avoid re-inference on resume. */
+    accountSuggestions: jsonb("account_suggestions").$type<AccountSuggestionPersisted[]>(),
     /** Cancellation timestamp; workflow checks between chunks and exits keeping partial inserts. */
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
     /** Step 4 output: resolved map + pending creates/renames applied at commit. */
     categoryResolution: jsonb("category_resolution").$type<CategoryResolution>(),
+    /** Cached AI category-mapping suggestions; populated on first GET to avoid re-inference on resume. */
+    categorySuggestions: jsonb("category_suggestions").$type<CategorySuggestionPersisted[]>(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     /** Set when status=failed; nullable otherwise. */
     errorMessage: text("error_message"),
