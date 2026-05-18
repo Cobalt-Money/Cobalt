@@ -37,7 +37,7 @@ export function MarketingNav() {
   return (
     <header className="sticky top-0 z-50 bg-background/80 py-4 backdrop-blur-sm">
       <Container className="flex items-center justify-between">
-        <Link className="text-xl" onClick={closeMenu} to="/">
+        <Link className="text-xl font-medium" onClick={closeMenu} to="/">
           Cobalt
         </Link>
         <div className="flex items-center gap-6">

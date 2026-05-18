@@ -106,7 +106,7 @@ export function ApiSection() {
   const [lang, setLang] = useState<Lang>("ts");
 
   return (
-    <section className="px-6 py-24 lg:py-32">
+    <section className="border-t px-6 py-24 lg:py-32">
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
