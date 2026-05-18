@@ -420,34 +420,23 @@ function ManualAccountForm({
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <CurrencyPicker
-          onSelect={(opt) => setCurrency(opt.code)}
-          selectedKey={currency}
-          trigger={
-            <button
-              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-transparent px-3 font-medium text-base text-foreground transition-colors hover:bg-foreground/[0.07]"
-              type="button"
-            >
-              <span aria-hidden className="text-xl leading-none">
-                {COMMON_CURRENCIES.find((c) => c.code === currency)?.flag ?? "🌐"}
-              </span>
-              {currency}
-            </button>
-          }
-        />
-      </div>
-
       <div className="flex flex-col gap-2 pt-1">
-        <div className="flex items-baseline gap-0.5">
-          <span
-            className={cn(
-              "text-lg tabular-nums",
-              balance.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
-            )}
-          >
-            $
-          </span>
+        <div className="flex items-center gap-2">
+          <CurrencyPicker
+            onSelect={(opt) => setCurrency(opt.code)}
+            selectedKey={currency}
+            trigger={
+              <button
+                className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-transparent px-2 font-medium text-base text-foreground transition-colors hover:bg-foreground/[0.07]"
+                type="button"
+              >
+                <span aria-hidden className="text-xl leading-none">
+                  {COMMON_CURRENCIES.find((c) => c.code === currency)?.flag ?? "🌐"}
+                </span>
+                {currency}
+              </button>
+            }
+          />
           <input
             aria-label={meta.balanceLabel}
             className="min-w-0 flex-1 cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50"
