@@ -41,10 +41,7 @@ export const tickerHistoryRouter = createApp().openapi(route, async (c) => {
   const from = shiftDate(date, -w);
   const to = shiftDate(date, w);
   const points = await fmpGetHistoricalRange(symbol, from, to);
-  // Temporarily no-store while we verify the low/high response shape
-  // end-to-end. Restore caching (e.g. s-maxage=86400) once the picker is
-  // confirmed stable.
-  c.header("Cache-Control", "no-store");
+  c.header("Cache-Control", "public, s-maxage=300, stale-while-revalidate=60");
   return c.json(
     {
       points: points.map((p) => ({ close: p.close, date: p.date, high: p.high, low: p.low })),
