@@ -332,7 +332,10 @@ function ManualAccountForm({
   /** Editable via the logo-square picker. */
   const [logoDomain, setLogoDomain] = useState<string | null>(initialLogoDomain ?? null);
   const [institutionName, setInstitutionName] = useState<string | null>(initialName ?? null);
-  const [subtype, setSubtype] = useState<string>(meta.subtypes[0] ?? "");
+  // Subtype is not user-editable in this flow — defaults to the first subtype
+  // for the picked type (e.g. "Brokerage" for investment). Server requires a
+  // non-empty value; UI doesn't expose granular control.
+  const [subtype] = useState<string>(meta.subtypes[0] ?? "");
   const [balance, setBalance] = useState("");
   const [creditLimit, setCreditLimit] = useState("");
   const [currency, setCurrency] = useState("USD");
@@ -385,8 +388,6 @@ function ManualAccountForm({
     });
   };
 
-  const subtypeListId = `manual-account-subtype-${type}`;
-
   return (
     <div className="flex flex-1 flex-col gap-3">
       <div className="flex items-center gap-3">
@@ -420,23 +421,6 @@ function ManualAccountForm({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <label className="flex items-center gap-2 text-muted-foreground">
-          <span className="shrink-0">Type</span>
-          <Input
-            aria-label="Subtype"
-            className="h-8 w-40"
-            list={subtypeListId}
-            maxLength={64}
-            onChange={(e) => setSubtype(e.target.value)}
-            placeholder="e.g. Checking"
-            value={subtype}
-          />
-          <datalist id={subtypeListId}>
-            {meta.subtypes.map((s) => (
-              <option key={s} value={s} />
-            ))}
-          </datalist>
-        </label>
         <label className="flex items-center gap-2 text-muted-foreground">
           <span className="shrink-0">Currency</span>
           <Input
