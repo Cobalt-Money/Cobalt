@@ -437,7 +437,7 @@ export function AddPositionForm({
             <AccountLogo
               className="size-5 shrink-0"
               logoDomain={acc.logoDomain}
-              name={acc.name}
+              name={acc.institutionName ?? acc.name}
               source="manual"
               subtype={acc.subtype ?? "investment"}
             />
@@ -456,7 +456,7 @@ export function AddPositionForm({
                 <AccountLogo
                   className="size-4 shrink-0"
                   logoDomain={selectedAccount.logoDomain}
-                  name={selectedAccount.name}
+                  name={selectedAccount.institutionName ?? selectedAccount.name}
                   source="manual"
                   subtype={selectedAccount.subtype ?? "investment"}
                 />
