@@ -117,7 +117,7 @@ function InstitutionPickerButton({
       <div
         aria-hidden
         className={cn(
-          "mt-1 flex size-11 shrink-0 items-center justify-center rounded-md outline-none",
+          "flex size-11 shrink-0 items-center justify-center rounded-md outline-none",
           logoDomain
             ? "bg-foreground/[0.03]"
             : "border border-dashed border-foreground/20 text-muted-foreground",
@@ -146,7 +146,7 @@ function InstitutionPickerButton({
           <button
             aria-label="Pick institution"
             className={cn(
-              "mt-1 flex size-11 shrink-0 items-center justify-center rounded-md outline-none transition-colors",
+              "flex size-11 shrink-0 items-center justify-center rounded-md outline-none transition-colors",
               logoDomain
                 ? "bg-foreground/[0.03] hover:bg-foreground/[0.07]"
                 : "border border-dashed border-foreground/20 text-muted-foreground hover:border-foreground/40 hover:text-foreground",
@@ -388,7 +388,7 @@ function ManualAccountForm({
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <div className="flex items-baseline gap-3">
+      <div className="flex items-center gap-3">
         <InstitutionPickerButton
           institutionName={institutionName}
           logoDomain={logoDomain}
