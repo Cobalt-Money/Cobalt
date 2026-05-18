@@ -449,20 +449,18 @@ function ManualAccountForm({
             type="text"
             value={balance}
           />
-          <div className="ml-auto">
-            <CurrencyPicker
-              onSelect={(opt) => setCurrency(opt.code)}
-              selectedKey={currency}
-              trigger={
-                <button
-                  className="inline-flex h-9 shrink-0 items-center rounded-full bg-transparent px-2 font-medium text-base text-foreground transition-colors hover:bg-foreground/[0.07]"
-                  type="button"
-                >
-                  {currency}
-                </button>
-              }
-            />
-          </div>
+          <CurrencyPicker
+            onSelect={(opt) => setCurrency(opt.code)}
+            selectedKey={currency}
+            trigger={
+              <button
+                className="inline-flex h-9 shrink-0 items-center rounded-full bg-transparent px-2 font-medium text-base text-foreground transition-colors hover:bg-foreground/[0.07]"
+                type="button"
+              >
+                {currency}
+              </button>
+            }
+          />
         </div>
         {type === "credit" ? (
           <div>
