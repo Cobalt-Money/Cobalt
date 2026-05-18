@@ -407,7 +407,9 @@ function CommandMenuDialog({
     if (!res.ok) {
       return { history: [], latestPrice: null };
     }
-    const json = (await res.json()) as { points: { close: number; date: string }[] };
+    const json = (await res.json()) as {
+      points: { close: number; date: string; high: number; low: number }[];
+    };
     const history = json.points;
     const latestPrice = history.length > 0 ? (history.at(-1)?.close ?? null) : null;
     return { history, latestPrice };

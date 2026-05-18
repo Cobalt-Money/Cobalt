@@ -21,6 +21,8 @@ export interface TickerSearchState {
 export interface PriceHistoryPoint {
   date: string;
   close: number;
+  low: number;
+  high: number;
 }
 
 export interface PriceHistoryFetcher {

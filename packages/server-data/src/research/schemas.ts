@@ -104,6 +104,8 @@ export const tickerHistoryPointSchema = z
   .object({
     close: z.number(),
     date: z.string(),
+    high: z.number(),
+    low: z.number(),
   })
   .openapi("TickerHistoryPoint");
 

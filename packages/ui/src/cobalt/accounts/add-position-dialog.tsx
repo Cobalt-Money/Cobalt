@@ -1,7 +1,8 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
-import { Add01Icon, BankIcon, Calendar03Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
+import { Slider } from "@cobalt-web/ui/components/slider";
+import { BankIcon, Calendar03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -159,18 +160,57 @@ function TickerCombobox({
   );
 }
 
+function PriceRangeSlider({
+  position,
+  onPick,
+}: {
+  position: PositionDraft;
+  onPick: (price: number) => void;
+}) {
+  const bar = useMemo(() => {
+    if (!position.dateAcquired || position.history.length === 0) {
+      return null;
+    }
+    return (
+      position.history.find((p) => p.date <= position.dateAcquired) ?? position.history[0] ?? null
+    );
+  }, [position.dateAcquired, position.history]);
+
+  if (!bar || bar.low >= bar.high) {
+    return null;
+  }
+  const current = position.pickedPrice ?? bar.close;
+  return (
+    <div className="flex flex-col gap-1">
+      <Slider
+        max={bar.high}
+        min={bar.low}
+        onValueChange={(v) => {
+          const next = Array.isArray(v) ? v[0] : v;
+          if (typeof next === "number") {
+            onPick(next);
+          }
+        }}
+        step={0.01}
+        value={[current]}
+      />
+      <div className="flex justify-between text-muted-foreground text-xs tabular-nums">
+        <span>Low {priceFmt.format(bar.low)}</span>
+        <span className="text-foreground">{priceFmt.format(current)}</span>
+        <span>High {priceFmt.format(bar.high)}</span>
+      </div>
+    </div>
+  );
+}
+
 function PositionRow({
   position,
   tickerSearch,
   onChange,
-  onRemove,
-  removable,
 }: {
   position: PositionDraft;
   tickerSearch: TickerSearchState;
   onChange: (next: PositionDraft) => void;
-  onRemove: () => void;
-  removable: boolean;
 }) {
   const selectedDate = useMemo(
     () => (position.dateAcquired ? isoToDate(position.dateAcquired) : undefined),
@@ -178,7 +218,7 @@ function PositionRow({
   );
 
   return (
-    <div className="flex flex-col gap-2 border-foreground/10 border-b pb-3 last:border-b-0 last:pb-0">
+    <div className="flex flex-col gap-3">
       <div className="flex items-baseline gap-3">
         <TickerCombobox
           onClear={() => onChange({ ...position, latestPrice: null, name: null, ticker: "" })}
@@ -226,16 +266,6 @@ function PositionRow({
             />
           </PopoverContent>
         </Popover>
-        {removable ? (
-          <button
-            aria-label="Remove position"
-            className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground"
-            onClick={onRemove}
-            type="button"
-          >
-            <HugeiconsIcon icon={Cancel01Icon} size={14} strokeWidth={2} />
-          </button>
-        ) : null}
       </div>
 
       <div className="flex items-baseline gap-1.5">
@@ -258,33 +288,34 @@ function PositionRow({
           <span className="text-muted-foreground text-sm">shares</span>
         )}
       </div>
+
+      <PriceRangeSlider
+        onPick={(price) => onChange({ ...position, pickedPrice: price })}
+        position={position}
+      />
     </div>
   );
 }
 
 // ── Form ──────────────────────────────────────────────────────────────────────
 
-function buildReadyPositions(positions: readonly PositionDraft[]) {
-  return positions
-    .map((p) => {
-      const qty = Number(p.shares);
-      if (!(p.ticker.trim() && Number.isFinite(qty) && qty > 0)) {
-        return null;
-      }
-      // Price is auto-resolved from the history fetch on (ticker, date). If FMP
-      // returned nothing for the window, fall back to 0 so the holding still
-      // saves — user can edit later.
-      const price = p.pickedPrice ?? p.latestPrice ?? 0;
-      return {
-        costBasis: null,
-        dateAcquired: p.dateAcquired || null,
-        institutionPrice: price,
-        name: p.name,
-        quantity: qty,
-        ticker: p.ticker.trim().toUpperCase(),
-      };
-    })
-    .filter((p): p is NonNullable<typeof p> => p !== null);
+function buildReadyPosition(p: PositionDraft) {
+  const qty = Number(p.shares);
+  if (!(p.ticker.trim() && Number.isFinite(qty) && qty > 0)) {
+    return null;
+  }
+  // Price is auto-resolved from the history fetch on (ticker, date). If FMP
+  // returned nothing for the window, fall back to 0 so the holding still
+  // saves — user can edit later.
+  const price = p.pickedPrice ?? p.latestPrice ?? 0;
+  return {
+    costBasis: null as number | null,
+    dateAcquired: p.dateAcquired || null,
+    institutionPrice: price,
+    name: p.name,
+    quantity: qty,
+    ticker: p.ticker.trim().toUpperCase(),
+  };
 }
 
 // eslint-disable-next-line complexity
@@ -299,7 +330,7 @@ export function AddPositionForm({
   initialAccountId,
 }: AddPositionFormProps) {
   const [accountId, setAccountId] = useState<string>(initialAccountId ?? accounts[0]?.id ?? "");
-  const [positions, setPositions] = useState<PositionDraft[]>(() => [emptyPosition()]);
+  const [position, setPosition] = useState<PositionDraft>(() => emptyPosition());
 
   useEffect(() => {
     if (!accountId && accounts.length > 0) {
@@ -307,83 +338,59 @@ export function AddPositionForm({
     }
   }, [accountId, accounts]);
 
-  // Fetch history when a row has ticker + date but no history yet.
+  // Fetch history when ticker + date are set but history hasn't loaded.
   useEffect(() => {
-    for (const p of positions) {
-      if (!(p.ticker.trim() && p.dateAcquired) || p.historyLoading || p.history.length > 0) {
-        continue;
-      }
-      const targetId = p.id;
-      const ticker = p.ticker.trim();
-      const date = p.dateAcquired;
-      setPositions((prev) =>
-        prev.map((x) => (x.id === targetId ? { ...x, historyLoading: true } : x)),
-      );
-      void (async () => {
-        try {
-          const { history, latestPrice } = await onLoadHistory(ticker, date);
-          setPositions((prev) =>
-            prev.map((x) =>
-              x.id === targetId
-                ? {
-                    ...x,
-                    history,
-                    historyLoading: false,
-                    latestPrice: latestPrice ?? x.latestPrice,
-                    pickedPrice:
-                      x.pickedPrice ??
-                      history.find((pt) => pt.date <= date)?.close ??
-                      history[0]?.close ??
-                      null,
-                  }
-                : x,
-            ),
-          );
-        } catch {
-          setPositions((prev) =>
-            prev.map((x) => (x.id === targetId ? { ...x, historyLoading: false } : x)),
-          );
-        }
-      })();
+    if (
+      !(position.ticker.trim() && position.dateAcquired) ||
+      position.historyLoading ||
+      position.history.length > 0
+    ) {
+      return;
     }
-  }, [positions, onLoadHistory]);
+    const ticker = position.ticker.trim();
+    const date = position.dateAcquired;
+    setPosition((prev) => ({ ...prev, historyLoading: true }));
+    void (async () => {
+      try {
+        const { history, latestPrice } = await onLoadHistory(ticker, date);
+        setPosition((prev) => ({
+          ...prev,
+          history,
+          historyLoading: false,
+          latestPrice: latestPrice ?? prev.latestPrice,
+          pickedPrice:
+            prev.pickedPrice ??
+            history.find((pt) => pt.date <= date)?.close ??
+            history[0]?.close ??
+            null,
+        }));
+      } catch {
+        setPosition((prev) => ({ ...prev, historyLoading: false }));
+      }
+    })();
+  }, [position, onLoadHistory]);
 
-  const readyPositions = buildReadyPositions(positions);
-  const canSubmit = !submitting && accountId !== "" && readyPositions.length > 0;
+  const ready = buildReadyPosition(position);
+  const canSubmit = !submitting && accountId !== "" && ready !== null;
   const selectedAccount = accounts.find((a) => a.id === accountId);
 
   const handleSubmit = () => {
-    if (!canSubmit) {
+    if (!(canSubmit && ready)) {
       return;
     }
-    onSubmit({ accountId, positions: readyPositions });
+    onSubmit({ accountId, positions: [ready] });
   };
 
   return (
     <div
       className="flex flex-col gap-3"
       onKeyDown={(e) => {
-        if (
-          e.key === "Backspace" &&
-          positions.every((p) => !p.ticker.trim()) &&
-          onBackspaceWhenEmpty
-        ) {
+        if (e.key === "Backspace" && !position.ticker.trim() && onBackspaceWhenEmpty) {
           onBackspaceWhenEmpty();
         }
       }}
     >
-      <div className="flex flex-col gap-3">
-        {positions.map((p) => (
-          <PositionRow
-            key={p.id}
-            onChange={(next) => setPositions((prev) => prev.map((x) => (x.id === p.id ? next : x)))}
-            onRemove={() => setPositions((prev) => prev.filter((x) => x.id !== p.id))}
-            position={p}
-            removable={positions.length > 1}
-            tickerSearch={tickerSearch}
-          />
-        ))}
-      </div>
+      <PositionRow onChange={setPosition} position={position} tickerSearch={tickerSearch} />
 
       <div className="flex flex-wrap items-center gap-1.5 pt-1">
         <CobaltSelectPopover
@@ -427,15 +434,6 @@ export function AddPositionForm({
           }
         />
       </div>
-
-      <button
-        className="inline-flex h-[1.625rem] w-fit shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 text-muted-foreground text-xs transition-colors hover:bg-foreground/10"
-        onClick={() => setPositions((prev) => [...prev, emptyPosition()])}
-        type="button"
-      >
-        <HugeiconsIcon className="size-3.5 shrink-0" icon={Add01Icon} strokeWidth={2} />
-        Add position
-      </button>
 
       <div className="mt-2 flex justify-end">
         <Button disabled={!canSubmit} onClick={handleSubmit} type="button">

@@ -44,7 +44,7 @@ export const tickerHistoryRouter = createApp().openapi(route, async (c) => {
   c.header("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=3600");
   return c.json(
     {
-      points: points.map((p) => ({ close: p.close, date: p.date })),
+      points: points.map((p) => ({ close: p.close, date: p.date, high: p.high, low: p.low })),
       requested: date,
       symbol,
     },
