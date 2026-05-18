@@ -241,11 +241,12 @@ function PositionRow({
       <div className="flex items-baseline gap-1.5">
         <input
           aria-label="Shares"
-          className="w-40 min-w-0 cursor-text bg-transparent text-foreground text-lg tabular-nums outline-none placeholder:text-muted-foreground/50"
+          className="min-w-[10ch] cursor-text bg-transparent text-foreground text-lg tabular-nums outline-none placeholder:text-muted-foreground/50 [field-sizing:content]"
           inputMode="decimal"
           min={0}
           onChange={(e) => onChange({ ...position, shares: e.target.value })}
           placeholder="# of shares"
+          size={position.shares.trim() === "" ? 12 : Math.max(1, position.shares.length)}
           step="0.0001"
           type="number"
           value={position.shares}
