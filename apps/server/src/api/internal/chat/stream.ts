@@ -4,12 +4,7 @@ import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { upsertMessage } from "@cobalt-web/server-data/chat/mutations";
 import { getUserLimits } from "@cobalt-web/server-data/subscriptions";
 import type { AppEnv } from "@cobalt-web/server-data/types";
-import {
-  convertToModelMessages,
-  createUIMessageStream,
-  createUIMessageStreamResponse,
-  pruneMessages,
-} from "ai";
+import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse } from "ai";
 import type { UIMessage } from "ai";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -21,8 +16,6 @@ import { parseModelWithReasoning } from "../../../ai/model-provider.js";
 import type { ReasoningEffort } from "../../../ai/model-provider.js";
 import { generateChatTitleWorkflow } from "../../../workflows/chat-title/workflow.js";
 import { requireAuth } from "../middleware.js";
-
-const MAX_HISTORY = 20;
 
 function extractMessageText(message: UIMessage): string {
   return message.parts
@@ -137,11 +130,7 @@ export const chatStreamRouter = new Hono<AppEnv>()
     await upsertMessage({ chatId, message });
     await startChatTitle(chat.title, chatId, message);
 
-    const allModelMessages = await convertToModelMessages(messages);
-    const trimmed =
-      allModelMessages.length > MAX_HISTORY
-        ? allModelMessages.slice(-MAX_HISTORY)
-        : allModelMessages;
+    const modelMessages = await convertToModelMessages(messages);
 
     const now = new Date();
     const currentDate = now.toLocaleDateString("en-CA");
@@ -150,24 +139,6 @@ export const chatStreamRouter = new Hono<AppEnv>()
       month: "long",
       weekday: "long",
       year: "numeric",
-    });
-
-    const modelMessages = pruneMessages({
-      messages: trimmed,
-      reasoning: "all",
-      toolCalls: [
-        {
-          tools: [
-            "bash",
-            "executeCode",
-            "webSearch",
-            "webExtract",
-            "renderChart",
-            "renderDocument",
-          ],
-          type: "all",
-        },
-      ],
     });
 
     const financeAgent = await createFinanceAgent(model, userId, effort);
