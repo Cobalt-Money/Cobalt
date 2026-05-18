@@ -398,16 +398,16 @@ export function AddPositionForm({
             </button>
           }
         />
-
-        <button
-          className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 text-muted-foreground text-xs transition-colors hover:bg-foreground/10"
-          onClick={() => setPositions((prev) => [...prev, emptyPosition()])}
-          type="button"
-        >
-          <HugeiconsIcon className="size-3.5 shrink-0" icon={Add01Icon} strokeWidth={2} />
-          Add position
-        </button>
       </div>
+
+      <button
+        className="inline-flex h-[1.625rem] w-fit shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 text-muted-foreground text-xs transition-colors hover:bg-foreground/10"
+        onClick={() => setPositions((prev) => [...prev, emptyPosition()])}
+        type="button"
+      >
+        <HugeiconsIcon className="size-3.5 shrink-0" icon={Add01Icon} strokeWidth={2} />
+        Add position
+      </button>
 
       <div className="mt-2 flex justify-end">
         <Button disabled={!canSubmit} onClick={handleSubmit} type="button">
