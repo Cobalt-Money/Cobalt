@@ -2,6 +2,7 @@ import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialo
 import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/types";
 import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
 import { AddManualAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-manual-account-dialog";
+import { AddPositionForm } from "@cobalt-web/ui/cobalt/accounts/add-position-dialog";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { AddTransactionForm } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
 import type { ExportFormat } from "@cobalt-web/ui/cobalt/transactions/lib/export";
@@ -65,8 +66,10 @@ import {
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
 import { useOpenImportWizard } from "@/components/imports/import-wizard";
+import { useQuery as useZeroQuery } from "@rocicorp/zero/react";
 import { useQuery } from "@tanstack/react-query";
-import { importsApi } from "@/lib/clients/api-client";
+import { queries } from "@cobalt-web/zero";
+import { brokerageApi, importsApi, researchApi } from "@/lib/clients/api-client";
 import { SettingsGrid } from "@/components/settings/settings-grid";
 import type { SettingsSection } from "@/components/settings/settings-grid";
 import { useAddManualAccountSubmit } from "@/hooks/use-add-manual-account-submit";
@@ -242,6 +245,7 @@ function isFormPage(activePage: string | undefined): boolean {
     activePage === "add-manual-account" ||
     activePage === "link-or-manual" ||
     activePage === "add-transaction" ||
+    activePage === "add-position" ||
     activePage === "add-tag" ||
     activePage === "manage-tags"
   );
@@ -288,6 +292,8 @@ interface CommandMenuContextValue {
   openAddManualAccount: () => void;
   /** Open palette to the add-transaction sub-page. */
   openAddTransaction: () => void;
+  /** Open palette to the add-position sub-page. */
+  openAddPosition: () => void;
   /** Open palette to the add-tag sub-page, optionally seeded with a name. */
   openAddTag: (opts?: { initialName?: string }) => void;
   /** Open palette to the bulk-actions sub-page for the given transactions. */
@@ -351,6 +357,7 @@ function CommandMenuDialog({
   const inAddManualAccount = activePage === "add-manual-account";
   const inLinkOrManual = activePage === "link-or-manual";
   const inAddTransaction = activePage === "add-transaction";
+  const inAddPosition = activePage === "add-position";
   const inAddTag = activePage === "add-tag";
   const inManageTags = activePage === "manage-tags";
   const inBulkActions = activePage === "bulk-actions";
@@ -375,6 +382,37 @@ function CommandMenuDialog({
     inSearchTickers,
   );
 
+  // Per-form ticker typeahead for the add-position page.
+  const [positionTickerQuery, setPositionTickerQuery] = useState("");
+  const { filteredTickers: positionTickerMatches } = useTickerSearch(
+    positionTickerQuery,
+    inAddPosition,
+  );
+  const positionTickerSearch = useMemo(
+    () => ({
+      loading: false,
+      onQueryChange: setPositionTickerQuery,
+      results: positionTickerMatches.map((t) => ({
+        name: t.name,
+        price: t.price,
+        symbol: t.symbol,
+      })),
+    }),
+    [positionTickerMatches],
+  );
+  const loadTickerHistory = useCallback(async (ticker: string, date: string) => {
+    const res = await researchApi["ticker-history"].$get({
+      query: { date, symbol: ticker },
+    });
+    if (!res.ok) {
+      return { history: [], latestPrice: null };
+    }
+    const json = (await res.json()) as { points: { close: number; date: string }[] };
+    const history = json.points;
+    const latestPrice = history.length > 0 ? (history.at(-1)?.close ?? null) : null;
+    return { history, latestPrice };
+  }, []);
+
   // ── Add-account ─────────────────────────────────────────────────────────────
 
   const { data: plaidInstitutions = [] } = useInstitutionSearch(search, inAddAccount);
@@ -391,6 +429,66 @@ function CommandMenuDialog({
     merchantSearch: addTxMerchantSearch,
     submit: submitAddTransaction,
   } = useAddTransactionData();
+  const [manualInvestmentAccounts] = useZeroQuery(queries.brokerage.manualInvestmentAccounts());
+  const positionAccountOptions = useMemo(
+    () =>
+      manualInvestmentAccounts.map((a) => ({
+        id: a.id,
+        institutionName: a.institutionName ?? null,
+        name: a.name ?? "Untitled",
+      })),
+    [manualInvestmentAccounts],
+  );
+  const submitAddPosition = useCallback(
+    async (values: {
+      accountId: string;
+      positions: {
+        ticker: string;
+        name: string | null;
+        quantity: number;
+        institutionPrice: number;
+        costBasis: number | null;
+        dateAcquired: string | null;
+      }[];
+      cashSleeve?: number;
+    }) => {
+      for (const p of values.positions) {
+        try {
+          const res = await brokerageApi["manual-holdings"].$post({
+            json: {
+              accountId: values.accountId,
+              costBasis: p.costBasis ?? undefined,
+              institutionPrice: p.institutionPrice,
+              institutionPriceAsOf: p.dateAcquired ?? undefined,
+              name: p.name ?? undefined,
+              quantity: p.quantity,
+              ticker: p.ticker,
+            },
+          });
+          if (!res.ok) {
+            cobaltToast.error(`Couldn't save ${p.ticker}.`);
+          }
+        } catch (error) {
+          console.error("Failed to post manual holding", p.ticker, error);
+          cobaltToast.error(`Couldn't save ${p.ticker}.`);
+        }
+      }
+      if (values.cashSleeve !== undefined && values.cashSleeve > 0) {
+        try {
+          const res = await brokerageApi["manual-cash-sleeve"].$put({
+            json: { accountId: values.accountId, amount: values.cashSleeve },
+          });
+          if (!res.ok) {
+            cobaltToast.error("Couldn't save uninvested cash.");
+          }
+        } catch (error) {
+          console.error("Failed to set manual cash sleeve", error);
+          cobaltToast.error("Couldn't save uninvested cash.");
+        }
+      }
+    },
+    [],
+  );
   const { isPending: submittingAddTag, submit: submitAddTagInner } = useAddTagSubmit();
   const submitAddTag = useCallback(
     async (values: Parameters<typeof submitAddTagInner>[0]) => {
@@ -501,6 +599,11 @@ function CommandMenuDialog({
   const enterAddTransaction = useCallback(() => {
     setSearch("");
     setPages((p) => [...p, "add-transaction"]);
+  }, [setPages, setSearch]);
+
+  const enterAddPosition = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "add-position"]);
   }, [setPages, setSearch]);
 
   const enterAddTag = useCallback(
@@ -826,6 +929,12 @@ function CommandMenuDialog({
       label: "Add Manual Transaction",
     },
     {
+      handleSelect: enterAddPosition,
+      icon: AppleStocksIcon,
+      keywords: ["holding", "stock", "ticker", "brokerage", "share"],
+      label: "Add a Position",
+    },
+    {
       handleSelect: () => {
         handleOpenChange(false);
         openImportWizard();
@@ -941,6 +1050,7 @@ function CommandMenuDialog({
           inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
           inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl",
           inAddTransaction && "sm:max-w-3xl",
+          inAddPosition && "sm:max-w-3xl",
           inAddManualAccount && "sm:max-w-3xl",
           inLinkOrManual && "sm:max-w-xl",
           inAddTag && "sm:max-w-lg",
@@ -1079,6 +1189,30 @@ function CommandMenuDialog({
                   })();
                 }}
                 submitting={false}
+              />
+            </div>
+          )}
+          {inAddPosition && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-foreground text-lg leading-none">
+                <Icon className="shrink-0" icon={AppleStocksIcon} size="lg" />
+                Add a position
+              </h2>
+              <AddPositionForm
+                accounts={positionAccountOptions}
+                onBackspaceWhenEmpty={popPage}
+                onLoadHistory={loadTickerHistory}
+                onSubmit={(values) => {
+                  void (async () => {
+                    try {
+                      await submitAddPosition(values);
+                      handleOpenChange(false);
+                    } catch {
+                      // Toast already shown by submit.
+                    }
+                  })();
+                }}
+                tickerSearch={positionTickerSearch}
               />
             </div>
           )}
@@ -1452,6 +1586,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
   const openAddAccount = useCallback(() => openAt("add-account"), [openAt]);
   const openAddManualAccount = useCallback(() => openAt("add-manual-account"), [openAt]);
   const openAddTransaction = useCallback(() => openAt("add-transaction"), [openAt]);
+  const openAddPosition = useCallback(() => openAt("add-position"), [openAt]);
   const openAddTag = useCallback(
     (opts?: { initialName?: string }) => {
       setAddTagInitialName(opts?.initialName ?? "");
@@ -1492,6 +1627,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
       open,
       openAddAccount,
       openAddManualAccount,
+      openAddPosition,
       openAddTag,
       openAddTransaction,
       openBulkActions,
@@ -1503,6 +1639,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
       open,
       openAddAccount,
       openAddManualAccount,
+      openAddPosition,
       openAddTag,
       openAddTransaction,
       openBulkActions,
