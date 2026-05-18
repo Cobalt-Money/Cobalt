@@ -426,7 +426,7 @@ function ManualAccountForm({
           selectedKey={currency}
           trigger={
             <button
-              className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-input/40 px-2 text-foreground text-xs transition-colors hover:bg-foreground/[0.07]"
+              className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full bg-transparent px-2 text-foreground text-xs transition-colors hover:bg-foreground/[0.07]"
               type="button"
             >
               <span aria-hidden className="text-sm leading-none">
