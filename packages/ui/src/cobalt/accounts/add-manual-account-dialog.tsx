@@ -424,13 +424,21 @@ function ManualAccountForm({
         <div className="flex items-center gap-2">
           <input
             aria-label={meta.balanceLabel}
-            className="min-w-0 flex-1 cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50"
+            className="cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50 [field-sizing:content]"
             inputMode="decimal"
-            min={0}
-            onChange={(e) => setBalance(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "" || /^\d*\.?\d*$/.test(v)) {
+                setBalance(v);
+              }
+            }}
             placeholder={meta.balanceLabel}
-            step="0.01"
-            type="number"
+            size={
+              balance.trim() === ""
+                ? Math.max(8, meta.balanceLabel.length)
+                : Math.max(1, balance.length)
+            }
+            type="text"
             value={balance}
           />
           <CurrencyPicker
