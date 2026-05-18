@@ -3,7 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/componen
 import { cn } from "@cobalt-web/ui/lib/utils";
 
 import { InstitutionLogo } from "../logos/institution-logo";
-import { COMMON_CURRENCIES, CurrencyPicker } from "./currency-picker";
+import { CurrencyPicker } from "./currency-picker";
 import {
   AppleStocksIcon,
   CreditCardIcon,
@@ -422,21 +422,6 @@ function ManualAccountForm({
 
       <div className="flex flex-col gap-2 pt-1">
         <div className="flex items-center gap-2">
-          <CurrencyPicker
-            onSelect={(opt) => setCurrency(opt.code)}
-            selectedKey={currency}
-            trigger={
-              <button
-                className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-transparent px-2 font-medium text-base text-foreground transition-colors hover:bg-foreground/[0.07]"
-                type="button"
-              >
-                <span aria-hidden className="text-xl leading-none">
-                  {COMMON_CURRENCIES.find((c) => c.code === currency)?.flag ?? "🌐"}
-                </span>
-                {currency}
-              </button>
-            }
-          />
           <input
             aria-label={meta.balanceLabel}
             className="min-w-0 flex-1 cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50"
@@ -447,6 +432,18 @@ function ManualAccountForm({
             step="0.01"
             type="number"
             value={balance}
+          />
+          <CurrencyPicker
+            onSelect={(opt) => setCurrency(opt.code)}
+            selectedKey={currency}
+            trigger={
+              <button
+                className="inline-flex h-9 shrink-0 items-center rounded-full bg-transparent px-2 font-medium text-base text-foreground transition-colors hover:bg-foreground/[0.07]"
+                type="button"
+              >
+                {currency}
+              </button>
+            }
           />
         </div>
         {type === "credit" ? (
