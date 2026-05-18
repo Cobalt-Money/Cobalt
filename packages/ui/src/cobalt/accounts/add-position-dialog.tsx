@@ -1,7 +1,6 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
-import { Slider } from "@cobalt-web/ui/components/slider";
 import { BankIcon, Calendar03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useState } from "react";
@@ -10,6 +9,7 @@ import { TickerLogo } from "../brokerage/ticker-logo";
 import { CobaltSelectPopover } from "../select-popover";
 import { AccountLogo } from "./account-logo";
 import { emptyPosition } from "./positions-card";
+import { RulerPicker } from "./ruler-picker";
 import type { PositionDraft, PriceHistoryPoint, TickerSearchState } from "./positions-card";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -181,22 +181,17 @@ function PriceRangeSlider({
   }
   const current = position.pickedPrice ?? bar.close;
   return (
-    <div className="flex flex-col gap-1">
-      <Slider
+    <div className="flex flex-col gap-2">
+      <RulerPicker
         max={bar.high}
         min={bar.low}
-        onValueChange={(v) => {
-          const next = Array.isArray(v) ? v[0] : v;
-          if (typeof next === "number") {
-            onPick(next);
-          }
-        }}
+        onValueChange={onPick}
         step={0.01}
-        value={[current]}
+        value={current}
       />
       <div className="flex justify-between text-muted-foreground text-xs tabular-nums">
         <span>Low {priceFmt.format(bar.low)}</span>
-        <span className="text-foreground">{priceFmt.format(current)}</span>
+        <span className="text-foreground">Price {priceFmt.format(current)}</span>
         <span>High {priceFmt.format(bar.high)}</span>
       </div>
     </div>
