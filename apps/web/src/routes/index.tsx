@@ -69,7 +69,7 @@ function Hero() {
             Spend seconds on your finances, not Sundays.
           </p>
         </div>
-        <CursorProvider className="h-[80vh] w-full">
+        <CursorProvider className="h-[26rem] w-full sm:h-[80vh]">
           <Cursor className="pointer-events-none">
             <svg
               className="size-7 text-primary"
