@@ -173,7 +173,12 @@ function PriceRangeSlider({
       return null;
     }
     return (
-      position.history.find((p) => p.date <= position.dateAcquired) ?? position.history[0] ?? null
+      // history is sorted oldest-first; findLast = closest trading day on or
+      // before the acquisition date. Plain find would pick the OLDEST in the
+      // window, which is the wrong bar.
+      position.history.findLast((p) => p.date <= position.dateAcquired) ??
+      position.history.at(-1) ??
+      null
     );
   }, [position.dateAcquired, position.history]);
 
@@ -389,8 +394,8 @@ export function AddPositionForm({
           latestPrice: latestPrice ?? prev.latestPrice,
           pickedPrice:
             prev.pickedPrice ??
-            history.find((pt) => pt.date <= date)?.close ??
-            history[0]?.close ??
+            history.findLast((pt) => pt.date <= date)?.close ??
+            history.at(-1)?.close ??
             null,
         }));
       } catch {
