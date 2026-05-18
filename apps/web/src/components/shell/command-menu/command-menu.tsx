@@ -66,10 +66,10 @@ import {
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
 import { useOpenImportWizard } from "@/components/imports/import-wizard";
-import { useQuery as useZeroQuery } from "@rocicorp/zero/react";
+import { useZero, useQuery as useZeroQuery } from "@rocicorp/zero/react";
 import { useQuery } from "@tanstack/react-query";
-import { queries } from "@cobalt-web/zero";
-import { brokerageApi, importsApi, researchApi } from "@/lib/clients/api-client";
+import { mutators, queries } from "@cobalt-web/zero";
+import { importsApi, researchApi } from "@/lib/clients/api-client";
 import { SettingsGrid } from "@/components/settings/settings-grid";
 import type { SettingsSection } from "@/components/settings/settings-grid";
 import { useAddManualAccountSubmit } from "@/hooks/use-add-manual-account-submit";
@@ -443,8 +443,9 @@ function CommandMenuDialog({
       })),
     [manualInvestmentAccounts],
   );
+  const zero = useZero();
   const submitAddPosition = useCallback(
-    async (values: {
+    (values: {
       accountId: string;
       positions: {
         ticker: string;
@@ -455,31 +456,34 @@ function CommandMenuDialog({
         dateAcquired: string | null;
       }[];
     }) => {
+      // Web uses the Zero mutator for optimistic UI; mobile / external clients
+      // use the REST endpoint (POST /internal/brokerage/manual-holdings).
       for (const p of values.positions) {
-        try {
-          const res = await brokerageApi["manual-holdings"].$post({
-            json: {
-              accountId: values.accountId,
-              costBasis: p.costBasis ?? undefined,
-              institutionPrice: p.institutionPrice,
-              institutionPriceAsOf: p.dateAcquired ?? undefined,
-              name: p.name ?? undefined,
-              quantity: p.quantity,
-              ticker: p.ticker,
-            },
-          });
-          if (res.ok) {
-            cobaltToast.positionAdded(p.ticker, p.quantity);
-          } else {
+        const { server } = zero.mutate(
+          mutators.brokerage.addManualHolding({
+            accountId: values.accountId,
+            dateAcquired: p.dateAcquired ?? undefined,
+            institutionPrice: p.institutionPrice,
+            name: p.name ?? undefined,
+            quantity: p.quantity,
+            ticker: p.ticker,
+          }),
+        );
+        cobaltToast.positionAdded(p.ticker, p.quantity);
+        void (async () => {
+          try {
+            const result = await server;
+            if (result.type === "error") {
+              cobaltToast.error(result.error.message || `Couldn't save ${p.ticker}.`);
+            }
+          } catch (error) {
+            console.error("Failed to save manual holding", p.ticker, error);
             cobaltToast.error(`Couldn't save ${p.ticker}.`);
           }
-        } catch (error) {
-          console.error("Failed to post manual holding", p.ticker, error);
-          cobaltToast.error(`Couldn't save ${p.ticker}.`);
-        }
+        })();
       }
     },
-    [],
+    [zero],
   );
   const { isPending: submittingAddTag, submit: submitAddTagInner } = useAddTagSubmit();
   const submitAddTag = useCallback(
