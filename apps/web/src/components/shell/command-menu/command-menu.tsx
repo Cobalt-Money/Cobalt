@@ -435,7 +435,9 @@ function CommandMenuDialog({
       manualInvestmentAccounts.map((a) => ({
         id: a.id,
         institutionName: a.institutionName ?? null,
+        logoDomain: a.logoDomain ?? null,
         name: a.name ?? "Untitled",
+        subtype: a.subtype ?? null,
       })),
     [manualInvestmentAccounts],
   );

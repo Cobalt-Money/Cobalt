@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { TickerLogo } from "../brokerage/ticker-logo";
 import { CobaltSelectPopover } from "../select-popover";
+import { AccountLogo } from "./account-logo";
 import { emptyPosition } from "./positions-card";
 import type { PositionDraft, PriceHistoryPoint, TickerSearchState } from "./positions-card";
 
@@ -16,6 +17,8 @@ export interface AddPositionAccountOption {
   id: string;
   name: string;
   institutionName: string | null;
+  logoDomain: string | null;
+  subtype: string | null;
 }
 
 export interface AddPositionFormValues {
@@ -383,6 +386,15 @@ export function AddPositionForm({
           itemMatch={(acc: AddPositionAccountOption, q) => acc.name.toLowerCase().includes(q)}
           items={accounts}
           onSelect={(acc: AddPositionAccountOption) => setAccountId(acc.id)}
+          renderIcon={(acc: AddPositionAccountOption) => (
+            <AccountLogo
+              className="size-5 shrink-0"
+              logoDomain={acc.logoDomain}
+              name={acc.name}
+              source="manual"
+              subtype={acc.subtype ?? "investment"}
+            />
+          )}
           renderLabel={(acc: AddPositionAccountOption) =>
             acc.institutionName ? `${acc.name} · ${acc.institutionName}` : acc.name
           }
@@ -393,7 +405,17 @@ export function AddPositionForm({
               className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-input/40 px-2 text-foreground text-xs transition-colors"
               type="button"
             >
-              <HugeiconsIcon className="size-3.5 shrink-0" icon={BankIcon} strokeWidth={2} />
+              {selectedAccount ? (
+                <AccountLogo
+                  className="size-4 shrink-0"
+                  logoDomain={selectedAccount.logoDomain}
+                  name={selectedAccount.name}
+                  source="manual"
+                  subtype={selectedAccount.subtype ?? "investment"}
+                />
+              ) : (
+                <HugeiconsIcon className="size-3.5 shrink-0" icon={BankIcon} strokeWidth={2} />
+              )}
               {selectedAccount ? selectedAccount.name : "Account"}
             </button>
           }
