@@ -417,6 +417,25 @@ function CommandMenuDialog({
   // ── Add-account ─────────────────────────────────────────────────────────────
 
   const { data: plaidInstitutions = [] } = useInstitutionSearch(search, inAddAccount);
+  /** Separate query state for the in-form institution picker on add-manual-account. */
+  const [manualAccountInstitutionQuery, setManualAccountInstitutionQuery] = useState("");
+  const {
+    data: manualAccountInstitutionResults = [],
+    isFetching: manualAccountInstitutionLoading,
+  } = useInstitutionSearch(manualAccountInstitutionQuery, inAddManualAccount);
+  const manualAccountInstitutionSearch = useMemo(
+    () => ({
+      loading: manualAccountInstitutionLoading,
+      onQueryChange: setManualAccountInstitutionQuery,
+      results: manualAccountInstitutionResults.map((i) => ({
+        id: i.id,
+        logo: i.logo ?? null,
+        name: i.name,
+        url: i.url ?? null,
+      })),
+    }),
+    [manualAccountInstitutionResults, manualAccountInstitutionLoading],
+  );
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
   const { handleChoose: handleChooseConnect, updateModeDialog } = useAccountLauncher(dismiss);
   const { submit: submitAddManualAccount } = useAddManualAccountSubmit();
@@ -1129,6 +1148,7 @@ function CommandMenuDialog({
               </h2>
               <AddManualAccountForm
                 initialLogoDomain={domainFromUrl(selectedInstitution?.url ?? null)}
+                institutionSearch={manualAccountInstitutionSearch}
                 initialName={selectedInstitution?.name}
                 initialType={cashEntry ? "depository" : undefined}
                 onBackspaceWhenEmpty={popPage}

@@ -1,4 +1,5 @@
 import { Button } from "@cobalt-web/ui/components/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
 
 import { InstitutionLogo } from "../logos/institution-logo";
@@ -20,6 +21,22 @@ import {
 } from "@cobalt-web/ui/components/dialog";
 
 export type ManualAccountType = "depository" | "credit" | "investment" | "loan";
+
+export interface InstitutionSuggestionItem {
+  /** Stable id (e.g. Plaid institution id). */
+  id: string;
+  name: string;
+  /** Domain or URL — used as `logoDomain` (InstitutionLogo strips to host). */
+  url: string | null;
+  /** Plaid CDN logo URL when present (rendered as a thumbnail in the picker). */
+  logo: string | null;
+}
+
+export interface InstitutionSearchState {
+  loading: boolean;
+  results: readonly InstitutionSuggestionItem[];
+  onQueryChange: (query: string) => void;
+}
 
 export interface ManualAccountFormValues {
   name: string;
@@ -78,6 +95,138 @@ const TYPE_META: readonly TypeMeta[] = [
   },
 ];
 
+// eslint-disable-next-line complexity
+function InstitutionPickerButton({
+  institutionName,
+  logoDomain,
+  search,
+  onPick,
+}: {
+  institutionName: string | null;
+  logoDomain: string | null;
+  search?: InstitutionSearchState;
+  onPick: (inst: InstitutionSuggestionItem) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  // Render the logo as a non-interactive square when no search wiring is
+  // provided — keeps the flow working for callers that don't supply a picker.
+  if (!search) {
+    return (
+      <div
+        aria-hidden
+        className={cn(
+          "mt-1 flex size-11 shrink-0 items-center justify-center rounded-md outline-none",
+          logoDomain
+            ? "bg-foreground/[0.03]"
+            : "border border-dashed border-foreground/20 text-muted-foreground",
+        )}
+      >
+        {logoDomain ? (
+          <InstitutionLogo
+            className="size-9"
+            institutionLogo={null}
+            institutionLogosExtra={null}
+            institutionName={institutionName}
+            institutionUrl={logoDomain}
+            source="manual"
+          />
+        ) : (
+          <span className="text-xl">+</span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <Popover onOpenChange={setOpen} open={open}>
+      <PopoverTrigger
+        render={
+          <button
+            aria-label="Pick institution"
+            className={cn(
+              "mt-1 flex size-11 shrink-0 items-center justify-center rounded-md outline-none transition-colors",
+              logoDomain
+                ? "bg-foreground/[0.03] hover:bg-foreground/[0.07]"
+                : "border border-dashed border-foreground/20 text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+            )}
+            type="button"
+          >
+            {logoDomain ? (
+              <InstitutionLogo
+                className="size-9"
+                institutionLogo={null}
+                institutionLogosExtra={null}
+                institutionName={institutionName}
+                institutionUrl={logoDomain}
+                source="manual"
+              />
+            ) : (
+              <span className="text-xl">+</span>
+            )}
+          </button>
+        }
+      />
+      <PopoverContent align="start" className="w-80 p-1">
+        <input
+          aria-label="Search institutions"
+          autoFocus
+          className="mb-1 w-full rounded-md bg-transparent px-2.5 py-1.5 text-foreground text-sm outline-none placeholder:text-muted-foreground/50"
+          onChange={(e) => {
+            setQuery(e.target.value);
+            search.onQueryChange(e.target.value);
+          }}
+          placeholder="Search Chase, Coinbase, Vanguard…"
+          value={query}
+        />
+        <div className="max-h-64 overflow-y-auto">
+          {(() => {
+            if (search.loading && search.results.length === 0) {
+              return (
+                <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
+                  Searching…
+                </div>
+              );
+            }
+            if (search.results.length === 0) {
+              return (
+                <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
+                  Type to search
+                </div>
+              );
+            }
+            return search.results.slice(0, 12).map((r) => (
+              <button
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+                key={r.id}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onPick(r);
+                  setOpen(false);
+                  setQuery("");
+                  search.onQueryChange("");
+                }}
+                type="button"
+              >
+                <InstitutionLogo
+                  className="size-5 shrink-0"
+                  institutionLogo={r.logo}
+                  institutionLogosExtra={null}
+                  institutionName={r.name}
+                  institutionUrl={r.url}
+                  source="plaid"
+                />
+                <span className="min-w-0 flex-1 truncate text-foreground">{r.name}</span>
+              </button>
+            ));
+          })()}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function metaFor(type: ManualAccountType): TypeMeta {
   const found = TYPE_META.find((m) => m.type === type);
   if (!found) {
@@ -99,6 +248,8 @@ export interface AddManualAccountFormProps {
   initialLogoDomain?: string | null;
   /** Lock the account type and skip the type picker. Used by the Cash entry path. */
   initialType?: ManualAccountType;
+  /** Wires the in-form institution picker (click the logo square). Omit to disable. */
+  institutionSearch?: InstitutionSearchState;
 }
 
 export interface AddManualAccountDialogProps {
@@ -110,6 +261,7 @@ export interface AddManualAccountDialogProps {
   initialName?: string;
   initialLogoDomain?: string | null;
   initialType?: ManualAccountType;
+  institutionSearch?: InstitutionSearchState;
 }
 
 function TypePicker({
@@ -162,6 +314,7 @@ function ManualAccountForm({
   autoFocus,
   initialName,
   initialLogoDomain,
+  institutionSearch,
 }: {
   type: ManualAccountType;
   onSubmit: (values: ManualAccountFormValues) => void;
@@ -171,14 +324,13 @@ function ManualAccountForm({
   autoFocus: boolean;
   initialName?: string;
   initialLogoDomain?: string | null;
+  institutionSearch?: InstitutionSearchState;
 }) {
   const meta = useMemo(() => metaFor(type), [type]);
   const [name, setName] = useState(initialName ?? "");
-  // logoDomain stays bound to the initial prefill from the picked institution
-  // (the only source now that the Brandfetch typeahead is gone). If the user
-  // edits the name we still keep it — render path falls back to lettermark
-  // when the domain stops matching.
-  const [logoDomain] = useState<string | null>(initialLogoDomain ?? null);
+  /** Editable via the logo-square picker. */
+  const [logoDomain, setLogoDomain] = useState<string | null>(initialLogoDomain ?? null);
+  const [institutionName, setInstitutionName] = useState<string | null>(initialName ?? null);
   const [subtype, setSubtype] = useState<string>(meta.subtypes[0] ?? "");
   const [balance, setBalance] = useState("");
   const [creditLimit, setCreditLimit] = useState("");
@@ -237,28 +389,18 @@ function ManualAccountForm({
   return (
     <div className="flex flex-1 flex-col gap-3">
       <div className="flex items-baseline gap-3">
-        <div
-          aria-hidden
-          className={cn(
-            "mt-1 flex size-11 shrink-0 items-center justify-center rounded-md outline-none",
-            logoDomain
-              ? "bg-foreground/[0.03]"
-              : "border border-dashed border-foreground/20 text-muted-foreground",
-          )}
-        >
-          {logoDomain ? (
-            <InstitutionLogo
-              className="size-9"
-              institutionLogo={null}
-              institutionLogosExtra={null}
-              institutionName={initialName ?? name}
-              institutionUrl={logoDomain}
-              source="manual"
-            />
-          ) : (
-            <span className="text-xl">+</span>
-          )}
-        </div>
+        <InstitutionPickerButton
+          institutionName={institutionName}
+          logoDomain={logoDomain}
+          onPick={(inst) => {
+            setLogoDomain(inst.url);
+            setInstitutionName(inst.name);
+            if (!name.trim()) {
+              setName(inst.name);
+            }
+          }}
+          search={institutionSearch}
+        />
         <input
           aria-label="Account name"
           className="min-w-0 flex-1 cursor-text bg-transparent font-semibold text-2xl text-foreground leading-tight tracking-tight outline-none placeholder:text-muted-foreground/50"
@@ -378,6 +520,7 @@ export function AddManualAccountForm({
   initialName,
   initialLogoDomain,
   initialType,
+  institutionSearch,
 }: AddManualAccountFormProps) {
   const [type, setType] = useState<ManualAccountType | null>(initialType ?? null);
 
@@ -394,6 +537,7 @@ export function AddManualAccountForm({
       autoFocus={autoFocus}
       initialLogoDomain={initialLogoDomain}
       initialName={initialName}
+      institutionSearch={institutionSearch}
       onBackspaceWhenEmpty={
         initialType
           ? onBackspaceWhenEmpty
@@ -418,6 +562,7 @@ export function AddManualAccountDialog({
   initialName,
   initialLogoDomain,
   initialType,
+  institutionSearch,
 }: AddManualAccountDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -430,6 +575,7 @@ export function AddManualAccountDialog({
             initialLogoDomain={initialLogoDomain}
             initialName={initialName}
             initialType={initialType}
+            institutionSearch={institutionSearch}
             key={open ? "open" : "closed"}
             onBackspaceWhenEmpty={onBackspaceWhenEmpty}
             onSubmit={onSubmit}
