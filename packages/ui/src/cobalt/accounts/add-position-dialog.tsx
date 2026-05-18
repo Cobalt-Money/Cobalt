@@ -305,10 +305,12 @@ function PositionRow({
         </div>
       </div>
 
-      <PriceRangeSlider
-        onPick={(price) => onChange({ ...position, pickedPrice: price })}
-        position={position}
-      />
+      {position.entryMode === "shares" ? (
+        <PriceRangeSlider
+          onPick={(price) => onChange({ ...position, pickedPrice: price })}
+          position={position}
+        />
+      ) : null}
     </div>
   );
 }
