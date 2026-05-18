@@ -1,5 +1,7 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
+
+import { InstitutionLogo } from "../logos/institution-logo";
 import {
   AppleStocksIcon,
   CreditCardIcon,
@@ -234,21 +236,45 @@ function ManualAccountForm({
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <input
-        aria-label="Account name"
-        className="w-full min-w-0 cursor-text bg-transparent font-semibold text-2xl text-foreground leading-tight tracking-tight outline-none placeholder:text-muted-foreground/50"
-        maxLength={255}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Backspace" && name === "" && onBackspaceWhenEmpty) {
-            e.preventDefault();
-            onBackspaceWhenEmpty();
-          }
-        }}
-        placeholder="Sapphire Reserve, Vanguard 401k, Wallet…"
-        ref={titleRef}
-        value={name}
-      />
+      <div className="flex items-baseline gap-3">
+        <div
+          aria-hidden
+          className={cn(
+            "mt-1 flex size-11 shrink-0 items-center justify-center rounded-md outline-none",
+            logoDomain
+              ? "bg-foreground/[0.03]"
+              : "border border-dashed border-foreground/20 text-muted-foreground",
+          )}
+        >
+          {logoDomain ? (
+            <InstitutionLogo
+              className="size-9"
+              institutionLogo={null}
+              institutionLogosExtra={null}
+              institutionName={initialName ?? name}
+              institutionUrl={logoDomain}
+              source="manual"
+            />
+          ) : (
+            <span className="text-xl">+</span>
+          )}
+        </div>
+        <input
+          aria-label="Account name"
+          className="min-w-0 flex-1 cursor-text bg-transparent font-semibold text-2xl text-foreground leading-tight tracking-tight outline-none placeholder:text-muted-foreground/50"
+          maxLength={255}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Backspace" && name === "" && onBackspaceWhenEmpty) {
+              e.preventDefault();
+              onBackspaceWhenEmpty();
+            }
+          }}
+          placeholder="Sapphire Reserve, Vanguard 401k, Wallet…"
+          ref={titleRef}
+          value={name}
+        />
+      </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <label className="flex items-center gap-2 text-muted-foreground">
