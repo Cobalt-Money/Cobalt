@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { ApiSection } from "@/components/landing/api-section";
 import { AppPreview } from "@/components/landing/app-preview";
 import { Container, MarketingFooter, MarketingNav } from "@/components/landing/marketing-shell";
+import { MobileAppPreview } from "@/components/landing/mobile-app-preview";
 import { MobileSection } from "@/components/landing/mobile-section";
 import { SurfaceSwitcher } from "@/components/landing/surface-switcher";
 import { Cursor, CursorProvider } from "@/components/ui/cursor";
@@ -69,7 +70,10 @@ function Hero() {
             Spend seconds on your finances, not Sundays.
           </p>
         </div>
-        <CursorProvider className="h-[26rem] w-full sm:h-[80vh]">
+        <div className="sm:hidden">
+          <MobileAppPreview />
+        </div>
+        <CursorProvider className="hidden w-full sm:block sm:h-[80vh]">
           <Cursor className="pointer-events-none hidden lg:block">
             <svg
               className="size-7 text-primary"

@@ -3,7 +3,6 @@ import type { FinancialEventCard } from "@cobalt-web/ui/cobalt/news/financial-ev
 import type { NewsMagazineSidebarItem } from "@cobalt-web/ui/cobalt/news/news-magazine";
 import { TransactionDetailActivity } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-activity";
 import { TransactionDetailSummary } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-summary";
-import { TransactionsTable } from "@cobalt-web/ui/cobalt/transactions/transactions-table";
 import {
   Message,
   MessageContent,
@@ -40,6 +39,7 @@ import type { BabyScreenerRow } from "@/components/landing/baby/baby-research";
 import { BabyResearch } from "@/components/landing/baby/baby-research";
 import { BabySubscriptionsCalendar } from "@/components/landing/baby/baby-subscriptions-calendar";
 import { BabyTickerDetail } from "@/components/landing/baby/baby-ticker-detail";
+import { BabyTransactions } from "@/components/landing/baby/baby-transactions";
 import { BrowserWindow } from "@/components/ui/mock-browser-window";
 
 // ---------------------------------------------------------------------------
@@ -1157,9 +1157,31 @@ function TransactionsView() {
     );
   }
 
+  const babyItems = TRANSACTIONS.map((tx) => ({
+    amount: tx.amount,
+    category: tx.category
+      ? {
+          groupName: tx.category.groupName,
+          iconKey: tx.category.iconKey,
+          name: tx.category.name,
+        }
+      : null,
+    date: tx.date,
+    id: tx.id,
+    logoUrl: tx.logoUrl,
+    name: tx.name,
+    website: tx.website,
+  }));
+
   return (
-    <div className="h-full overflow-hidden pt-4">
-      <TransactionsTable isComplete items={TRANSACTIONS} onOpenTransaction={setSelectedTx} />
+    <div className="h-full overflow-auto pt-2">
+      <BabyTransactions
+        items={babyItems}
+        onOpen={(t) => {
+          const full = TRANSACTIONS.find((x) => x.id === t.id) ?? null;
+          setSelectedTx(full);
+        }}
+      />
     </div>
   );
 }
