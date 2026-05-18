@@ -10,11 +10,6 @@ const ACCOUNT_TYPE = ["depository", "credit", "investment", "loan"] as const;
 
 const createAccountSchema = z
   .object({
-    // Optional client-supplied UUID — lets callers (e.g. the manual investment
-    // create flow that immediately posts holdings against the new account)
-    // know the id before the server round-trips. Server uses it as-is or
-    // generates one if absent.
-    accountId: z.string().uuid().optional(),
     creditLimit: z.number().positive().optional(),
     currency: z.string().length(3).default("USD"),
     currentBalance: z.number(),
@@ -73,7 +68,7 @@ export const accountsMutators = {
     if (!ctx?.userId) {
       throw new Error("Unauthorized");
     }
-    const accountId = args.accountId ?? crypto.randomUUID();
+    const accountId = crypto.randomUUID();
     await tx.mutate.financialAccount.insert({
       id: accountId,
       logoDomain: args.logoDomain?.trim() || undefined,

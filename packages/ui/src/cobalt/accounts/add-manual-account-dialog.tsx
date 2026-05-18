@@ -1,7 +1,5 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { emptyPosition, PositionsCard } from "./positions-card";
-import type { PositionDraft, PriceHistoryPoint, TickerSearchState } from "./positions-card";
 import {
   AppleStocksIcon,
   CreditCardIcon,
@@ -45,25 +43,6 @@ export interface ManualAccountFormValues {
   currency: string;
   /** Brandfetch domain when picked from typeahead, else null. */
   logoDomain: string | null;
-  /**
-   * Investment accounts only: holdings to seed alongside the account create.
-   * Empty / undefined when the user chose "track total only".
-   */
-  positions?: ManualAccountFormPosition[];
-  /** Investment accounts only: uninvested cash sleeve ($), 0 / undefined = none. */
-  cashSleeve?: number;
-}
-
-export interface ManualAccountFormPosition {
-  ticker: string;
-  name: string | null;
-  quantity: number;
-  /** Price the holding is being valued at right now (per share). */
-  institutionPrice: number;
-  /** Optional total $ paid; used to derive averagePrice on the server. */
-  costBasis: number | null;
-  /** YYYY-MM-DD when the position was acquired, for `institution_price_as_of`. */
-  dateAcquired: string | null;
 }
 
 interface TypeMeta {
@@ -176,13 +155,6 @@ export interface AddManualAccountFormProps {
   initialLogoDomain?: string | null;
   /** Lock the account type and skip the type picker. Used by the Cash entry path. */
   initialType?: ManualAccountType;
-  /** Ticker typeahead for the investment-type positions card. Omit to hide positions UI. */
-  tickerSearch?: TickerSearchState;
-  /** Trigger history fetch for a position row (called when ticker + date filled and history not yet loaded). */
-  onLoadHistory?: (
-    ticker: string,
-    date: string,
-  ) => Promise<{ history: PriceHistoryPoint[]; latestPrice: number | null }>;
 }
 
 export interface AddManualAccountDialogProps {
@@ -195,11 +167,6 @@ export interface AddManualAccountDialogProps {
   initialName?: string;
   initialLogoDomain?: string | null;
   initialType?: ManualAccountType;
-  tickerSearch?: TickerSearchState;
-  onLoadHistory?: (
-    ticker: string,
-    date: string,
-  ) => Promise<{ history: PriceHistoryPoint[]; latestPrice: number | null }>;
 }
 
 function TypePicker({
@@ -253,8 +220,6 @@ function ManualAccountForm({
   brandSearch,
   initialName,
   initialLogoDomain,
-  tickerSearch,
-  onLoadHistory,
 }: {
   type: ManualAccountType;
   onSubmit: (values: ManualAccountFormValues) => void;
@@ -265,11 +230,6 @@ function ManualAccountForm({
   brandSearch?: BrandSearchState;
   initialName?: string;
   initialLogoDomain?: string | null;
-  tickerSearch?: TickerSearchState;
-  onLoadHistory?: (
-    ticker: string,
-    date: string,
-  ) => Promise<{ history: PriceHistoryPoint[]; latestPrice: number | null }>;
 }) {
   const meta = useMemo(() => metaFor(type), [type]);
   const [name, setName] = useState(initialName ?? "");
@@ -283,14 +243,6 @@ function ManualAccountForm({
   const [creditLimit, setCreditLimit] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  /** Investment-only: positions list + cash sleeve + escape hatch. */
-  const usePositions = type === "investment" && tickerSearch !== undefined;
-  const [positions, setPositions] = useState<PositionDraft[]>(() =>
-    usePositions ? [emptyPosition()] : [],
-  );
-  const [cashAmount, setCashAmount] = useState("");
-  const [skipPositions, setSkipPositions] = useState(false);
-  const showPositionsCard = usePositions && !skipPositions;
   const titleRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -318,66 +270,15 @@ function ManualAccountForm({
   const parsedLimit = creditLimit.trim() === "" ? null : Number(creditLimit);
   const validLimit =
     type !== "credit" || parsedLimit === null || (Number.isFinite(parsedLimit) && parsedLimit > 0);
-  const parsedCash = cashAmount.trim() === "" ? 0 : Number(cashAmount);
-  const validCash = Number.isFinite(parsedCash) && parsedCash >= 0;
-
-  /** Positions ready to send: have a ticker, shares > 0, and a price (picker or amountPaid). */
-  const readyPositions = positions
-    .map((p) => {
-      const qty = Number(p.shares);
-      if (!(p.ticker.trim() && Number.isFinite(qty) && qty > 0)) {
-        return null;
-      }
-      const amount = Number(p.amountPaid);
-      const hasAmount = p.amountPaid.trim() !== "" && Number.isFinite(amount) && amount >= 0;
-      const price = hasAmount ? amount / qty : (p.pickedPrice ?? p.latestPrice);
-      if (price === null || !Number.isFinite(price) || price < 0) {
-        return null;
-      }
-      return {
-        costBasis: hasAmount ? amount : null,
-        dateAcquired: p.dateAcquired || null,
-        institutionPrice: price,
-        name: p.name,
-        quantity: qty,
-        ticker: p.ticker.trim().toUpperCase(),
-      };
-    })
-    .filter((p): p is NonNullable<typeof p> => p !== null);
-
-  const positionsTotal = readyPositions.reduce(
-    (sum, p) => sum + p.quantity * p.institutionPrice,
-    0,
-  );
-  const positionsModeValid = !showPositionsCard || readyPositions.length > 0 || parsedCash > 0;
-
   const canSubmit =
     !submitting &&
     trimmedName.length > 0 &&
-    subtype.trim().length > 0 &&
+    validBalance &&
     validLimit &&
-    validCash &&
-    (showPositionsCard ? positionsModeValid : validBalance);
+    subtype.trim().length > 0;
 
   const handleSubmit = () => {
-    if (!canSubmit) {
-      return;
-    }
-    if (showPositionsCard) {
-      onSubmit({
-        cashSleeve: parsedCash > 0 ? parsedCash : undefined,
-        creditLimit: null,
-        currency: currency.trim().toUpperCase() || "USD",
-        currentBalance: positionsTotal + parsedCash,
-        logoDomain,
-        name: trimmedName,
-        positions: readyPositions,
-        subtype: subtype.trim(),
-        type,
-      });
-      return;
-    }
-    if (parsedBalance === null) {
+    if (!canSubmit || parsedBalance === null) {
       return;
     }
     onSubmit({
@@ -390,50 +291,6 @@ function ManualAccountForm({
       type,
     });
   };
-
-  // Fire history fetch when a row has ticker + date but no history yet.
-  useEffect(() => {
-    if (!(showPositionsCard && onLoadHistory)) {
-      return;
-    }
-    for (const p of positions) {
-      if (p.ticker.trim() && p.dateAcquired && !p.historyLoading && p.history.length === 0) {
-        const targetId = p.id;
-        const ticker = p.ticker.trim();
-        const date = p.dateAcquired;
-        setPositions((prev) =>
-          prev.map((x) => (x.id === targetId ? { ...x, historyLoading: true } : x)),
-        );
-        void (async () => {
-          try {
-            const { history, latestPrice } = await onLoadHistory(ticker, date);
-            setPositions((prev) =>
-              prev.map((x) =>
-                x.id === targetId
-                  ? {
-                      ...x,
-                      history,
-                      historyLoading: false,
-                      latestPrice: latestPrice ?? x.latestPrice,
-                      // Default-pick the close on or before the requested date.
-                      pickedPrice:
-                        x.pickedPrice ??
-                        history.find((pt) => pt.date <= date)?.close ??
-                        history[0]?.close ??
-                        null,
-                    }
-                  : x,
-              ),
-            );
-          } catch {
-            setPositions((prev) =>
-              prev.map((x) => (x.id === targetId ? { ...x, historyLoading: false } : x)),
-            );
-          }
-        })();
-      }
-    }
-  }, [positions, showPositionsCard, onLoadHistory]);
 
   const subtypeListId = `manual-account-subtype-${type}`;
   const showResults = showSuggestions && brandSearch !== undefined && trimmedName.length >= 2;
@@ -523,74 +380,58 @@ function ManualAccountForm({
         </label>
       </div>
 
-      {showPositionsCard && tickerSearch ? (
-        <PositionsCard
-          cashAmount={cashAmount}
-          onCashChange={setCashAmount}
-          onChange={setPositions}
-          onLoadHistory={() => {
-            // History fetch is owned by the form's effect above, so the card's
-            // ask is a no-op here. The card calls this on mount per row; the
-            // effect handles it idempotently via historyLoading + history.length.
-          }}
-          onSkip={() => setSkipPositions(true)}
-          positions={positions}
-          tickerSearch={tickerSearch}
-        />
-      ) : (
-        <div className="flex flex-col gap-2 pt-1">
+      <div className="flex flex-col gap-2 pt-1">
+        <div>
+          <div className="text-muted-foreground text-xs">{meta.balanceLabel}</div>
+          <div className="flex items-baseline gap-0.5">
+            <span
+              className={cn(
+                "text-lg tabular-nums",
+                balance.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
+              )}
+            >
+              $
+            </span>
+            <input
+              aria-label={meta.balanceLabel}
+              className="min-w-0 flex-1 cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50"
+              inputMode="decimal"
+              min={0}
+              onChange={(e) => setBalance(e.target.value)}
+              placeholder="0.00"
+              step="0.01"
+              type="number"
+              value={balance}
+            />
+          </div>
+        </div>
+        {type === "credit" ? (
           <div>
-            <div className="text-muted-foreground text-xs">{meta.balanceLabel}</div>
+            <div className="text-muted-foreground text-xs">Credit limit</div>
             <div className="flex items-baseline gap-0.5">
               <span
                 className={cn(
                   "text-lg tabular-nums",
-                  balance.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
+                  creditLimit.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
                 )}
               >
                 $
               </span>
               <input
-                aria-label={meta.balanceLabel}
+                aria-label="Credit limit"
                 className="min-w-0 flex-1 cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50"
                 inputMode="decimal"
                 min={0}
-                onChange={(e) => setBalance(e.target.value)}
+                onChange={(e) => setCreditLimit(e.target.value)}
                 placeholder="0.00"
                 step="0.01"
                 type="number"
-                value={balance}
+                value={creditLimit}
               />
             </div>
           </div>
-          {type === "credit" ? (
-            <div>
-              <div className="text-muted-foreground text-xs">Credit limit</div>
-              <div className="flex items-baseline gap-0.5">
-                <span
-                  className={cn(
-                    "text-lg tabular-nums",
-                    creditLimit.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
-                  )}
-                >
-                  $
-                </span>
-                <input
-                  aria-label="Credit limit"
-                  className="min-w-0 flex-1 cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50"
-                  inputMode="decimal"
-                  min={0}
-                  onChange={(e) => setCreditLimit(e.target.value)}
-                  placeholder="0.00"
-                  step="0.01"
-                  type="number"
-                  value={creditLimit}
-                />
-              </div>
-            </div>
-          ) : null}
-        </div>
-      )}
+        ) : null}
+      </div>
 
       <div className="mt-auto flex justify-end pt-2">
         <Button disabled={!canSubmit} onClick={handleSubmit} type="button">
@@ -611,8 +452,6 @@ export function AddManualAccountForm({
   initialName,
   initialLogoDomain,
   initialType,
-  tickerSearch,
-  onLoadHistory,
 }: AddManualAccountFormProps) {
   const [type, setType] = useState<ManualAccountType | null>(initialType ?? null);
 
@@ -637,11 +476,9 @@ export function AddManualAccountForm({
               setType(null);
             }
       }
-      onLoadHistory={onLoadHistory}
       onSubmit={onSubmit}
       submitLabel={submitLabel}
       submitting={submitting}
-      tickerSearch={tickerSearch}
       type={type}
     />
   );
@@ -657,8 +494,6 @@ export function AddManualAccountDialog({
   initialName,
   initialLogoDomain,
   initialType,
-  tickerSearch,
-  onLoadHistory,
 }: AddManualAccountDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -674,10 +509,8 @@ export function AddManualAccountDialog({
             initialType={initialType}
             key={open ? "open" : "closed"}
             onBackspaceWhenEmpty={onBackspaceWhenEmpty}
-            onLoadHistory={onLoadHistory}
             onSubmit={onSubmit}
             submitting={submitting}
-            tickerSearch={tickerSearch}
           />
         </DialogBody>
       </DialogContent>
