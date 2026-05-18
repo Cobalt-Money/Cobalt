@@ -121,6 +121,71 @@ async function recomputeAccountBalance(accountId: string): Promise<void> {
     .where(eq(balance.accountId, accountId));
 }
 
+/**
+ * Accumulate a new buy lot into the existing holding for
+ * (accountId, securityId), or insert fresh if none. Returns the holding id.
+ */
+async function upsertAccumulatedHolding(args: {
+  accountId: string;
+  userId: string;
+  securityId: string;
+  addQty: number;
+  buyPrice: number;
+  buyCost: number;
+  currency: string | null;
+  institutionPriceAsOf: string | null;
+}): Promise<string> {
+  const existing = await db.query.holding.findFirst({
+    columns: { costBasis: true, id: true, quantity: true },
+    where: {
+      accountId: { eq: args.accountId },
+      securityId: { eq: args.securityId },
+    },
+  });
+  if (existing) {
+    const totalQty = Number(existing.quantity) + args.addQty;
+    const totalCost = Number(existing.costBasis ?? "0") + args.buyCost;
+    const avg = totalQty > 0 ? totalCost / totalQty : null;
+    await db
+      .update(holding)
+      .set({
+        averagePrice: avg === null ? null : avg.toFixed(10),
+        costBasis: totalCost.toFixed(4),
+        currency: args.currency,
+        institutionPrice: args.buyPrice.toFixed(10),
+        institutionPriceAsOf: args.institutionPriceAsOf,
+        institutionValue: (totalQty * args.buyPrice).toFixed(4),
+        lastSyncAt: new Date(),
+        quantity: totalQty.toFixed(10),
+        updatedAt: new Date(),
+      })
+      .where(eq(holding.id, existing.id));
+    return existing.id;
+  }
+  const avg = args.addQty > 0 ? args.buyCost / args.addQty : null;
+  const [row] = await db
+    .insert(holding)
+    .values({
+      accountId: args.accountId,
+      averagePrice: avg === null ? null : avg.toFixed(10),
+      costBasis: args.buyCost.toFixed(4),
+      currency: args.currency,
+      institutionPrice: args.buyPrice.toFixed(10),
+      institutionPriceAsOf: args.institutionPriceAsOf,
+      institutionValue: (args.addQty * args.buyPrice).toFixed(4),
+      lastSyncAt: new Date(),
+      quantity: args.addQty.toFixed(10),
+      securityId: args.securityId,
+      source: MANUAL_SOURCE,
+      userId: args.userId,
+    })
+    .returning({ id: holding.id });
+  if (!row) {
+    throw new ApiError(500, "holding_insert_failed", "Failed to insert holding");
+  }
+  return row.id;
+}
+
 export async function createManualHolding(
   userId: string,
   input: CreateManualHoldingBody,
@@ -138,57 +203,33 @@ export async function createManualHolding(
     ticker: input.ticker,
   });
 
-  const qty = input.quantity;
-  const price = input.institutionPrice;
-  const averagePrice = input.costBasis !== undefined && qty > 0 ? input.costBasis / qty : null;
+  const addQty = input.quantity;
+  const buyPrice = input.institutionPrice;
+  /** Cost of THIS buy. If user didn't supply one, derive from price × qty. */
+  const buyCost = input.costBasis ?? addQty * buyPrice;
+  const holdingId = await upsertAccumulatedHolding({
+    accountId: account.id,
+    addQty,
+    buyCost,
+    buyPrice,
+    currency: input.currency ?? account.currency,
+    institutionPriceAsOf: input.institutionPriceAsOf ?? null,
+    securityId,
+    userId,
+  });
 
-  const [row] = await db
-    .insert(holding)
-    .values({
-      accountId: account.id,
-      averagePrice: averagePrice === null ? null : averagePrice.toFixed(10),
-      costBasis: input.costBasis === undefined ? null : input.costBasis.toFixed(4),
-      currency: input.currency ?? account.currency,
-      institutionPrice: price.toFixed(10),
-      institutionPriceAsOf: input.institutionPriceAsOf ?? null,
-      institutionValue: (qty * price).toFixed(4),
-      lastSyncAt: new Date(),
-      quantity: qty.toFixed(10),
-      securityId,
-      source: MANUAL_SOURCE,
-      userId,
-    })
-    .onConflictDoUpdate({
-      set: {
-        averagePrice: sql`excluded.average_price`,
-        costBasis: sql`excluded.cost_basis`,
-        currency: sql`excluded.currency`,
-        institutionPrice: sql`excluded.institution_price`,
-        institutionPriceAsOf: sql`excluded.institution_price_as_of`,
-        institutionValue: sql`excluded.institution_value`,
-        lastSyncAt: sql`excluded.last_sync_at`,
-        quantity: sql`excluded.quantity`,
-        updatedAt: new Date(),
-      },
-      target: [holding.accountId, holding.securityId],
-    })
-    .returning({ id: holding.id });
-
-  if (!row) {
-    throw new ApiError(500, "holding_insert_failed", "Failed to insert holding");
-  }
-
-  // Log a BUY activity row so the brokerage activity feed surfaces the
-  // addition alongside Plaid / SnapTrade BUY events.
+  // Log a BUY activity row per submission (one per buy lot). Activity rows
+  // are NOT collapsed across submissions — the feed keeps each buy distinct
+  // even though the holding row aggregates.
   const activityDate = input.institutionPriceAsOf ?? new Date().toISOString().slice(0, 10);
   await db.insert(investmentActivity).values({
     accountId: account.id,
-    amount: (qty * price).toFixed(4),
+    amount: buyCost.toFixed(4),
     currency: input.currency ?? account.currency,
     date: activityDate,
     name: input.name ?? input.ticker.trim().toUpperCase(),
-    price: price.toFixed(10),
-    quantity: qty.toFixed(10),
+    price: buyPrice.toFixed(10),
+    quantity: addQty.toFixed(10),
     securityId,
     source: MANUAL_SOURCE,
     type: "BUY",
@@ -196,7 +237,7 @@ export async function createManualHolding(
   });
 
   await recomputeAccountBalance(account.id);
-  return { holdingId: row.id };
+  return { holdingId };
 }
 
 export async function updateManualHolding(

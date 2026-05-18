@@ -126,39 +126,49 @@ export const brokerageMutators = {
     });
 
     const ticker = args.ticker.trim().toUpperCase();
-    const qty = args.quantity;
-    const price = args.institutionPrice;
+    const addQty = args.quantity;
+    const buyPrice = args.institutionPrice;
+    const buyCost = addQty * buyPrice;
     const dateIso = args.dateAcquired ?? new Date().toISOString().slice(0, 10);
     /** Zero stores date columns as epoch ms. */
     const dateMs = Date.parse(`${dateIso}T00:00:00Z`);
 
-    // Idempotent on (accountId, securityId) — second submit for the same
-    // ticker overwrites the existing holding to mirror the REST endpoint.
+    // Accumulate into the existing holding for (accountId, securityId) so
+    // repeated buys of the same ticker grow the share count + cost basis
+    // rather than overwriting the previous lot.
     const existingHolding = await tx.run(
       zql.holding.where("accountId", args.accountId).where("securityId", securityId).one(),
     );
 
     // eslint-disable-next-line unicorn/prefer-ternary
     if (existingHolding) {
+      const prevQty = Number(existingHolding.quantity);
+      const prevCost = Number(existingHolding.costBasis ?? 0);
+      const totalQty = prevQty + addQty;
+      const totalCost = prevCost + buyCost;
       await tx.mutate.holding.update({
+        averagePrice: totalQty > 0 ? totalCost / totalQty : null,
+        costBasis: totalCost,
         currency,
         id: existingHolding.id,
-        institutionPrice: price,
+        institutionPrice: buyPrice,
         institutionPriceAsOf: dateMs,
-        institutionValue: qty * price,
+        institutionValue: totalQty * buyPrice,
         lastSyncAt: Date.now(),
-        quantity: qty,
+        quantity: totalQty,
       });
     } else {
       await tx.mutate.holding.insert({
         accountId: args.accountId,
+        averagePrice: addQty > 0 ? buyCost / addQty : null,
+        costBasis: buyCost,
         currency,
         id: crypto.randomUUID(),
-        institutionPrice: price,
+        institutionPrice: buyPrice,
         institutionPriceAsOf: dateMs,
-        institutionValue: qty * price,
+        institutionValue: buyCost,
         lastSyncAt: Date.now(),
-        quantity: qty,
+        quantity: addQty,
         securityId,
         source: "manual",
         userId: ctx.userId,
@@ -167,13 +177,13 @@ export const brokerageMutators = {
 
     await tx.mutate.investmentActivity.insert({
       accountId: args.accountId,
-      amount: qty * price,
+      amount: buyCost,
       currency,
       date: dateMs,
       id: crypto.randomUUID(),
       name: args.name ?? ticker,
-      price: price,
-      quantity: qty,
+      price: buyPrice,
+      quantity: addQty,
       securityId,
       source: "manual",
       type: "BUY",
