@@ -19,19 +19,6 @@ import {
 
 export type ManualAccountType = "depository" | "credit" | "investment" | "loan";
 
-export interface BrandSuggestionItem {
-  brandId: string;
-  name: string;
-  domain: string | null;
-  icon: string | null;
-}
-
-export interface BrandSearchState {
-  loading: boolean;
-  results: readonly BrandSuggestionItem[];
-  onQueryChange: (query: string) => void;
-}
-
 export interface ManualAccountFormValues {
   name: string;
   type: ManualAccountType;
@@ -89,49 +76,6 @@ const TYPE_META: readonly TypeMeta[] = [
   },
 ];
 
-function renderBrandResults({
-  brandSearch,
-  onPick,
-}: {
-  brandSearch: BrandSearchState;
-  onPick: (r: BrandSuggestionItem) => void;
-}) {
-  if (brandSearch.loading && brandSearch.results.length === 0) {
-    return <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Searching…</div>;
-  }
-  if (brandSearch.results.length === 0) {
-    return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        No matches — your typed name will be used.
-      </div>
-    );
-  }
-  return brandSearch.results.slice(0, 8).map((r) => (
-    <button
-      className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
-      key={r.brandId}
-      onMouseDown={(e) => {
-        e.preventDefault();
-        onPick(r);
-      }}
-      type="button"
-    >
-      {r.icon ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          alt=""
-          className="size-5 shrink-0 rounded-sm bg-foreground/5 object-contain"
-          src={r.icon}
-        />
-      ) : (
-        <div className="size-5 shrink-0 rounded-sm bg-foreground/5" />
-      )}
-      <span className="min-w-0 flex-1 truncate text-foreground">{r.name}</span>
-      {r.domain ? <span className="shrink-0 text-muted-foreground text-xs">{r.domain}</span> : null}
-    </button>
-  ));
-}
-
 function metaFor(type: ManualAccountType): TypeMeta {
   const found = TYPE_META.find((m) => m.type === type);
   if (!found) {
@@ -148,8 +92,6 @@ export interface AddManualAccountFormProps {
   onBackspaceWhenEmpty?: () => void;
   submitLabel?: string;
   autoFocus?: boolean;
-  /** Brandfetch typeahead wiring; omit to disable suggestions. */
-  brandSearch?: BrandSearchState;
   /** Prefill from upstream institution selection (e.g. user picked Chase, opted to add manually). */
   initialName?: string;
   initialLogoDomain?: string | null;
@@ -163,7 +105,6 @@ export interface AddManualAccountDialogProps {
   onSubmit: (values: ManualAccountFormValues) => void;
   submitting?: boolean;
   onBackspaceWhenEmpty?: () => void;
-  brandSearch?: BrandSearchState;
   initialName?: string;
   initialLogoDomain?: string | null;
   initialType?: ManualAccountType;
@@ -217,7 +158,6 @@ function ManualAccountForm({
   submitting,
   submitLabel,
   autoFocus,
-  brandSearch,
   initialName,
   initialLogoDomain,
 }: {
@@ -227,22 +167,20 @@ function ManualAccountForm({
   submitting: boolean;
   submitLabel: string;
   autoFocus: boolean;
-  brandSearch?: BrandSearchState;
   initialName?: string;
   initialLogoDomain?: string | null;
 }) {
   const meta = useMemo(() => metaFor(type), [type]);
   const [name, setName] = useState(initialName ?? "");
-  const [logoDomain, setLogoDomain] = useState<string | null>(initialLogoDomain ?? null);
-  /** Name string the current logoDomain was anchored to (initial prefill or last suggestion pick). */
-  const [logoAnchorName, setLogoAnchorName] = useState<string | null>(
-    initialLogoDomain ? (initialName ?? null) : null,
-  );
+  // logoDomain stays bound to the initial prefill from the picked institution
+  // (the only source now that the Brandfetch typeahead is gone). If the user
+  // edits the name we still keep it — render path falls back to lettermark
+  // when the domain stops matching.
+  const [logoDomain] = useState<string | null>(initialLogoDomain ?? null);
   const [subtype, setSubtype] = useState<string>(meta.subtypes[0] ?? "");
   const [balance, setBalance] = useState("");
   const [creditLimit, setCreditLimit] = useState("");
   const [currency, setCurrency] = useState("USD");
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const titleRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -293,61 +231,24 @@ function ManualAccountForm({
   };
 
   const subtypeListId = `manual-account-subtype-${type}`;
-  const showResults = showSuggestions && brandSearch !== undefined && trimmedName.length >= 2;
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <div className="relative">
-        <input
-          aria-label="Account name"
-          className="w-full min-w-0 cursor-text bg-transparent font-semibold text-2xl text-foreground leading-tight tracking-tight outline-none placeholder:text-muted-foreground/50"
-          maxLength={255}
-          onBlur={() => {
-            window.setTimeout(() => setShowSuggestions(false), 150);
-          }}
-          onChange={(e) => {
-            const v = e.target.value;
-            setName(v);
-            // Drop logo only if user diverged from the name it was anchored to.
-            if (logoAnchorName !== null && v.trim() !== logoAnchorName.trim()) {
-              setLogoDomain(null);
-              setLogoAnchorName(null);
-            }
-            brandSearch?.onQueryChange(v);
-            setShowSuggestions(true);
-          }}
-          onFocus={() => {
-            setShowSuggestions(true);
-            brandSearch?.onQueryChange(name);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Backspace" && name === "" && onBackspaceWhenEmpty) {
-              e.preventDefault();
-              onBackspaceWhenEmpty();
-            }
-            if (e.key === "Escape") {
-              setShowSuggestions(false);
-            }
-          }}
-          placeholder="Sapphire Reserve, Vanguard 401k, Wallet…"
-          ref={titleRef}
-          value={name}
-        />
-        {showResults ? (
-          <div className="absolute top-full left-0 z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-foreground/10 bg-popover p-1 shadow-md">
-            {renderBrandResults({
-              brandSearch,
-              onPick: (r) => {
-                setName(r.name);
-                setLogoDomain(r.domain);
-                setLogoAnchorName(r.name);
-                setShowSuggestions(false);
-                brandSearch.onQueryChange("");
-              },
-            })}
-          </div>
-        ) : null}
-      </div>
+      <input
+        aria-label="Account name"
+        className="w-full min-w-0 cursor-text bg-transparent font-semibold text-2xl text-foreground leading-tight tracking-tight outline-none placeholder:text-muted-foreground/50"
+        maxLength={255}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Backspace" && name === "" && onBackspaceWhenEmpty) {
+            e.preventDefault();
+            onBackspaceWhenEmpty();
+          }
+        }}
+        placeholder="Sapphire Reserve, Vanguard 401k, Wallet…"
+        ref={titleRef}
+        value={name}
+      />
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <label className="flex items-center gap-2 text-muted-foreground">
@@ -448,7 +349,6 @@ export function AddManualAccountForm({
   onBackspaceWhenEmpty,
   submitLabel = "Create account",
   autoFocus = true,
-  brandSearch,
   initialName,
   initialLogoDomain,
   initialType,
@@ -466,7 +366,6 @@ export function AddManualAccountForm({
   return (
     <ManualAccountForm
       autoFocus={autoFocus}
-      brandSearch={brandSearch}
       initialLogoDomain={initialLogoDomain}
       initialName={initialName}
       onBackspaceWhenEmpty={
@@ -490,7 +389,6 @@ export function AddManualAccountDialog({
   onSubmit,
   submitting = false,
   onBackspaceWhenEmpty,
-  brandSearch,
   initialName,
   initialLogoDomain,
   initialType,
@@ -503,7 +401,6 @@ export function AddManualAccountDialog({
         </DialogHeader>
         <DialogBody>
           <AddManualAccountForm
-            brandSearch={brandSearch}
             initialLogoDomain={initialLogoDomain}
             initialName={initialName}
             initialType={initialType}

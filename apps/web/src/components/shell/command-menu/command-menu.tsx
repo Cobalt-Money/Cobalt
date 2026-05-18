@@ -73,7 +73,6 @@ import { importsApi, researchApi } from "@/lib/clients/api-client";
 import { SettingsGrid } from "@/components/settings/settings-grid";
 import type { SettingsSection } from "@/components/settings/settings-grid";
 import { useAddManualAccountSubmit } from "@/hooks/use-add-manual-account-submit";
-import { useMerchantSearch } from "@/hooks/use-merchant-search";
 import { useAddTagSubmit } from "@/hooks/use-add-tag-submit";
 import { useAddTransactionData } from "@/hooks/use-add-transaction-data";
 import { useAllCategories } from "@/hooks/use-categories";
@@ -421,8 +420,6 @@ function CommandMenuDialog({
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
   const { handleChoose: handleChooseConnect, updateModeDialog } = useAccountLauncher(dismiss);
   const { submit: submitAddManualAccount } = useAddManualAccountSubmit();
-  const [brandQuery, setBrandQuery] = useState("");
-  const { data: brandResults = [], isFetching: brandSearchLoading } = useMerchantSearch(brandQuery);
   const {
     availableTags: addTxAvailableTags,
     categoryOptions: addTxCategoryOptions,
@@ -1131,11 +1128,6 @@ function CommandMenuDialog({
                 Add an account
               </h2>
               <AddManualAccountForm
-                brandSearch={{
-                  loading: brandSearchLoading,
-                  onQueryChange: setBrandQuery,
-                  results: brandResults,
-                }}
                 initialLogoDomain={domainFromUrl(selectedInstitution?.url ?? null)}
                 initialName={selectedInstitution?.name}
                 initialType={cashEntry ? "depository" : undefined}
