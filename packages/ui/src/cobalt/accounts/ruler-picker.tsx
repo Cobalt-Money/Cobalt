@@ -1,4 +1,5 @@
 import { cn } from "@cobalt-web/ui/lib/utils";
+import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface RulerPickerProps {
@@ -98,6 +99,36 @@ export function RulerPicker({
     }
   };
 
+  // Mouse + touch drag-to-scrub so users don't need the (hidden) scrollbar.
+  const dragRef = useRef<{ startX: number; startScroll: number } | null>(null);
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current;
+    if (!el) {
+      return;
+    }
+    el.setPointerCapture(e.pointerId);
+    dragRef.current = { startScroll: el.scrollLeft, startX: e.clientX };
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    const el = scrollerRef.current;
+    if (!(drag && el)) {
+      return;
+    }
+    el.scrollLeft = drag.startScroll - (e.clientX - drag.startX);
+  };
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current;
+    if (el) {
+      try {
+        el.releasePointerCapture(e.pointerId);
+      } catch {
+        /* pointer already released */
+      }
+    }
+    dragRef.current = null;
+  };
+
   return (
     <div
       className={cn(
@@ -111,7 +142,15 @@ export function RulerPicker({
         aria-hidden
         className="pointer-events-none absolute inset-y-0 left-1/2 z-10 w-px -translate-x-1/2 bg-primary/30"
       />
-      <div className="scrollbar-none overflow-x-auto" onScroll={handleScroll} ref={scrollerRef}>
+      <div
+        className="scrollbar-none cursor-grab touch-pan-x overflow-x-auto active:cursor-grabbing [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        onPointerCancel={onPointerUp}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onScroll={handleScroll}
+        ref={scrollerRef}
+      >
         <div
           className="relative h-12"
           style={{ paddingLeft: sidePad, paddingRight: sidePad, width: railWidth + wrapperWidth }}
