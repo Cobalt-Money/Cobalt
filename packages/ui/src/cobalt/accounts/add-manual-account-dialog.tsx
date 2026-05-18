@@ -426,10 +426,10 @@ function ManualAccountForm({
           selectedKey={currency}
           trigger={
             <button
-              className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full bg-transparent px-2 text-foreground text-xs transition-colors hover:bg-foreground/[0.07]"
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-transparent px-3 font-medium text-base text-foreground transition-colors hover:bg-foreground/[0.07]"
               type="button"
             >
-              <span aria-hidden className="text-sm leading-none">
+              <span aria-hidden className="text-xl leading-none">
                 {COMMON_CURRENCIES.find((c) => c.code === currency)?.flag ?? "🌐"}
               </span>
               {currency}
