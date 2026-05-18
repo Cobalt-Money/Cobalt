@@ -79,6 +79,11 @@ export type BankAccountRowWithRelations = Row<typeof queries.accounts.bankAccoun
 /** Row from `queries.brokerage.accounts()` — financialAccount source='snaptrade' with balance + snaptradeAuthorization. */
 export type BrokerageRowWithRelations = Row<typeof queries.brokerage.accounts>;
 
+/** Row from `queries.brokerage.manualInvestmentAccounts()` — financialAccount source='manual' type='investment' with balance + holdings. */
+export type ManualInvestmentRowWithRelations = Row<
+  typeof queries.brokerage.manualInvestmentAccounts
+>;
+
 function institutionFieldsFromBankConnection(
   conn: BankAccountRowWithRelations["plaidConnection"],
 ): {
@@ -168,11 +173,47 @@ export function brokerageRowToCard(row: BrokerageRowWithRelations): AccountCardV
   };
 }
 
+export function manualInvestmentRowToCard(
+  row: ManualInvestmentRowWithRelations,
+): AccountCardViewModel {
+  const institution = row.institutionName?.trim() ?? row.name?.trim() ?? "Brokerage";
+  const accountTypeRaw = row.subtype ?? row.type ?? null;
+  const typeLabel = accountTypeRaw
+    ? titleCaseWords(accountTypeRaw.replaceAll("_", " "))
+    : "Brokerage";
+  const lastSyncedAt = syncMsFromBalance(row.balance);
+  const customName = row.customName?.trim() || null;
+  const description = customName ?? (row.name?.trim() || "Investment account");
+
+  return {
+    accountTypeLabel: typeLabel,
+    category: "brokerage",
+    description,
+    id: row.id,
+    institution,
+    institutionLogo: null,
+    institutionUrl: row.logoDomain?.trim() ?? null,
+    isCustomNamed: customName !== null,
+    kind: "brokerage",
+    lastSyncedAt,
+    mask: maskDigits(null, row.externalId ?? ""),
+    plaidAccountId: null,
+    plaidItemId: null,
+    snaptradeAuthorizationId: null,
+    source: "manual",
+    subtype: row.subtype,
+  };
+}
+
 export function mergeAndSortAccountCards(
   bankRows: readonly BankAccountRowWithRelations[],
   brokerageRows: readonly BrokerageRowWithRelations[],
+  manualInvestmentRows: readonly ManualInvestmentRowWithRelations[] = [],
 ): AccountCardViewModel[] {
   const bankCards = bankRows.map(bankAccountRowToCard);
   const broCards = brokerageRows.map(brokerageRowToCard);
-  return [...bankCards, ...broCards].toSorted((a, b) => a.institution.localeCompare(b.institution));
+  const manualBroCards = manualInvestmentRows.map(manualInvestmentRowToCard);
+  return [...bankCards, ...broCards, ...manualBroCards].toSorted((a, b) =>
+    a.institution.localeCompare(b.institution),
+  );
 }
