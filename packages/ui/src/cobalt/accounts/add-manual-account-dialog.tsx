@@ -450,29 +450,26 @@ function ManualAccountForm({
       </div>
 
       <div className="flex flex-col gap-2 pt-1">
-        <div>
-          <div className="text-muted-foreground text-xs">{meta.balanceLabel}</div>
-          <div className="flex items-baseline gap-0.5">
-            <span
-              className={cn(
-                "text-lg tabular-nums",
-                balance.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
-              )}
-            >
-              $
-            </span>
-            <input
-              aria-label={meta.balanceLabel}
-              className="min-w-0 flex-1 cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50"
-              inputMode="decimal"
-              min={0}
-              onChange={(e) => setBalance(e.target.value)}
-              placeholder="0.00"
-              step="0.01"
-              type="number"
-              value={balance}
-            />
-          </div>
+        <div className="flex items-baseline gap-0.5">
+          <span
+            className={cn(
+              "text-lg tabular-nums",
+              balance.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
+            )}
+          >
+            $
+          </span>
+          <input
+            aria-label={meta.balanceLabel}
+            className="min-w-0 flex-1 cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50"
+            inputMode="decimal"
+            min={0}
+            onChange={(e) => setBalance(e.target.value)}
+            placeholder={meta.balanceLabel}
+            step="0.01"
+            type="number"
+            value={balance}
+          />
         </div>
         {type === "credit" ? (
           <div>
