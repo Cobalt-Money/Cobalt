@@ -1,9 +1,9 @@
 import { Button } from "@cobalt-web/ui/components/button";
-import { Input } from "@cobalt-web/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
 
 import { InstitutionLogo } from "../logos/institution-logo";
+import { COMMON_CURRENCIES, CurrencyPicker } from "./currency-picker";
 import {
   AppleStocksIcon,
   CreditCardIcon,
@@ -421,17 +421,21 @@ function ManualAccountForm({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <label className="flex items-center gap-2 text-muted-foreground">
-          <span className="shrink-0">Currency</span>
-          <Input
-            aria-label="Currency"
-            className="h-8 w-20 uppercase"
-            maxLength={3}
-            minLength={3}
-            onChange={(e) => setCurrency(e.target.value)}
-            value={currency}
-          />
-        </label>
+        <CurrencyPicker
+          onSelect={(opt) => setCurrency(opt.code)}
+          selectedKey={currency}
+          trigger={
+            <button
+              className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-input/40 px-2 text-foreground text-xs transition-colors hover:bg-foreground/[0.07]"
+              type="button"
+            >
+              <span aria-hidden className="text-sm leading-none">
+                {COMMON_CURRENCIES.find((c) => c.code === currency)?.flag ?? "🌐"}
+              </span>
+              {currency}
+            </button>
+          }
+        />
       </div>
 
       <div className="flex flex-col gap-2 pt-1">
