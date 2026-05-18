@@ -3,7 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/componen
 import { cn } from "@cobalt-web/ui/lib/utils";
 
 import { InstitutionLogo } from "../logos/institution-logo";
-import { CurrencyPicker } from "./currency-picker";
+import { COMMON_CURRENCIES, CurrencyPicker } from "./currency-picker";
 import {
   AppleStocksIcon,
   CreditCardIcon,
@@ -421,7 +421,15 @@ function ManualAccountForm({
       </div>
 
       <div className="flex flex-col gap-2 pt-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <span
+            className={cn(
+              "shrink-0 text-lg tabular-nums",
+              balance.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
+            )}
+          >
+            {COMMON_CURRENCIES.find((c) => c.code === currency)?.symbol ?? currency}
+          </span>
           <input
             aria-label={meta.balanceLabel}
             className="cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50 [field-sizing:content]"
@@ -441,18 +449,20 @@ function ManualAccountForm({
             type="text"
             value={balance}
           />
-          <CurrencyPicker
-            onSelect={(opt) => setCurrency(opt.code)}
-            selectedKey={currency}
-            trigger={
-              <button
-                className="inline-flex h-9 shrink-0 items-center rounded-full bg-transparent px-2 font-medium text-base text-foreground transition-colors hover:bg-foreground/[0.07]"
-                type="button"
-              >
-                {currency}
-              </button>
-            }
-          />
+          <div className="ml-auto">
+            <CurrencyPicker
+              onSelect={(opt) => setCurrency(opt.code)}
+              selectedKey={currency}
+              trigger={
+                <button
+                  className="inline-flex h-9 shrink-0 items-center rounded-full bg-transparent px-2 font-medium text-base text-foreground transition-colors hover:bg-foreground/[0.07]"
+                  type="button"
+                >
+                  {currency}
+                </button>
+              }
+            />
+          </div>
         </div>
         {type === "credit" ? (
           <div>
