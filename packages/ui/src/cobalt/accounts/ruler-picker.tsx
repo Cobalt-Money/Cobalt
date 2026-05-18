@@ -1,6 +1,6 @@
 import { cn } from "@cobalt-web/ui/lib/utils";
 import type React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
 export interface RulerPickerProps {
   min: number;
@@ -42,18 +42,20 @@ export function RulerPicker({
   const settingFromValue = useRef(false);
 
   // Measure wrapper width so we can set leading/trailing padding to half the
-  // wrapper — keeps the center indicator over the value.
-  useEffect(() => {
+  // wrapper — keeps the center indicator over the value. Layout-effect so the
+  // initial width is captured before the first paint (avoids a "starts at the
+  // left edge, jumps to center" flicker on mount).
+  useLayoutEffect(() => {
     const el = wrapperRef.current;
     if (!el) {
       return;
     }
+    setWrapperWidth(el.clientWidth);
     const ro = new ResizeObserver((entries) => {
       const w = entries[0]?.contentRect.width ?? 0;
       setWrapperWidth(w);
     });
     ro.observe(el);
-    setWrapperWidth(el.clientWidth);
     return () => ro.disconnect();
   }, []);
 
@@ -68,8 +70,10 @@ export function RulerPicker({
   const railWidth = (max - min) * pxPerUnit;
   const sidePad = wrapperWidth / 2;
 
-  // Drive the scroller from external value changes.
-  useEffect(() => {
+  // Drive the scroller from external value changes. useLayoutEffect runs
+  // before the browser paints — keeps the rail centered on the initial mount
+  // (no visible "starts at 0, jumps to center" flicker).
+  useLayoutEffect(() => {
     const el = scrollerRef.current;
     if (!el || wrapperWidth === 0) {
       return;
