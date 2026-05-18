@@ -238,19 +238,21 @@ function PositionRow({
         ) : null}
       </div>
 
-      <div className="flex items-baseline gap-0.5">
+      <div className="flex items-baseline gap-1.5">
         <input
           aria-label="Shares"
-          className="w-24 min-w-0 cursor-text bg-transparent text-foreground text-lg tabular-nums outline-none placeholder:text-muted-foreground/50"
+          className="w-40 min-w-0 cursor-text bg-transparent text-foreground text-lg tabular-nums outline-none placeholder:text-muted-foreground/50"
           inputMode="decimal"
           min={0}
           onChange={(e) => onChange({ ...position, shares: e.target.value })}
-          placeholder="0"
+          placeholder="# of shares"
           step="0.0001"
           type="number"
           value={position.shares}
         />
-        <span className="text-muted-foreground text-sm">shares</span>
+        {position.shares.trim() === "" ? null : (
+          <span className="text-muted-foreground text-sm">shares</span>
+        )}
       </div>
     </div>
   );
