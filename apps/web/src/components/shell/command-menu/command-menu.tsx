@@ -468,7 +468,9 @@ function CommandMenuDialog({
               ticker: p.ticker,
             },
           });
-          if (!res.ok) {
+          if (res.ok) {
+            cobaltToast.positionAdded(p.ticker, p.quantity);
+          } else {
             cobaltToast.error(`Couldn't save ${p.ticker}.`);
           }
         } catch (error) {

@@ -35,7 +35,10 @@ export interface PositionDraft {
   id: string;
   ticker: string;
   name: string | null;
+  /** Typed value, interpreted per `entryMode` — shares or dollars. */
   shares: string;
+  /** Whether `shares` carries a share count or a dollar amount. */
+  entryMode: "shares" | "dollars";
   dateAcquired: string;
   /** User-entered $ paid total — wins over picker if set. */
   amountPaid: string;
@@ -51,6 +54,7 @@ export function emptyPosition(): PositionDraft {
   return {
     amountPaid: "",
     dateAcquired: new Date().toISOString().slice(0, 10),
+    entryMode: "shares",
     history: [],
     historyLoading: false,
     id: crypto.randomUUID(),

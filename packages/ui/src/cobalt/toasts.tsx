@@ -73,6 +73,14 @@ export const cobaltToast = {
     });
   },
 
+  /** Manual brokerage position added. */
+  positionAdded(ticker: string, quantity: number) {
+    return toast("Position added", {
+      description: `${quantity} ${ticker}`,
+      icon: POSTED_ICON,
+    });
+  },
+
   /** Manual transaction created. */
   transactionAdded(name: string) {
     return toast("Transaction added", {

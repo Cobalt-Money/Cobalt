@@ -1,6 +1,7 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
+import { cn } from "@cobalt-web/ui/lib/utils";
 import { BankIcon, Calendar03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useState } from "react";
@@ -263,9 +264,12 @@ function PositionRow({
         </Popover>
       </div>
 
-      <div className="flex items-baseline gap-1.5">
+      <div className="flex items-baseline gap-2">
+        {position.entryMode === "dollars" ? (
+          <span className="text-lg text-muted-foreground/50 tabular-nums">$</span>
+        ) : null}
         <input
-          aria-label="Shares"
+          aria-label={position.entryMode === "dollars" ? "Dollar amount" : "Shares"}
           className="cursor-text bg-transparent text-foreground text-lg tabular-nums outline-none placeholder:text-muted-foreground/50 [field-sizing:content]"
           inputMode="decimal"
           onChange={(e) => {
@@ -274,14 +278,31 @@ function PositionRow({
               onChange({ ...position, shares: v });
             }
           }}
-          placeholder="# of shares"
+          placeholder={position.entryMode === "dollars" ? "amount" : "# of shares"}
           size={position.shares.trim() === "" ? 12 : Math.max(1, position.shares.length)}
           type="text"
           value={position.shares}
         />
-        {position.shares.trim() === "" ? null : (
+        {position.shares.trim() === "" || position.entryMode === "dollars" ? null : (
           <span className="text-muted-foreground text-sm">shares</span>
         )}
+        <div className="ml-auto flex h-6 shrink-0 rounded-full border border-foreground/15 bg-foreground/[0.03] p-0.5 text-xs">
+          {(["shares", "dollars"] as const).map((m) => (
+            <button
+              className={cn(
+                "rounded-full px-2 transition-colors",
+                position.entryMode === m
+                  ? "bg-foreground/10 text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+              key={m}
+              onClick={() => onChange({ ...position, entryMode: m, shares: "" })}
+              type="button"
+            >
+              {m === "shares" ? "Shares" : "Dollars"}
+            </button>
+          ))}
+        </div>
       </div>
 
       <PriceRangeSlider
@@ -295,14 +316,27 @@ function PositionRow({
 // ── Form ──────────────────────────────────────────────────────────────────────
 
 function buildReadyPosition(p: PositionDraft) {
-  const qty = Number(p.shares);
-  if (!(p.ticker.trim() && Number.isFinite(qty) && qty > 0)) {
+  if (!p.ticker.trim()) {
     return null;
   }
   // Price is auto-resolved from the history fetch on (ticker, date). If FMP
   // returned nothing for the window, fall back to 0 so the holding still
   // saves — user can edit later.
   const price = p.pickedPrice ?? p.latestPrice ?? 0;
+  const typed = Number(p.shares);
+  if (!(Number.isFinite(typed) && typed > 0)) {
+    return null;
+  }
+  // Dollar-mode: derive shares from typed $ / price. Requires a valid price.
+  let qty: number;
+  if (p.entryMode === "dollars") {
+    qty = price > 0 ? typed / price : 0;
+  } else {
+    qty = typed;
+  }
+  if (qty <= 0) {
+    return null;
+  }
   return {
     costBasis: null as number | null,
     dateAcquired: p.dateAcquired || null,
