@@ -148,7 +148,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
           const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
           throw new Error(errMsg ?? "Could not open reconnect");
         }
-        window.location.assign(data.redirectURI);
+        window.open(data.redirectURI, "_blank", "noopener,noreferrer");
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Reconnect failed");
