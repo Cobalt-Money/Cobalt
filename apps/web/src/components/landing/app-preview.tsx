@@ -1330,7 +1330,7 @@ export function AppPreview() {
 
   return (
     <BrowserWindow className="w-full h-full" size="2xl" variant="chrome">
-      <div className="flex h-full overflow-hidden rounded-2xl bg-sidebar">
+      <div className="origin-top-left flex h-[250%] w-[250%] scale-[0.4] overflow-hidden rounded-2xl bg-sidebar sm:h-full sm:w-full sm:scale-100">
         <MiniSidebar active={active} onChatThread={setChatThread} onNav={setActive} />
 
         {/* Inset content area */}

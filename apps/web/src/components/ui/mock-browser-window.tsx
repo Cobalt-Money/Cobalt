@@ -73,7 +73,7 @@ export function BrowserWindow({
   sidebarItems,
 }: BrowserWindowProps) {
   const sizeClasses = {
-    "2xl": "h-[56rem] w-full",
+    "2xl": "h-[26rem] w-full sm:h-[56rem]",
     lg: "h-96 max-w-4xl",
     md: "h-80 max-w-2xl",
     sm: "h-64 max-w-sm",
