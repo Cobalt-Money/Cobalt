@@ -1,4 +1,5 @@
 import { Button } from "@cobalt-web/ui/components/button";
+import { Input } from "@cobalt-web/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
 
@@ -421,9 +422,9 @@ function ManualAccountForm({
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <label className="flex items-center gap-2 text-muted-foreground">
           <span className="shrink-0">Type</span>
-          <input
+          <Input
             aria-label="Subtype"
-            className="min-w-0 cursor-text rounded-md border border-foreground/10 bg-transparent px-2 py-1 text-foreground outline-none focus:border-foreground/30"
+            className="h-8 w-40"
             list={subtypeListId}
             maxLength={64}
             onChange={(e) => setSubtype(e.target.value)}
@@ -438,9 +439,9 @@ function ManualAccountForm({
         </label>
         <label className="flex items-center gap-2 text-muted-foreground">
           <span className="shrink-0">Currency</span>
-          <input
+          <Input
             aria-label="Currency"
-            className="w-16 cursor-text rounded-md border border-foreground/10 bg-transparent px-2 py-1 text-foreground uppercase outline-none focus:border-foreground/30"
+            className="h-8 w-20 uppercase"
             maxLength={3}
             minLength={3}
             onChange={(e) => setCurrency(e.target.value)}
