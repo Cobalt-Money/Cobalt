@@ -31,7 +31,7 @@ const RECENT = [
 
 export function MobileSection() {
   return (
-    <section className="px-6 py-24 lg:py-32">
+    <section className="border-t px-6 py-24 lg:py-32">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-16 text-center">
         {/* Phone */}
         <div className="relative order-2 mx-auto flex justify-center">

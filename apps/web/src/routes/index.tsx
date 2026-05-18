@@ -70,7 +70,7 @@ function Hero() {
           </p>
         </div>
         <CursorProvider className="h-[26rem] w-full sm:h-[80vh]">
-          <Cursor className="pointer-events-none">
+          <Cursor className="pointer-events-none hidden lg:block">
             <svg
               className="size-7 text-primary"
               xmlns="http://www.w3.org/2000/svg"
@@ -91,7 +91,7 @@ function Hero() {
 
 function IntegrationsSection() {
   return (
-    <section className="flex min-h-screen flex-col justify-center px-6 py-24 lg:py-32">
+    <section className="flex min-h-screen flex-col justify-center border-t px-6 py-24 lg:py-32">
       <div className="mx-auto w-full max-w-5xl">
         <div className="mb-16 text-center">
           <h2 className="text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
