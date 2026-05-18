@@ -130,7 +130,7 @@ export function RulerPicker({
   };
 
   return (
-    <div className={cn("relative py-2", className)} ref={wrapperRef}>
+    <div className={cn("relative w-full py-2", className)} ref={wrapperRef}>
       {/* Center indicator */}
       <div
         aria-hidden
