@@ -1,6 +1,7 @@
 import { db } from "@cobalt-web/db";
 import { balance } from "@cobalt-web/db/schema/accounts/balance";
 import { holding } from "@cobalt-web/db/schema/accounts/investments/holding";
+import { investmentActivity } from "@cobalt-web/db/schema/accounts/investments/investment-activity";
 import { security } from "@cobalt-web/db/schema/accounts/investments/security";
 import { and, eq, sql } from "drizzle-orm";
 
@@ -176,6 +177,23 @@ export async function createManualHolding(
   if (!row) {
     throw new ApiError(500, "holding_insert_failed", "Failed to insert holding");
   }
+
+  // Log a BUY activity row so the brokerage activity feed surfaces the
+  // addition alongside Plaid / SnapTrade BUY events.
+  const activityDate = input.institutionPriceAsOf ?? new Date().toISOString().slice(0, 10);
+  await db.insert(investmentActivity).values({
+    accountId: account.id,
+    amount: (qty * price).toFixed(4),
+    currency: input.currency ?? account.currency,
+    date: activityDate,
+    name: input.name ?? input.ticker.trim().toUpperCase(),
+    price: price.toFixed(10),
+    quantity: qty.toFixed(10),
+    securityId,
+    source: MANUAL_SOURCE,
+    type: "BUY",
+    userId,
+  });
 
   await recomputeAccountBalance(account.id);
   return { holdingId: row.id };
