@@ -8,8 +8,6 @@ import {
   Calendar03Icon,
   Cancel01Icon,
   Coins01Icon,
-  Money01Icon,
-  SearchDollarIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useState } from "react";
@@ -166,71 +164,6 @@ function TickerCombobox({
   );
 }
 
-// eslint-disable-next-line complexity
-function PricePickerPopover({
-  position,
-  onPick,
-}: {
-  position: PositionDraft;
-  onPick: (price: number) => void;
-}) {
-  const label =
-    position.pickedPrice === null ? "Cost basis" : priceFmt.format(position.pickedPrice);
-  const isSet = position.pickedPrice !== null;
-  return (
-    <Popover>
-      <PopoverTrigger
-        render={
-          <button
-            className={cn(
-              "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs transition-colors",
-              isSet
-                ? "border-foreground/15 bg-input/40 text-foreground"
-                : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10",
-            )}
-            type="button"
-          >
-            <HugeiconsIcon className="size-3.5 shrink-0" icon={SearchDollarIcon} strokeWidth={2} />
-            {label}
-          </button>
-        }
-      />
-      <PopoverContent align="start" className="w-64 p-1">
-        {position.historyLoading && (
-          <div className="px-2 py-2 text-center text-muted-foreground text-sm">Loading prices…</div>
-        )}
-        {!position.historyLoading && position.history.length === 0 && (
-          <div className="px-2 py-2 text-center text-muted-foreground text-sm">
-            Pick a ticker + date to load prices.
-          </div>
-        )}
-        {!position.historyLoading && position.history.length > 0 && (
-          <div className="max-h-56 overflow-y-auto">
-            {position.history.map((p) => {
-              const isPicked = position.pickedPrice === p.close;
-              return (
-                <button
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-input/40",
-                    isPicked && "bg-foreground/10",
-                  )}
-                  key={p.date}
-                  onClick={() => onPick(p.close)}
-                  type="button"
-                >
-                  <span className="text-foreground">{p.date}</span>
-                  <span className="text-foreground tabular-nums">{priceFmt.format(p.close)}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-// eslint-disable-next-line complexity
 function PositionRow({
   position,
   tickerSearch,
@@ -324,28 +257,6 @@ function PositionRow({
         />
         <span className="text-muted-foreground text-sm">shares</span>
       </div>
-
-      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-        <PricePickerPopover
-          onPick={(price) => onChange({ ...position, pickedPrice: price })}
-          position={position}
-        />
-        <div className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 text-muted-foreground text-xs">
-          <HugeiconsIcon className="size-3.5 shrink-0" icon={Money01Icon} strokeWidth={2} />
-          <span className="shrink-0">Paid</span>
-          <input
-            aria-label="Amount paid (overrides picker)"
-            className="w-16 min-w-0 cursor-text bg-transparent text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50"
-            inputMode="decimal"
-            min={0}
-            onChange={(e) => onChange({ ...position, amountPaid: e.target.value })}
-            placeholder="—"
-            step="0.01"
-            type="number"
-            value={position.amountPaid}
-          />
-        </div>
-      </div>
     </div>
   );
 }
@@ -359,14 +270,12 @@ function buildReadyPositions(positions: readonly PositionDraft[]) {
       if (!(p.ticker.trim() && Number.isFinite(qty) && qty > 0)) {
         return null;
       }
-      const amount = Number(p.amountPaid);
-      const hasAmount = p.amountPaid.trim() !== "" && Number.isFinite(amount) && amount >= 0;
-      const price = hasAmount ? amount / qty : (p.pickedPrice ?? p.latestPrice);
-      if (price === null || !Number.isFinite(price) || price < 0) {
-        return null;
-      }
+      // Price is auto-resolved from the history fetch on (ticker, date). If FMP
+      // returned nothing for the window, fall back to 0 so the holding still
+      // saves — user can edit later.
+      const price = p.pickedPrice ?? p.latestPrice ?? 0;
       return {
-        costBasis: hasAmount ? amount : null,
+        costBasis: null,
         dateAcquired: p.dateAcquired || null,
         institutionPrice: price,
         name: p.name,
