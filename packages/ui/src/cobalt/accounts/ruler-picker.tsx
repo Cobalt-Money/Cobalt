@@ -130,13 +130,7 @@ export function RulerPicker({
   };
 
   return (
-    <div
-      className={cn(
-        "relative rounded-2xl border border-foreground/10 bg-background py-4 shadow-sm",
-        className,
-      )}
-      ref={wrapperRef}
-    >
+    <div className={cn("relative py-2", className)} ref={wrapperRef}>
       {/* Center indicator */}
       <div
         aria-hidden
