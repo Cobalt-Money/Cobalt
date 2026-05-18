@@ -450,7 +450,6 @@ function CommandMenuDialog({
         costBasis: number | null;
         dateAcquired: string | null;
       }[];
-      cashSleeve?: number;
     }) => {
       for (const p of values.positions) {
         try {
@@ -471,19 +470,6 @@ function CommandMenuDialog({
         } catch (error) {
           console.error("Failed to post manual holding", p.ticker, error);
           cobaltToast.error(`Couldn't save ${p.ticker}.`);
-        }
-      }
-      if (values.cashSleeve !== undefined && values.cashSleeve > 0) {
-        try {
-          const res = await brokerageApi["manual-cash-sleeve"].$put({
-            json: { accountId: values.accountId, amount: values.cashSleeve },
-          });
-          if (!res.ok) {
-            cobaltToast.error("Couldn't save uninvested cash.");
-          }
-        } catch (error) {
-          console.error("Failed to set manual cash sleeve", error);
-          cobaltToast.error("Couldn't save uninvested cash.");
         }
       }
     },

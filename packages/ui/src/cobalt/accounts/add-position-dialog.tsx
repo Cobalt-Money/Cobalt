@@ -1,14 +1,7 @@
 import { Button } from "@cobalt-web/ui/components/button";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
-import { cn } from "@cobalt-web/ui/lib/utils";
-import {
-  Add01Icon,
-  BankIcon,
-  Calendar03Icon,
-  Cancel01Icon,
-  Coins01Icon,
-} from "@hugeicons/core-free-icons";
+import { Add01Icon, BankIcon, Calendar03Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -35,7 +28,6 @@ export interface AddPositionFormValues {
     costBasis: number | null;
     dateAcquired: string | null;
   }[];
-  cashSleeve?: number;
 }
 
 export interface AddPositionFormProps {
@@ -299,7 +291,6 @@ export function AddPositionForm({
 }: AddPositionFormProps) {
   const [accountId, setAccountId] = useState<string>(initialAccountId ?? accounts[0]?.id ?? "");
   const [positions, setPositions] = useState<PositionDraft[]>(() => [emptyPosition()]);
-  const [cashAmount, setCashAmount] = useState("");
 
   useEffect(() => {
     if (!accountId && accounts.length > 0) {
@@ -348,22 +339,15 @@ export function AddPositionForm({
     }
   }, [positions, onLoadHistory]);
 
-  const parsedCash = cashAmount.trim() === "" ? 0 : Number(cashAmount);
-  const validCash = Number.isFinite(parsedCash) && parsedCash >= 0;
   const readyPositions = buildReadyPositions(positions);
-  const canSubmit =
-    !submitting && accountId !== "" && validCash && (readyPositions.length > 0 || parsedCash > 0);
+  const canSubmit = !submitting && accountId !== "" && readyPositions.length > 0;
   const selectedAccount = accounts.find((a) => a.id === accountId);
 
   const handleSubmit = () => {
     if (!canSubmit) {
       return;
     }
-    onSubmit({
-      accountId,
-      cashSleeve: parsedCash > 0 ? parsedCash : undefined,
-      positions: readyPositions,
-    });
+    onSubmit({ accountId, positions: readyPositions });
   };
 
   return (
@@ -423,29 +407,6 @@ export function AddPositionForm({
           <HugeiconsIcon className="size-3.5 shrink-0" icon={Add01Icon} strokeWidth={2} />
           Add position
         </button>
-
-        <div
-          className={cn(
-            "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs",
-            cashAmount.trim() !== "" && parsedCash > 0
-              ? "border-foreground/15 bg-input/40 text-foreground"
-              : "border-foreground/15 bg-foreground/5 text-muted-foreground",
-          )}
-        >
-          <HugeiconsIcon className="size-3.5 shrink-0" icon={Coins01Icon} strokeWidth={2} />
-          <span className="shrink-0">Cash</span>
-          <input
-            aria-label="Uninvested cash"
-            className="w-16 min-w-0 cursor-text bg-transparent text-right tabular-nums outline-none placeholder:text-muted-foreground/50"
-            inputMode="decimal"
-            min={0}
-            onChange={(e) => setCashAmount(e.target.value)}
-            placeholder="—"
-            step="0.01"
-            type="number"
-            value={cashAmount}
-          />
-        </div>
       </div>
 
       <div className="mt-2 flex justify-end">
