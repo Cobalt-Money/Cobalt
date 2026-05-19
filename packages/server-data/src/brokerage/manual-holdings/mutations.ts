@@ -6,7 +6,11 @@ import { security } from "@cobalt-web/db/schema/accounts/investments/security";
 import { and, eq, sql } from "drizzle-orm";
 
 import { ApiError } from "../../_shared/api-error.js";
-import type { CreateManualHoldingBody, UpdateManualHoldingBody } from "./schemas.js";
+import type {
+  CreateManualHoldingBody,
+  SellManualHoldingBody,
+  UpdateManualHoldingBody,
+} from "./schemas.js";
 
 const MANUAL_SOURCE = "manual" as const;
 const CASH_TICKER = "CASH";
@@ -294,6 +298,87 @@ export async function deleteManualHolding(userId: string, holdingId: string): Pr
   const existing = await getOwnedHolding(holdingId, userId);
   await db.delete(holding).where(eq(holding.id, holdingId));
   await recomputeAccountBalance(existing.accountId);
+}
+
+/**
+ * Record a SELL against a manual holding:
+ *  - Validates sellQuantity ≤ existing quantity (server-side anti-oversell).
+ *  - Decrements quantity; reduces costBasis proportionally so averagePrice
+ *    stays constant for the remaining lot (average-cost method).
+ *  - Refreshes institutionPrice + institutionValue to reflect the sale price
+ *    (a recent market reference for the row).
+ *  - Deletes the holding row when quantity hits 0.
+ *  - Inserts a SELL investmentActivity row (amount = sellQty × sellPrice).
+ *  - Recomputes balance.current.
+ *
+ * Realized P&L is NOT stored explicitly — it's derivable from the SELL row
+ * (sellPrice) vs the holding's averagePrice at sale time, but recording it
+ * separately is deferred to a future schema column.
+ */
+// eslint-disable-next-line complexity
+export async function sellManualHolding(
+  userId: string,
+  input: SellManualHoldingBody,
+): Promise<void> {
+  if (!Number.isFinite(input.sellQuantity) || input.sellQuantity <= 0) {
+    throw new ApiError(400, "invalid_quantity", "Sell quantity must be > 0");
+  }
+  if (!Number.isFinite(input.sellPrice) || input.sellPrice < 0) {
+    throw new ApiError(400, "invalid_price", "Sell price must be ≥ 0");
+  }
+  const owned = await getOwnedHolding(input.holdingId, userId);
+  const current = await db.query.holding.findFirst({
+    columns: { averagePrice: true, costBasis: true, quantity: true },
+    where: { id: { eq: input.holdingId } },
+  });
+  if (!current) {
+    throw new ApiError(404, "holding_not_found", "Holding not found");
+  }
+
+  const prevQty = Number(current.quantity);
+  if (input.sellQuantity > prevQty) {
+    throw new ApiError(400, "oversell", `Cannot sell ${input.sellQuantity} — only ${prevQty} held`);
+  }
+  const avgPrice = Number(current.averagePrice ?? "0");
+  const prevCost = Number(current.costBasis ?? "0");
+  const newQty = prevQty - input.sellQuantity;
+  // Average-cost method — costBasis shrinks by avgPrice × sellQty so the
+  // per-share average stays the same on whatever's left.
+  const newCost = Math.max(0, prevCost - avgPrice * input.sellQuantity);
+
+  // eslint-disable-next-line unicorn/prefer-ternary
+  if (newQty === 0) {
+    await db.delete(holding).where(eq(holding.id, input.holdingId));
+  } else {
+    await db
+      .update(holding)
+      .set({
+        costBasis: newCost.toFixed(4),
+        institutionPrice: input.sellPrice.toFixed(10),
+        institutionPriceAsOf: input.soldAt ?? null,
+        institutionValue: (newQty * input.sellPrice).toFixed(4),
+        lastSyncAt: new Date(),
+        quantity: newQty.toFixed(10),
+        updatedAt: new Date(),
+      })
+      .where(eq(holding.id, input.holdingId));
+  }
+
+  const soldAt = input.soldAt ?? new Date().toISOString().slice(0, 10);
+  await db.insert(investmentActivity).values({
+    accountId: owned.accountId,
+    amount: (input.sellQuantity * input.sellPrice).toFixed(4),
+    date: soldAt,
+    name: "Sell",
+    price: input.sellPrice.toFixed(10),
+    quantity: input.sellQuantity.toFixed(10),
+    securityId: owned.securityId,
+    source: MANUAL_SOURCE,
+    type: "SELL",
+    userId,
+  });
+
+  await recomputeAccountBalance(owned.accountId);
 }
 
 /**

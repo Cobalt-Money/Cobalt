@@ -46,8 +46,21 @@ export const manualHoldingCreatedSchema = z
   })
   .openapi("ManualHoldingCreated");
 
+export const sellManualHoldingBodySchema = z
+  .object({
+    holdingId: z.uuid(),
+    sellPrice: z.number().nonnegative(),
+    sellQuantity: z.number().positive(),
+    soldAt: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+  })
+  .openapi("SellManualHoldingBody");
+
 export const okSchema = z.object({ ok: z.literal(true) }).openapi("Ok");
 
 export type CreateManualHoldingBody = z.infer<typeof createManualHoldingBodySchema>;
 export type UpdateManualHoldingBody = z.infer<typeof updateManualHoldingBodySchema>;
 export type SetManualCashSleeveBody = z.infer<typeof setManualCashSleeveBodySchema>;
+export type SellManualHoldingBody = z.infer<typeof sellManualHoldingBodySchema>;

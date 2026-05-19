@@ -3,6 +3,7 @@ import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-a
 import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
 import { AddManualAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-manual-account-dialog";
 import { AddPositionForm } from "@cobalt-web/ui/cobalt/accounts/add-position-dialog";
+import { SellPositionForm } from "@cobalt-web/ui/cobalt/accounts/sell-position-dialog";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { AddTransactionForm } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
 import type { ExportFormat } from "@cobalt-web/ui/cobalt/transactions/lib/export";
@@ -245,6 +246,7 @@ function isFormPage(activePage: string | undefined): boolean {
     activePage === "link-or-manual" ||
     activePage === "add-transaction" ||
     activePage === "add-position" ||
+    activePage === "sell-position" ||
     activePage === "add-tag" ||
     activePage === "manage-tags"
   );
@@ -357,6 +359,7 @@ function CommandMenuDialog({
   const inLinkOrManual = activePage === "link-or-manual";
   const inAddTransaction = activePage === "add-transaction";
   const inAddPosition = activePage === "add-position";
+  const inSellPosition = activePage === "sell-position";
   const inAddTag = activePage === "add-tag";
   const inManageTags = activePage === "manage-tags";
   const inBulkActions = activePage === "bulk-actions";
@@ -459,6 +462,30 @@ function CommandMenuDialog({
       })),
     [manualInvestmentAccounts],
   );
+  /** All manual holdings across the user's manual investment accounts — drives the Sell flow's picker. */
+  const [allManualPositions] = useZeroQuery(queries.brokerage.positions({ source: "manual" }));
+  const sellableHoldings = useMemo(
+    () =>
+      allManualPositions
+        .map((h) => {
+          const acct = manualInvestmentAccounts.find((a) => a.id === h.accountId);
+          const ticker = h.security?.tickerSymbol ?? null;
+          const qty = Number(h.quantity);
+          if (!(acct && ticker) || qty <= 0) {
+            return null;
+          }
+          return {
+            accountId: acct.id,
+            accountName: acct.name ?? "Account",
+            holdingId: h.id,
+            name: h.security?.name ?? null,
+            quantity: qty,
+            ticker,
+          };
+        })
+        .filter((h): h is NonNullable<typeof h> => h !== null),
+    [allManualPositions, manualInvestmentAccounts],
+  );
   const zero = useZero();
   const submitAddPosition = useCallback(
     (values: {
@@ -500,6 +527,27 @@ function CommandMenuDialog({
       }
     },
     [zero],
+  );
+  const submitSellPosition = useCallback(
+    (values: { holdingId: string; sellQuantity: number; sellPrice: number; soldAt: string }) => {
+      const holding = sellableHoldings.find((h) => h.holdingId === values.holdingId);
+      const { server } = zero.mutate(mutators.brokerage.sellManualHolding(values));
+      if (holding) {
+        cobaltToast.positionSold(holding.ticker, values.sellQuantity);
+      }
+      void (async () => {
+        try {
+          const result = await server;
+          if (result.type === "error") {
+            cobaltToast.error(result.error.message || "Couldn't record sale.");
+          }
+        } catch (error) {
+          console.error("Failed to record sale", error);
+          cobaltToast.error("Couldn't record sale.");
+        }
+      })();
+    },
+    [sellableHoldings, zero],
   );
   const { isPending: submittingAddTag, submit: submitAddTagInner } = useAddTagSubmit();
   const submitAddTag = useCallback(
@@ -616,6 +664,11 @@ function CommandMenuDialog({
   const enterAddPosition = useCallback(() => {
     setSearch("");
     setPages((p) => [...p, "add-position"]);
+  }, [setPages, setSearch]);
+
+  const enterSellPosition = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "sell-position"]);
   }, [setPages, setSearch]);
 
   const enterAddTag = useCallback(
@@ -947,6 +1000,12 @@ function CommandMenuDialog({
       label: "Add a Position",
     },
     {
+      handleSelect: enterSellPosition,
+      icon: AppleStocksIcon,
+      keywords: ["sell", "close", "exit", "holding", "share", "stock"],
+      label: "Sell a Position",
+    },
+    {
       handleSelect: () => {
         handleOpenChange(false);
         openImportWizard();
@@ -1063,6 +1122,7 @@ function CommandMenuDialog({
           inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl",
           inAddTransaction && "sm:max-w-3xl",
           inAddPosition && "sm:max-w-3xl",
+          inSellPosition && "sm:max-w-3xl",
           inAddManualAccount && "sm:max-w-3xl",
           inLinkOrManual && "sm:max-w-xl",
           inAddTag && "sm:max-w-lg",
@@ -1221,6 +1281,22 @@ function CommandMenuDialog({
                   })();
                 }}
                 tickerSearch={positionTickerSearch}
+              />
+            </div>
+          )}
+          {inSellPosition && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-foreground text-lg leading-none">
+                <Icon className="shrink-0" icon={AppleStocksIcon} size="lg" />
+                Sell a position
+              </h2>
+              <SellPositionForm
+                holdings={sellableHoldings}
+                onBackspaceWhenEmpty={popPage}
+                onSubmit={(values) => {
+                  submitSellPosition(values);
+                  handleOpenChange(false);
+                }}
               />
             </div>
           )}

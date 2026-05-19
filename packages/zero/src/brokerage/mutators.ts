@@ -29,6 +29,20 @@ const setCashSleeveSchema = z.object({
   amount: z.number().nonnegative(),
 });
 
+const sellManualHoldingSchema = z.object({
+  holdingId: z.string().uuid(),
+  sellPrice: z.number().nonnegative(),
+  sellQuantity: z.number().positive(),
+  soldAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+});
+
+const deleteManualHoldingSchema = z.object({
+  holdingId: z.string().uuid(),
+});
+
 async function assertOwnsManualInvestmentAccount(
   tx: Transaction<Schema>,
   ctx: Context,
@@ -103,6 +117,7 @@ async function recomputeAccountBalance(tx: Transaction<Schema>, accountId: strin
   }
 }
 
+// eslint-disable-next-line sort-keys
 export const brokerageMutators = {
   /**
    * Add a manual holding + log a BUY investmentActivity row + recompute the
@@ -244,5 +259,76 @@ export const brokerageMutators = {
     }
 
     await recomputeAccountBalance(tx, args.accountId);
+  }),
+
+  /**
+   * SELL against an existing manual holding. Decrements quantity + cost
+   * basis (average-cost method), refreshes institutionPrice to the sale
+   * price, deletes the row when quantity hits 0, and logs a SELL activity
+   * row. Server-side validation rejects oversells.
+   */
+  // eslint-disable-next-line complexity
+  sellManualHolding: defineMutator(sellManualHoldingSchema, async ({ args, ctx, tx }) => {
+    if (!ctx?.userId) {
+      throw new Error("Unauthorized");
+    }
+    const existing = await tx.run(zql.holding.where("id", args.holdingId).one());
+    if (!existing || existing.userId !== ctx.userId || existing.source !== "manual") {
+      throw new Error("Holding not found");
+    }
+    const prevQty = Number(existing.quantity);
+    if (args.sellQuantity > prevQty) {
+      throw new Error(`Cannot sell ${args.sellQuantity} — only ${prevQty} held`);
+    }
+    const avgPrice = Number(existing.averagePrice ?? 0);
+    const prevCost = Number(existing.costBasis ?? 0);
+    const newQty = prevQty - args.sellQuantity;
+    const newCost = Math.max(0, prevCost - avgPrice * args.sellQuantity);
+    const soldAtIso = args.soldAt ?? new Date().toISOString().slice(0, 10);
+    const soldAtMs = Date.parse(`${soldAtIso}T00:00:00Z`);
+
+    // eslint-disable-next-line unicorn/prefer-ternary
+    if (newQty === 0) {
+      await tx.mutate.holding.delete({ id: existing.id });
+    } else {
+      await tx.mutate.holding.update({
+        costBasis: newCost,
+        id: existing.id,
+        institutionPrice: args.sellPrice,
+        institutionPriceAsOf: soldAtMs,
+        institutionValue: newQty * args.sellPrice,
+        lastSyncAt: Date.now(),
+        quantity: newQty,
+      });
+    }
+
+    await tx.mutate.investmentActivity.insert({
+      accountId: existing.accountId,
+      amount: args.sellQuantity * args.sellPrice,
+      date: soldAtMs,
+      id: crypto.randomUUID(),
+      name: "Sell",
+      price: args.sellPrice,
+      quantity: args.sellQuantity,
+      securityId: existing.securityId,
+      source: "manual",
+      type: "SELL",
+      userId: ctx.userId,
+    });
+
+    await recomputeAccountBalance(tx, existing.accountId);
+  }),
+
+  /** Delete a manual holding row outright. Activity history rows stay. */
+  deleteManualHolding: defineMutator(deleteManualHoldingSchema, async ({ args, ctx, tx }) => {
+    if (!ctx?.userId) {
+      throw new Error("Unauthorized");
+    }
+    const existing = await tx.run(zql.holding.where("id", args.holdingId).one());
+    if (!existing || existing.userId !== ctx.userId || existing.source !== "manual") {
+      throw new Error("Holding not found");
+    }
+    await tx.mutate.holding.delete({ id: existing.id });
+    await recomputeAccountBalance(tx, existing.accountId);
   }),
 };

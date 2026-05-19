@@ -89,6 +89,21 @@ export const cobaltToast = {
     });
   },
 
+  /** Manual brokerage position sold. */
+  positionSold(ticker: string, quantity: number) {
+    return toast("Position sold", {
+      description: (
+        <span className="flex items-center gap-2">
+          <TickerLogo size={16} symbol={ticker} />
+          <span>
+            {quantity} {ticker}
+          </span>
+        </span>
+      ),
+      icon: POSTED_ICON,
+    });
+  },
+
   /** Manual transaction created. */
   transactionAdded(name: string) {
     return toast("Transaction added", {

@@ -1,0 +1,267 @@
+import { Button } from "@cobalt-web/ui/components/button";
+import { Calendar } from "@cobalt-web/ui/components/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
+import { cn } from "@cobalt-web/ui/lib/utils";
+import { Calendar03Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useEffect, useMemo, useState } from "react";
+
+import { TickerLogo } from "../brokerage/ticker-logo";
+import { CobaltSelectPopover } from "../select-popover";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+export interface SellableHolding {
+  holdingId: string;
+  ticker: string;
+  /** Display name (security.name); falls back to ticker. */
+  name: string | null;
+  /** Total shares currently held — submission cannot exceed this. */
+  quantity: number;
+  /** Account this holding belongs to. */
+  accountId: string;
+  accountName: string;
+}
+
+export interface SellPositionFormValues {
+  holdingId: string;
+  sellQuantity: number;
+  sellPrice: number;
+  soldAt: string;
+}
+
+export interface SellPositionFormProps {
+  holdings: readonly SellableHolding[];
+  onSubmit: (values: SellPositionFormValues) => void;
+  submitting?: boolean;
+  submitLabel?: string;
+  onBackspaceWhenEmpty?: () => void;
+  initialHoldingId?: string;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const priceFmt = new Intl.NumberFormat("en-US", {
+  currency: "USD",
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+  style: "currency",
+});
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isoToDate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
+}
+
+function dateToIso(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatDateLabel(iso: string): string {
+  const d = isoToDate(iso);
+  if (Number.isNaN(d.getTime())) {
+    return iso;
+  }
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+}
+
+// ── Form ──────────────────────────────────────────────────────────────────────
+
+// eslint-disable-next-line complexity
+export function SellPositionForm({
+  holdings,
+  onSubmit,
+  submitting = false,
+  submitLabel = "Sell",
+  onBackspaceWhenEmpty,
+  initialHoldingId,
+}: SellPositionFormProps) {
+  const [holdingId, setHoldingId] = useState<string>(
+    initialHoldingId ?? holdings[0]?.holdingId ?? "",
+  );
+  const [sharesText, setSharesText] = useState("");
+  const [priceText, setPriceText] = useState("");
+  const [soldAt, setSoldAt] = useState<string>(todayIso());
+
+  useEffect(() => {
+    if (!holdingId && holdings.length > 0) {
+      setHoldingId(holdings[0]?.holdingId ?? "");
+    }
+  }, [holdingId, holdings]);
+
+  const selected = holdings.find((h) => h.holdingId === holdingId) ?? null;
+  const maxQty = selected?.quantity ?? 0;
+  const parsedShares = sharesText.trim() === "" ? 0 : Number(sharesText);
+  const validShares = Number.isFinite(parsedShares) && parsedShares > 0 && parsedShares <= maxQty;
+  const parsedPrice = priceText.trim() === "" ? 0 : Number(priceText);
+  const validPrice = Number.isFinite(parsedPrice) && parsedPrice >= 0;
+
+  const oversell = parsedShares > maxQty && maxQty > 0;
+  const canSubmit = !submitting && selected !== null && validShares && validPrice;
+  const selectedDate = useMemo(() => isoToDate(soldAt), [soldAt]);
+
+  const handleSubmit = () => {
+    if (!(canSubmit && selected)) {
+      return;
+    }
+    onSubmit({
+      holdingId: selected.holdingId,
+      sellPrice: parsedPrice,
+      sellQuantity: parsedShares,
+      soldAt,
+    });
+  };
+
+  return (
+    <div
+      className="flex flex-col gap-3"
+      onKeyDown={(e) => {
+        if (e.key === "Backspace" && sharesText === "" && onBackspaceWhenEmpty) {
+          onBackspaceWhenEmpty();
+        }
+      }}
+    >
+      <div className="flex items-center gap-3">
+        {selected ? <TickerLogo className="shrink-0" size={28} symbol={selected.ticker} /> : null}
+        <CobaltSelectPopover
+          emptyText="No manual holdings to sell"
+          itemKey={(h: SellableHolding) => h.holdingId}
+          itemMatch={(h, q) =>
+            h.ticker.toLowerCase().includes(q) || (h.name ?? "").toLowerCase().includes(q)
+          }
+          items={holdings}
+          onSelect={(h: SellableHolding) => {
+            setHoldingId(h.holdingId);
+            setSharesText("");
+          }}
+          renderIcon={(h: SellableHolding) => (
+            <TickerLogo className="shrink-0" size={20} symbol={h.ticker} />
+          )}
+          renderLabel={(h: SellableHolding) => (
+            <span className="flex w-full items-center justify-between gap-2">
+              <span>
+                <span className="font-medium text-foreground">{h.ticker}</span>
+                <span className="ml-2 text-muted-foreground text-xs">{h.accountName}</span>
+              </span>
+              <span className="text-muted-foreground text-xs tabular-nums">
+                {h.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+              </span>
+            </span>
+          )}
+          searchPlaceholder="Search ticker…"
+          selectedKey={holdingId}
+          trigger={
+            <button
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-transparent px-3 font-semibold text-2xl text-foreground tracking-tight transition-colors hover:bg-foreground/[0.07]"
+              type="button"
+            >
+              {selected ? selected.ticker : "Pick a position"}
+            </button>
+          }
+        />
+        <Popover>
+          <PopoverTrigger
+            render={
+              <button
+                className="ml-auto flex shrink-0 items-center gap-2 rounded-md px-1 py-1 text-foreground transition-colors hover:bg-input/30"
+                type="button"
+              >
+                <HugeiconsIcon
+                  className="size-4 text-muted-foreground"
+                  icon={Calendar03Icon}
+                  strokeWidth={2}
+                />
+                {formatDateLabel(soldAt)}
+              </button>
+            }
+          />
+          <PopoverContent align="end" className="w-auto p-2">
+            <Calendar
+              mode="single"
+              onSelect={(d) => {
+                if (d) {
+                  setSoldAt(dateToIso(d));
+                }
+              }}
+              selected={selectedDate}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      <div className="flex items-baseline gap-1.5">
+        <input
+          aria-label="Shares to sell"
+          className="cursor-text bg-transparent text-foreground text-lg tabular-nums outline-none placeholder:text-muted-foreground/50 [field-sizing:content]"
+          inputMode="decimal"
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "" || /^\d*\.?\d*$/.test(v)) {
+              setSharesText(v);
+            }
+          }}
+          placeholder="# of shares"
+          size={sharesText.trim() === "" ? 12 : Math.max(1, sharesText.length)}
+          type="text"
+          value={sharesText}
+        />
+        {sharesText.trim() === "" ? null : (
+          <span className="text-muted-foreground text-sm">
+            shares ·{" "}
+            <span className={cn(oversell && "text-destructive")}>
+              {maxQty.toLocaleString(undefined, { maximumFractionDigits: 4 })} available
+            </span>
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-baseline gap-1">
+        <span
+          className={cn(
+            "text-lg tabular-nums",
+            priceText.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
+          )}
+        >
+          $
+        </span>
+        <input
+          aria-label="Sell price per share"
+          className="cursor-text bg-transparent text-foreground text-lg tabular-nums outline-none placeholder:text-muted-foreground/50 [field-sizing:content]"
+          inputMode="decimal"
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "" || /^\d*\.?\d*$/.test(v)) {
+              setPriceText(v);
+            }
+          }}
+          placeholder="Sell price / share"
+          size={priceText.trim() === "" ? 18 : Math.max(1, priceText.length)}
+          type="text"
+          value={priceText}
+        />
+      </div>
+
+      {validShares && validPrice ? (
+        <div className="text-muted-foreground text-xs">
+          Proceeds ·{" "}
+          <span className="text-foreground tabular-nums">
+            {priceFmt.format(parsedShares * parsedPrice)}
+          </span>
+        </div>
+      ) : null}
+
+      <div className="mt-2 flex justify-end">
+        <Button disabled={!canSubmit} onClick={handleSubmit} type="button">
+          {submitting ? "Selling…" : submitLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}

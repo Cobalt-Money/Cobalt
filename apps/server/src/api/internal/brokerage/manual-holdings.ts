@@ -2,6 +2,7 @@ import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/sch
 import {
   createManualHolding,
   deleteManualHolding,
+  sellManualHolding,
   setManualCashSleeve,
   updateManualHolding,
 } from "@cobalt-web/server-data/brokerage/manual-holdings/mutations";
@@ -9,6 +10,7 @@ import {
   createManualHoldingBodySchema,
   manualHoldingCreatedSchema,
   okSchema,
+  sellManualHoldingBodySchema,
   setManualCashSleeveBodySchema,
   updateManualHoldingBodySchema,
   updateManualHoldingParamsSchema,
@@ -80,6 +82,28 @@ const deleteRouteDef = createRoute({
   tags: ["Brokerage"],
 });
 
+const sellRouteDef = createRoute({
+  method: "post",
+  middleware: [requirePaidUser] as const,
+  path: "/manual-holdings/sell",
+  request: {
+    body: {
+      content: { "application/json": { schema: sellManualHoldingBodySchema } },
+      required: true,
+    },
+  },
+  responses: {
+    200: jsonContent(okSchema, "Sell recorded"),
+    400: jsonContent(errorResponseWithCodeSchema, "Invalid input or oversell"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Holding not found"),
+    422: validationErrorResponse(sellManualHoldingBodySchema),
+  },
+  summary: "Record a SELL against a manual holding",
+  tags: ["Brokerage"],
+});
+
 const cashSleeveRouteDef = createRoute({
   method: "put",
   middleware: [requirePaidUser] as const,
@@ -117,6 +141,11 @@ export const manualHoldingsRouter = createApp()
   .openapi(deleteRouteDef, async (c) => {
     const { holdingId } = c.req.valid("param");
     await deleteManualHolding(c.var.user.id, holdingId);
+    return c.json({ ok: true as const }, 200);
+  })
+  .openapi(sellRouteDef, async (c) => {
+    const body = c.req.valid("json");
+    await sellManualHolding(c.var.user.id, body);
     return c.json({ ok: true as const }, 200);
   })
   .openapi(cashSleeveRouteDef, async (c) => {

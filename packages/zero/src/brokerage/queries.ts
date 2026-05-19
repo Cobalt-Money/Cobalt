@@ -12,7 +12,7 @@ const SNAPSHOT_RANGE = z.enum(["1W", "1M", "1Y", "All"]);
 const RANGE_DAYS: Record<"1W" | "1M" | "1Y", number> = { "1M": 30, "1W": 7, "1Y": 365 };
 
 const SOURCE_FILTER = z
-  .object({ source: z.enum(["plaid", "snaptrade", "all"]).optional() })
+  .object({ source: z.enum(["plaid", "snaptrade", "manual", "all"]).optional() })
   .optional();
 
 function snapshotCutoff(range: z.infer<typeof SNAPSHOT_RANGE> | undefined): number | null {
