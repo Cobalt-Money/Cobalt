@@ -38,7 +38,7 @@ export const transactionLockedFieldsSchema = z
   .array(z.enum(LOCK_KEYS))
   .openapi("TransactionLockedFields");
 
-/** `transaction` row fields exposed on the list (see `getUserTransactions`). */
+/** `transaction` row fields exposed on the list (see `getTransactions`). */
 const transactionListItemRowSchema = createSelectSchema(transaction, {
   ...transactionJsonbSelectRefinements,
   lockedFields: transactionLockedFieldsSchema,
@@ -95,7 +95,7 @@ const transactionCategoryShape = categoryRowSlice
 
 export const transactionCategorySchema = transactionCategoryShape.nullable();
 
-/** List transaction DTO: picked `transaction` columns + joined account / institution (see `getUserTransactions`). */
+/** List transaction DTO: picked `transaction` columns + joined account / institution (see `getTransactions`). */
 export const transactionListItemSchema = transactionListItemRowSchema
   .pick({
     authorizedDate: true,

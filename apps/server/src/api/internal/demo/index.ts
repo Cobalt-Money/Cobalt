@@ -1,11 +1,9 @@
 import { auth } from "@cobalt-web/auth";
-import { db } from "@cobalt-web/db";
 import { seedDemoUser } from "@cobalt-web/db/demo/seed-demo-user";
-import { user as userTable } from "@cobalt-web/db/schema/users/auth/auth";
 import { env } from "@cobalt-web/env/server";
 import type { AppEnv } from "@cobalt-web/server-data/types";
+import { deleteUser } from "@cobalt-web/server-data/user/mutations";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { eq } from "drizzle-orm";
 import { deleteCookie, getSignedCookie, setSignedCookie } from "hono/cookie";
 
 import { requireAuth } from "../middleware.js";
@@ -37,7 +35,7 @@ async function createDemoSession(req: Request): Promise<DemoSessionResult> {
     throw new Error("signInAnonymous returned no user id");
   }
 
-  await seedDemoUser(db, userId);
+  await seedDemoUser(userId);
 
   return {
     authToken: response.headers.get("set-auth-token"),
@@ -143,7 +141,7 @@ export const demoRouter = new OpenAPIHono<AppEnv>()
     // Delete the user row first — cascades sessions + all owned data — so
     // even if a stale Better Auth cookie cache returns the user briefly, the
     // next getSession DB lookup misses.
-    await db.delete(userTable).where(eq(userTable.id, currentUser.id));
+    await deleteUser(currentUser.id);
 
     // Forward Better Auth's own clear-cookie headers from signOut rather than
     // hand-rolling the cookie name list. Defensive: if signOut throws (likely

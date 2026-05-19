@@ -1,7 +1,7 @@
-import { db } from "@cobalt-web/db";
 import { env } from "@cobalt-web/env/server";
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { upsertMessage } from "@cobalt-web/server-data/chat/mutations";
+import { getChat } from "@cobalt-web/server-data/chat/queries";
 import { getUserLimits } from "@cobalt-web/server-data/subscriptions";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import {
@@ -97,13 +97,8 @@ export const chatStreamRouter = new Hono<AppEnv>()
       throw new ApiError(400, "messages_required", "messages history is required");
     }
 
-    const chat = await db.query.chats.findFirst({
-      where: { chatId: { eq: chatId }, userId: { eq: userId } },
-    });
-    if (!chat) {
-      // Single neutral code — never differentiate missing vs unowned.
-      throw new ApiError(404, "chat_not_found", "Chat not found");
-    }
+    // Single neutral 404 — never differentiate missing vs unowned.
+    const chat = await getChat(userId, chatId);
 
     const { baseModel: loggedBaseModel, useReasoning: loggedUseReasoning } =
       parseModelWithReasoning(model ?? env.AI_GATEWAY_MODEL ?? "(default)");

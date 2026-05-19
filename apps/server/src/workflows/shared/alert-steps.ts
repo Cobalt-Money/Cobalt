@@ -1,29 +1,16 @@
-import { db } from "@cobalt-web/db";
-import { userAlerts } from "@cobalt-web/db/schema/users/alerts";
 import type { AlertSource, AlertType } from "@cobalt-web/db/schema/users/alerts";
-import { and, eq, isNull } from "drizzle-orm";
+import { insertAlert, resolveAlerts } from "@cobalt-web/server-data/alerts/mutations";
 
 export async function insertAlertStep(params: {
-  userId: string;
-  type: AlertType;
+  metadata?: { institutionLogo?: string | null };
   source: AlertSource;
   sourceId: string;
-  metadata?: { institutionLogo?: string | null };
+  type: AlertType;
+  userId: string;
 }): Promise<{ inserted: boolean }> {
   "use step";
 
-  const result = await db
-    .insert(userAlerts)
-    .values({
-      metadata: params.metadata ?? null,
-      source: params.source,
-      sourceId: params.sourceId,
-      type: params.type,
-      userId: params.userId,
-    })
-    .onConflictDoNothing();
-
-  return { inserted: (result.rowCount ?? 0) > 0 };
+  return await insertAlert(params);
 }
 
 export async function resolveAlertsStep(params: {
@@ -32,16 +19,5 @@ export async function resolveAlertsStep(params: {
 }): Promise<{ resolvedCount: number }> {
   "use step";
 
-  const result = await db
-    .update(userAlerts)
-    .set({ resolvedAt: new Date() })
-    .where(
-      and(
-        eq(userAlerts.source, params.source),
-        eq(userAlerts.sourceId, params.sourceId),
-        isNull(userAlerts.resolvedAt),
-      ),
-    );
-
-  return { resolvedCount: result.rowCount ?? 0 };
+  return await resolveAlerts(params);
 }

@@ -1,6 +1,7 @@
 import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { balance } from "@cobalt-web/db/schema/accounts/balance";
+import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { ALERT_SOURCES, userAlerts } from "@cobalt-web/db/schema/users/alerts";
 import { and, eq, isNull, sql } from "drizzle-orm";
@@ -188,6 +189,81 @@ export async function syncNewAccountsForItem(
     .update(plaidConnection)
     .set({ newAccountsAvailable: false, updatedAt: new Date() })
     .where(eq(plaidConnection.plaidItemId, plaidItemId));
+}
+
+/**
+ * Upsert a single Plaid account onto `financial_account`. Conflicts on
+ * `(source, external_id)` and preserves `persistentAccountId` if already set
+ * (coalesce-style — Plaid may omit it on partial updates).
+ */
+export async function upsertPlaidAccount(
+  connectionId: string,
+  userId: string,
+  account: AccountBase,
+): Promise<void> {
+  const toInsert = financialAccountInsertFromPlaid(connectionId, userId);
+  await db
+    .insert(financialAccount)
+    .values(toInsert(account))
+    .onConflictDoUpdate({
+      set: {
+        persistentAccountId: sql`coalesce(${financialAccount.persistentAccountId}, excluded.persistent_account_id)`,
+        updatedAt: new Date(),
+      },
+      target: [financialAccount.source, financialAccount.externalId],
+      targetWhere: sql`external_id IS NOT NULL`,
+    });
+}
+
+/** Delete a Plaid financial_account row by primary key. */
+export async function deletePlaidAccount(accountId: string): Promise<void> {
+  await db.delete(financialAccount).where(eq(financialAccount.id, accountId));
+}
+
+/**
+ * Re-point snapshot rows from an orphan financial_account to a new one,
+ * skipping any (account, date) pair that already exists on the new account
+ * (the unique index would reject the row anyway).
+ */
+export async function migrateSnapshotsBetweenAccounts(
+  orphanId: string,
+  newId: string,
+  userId: string,
+): Promise<void> {
+  const orphanRows = await db
+    .select({ snapshotDate: snapshot.snapshotDate })
+    .from(snapshot)
+    .where(and(eq(snapshot.userId, userId), eq(snapshot.accountId, orphanId)));
+
+  const newRows = await db
+    .select({ snapshotDate: snapshot.snapshotDate })
+    .from(snapshot)
+    .where(and(eq(snapshot.userId, userId), eq(snapshot.accountId, newId)));
+  const newDates = new Set(newRows.map((r) => r.snapshotDate));
+
+  for (const row of orphanRows) {
+    const date = row.snapshotDate;
+    await (newDates.has(date)
+      ? db
+          .delete(snapshot)
+          .where(
+            and(
+              eq(snapshot.userId, userId),
+              eq(snapshot.accountId, orphanId),
+              eq(snapshot.snapshotDate, date),
+            ),
+          )
+      : db
+          .update(snapshot)
+          .set({ accountId: newId })
+          .where(
+            and(
+              eq(snapshot.userId, userId),
+              eq(snapshot.accountId, orphanId),
+              eq(snapshot.snapshotDate, date),
+            ),
+          ));
+  }
 }
 
 export async function clearItemError(plaidItemId: string, userId: string): Promise<void> {

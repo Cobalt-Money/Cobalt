@@ -1,6 +1,5 @@
 import { bindRoutes, route } from "@cobalt-web/bindings";
 import type { Binding, RouteSpec } from "@cobalt-web/bindings";
-import { db } from "@cobalt-web/db";
 import { getBankAccountById, listAccounts } from "@cobalt-web/server-data/accounts/queries";
 import { accountListQuerySchema } from "@cobalt-web/server-data/accounts/schemas";
 import {
@@ -23,7 +22,10 @@ import { symbolQuerySchema } from "@cobalt-web/server-data/research/schemas";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
 import { balanceSnapshotQuerySchema } from "@cobalt-web/server-data/snapshots/schemas";
 import { patchTransaction } from "@cobalt-web/server-data/transactions/mutations";
-import { getUserTransactions } from "@cobalt-web/server-data/transactions/queries";
+import {
+  assertTransactionOwner,
+  getTransactions,
+} from "@cobalt-web/server-data/transactions/queries";
 import {
   transactionListQuerySchema,
   transactionPatchBodySchema,
@@ -221,20 +223,14 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
   }),
   route({
     description: "List the user's transactions (paginated, filterable).",
-    handler: (userId, args) => getUserTransactions(userId, args),
+    handler: (userId, args) => getTransactions(userId, args),
     name: "transactions_list",
     schema: transactionListQuerySchema,
   }),
   route({
     description: "Patch a transaction the user owns (mutation). Verifies ownership first.",
     handler: async (userId, { patch, transactionId }) => {
-      const owner = await db.query.transaction.findFirst({
-        columns: { id: true },
-        where: { id: { eq: transactionId }, userId: { eq: userId } },
-      });
-      if (!owner) {
-        throw new Error("transaction not found or not owned by user");
-      }
+      await assertTransactionOwner(userId, transactionId);
       await patchTransaction(transactionId, userId, patch);
       return { ok: true };
     },

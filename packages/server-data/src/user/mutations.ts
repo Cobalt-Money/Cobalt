@@ -4,9 +4,33 @@ import { snaptradeClient } from "@cobalt-web/clients/snaptrade";
 import { db } from "@cobalt-web/db";
 import { user } from "@cobalt-web/db/schema/users/auth/auth";
 import { subscription } from "@cobalt-web/db/schema/users/subscriptions/stripe";
-import { eq } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing", "past_due"]);
+
+/**
+ * Deletes the user row only. Cascades to sessions and all owned data via
+ * `onDelete: "cascade"` on user.id. Does NOT clean up external providers
+ * (Plaid, Stripe, SnapTrade) — use `deleteUserAccount` for that.
+ *
+ * Intended for anonymous/demo users with no external resources.
+ */
+export async function deleteUser(userId: string) {
+  await db.delete(user).where(eq(user.id, userId));
+}
+
+/**
+ * Deletes anonymous (demo) users older than `cutoff`. Cascades wipe their
+ * accounts/transactions/holdings via `onDelete: "cascade"` on user.id.
+ * Returns the deleted user IDs for logging.
+ */
+export async function deleteStaleAnonymousUsers(cutoff: Date): Promise<string[]> {
+  const deleted = await db
+    .delete(user)
+    .where(and(eq(user.isAnonymous, true), lt(user.createdAt, cutoff)))
+    .returning({ id: user.id });
+  return deleted.map((r) => r.id);
+}
 
 /** Sets `lastSeenAt` to now for the given user. */
 export async function updateLastSeen(userId: string) {
