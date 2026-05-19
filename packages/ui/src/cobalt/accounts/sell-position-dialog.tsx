@@ -89,6 +89,8 @@ export function SellPositionForm({
   const [sharesText, setSharesText] = useState("");
   const [priceText, setPriceText] = useState("");
   const [soldAt, setSoldAt] = useState<string>(todayIso());
+  /** Whether `sharesText` carries a share count or a dollar amount. */
+  const [entryMode, setEntryMode] = useState<"shares" | "dollars">("shares");
 
   useEffect(() => {
     if (!holdingId && holdings.length > 0) {
@@ -98,12 +100,23 @@ export function SellPositionForm({
 
   const selected = holdings.find((h) => h.holdingId === holdingId) ?? null;
   const maxQty = selected?.quantity ?? 0;
-  const parsedShares = sharesText.trim() === "" ? 0 : Number(sharesText);
-  const validShares = Number.isFinite(parsedShares) && parsedShares > 0 && parsedShares <= maxQty;
   const parsedPrice = priceText.trim() === "" ? 0 : Number(priceText);
   const validPrice = Number.isFinite(parsedPrice) && parsedPrice >= 0;
 
-  const oversell = parsedShares > maxQty && maxQty > 0;
+  // Derive shares + total proceeds from whichever mode the user typed in.
+  const parsedAmount = sharesText.trim() === "" ? 0 : Number(sharesText);
+  const finiteAmount = Number.isFinite(parsedAmount) && parsedAmount > 0;
+  let derivedShares: number;
+  if (entryMode === "dollars") {
+    derivedShares = parsedPrice > 0 ? parsedAmount / parsedPrice : 0;
+  } else {
+    derivedShares = parsedAmount;
+  }
+  const proceeds = derivedShares * parsedPrice;
+  const maxProceeds = maxQty * parsedPrice;
+  const validShares = finiteAmount && derivedShares > 0 && derivedShares <= maxQty;
+  const oversell = derivedShares > maxQty && maxQty > 0;
+
   const canSubmit = !submitting && selected !== null && validShares && validPrice;
   const selectedDate = useMemo(() => isoToDate(soldAt), [soldAt]);
 
@@ -114,7 +127,7 @@ export function SellPositionForm({
     onSubmit({
       holdingId: selected.holdingId,
       sellPrice: parsedPrice,
-      sellQuantity: parsedShares,
+      sellQuantity: derivedShares,
       soldAt,
     });
   };
@@ -196,9 +209,12 @@ export function SellPositionForm({
         </Popover>
       </div>
 
-      <div className="flex items-baseline gap-1.5">
+      <div className="flex items-baseline gap-2">
+        {entryMode === "dollars" ? (
+          <span className="text-lg text-muted-foreground/50 tabular-nums">$</span>
+        ) : null}
         <input
-          aria-label="Shares to sell"
+          aria-label={entryMode === "dollars" ? "Dollar amount to sell" : "Shares to sell"}
           className="cursor-text bg-transparent text-foreground text-lg tabular-nums outline-none placeholder:text-muted-foreground/50 [field-sizing:content]"
           inputMode="decimal"
           onChange={(e) => {
@@ -207,19 +223,49 @@ export function SellPositionForm({
               setSharesText(v);
             }
           }}
-          placeholder="# of shares"
+          placeholder={entryMode === "dollars" ? "amount" : "# of shares"}
           size={sharesText.trim() === "" ? 12 : Math.max(1, sharesText.length)}
           type="text"
           value={sharesText}
         />
         {sharesText.trim() === "" ? null : (
           <span className="text-muted-foreground text-sm">
-            shares ·{" "}
+            {entryMode === "shares" ? "shares" : null}
+            {entryMode === "shares" && parsedPrice > 0 ? " · " : null}
+            {entryMode === "dollars" && derivedShares > 0 ? (
+              <>
+                ≈ {derivedShares.toLocaleString(undefined, { maximumFractionDigits: 4 })} shares
+                ·{" "}
+              </>
+            ) : null}
             <span className={cn(oversell && "text-destructive")}>
               {maxQty.toLocaleString(undefined, { maximumFractionDigits: 4 })} available
+              {entryMode === "dollars" && parsedPrice > 0
+                ? ` (${priceFmt.format(maxProceeds)})`
+                : null}
             </span>
           </span>
         )}
+        <div className="ml-auto flex h-6 shrink-0 rounded-full border border-foreground/15 bg-foreground/[0.03] p-0.5 text-xs">
+          {(["shares", "dollars"] as const).map((m) => (
+            <button
+              className={cn(
+                "rounded-full px-2 transition-colors",
+                entryMode === m
+                  ? "bg-foreground/10 text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+              key={m}
+              onClick={() => {
+                setEntryMode(m);
+                setSharesText("");
+              }}
+              type="button"
+            >
+              {m === "shares" ? "Shares" : "Dollars"}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex items-baseline gap-1">
@@ -251,9 +297,7 @@ export function SellPositionForm({
       {validShares && validPrice ? (
         <div className="text-muted-foreground text-xs">
           Proceeds ·{" "}
-          <span className="text-foreground tabular-nums">
-            {priceFmt.format(parsedShares * parsedPrice)}
-          </span>
+          <span className="text-foreground tabular-nums">{priceFmt.format(proceeds)}</span>
         </div>
       ) : null}
 
