@@ -1,23 +1,11 @@
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
-import type { Row } from "@cobalt-web/zero";
-import { mutators, queries } from "@cobalt-web/zero";
-import { useQuery, useZero } from "@rocicorp/zero/react";
+import { mutators } from "@cobalt-web/zero";
+import type { queries, Row } from "@cobalt-web/zero";
+import { useZero } from "@rocicorp/zero/react";
 import { useCallback } from "react";
 
 export type CategoryRow = Row<typeof queries.categories.list>;
 export type GroupRow = Row<typeof queries.categories.listGroups>;
-
-/** All non-deleted cats incl hidden — settings/management view. */
-export function useAllCategories() {
-  const [data] = useQuery(queries.categories.list({ includeHidden: true }));
-  return { data };
-}
-
-/** All non-deleted groups for the user. */
-export function useCategoryGroups() {
-  const [data] = useQuery(queries.categories.listGroups());
-  return { data };
-}
 
 function fireAndForget(
   server: Promise<{ type: "success" } | { type: "error"; error: { message: string } }>,
