@@ -18,11 +18,13 @@ import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon, ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useEffect, useMemo, useState } from "react";
+import { queries } from "@cobalt-web/zero";
+import { useQuery } from "@rocicorp/zero/react";
+import { useMemo, useState } from "react";
 
 import type { ManageCategoriesCat } from "@cobalt-web/ui/cobalt/transactions/categories/manage-categories-form";
 
-import { useAllCategories, useHideCategory } from "@/hooks/use-categories";
+import { useHideCategory } from "@/hooks/use-categories";
 import { useTransactions } from "@/hooks/use-transactions";
 
 interface Props {
@@ -33,18 +35,32 @@ interface Props {
 
 export function HideCategoryDialog({ open, onOpenChange, category }: Props) {
   const hide = useHideCategory();
-  const { data: allCategories } = useAllCategories();
+  const [allCategories] = useQuery(queries.categories.list({ includeHidden: true }));
   const { items: txns, isComplete } = useTransactions({
     categoryIds: category ? [category.id] : [],
   });
 
-  const [reassignTo, setReassignTo] = useState<string>("");
+  const [userReassign, setUserReassign] = useState<string | null>(null);
   const [skipReassign, setSkipReassign] = useState(false);
 
   const targets = useMemo(
     () => allCategories.filter((c) => c.id !== category?.id && !c.hidden),
     [allCategories, category?.id],
   );
+
+  const defaultReassign = useMemo(() => {
+    const uncategorized = targets.find((c) => c.systemKey === "uncategorized");
+    return uncategorized?.id ?? targets[0]?.id ?? "";
+  }, [targets]);
+  const reassignTo = userReassign ?? defaultReassign;
+
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
+      setUserReassign(null);
+      setSkipReassign(false);
+    }
+    onOpenChange(next);
+  };
 
   const pickerOptions = useMemo<readonly CategoryPickerOption[]>(
     () =>
@@ -62,15 +78,6 @@ export function HideCategoryDialog({ open, onOpenChange, category }: Props) {
     [targets],
   );
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    setSkipReassign(false);
-    const uncategorized = targets.find((c) => c.systemKey === "uncategorized");
-    setReassignTo(uncategorized?.id ?? targets[0]?.id ?? "");
-  }, [open, targets]);
-
   const txCount = txns.length;
   const target = targets.find((t) => t.id === reassignTo) ?? null;
   const targetIcon = target ? (resolveCategoryIcon(target.iconKey) ?? null) : null;
@@ -81,7 +88,7 @@ export function HideCategoryDialog({ open, onOpenChange, category }: Props) {
     }
     const reassign = skipReassign || txCount === 0 ? null : reassignTo || null;
     hide({ categoryId: category.id, reassignTo: reassign });
-    onOpenChange(false);
+    handleOpenChange(false);
   };
 
   const canSubmit = category !== null && (skipReassign || txCount === 0 || reassignTo !== "");
@@ -106,7 +113,7 @@ export function HideCategoryDialog({ open, onOpenChange, category }: Props) {
             {txCount === 1 ? "" : "s"} to
           </span>
           <CategoryPicker
-            onSelect={(opt) => setReassignTo(opt.id)}
+            onSelect={(opt) => setUserReassign(opt.id)}
             options={pickerOptions}
             selectedKey={reassignTo}
             trigger={
@@ -161,7 +168,7 @@ export function HideCategoryDialog({ open, onOpenChange, category }: Props) {
   };
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -176,7 +183,7 @@ export function HideCategoryDialog({ open, onOpenChange, category }: Props) {
           {renderBody()}
         </DialogBody>
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} type="button" variant="outline">
+          <Button onClick={() => handleOpenChange(false)} type="button" variant="outline">
             Cancel
           </Button>
           <Button disabled={!canSubmit} onClick={handleHide} type="button">

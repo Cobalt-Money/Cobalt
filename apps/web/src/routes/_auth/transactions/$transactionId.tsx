@@ -16,13 +16,11 @@ import { useEffect, useMemo, useState } from "react";
 import { CategoryFormDialog } from "@/components/categories/category-form-dialog";
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
-import { useCategoryGroups } from "@/hooks/use-categories";
 import { useGeocodeSearch } from "@/hooks/use-geocode-search";
 import { useMerchantSearch } from "@/hooks/use-merchant-search";
 import {
   useSetTransactionTags,
   useTagOptions,
-  useTags,
   useTransactionTagIds,
 } from "@/hooks/use-tags";
 import { useHistory, useTransactions } from "@/hooks/use-transactions";
@@ -74,7 +72,7 @@ function TransactionDetailRoute() {
   const editEvents = useHistory(transactionId);
 
   const { options: availableTags } = useTagOptions();
-  const { data: allTags = [] } = useTags();
+  const [allTags] = useQuery(queries.tags.list());
   const [categoryRows] = useQuery(queries.categories.list());
   const categoryOptions = useMemo(
     () =>
@@ -92,7 +90,7 @@ function TransactionDetailRoute() {
     [categoryRows]
   );
   const { openAddTag } = useCommandMenu();
-  const { data: categoryGroups } = useCategoryGroups();
+  const [categoryGroups] = useQuery(queries.categories.listGroups());
   const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
   const setTransactionTags = useSetTransactionTags();
   const { data: currentTagIds = [] } = useTransactionTagIds(transactionId);

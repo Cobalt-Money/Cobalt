@@ -15,7 +15,7 @@ import {
   TRANSACTION_LIST_DEFAULT_LIMIT,
   TRANSACTION_LIST_MAX_LIMIT,
 } from "@cobalt-web/zero/transactions/lib";
-import { useZero } from "@rocicorp/zero/react";
+import { useQuery, useZero } from "@rocicorp/zero/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -25,8 +25,7 @@ import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layo
 import { useAddTransactionData } from "@/hooks/use-add-transaction-data";
 import { useBankOptions } from "@/hooks/use-bank-options";
 import { useBulkSetCategory } from "@/hooks/use-bulk-transactions";
-import { useAllCategories } from "@/hooks/use-categories";
-import { useSetTransactionTags, useTagOptions, useTags } from "@/hooks/use-tags";
+import { useSetTransactionTags, useTagOptions } from "@/hooks/use-tags";
 import { transactionsListQuery, useTransactions } from "@/hooks/use-transactions";
 
 import type { TransactionsSearch } from "./route";
@@ -53,13 +52,25 @@ export const Route = createFileRoute("/_auth/transactions/")({
   staticData: { title: "Transactions" },
 });
 
+function filterSignature(search: TransactionsSearch): string {
+  return [
+    search.amount,
+    search.amountMin,
+    search.amountMax,
+    search.bank?.join(","),
+    search.categoryIds?.join(","),
+    search.status,
+    search.tagIds?.join(","),
+  ].join("|");
+}
+
 function TransactionsListPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const bankOptions = useBankOptions();
   const { options: tagOptions } = useTagOptions();
-  const { data: allTags } = useTags();
-  const { data: allCategories } = useAllCategories();
+  const [allTags] = useQuery(queries.tags.list());
+  const [allCategories] = useQuery(queries.categories.list({ includeHidden: true }));
   const categoryOptions = useMemo(
     () =>
       allCategories
@@ -99,19 +110,14 @@ function TransactionsListPage() {
     }
     return map;
   }, [allTags]);
-  const [limit, setLimit] = useState<number>(TRANSACTION_LIST_DEFAULT_LIMIT);
   // Reset paging window when filters change so we don't keep an oversized subscription.
-  useEffect(() => {
+  const filterKey = filterSignature(search);
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  const [limit, setLimit] = useState<number>(TRANSACTION_LIST_DEFAULT_LIMIT);
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey);
     setLimit(TRANSACTION_LIST_DEFAULT_LIMIT);
-  }, [
-    search.amount,
-    search.amountMax,
-    search.amountMin,
-    search.bank,
-    search.categoryIds,
-    search.status,
-    search.tagIds,
-  ]);
+  }
   const { isComplete, items } = useTransactions({
     amount: search.amount,
     amountMax: search.amountMax,

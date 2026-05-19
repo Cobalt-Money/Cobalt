@@ -6,18 +6,12 @@ import { mutators, queries } from "@cobalt-web/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import { useCallback, useMemo } from "react";
 
-/** Active + archived tags for the signed-in user (Zero replicated). */
-export function useTags() {
-  const [data] = useQuery(queries.tags.list());
-  return { data };
-}
-
 /** Active (not archived) tags shaped for the picker. */
 export function useTagOptions(): {
   options: readonly TagOption[];
   isLoading: boolean;
 } {
-  const { data } = useTags();
+  const [data] = useQuery(queries.tags.list());
   const options = useMemo<readonly TagOption[]>(
     () =>
       data
