@@ -37,5 +37,15 @@ export { subscription } from "./users/subscriptions/stripe";
 export { fundamentals } from "./research/fundamentals";
 export { tickers } from "./research/tickers";
 
+// Imports — transaction.import_job_id FK forces importJob (and its peers)
+// to be in the schema graph drizzle-zero traverses, even though Zero won't
+// sync the rows themselves to the client.
+export { accountMappingCache } from "./imports/account-mapping-cache";
+export { categoryMappingCache } from "./imports/category-mapping-cache";
+export { csvColumnRoleCache } from "./imports/csv-column-role-cache";
+export { csvMappingCache } from "./imports/csv-mapping-cache";
+export { importJob } from "./imports/import-job";
+export { importStagedTransaction } from "./imports/import-staged-transaction";
+
 // v2 `defineRelations` for drizzle-zero@1.0-beta. Same source as DB runtime.
 export { relations } from "./relations";

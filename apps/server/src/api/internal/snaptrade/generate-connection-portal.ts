@@ -9,11 +9,11 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requireAuth } from "../middleware.js";
+import { requireAuth, requireNotDemo } from "../middleware.js";
 
 const route = createRoute({
   method: "post",
-  middleware: [requireAuth] as const,
+  middleware: [requireAuth, requireNotDemo] as const,
   path: "/generateConnectionPortal",
   request: {
     body: {

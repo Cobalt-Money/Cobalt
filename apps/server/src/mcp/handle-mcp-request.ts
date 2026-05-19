@@ -1,5 +1,8 @@
+import { db } from "@cobalt-web/db";
+import { user as userTable } from "@cobalt-web/db/schema/users/auth/auth";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { eq } from "drizzle-orm";
 
 import { registerMcpTools } from "./tools/register-tools.js";
 import { verifyOAuthAccessTokenForMcp } from "./verify-oidc-access-token.js";
@@ -102,6 +105,18 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
   const userId = verified.sub;
   if (typeof userId !== "string" || userId.length === 0) {
     return unauthorizedResponse(origin, "Access token is not associated with a Cobalt user.");
+  }
+
+  // Demo (anonymous) accounts must not back MCP sessions. Tokens outlive the
+  // 24h demo-user cleanup cron and external MCP clients would silently break
+  // when the underlying row is purged. Reject upfront.
+  const [row] = await db
+    .select({ isAnonymous: userTable.isAnonymous })
+    .from(userTable)
+    .where(eq(userTable.id, userId))
+    .limit(1);
+  if (row?.isAnonymous) {
+    return unauthorizedResponse(origin, "MCP access is disabled for demo accounts.");
   }
 
   const authInfo = {

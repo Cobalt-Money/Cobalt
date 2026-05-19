@@ -27,11 +27,18 @@ function snapshotCutoff(range: z.infer<typeof SNAPSHOT_RANGE> | undefined): numb
  * (financialAccount with source='snaptrade', plus holding/orders/investmentActivity/snapshot).
  */
 export const brokerageQueries = {
-  /** Linked SnapTrade brokerage accounts with balance, holdings, and authorization metadata. */
+  /**
+   * Brokerage accounts: SnapTrade-linked or user-added manual investment
+   * accounts. Plaid investment accounts surface via `plaidInvestmentAccounts`
+   * below — kept separate because Plaid balance/connection metadata is
+   * fetched through a different relation graph.
+   */
   accounts: defineQuery(({ ctx }: { ctx: Context }) =>
     zql.financialAccount
       .where("userId", ctx?.userId ?? NO_MATCH_ID)
-      .where("source", "snaptrade")
+      .where(({ or, and, cmp }) =>
+        or(cmp("source", "snaptrade"), and(cmp("source", "manual"), cmp("type", "investment"))),
+      )
       .related("balance")
       .related("holdings")
       .related("snaptradeAuthorization"),
@@ -59,7 +66,11 @@ export const brokerageQueries = {
         .where("userId", ctx?.userId ?? NO_MATCH_ID)
         .whereExists("account", (acc) =>
           acc.where(({ or, cmp, and }) =>
-            or(cmp("source", "snaptrade"), and(cmp("source", "plaid"), cmp("type", "investment"))),
+            or(
+              cmp("source", "snaptrade"),
+              and(cmp("source", "plaid"), cmp("type", "investment")),
+              and(cmp("source", "manual"), cmp("type", "investment")),
+            ),
           ),
         )
         .where(({ and, cmp }) =>

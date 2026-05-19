@@ -8,6 +8,7 @@ import { useEffect } from "react";
 
 import { UpgradePromptHost } from "../components/upgrade/upgrade-prompt-host";
 import { AppSessionProvider } from "../lib/providers/app-session";
+import { DemoProvider } from "../lib/providers/demo-provider";
 import type { RouterContext } from "../router";
 import "../bones/registry";
 import appCss from "@cobalt-web/ui/globals.css?url";
@@ -77,12 +78,14 @@ function RootDocument() {
         >
           <QueryClientProvider client={queryClient}>
             <AppSessionProvider>
-              <TooltipProvider>
-                <div className="flex h-svh min-h-0 flex-col overflow-hidden">
-                  <Outlet />
-                </div>
-                <UpgradePromptHost />
-              </TooltipProvider>
+              <DemoProvider>
+                <TooltipProvider>
+                  <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+                    <Outlet />
+                  </div>
+                  <UpgradePromptHost />
+                </TooltipProvider>
+              </DemoProvider>
             </AppSessionProvider>
           </QueryClientProvider>
           <Toaster richColors />

@@ -5,6 +5,7 @@ import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 
 import { OnboardingProgressProvider } from "@/components/accounts/onboarding-context";
 import { OnboardingProgress } from "@/components/accounts/onboarding-progress";
+import { DemoBanner } from "@/components/demo/demo-banner";
 import { ImportWizardHost } from "@/components/imports/import-wizard";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
@@ -28,7 +29,11 @@ export const Route = createFileRoute("/_auth")({
   },
 });
 
-function AuthShellWithOutlet() {
+function AuthShellWithOutlet({ isDemo }: { isDemo: boolean }) {
+  // Setting `data-demo-banner` on this wrapper (vs `document.body` via an
+  // effect) keeps the demo-mode flag in React tree — CSS in globals.css
+  // targets `[data-demo-banner="1"] [data-slot="sidebar"]` etc. No effect,
+  // no global DOM mutation.
   return (
     <ZeroProvider>
       <OnboardingProgressProvider>
@@ -36,12 +41,15 @@ function AuthShellWithOutlet() {
           <SettingsDialogProvider>
             <ImportWizardHost>
               <CommandMenuProvider>
-                <SidebarProvider className="min-h-0 flex-1">
-                  <AppSidebar />
-                  <AmbientInsetProvider>
-                    <Outlet />
-                  </AmbientInsetProvider>
-                </SidebarProvider>
+                <div className="contents" data-demo-banner={isDemo ? "1" : undefined}>
+                  <DemoBanner />
+                  <SidebarProvider className="min-h-0 flex-1">
+                    <AppSidebar />
+                    <AmbientInsetProvider>
+                      <Outlet />
+                    </AmbientInsetProvider>
+                  </SidebarProvider>
+                </div>
               </CommandMenuProvider>
             </ImportWizardHost>
           </SettingsDialogProvider>
@@ -63,5 +71,8 @@ function AuthLayout() {
     return <Navigate replace to="/" />;
   }
 
-  return <AuthShellWithOutlet />;
+  // Anonymous plugin's isAnonymous field isn't inferred by authClient.useSession;
+  // narrow via runtime read instead of cast at every callsite.
+  const user = session.data.user as { isAnonymous?: boolean };
+  return <AuthShellWithOutlet isDemo={Boolean(user.isAnonymous)} />;
 }

@@ -5,12 +5,12 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent } from "../../../lib/openapi-helpers.js";
-import { requireAuth } from "../middleware.js";
+import { requireAuth, requireNotDemo } from "../middleware.js";
 
 const route = createRoute({
   description: "Permanently delete the authenticated user's account and all associated data",
   method: "delete",
-  middleware: [requireAuth] as const,
+  middleware: [requireAuth, requireNotDemo] as const,
   path: "/deleteAccount",
   responses: {
     200: jsonContent(deleteAccountResponseSchema, "Account deleted"),

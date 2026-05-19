@@ -22,7 +22,7 @@ import { deleteActiveZeroReplicaOnLogout } from "@/lib/zero-logout";
 
 const CONFIRMATION_TEXT = "DELETE";
 
-export function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
+export function DeleteAccountDialog(_props: { userEmail?: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -133,7 +133,6 @@ export function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
             disabled={isDeleting}
             onChange={(e) => setConfirmation(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground">Account: {userEmail}</p>
         </div>
 
         <AlertDialogFooter>

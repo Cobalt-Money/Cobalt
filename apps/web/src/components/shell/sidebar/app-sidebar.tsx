@@ -281,13 +281,16 @@ function ChatsGroup() {
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const session = useAppSession();
-  const authedUser = session.data?.user;
+  const authedUser = session.data?.user as
+    | { name: string; email?: string; image?: string | null; isAnonymous?: boolean }
+    | undefined;
   const navUser =
     authedUser === undefined
       ? null
       : {
           avatar: authedUser.image ?? "",
           email: authedUser.email ?? "",
+          isAnonymous: Boolean(authedUser.isAnonymous),
           name: authedUser.name,
         };
 
