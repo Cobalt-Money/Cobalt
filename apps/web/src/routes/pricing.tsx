@@ -6,10 +6,20 @@ import { useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { authClient } from "@/lib/clients/auth-client";
 import { useAppSession } from "@/lib/providers/app-session";
+import { buildSeoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/pricing")({
   component: PricingPage,
   staticData: { title: "Pricing" },
+  head: () => {
+    const seo = buildSeoMeta({
+      title: "Pricing",
+      description:
+        "Simple Cobalt pricing — monthly or annual. Unlimited accounts, AI guidance, brokerage integration, and more.",
+      path: "/pricing",
+    });
+    return { meta: seo.meta, links: seo.links };
+  },
 });
 
 const MONTHLY_PRICE = 6.99;

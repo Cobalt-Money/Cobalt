@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "check-types": "tsc --noEmit",
-    "build": "vite build",
+    "build": "bun run generate:sitemap && vite build",
+    "generate:sitemap": "bun run scripts/generate-sitemap.ts",
     "start": "vite preview",
     "serve": "vite preview",
     "dev": "vite dev",

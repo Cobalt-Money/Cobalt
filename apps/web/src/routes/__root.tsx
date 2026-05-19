@@ -15,37 +15,48 @@ import { AppSessionProvider } from "../lib/providers/app-session";
 import type { RouterContext } from "../router";
 import "../bones/registry";
 import appCss from "@cobalt-web/ui/globals.css?url";
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_OG_IMAGE,
+  DEFAULT_TITLE,
+  SITE_NAME,
+  SITE_URL,
+  TWITTER_HANDLE,
+} from "@/lib/seo";
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootDocument,
 
   head: () => ({
     links: [
-      {
-        href: "https://fonts.googleapis.com",
-        rel: "preconnect",
-      },
+      { href: "https://fonts.googleapis.com", rel: "preconnect" },
       {
         crossOrigin: "anonymous",
         href: "https://fonts.gstatic.com",
         rel: "preconnect",
       },
-      {
-        href: appCss,
-        rel: "stylesheet",
-      },
+      { href: appCss, rel: "stylesheet" },
+      { href: "/favicon.ico", rel: "icon" },
     ],
     meta: [
-      {
-        charSet: "utf-8",
-      },
-      {
-        content: "width=device-width, initial-scale=1",
-        name: "viewport",
-      },
-      {
-        title: "My App",
-      },
+      { charSet: "utf-8" },
+      { content: "width=device-width, initial-scale=1", name: "viewport" },
+      { content: "#000000", name: "theme-color" },
+      { title: DEFAULT_TITLE },
+      { content: DEFAULT_DESCRIPTION, name: "description" },
+
+      { content: DEFAULT_TITLE, property: "og:title" },
+      { content: DEFAULT_DESCRIPTION, property: "og:description" },
+      { content: "website", property: "og:type" },
+      { content: SITE_URL, property: "og:url" },
+      { content: DEFAULT_OG_IMAGE, property: "og:image" },
+      { content: SITE_NAME, property: "og:site_name" },
+
+      { content: "summary_large_image", name: "twitter:card" },
+      { content: TWITTER_HANDLE, name: "twitter:site" },
+      { content: DEFAULT_TITLE, name: "twitter:title" },
+      { content: DEFAULT_DESCRIPTION, name: "twitter:description" },
+      { content: DEFAULT_OG_IMAGE, name: "twitter:image" },
     ],
   }),
 });
