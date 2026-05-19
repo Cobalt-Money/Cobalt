@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { TickerLogo } from "../brokerage/ticker-logo";
 import type { PriceHistoryPoint } from "./positions-card";
+import { RulerPicker } from "./ruler-picker";
 import { CobaltSelectPopover } from "../select-popover";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -98,8 +99,10 @@ export function SellPositionForm({
   const [soldAt, setSoldAt] = useState<string>(todayIso());
   /** Whether `sharesText` carries a share count or a dollar amount. */
   const [entryMode, setEntryMode] = useState<"shares" | "dollars">("shares");
-  /** Cache key of the last (ticker, soldAt) we seeded a default price for. */
-  const [seededFor, setSeededFor] = useState<string>("");
+  const [history, setHistory] = useState<PriceHistoryPoint[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  /** Memoize the ticker we last loaded history for, so we don't refetch on every render. */
+  const [loadedFor, setLoadedFor] = useState<string>("");
 
   useEffect(() => {
     if (!holdingId && holdings.length > 0) {
@@ -107,30 +110,41 @@ export function SellPositionForm({
     }
   }, [holdingId, holdings]);
 
-  // Seed the sell price with the closest preceding day's close — saves the
-  // user from typing it when they're recording a typical at-market sale.
+  // Fetch OHLC around the sale date for the price scrubber bounds.
   const ticker = holdings.find((h) => h.holdingId === holdingId)?.ticker ?? "";
-  const seedKey = `${ticker}::${soldAt}`;
+  const fetchKey = `${ticker}::${soldAt}`;
   useEffect(() => {
-    if (!(onLoadHistory && ticker && soldAt) || seedKey === seededFor) {
+    if (!(onLoadHistory && ticker && soldAt) || fetchKey === loadedFor) {
       return;
     }
-    setSeededFor(seedKey);
+    setHistoryLoading(true);
+    setHistory([]);
+    setLoadedFor(fetchKey);
     void (async () => {
       try {
-        const { history, latestPrice } = await onLoadHistory(ticker, soldAt);
+        const { history: hist, latestPrice } = await onLoadHistory(ticker, soldAt);
+        setHistory(hist);
+        setHistoryLoading(false);
+        // Seed the sell price with the closest preceding day's close if blank.
         if (priceText.trim() === "") {
-          const bar = history.findLast((p) => p.date <= soldAt) ?? history.at(-1) ?? null;
+          const bar = hist.findLast((p) => p.date <= soldAt) ?? hist.at(-1) ?? null;
           const seed = bar?.close ?? latestPrice ?? null;
           if (seed !== null) {
             setPriceText(seed.toFixed(2));
           }
         }
       } catch {
-        /* leave priceText blank, user types manually */
+        setHistoryLoading(false);
       }
     })();
-  }, [onLoadHistory, priceText, seedKey, seededFor, soldAt, ticker]);
+  }, [fetchKey, loadedFor, onLoadHistory, priceText, soldAt, ticker]);
+
+  const bar = useMemo(() => {
+    if (history.length === 0) {
+      return null;
+    }
+    return history.findLast((p) => p.date <= soldAt) ?? history.at(-1) ?? null;
+  }, [history, soldAt]);
 
   const selected = holdings.find((h) => h.holdingId === holdingId) ?? null;
   const maxQty = selected?.quantity ?? 0;
@@ -327,6 +341,28 @@ export function SellPositionForm({
           value={priceText}
         />
       </div>
+
+      {entryMode === "shares" && bar && bar.low < bar.high ? (
+        <div className="flex flex-col gap-2">
+          <RulerPicker
+            max={bar.high}
+            min={bar.low}
+            onValueChange={(v) => setPriceText(v.toFixed(2))}
+            step={0.01}
+            value={parsedPrice || bar.close}
+          />
+          <div className="flex justify-between text-muted-foreground text-xs tabular-nums">
+            <span>Low {priceFmt.format(bar.low)}</span>
+            <span className="text-foreground">
+              Price {priceFmt.format(parsedPrice || bar.close)}
+            </span>
+            <span>High {priceFmt.format(bar.high)}</span>
+          </div>
+        </div>
+      ) : null}
+      {entryMode === "shares" && historyLoading ? (
+        <div className="text-muted-foreground text-xs">Loading price range…</div>
+      ) : null}
 
       {validShares && validPrice ? (
         <div className="text-muted-foreground text-xs">
