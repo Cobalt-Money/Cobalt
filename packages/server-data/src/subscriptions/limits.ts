@@ -5,7 +5,6 @@ import { userHasActiveSubscription } from "./queries.js";
 export const MODELS = {
   haiku: "anthropic/claude-haiku-4.5",
   opus: "anthropic/claude-opus-4.7",
-  sonnet: "anthropic/claude-sonnet-4.6",
 } as const;
 
 export type ModelSlug = (typeof MODELS)[keyof typeof MODELS];
@@ -25,7 +24,7 @@ export const FREE_LIMITS: TierLimits = {
 export const PRO_LIMITS: TierLimits = {
   connections: Number.POSITIVE_INFINITY,
   extendedThinking: true,
-  models: [MODELS.haiku, MODELS.sonnet, MODELS.opus],
+  models: [MODELS.haiku, MODELS.opus],
 };
 
 export async function getUserLimits(userId: string): Promise<TierLimits> {

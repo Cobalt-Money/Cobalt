@@ -13,12 +13,12 @@ const COPY: Record<UpgradeReason, { description: string; title: string }> = {
   },
   extended_thinking_not_allowed: {
     description:
-      "Extended thinking lets the AI plan deeper before answering. Pro unlocks it on Sonnet and Opus.",
+      "Extended thinking lets the AI plan deeper before answering. Pro unlocks it on Opus.",
     title: "Upgrade for extended thinking",
   },
   model_not_allowed: {
     description:
-      "Free tier runs on Claude Haiku 4.5. Upgrade to Pro to use Claude Sonnet 4.6 and Opus 4.7 for deeper analysis.",
+      "Free tier runs on Claude Haiku 4.5. Upgrade to Pro to use Claude Opus 4.7 for deeper analysis.",
     title: "Upgrade for advanced AI models",
   },
 };

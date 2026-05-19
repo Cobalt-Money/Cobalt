@@ -27,8 +27,7 @@ const freeFeatures = [
 
 const proFeatures = [
   "Unlimited synced bank + brokerage",
-  "All AI models (Sonnet, Opus) + extended thinking",
-  "Analyst mode (code agent, SQL, charts)",
+  "Claude Opus 4.7 + extended thinking",
   "Early access to new features",
 ];
 
