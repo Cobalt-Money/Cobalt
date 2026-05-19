@@ -1,9 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { MarketingFooter, MarketingNav } from "@/components/landing/marketing-shell";
+import { buildSeoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/terms")({
   component: TermsOfService,
+  head: () => {
+    const seo = buildSeoMeta({
+      description: "Cobalt terms of service.",
+      path: "/terms",
+      title: "Terms of Service",
+    });
+    return { links: seo.links, meta: seo.meta };
+  },
   staticData: { title: "Terms of Service" },
 });
 
@@ -348,7 +357,7 @@ function TermsOfService() {
             <p className="text-foreground/85 mb-4">
               Please review our Privacy Policy at{" "}
               <a href="/privacy" className="text-blue-400 hover:text-blue-300">
-                https://try-cobalt.com/privacy
+                https://cobaltpf.com/privacy
               </a>{" "}
               to understand our data practices, including:
             </p>

@@ -1,9 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { MarketingFooter, MarketingNav } from "@/components/landing/marketing-shell";
+import { buildSeoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
   component: PrivacyPolicy,
+  head: () => {
+    const seo = buildSeoMeta({
+      description: "How Cobalt collects, uses, and protects your data.",
+      path: "/privacy",
+      title: "Privacy Policy",
+    });
+    return { links: seo.links, meta: seo.meta };
+  },
   staticData: { title: "Privacy Policy" },
 });
 

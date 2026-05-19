@@ -133,7 +133,31 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
   });
 
   const server = new McpServer(
-    { name: "cobalt", version: "0.1.0" },
+    {
+      description:
+        "Talk to your money. Query accounts, transactions, and balances from any MCP client.",
+      icons: [
+        {
+          mimeType: "image/png",
+          sizes: ["512x512"],
+          src: "https://cobaltpf.com/favicon-512x512.png",
+        },
+        {
+          mimeType: "image/png",
+          sizes: ["180x180"],
+          src: "https://cobaltpf.com/apple-touch-icon.png",
+        },
+        {
+          mimeType: "image/png",
+          sizes: ["32x32"],
+          src: "https://cobaltpf.com/favicon-32x32.png",
+        },
+      ],
+      name: "cobalt",
+      title: "Cobalt",
+      version: "0.1.0",
+      websiteUrl: "https://cobaltpf.com",
+    },
     { capabilities: { tools: { listChanged: true } } },
   );
 

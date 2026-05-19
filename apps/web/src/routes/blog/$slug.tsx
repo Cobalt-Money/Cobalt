@@ -1,10 +1,49 @@
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 
 import { getBlogPost } from "@/lib/blog";
+import { SITE_URL, buildSeoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/blog/$slug")({
   component: BlogPostPage,
   staticData: { title: "Blog" },
+  head: ({ params }) => {
+    const post = getBlogPost(params.slug);
+    if (!post) {
+      return {};
+    }
+    const { frontmatter } = post;
+    const seo = buildSeoMeta({
+      title: frontmatter.title,
+      description: frontmatter.description,
+      path: `/blog/${params.slug}`,
+      image: frontmatter.coverImage
+        ? `${SITE_URL}${frontmatter.coverImage}`
+        : undefined,
+      type: "article",
+      publishedTime: frontmatter.date,
+      author: frontmatter.author,
+    });
+    return {
+      meta: seo.meta,
+      links: seo.links,
+      scripts: [
+        {
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            headline: frontmatter.title,
+            description: frontmatter.description,
+            datePublished: frontmatter.date,
+            author: frontmatter.author
+              ? { "@type": "Person", name: frontmatter.author }
+              : undefined,
+            mainEntityOfPage: `${SITE_URL}/blog/${params.slug}`,
+          }),
+          type: "application/ld+json",
+        },
+      ],
+    };
+  },
 });
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
