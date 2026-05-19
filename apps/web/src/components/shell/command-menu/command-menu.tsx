@@ -1293,6 +1293,7 @@ function CommandMenuDialog({
               <SellPositionForm
                 holdings={sellableHoldings}
                 onBackspaceWhenEmpty={popPage}
+                onLoadHistory={loadTickerHistory}
                 onSubmit={(values) => {
                   submitSellPosition(values);
                   handleOpenChange(false);
