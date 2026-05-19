@@ -84,10 +84,9 @@ describe("subscription tier limits", () => {
       expect(FREE_LIMITS.connections).toBe(1);
     });
 
-    it("PRO_LIMITS exposes Haiku + Sonnet + Opus and unlocks every capability", () => {
+    it("PRO_LIMITS exposes Haiku + Opus and unlocks every capability", () => {
       expect(PRO_LIMITS.models).toStrictEqual([
         "anthropic/claude-haiku-4.5",
-        "anthropic/claude-sonnet-4.6",
         "anthropic/claude-opus-4.7",
       ]);
       expect(PRO_LIMITS.extendedThinking).toBeTruthy();
@@ -97,7 +96,6 @@ describe("subscription tier limits", () => {
     it("free user is gated to Haiku at runtime", async () => {
       const limits = await getUserLimits("u1");
       expect(limits.models).toContain("anthropic/claude-haiku-4.5");
-      expect(limits.models).not.toContain("anthropic/claude-sonnet-4.6");
       expect(limits.models).not.toContain("anthropic/claude-opus-4.7");
       expect(limits.extendedThinking).toBeFalsy();
     });
@@ -105,7 +103,6 @@ describe("subscription tier limits", () => {
     it("paid user can use every model + extended thinking at runtime", async () => {
       stripeFindMany.mockResolvedValueOnce([{ status: "active" }]);
       const limits = await getUserLimits("u1");
-      expect(limits.models).toContain("anthropic/claude-sonnet-4.6");
       expect(limits.models).toContain("anthropic/claude-opus-4.7");
       expect(limits.extendedThinking).toBeTruthy();
     });

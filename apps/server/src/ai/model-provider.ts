@@ -28,9 +28,9 @@ export function parseModelWithReasoning(modelId: string): {
 
 export type ReasoningEffort = "low" | "medium" | "high" | "max";
 
-// Anthropic extended thinking: adaptive (4.6+ opus/sonnet) vs fixed budget (older).
-const ADAPTIVE_CLAUDE = /anthropic\/claude-(opus|sonnet)-4\.[6-9]/i;
-const BUDGET_CLAUDE = /anthropic\/(claude-opus-4|claude-sonnet-4|claude-3-7-sonnet)/i;
+// Anthropic extended thinking: adaptive (4.6+ opus) vs fixed budget (older).
+const ADAPTIVE_CLAUDE = /anthropic\/claude-opus-4\.[6-9]/i;
+const BUDGET_CLAUDE = /anthropic\/claude-opus-4/i;
 
 export function getProviderOptions(
   baseModel: string,
