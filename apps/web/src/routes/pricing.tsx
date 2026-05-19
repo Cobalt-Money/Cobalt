@@ -12,16 +12,16 @@ import { buildSeoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/pricing")({
   component: PricingPage,
-  staticData: { title: "Pricing" },
   head: () => {
     const seo = buildSeoMeta({
-      title: "Pricing",
       description:
         "Simple Cobalt pricing — monthly or annual. Unlimited accounts, AI guidance, brokerage integration, and more.",
       path: "/pricing",
+      title: "Pricing",
     });
-    return { meta: seo.meta, links: seo.links };
+    return { links: seo.links, meta: seo.meta };
   },
+  staticData: { title: "Pricing" },
 });
 
 const MONTHLY_PRICE = 6.99;

@@ -5,15 +5,15 @@ import { buildSeoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
   component: PrivacyPolicy,
-  staticData: { title: "Privacy Policy" },
   head: () => {
     const seo = buildSeoMeta({
-      title: "Privacy Policy",
       description: "How Cobalt collects, uses, and protects your data.",
       path: "/privacy",
+      title: "Privacy Policy",
     });
-    return { meta: seo.meta, links: seo.links };
+    return { links: seo.links, meta: seo.meta };
   },
+  staticData: { title: "Privacy Policy" },
 });
 
 function PrivacyPolicy() {

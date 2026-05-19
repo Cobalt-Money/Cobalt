@@ -3,7 +3,7 @@ export const SITE_NAME = "Cobalt";
 export const DEFAULT_TITLE = "Cobalt — Talk to your money";
 export const DEFAULT_DESCRIPTION =
   "Other finance apps give you homework. Cobalt gives you answers — ask anything about your money, from anywhere.";
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.png`;
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
 export const TWITTER_HANDLE = "@trycobalt";
 
 interface SeoMetaInput {
@@ -27,7 +27,7 @@ export function buildSeoMeta({
 }: SeoMetaInput) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
   const url = `${SITE_URL}${path}`;
-  const meta: Array<Record<string, string>> = [
+  const meta: Record<string, string>[] = [
     { title: fullTitle },
     { content: description, name: "description" },
 
@@ -54,5 +54,5 @@ export function buildSeoMeta({
 
   const links = [{ href: url, rel: "canonical" }];
 
-  return { meta, links };
+  return { links, meta };
 }

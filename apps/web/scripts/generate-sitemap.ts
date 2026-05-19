@@ -22,7 +22,7 @@ function urlEntry(path: string, lastmod?: string): string {
   return `  <url><loc>${loc}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}</url>`;
 }
 
-const today = new Date().toISOString().split("T")[0];
+const [today] = new Date().toISOString().split("T");
 const urls = [
   ...STATIC_PATHS.map((p) => urlEntry(p, today)),
   ...blogSlugs().map((slug) => urlEntry(`/blog/${slug}`, today)),

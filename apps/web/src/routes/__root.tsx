@@ -33,7 +33,24 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         rel: "preconnect",
       },
       { href: appCss, rel: "stylesheet" },
-      { href: "/favicon.ico", rel: "icon" },
+      { href: "/favicon.svg", rel: "icon", type: "image/svg+xml" },
+      {
+        href: "/favicon-32x32.png",
+        rel: "icon",
+        sizes: "32x32",
+        type: "image/png",
+      },
+      {
+        href: "/favicon-16x16.png",
+        rel: "icon",
+        sizes: "16x16",
+        type: "image/png",
+      },
+      {
+        href: "/apple-touch-icon.png",
+        rel: "apple-touch-icon",
+        sizes: "180x180",
+      },
     ],
     meta: [
       { charSet: "utf-8" },

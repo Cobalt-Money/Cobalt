@@ -23,18 +23,15 @@ export const Route = createFileRoute("/")({
         },
         ...seo.links,
       ],
-      meta: [
-        ...seo.meta,
-        { content: "app-id=6757945133", name: "apple-itunes-app" },
-      ],
+      meta: [...seo.meta, { content: "app-id=6757945133", name: "apple-itunes-app" }],
       scripts: [
         {
           children: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Organization",
+            logo: "https://cobaltpf.com/og-image.png",
             name: "Cobalt",
             url: "https://cobaltpf.com",
-            logo: "https://cobaltpf.com/og-default.png",
           }),
           type: "application/ld+json",
         },

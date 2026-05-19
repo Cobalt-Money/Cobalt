@@ -5,15 +5,15 @@ import { buildSeoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/terms")({
   component: TermsOfService,
-  staticData: { title: "Terms of Service" },
   head: () => {
     const seo = buildSeoMeta({
-      title: "Terms of Service",
       description: "Cobalt terms of service.",
       path: "/terms",
+      title: "Terms of Service",
     });
-    return { meta: seo.meta, links: seo.links };
+    return { links: seo.links, meta: seo.meta };
   },
+  staticData: { title: "Terms of Service" },
 });
 
 function TermsOfService() {

@@ -5,16 +5,15 @@ import { buildSeoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/blog/")({
   component: BlogIndex,
-  staticData: { title: "Blog" },
   head: () => {
     const seo = buildSeoMeta({
-      title: "Blog",
-      description:
-        "Product updates, design notes, and occasional essays from the Cobalt team.",
+      description: "Product updates, design notes, and occasional essays from the Cobalt team.",
       path: "/blog",
+      title: "Blog",
     });
-    return { meta: seo.meta, links: seo.links };
+    return { links: seo.links, meta: seo.meta };
   },
+  staticData: { title: "Blog" },
 });
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
