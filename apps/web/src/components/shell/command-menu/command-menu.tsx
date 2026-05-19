@@ -68,9 +68,12 @@ import {
 } from "@/components/accounts/use-add-account-flow";
 import { useOpenImportWizard } from "@/components/imports/import-wizard";
 import { useZero, useQuery as useZeroQuery } from "@rocicorp/zero/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { mutators, queries } from "@cobalt-web/zero";
-import { importsApi, researchApi } from "@/lib/clients/api-client";
+import { importsApi } from "@/lib/clients/api-client";
+import type { SellManualHoldingBody } from "@cobalt-web/server-data/brokerage/manual-holdings/schemas";
+
+import { tickerHistoryQuery } from "@/hooks/research-queries";
 import { SettingsGrid } from "@/components/settings/settings-grid";
 import type { SettingsSection } from "@/components/settings/settings-grid";
 import { useAddManualAccountSubmit } from "@/hooks/use-add-manual-account-submit";
@@ -402,20 +405,14 @@ function CommandMenuDialog({
     }),
     [positionTickerMatches],
   );
-  const loadTickerHistory = useCallback(async (ticker: string, date: string) => {
-    const res = await researchApi["ticker-history"].$get({
-      query: { date, symbol: ticker },
-    });
-    if (!res.ok) {
-      return { history: [], latestPrice: null };
-    }
-    const json = (await res.json()) as {
-      points: { close: number; date: string; high: number; low: number }[];
-    };
-    const history = json.points;
-    const latestPrice = history.length > 0 ? (history.at(-1)?.close ?? null) : null;
-    return { history, latestPrice };
-  }, []);
+  // Imperative ticker-history fetch backed by TanStack Query cache so repeated
+  // form opens for the same (ticker, date) don't re-hit FMP. Mirrors the
+  // chartQuery / quoteQuery pattern in research-queries.ts.
+  const queryClient = useQueryClient();
+  const loadTickerHistory = useCallback(
+    (ticker: string, date: string) => queryClient.fetchQuery(tickerHistoryQuery(ticker, date)),
+    [queryClient],
+  );
 
   // ── Add-account ─────────────────────────────────────────────────────────────
 
@@ -529,7 +526,7 @@ function CommandMenuDialog({
     [zero],
   );
   const submitSellPosition = useCallback(
-    (values: { holdingId: string; sellQuantity: number; sellPrice: number; soldAt: string }) => {
+    (values: SellManualHoldingBody) => {
       const holding = sellableHoldings.find((h) => h.holdingId === values.holdingId);
       const { server } = zero.mutate(mutators.brokerage.sellManualHolding(values));
       if (holding) {
@@ -996,14 +993,14 @@ function CommandMenuDialog({
     {
       handleSelect: enterAddPosition,
       icon: AppleStocksIcon,
-      keywords: ["holding", "stock", "ticker", "brokerage", "share"],
-      label: "Add a Position",
+      keywords: ["buy", "holding", "stock", "ticker", "brokerage", "share", "manual"],
+      label: "Add Manual Position",
     },
     {
       handleSelect: enterSellPosition,
       icon: AppleStocksIcon,
-      keywords: ["sell", "close", "exit", "holding", "share", "stock"],
-      label: "Sell a Position",
+      keywords: ["sell", "close", "exit", "holding", "share", "stock", "manual"],
+      label: "Sell Manual Position",
     },
     {
       handleSelect: () => {
@@ -1262,9 +1259,9 @@ function CommandMenuDialog({
           )}
           {inAddPosition && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
-              <h2 className="flex items-center gap-2 font-semibold text-foreground text-lg leading-none">
+              <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
                 <Icon className="shrink-0" icon={AppleStocksIcon} size="lg" />
-                Add a position
+                New Position
               </h2>
               <AddPositionForm
                 accounts={positionAccountOptions}
@@ -1280,24 +1277,32 @@ function CommandMenuDialog({
                     }
                   })();
                 }}
+                submitting={false}
                 tickerSearch={positionTickerSearch}
               />
             </div>
           )}
           {inSellPosition && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
-              <h2 className="flex items-center gap-2 font-semibold text-foreground text-lg leading-none">
+              <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
                 <Icon className="shrink-0" icon={AppleStocksIcon} size="lg" />
-                Sell a position
+                Sell Position
               </h2>
               <SellPositionForm
                 holdings={sellableHoldings}
                 onBackspaceWhenEmpty={popPage}
                 onLoadHistory={loadTickerHistory}
                 onSubmit={(values) => {
-                  submitSellPosition(values);
-                  handleOpenChange(false);
+                  void (async () => {
+                    try {
+                      await submitSellPosition(values);
+                      handleOpenChange(false);
+                    } catch {
+                      // Toast already shown by submit.
+                    }
+                  })();
                 }}
+                submitting={false}
               />
             </div>
           )}

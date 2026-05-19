@@ -6,6 +6,8 @@ import { Calendar03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useState } from "react";
 
+import type { SellManualHoldingBody } from "@cobalt-web/server-data/brokerage/manual-holdings/schemas";
+
 import { TickerLogo } from "../brokerage/ticker-logo";
 import type { PriceHistoryPoint } from "./positions-card";
 import { RulerPicker } from "./ruler-picker";
@@ -25,12 +27,8 @@ export interface SellableHolding {
   accountName: string;
 }
 
-export interface SellPositionFormValues {
-  holdingId: string;
-  sellQuantity: number;
-  sellPrice: number;
-  soldAt: string;
-}
+/** Reuse the server schema's body — UI submits exactly what the endpoint expects. */
+export type SellPositionFormValues = SellManualHoldingBody;
 
 export interface SellPositionFormProps {
   holdings: readonly SellableHolding[];
