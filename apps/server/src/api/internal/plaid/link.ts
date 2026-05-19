@@ -18,13 +18,13 @@ import { resumeHook, start } from "workflow/api";
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { plaidAddAccountWorkflow } from "../../../workflows/plaid/sync/workflow.js";
-import { requireAuth } from "../middleware.js";
+import { requireAuth, requireNotDemo } from "../middleware.js";
 
 // ── Route definitions ───────────────────────────────────────────────
 
 const createLinkTokenRoute = createRoute({
   method: "post",
-  middleware: [requireAuth] as const,
+  middleware: [requireAuth, requireNotDemo] as const,
   path: "/createLinkToken",
   request: {
     body: {
@@ -51,7 +51,7 @@ const createLinkTokenRoute = createRoute({
 
 const resolveLinkRoute = createRoute({
   method: "post",
-  middleware: [requireAuth] as const,
+  middleware: [requireAuth, requireNotDemo] as const,
   path: "/resolveLink",
   request: {
     body: {
@@ -155,7 +155,10 @@ const linkRouter = createApp()
 
     if (!cancelled && !publicToken) {
       return c.json(
-        { code: "invalid_resolve_payload", error: "Must provide publicToken or cancelled: true" },
+        {
+          code: "invalid_resolve_payload",
+          error: "Must provide publicToken or cancelled: true",
+        },
         400,
       );
     }

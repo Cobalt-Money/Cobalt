@@ -4,6 +4,7 @@ import { Navigate, createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import SocialAuth from "@/components/auth/social-auth";
+import { TryDemoButton } from "@/components/demo/try-demo-button";
 import { useAppSession } from "@/lib/providers/app-session";
 
 export const Route = createFileRoute("/login")({
@@ -52,8 +53,17 @@ function RouteComponent() {
       </header>
 
       <main className="relative flex flex-1 items-center justify-center px-6 py-12">
-        <div className="flex w-full max-w-md flex-col items-center">
+        <div className="flex w-full max-w-md flex-col items-center gap-6">
           <SocialAuth callbackURL={callbackURL} />
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px w-12 bg-border" />
+            <span>or</span>
+            <span className="h-px w-12 bg-border" />
+          </div>
+          <TryDemoButton />
+          <p className="max-w-xs text-center text-xs text-muted-foreground">
+            Explore the full app with sample data. No account, no commitment.
+          </p>
         </div>
       </main>
     </div>

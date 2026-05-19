@@ -7,6 +7,7 @@ import type { PlaidLinkOnExitMetadata, PlaidLinkOnSuccessMetadata } from "react-
 import { toast } from "sonner";
 
 import { institutionsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
+import { isDemoBlockedResponse } from "@/lib/clients/api-fetch";
 import { handleTierGateResponse } from "@/lib/upgrade-prompt";
 
 import { useOnboarding } from "./onboarding-context";
@@ -168,6 +169,10 @@ export function useAccountLauncher(onDismiss: () => void) {
           if (await handleTierGateResponse(res)) {
             return;
           }
+          // Demo-blocked responses already surface a toast via apiFetch.
+          if (await isDemoBlockedResponse(res)) {
+            return;
+          }
           throw new Error("Failed to start Plaid");
         }
         const data = await res.json();
@@ -209,6 +214,10 @@ export function useAccountLauncher(onDismiss: () => void) {
         });
         if (!res.ok) {
           if (await handleTierGateResponse(res)) {
+            toast.dismiss(loadingId);
+            return;
+          }
+          if (await isDemoBlockedResponse(res)) {
             toast.dismiss(loadingId);
             return;
           }

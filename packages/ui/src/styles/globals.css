@@ -388,3 +388,24 @@
     transition: none !important;
   }
 }
+
+/* ── Demo banner offsets ─────────────────────────────────────────
+ * <DemoBanner /> renders fixed at top (z-50, h-9 = 2.25rem). App root is
+ * `h-svh overflow-hidden`, so padding body would push the shell past the
+ * viewport and clip scroll. Instead:
+ *   • Shrink the SidebarProvider wrapper (the flex parent of sidebar +
+ *     inset) by 36px and offset it from the top, so its child elements
+ *     start below the banner.
+ *   • Sidebar uses `position: fixed`, so we still need to shift its `top`
+ *     and `height` explicitly.
+ */
+[data-demo-banner="1"] [data-slot="sidebar-wrapper"] {
+  margin-top: 2.25rem;
+  height: calc(100svh - 2.25rem) !important;
+  min-height: 0 !important;
+}
+[data-demo-banner="1"] [data-slot="sidebar-container"],
+[data-demo-banner="1"] [data-slot="sidebar"] {
+  top: 2.25rem;
+  height: calc(100svh - 2.25rem);
+}

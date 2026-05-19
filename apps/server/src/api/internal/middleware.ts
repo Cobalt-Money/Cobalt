@@ -36,9 +36,30 @@ export const requirePaidUser = createMiddleware<AppEnv>(async (c, next) => {
   c.set("session", session.session);
   c.set("zeroContext", toZeroContext(session.user.id));
 
-  const entitled = await userHasActiveSubscription(session.user.id);
-  if (!entitled) {
-    return c.json({ code: "subscription_required", error: "Subscription required" }, 403);
+  // Demo (anonymous) users bypass the subscription gate. They consume the
+  // same paid surfaces (Zero sync, agent chat) against seeded fixtures so
+  // prospects can see the full product before paying.
+  if (!session.user.isAnonymous) {
+    const entitled = await userHasActiveSubscription(session.user.id);
+    if (!entitled) {
+      return c.json({ code: "subscription_required", error: "Subscription required" }, 403);
+    }
+  }
+  await next();
+});
+
+/**
+ * Reject the request if the authenticated user is a demo (anonymous) account.
+ *
+ * Demo === anonymous in this app — Better Auth's anonymous plugin sets
+ * `isAnonymous=true` when /api/demo/create mints the session. Use on
+ * side-effectful routes that must not run for demo users: Plaid link/sync,
+ * Stripe checkout/portal, email sends, OAuth/MCP token issuance, account
+ * delete, email change. Apply *after* `requireAuth` so `c.var.user` is set.
+ */
+export const requireNotDemo = createMiddleware<AppEnv>(async (c, next) => {
+  if (c.var.user?.isAnonymous) {
+    return c.json({ code: "demo_blocked", error: "Not available in demo mode" }, 403);
   }
   await next();
 });

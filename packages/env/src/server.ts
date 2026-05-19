@@ -73,6 +73,9 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     TRUSTED_ORIGINS_EXTRA: commaList,
+    /** Upstash Redis REST endpoint + token. Provisioned via Vercel Marketplace. Optional for local dev — falls back to in-memory rate limits when unset. */
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+    UPSTASH_REDIS_REST_URL: z.url().optional(),
     /** Pool for Zero mutate adapter (keep small if same DB as `DATABASE_URL`). */
     ZERO_DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(2),
   },

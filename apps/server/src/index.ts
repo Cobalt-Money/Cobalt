@@ -17,6 +17,7 @@ import { authRouter } from "./api/internal/auth.js";
 import { brokerageRouter } from "./api/internal/brokerage/index.js";
 import { categoriesRouter } from "./api/internal/categories/index.js";
 import { chatRouter } from "./api/internal/chat/index.js";
+import { demoRouter } from "./api/internal/demo/index.js";
 import { importsRouter } from "./api/internal/imports/index.js";
 import { institutionsRouter } from "./api/internal/institutions.js";
 import { newsRouter } from "./api/internal/news.js";
@@ -31,6 +32,7 @@ import { zeroRouter } from "./api/internal/zero.js";
 import { v1Router } from "./api/public/v1/index.js";
 import { cronFinancialEventsRouter } from "./cron/financial-events.js";
 import { cronRefreshFundamentalsRouter } from "./cron/refresh-fundamentals.js";
+import { cronResetDemoRouter } from "./cron/reset-demo.js";
 import { cronRssRouter } from "./cron/rss.js";
 import { cronSnapshotsRouter } from "./cron/snapshots.js";
 import { getPublicOriginFromRequest, handleMcpHttpRequest } from "./mcp/handle-mcp-request.js";
@@ -101,6 +103,7 @@ base.route("/api/institutions", institutionsRouter);
 base.route("/api/imports", importsRouter);
 base.route("/api/plaid", plaidRouter);
 base.route("/api/appstore", appstoreRouter);
+base.route("/api/demo", demoRouter);
 base.doc31("/openapi.json", {
   info: {
     description: "Cobalt financial platform API",
@@ -174,6 +177,7 @@ const app = new Hono()
   .route("/api/cron", cronFinancialEventsRouter)
   .route("/api/cron", cronRssRouter)
   .route("/api/cron", cronSnapshotsRouter)
+  .route("/api/cron", cronResetDemoRouter)
   .route("/api/queues/snapshot-user", snapshotUserQueueRouter) // Queue consumer (Vercel OIDC — private route).
   .route("/webhooks/appstore", appstoreWebhookRouter) // Webhooks (no user auth — provider signatures).
   .route("/webhooks/plaid", plaidWebhookRouter)
@@ -209,6 +213,7 @@ export type AppstoreRouter = typeof appstoreRouter;
 export type BrokerageRouter = typeof brokerageRouter;
 export type CategoriesRouter = typeof categoriesRouter;
 export type ChatRouter = typeof chatRouter;
+export type DemoRouter = typeof demoRouter;
 export type ImportsRouter = typeof importsRouter;
 export type InstitutionsRouter = typeof institutionsRouter;
 export type NewsRouter = typeof newsRouter;

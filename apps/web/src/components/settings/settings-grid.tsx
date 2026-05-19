@@ -4,6 +4,7 @@ import { DialogTitle } from "@cobalt-web/ui/components/dialog";
 import { Input } from "@cobalt-web/ui/components/input";
 import { Separator } from "@cobalt-web/ui/components/separator";
 import { Switch } from "@cobalt-web/ui/components/switch";
+import { useDemo } from "@cobalt-web/ui/hooks/use-demo";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
   AccountSetting01Icon,
@@ -92,7 +93,12 @@ export function SettingsGrid({
         className={cn("flex flex-1 flex-col overflow-y-auto", compact ? "p-5 pr-10" : "p-6 pr-12")}
       >
         {activeSection === "profile" && <ProfileSection initials={initials} user={user} />}
-        {activeSection === "account" && <AccountSection userEmail={user?.email} />}
+        {activeSection === "account" && (
+          <AccountSection
+            isDemo={Boolean((user as { isAnonymous?: boolean } | undefined)?.isAnonymous)}
+            userEmail={user?.email}
+          />
+        )}
         {activeSection === "appearance" && <AppearanceSection setTheme={setTheme} theme={theme} />}
         {activeSection === "billing" && <BillingSection />}
       </div>
@@ -184,11 +190,43 @@ function ProfileSection({
 
 // ─── Account ─────────────────────────────────────────────────────────────────
 
-function AccountSection({ userEmail }: { userEmail: string | undefined }) {
+function AccountSection({ userEmail, isDemo }: { userEmail: string | undefined; isDemo: boolean }) {
+  const { enter, exit, pending } = useDemo();
   return (
     <div className="flex flex-col gap-6">
       <DialogTitle className="font-semibold text-base">Account</DialogTitle>
-      {userEmail && <DeleteAccountDialog userEmail={userEmail} />}
+
+      {/* Demo mode toggle — visible to everyone. Real users `Enter demo` to preview
+          with sample data; demo users exit back to their real session via the
+          banner exit too, surfaced here for discoverability. */}
+      <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
+        <div className="flex flex-col gap-0.5">
+          <p className="font-medium text-sm">Demo mode</p>
+          <p className="text-muted-foreground text-xs">
+            {isDemo
+              ? "You're viewing sample data. Exit to return to your account."
+              : "Preview Cobalt with sample data. Your real account stays untouched."}
+          </p>
+        </div>
+        <Button
+          disabled={pending}
+          onClick={() => {
+            void (isDemo ? exit() : enter());
+          }}
+          size="sm"
+          variant={isDemo ? "default" : "outline"}
+        >
+          {isDemo ? "Exit demo" : "Enter demo"}
+        </Button>
+      </div>
+
+      {isDemo ? (
+        <p className="text-muted-foreground text-sm">
+          Account management is disabled in demo mode. Sign up to manage your real account.
+        </p>
+      ) : (
+        userEmail && <DeleteAccountDialog userEmail={userEmail} />
+      )}
     </div>
   );
 }
