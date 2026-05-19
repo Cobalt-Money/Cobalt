@@ -3,12 +3,13 @@ import { SellPositionForm } from "@cobalt-web/ui/cobalt/accounts/sell-position-d
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { Icon } from "@cobalt-web/ui/components/icon";
 import { AppleStocksIcon } from "@hugeicons/core-free-icons";
-import { useZero, useQuery as useZeroQuery } from "@rocicorp/zero/react";
+import { useQuery as useZeroQuery } from "@rocicorp/zero/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { mutators, queries } from "@cobalt-web/zero";
+import { queries } from "@cobalt-web/zero";
 import { useCallback, useMemo } from "react";
 
 import { tickerHistoryQuery } from "@/hooks/research-queries";
+import { useMutator } from "@/hooks/use-mutator";
 
 interface Props {
   /** Fired after a successful submit. Parent decides whether to pop or close. */
@@ -18,7 +19,7 @@ interface Props {
 }
 
 export function SellPositionPage({ onSuccess, onBackspaceWhenEmpty }: Props) {
-  const zero = useZero();
+  const run = useMutator();
   const queryClient = useQueryClient();
 
   const [manualInvestmentAccounts] = useZeroQuery(queries.brokerage.manualInvestmentAccounts());
@@ -56,23 +57,12 @@ export function SellPositionPage({ onSuccess, onBackspaceWhenEmpty }: Props) {
   const submit = useCallback(
     (values: SellManualHoldingBody) => {
       const holding = holdings.find((h) => h.holdingId === values.holdingId);
-      const { server } = zero.mutate(mutators.brokerage.sellManualHolding(values));
+      run((m) => m.brokerage.sellManualHolding(values), "Couldn't record sale.");
       if (holding) {
         cobaltToast.positionSold(holding.ticker, values.sellQuantity);
       }
-      void (async () => {
-        try {
-          const result = await server;
-          if (result.type === "error") {
-            cobaltToast.error(result.error.message || "Couldn't record sale.");
-          }
-        } catch (error) {
-          console.error("Failed to record sale", error);
-          cobaltToast.error("Couldn't record sale.");
-        }
-      })();
     },
-    [holdings, zero],
+    [holdings, run],
   );
 
   const handleSubmit = useCallback(

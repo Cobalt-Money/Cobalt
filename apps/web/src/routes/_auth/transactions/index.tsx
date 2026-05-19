@@ -10,12 +10,12 @@ import { TransactionsTable } from "@cobalt-web/ui/cobalt/transactions/transactio
 import { TransactionsToolbar } from "@cobalt-web/ui/cobalt/transactions/transactions-toolbar";
 import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
-import { mutators, queries } from "@cobalt-web/zero";
+import { queries } from "@cobalt-web/zero";
 import {
   TRANSACTION_LIST_DEFAULT_LIMIT,
   TRANSACTION_LIST_MAX_LIMIT,
 } from "@cobalt-web/zero/transactions/lib";
-import { useQuery, useZero } from "@rocicorp/zero/react";
+import { useQuery } from "@rocicorp/zero/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -25,6 +25,7 @@ import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layo
 import { useAddTransactionData } from "@/hooks/use-add-transaction-data";
 import { useBankOptions } from "@/hooks/use-bank-options";
 import { useBulkSetCategory } from "@/hooks/use-bulk-transactions";
+import { useMutator } from "@/hooks/use-mutator";
 import { useSetTransactionTags, useTagOptions } from "@/hooks/use-tags";
 import { transactionsListQuery, useTransactions } from "@/hooks/use-transactions";
 
@@ -193,7 +194,7 @@ function TransactionsListPage() {
     [items],
   );
 
-  const zero = useZero();
+  const run = useMutator();
   const { locationSearch, merchantSearch } = useAddTransactionData();
   const { mutateAsync: bulkSetCategory } = useBulkSetCategory();
   const { mutate: setTransactionTags } = useSetTransactionTags();
@@ -211,95 +212,70 @@ function TransactionsListPage() {
   );
   const handleSetDate = useCallback(
     (transactionId: string, dateIso: string) => {
-      const { server } = zero.mutate(
-        mutators.transaction.updateDate({
-          date: dateIso,
-          editId: crypto.randomUUID(),
-          id: transactionId,
-        }),
+      run(
+        (m) =>
+          m.transaction.updateDate({
+            date: dateIso,
+            editId: crypto.randomUUID(),
+            id: transactionId,
+          }),
+        { silent: true },
       );
-      void (async () => {
-        try {
-          await server;
-        } catch (error) {
-          console.error("[transaction.updateDate]", error);
-        }
-      })();
     },
-    [zero],
+    [run],
   );
   const handleSetName = useCallback(
     (transactionId: string, name: string) => {
-      const { server } = zero.mutate(
-        mutators.transaction.updateName({
-          editId: crypto.randomUUID(),
-          id: transactionId,
-          name,
-        }),
+      run(
+        (m) =>
+          m.transaction.updateName({
+            editId: crypto.randomUUID(),
+            id: transactionId,
+            name,
+          }),
+        { silent: true },
       );
-      void (async () => {
-        try {
-          await server;
-        } catch (error) {
-          console.error("[transaction.updateName]", error);
-        }
-      })();
     },
-    [zero],
+    [run],
   );
   const handleSetMerchant = useCallback(
     (transactionId: string, merchant: { merchantName: string | null; website: string | null }) => {
-      const { server } = zero.mutate(
-        mutators.transaction.updateMerchant({
-          editId: crypto.randomUUID(),
-          id: transactionId,
-          merchantName: merchant.merchantName,
-          website: merchant.website,
-        }),
+      run(
+        (m) =>
+          m.transaction.updateMerchant({
+            editId: crypto.randomUUID(),
+            id: transactionId,
+            merchantName: merchant.merchantName,
+            website: merchant.website,
+          }),
+        { silent: true },
       );
-      void (async () => {
-        try {
-          await server;
-        } catch (error) {
-          console.error("[transaction.updateMerchant]", error);
-        }
-      })();
     },
-    [zero],
+    [run],
   );
   const handleSetLocation = useCallback(
     (transactionId: string, location: NonNullable<TransactionListItem["location"]>) => {
-      const { server } = zero.mutate(
-        mutators.transaction.updateLocation({
-          editId: crypto.randomUUID(),
-          id: transactionId,
-          location,
-        }),
+      run(
+        (m) =>
+          m.transaction.updateLocation({
+            editId: crypto.randomUUID(),
+            id: transactionId,
+            location,
+          }),
+        { silent: true },
       );
-      void (async () => {
-        try {
-          await server;
-        } catch (error) {
-          console.error("[transaction.updateLocation]", error);
-        }
-      })();
     },
-    [zero],
+    [run],
   );
   const handleDeleteTransaction = useCallback(
     (transactionId: string) => {
-      const { server } = zero.mutate(mutators.transaction.deleteTransaction({ id: transactionId }));
+      run(
+        (m) => m.transaction.deleteTransaction({ id: transactionId }),
+        "Couldn't delete transaction. Please try again.",
+      );
       cobaltToast.transactionDeleted();
-      void (async () => {
-        try {
-          await server;
-        } catch (error) {
-          console.error("[transaction.deleteTransaction]", error);
-          cobaltToast.error("Couldn't delete transaction. Please try again.");
-        }
-      })();
     },
-    [zero],
+    [run],
   );
 
   return (

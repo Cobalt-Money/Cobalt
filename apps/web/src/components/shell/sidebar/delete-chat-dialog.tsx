@@ -8,12 +8,11 @@ import {
   AlertDialogTitle,
 } from "@cobalt-web/ui/components/alert-dialog";
 import { Button } from "@cobalt-web/ui/components/button";
-import { mutators } from "@cobalt-web/zero";
 import { Delete02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useZero } from "@rocicorp/zero/react";
 import { useMatchRoute, useRouter } from "@tanstack/react-router";
-import { toast } from "sonner";
+
+import { useMutator } from "@/hooks/use-mutator";
 
 interface DeleteChatDialogProps {
   open: boolean;
@@ -32,7 +31,7 @@ export function DeleteChatDialog({
 }: DeleteChatDialogProps) {
   const router = useRouter();
   const matchRoute = useMatchRoute();
-  const zero = useZero();
+  const run = useMutator();
 
   const handleDelete = () => {
     if (!chatId) {
@@ -44,20 +43,7 @@ export function DeleteChatDialog({
       to: "/ai-chat/$chatId",
     });
 
-    // Fire the mutator. Client run updates the local replica sub-frame, so
-    // the sidebar row and dialog disappear immediately. We surface errors
-    // only if the server run rejects — optimistic UX.
-    const { server } = zero.mutate(mutators.chats.delete({ chatId }));
-    void (async () => {
-      try {
-        const result = await server;
-        if (result.type === "error") {
-          toast.error(result.error.message);
-        }
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to delete chat");
-      }
-    })();
+    run((m) => m.chats.delete({ chatId }), "Failed to delete chat");
 
     if (wasOnDeletedChat) {
       router.navigate({ to: "/ai-chat" });
