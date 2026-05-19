@@ -19,7 +19,7 @@ export const kalshiUsers = pgTable(
       .primaryKey()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => [index("kalshi_users_api_key_id_idx").on(table.apiKeyId)]
+  (table) => [index("kalshi_users_api_key_id_idx").on(table.apiKeyId)],
 );
 
 // Type exports

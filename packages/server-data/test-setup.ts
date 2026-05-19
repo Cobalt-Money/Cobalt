@@ -3,7 +3,6 @@
 // t3-env schema. Tests never hit a real database / provider — actions and
 // mutations are mocked at the network / DB boundary.
 const REQUIRED_ENV: Record<string, string> = {
-  ALPHA_VANTAGE_API_KEY: "test-alpha-vantage",
   APPLE_APP_BUNDLE_IDENTIFIER: "test.bundle.id",
   APPLE_KEY_ID: "test-key-id",
   APPLE_PRIVATE_KEY: "test-private-key",
@@ -11,6 +10,7 @@ const REQUIRED_ENV: Record<string, string> = {
   APPLE_TEAM_ID: "test-team-id",
   BETTER_AUTH_SECRET: "test-secret-that-is-at-least-32-characters-long",
   BETTER_AUTH_URL: "http://localhost:3000",
+  BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_test_token",
   CORS_ORIGIN: "http://localhost:3000",
   DATABASE_URL: "postgresql://test:test@localhost:5432/test",
   GOOGLE_CLIENT_ID: "test-google-client",

@@ -25,8 +25,7 @@ export function ZeroNeedsAuthBanner() {
     >
       <p className="font-medium">Sync needs authentication</p>
       <p className="text-muted-foreground mt-1">
-        Your session may have expired. Reconnect to resume syncing, or sign in
-        again.
+        Your session may have expired. Reconnect to resume syncing, or sign in again.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
@@ -43,10 +42,7 @@ export function ZeroNeedsAuthBanner() {
         >
           Reconnect
         </Button>
-        <Link
-          className={cn(buttonVariants({ size: "sm", variant: "outline" }))}
-          to="/"
-        >
+        <Link className={cn(buttonVariants({ size: "sm", variant: "outline" }))} to="/">
           Sign in
         </Link>
       </div>

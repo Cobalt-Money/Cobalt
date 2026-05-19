@@ -4,14 +4,13 @@ import type { IconSvgElement } from "@hugeicons/react";
 import type { CategoryPrimaryGlyph } from "./category-primary-icons";
 
 function isImageGlyph(
-  icon: CategoryPrimaryGlyph
+  icon: CategoryPrimaryGlyph,
 ): icon is { kind: "image"; src: string; srcDark?: string } {
-  return (
-    typeof icon === "object" &&
-    icon !== null &&
-    "kind" in icon &&
-    icon.kind === "image"
-  );
+  return typeof icon === "object" && icon !== null && "kind" in icon && icon.kind === "image";
+}
+
+function isEmojiGlyph(icon: CategoryPrimaryGlyph): icon is { kind: "emoji"; char: string } {
+  return typeof icon === "object" && icon !== null && "kind" in icon && icon.kind === "emoji";
 }
 
 const baseImageGlyphClass = "shrink-0 object-contain opacity-80";
@@ -26,6 +25,16 @@ export function CategoryIcon({
   sizeClassName?: string;
 }) {
   const imageGlyphClass = `${sizeClassName} ${baseImageGlyphClass}`;
+  if (isEmojiGlyph(icon)) {
+    return (
+      <span
+        aria-hidden
+        className={`${sizeClassName} inline-flex shrink-0 items-center justify-center leading-none`}
+      >
+        {icon.char}
+      </span>
+    );
+  }
   if (isImageGlyph(icon)) {
     if (icon.srcDark) {
       return (
@@ -48,15 +57,7 @@ export function CategoryIcon({
       );
     }
 
-    return (
-      <img
-        alt=""
-        aria-hidden
-        className={imageGlyphClass}
-        decoding="async"
-        src={icon.src}
-      />
-    );
+    return <img alt="" aria-hidden className={imageGlyphClass} decoding="async" src={icon.src} />;
   }
 
   return (

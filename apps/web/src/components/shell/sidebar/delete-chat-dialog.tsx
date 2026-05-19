@@ -55,9 +55,7 @@ export function DeleteChatDialog({
           toast.error(result.error.message);
         }
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to delete chat"
-        );
+        toast.error(error instanceof Error ? error.message : "Failed to delete chat");
       }
     })();
 
@@ -78,23 +76,15 @@ export function DeleteChatDialog({
           <AlertDialogTitle>Delete chat</AlertDialogTitle>
           <AlertDialogDescription>
             Are you sure you want to delete this chat?
-            <span className="mt-2 block truncate font-medium text-foreground">
-              {displayTitle}
-            </span>
+            <span className="mt-2 block truncate font-medium text-foreground">{displayTitle}</span>
             <span className="mt-2 block">
-              This action cannot be undone and will permanently remove all
-              messages in this chat.
+              This action cannot be undone and will permanently remove all messages in this chat.
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <Button
-            disabled={!chatId}
-            onClick={handleDelete}
-            type="button"
-            variant="destructive"
-          >
+          <Button disabled={!chatId} onClick={handleDelete} type="button" variant="destructive">
             <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
             Delete
           </Button>

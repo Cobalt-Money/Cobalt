@@ -23,10 +23,7 @@ export function TickerLogo({
 
   if (clientId) {
     return (
-      <div
-        className={cn("shrink-0", className)}
-        style={{ height: size, width: size }}
-      >
+      <div className={cn("shrink-0", className)} style={{ height: size, width: size }}>
         <TickerLogoCDN
           alt={`${raw} logo`}
           className="ring-border/60 size-full overflow-hidden rounded-full ring-1"
@@ -44,7 +41,7 @@ export function TickerLogo({
       aria-hidden
       className={cn(
         "ring-border/60 flex shrink-0 items-center justify-center rounded-full bg-muted ring-1",
-        className
+        className,
       )}
       style={{ height: size, width: size }}
     >

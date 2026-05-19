@@ -1,7 +1,8 @@
 import { env } from "@cobalt-web/env/web";
+import type { Message as ChatMessage, Part } from "@cobalt-web/zero";
 import { useNavigate } from "@tanstack/react-router";
 import { DefaultChatTransport, readUIMessageStream } from "ai";
-import type { UIMessage, UIMessageChunk } from "ai";
+import type { FileUIPart, UIMessage, UIMessageChunk } from "ai";
 import {
   createContext,
   useCallback,
@@ -14,50 +15,45 @@ import {
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
-import {
-  normalizeGatewayModelId,
-  useAgentSettings,
-} from "./agent-settings-context";
+import { handleTierGateResponse } from "@/lib/upgrade-prompt";
 
-// Shape of a Zero-synced message part. Fields match the zero schema; any can be
-// null for parts that don't use that field.
-interface ZeroMessagePart {
-  type: unknown;
-  text_text: unknown;
-  reasoning_text: unknown;
-  tool_state: unknown;
-  tool_toolCallId: unknown;
-  tool_input: unknown;
-  tool_output: unknown;
-  tool_errorText: unknown;
-  data: unknown;
+import { normalizeGatewayModelId, useAgentSettings } from "./agent-settings-context";
+
+type ZeroMessagePart = Part;
+type ZeroMessageRow = ChatMessage & { readonly parts: readonly Part[] };
+
+function isNullish<T>(v: T | null | undefined): v is null | undefined {
+  return v === null || v === undefined;
 }
 
-interface ZeroMessageRow {
-  messageId: unknown;
-  role: unknown;
-  createdAt: unknown;
-  parts: readonly ZeroMessagePart[];
-}
-
-function partRowToUIPart(
-  p: ZeroMessagePart
-): UIMessage["parts"][number] | null {
-  const type = typeof p.type === "string" ? p.type : null;
-  if (!type) {
+function filePartFromRow(p: ZeroMessagePart): UIMessage["parts"][number] | null {
+  if (isNullish(p.file_url) || isNullish(p.file_mediaType)) {
     return null;
   }
+  const filePart: Record<string, unknown> = {
+    mediaType: p.file_mediaType,
+    type: "file",
+    url: p.file_url,
+  };
+  if (!isNullish(p.file_filename)) {
+    filePart.filename = p.file_filename;
+  }
+  return filePart as UIMessage["parts"][number];
+}
+
+function partRowToUIPart(p: ZeroMessagePart): UIMessage["parts"][number] | null {
+  const { type } = p;
   if (type === "text") {
-    if (p.text_text === null || p.text_text === undefined) {
+    if (isNullish(p.text_text)) {
       return null;
     }
-    return { text: String(p.text_text), type: "text" };
+    return { text: p.text_text, type: "text" };
   }
   if (type === "reasoning") {
-    if (p.reasoning_text === null || p.reasoning_text === undefined) {
+    if (isNullish(p.reasoning_text)) {
       return null;
     }
-    return { text: String(p.reasoning_text), type: "reasoning" };
+    return { text: p.reasoning_text, type: "reasoning" };
   }
   if (type.startsWith("tool-")) {
     if (!p.tool_toolCallId || !p.tool_state) {
@@ -68,10 +64,10 @@ function partRowToUIPart(
       toolCallId: p.tool_toolCallId,
       type,
     };
-    if (p.tool_input) {
+    if (!isNullish(p.tool_input)) {
       toolPart.input = p.tool_input;
     }
-    if (p.tool_output) {
+    if (!isNullish(p.tool_output)) {
       toolPart.output = p.tool_output;
     }
     if (p.tool_errorText) {
@@ -79,7 +75,10 @@ function partRowToUIPart(
     }
     return toolPart as UIMessage["parts"][number];
   }
-  if (type.startsWith("data-") && p.data) {
+  if (type === "file") {
+    return filePartFromRow(p);
+  }
+  if (type.startsWith("data-") && !isNullish(p.data)) {
     return { data: p.data, type } as UIMessage["parts"][number];
   }
   if (type === "step-start") {
@@ -90,11 +89,11 @@ function partRowToUIPart(
 
 function zeroRowToFullUIMessage(row: ZeroMessageRow): UIMessage {
   return {
-    id: String(row.messageId),
+    id: row.messageId,
     parts: row.parts
       .map(partRowToUIPart)
       .filter((p): p is UIMessage["parts"][number] => p !== null),
-    role: String(row.role) as "user" | "assistant",
+    role: row.role as "user" | "assistant",
   };
 }
 
@@ -104,9 +103,7 @@ function zeroRowToFullUIMessage(row: ZeroMessageRow): UIMessage {
  * handling text, reasoning, tool-input, and all other part types.
  */
 class InternalTransport extends DefaultChatTransport<UIMessage> {
-  public decodeStream(
-    stream: ReadableStream<Uint8Array>
-  ): ReadableStream<UIMessageChunk> {
+  public decodeStream(stream: ReadableStream<Uint8Array>): ReadableStream<UIMessageChunk> {
     return super.processResponseStream(stream);
   }
 }
@@ -117,6 +114,7 @@ export interface QueuedMessage {
   id: string;
   text: string;
   chatId: string;
+  files?: FileUIPart[];
 }
 
 interface StreamState {
@@ -128,14 +126,24 @@ interface StreamState {
 }
 
 interface ChatContextValue extends StreamState {
-  submit: (chatId: string | undefined, content: string) => Promise<void>;
+  submit: (
+    chatId: string | undefined,
+    content: string,
+    files?: readonly FileUIPart[],
+  ) => Promise<void>;
   /** Abort the in-flight stream (does nothing if not streaming). */
   stop: () => void;
   /** Resolve a pending tool call (e.g. askUser) and resume the agent. */
-  addToolOutput: (opts: {
+  addToolOutput: (opts: { chatId: string; toolCallId: string; output: unknown }) => Promise<void>;
+  /**
+   * Resolve multiple pending tool calls in a single resume. Use when the
+   * model emitted parallel tool calls (e.g. askUser × N) so all results are
+   * sent back together — otherwise unresolved parts are dropped by
+   * convertToModelMessages and the model re-emits them.
+   */
+  addToolOutputs: (opts: {
     chatId: string;
-    toolCallId: string;
-    output: unknown;
+    items: { toolCallId: string; output: unknown }[];
   }) => Promise<void>;
   /** Messages queued while streaming; auto-dispatched when stream ends. */
   queuedMessages: QueuedMessage[];
@@ -192,7 +200,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     () => () => {
       abortRef.current?.abort();
     },
-    []
+    [],
   );
 
   const setZeroMessages = useCallback((rows: readonly ZeroMessageRow[]) => {
@@ -218,7 +226,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         streamStartedAt: new Date(),
       });
 
-      const { effort, model, mode, reasoning } = settings;
+      const { effort, model, reasoning } = settings;
       const baseModel = normalizeGatewayModelId(model);
       const modelId = reasoning ? `${baseModel}+reasoning` : baseModel;
 
@@ -247,7 +255,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             effort,
             message,
             messages,
-            mode,
             model: modelId,
           }),
           credentials: "include",
@@ -257,12 +264,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
 
         if (!res.ok || !res.body) {
-          const errorText = await res.text().catch(() => "(unreadable)");
-          console.error(
-            `[chat-stream] ${res.status} ${res.statusText}:`,
-            errorText
-          );
-          toast.error(getToastMessage(res.status));
+          const gated = res.body ? await handleTierGateResponse(res) : false;
+          if (!gated) {
+            const errorText = await res.text().catch(() => "(unreadable)");
+            console.error(`[chat-stream] ${res.status} ${res.statusText}:`, errorText);
+            toast.error(getToastMessage(res.status));
+          }
           setState((prev) => ({ ...prev, isStreaming: false }));
           return;
         }
@@ -311,11 +318,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [serverUrl, settings]
+    [serverUrl, settings],
   );
 
   const submit = useCallback(
-    async (chatId: string | undefined, content: string) => {
+    async (chatId: string | undefined, content: string, files?: readonly FileUIPart[]) => {
       let activeChatId = chatId;
 
       if (!activeChatId) {
@@ -343,25 +350,100 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (abortRef.current && !abortRef.current.signal.aborted) {
         setQueuedMessages((prev) => [
           ...prev,
-          { chatId: activeChatId, id: crypto.randomUUID(), text: content },
+          {
+            chatId: activeChatId,
+            files: files ? [...files] : undefined,
+            id: crypto.randomUUID(),
+            text: content,
+          },
         ]);
+        return;
+      }
+
+      const fileParts: UIMessage["parts"] = (files ?? []).map((f) => ({
+        filename: f.filename,
+        mediaType: f.mediaType,
+        type: "file",
+        url: f.url,
+      }));
+      const textParts: UIMessage["parts"] = content.trim() ? [{ text: content, type: "text" }] : [];
+      const parts = [...fileParts, ...textParts];
+      if (parts.length === 0) {
         return;
       }
 
       const userMessage: UIMessage = {
         id: crypto.randomUUID(),
-        parts: [{ text: content, type: "text" }],
+        parts,
         role: "user",
       };
 
-      const historyUIMessages = zeroMessagesRef.current.map(
-        zeroRowToFullUIMessage
-      );
+      const historyUIMessages = zeroMessagesRef.current.map(zeroRowToFullUIMessage);
       const allMessages: UIMessage[] = [...historyUIMessages, userMessage];
 
       await runStream(activeChatId, userMessage, allMessages);
     },
-    [navigate, runStream, serverUrl]
+    [navigate, runStream, serverUrl],
+  );
+
+  const addToolOutputs = useCallback(
+    async ({
+      chatId,
+      items,
+    }: {
+      chatId: string;
+      items: { toolCallId: string; output: unknown }[];
+    }) => {
+      if (items.length === 0) {
+        return;
+      }
+      const outputById = new Map(items.map((i) => [i.toolCallId, i.output]));
+      const remaining = new Set(outputById.keys());
+
+      const history = zeroMessagesRef.current.map(zeroRowToFullUIMessage);
+      const updated = history.map((msg) => {
+        if (msg.role !== "assistant" || remaining.size === 0) {
+          return msg;
+        }
+        let changed = false;
+        const newParts = msg.parts.map((p) => {
+          const id = (p as { toolCallId?: string }).toolCallId;
+          if (
+            !id ||
+            !remaining.has(id) ||
+            typeof p.type !== "string" ||
+            !p.type.startsWith("tool-")
+          ) {
+            return p;
+          }
+          remaining.delete(id);
+          changed = true;
+          return {
+            ...(p as Record<string, unknown>),
+            output: outputById.get(id),
+            state: "output-available",
+          } as UIMessage["parts"][number];
+        });
+        return changed ? { ...msg, parts: newParts } : msg;
+      });
+
+      if (remaining.size === items.length) {
+        console.warn("[chat] addToolOutputs: no matching tool calls", [...remaining]);
+        return;
+      }
+      if (remaining.size > 0) {
+        console.warn("[chat] addToolOutputs: some tool calls not found", [...remaining]);
+      }
+
+      const lastAssistant = updated.at(-1);
+      if (!lastAssistant || lastAssistant.role !== "assistant") {
+        console.warn("[chat] addToolOutputs: last message is not assistant");
+        return;
+      }
+
+      await runStream(chatId, lastAssistant, updated);
+    },
+    [runStream],
   );
 
   const addToolOutput = useCallback(
@@ -374,47 +456,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       toolCallId: string;
       output: unknown;
     }) => {
-      const history = zeroMessagesRef.current.map(zeroRowToFullUIMessage);
-      // Find the newest assistant message carrying this tool call and patch it.
-      let patched = false;
-      const updated = history.map((msg) => {
-        if (patched || msg.role !== "assistant") {
-          return msg;
-        }
-        const idx = msg.parts.findIndex(
-          (p) =>
-            typeof p.type === "string" &&
-            p.type.startsWith("tool-") &&
-            (p as { toolCallId?: string }).toolCallId === toolCallId
-        );
-        if (idx === -1) {
-          return msg;
-        }
-        const newParts = [...msg.parts];
-        const existing = newParts[idx] as Record<string, unknown>;
-        newParts[idx] = {
-          ...existing,
-          output,
-          state: "output-available",
-        } as UIMessage["parts"][number];
-        patched = true;
-        return { ...msg, parts: newParts };
-      });
-
-      if (!patched) {
-        console.warn("[chat] addToolOutput: no matching tool call", toolCallId);
-        return;
-      }
-
-      const lastAssistant = updated.at(-1);
-      if (!lastAssistant || lastAssistant.role !== "assistant") {
-        console.warn("[chat] addToolOutput: last message is not assistant");
-        return;
-      }
-
-      await runStream(chatId, lastAssistant, updated);
+      await addToolOutputs({ chatId, items: [{ output, toolCallId }] });
     },
-    [runStream]
+    [addToolOutputs],
   );
 
   const removeFromQueue = useCallback((id: string) => {
@@ -422,9 +466,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateInQueue = useCallback((id: string, text: string) => {
-    setQueuedMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, text } : m))
-    );
+    setQueuedMessages((prev) => prev.map((m) => (m.id === id ? { ...m, text } : m)));
   }, []);
 
   // Auto-dispatch the head of the queue once streaming ends.
@@ -440,7 +482,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setQueuedMessages((prev) => prev.slice(1));
     const run = async () => {
       try {
-        await submit(next.chatId, next.text);
+        await submit(next.chatId, next.text, next.files);
       } finally {
         forceDispatchRef.current = false;
       }
@@ -456,6 +498,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     () => ({
       ...state,
       addToolOutput,
+      addToolOutputs,
       clearStream,
       queuedMessages,
       removeFromQueue,
@@ -467,6 +510,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [
       state,
       addToolOutput,
+      addToolOutputs,
       clearStream,
       queuedMessages,
       removeFromQueue,
@@ -474,7 +518,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       stop,
       submit,
       updateInQueue,
-    ]
+    ],
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

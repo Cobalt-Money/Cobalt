@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from "vitest";
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { render, screen } from "@testing-library/react";
 
@@ -11,17 +12,15 @@ vi.mock(import("@cobalt-web/ui/components/ui/map"), () => ({
   MarkerContent: () => null,
 }));
 
-function createMockTransaction(
-  overrides: Partial<TransactionListItem> = {}
-): TransactionListItem {
+function createMockTransaction(overrides: Partial<TransactionListItem> = {}): TransactionListItem {
   return {
+    accountLogoDomain: null,
     accountName: "Checking",
+    accountSubtype: "checking",
     accountType: "depository",
     amount: -12.34,
     authorizedDate: null,
     category: null,
-    categoryConfidence: null,
-    categoryDetail: null,
     counterparties: null,
     date: "2025-01-15",
     id: "550e8400-e29b-41d4-a716-446655440001",
@@ -37,7 +36,7 @@ function createMockTransaction(
     pending: false,
     plaidAccountId: "plaid-acc-1",
     source: "plaid",
-    userOverrideLocation: null,
+    tagIds: [],
     website: null,
     ...overrides,
   };
@@ -47,12 +46,8 @@ describe(TransactionDetailView, () => {
   it("renders merchant/title, formatted amount, and Activity", () => {
     render(<TransactionDetailView transaction={createMockTransaction()} />);
 
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Coffee Shop Purchase" })
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Coffee Shop Purchase" })).toBeTruthy();
     expect(screen.getByText("$12.34")).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Activity" })
-    ).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "Activity" })).toBeTruthy();
   });
 });

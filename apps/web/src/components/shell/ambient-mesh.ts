@@ -2,9 +2,7 @@ import type { CSSProperties } from "react";
 
 export type AmbientMode = "dark" | "light";
 
-export function hexToRgb(
-  hex: string
-): { b: number; g: number; r: number } | null {
+export function hexToRgb(hex: string): { b: number; g: number; r: number } | null {
   const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
   if (!m?.[1] || !m[2] || !m[3]) {
     return null;
@@ -33,7 +31,7 @@ export function symbolHue(symbol: string): number {
 export function ambientMeshStyle(
   dominantHex: string | null,
   symbol: string,
-  mode: AmbientMode
+  mode: AmbientMode,
 ): CSSProperties {
   const rgb = dominantHex ? hexToRgb(dominantHex) : null;
   const hue = symbolHue(symbol);

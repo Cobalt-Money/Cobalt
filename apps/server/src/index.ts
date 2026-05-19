@@ -15,25 +15,27 @@ import { alertsRouter } from "./api/internal/alerts/index.js";
 import { appstoreRouter } from "./api/internal/appstore.js";
 import { authRouter } from "./api/internal/auth.js";
 import { brokerageRouter } from "./api/internal/brokerage/index.js";
+import { categoriesRouter } from "./api/internal/categories/index.js";
 import { chatRouter } from "./api/internal/chat/index.js";
+import { demoRouter } from "./api/internal/demo/index.js";
+import { importsRouter } from "./api/internal/imports/index.js";
 import { institutionsRouter } from "./api/internal/institutions.js";
 import { newsRouter } from "./api/internal/news.js";
 import { plaidRouter } from "./api/internal/plaid/index.js";
 import { researchRouter } from "./api/internal/research/index.js";
 import { snaptradeRouter } from "./api/internal/snaptrade/index.js";
 import { subscriptionsRouter } from "./api/internal/subscriptions/index.js";
+import { tagsRouter } from "./api/internal/tags/index.js";
 import { transactionsRouter } from "./api/internal/transactions/index.js";
 import { userRouter } from "./api/internal/user/index.js";
 import { zeroRouter } from "./api/internal/zero.js";
 import { v1Router } from "./api/public/v1/index.js";
 import { cronFinancialEventsRouter } from "./cron/financial-events.js";
 import { cronRefreshFundamentalsRouter } from "./cron/refresh-fundamentals.js";
+import { cronResetDemoRouter } from "./cron/reset-demo.js";
 import { cronRssRouter } from "./cron/rss.js";
 import { cronSnapshotsRouter } from "./cron/snapshots.js";
-import {
-  getPublicOriginFromRequest,
-  handleMcpHttpRequest,
-} from "./mcp/handle-mcp-request.js";
+import { getPublicOriginFromRequest, handleMcpHttpRequest } from "./mcp/handle-mcp-request.js";
 import { buildMcpProtectedResourceMetadata } from "./mcp/oauth-discovery.js";
 import { snapshotUserQueueRouter } from "./queue/snapshot-user.js";
 import { appstoreWebhookRouter } from "./webhooks/appstore.js";
@@ -58,9 +60,7 @@ import { snaptradeWebhookRouter } from "./webhooks/snaptrade.js";
 // ── OAuth discovery helpers ─────────────────────────────────────────
 
 const oauthAuthServerMetadata = oauthProviderAuthServerMetadata(auth as never);
-const oauthOpenIdConfigMetadata = oauthProviderOpenIdConfigMetadata(
-  auth as never
-);
+const oauthOpenIdConfigMetadata = oauthProviderOpenIdConfigMetadata(auth as never);
 
 // Stable Hono-compatible wrapper so both well-known mount paths below can
 // reuse the same handler.
@@ -90,6 +90,8 @@ base.route("/api/zero", zeroRouter);
 base.route("/api/accounts", accountsRouter);
 base.route("/api/alerts", alertsRouter);
 base.route("/api/transactions", transactionsRouter);
+base.route("/api/tags", tagsRouter);
+base.route("/api/categories", categoriesRouter);
 base.route("/api/brokerage", brokerageRouter);
 base.route("/api/chat", chatRouter);
 base.route("/api/news", newsRouter);
@@ -98,8 +100,10 @@ base.route("/api/snaptrade", snaptradeRouter);
 base.route("/api/subscriptions", subscriptionsRouter);
 base.route("/api/user", userRouter);
 base.route("/api/institutions", institutionsRouter);
+base.route("/api/imports", importsRouter);
 base.route("/api/plaid", plaidRouter);
 base.route("/api/appstore", appstoreRouter);
+base.route("/api/demo", demoRouter);
 base.doc31("/openapi.json", {
   info: {
     description: "Cobalt financial platform API",
@@ -114,27 +118,24 @@ base.doc31("/openapi.json", {
 // Third-party developer surface at `/v1`. Kept on its own `OpenAPIHono`
 // instance so it can publish an independent title, server URL, and auth
 // scheme at `/v1/openapi.json` without leaking internal routes.
-const publicApi = new OpenAPIHono()
-  .route("/v1", v1Router)
-  .doc("/v1/openapi.json", {
-    info: {
-      description:
-        "The Cobalt public API provides programmatic access to market data, portfolio analytics, and financial insights.",
-      title: "Cobalt Public API",
-      version: "1.0.0",
-    },
-    openapi: "3.1.0",
-    security: [{ bearerAuth: [] }],
-    servers: [{ description: "Production", url: "https://api.cobaltpf.com" }],
-  });
+const publicApi = new OpenAPIHono().route("/v1", v1Router).doc("/v1/openapi.json", {
+  info: {
+    description:
+      "The Cobalt public API provides programmatic access to market data, portfolio analytics, and financial insights.",
+    title: "Cobalt Public API",
+    version: "1.0.0",
+  },
+  openapi: "3.1.0",
+  security: [{ bearerAuth: [] }],
+  servers: [{ description: "Production", url: "https://api.cobaltpf.com" }],
+});
 
 // `registerComponent` mutates the schema registry (not the Hono instance)
 // and doesn't return anything useful, so it runs as a side-effect statement
 // after the const. Not subject to the chain-return contract above.
 publicApi.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
   bearerFormat: "OAuth 2.0 Access Token",
-  description:
-    "OAuth 2.0 access token obtained via the authorization code flow",
+  description: "OAuth 2.0 access token obtained via the authorization code flow",
   scheme: "bearer",
   type: "http",
 });
@@ -160,7 +161,7 @@ const app = new Hono()
       credentials: true,
       exposeHeaders: ["Mcp-Session-Id", "mcp-session-id"],
       origin: env.CORS_ORIGIN,
-    })
+    }),
   )
   .get("/.well-known/oauth-protected-resource/api/mcp", (c) => {
     // RFC 9728 — Protected Resource Metadata; first endpoint clients hit to discover which auth server protects MCP.
@@ -168,22 +169,15 @@ const app = new Hono()
     const mcpResourceUrl = new URL("/api/mcp", origin).href;
     return c.json(buildMcpProtectedResourceMetadata(mcpResourceUrl));
   })
-  .get(
-    "/.well-known/oauth-authorization-server/api/auth",
-    oauthAuthServerMetadataHandler
-  ) // RFC 8414 — Authorization Server Metadata (path-suffixed for issuer /api/auth); authorize, token, registration, JWKS, revocation.
-  .get(
-    "/.well-known/oauth-authorization-server",
-    oauthAuthServerMetadataHandler
-  ) // Some clients probe the root well-known path; same document to avoid 404 noise.
-  .get("/.well-known/openid-configuration", (c) =>
-    oauthOpenIdConfigMetadata(c.req.raw)
-  ) // OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
+  .get("/.well-known/oauth-authorization-server/api/auth", oauthAuthServerMetadataHandler) // RFC 8414 — Authorization Server Metadata (path-suffixed for issuer /api/auth); authorize, token, registration, JWKS, revocation.
+  .get("/.well-known/oauth-authorization-server", oauthAuthServerMetadataHandler) // Some clients probe the root well-known path; same document to avoid 404 noise.
+  .get("/.well-known/openid-configuration", (c) => oauthOpenIdConfigMetadata(c.req.raw)) // OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
   .all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw)) // Streamable HTTP MCP; Bearer from OAuth above.
   .route("/api/cron", cronRefreshFundamentalsRouter) // Cron (no user auth — CRON_SECRET).
   .route("/api/cron", cronFinancialEventsRouter)
   .route("/api/cron", cronRssRouter)
-  .route("/api/cron", cronSnapshotsRouter) // Schedule parked in vercel.json `// crons-disabled`.
+  .route("/api/cron", cronSnapshotsRouter)
+  .route("/api/cron", cronResetDemoRouter)
   .route("/api/queues/snapshot-user", snapshotUserQueueRouter) // Queue consumer (Vercel OIDC — private route).
   .route("/webhooks/appstore", appstoreWebhookRouter) // Webhooks (no user auth — provider signatures).
   .route("/webhooks/plaid", plaidWebhookRouter)
@@ -192,7 +186,7 @@ const app = new Hono()
   .get(
     "/docs",
     Scalar({
-      hideModels: true,
+      hideModels: false,
       pageTitle: "Cobalt API",
       sources: [
         { title: "Cobalt API", url: "/openapi.json" },
@@ -201,7 +195,7 @@ const app = new Hono()
           url: "/api/auth/open-api/generate-schema",
         },
       ],
-    })
+    }),
   )
   .route("/", base)
   .route("/", publicApi);
@@ -217,13 +211,17 @@ export type AccountsRouter = typeof accountsRouter;
 export type AlertsRouter = typeof alertsRouter;
 export type AppstoreRouter = typeof appstoreRouter;
 export type BrokerageRouter = typeof brokerageRouter;
+export type CategoriesRouter = typeof categoriesRouter;
 export type ChatRouter = typeof chatRouter;
+export type DemoRouter = typeof demoRouter;
+export type ImportsRouter = typeof importsRouter;
 export type InstitutionsRouter = typeof institutionsRouter;
 export type NewsRouter = typeof newsRouter;
 export type PlaidRouter = typeof plaidRouter;
 export type ResearchRouter = typeof researchRouter;
 export type SnaptradeRouter = typeof snaptradeRouter;
 export type SubscriptionsRouter = typeof subscriptionsRouter;
+export type TagsRouter = typeof tagsRouter;
 export type TransactionsRouter = typeof transactionsRouter;
 export type UserRouter = typeof userRouter;
 

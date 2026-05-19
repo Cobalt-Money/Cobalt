@@ -1,8 +1,4 @@
 import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
-import { holding } from "@cobalt-web/db/schema/accounts/investments/holding";
-import { security } from "@cobalt-web/db/schema/accounts/investments/security";
-import { and, asc, eq } from "drizzle-orm";
 import type { z } from "zod";
 
 import type { EnhancedBrokerageAccount } from "./lib.js";
@@ -15,14 +11,9 @@ import type {
 
 export type PositionsQuery = z.infer<typeof positionsQuerySchema>;
 export type ActivitiesQuery = z.infer<typeof activitiesQuerySchema>;
-export type PortfolioSnapshotsQuery = z.infer<
-  typeof portfolioSnapshotsQuerySchema
->;
+export type PortfolioSnapshotsQuery = z.infer<typeof portfolioSnapshotsQuerySchema>;
 
-const groupBy = <T>(
-  items: T[],
-  key: (item: T) => string
-): Record<string, T[]> => {
+const groupBy = <T>(items: T[], key: (item: T) => string): Record<string, T[]> => {
   const map: Record<string, T[]> = {};
   for (const item of items) {
     const k = key(item);
@@ -79,11 +70,7 @@ const PLAID_TYPE_LABEL: Record<string, string> = {
 
 /** Plaid stores raw type/subtype strings; SnapTrade stores canonical labels.
  * Normalize Plaid rows on read so the wire vocabulary is consistent. */
-function normalizeActivityType(
-  source: string,
-  type: string,
-  subtype: string | null
-): string {
+function normalizeActivityType(source: string, type: string, subtype: string | null): string {
   if (source !== "plaid") {
     return type;
   }
@@ -144,245 +131,28 @@ export async function getBalancesByUserId(userId: string) {
 
 // ── Positions ───────────────────────────────────────────────────────
 
-export async function getPositionsByUserId(
-  userId: string,
-  params: PositionsQuery
-) {
+export async function getPositionsByUserId(userId: string, params: PositionsQuery) {
   const { accountId, limit, offset } = params;
 
-  const conditions = [eq(holding.userId, userId)];
-  if (accountId) {
-    conditions.push(eq(financialAccount.externalId, accountId));
-  }
-
-  let q = db
-    .select({
-      acct: { externalId: financialAccount.externalId },
-      hold: {
-        averagePrice: holding.averagePrice,
-        costBasis: holding.costBasis,
-        createdAt: holding.createdAt,
-        currency: holding.currency,
-        id: holding.id,
-        institutionPrice: holding.institutionPrice,
-        institutionValue: holding.institutionValue,
-        isQuotable: holding.isQuotable,
-        isTradable: holding.isTradable,
-        lastSyncAt: holding.lastSyncAt,
-        openPnl: holding.openPnl,
-        quantity: holding.quantity,
-        securityId: holding.securityId,
-        updatedAt: holding.updatedAt,
-      },
-      sec: {
-        exchangeCode: security.exchangeCode,
-        exchangeName: security.exchangeName,
-        externalId: security.externalId,
-        figiCode: security.figiCode,
-        marketIdentifierCode: security.marketIdentifierCode,
-        name: security.name,
-        subtype: security.subtype,
-        tickerSymbol: security.tickerSymbol,
-        type: security.type,
-      },
-    })
-    .from(holding)
-    .innerJoin(financialAccount, eq(holding.accountId, financialAccount.id))
-    .innerJoin(security, eq(holding.securityId, security.id))
-    .where(and(...conditions))
-    .orderBy(asc(security.tickerSymbol))
-    .$dynamic();
-
-  if (limit !== undefined) {
-    q = q.limit(limit);
-  }
-  if (offset !== undefined) {
-    q = q.offset(offset);
-  }
-
-  const rows = await q;
-
-  const positions = rows.map((r) => {
-    // Plaid rows lack averagePrice/openPnl — fall back to computed values.
-    const quantity = Number(r.hold.quantity ?? 0);
-    const costBasisNum = Number(r.hold.costBasis ?? 0);
-    const institutionValueNum = Number(r.hold.institutionValue ?? 0);
-    const averagePurchasePrice =
-      r.hold.averagePrice ??
-      (quantity > 0 ? String(costBasisNum / quantity) : "0");
-    const openPnl =
-      r.hold.openPnl ?? String(institutionValueNum - costBasisNum);
-
-    const externalId = r.acct.externalId ?? "";
-    return {
-      accountId: externalId,
-      averagePurchasePrice: numStr(averagePurchasePrice),
-      createdAt: toISOString(r.hold.createdAt),
-      currencyCode: r.hold.currency ?? "USD",
-      currencyId: null,
-      currencyName: "US Dollar",
-      exchangeCode: r.sec.exchangeCode,
-      exchangeId: null,
-      exchangeMicCode: r.sec.marketIdentifierCode,
-      exchangeName: r.sec.exchangeName,
-      figiCode: r.sec.figiCode,
-      id: r.hold.id,
-      isQuotable: r.hold.isQuotable ?? true,
-      isTradable: r.hold.isTradable ?? false,
-      lastSync: toISOString(r.hold.lastSyncAt ?? r.hold.updatedAt),
-      localId: null,
-      openPnl: numStr(openPnl),
-      price: numStr(r.hold.institutionPrice),
-      rawSymbol: r.sec.tickerSymbol,
-      securityTypeCode: r.sec.type,
-      securityTypeDescription: r.sec.subtype,
-      securityTypeId: null,
-      snapTradeAccountId: externalId,
-      symbol: r.sec.tickerSymbol,
-      symbolDescription: r.sec.name,
-      symbolId: r.sec.externalId,
-      units: numStr(r.hold.quantity),
-      updatedAt: toISOString(r.hold.updatedAt),
-      userId,
-    };
-  });
-
-  return {
-    positions,
-    positionsByAccount: groupBy(positions, (p) => p.accountId),
-  };
-}
-
-// ── Activities ──────────────────────────────────────────────────────
-
-interface ActivityJoinRow {
-  acct: { externalId: string | null };
-  activity: {
-    amount: string | null;
-    createdAt: Date | null;
-    date: string | null;
-    externalId: string | null;
-    externalReferenceId: string | null;
-    fees: string | null;
-    id: string;
-    currency: string | null;
-    name: string | null;
-    optionSymbol: string | null;
-    optionType: string | null;
-    price: string | null;
-    quantity: string | null;
-    settlementDate: string | null;
-    source: string;
-    subtype: string | null;
-    type: string;
-    updatedAt: Date | null;
-  };
-  sec: {
-    exchangeCode: string | null;
-    exchangeName: string | null;
-    externalId: string | null;
-    figiCode: string | null;
-    marketIdentifierCode: string | null;
-    name: string | null;
-    subtype: string | null;
-    tickerSymbol: string | null;
-    type: string | null;
-  } | null;
-}
-
-function pickSecurityFields(sec: ActivityJoinRow["sec"]) {
-  return {
-    exchangeCode: sec?.exchangeCode ?? null,
-    exchangeMicCode: sec?.marketIdentifierCode ?? null,
-    exchangeName: sec?.exchangeName ?? null,
-    figiCode: sec?.figiCode ?? null,
-    securityTypeCode: sec?.type ?? null,
-    securityTypeDescription: sec?.subtype ?? null,
-    symbolDescription: sec?.name ?? null,
-    symbolId: sec?.externalId ?? null,
-    ticker: sec?.tickerSymbol ?? null,
-  };
-}
-
-function mapActivityRow(r: ActivityJoinRow, userId: string) {
-  const sec = pickSecurityFields(r.sec);
-  const acctExternal = r.acct.externalId ?? "";
-  return {
-    accountId: acctExternal,
-    activityId: r.activity.externalId,
-    amount: numStr(r.activity.amount),
-    createdAt: toISOString(r.activity.createdAt),
-    currencyCode: r.activity.currency ?? "USD",
-    currencyId: null,
-    currencyName: "US Dollar",
-    description: r.activity.name,
-    exchangeCode: sec.exchangeCode,
-    exchangeId: null,
-    exchangeMicCode: sec.exchangeMicCode,
-    exchangeName: sec.exchangeName,
-    externalReferenceId: r.activity.externalReferenceId,
-    fee: numStr(r.activity.fees),
-    figiCode: sec.figiCode,
-    fxRate: null,
-    id: r.activity.id,
-    institution: null,
-    lastSync: toISOString(r.activity.updatedAt),
-    optionSymbol: r.activity.optionSymbol,
-    optionType: r.activity.optionType,
-    pagination: null,
-    price: numStr(r.activity.price),
-    rawSymbol: sec.ticker,
-    securityTypeCode: sec.securityTypeCode,
-    securityTypeDescription: sec.securityTypeDescription,
-    securityTypeId: null,
-    settlementDate: toDateString(r.activity.settlementDate),
-    snapTradeAccountId: acctExternal,
-    symbol: sec.ticker,
-    symbolDescription: sec.symbolDescription,
-    symbolId: sec.symbolId,
-    symbolTicker: sec.ticker,
-    tradeDate: toDateString(r.activity.date),
-    type: normalizeActivityType(
-      r.activity.source,
-      r.activity.type,
-      r.activity.subtype
-    ),
-    units: numStr(r.activity.quantity),
-    updatedAt: toISOString(r.activity.updatedAt),
-    userId,
-  };
-}
-
-export async function getActivitiesByUserId(
-  userId: string,
-  params: ActivitiesQuery
-) {
-  const { accountId, limit, offset } = params;
-
-  const rows = await db.query.investmentActivity.findMany({
+  const rows = await db.query.holding.findMany({
     columns: {
-      amount: true,
+      averagePrice: true,
+      costBasis: true,
       createdAt: true,
       currency: true,
-      date: true,
-      externalId: true,
-      externalReferenceId: true,
-      fees: true,
       id: true,
-      name: true,
-      optionSymbol: true,
-      optionType: true,
-      price: true,
+      institutionPrice: true,
+      institutionValue: true,
+      isQuotable: true,
+      isTradable: true,
+      lastSyncAt: true,
+      openPnl: true,
       quantity: true,
-      settlementDate: true,
-      source: true,
-      subtype: true,
-      type: true,
+      securityId: true,
       updatedAt: true,
     },
     ...(limit === undefined ? {} : { limit }),
     ...(offset === undefined ? {} : { offset }),
-    orderBy: { date: "desc" },
     where: {
       userId: { eq: userId },
       ...(accountId ? { account: { externalId: { eq: accountId } } } : {}),
@@ -405,36 +175,178 @@ export async function getActivitiesByUserId(
     },
   });
 
-  const activities = rows.map((r) =>
-    mapActivityRow(
-      {
-        acct: { externalId: r.account.externalId },
-        activity: {
-          amount: r.amount,
-          createdAt: r.createdAt,
-          currency: r.currency,
-          date: r.date,
-          externalId: r.externalId,
-          externalReferenceId: r.externalReferenceId,
-          fees: r.fees,
-          id: r.id,
-          name: r.name,
-          optionSymbol: r.optionSymbol,
-          optionType: r.optionType,
-          price: r.price,
-          quantity: r.quantity,
-          settlementDate: r.settlementDate,
-          source: r.source,
-          subtype: r.subtype,
-          type: r.type,
-          updatedAt: r.updatedAt,
-        },
-        sec: r.security,
-      },
-      userId
-    )
-  );
+  // Sort by ticker client-side — drizzle relational findMany can't orderBy across joins.
+  rows.sort((a, b) => (a.security.tickerSymbol ?? "").localeCompare(b.security.tickerSymbol ?? ""));
 
+  const positions = rows.map((r) => {
+    // Plaid rows lack averagePrice/openPnl — fall back to computed values.
+    const quantity = Number(r.quantity ?? 0);
+    const costBasisNum = Number(r.costBasis ?? 0);
+    const institutionValueNum = Number(r.institutionValue ?? 0);
+    const averagePurchasePrice =
+      r.averagePrice ?? (quantity > 0 ? String(costBasisNum / quantity) : "0");
+    const openPnl = r.openPnl ?? String(institutionValueNum - costBasisNum);
+
+    const externalId = r.account.externalId ?? "";
+    const sec = r.security;
+    return {
+      accountId: externalId,
+      averagePurchasePrice: numStr(averagePurchasePrice),
+      createdAt: toISOString(r.createdAt),
+      currencyCode: r.currency ?? "USD",
+      currencyId: null,
+      currencyName: "US Dollar",
+      exchangeCode: sec.exchangeCode,
+      exchangeId: null,
+      exchangeMicCode: sec.marketIdentifierCode,
+      exchangeName: sec.exchangeName,
+      figiCode: sec.figiCode,
+      id: r.id,
+      isQuotable: r.isQuotable ?? true,
+      isTradable: r.isTradable ?? false,
+      lastSync: toISOString(r.lastSyncAt ?? r.updatedAt),
+      localId: null,
+      openPnl: numStr(openPnl),
+      price: numStr(r.institutionPrice),
+      rawSymbol: sec.tickerSymbol,
+      securityTypeCode: sec.type,
+      securityTypeDescription: sec.subtype,
+      securityTypeId: null,
+      snapTradeAccountId: externalId,
+      symbol: sec.tickerSymbol,
+      symbolDescription: sec.name,
+      symbolId: sec.externalId,
+      units: numStr(r.quantity),
+      updatedAt: toISOString(r.updatedAt),
+      userId,
+    };
+  });
+
+  return {
+    positions,
+    positionsByAccount: groupBy(positions, (p) => p.accountId),
+  };
+}
+
+// ── Activities ──────────────────────────────────────────────────────
+
+function fetchActivityRows(
+  userId: string,
+  accountId: string | undefined,
+  opts: { limit?: number; offset?: number },
+) {
+  return db.query.investmentActivity.findMany({
+    columns: {
+      amount: true,
+      createdAt: true,
+      currency: true,
+      date: true,
+      externalId: true,
+      externalReferenceId: true,
+      fees: true,
+      id: true,
+      name: true,
+      optionSymbol: true,
+      optionType: true,
+      price: true,
+      quantity: true,
+      settlementDate: true,
+      source: true,
+      subtype: true,
+      type: true,
+      updatedAt: true,
+    },
+    ...(opts.limit === undefined ? {} : { limit: opts.limit }),
+    ...(opts.offset === undefined ? {} : { offset: opts.offset }),
+    orderBy: { date: "desc" },
+    where: {
+      userId: { eq: userId },
+      ...(accountId ? { account: { externalId: { eq: accountId } } } : {}),
+    },
+    with: {
+      account: { columns: { externalId: true } },
+      security: {
+        columns: {
+          exchangeCode: true,
+          exchangeName: true,
+          externalId: true,
+          figiCode: true,
+          marketIdentifierCode: true,
+          name: true,
+          subtype: true,
+          tickerSymbol: true,
+          type: true,
+        },
+      },
+    },
+  });
+}
+
+type ActivityRow = Awaited<ReturnType<typeof fetchActivityRows>>[number];
+
+function pickSecurityFields(sec: ActivityRow["security"]) {
+  return {
+    exchangeCode: sec?.exchangeCode ?? null,
+    exchangeMicCode: sec?.marketIdentifierCode ?? null,
+    exchangeName: sec?.exchangeName ?? null,
+    figiCode: sec?.figiCode ?? null,
+    securityTypeCode: sec?.type ?? null,
+    securityTypeDescription: sec?.subtype ?? null,
+    symbolDescription: sec?.name ?? null,
+    symbolId: sec?.externalId ?? null,
+    ticker: sec?.tickerSymbol ?? null,
+  };
+}
+
+function mapActivityRow(r: ActivityRow, userId: string) {
+  const sec = pickSecurityFields(r.security);
+  const acctExternal = r.account.externalId ?? "";
+  return {
+    accountId: acctExternal,
+    activityId: r.externalId,
+    amount: numStr(r.amount),
+    createdAt: toISOString(r.createdAt),
+    currencyCode: r.currency ?? "USD",
+    currencyId: null,
+    currencyName: "US Dollar",
+    description: r.name,
+    exchangeCode: sec.exchangeCode,
+    exchangeId: null,
+    exchangeMicCode: sec.exchangeMicCode,
+    exchangeName: sec.exchangeName,
+    externalReferenceId: r.externalReferenceId,
+    fee: numStr(r.fees),
+    figiCode: sec.figiCode,
+    fxRate: null,
+    id: r.id,
+    institution: null,
+    lastSync: toISOString(r.updatedAt),
+    optionSymbol: r.optionSymbol,
+    optionType: r.optionType,
+    pagination: null,
+    price: numStr(r.price),
+    rawSymbol: sec.ticker,
+    securityTypeCode: sec.securityTypeCode,
+    securityTypeDescription: sec.securityTypeDescription,
+    securityTypeId: null,
+    settlementDate: toDateString(r.settlementDate),
+    snapTradeAccountId: acctExternal,
+    symbol: sec.ticker,
+    symbolDescription: sec.symbolDescription,
+    symbolId: sec.symbolId,
+    symbolTicker: sec.ticker,
+    tradeDate: toDateString(r.date),
+    type: normalizeActivityType(r.source, r.type, r.subtype),
+    units: numStr(r.quantity),
+    updatedAt: toISOString(r.updatedAt),
+    userId,
+  };
+}
+
+export async function getActivitiesByUserId(userId: string, params: ActivitiesQuery) {
+  const { accountId, limit, offset } = params;
+  const rows = await fetchActivityRows(userId, accountId, { limit, offset });
+  const activities = rows.map((r) => mapActivityRow(r, userId));
   return {
     activities,
     activitiesByAccount: groupBy(activities, (a) => a.accountId),
@@ -445,36 +357,36 @@ export async function getActivitiesByUserId(
 
 export async function getPortfolioSnapshotsByUserId(
   userId: string,
-  params: PortfolioSnapshotsQuery
+  params: PortfolioSnapshotsQuery,
 ) {
-  const {
-    accountId,
-    startDate: startDateParam,
-    endDate: endDateParam,
-  } = params;
+  const { accountId, startDate: startDateParam, endDate: endDateParam } = params;
 
   const now = new Date();
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(now.getMonth() - 6);
 
-  const startDate =
-    startDateParam ?? sixMonthsAgo.toISOString().split("T")[0] ?? "";
+  const startDate = startDateParam ?? sixMonthsAgo.toISOString().split("T")[0] ?? "";
   const endDate = endDateParam ?? now.toISOString().split("T")[0] ?? "";
 
   const rows = await db.query.snapshot.findMany({
     columns: {
       accountId: true,
       current: true,
-      positionsValue: true,
+      id: true,
       snapshotDate: true,
     },
     orderBy: { snapshotDate: "asc" },
     where: {
+      account: {
+        OR: [
+          { source: { eq: "snaptrade" } },
+          { AND: [{ source: { eq: "plaid" } }, { type: { eq: "investment" } }] },
+          { AND: [{ source: { eq: "manual" } }, { type: { eq: "investment" } }] },
+        ],
+      },
       snapshotDate: { gte: startDate, lte: endDate },
       userId: { eq: userId },
-      ...(accountId && accountId !== "all-accounts"
-        ? { accountId: { eq: accountId } }
-        : {}),
+      ...(accountId && accountId !== "all-accounts" ? { accountId: { eq: accountId } } : {}),
     },
   });
 
@@ -484,15 +396,11 @@ export async function getPortfolioSnapshotsByUserId(
       if (!dateStr) {
         return null;
       }
-      const total = Number.parseFloat(s.current ?? "0");
-      const positions = Number.parseFloat(s.positionsValue ?? "0");
-      const cash = total - positions;
       return {
         accountId: s.accountId,
-        cash,
-        positions,
+        id: s.id,
         snapshotDate: dateStr,
-        value: total,
+        value: Number.parseFloat(s.current ?? "0"),
       };
     })
     .filter((s): s is NonNullable<typeof s> => s !== null);
@@ -523,8 +431,8 @@ export async function getUserBrokeragesByUserId(userId: string) {
 
   const names = rows
     .map((r) => {
-      // Plaid: only investment accounts contribute to "user brokerages".
-      if (r.source === "plaid" && r.type !== "investment") {
+      // Plaid + manual: only investment accounts count as brokerages.
+      if ((r.source === "plaid" || r.source === "manual") && r.type !== "investment") {
         return null;
       }
       return r.institutionName ?? r.plaidConnection?.institutionName ?? null;
@@ -561,7 +469,7 @@ export async function getUserTickersByUserId(userId: string) {
  * Institution name is COALESCEd from `plaidConnection` for Plaid rows.
  */
 export async function getBrokerageAccountsByUserId(
-  userId: string
+  userId: string,
 ): Promise<EnhancedBrokerageAccount[]> {
   const accounts = await db.query.financialAccount.findMany({
     columns: {
@@ -579,6 +487,7 @@ export async function getBrokerageAccountsByUserId(
       OR: [
         { source: { eq: "snaptrade" } },
         { source: { eq: "plaid" }, type: { eq: "investment" } },
+        { source: { eq: "manual" }, type: { eq: "investment" } },
       ],
       userId: { eq: userId },
     },
@@ -625,10 +534,7 @@ export async function getBrokerageAccountsByUserId(
       cashRestrictions: null,
       createdDate: account.createdAt.toISOString(),
       id: account.externalId ?? account.id,
-      institutionName:
-        account.institutionName ??
-        account.plaidConnection?.institutionName ??
-        "",
+      institutionName: account.institutionName ?? account.plaidConnection?.institutionName ?? "",
       name: account.name ?? "",
       userId,
     };

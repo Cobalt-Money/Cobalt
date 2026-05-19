@@ -1,9 +1,5 @@
 import { NewsToolbar } from "@cobalt-web/ui/cobalt/news/news-toolbar";
-import {
-  createFileRoute,
-  Outlet,
-  useRouterState,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 
@@ -30,9 +26,7 @@ function NewsLayoutInner() {
     <SidebarShellLayout
       flushBottom
       toolbar={
-        isNewsList ? (
-          <NewsToolbar activeTab={activeTab} onTabChange={setActiveTab} />
-        ) : undefined
+        isNewsList ? <NewsToolbar activeTab={activeTab} onTabChange={setActiveTab} /> : undefined
       }
     >
       <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">

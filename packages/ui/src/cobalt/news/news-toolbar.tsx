@@ -1,4 +1,4 @@
-import { cn } from "@cobalt-web/ui/lib/utils";
+import { Toggle } from "@cobalt-web/ui/components/toggle";
 
 export const NEWS_TAB_DEFS = [
   { id: "general", label: "General" },
@@ -20,29 +20,25 @@ export function NewsToolbar({
   onTabChange: (v: NewsTab) => void;
 }) {
   return (
-    <div className="flex items-center gap-1 border-b border-border/50 px-4 lg:px-6">
-      {NEWS_TAB_DEFS.map((t, index) => {
-        const isFirst = index === 0;
-        return (
-          <button
+    <div className="flex w-full min-w-0 flex-col gap-4 bg-sidebar-inset px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        {NEWS_TAB_DEFS.map((t) => (
+          <Toggle
             key={t.id}
+            pressed={activeTab === t.id}
+            onPressedChange={(pressed) => {
+              if (pressed) {
+                onTabChange(t.id);
+              }
+            }}
+            size="sm"
             type="button"
-            onClick={() => onTabChange(t.id)}
-            className={cn(
-              "relative py-2 text-sm font-medium transition-colors",
-              isFirst ? "pl-0 pr-3" : "px-3",
-              activeTab === t.id
-                ? cn(
-                    "text-foreground after:absolute after:bottom-0 after:h-0.5 after:rounded-full after:bg-foreground",
-                    isFirst ? "after:left-0 after:right-3" : "after:inset-x-3"
-                  )
-                : "text-muted-foreground hover:text-foreground"
-            )}
+            variant="outline"
           >
             {t.label}
-          </button>
-        );
-      })}
+          </Toggle>
+        ))}
+      </div>
     </div>
   );
 }

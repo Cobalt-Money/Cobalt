@@ -14,6 +14,7 @@ import {
 
 import { user } from "../../../users/auth/auth";
 import { financialAccount } from "../../account";
+import { category } from "../categories/category";
 import { transactionSource } from "./transaction";
 import type { RecurringTransactionIdsJson } from "./zod";
 
@@ -27,12 +28,11 @@ export const recurring = pgTable(
       precision: 19,
       scale: 4,
     }).notNull(),
-    category: text("category"),
-    categoryConfidence: text("category_confidence"),
-    categoryDetail: text("category_detail"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    /** SRI-311: FK to user's category row. */
+    categoryId: uuid("category_id").references(() => category.id, {
+      onDelete: "restrict",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     description: text("description").notNull(),
     externalId: text("external_id"),
     firstDate: date("first_date").notNull(),
@@ -46,9 +46,7 @@ export const recurring = pgTable(
     source: transactionSource("source").notNull(), //plaid or snaptrade
     status: text("status").notNull(),
     streamType: text("stream_type").notNull(), //what is this?
-    transactionIds: jsonb("transaction_ids")
-      .$type<RecurringTransactionIdsJson>()
-      .notNull(),
+    transactionIds: jsonb("transaction_ids").$type<RecurringTransactionIdsJson>().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull()
@@ -59,16 +57,13 @@ export const recurring = pgTable(
   },
   (t) => [
     index("recurring_account_id_idx").on(t.accountId),
+    index("recurring_category_id_idx").on(t.categoryId),
     index("recurring_user_id_idx").on(t.userId),
-    index("recurring_account_date_type_idx").on(
-      t.accountId,
-      t.lastDate,
-      t.streamType
-    ),
+    index("recurring_account_date_type_idx").on(t.accountId, t.lastDate, t.streamType),
     uniqueIndex("recurring_source_external_id_idx")
       .on(t.source, t.externalId)
       .where(sql`external_id IS NOT NULL`),
-  ]
+  ],
 );
 
 export type Recurring = typeof recurring.$inferSelect;

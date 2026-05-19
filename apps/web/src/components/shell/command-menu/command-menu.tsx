@@ -1,32 +1,54 @@
 import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-grid";
 import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/types";
-import { AddCashAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-cash-account-dialog";
-import {
-  CobaltCommandDialog,
-  CobaltCommandInput,
-  CobaltCommandPaletteRoot,
-} from "@cobalt-web/ui/cobalt/command-palette";
+import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
+import { AddManualAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-manual-account-dialog";
+import { AddPositionForm } from "@cobalt-web/ui/cobalt/accounts/add-position-dialog";
+import { SellPositionForm } from "@cobalt-web/ui/cobalt/accounts/sell-position-dialog";
+import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { AddTransactionForm } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
+import type { ExportFormat } from "@cobalt-web/ui/cobalt/transactions/lib/export";
 import {
+  buildTransactionsTsv,
+  exportTransactions,
+} from "@cobalt-web/ui/cobalt/transactions/lib/export";
+import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import {
+  CategoryIcon,
+  resolveCategoryIcon,
+  UNKNOWN_CATEGORY_ICON,
+} from "@cobalt-web/ui/cobalt/transactions/categories";
+import { AddTagForm } from "@cobalt-web/ui/cobalt/transactions/tags/add-tag-dialog";
+import { ManageTagsForm } from "@cobalt-web/ui/cobalt/transactions/tags/manage-tags-dialog";
+import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
+import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
+import { TagChip } from "@cobalt-web/ui/cobalt/transactions/tags/tag-chip";
+import {
+  Command,
+  CommandDialog,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList,
 } from "@cobalt-web/ui/components/command";
+import { Icon } from "@cobalt-web/ui/components/icon";
 import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
   AppleStocksIcon,
   ArrowReloadHorizontalIcon,
   BellDotIcon,
+  Copy01Icon,
   CreditCardIcon,
   Download02Icon,
   Edit02Icon,
   EyeIcon,
   File02Icon,
+  Folder01Icon,
   Home04Icon,
   Logout01Icon,
   Money01Icon,
+  Tag01Icon,
   Moon02Icon,
   Search02Icon,
   SearchDollarIcon,
@@ -37,24 +59,35 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 
-import { useAddCashAccount } from "@/components/accounts/add-cash-account-host";
 import {
   useAccountLauncher,
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
+import { useOpenImportWizard } from "@/components/imports/import-wizard";
+import { useZero, useQuery as useZeroQuery } from "@rocicorp/zero/react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { mutators, queries } from "@cobalt-web/zero";
+import { importsApi } from "@/lib/clients/api-client";
+import type { SellManualHoldingBody } from "@cobalt-web/server-data/brokerage/manual-holdings/schemas";
+
+import { tickerHistoryQuery } from "@/hooks/research-queries";
 import { SettingsGrid } from "@/components/settings/settings-grid";
 import type { SettingsSection } from "@/components/settings/settings-grid";
-import { useAddTransaction } from "@/components/transactions/add-transaction-provider";
+import { useAddManualAccountSubmit } from "@/hooks/use-add-manual-account-submit";
+import { useAddTagSubmit } from "@/hooks/use-add-tag-submit";
+import { useAddTransactionData } from "@/hooks/use-add-transaction-data";
+import { useAllCategories } from "@/hooks/use-categories";
+import { useBulkSetCategory, useBulkSetExcluded } from "@/hooks/use-bulk-transactions";
+import {
+  useBulkApplyTags,
+  useDeleteTag,
+  useTagOptions,
+  useTags,
+  useUpdateTag,
+} from "@/hooks/use-tags";
 import { logout } from "@/lib/zero-logout";
 
 import { ChatSearchResults, useChatSearch } from "./search-chats";
@@ -170,12 +203,56 @@ function getPlaceholder(activePage: string | undefined): string {
   if (activePage === "search-tickers") {
     return "Search tickers…";
   }
+  if (activePage === "bulk-set-category") {
+    return "Search categories…";
+  }
+  if (activePage === "bulk-add-tags" || activePage === "bulk-remove-tags") {
+    return "Search tags…";
+  }
+  if (activePage === "bulk-actions") {
+    return "Search actions…";
+  }
+  if (activePage === "bulk-export") {
+    return "Export format…";
+  }
   return "Type a command or search…";
+}
+
+/** Strip protocol/path/`www.` to get a bare domain suitable for Brandfetch CDN paths. */
+function domainFromUrl(url: string | null): string | null {
+  if (!url) {
+    return null;
+  }
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return null;
+  }
+  let host = trimmed;
+  if (trimmed.includes("://")) {
+    try {
+      host = new URL(trimmed).hostname;
+    } catch {
+      return null;
+    }
+  }
+  const cleaned = host
+    .replace(/^www\./, "")
+    .split("/")[0]
+    ?.toLowerCase();
+  return cleaned && cleaned.length > 0 ? cleaned : null;
 }
 
 /** Pages that render their own form body and hide the cmdk input + list. */
 function isFormPage(activePage: string | undefined): boolean {
-  return activePage === "add-cash-account" || activePage === "add-transaction";
+  return (
+    activePage === "add-manual-account" ||
+    activePage === "link-or-manual" ||
+    activePage === "add-transaction" ||
+    activePage === "add-position" ||
+    activePage === "sell-position" ||
+    activePage === "add-tag" ||
+    activePage === "manage-tags"
+  );
 }
 
 // ── Sub-page helpers ──────────────────────────────────────────────────────────
@@ -195,7 +272,12 @@ function isDefaultCommandView(activePage: string | undefined): boolean {
   return (
     activePage !== "search-chats" &&
     activePage !== "search-transactions" &&
-    activePage !== "search-tickers"
+    activePage !== "search-tickers" &&
+    activePage !== "bulk-actions" &&
+    activePage !== "bulk-set-category" &&
+    activePage !== "bulk-add-tags" &&
+    activePage !== "bulk-remove-tags" &&
+    activePage !== "bulk-export"
   );
 }
 
@@ -204,6 +286,22 @@ function isDefaultCommandView(activePage: string | undefined): boolean {
 interface CommandMenuContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
+  /** Open palette directly to the manage-tags sub-page. */
+  openManageTags: () => void;
+  /** Open palette directly to the manage-categories sub-page. */
+  openManageCategories: () => void;
+  /** Open palette to the add-account sub-page. */
+  openAddAccount: () => void;
+  /** Open palette to the add-manual-account sub-page. */
+  openAddManualAccount: () => void;
+  /** Open palette to the add-transaction sub-page. */
+  openAddTransaction: () => void;
+  /** Open palette to the add-position sub-page. */
+  openAddPosition: () => void;
+  /** Open palette to the add-tag sub-page, optionally seeded with a name. */
+  openAddTag: (opts?: { initialName?: string }) => void;
+  /** Open palette to the bulk-actions sub-page for the given transactions. */
+  openBulkActions: (transactions: readonly TransactionListItem[]) => void;
 }
 
 const CommandMenuContext = createContext<CommandMenuContextValue | null>(null);
@@ -222,18 +320,37 @@ export function useCommandMenu(): CommandMenuContextValue {
 function CommandMenuDialog({
   open,
   onOpenChange,
+  pages,
+  setPages,
+  search,
+  setSearch,
+  addTagInitialName,
+  setAddTagInitialName,
+  bulkTargets,
+  onClearBulkTargets,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  pages: string[];
+  setPages: React.Dispatch<React.SetStateAction<string[]>>;
+  search: string;
+  setSearch: React.Dispatch<React.SetStateAction<string>>;
+  addTagInitialName: string;
+  setAddTagInitialName: React.Dispatch<React.SetStateAction<string>>;
+  bulkTargets: readonly TransactionListItem[];
+  onClearBulkTargets: () => void;
 }) {
   const navigate = useNavigate();
   const router = useRouter();
+  const openImportWizard = useOpenImportWizard();
   const { resolvedTheme, setTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
-  const [pages, setPages] = useState<string[]>([]);
-  const [search, setSearch] = useState("");
-  const [settingsSection, setSettingsSection] =
-    useState<SettingsSection>("profile");
+  const [settingsSection, setSettingsSection] = useState<SettingsSection>("profile");
+  const [selectedInstitution, setSelectedInstitution] = useState<AddAccountInstitution | null>(
+    null,
+  );
+  /** True when manual-account form was entered via the Cash tile or "Create cash account" — locks type to depository. */
+  const [cashEntry, setCashEntry] = useState(false);
 
   const activePage = pages.at(-1);
   const inSearchTransactions = activePage === "search-transactions";
@@ -241,45 +358,249 @@ function CommandMenuDialog({
   const inAddAccount = activePage === "add-account";
   const inSearchTickers = activePage === "search-tickers";
   const inSettings = activePage === "settings";
-  const inAddCashAccount = activePage === "add-cash-account";
+  const inAddManualAccount = activePage === "add-manual-account";
+  const inLinkOrManual = activePage === "link-or-manual";
   const inAddTransaction = activePage === "add-transaction";
+  const inAddPosition = activePage === "add-position";
+  const inSellPosition = activePage === "sell-position";
+  const inAddTag = activePage === "add-tag";
+  const inManageTags = activePage === "manage-tags";
+  const inBulkActions = activePage === "bulk-actions";
+  const inBulkSetCategory = activePage === "bulk-set-category";
+  const inBulkAddTags = activePage === "bulk-add-tags";
+  const inBulkRemoveTags = activePage === "bulk-remove-tags";
+  const inBulkExport = activePage === "bulk-export";
   const inFormPage = isFormPage(activePage);
   const trimmedSearch = search.trim();
 
   // ── Search hooks ────────────────────────────────────────────────────────────
 
-  const { filteredTransactions, prefetch: prefetchTransactions } =
-    useTransactionSearch(trimmedSearch, inSearchTransactions);
+  const { filteredTransactions } = useTransactionSearch(trimmedSearch, open);
 
-  const {
-    filteredChats,
-    handleHighlight: handleChatHighlight,
-    prefetch: prefetchChats,
-  } = useChatSearch(trimmedSearch, inSearchChats);
+  const { filteredChats, handleHighlight: handleChatHighlight } = useChatSearch(
+    trimmedSearch,
+    open,
+  );
 
   const { filteredTickers, isLoadingUniverse, tickerRows } = useTickerSearch(
     trimmedSearch,
-    inSearchTickers
+    inSearchTickers,
+  );
+
+  // Per-form ticker typeahead for the add-position page.
+  const [positionTickerQuery, setPositionTickerQuery] = useState("");
+  const { filteredTickers: positionTickerMatches } = useTickerSearch(
+    positionTickerQuery,
+    inAddPosition,
+  );
+  const positionTickerSearch = useMemo(
+    () => ({
+      loading: false,
+      onQueryChange: setPositionTickerQuery,
+      results: positionTickerMatches.map((t) => ({
+        name: t.name,
+        price: t.price,
+        symbol: t.symbol,
+      })),
+    }),
+    [positionTickerMatches],
+  );
+  // Imperative ticker-history fetch backed by TanStack Query cache so repeated
+  // form opens for the same (ticker, date) don't re-hit FMP. Mirrors the
+  // chartQuery / quoteQuery pattern in research-queries.ts.
+  const queryClient = useQueryClient();
+  const loadTickerHistory = useCallback(
+    (ticker: string, date: string) => queryClient.fetchQuery(tickerHistoryQuery(ticker, date)),
+    [queryClient],
   );
 
   // ── Add-account ─────────────────────────────────────────────────────────────
 
-  const { data: plaidInstitutions = [] } = useInstitutionSearch(
-    search,
-    inAddAccount
+  const { data: plaidInstitutions = [] } = useInstitutionSearch(search, inAddAccount);
+  /** Separate query state for the in-form institution picker on add-manual-account. */
+  const [manualAccountInstitutionQuery, setManualAccountInstitutionQuery] = useState("");
+  const {
+    data: manualAccountInstitutionResults = [],
+    isFetching: manualAccountInstitutionLoading,
+  } = useInstitutionSearch(manualAccountInstitutionQuery, inAddManualAccount);
+  const manualAccountInstitutionSearch = useMemo(
+    () => ({
+      loading: manualAccountInstitutionLoading,
+      onQueryChange: setManualAccountInstitutionQuery,
+      results: manualAccountInstitutionResults.map((i) => ({
+        id: i.id,
+        logo: i.logo ?? null,
+        name: i.name,
+        url: i.url ?? null,
+      })),
+    }),
+    [manualAccountInstitutionResults, manualAccountInstitutionLoading],
   );
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
-  const { handleChoose: handleChooseConnect, updateModeDialog } =
-    useAccountLauncher(dismiss);
-  const { submitAddCashAccount, submittingAddCashAccount } =
-    useAddCashAccount();
+  const { handleChoose: handleChooseConnect, updateModeDialog } = useAccountLauncher(dismiss);
+  const { submit: submitAddManualAccount } = useAddManualAccountSubmit();
   const {
+    availableTags: addTxAvailableTags,
+    categoryOptions: addTxCategoryOptions,
     locationSearch: addTxLocationSearch,
     manualAccounts,
     merchantSearch: addTxMerchantSearch,
-    submitAddTransaction,
-    submittingAddTransaction,
-  } = useAddTransaction();
+    submit: submitAddTransaction,
+  } = useAddTransactionData();
+  const [manualInvestmentAccounts] = useZeroQuery(queries.brokerage.manualInvestmentAccounts());
+  const positionAccountOptions = useMemo(
+    () =>
+      manualInvestmentAccounts.map((a) => ({
+        id: a.id,
+        institutionName: a.institutionName ?? null,
+        logoDomain: a.logoDomain ?? null,
+        name: a.name ?? "Untitled",
+        subtype: a.subtype ?? null,
+      })),
+    [manualInvestmentAccounts],
+  );
+  /** All manual holdings across the user's manual investment accounts — drives the Sell flow's picker. */
+  const [allManualPositions] = useZeroQuery(queries.brokerage.positions({ source: "manual" }));
+  const sellableHoldings = useMemo(
+    () =>
+      allManualPositions
+        .map((h) => {
+          const acct = manualInvestmentAccounts.find((a) => a.id === h.accountId);
+          const ticker = h.security?.tickerSymbol ?? null;
+          const qty = Number(h.quantity);
+          if (!(acct && ticker) || qty <= 0) {
+            return null;
+          }
+          return {
+            accountId: acct.id,
+            accountName: acct.name ?? "Account",
+            holdingId: h.id,
+            name: h.security?.name ?? null,
+            quantity: qty,
+            ticker,
+          };
+        })
+        .filter((h): h is NonNullable<typeof h> => h !== null),
+    [allManualPositions, manualInvestmentAccounts],
+  );
+  const zero = useZero();
+  const submitAddPosition = useCallback(
+    (values: {
+      accountId: string;
+      positions: {
+        ticker: string;
+        name: string | null;
+        quantity: number;
+        institutionPrice: number;
+        costBasis: number | null;
+        dateAcquired: string | null;
+      }[];
+    }) => {
+      // Web uses the Zero mutator for optimistic UI; mobile / external clients
+      // use the REST endpoint (POST /internal/brokerage/manual-holdings).
+      for (const p of values.positions) {
+        const { server } = zero.mutate(
+          mutators.brokerage.addManualHolding({
+            accountId: values.accountId,
+            dateAcquired: p.dateAcquired ?? undefined,
+            institutionPrice: p.institutionPrice,
+            name: p.name ?? undefined,
+            quantity: p.quantity,
+            ticker: p.ticker,
+          }),
+        );
+        cobaltToast.positionAdded(p.ticker, p.quantity);
+        void (async () => {
+          try {
+            const result = await server;
+            if (result.type === "error") {
+              cobaltToast.error(result.error.message || `Couldn't save ${p.ticker}.`);
+            }
+          } catch (error) {
+            console.error("Failed to save manual holding", p.ticker, error);
+            cobaltToast.error(`Couldn't save ${p.ticker}.`);
+          }
+        })();
+      }
+    },
+    [zero],
+  );
+  const submitSellPosition = useCallback(
+    (values: SellManualHoldingBody) => {
+      const holding = sellableHoldings.find((h) => h.holdingId === values.holdingId);
+      const { server } = zero.mutate(mutators.brokerage.sellManualHolding(values));
+      if (holding) {
+        cobaltToast.positionSold(holding.ticker, values.sellQuantity);
+      }
+      void (async () => {
+        try {
+          const result = await server;
+          if (result.type === "error") {
+            cobaltToast.error(result.error.message || "Couldn't record sale.");
+          }
+        } catch (error) {
+          console.error("Failed to record sale", error);
+          cobaltToast.error("Couldn't record sale.");
+        }
+      })();
+    },
+    [sellableHoldings, zero],
+  );
+  const { isPending: submittingAddTag, submit: submitAddTagInner } = useAddTagSubmit();
+  const submitAddTag = useCallback(
+    async (values: Parameters<typeof submitAddTagInner>[0]) => {
+      try {
+        await submitAddTagInner(values);
+      } catch {
+        // Toast already shown.
+      }
+    },
+    [submitAddTagInner],
+  );
+
+  // ── Manage-tags data ────────────────────────────────────────────────────────
+
+  const { data: allTags } = useTags();
+  const updateTag = useUpdateTag();
+  const deleteTag = useDeleteTag();
+  const manageTagsList = useMemo(
+    () =>
+      allTags
+        .filter((t) => t.archivedAt === null && isTagColor(t.color))
+        .map((t) => ({
+          color: t.color as TagColor,
+          count: t.transactionTags?.length ?? 0,
+          id: t.id,
+          name: t.name,
+        })),
+    [allTags],
+  );
+
+  // ── Bulk-actions data ───────────────────────────────────────────────────────
+
+  const { data: allCategoriesForBulk } = useAllCategories();
+  const { options: bulkTagOptions } = useTagOptions();
+  const { mutateAsync: bulkSetCategory } = useBulkSetCategory();
+  const { mutateAsync: bulkSetExcluded } = useBulkSetExcluded();
+  const { mutateAsync: bulkApplyTags } = useBulkApplyTags();
+  const bulkCategoryGroups = useMemo(() => {
+    type CatRow = (typeof allCategoriesForBulk)[number];
+    const groups = new Map<string, { groupName: string; items: CatRow[] }>();
+    for (const c of allCategoriesForBulk) {
+      if (c.hidden) {
+        continue;
+      }
+      const groupName = c.group?.name ?? "Other";
+      const key = `${c.group?.systemKey ?? "_custom"}::${groupName}`;
+      const bucket = groups.get(key);
+      if (bucket) {
+        bucket.items.push(c);
+      } else {
+        groups.set(key, { groupName, items: [c] });
+      }
+    }
+    return [...groups.values()];
+  }, [allCategoriesForBulk]);
 
   // ── Theme ───────────────────────────────────────────────────────────────────
 
@@ -293,7 +614,7 @@ function CommandMenuDialog({
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => onOpenChange(nextOpen),
-    [onOpenChange]
+    [onOpenChange],
   );
 
   const go = useCallback(
@@ -302,7 +623,7 @@ function CommandMenuDialog({
       handleOpenChange(false);
       navigate({ to });
     },
-    [handleOpenChange, navigate, router]
+    [handleOpenChange, navigate, router],
   );
 
   const toggleTheme = useCallback(() => {
@@ -313,66 +634,232 @@ function CommandMenuDialog({
   // ── Sub-page entry ──────────────────────────────────────────────────────────
 
   const enterSearchTransactions = useCallback(() => {
-    prefetchTransactions();
     setSearch("");
     setPages((p) => [...p, "search-transactions"]);
-  }, [prefetchTransactions]);
+  }, [setPages, setSearch]);
 
   const enterSearchChats = useCallback(() => {
-    prefetchChats();
     setSearch("");
     setPages((p) => [...p, "search-chats"]);
-  }, [prefetchChats]);
+  }, [setPages, setSearch]);
 
   const enterSearchTickers = useCallback(() => {
     setSearch("");
     setPages((p) => [...p, "search-tickers"]);
-  }, []);
+  }, [setPages, setSearch]);
 
   const enterAddAccount = useCallback(() => {
     setSearch("");
     setPages((p) => [...p, "add-account"]);
-  }, []);
+  }, [setPages, setSearch]);
 
   const enterAddTransaction = useCallback(() => {
     setSearch("");
     setPages((p) => [...p, "add-transaction"]);
-  }, []);
+  }, [setPages, setSearch]);
+
+  const enterAddPosition = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "add-position"]);
+  }, [setPages, setSearch]);
+
+  const enterSellPosition = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "sell-position"]);
+  }, [setPages, setSearch]);
+
+  const enterAddTag = useCallback(
+    (initialName?: string) => {
+      setAddTagInitialName(initialName ?? "");
+      setSearch("");
+      setPages((p) => [...p, "add-tag"]);
+    },
+    [setAddTagInitialName, setPages, setSearch],
+  );
+
+  const addTxOnRequestCreateTag = useCallback(
+    (initialName: string) => {
+      enterAddTag(initialName);
+    },
+    [enterAddTag],
+  );
+
+  const enterManageTags = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "manage-tags"]);
+  }, [setPages, setSearch]);
+
+  const enterBulkSetCategory = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "bulk-set-category"]);
+  }, [setPages, setSearch]);
+
+  const enterBulkAddTags = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "bulk-add-tags"]);
+  }, [setPages, setSearch]);
+
+  const enterBulkRemoveTags = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "bulk-remove-tags"]);
+  }, [setPages, setSearch]);
+
+  const enterBulkExport = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "bulk-export"]);
+  }, [setPages, setSearch]);
+
+  const closeAndClearBulk = useCallback(() => {
+    onOpenChange(false);
+    onClearBulkTargets();
+  }, [onClearBulkTargets, onOpenChange]);
+
+  const handleBulkSetCategory = useCallback(
+    (categoryId: string) => {
+      const ids = bulkTargets.map((t) => t.id);
+      if (ids.length === 0) {
+        return;
+      }
+      void (async () => {
+        try {
+          await bulkSetCategory({ categoryId, transactionIds: ids });
+        } catch {
+          // toast already shown
+        } finally {
+          closeAndClearBulk();
+        }
+      })();
+    },
+    [bulkSetCategory, bulkTargets, closeAndClearBulk],
+  );
+
+  const handleBulkApplyTag = useCallback(
+    (tagId: string, mode: "add" | "remove") => {
+      const ids = bulkTargets.map((t) => t.id);
+      if (ids.length === 0) {
+        return;
+      }
+      void (async () => {
+        try {
+          await bulkApplyTags({
+            addTagIds: mode === "add" ? [tagId] : [],
+            removeTagIds: mode === "remove" ? [tagId] : [],
+            transactionIds: ids,
+          });
+        } catch {
+          // toast already shown
+        } finally {
+          closeAndClearBulk();
+        }
+      })();
+    },
+    [bulkApplyTags, bulkTargets, closeAndClearBulk],
+  );
+
+  const handleBulkExport = useCallback(
+    (format: ExportFormat) => {
+      if (bulkTargets.length === 0) {
+        return;
+      }
+      exportTransactions([...bulkTargets], format);
+      closeAndClearBulk();
+    },
+    [bulkTargets, closeAndClearBulk],
+  );
+
+  const handleBulkCopy = useCallback(() => {
+    if (bulkTargets.length === 0) {
+      return;
+    }
+    const tsv = buildTransactionsTsv([...bulkTargets]);
+    void (async () => {
+      try {
+        await navigator.clipboard.writeText(tsv);
+        cobaltToast.bulkSuccess(
+          `Copied ${bulkTargets.length} ${bulkTargets.length === 1 ? "row" : "rows"}`,
+          "Paste into a spreadsheet to keep columns.",
+        );
+      } catch {
+        cobaltToast.error("Couldn't copy to clipboard.");
+      } finally {
+        closeAndClearBulk();
+      }
+    })();
+  }, [bulkTargets, closeAndClearBulk]);
+
+  const handleBulkSetExcluded = useCallback(
+    (excluded: boolean) => {
+      const ids = bulkTargets.map((t) => t.id);
+      if (ids.length === 0) {
+        return;
+      }
+      void (async () => {
+        try {
+          await bulkSetExcluded({ excluded, transactionIds: ids });
+        } catch {
+          // toast already shown
+        } finally {
+          closeAndClearBulk();
+        }
+      })();
+    },
+    [bulkSetExcluded, bulkTargets, closeAndClearBulk],
+  );
 
   const popPage = useCallback(() => {
+    if (pages.length <= 1) {
+      // At the last sub-page: close dialog instead of popping to default.
+      // setOpen defers pages reset until after exit animation so the
+      // sub-page stays visible while closing (no default-palette flash).
+      onOpenChange(false);
+      return;
+    }
     setPages((p) => p.slice(0, -1));
     setSearch("");
     // Sub-page input is unmounting; cmdk's input remount races with body
     // grabbing focus. Double-rAF after state commit, then focus the input.
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        const el = document.querySelector<HTMLInputElement>(
-          '[data-slot="command-input"]'
-        );
+        const el = document.querySelector<HTMLInputElement>('[data-slot="command-input"]');
         el?.focus();
       });
     });
-  }, []);
+  }, [onOpenChange, pages.length, setPages, setSearch]);
 
   const handleChooseInstitution = useCallback(
     (institution: AddAccountInstitution) => {
-      if (institution.provider === "manual") {
-        // Replace add-account page with add-cash-account — same dialog,
-        // same morph in/out as other sub-pages.
-        setSearch("");
-        setPages((p) => [...p.slice(0, -1), "add-cash-account"]);
+      if (institution.id === "manual:import-csv") {
+        handleOpenChange(false);
+        openImportWizard();
         return;
       }
-      handleChooseConnect(institution);
+      if (institution.provider === "manual") {
+        // Cash tile — no intermediate step, no institution prefill, lock type to depository.
+        setSelectedInstitution(null);
+        setCashEntry(true);
+        setSearch("");
+        setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
+        return;
+      }
+      // Plaid/SnapTrade institution — give user a choice between linking and
+      // tracking it manually. Stash the institution so the manual form can
+      // prefill name + logoDomain if they pick "Add manually".
+      setSelectedInstitution(institution);
+      setCashEntry(false);
+      setSearch("");
+      setPages((p) => [...p.slice(0, -1), "link-or-manual"]);
     },
-    [handleChooseConnect]
+    [handleOpenChange, openImportWizard, setPages, setSearch],
   );
 
-  const enterSettings = useCallback((section: SettingsSection) => {
-    setSearch("");
-    setSettingsSection(section);
-    setPages((p) => [...p, "settings"]);
-  }, []);
+  const enterSettings = useCallback(
+    (section: SettingsSection) => {
+      setSearch("");
+      setSettingsSection(section);
+      setPages((p) => [...p, "settings"]);
+    },
+    [setPages, setSearch],
+  );
 
   // ── Navigation handlers ─────────────────────────────────────────────────────
 
@@ -388,7 +875,7 @@ function CommandMenuDialog({
         to: "/transactions/$transactionId",
       });
     },
-    [handleOpenChange, navigate, router]
+    [handleOpenChange, navigate, router],
   );
 
   const handleSelectChat = useCallback(
@@ -397,7 +884,7 @@ function CommandMenuDialog({
       handleOpenChange(false);
       navigate({ params: { chatId }, to: "/ai-chat/$chatId" });
     },
-    [handleOpenChange, navigate, router]
+    [handleOpenChange, navigate, router],
   );
 
   const handleSelectTicker = useCallback(
@@ -406,7 +893,7 @@ function CommandMenuDialog({
       handleOpenChange(false);
       navigate({ params: { symbol }, to: "/research/$symbol" });
     },
-    [handleOpenChange, navigate, router]
+    [handleOpenChange, navigate, router],
   );
 
   // ── Keyboard ────────────────────────────────────────────────────────────────
@@ -415,15 +902,26 @@ function CommandMenuDialog({
     (e: ReactKeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Backspace" && search.length === 0 && pages.length > 0) {
         e.preventDefault();
+        if (pages.length === 1) {
+          // At the last sub-page: close dialog instead of popping to default.
+          // setOpen defers pages reset until after exit animation so the
+          // sub-page stays visible while closing (no default-palette flash).
+          onOpenChange(false);
+          return;
+        }
         setPages((p) => p.slice(0, -1));
       }
       if (e.key === "Escape" && pages.length > 0) {
         e.preventDefault();
+        if (pages.length === 1) {
+          onOpenChange(false);
+          return;
+        }
         setPages((p) => p.slice(0, -1));
         setSearch("");
       }
     },
-    [pages.length, search.length]
+    [onOpenChange, pages.length, search.length, setPages, setSearch],
   );
 
   // ── Action groups ───────────────────────────────────────────────────────────
@@ -443,6 +941,42 @@ function CommandMenuDialog({
     },
   ];
 
+  const resumableImports = useQuery<{
+    jobs: {
+      id: string;
+      originalFilename: string;
+      status: "uploaded" | "column_mapped" | "account_mapped" | "category_mapped" | "committing";
+    }[];
+  }>({
+    enabled: open,
+    queryFn: async () => {
+      const res = await importsApi.list.$get();
+      if (!res.ok) {
+        throw new Error("Failed to load imports");
+      }
+      return (await res.json()) as {
+        jobs: {
+          id: string;
+          originalFilename: string;
+          status:
+            | "uploaded"
+            | "column_mapped"
+            | "account_mapped"
+            | "category_mapped"
+            | "committing";
+        }[];
+      };
+    },
+    queryKey: ["resumable-imports"],
+  });
+  const resumableStepLabel: Record<string, string> = {
+    account_mapped: "Map categories",
+    category_mapped: "Review & commit",
+    column_mapped: "Map accounts",
+    committing: "Importing…",
+    uploaded: "Map columns",
+  };
+
   const transactionActions: CommandAction[] = [
     {
       handleSelect: enterSearchTransactions,
@@ -455,6 +989,57 @@ function CommandMenuDialog({
       icon: Edit02Icon,
       keywords: ["create", "new", "add", "manual"],
       label: "Add Manual Transaction",
+    },
+    {
+      handleSelect: enterAddPosition,
+      icon: AppleStocksIcon,
+      keywords: ["buy", "holding", "stock", "ticker", "brokerage", "share", "manual"],
+      label: "Add Manual Position",
+    },
+    {
+      handleSelect: enterSellPosition,
+      icon: AppleStocksIcon,
+      keywords: ["sell", "close", "exit", "holding", "share", "stock", "manual"],
+      label: "Sell Manual Position",
+    },
+    {
+      handleSelect: () => {
+        handleOpenChange(false);
+        openImportWizard();
+      },
+      icon: File02Icon,
+      keywords: ["import", "csv", "upload", "mint", "ynab", "monarch", "bulk"],
+      label: "Import Transactions",
+    },
+    ...(resumableImports.data?.jobs ?? []).map<CommandAction>((j) => ({
+      handleSelect: () => {
+        handleOpenChange(false);
+        openImportWizard(j.id);
+      },
+      icon: File02Icon,
+      keywords: ["import", "resume", j.originalFilename],
+      label: `Resume: ${j.originalFilename} (${resumableStepLabel[j.status] ?? j.status})`,
+    })),
+    {
+      handleSelect: enterAddTag,
+      icon: Edit02Icon,
+      keywords: ["tag", "label", "category", "create"],
+      label: "Add Tag",
+    },
+    {
+      handleSelect: enterManageTags,
+      icon: Tag01Icon,
+      keywords: ["tag", "label", "edit", "rename", "delete", "manage"],
+      label: "Manage Tags",
+    },
+    {
+      handleSelect: () => {
+        handleOpenChange(false);
+        void navigate({ to: "/transactions/categories" });
+      },
+      icon: Folder01Icon,
+      keywords: ["category", "categories", "group", "edit", "rename", "delete", "manage"],
+      label: "Manage Categories",
     },
     {
       handleSelect: () => go("/transactions"),
@@ -528,12 +1113,17 @@ function CommandMenuDialog({
   return (
     <>
       {updateModeDialog}
-      <CobaltCommandDialog
+      <CommandDialog
         className={cn(
           inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
           inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl",
           inAddTransaction && "sm:max-w-3xl",
-          inAddCashAccount && "sm:max-w-3xl"
+          inAddPosition && "sm:max-w-3xl",
+          inSellPosition && "sm:max-w-3xl",
+          inAddManualAccount && "sm:max-w-3xl",
+          inLinkOrManual && "sm:max-w-xl",
+          inAddTag && "sm:max-w-lg",
+          inManageTags && "sm:max-w-md",
         )}
         description="Search for a page or action"
         onOpenChange={handleOpenChange}
@@ -541,12 +1131,13 @@ function CommandMenuDialog({
         showCloseButton={false}
         title="Command palette"
       >
-        <CobaltCommandPaletteRoot
+        <Command
           onValueChange={handleChatHighlight}
           shouldFilter={!isClientFilteredPage(activePage)}
         >
           {inSettings || inFormPage ? null : (
-            <CobaltCommandInput
+            <CommandInput
+              variant="frameless"
               onKeyDown={handleInputKeyDown}
               onValueChange={setSearch}
               placeholder={getPlaceholder(activePage)}
@@ -560,50 +1151,97 @@ function CommandMenuDialog({
               onSectionChange={setSettingsSection}
             />
           )}
-          {inAddCashAccount && (
+          {inLinkOrManual && selectedInstitution !== null && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-3 font-semibold text-foreground text-lg leading-none">
+                <InstitutionLogo
+                  className="size-10 shrink-0 overflow-hidden rounded-lg"
+                  institutionLogo={selectedInstitution.logo}
+                  institutionName={selectedInstitution.name}
+                  institutionUrl={selectedInstitution.url}
+                />
+                <span>{selectedInstitution.name}</span>
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                How would you like to add this account?
+              </p>
+              <div className="flex flex-col gap-2 pt-1">
+                <button
+                  className="flex flex-col items-start gap-1 rounded-lg border border-foreground/10 bg-foreground/[0.03] p-4 text-left transition-colors hover:bg-foreground/[0.07]"
+                  onClick={() => {
+                    handleChooseConnect(selectedInstitution);
+                  }}
+                  type="button"
+                >
+                  <span className="font-medium text-foreground text-sm">
+                    Link with {selectedInstitution.provider === "plaid" ? "Plaid" : "SnapTrade"}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    Auto-sync balances and transactions.
+                  </span>
+                </button>
+                <button
+                  className="flex flex-col items-start gap-1 rounded-lg border border-foreground/10 bg-foreground/[0.03] p-4 text-left transition-colors hover:bg-foreground/[0.07]"
+                  onClick={() => {
+                    setCashEntry(false);
+                    setSearch("");
+                    setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
+                  }}
+                  type="button"
+                >
+                  <span className="font-medium text-foreground text-sm">Add manually</span>
+                  <span className="text-muted-foreground text-xs">
+                    Track balance yourself; no auto-sync.
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
+          {inAddManualAccount && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-foreground text-lg leading-none">
-                <HugeiconsIcon
-                  className="size-6 shrink-0"
-                  icon={Wallet01Icon}
-                  strokeWidth={2}
-                />
-                New Cash Account
+                <Icon className="shrink-0" icon={Wallet01Icon} size="lg" />
+                Add an account
               </h2>
-              <AddCashAccountForm
+              <AddManualAccountForm
+                initialLogoDomain={domainFromUrl(selectedInstitution?.url ?? null)}
+                institutionSearch={manualAccountInstitutionSearch}
+                initialName={selectedInstitution?.name}
+                initialType={cashEntry ? "depository" : undefined}
                 onBackspaceWhenEmpty={popPage}
                 onSubmit={(values) => {
                   void (async () => {
                     try {
-                      await submitAddCashAccount(values);
+                      await submitAddManualAccount(values);
                       handleOpenChange(false);
                     } catch {
                       // Toast already shown by provider.
                     }
                   })();
                 }}
-                submitting={submittingAddCashAccount}
+                submitting={false}
               />
             </div>
           )}
           {inAddTransaction && (
             <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
               <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
-                <HugeiconsIcon
-                  className="size-6 shrink-0"
-                  icon={Money01Icon}
-                  strokeWidth={2}
-                />
+                <Icon className="shrink-0" icon={Money01Icon} size="lg" />
                 New Transaction
               </h2>
               <AddTransactionForm
                 accounts={manualAccounts}
+                availableTags={addTxAvailableTags}
+                categoryOptions={addTxCategoryOptions}
                 locationSearch={addTxLocationSearch}
                 merchantSearch={addTxMerchantSearch}
                 onBackspaceWhenEmpty={popPage}
+                onRequestCreateTag={addTxOnRequestCreateTag}
                 onCreateCashAccount={() => {
+                  setSelectedInstitution(null);
+                  setCashEntry(true);
                   setSearch("");
-                  setPages((p) => [...p.slice(0, -1), "add-cash-account"]);
+                  setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
                 }}
                 onSubmit={(values) => {
                   void (async () => {
@@ -615,7 +1253,106 @@ function CommandMenuDialog({
                     }
                   })();
                 }}
-                submitting={submittingAddTransaction}
+                submitting={false}
+              />
+            </div>
+          )}
+          {inAddPosition && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
+                <Icon className="shrink-0" icon={AppleStocksIcon} size="lg" />
+                New Position
+              </h2>
+              <AddPositionForm
+                accounts={positionAccountOptions}
+                onBackspaceWhenEmpty={popPage}
+                onLoadHistory={loadTickerHistory}
+                onSubmit={(values) => {
+                  void (async () => {
+                    try {
+                      await submitAddPosition(values);
+                      handleOpenChange(false);
+                    } catch {
+                      // Toast already shown by submit.
+                    }
+                  })();
+                }}
+                submitting={false}
+                tickerSearch={positionTickerSearch}
+              />
+            </div>
+          )}
+          {inSellPosition && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
+                <Icon className="shrink-0" icon={AppleStocksIcon} size="lg" />
+                Sell Position
+              </h2>
+              <SellPositionForm
+                holdings={sellableHoldings}
+                onBackspaceWhenEmpty={popPage}
+                onLoadHistory={loadTickerHistory}
+                onSubmit={(values) => {
+                  void (async () => {
+                    try {
+                      await submitSellPosition(values);
+                      handleOpenChange(false);
+                    } catch {
+                      // Toast already shown by submit.
+                    }
+                  })();
+                }}
+                submitting={false}
+              />
+            </div>
+          )}
+          {inAddTag && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
+                <Icon className="shrink-0" icon={Tag01Icon} size="md" />
+                New Tag
+              </h2>
+              <AddTagForm
+                initialName={addTagInitialName}
+                onBackspaceWhenEmpty={popPage}
+                onSubmit={(values) => {
+                  void (async () => {
+                    try {
+                      await submitAddTag(values);
+                      // Morph back to the previous sub-page (e.g. manage-tags)
+                      // when there is one; otherwise close the palette.
+                      if (pages.length > 1) {
+                        popPage();
+                      } else {
+                        handleOpenChange(false);
+                      }
+                    } catch {
+                      // Toast already shown by provider.
+                    }
+                  })();
+                }}
+                submitting={submittingAddTag}
+              />
+            </div>
+          )}
+          {inManageTags && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
+                <Icon className="shrink-0" icon={Tag01Icon} size="md" />
+                Manage tags
+              </h2>
+              <ManageTagsForm
+                onDelete={(tagId) => {
+                  deleteTag.mutate(tagId);
+                }}
+                onRecolor={(tagId, color) => {
+                  updateTag.mutate({ body: { color }, tagId });
+                }}
+                onRename={(tagId, name) => {
+                  updateTag.mutate({ body: { name }, tagId });
+                }}
+                onRequestCreate={enterAddTag}
+                tags={manageTagsList}
               />
             </div>
           )}
@@ -652,29 +1389,199 @@ function CommandMenuDialog({
                   onSelect={handleSelectTicker}
                 />
               )}
+              {inBulkActions && (
+                <>
+                  <CommandEmpty>No actions found.</CommandEmpty>
+                  <CommandGroup heading={`${bulkTargets.length} transactions`}>
+                    <CommandItem
+                      keywords={["category", "categorize"]}
+                      onSelect={enterBulkSetCategory}
+                      value="Set category"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Folder01Icon}
+                        strokeWidth={2}
+                      />
+                      Set category…
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["tag", "label", "add"]}
+                      onSelect={enterBulkAddTags}
+                      value="Add tags"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Tag01Icon}
+                        strokeWidth={2}
+                      />
+                      Add tags…
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["tag", "label", "remove"]}
+                      onSelect={enterBulkRemoveTags}
+                      value="Remove tags"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Tag01Icon}
+                        strokeWidth={2}
+                      />
+                      Remove tags…
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["exclude", "spending", "insights", "hide"]}
+                      onSelect={() => handleBulkSetExcluded(true)}
+                      value="Exclude from spending"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={EyeIcon}
+                        strokeWidth={2}
+                      />
+                      Exclude from spending
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["include", "spending", "insights", "show"]}
+                      onSelect={() => handleBulkSetExcluded(false)}
+                      value="Include in spending"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={EyeIcon}
+                        strokeWidth={2}
+                      />
+                      Include in spending
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["copy", "clipboard", "paste", "tsv"]}
+                      onSelect={handleBulkCopy}
+                      value="Copy"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Copy01Icon}
+                        strokeWidth={2}
+                      />
+                      Copy as table
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["export", "download", "csv", "xlsx", "excel"]}
+                      onSelect={enterBulkExport}
+                      value="Export"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Download02Icon}
+                        strokeWidth={2}
+                      />
+                      Export…
+                    </CommandItem>
+                  </CommandGroup>
+                </>
+              )}
+              {inBulkExport && (
+                <>
+                  <CommandEmpty>No formats found.</CommandEmpty>
+                  <CommandGroup heading="Export format">
+                    <CommandItem
+                      keywords={["csv", "comma", "spreadsheet"]}
+                      onSelect={() => handleBulkExport("csv")}
+                      value="CSV"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Download02Icon}
+                        strokeWidth={2}
+                      />
+                      CSV
+                    </CommandItem>
+                    <CommandItem
+                      keywords={["xlsx", "excel", "spreadsheet"]}
+                      onSelect={() => handleBulkExport("xlsx")}
+                      value="XLSX"
+                    >
+                      <HugeiconsIcon
+                        aria-hidden
+                        className="text-muted-foreground"
+                        icon={Download02Icon}
+                        strokeWidth={2}
+                      />
+                      XLSX (Excel)
+                    </CommandItem>
+                  </CommandGroup>
+                </>
+              )}
+              {inBulkSetCategory && (
+                <>
+                  <CommandEmpty>No categories found.</CommandEmpty>
+                  {bulkCategoryGroups.map((group) => (
+                    <CommandGroup heading={group.groupName} key={group.groupName}>
+                      {group.items.map((cat) => {
+                        const icon = resolveCategoryIcon(cat.iconKey) ?? UNKNOWN_CATEGORY_ICON;
+                        return (
+                          <CommandItem
+                            key={cat.id}
+                            keywords={[group.groupName]}
+                            onSelect={() => handleBulkSetCategory(cat.id)}
+                            value={`${cat.name} ${group.groupName}`}
+                          >
+                            <CategoryIcon icon={icon} sizeClassName="size-5" />
+                            {cat.name}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  ))}
+                </>
+              )}
+              {(inBulkAddTags || inBulkRemoveTags) && (
+                <>
+                  <CommandEmpty>No tags found.</CommandEmpty>
+                  <CommandGroup heading={inBulkAddTags ? "Add tag" : "Remove tag"}>
+                    {bulkTagOptions.map((tag) => (
+                      <CommandItem
+                        key={tag.id}
+                        onSelect={() =>
+                          handleBulkApplyTag(tag.id, inBulkAddTags ? "add" : "remove")
+                        }
+                        value={tag.name}
+                      >
+                        <TagChip color={tag.color} name={tag.name} size="sm" />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </>
+              )}
               {isDefaultCommandView(activePage) && (
                 <>
                   <CommandEmpty>No results found.</CommandEmpty>
 
                   <CommandGroup heading="Navigation">
-                    {COMMAND_NAV_ROUTES.map(
-                      ({ icon, keywords, label, path }) => (
-                        <CommandItem
-                          key={String(path)}
-                          keywords={keywords}
-                          onSelect={() => go(path)}
-                          value={`${label} ${path}`}
-                        >
-                          <HugeiconsIcon
-                            aria-hidden
-                            className="text-muted-foreground"
-                            icon={icon}
-                            strokeWidth={2}
-                          />
-                          {label}
-                        </CommandItem>
-                      )
-                    )}
+                    {COMMAND_NAV_ROUTES.map(({ icon, keywords, label, path }) => (
+                      <CommandItem
+                        key={String(path)}
+                        keywords={keywords}
+                        onSelect={() => go(path)}
+                        value={`${label} ${path}`}
+                      >
+                        <HugeiconsIcon
+                          aria-hidden
+                          className="text-muted-foreground"
+                          icon={icon}
+                          strokeWidth={2}
+                        />
+                        {label}
+                      </CommandItem>
+                    ))}
                   </CommandGroup>
 
                   <CommandGroup heading="Accounts">
@@ -726,8 +1633,8 @@ function CommandMenuDialog({
             </CommandList>
           )}
           {inSearchTransactions ? <TransactionSearchFooter /> : null}
-        </CobaltCommandPaletteRoot>
-      </CobaltCommandDialog>
+        </Command>
+      </CommandDialog>
     </>
   );
 }
@@ -735,25 +1642,118 @@ function CommandMenuDialog({
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function CommandMenuProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const [open, setOpenState] = useState(false);
+  const [pages, setPages] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+  const [addTagInitialName, setAddTagInitialName] = useState("");
+  const [bulkTargets, setBulkTargets] = useState<readonly TransactionListItem[]>([]);
+  const clearBulkTargets = useCallback(() => setBulkTargets([]), []);
+
+  const setOpen = useCallback((nextOpen: boolean) => {
+    setOpenState(nextOpen);
+    if (!nextOpen) {
+      // Defer reset until after dialog exit animation so the active sub-page
+      // stays visible while closing instead of flashing the default palette.
+      window.setTimeout(() => {
+        setPages([]);
+        setSearch("");
+        setBulkTargets([]);
+      }, 200);
+    }
+  }, []);
+
+  const openAt = useCallback((page: string) => {
+    setPages([page]);
+    setSearch("");
+    setOpenState(true);
+  }, []);
+
+  const openManageTags = useCallback(() => openAt("manage-tags"), [openAt]);
+  const openManageCategories = useCallback(() => {
+    void navigate({ to: "/transactions/categories" });
+  }, [navigate]);
+  const openAddAccount = useCallback(() => openAt("add-account"), [openAt]);
+  const openAddManualAccount = useCallback(() => openAt("add-manual-account"), [openAt]);
+  const openAddTransaction = useCallback(() => openAt("add-transaction"), [openAt]);
+  const openAddPosition = useCallback(() => openAt("add-position"), [openAt]);
+  const openAddTag = useCallback(
+    (opts?: { initialName?: string }) => {
+      setAddTagInitialName(opts?.initialName ?? "");
+      openAt("add-tag");
+    },
+    [openAt],
+  );
+  const openBulkActions = useCallback(
+    (transactions: readonly TransactionListItem[]) => {
+      setBulkTargets([...transactions]);
+      openAt("bulk-actions");
+    },
+    [openAt],
+  );
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((wasOpen) => !wasOpen);
+        setOpenState((wasOpen) => {
+          const next = !wasOpen;
+          if (!next) {
+            window.setTimeout(() => {
+              setPages([]);
+              setSearch("");
+            }, 200);
+          }
+          return next;
+        });
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const value = useMemo(() => ({ open, setOpen }), [open]);
+  const value = useMemo(
+    () => ({
+      open,
+      openAddAccount,
+      openAddManualAccount,
+      openAddPosition,
+      openAddTag,
+      openAddTransaction,
+      openBulkActions,
+      openManageCategories,
+      openManageTags,
+      setOpen,
+    }),
+    [
+      open,
+      openAddAccount,
+      openAddManualAccount,
+      openAddPosition,
+      openAddTag,
+      openAddTransaction,
+      openBulkActions,
+      openManageCategories,
+      openManageTags,
+      setOpen,
+    ],
+  );
 
   return (
     <CommandMenuContext.Provider value={value}>
       {children}
-      <CommandMenuDialog onOpenChange={setOpen} open={open} />
+      <CommandMenuDialog
+        addTagInitialName={addTagInitialName}
+        bulkTargets={bulkTargets}
+        onClearBulkTargets={clearBulkTargets}
+        onOpenChange={setOpen}
+        open={open}
+        pages={pages}
+        search={search}
+        setAddTagInitialName={setAddTagInitialName}
+        setPages={setPages}
+        setSearch={setSearch}
+      />
     </CommandMenuContext.Provider>
   );
 }
@@ -761,17 +1761,12 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
 // ── Shortcut badge ────────────────────────────────────────────────────────────
 
 export function CommandMenuSearchShortcut() {
-  const isMac =
-    typeof navigator !== "undefined" &&
-    /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+  const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
   return (
-    <KbdGroup
-      aria-hidden
-      className="pointer-events-none hidden shrink-0 gap-0.5 sm:inline-flex"
-    >
-      <Kbd className="min-w-6 px-1">{isMac ? "⌘" : "Ctrl"}</Kbd>
-      <Kbd className="min-w-6 px-1">K</Kbd>
+    <KbdGroup aria-hidden className="pointer-events-none hidden shrink-0 sm:inline-flex">
+      <Kbd>{isMac ? "⌘" : "Ctrl"}</Kbd>
+      <Kbd>K</Kbd>
     </KbdGroup>
   );
 }

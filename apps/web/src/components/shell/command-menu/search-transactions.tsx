@@ -3,17 +3,13 @@ import { MerchantLogo } from "@cobalt-web/ui/cobalt/logos/merchant-logo";
 import { mapZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 import type { ZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 import { getTransactionDisplayName } from "@cobalt-web/ui/cobalt/transactions/lib/helpers";
-import {
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@cobalt-web/ui/components/command";
+import { CommandEmpty, CommandGroup, CommandItem } from "@cobalt-web/ui/components/command";
 import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { zql } from "@cobalt-web/zero";
-import { useQuery, useZero } from "@rocicorp/zero/react";
-import { useCallback, useMemo } from "react";
+import { useQuery } from "@rocicorp/zero/react";
+import { useMemo } from "react";
 import type { MouseEvent } from "react";
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
@@ -39,9 +35,7 @@ const amountFormatter = new Intl.NumberFormat("en-US", {
 });
 
 const formatAmount = (amount: number | null | undefined): string =>
-  amount === null || amount === undefined
-    ? ""
-    : amountFormatter.format(Math.abs(amount));
+  amount === null || amount === undefined ? "" : amountFormatter.format(Math.abs(amount));
 
 const formatDate = (date: unknown): string => {
   const parsed = parseDate(date);
@@ -58,29 +52,17 @@ const formatDate = (date: unknown): string => {
 
 const buildRecentQuery = () =>
   zql.transaction
-    .related("account", (q) =>
-      q.related("plaidConnection", (c) => c.related("institution"))
-    )
+    .related("account", (q) => q.related("plaidConnection", (c) => c.related("institution")))
     .orderBy("date", "desc")
     .limit(30);
-
-const buildPrefetchQuery = () =>
-  zql.transaction
-    .related("account", (q) =>
-      q.related("plaidConnection", (c) => c.related("institution"))
-    )
-    .orderBy("date", "desc")
-    .limit(300);
 
 const buildSearchQuery = (trimmedSearch: string) => {
   const pattern = ILIKE_WILDCARD(trimmedSearch);
   return zql.transaction
     .where(({ cmp, or }) =>
-      or(cmp("name", "ILIKE", pattern), cmp("merchantName", "ILIKE", pattern))
+      or(cmp("name", "ILIKE", pattern), cmp("merchantName", "ILIKE", pattern)),
     )
-    .related("account", (q) =>
-      q.related("plaidConnection", (c) => c.related("institution"))
-    )
+    .related("account", (q) => q.related("plaidConnection", (c) => c.related("institution")))
     .orderBy("date", "desc")
     .limit(50);
 };
@@ -93,25 +75,17 @@ const isNotNull = <T,>(value: T | null): value is T => value !== null;
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useTransactionSearch(trimmedSearch: string, enabled: boolean) {
-  const zero = useZero();
-
   const [transactionRows] = useQuery(
-    trimmedSearch.length > 0
-      ? buildSearchQuery(trimmedSearch)
-      : buildRecentQuery(),
-    { enabled }
+    trimmedSearch.length > 0 ? buildSearchQuery(trimmedSearch) : buildRecentQuery(),
+    { enabled },
   );
 
   const filteredTransactions = useMemo<TransactionListItem[]>(
     () => (enabled ? transactionRows.map(toListItem).filter(isNotNull) : []),
-    [enabled, transactionRows]
+    [enabled, transactionRows],
   );
 
-  const prefetch = useCallback(() => {
-    zero.run(buildPrefetchQuery());
-  }, [zero]);
-
-  return { filteredTransactions, prefetch };
+  return { filteredTransactions };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -129,14 +103,10 @@ export function TransactionSearchResults({
     <>
       {filteredTransactions.length === 0 ? (
         <CommandEmpty>
-          {trimmedSearch.length > 0
-            ? "No transactions found."
-            : "No recent transactions."}
+          {trimmedSearch.length > 0 ? "No transactions found." : "No recent transactions."}
         </CommandEmpty>
       ) : null}
-      <CommandGroup
-        heading={trimmedSearch.length > 0 ? "Search results" : "Recent"}
-      >
+      <CommandGroup heading={trimmedSearch.length > 0 ? "Search results" : "Recent"}>
         {filteredTransactions.map((t) => {
           const name = getTransactionDisplayName(t) || "Untitled";
           const isInflow = (t.amount ?? 0) < 0;
@@ -163,17 +133,13 @@ export function TransactionSearchResults({
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate font-medium">{name}</span>
                   <span className="truncate text-muted-foreground text-xs">
-                    {[t.accountName, formatDate(t.date)]
-                      .filter(Boolean)
-                      .join(" · ")}
+                    {[t.accountName, formatDate(t.date)].filter(Boolean).join(" · ")}
                   </span>
                 </div>
                 <span
                   className={cn(
                     "ml-auto shrink-0 font-medium tabular-nums",
-                    isInflow
-                      ? "text-green-550"
-                      : "text-red-600 dark:text-red-500"
+                    isInflow ? "text-success" : "text-destructive",
                   )}
                 >
                   <PrivateAmount>

@@ -82,14 +82,9 @@ interface QuickStartRowProps {
   onQuickStart: (prompt: string) => void;
 }
 
-function QuickStartRow({
-  actions,
-  reverse = false,
-  rowKey,
-  onQuickStart,
-}: QuickStartRowProps) {
+function QuickStartRow({ actions, reverse = false, rowKey, onQuickStart }: QuickStartRowProps) {
   const duplicated = (["a", "b", "c"] as const).flatMap((copy) =>
-    actions.map((action) => ({ ...action, copy }))
+    actions.map((action) => ({ ...action, copy })),
   );
   const from = reverse ? `-${(actions.length * 100) / 3}%` : "0%";
   const to = reverse ? "0%" : `-${(actions.length * 100) / 3}%`;
@@ -100,8 +95,7 @@ function QuickStartRow({
       style={{
         WebkitMaskImage:
           "linear-gradient(to right, transparent, black 18%, black 82%, transparent)",
-        maskImage:
-          "linear-gradient(to right, transparent, black 18%, black 82%, transparent)",
+        maskImage: "linear-gradient(to right, transparent, black 18%, black 82%, transparent)",
       }}
     >
       <motion.div
@@ -123,13 +117,8 @@ function QuickStartRow({
             onClick={() => onQuickStart(action.prompt)}
             type="button"
           >
-            <HugeiconsIcon
-              className="size-5 text-muted-foreground"
-              icon={action.icon}
-            />
-            <span className="whitespace-nowrap font-medium text-base">
-              {action.title}
-            </span>
+            <HugeiconsIcon className="size-5 text-muted-foreground" icon={action.icon} />
+            <span className="whitespace-nowrap font-medium text-base">{action.title}</span>
           </button>
         ))}
       </motion.div>
@@ -171,22 +160,9 @@ export function ChatEmptyState() {
           </div>
 
           <div className="w-full space-y-3">
-            <QuickStartRow
-              actions={ROW_1}
-              onQuickStart={handleQuickStart}
-              rowKey="row1"
-            />
-            <QuickStartRow
-              actions={ROW_2}
-              onQuickStart={handleQuickStart}
-              reverse
-              rowKey="row2"
-            />
-            <QuickStartRow
-              actions={ROW_3}
-              onQuickStart={handleQuickStart}
-              rowKey="row3"
-            />
+            <QuickStartRow actions={ROW_1} onQuickStart={handleQuickStart} rowKey="row1" />
+            <QuickStartRow actions={ROW_2} onQuickStart={handleQuickStart} reverse rowKey="row2" />
+            <QuickStartRow actions={ROW_3} onQuickStart={handleQuickStart} rowKey="row3" />
           </div>
         </motion.div>
       )}

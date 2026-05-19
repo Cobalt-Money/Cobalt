@@ -42,10 +42,10 @@ export function LogoCDN({
         ? brandfetchIconDomainUrls(
             domain.trim(),
             clientId,
-            logoApiSize === 128 ? undefined : { size: logoApiSize }
+            logoApiSize === 128 ? undefined : { size: logoApiSize },
           )
         : [],
-    [clientId, domain, logoApiSize]
+    [clientId, domain, logoApiSize],
   );
 
   return (

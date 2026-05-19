@@ -1,5 +1,7 @@
 import { fmpStableGet } from "@cobalt-web/clients/fmp";
 
+import { ApiError } from "../_shared/api-error.js";
+import { withFmpUpstream } from "./fmp-errors.js";
 import type { FmpProfile } from "./schemas.js";
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -67,12 +69,12 @@ function firstFiniteNum(...candidates: unknown[]): number | null {
 // ── Quote ─────────────────────────────────────────────────────────
 
 export async function fmpGetQuote(symbol: string): Promise<FmpQuote> {
-  const raw = await fmpStableGet("batch-quote", { symbols: symbol });
+  const raw = await withFmpUpstream(() => fmpStableGet("batch-quote", { symbols: symbol }));
   const arr = Array.isArray(raw) ? raw : [];
   const item = firstObject(arr[0] ?? raw);
 
   if (!item) {
-    throw new Error(`No quote data available for ${symbol}`);
+    throw new ApiError(404, "ticker_not_found", `No quote data available for ${symbol}`);
   }
 
   return {
@@ -88,7 +90,7 @@ export async function fmpGetQuote(symbol: string): Promise<FmpQuote> {
 function profilePe(
   item: Record<string, unknown>,
   kmTtm: Record<string, unknown> | null,
-  ratiosRow: Record<string, unknown> | null
+  ratiosRow: Record<string, unknown> | null,
 ): number | null {
   return firstFiniteNum(
     item.pe,
@@ -100,28 +102,23 @@ function profilePe(
     kmTtm?.peRatio,
     kmTtm?.priceEarningsRatioTTM,
     ratiosRow?.priceToEarningsRatio,
-    ratiosRow?.peRatio
+    ratiosRow?.peRatio,
   );
 }
 
 function profileRevenue(
   item: Record<string, unknown>,
   kmTtm: Record<string, unknown> | null,
-  incomeRow: Record<string, unknown> | null
+  incomeRow: Record<string, unknown> | null,
 ): number | null {
-  return firstFiniteNum(
-    item.revenue,
-    kmTtm?.revenueTTM,
-    kmTtm?.revenue,
-    incomeRow?.revenue
-  );
+  return firstFiniteNum(item.revenue, kmTtm?.revenueTTM, kmTtm?.revenue, incomeRow?.revenue);
 }
 
 function mapProfileItemToFmpProfile(
   symbol: string,
   item: Record<string, unknown>,
   pe: number | null,
-  revenue: number | null
+  revenue: number | null,
 ): FmpProfile {
   return {
     beta: num(item.beta),
@@ -138,12 +135,7 @@ function mapProfileItemToFmpProfile(
     industry: str(item.industry),
     ipoDate: str(item.ipoDate),
     /** Stable API uses `marketCap`; legacy/v3 samples used `mktCap`. */
-    marketCap: num(
-      item.mktCap ??
-        item.marketCap ??
-        item.market_cap ??
-        item.marketCapitalization
-    ),
+    marketCap: num(item.mktCap ?? item.marketCap ?? item.market_cap ?? item.marketCapitalization),
     pe,
     price: num(item.price),
     revenue,
@@ -158,8 +150,8 @@ function mapProfileItemToFmpProfile(
  * latest `ratios` row (screener P/E), and latest annual `income-statement` for revenue.
  */
 export async function fmpGetProfile(symbol: string): Promise<FmpProfile> {
-  const [profileRes, keyMetricsTtmRes, ratiosRes, incomeRes] =
-    await Promise.allSettled([
+  const [profileRes, keyMetricsTtmRes, ratiosRes, incomeRes] = await withFmpUpstream(() =>
+    Promise.allSettled([
       fmpStableGet("profile", { symbol }),
       fmpStableGet("key-metrics-ttm", { symbol }),
       fmpStableGet("ratios", { limit: 1, symbol }),
@@ -168,29 +160,29 @@ export async function fmpGetProfile(symbol: string): Promise<FmpProfile> {
         period: "annual",
         symbol,
       }),
-    ]);
+    ]),
+  );
 
   if (profileRes.status === "rejected") {
-    throw profileRes.reason instanceof Error
-      ? profileRes.reason
-      : new Error(String(profileRes.reason));
+    const { reason } = profileRes;
+    if (reason instanceof ApiError) {
+      throw reason;
+    }
+    const message = reason instanceof Error ? reason.message : String(reason);
+    throw new ApiError(502, "fmp_upstream_failed", message);
   }
 
   const raw = profileRes.value;
   const item = firstObject(Array.isArray(raw) ? raw[0] : raw);
 
   if (!item) {
-    throw new Error(`No profile data available for ${symbol}`);
+    throw new ApiError(404, "ticker_not_found", `No profile data available for ${symbol}`);
   }
 
   const kmTtm =
-    keyMetricsTtmRes.status === "fulfilled"
-      ? firstObject(keyMetricsTtmRes.value)
-      : null;
-  const ratiosRow =
-    ratiosRes.status === "fulfilled" ? firstObject(ratiosRes.value) : null;
-  const incomeRow =
-    incomeRes.status === "fulfilled" ? firstObject(incomeRes.value) : null;
+    keyMetricsTtmRes.status === "fulfilled" ? firstObject(keyMetricsTtmRes.value) : null;
+  const ratiosRow = ratiosRes.status === "fulfilled" ? firstObject(ratiosRes.value) : null;
+  const incomeRow = incomeRes.status === "fulfilled" ? firstObject(incomeRes.value) : null;
 
   const pe = profilePe(item, kmTtm, ratiosRow);
   const revenue = profileRevenue(item, kmTtm, incomeRow);
@@ -200,11 +192,11 @@ export async function fmpGetProfile(symbol: string): Promise<FmpProfile> {
 
 // ── Historical Chart ──────────────────────────────────────────────
 
-type TimePeriod = "1D" | "1W" | "1M" | "3M" | "6M" | "YTD" | "1Y" | "All";
+export type TimePeriod = "1D" | "1W" | "1M" | "3M" | "6M" | "YTD" | "1Y" | "All";
 
 function chartPathAndParams(
   symbol: string,
-  period: TimePeriod
+  period: TimePeriod,
 ): { params: Record<string, string | number>; path: string } {
   switch (period) {
     case "1D": {
@@ -270,12 +262,66 @@ function periodStartDate(period: TimePeriod): string {
   }
 }
 
+/**
+ * Fetch end-of-day historical points for an arbitrary date range.
+ * Used by the manual-holding cost-basis picker, which needs closes around a
+ * user-supplied purchase date (not relative to today).
+ */
+export async function fmpGetHistoricalRange(
+  symbol: string,
+  fromDate: string,
+  toDate: string,
+): Promise<FmpHistoricalPoint[]> {
+  const raw = await withFmpUpstream(() =>
+    fmpStableGet("historical-price-eod/full", {
+      from: fromDate,
+      symbol,
+      to: toDate,
+    }),
+  );
+
+  let items: unknown[];
+  if (Array.isArray(raw)) {
+    items = raw;
+  } else if (
+    raw &&
+    typeof raw === "object" &&
+    Array.isArray((raw as Record<string, unknown>).historical)
+  ) {
+    items = (raw as Record<string, unknown>).historical as unknown[];
+  } else {
+    return [];
+  }
+
+  const points: FmpHistoricalPoint[] = [];
+  for (const entry of items) {
+    if (!entry || typeof entry !== "object") {
+      continue;
+    }
+    const o = entry as Record<string, unknown>;
+    const dateStr = str(o.date);
+    if (!dateStr) {
+      continue;
+    }
+    points.push({
+      close: num(o.close) ?? 0,
+      date: dateStr,
+      high: num(o.high) ?? 0,
+      low: num(o.low) ?? 0,
+      open: num(o.open) ?? 0,
+      volume: num(o.volume) ?? 0,
+    });
+  }
+
+  return points.toReversed();
+}
+
 export async function fmpGetChart(
   symbol: string,
-  period: TimePeriod
+  period: TimePeriod,
 ): Promise<FmpHistoricalPoint[]> {
   const { params, path } = chartPathAndParams(symbol, period);
-  const raw = await fmpStableGet(path, params);
+  const raw = await withFmpUpstream(() => fmpStableGet(path, params));
 
   let items: unknown[];
   if (Array.isArray(raw)) {

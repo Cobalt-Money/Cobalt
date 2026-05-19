@@ -25,14 +25,9 @@ import { config } from "dotenv";
 config({ path: resolve(import.meta.dir, "../apps/server/.env"), quiet: true });
 const src = process.env.MIGRATION_URI ?? process.env.DATABASE_URL;
 const dst =
-  process.env.LOCAL_DATABASE_URL ??
-  "postgresql://postgres:postgres@127.0.0.1:5433/cobalt";
-const dumpImg =
-  process.env.DUMP_PG_DUMP_IMAGE ?? process.env.DUMP_PG_IMAGE ?? "postgres:18";
-const restoreImg =
-  process.env.DUMP_PG_RESTORE_IMAGE ??
-  process.env.DUMP_PG_IMAGE ??
-  "postgres:18";
+  process.env.LOCAL_DATABASE_URL ?? "postgresql://postgres:postgres@127.0.0.1:5433/cobalt";
+const dumpImg = process.env.DUMP_PG_DUMP_IMAGE ?? process.env.DUMP_PG_IMAGE ?? "postgres:18";
+const restoreImg = process.env.DUMP_PG_RESTORE_IMAGE ?? process.env.DUMP_PG_IMAGE ?? "postgres:18";
 const full = process.argv.includes("--full");
 const replace = process.argv.includes("--replace");
 if (!src) {
@@ -44,10 +39,10 @@ const extraExcludeSchemas = (process.env.DUMP_EXCLUDE_SCHEMAS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
-const excludeSchemaArgs = [
-  ...defaultExcludeSchemas,
-  ...extraExcludeSchemas,
-].flatMap((name) => ["--exclude-schema", name]);
+const excludeSchemaArgs = [...defaultExcludeSchemas, ...extraExcludeSchemas].flatMap((name) => [
+  "--exclude-schema",
+  name,
+]);
 /** LIKE patterns: `_` is a wildcard; escape as `\_` so `__drizzle_migrations` matches literally. */
 const excludeDrizzleMigrationData = [
   "--exclude-table-data=public.\\_\\_drizzle_migrations",
@@ -87,15 +82,11 @@ function forDockerRestore(url) {
 }
 const restoreUrl = forDockerRestore(restoreConnectionUrl());
 const linuxHost =
-  process.platform === "linux"
-    ? ["--add-host", "host.docker.internal:host-gateway"]
-    : [];
+  process.platform === "linux" ? ["--add-host", "host.docker.internal:host-gateway"] : [];
 /** Clear local app data so a data-only COPY does not hit duplicate PKs (re-dump / refresh). */
 function truncateLocalAppTables() {
   if (full) {
-    process.stderr.write(
-      "dump: --replace ignored with --full (use empty DB or db:local:reset)\n"
-    );
+    process.stderr.write("dump: --replace ignored with --full (use empty DB or db:local:reset)\n");
     return Promise.resolve(0);
   }
   const sql = `DO $truncate$
@@ -131,13 +122,13 @@ $truncate$;`;
       stderr: "inherit",
       stdin: new TextEncoder().encode(sql),
       stdout: "inherit",
-    }
+    },
   );
   return proc.exited;
 }
 if (replace) {
   process.stderr.write(
-    "dump: --replace: truncating public/drizzle tables (except __drizzle_migrations)\n"
+    "dump: --replace: truncating public/drizzle tables (except __drizzle_migrations)\n",
   );
   const t = await truncateLocalAppTables();
   if (t !== 0) {
@@ -160,7 +151,7 @@ const dump = Bun.spawn(
     ...excludeSchemaArgs,
     "-Fc",
   ],
-  { stderr: "inherit", stdout: "pipe" }
+  { stderr: "inherit", stdout: "pipe" },
 );
 const restore = Bun.spawn(
   [
@@ -176,7 +167,7 @@ const restore = Bun.spawn(
     "-d",
     restoreUrl,
   ],
-  { stderr: "inherit", stdin: dump.stdout, stdout: "inherit" }
+  { stderr: "inherit", stdin: dump.stdout, stdout: "inherit" },
 );
 const [a, b] = await Promise.all([dump.exited, restore.exited]);
 process.exit(a !== 0 || b !== 0 ? 1 : 0);

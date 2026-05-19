@@ -10,11 +10,7 @@ import {
 } from "@cobalt-web/ui/components/alert-dialog";
 import { Button } from "@cobalt-web/ui/components/button";
 import { Input } from "@cobalt-web/ui/components/input";
-import {
-  Alert02Icon,
-  Delete02Icon,
-  Loading03Icon,
-} from "@hugeicons/core-free-icons";
+import { Alert02Icon, Delete02Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
@@ -26,7 +22,7 @@ import { deleteActiveZeroReplicaOnLogout } from "@/lib/zero-logout";
 
 const CONFIRMATION_TEXT = "DELETE";
 
-export function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
+export function DeleteAccountDialog(_props: { userEmail?: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -80,9 +76,7 @@ export function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
       await router.navigate({ to: "/" });
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to delete account. Please try again."
+        error instanceof Error ? error.message : "Failed to delete account. Please try again.",
       );
       setIsDeleting(false);
     }
@@ -111,17 +105,14 @@ export function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
             Delete account permanently
           </AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your
-            account and all associated data:
+            This action cannot be undone. This will permanently delete your account and all
+            associated data:
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
           <li>Connected bank accounts (Plaid connections will be revoked)</li>
-          <li>
-            Connected brokerage accounts (SnapTrade authorizations will be
-            revoked)
-          </li>
+          <li>Connected brokerage accounts (SnapTrade authorizations will be revoked)</li>
           <li>Active Stripe subscriptions (cancelled immediately)</li>
           <li>Portfolio snapshots, transactions, and historical data</li>
           <li>Financial goals, chats, documents, and feedback</li>
@@ -129,13 +120,8 @@ export function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
         </ul>
 
         <div className="flex flex-col gap-2">
-          <label
-            htmlFor="delete-account-confirm"
-            className="text-sm font-medium text-foreground"
-          >
-            Type{" "}
-            <span className="font-mono font-semibold">{CONFIRMATION_TEXT}</span>{" "}
-            to confirm
+          <label htmlFor="delete-account-confirm" className="text-sm font-medium text-foreground">
+            Type <span className="font-mono font-semibold">{CONFIRMATION_TEXT}</span> to confirm
           </label>
           <Input
             id="delete-account-confirm"
@@ -147,7 +133,6 @@ export function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
             disabled={isDeleting}
             onChange={(e) => setConfirmation(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground">Account: {userEmail}</p>
         </div>
 
         <AlertDialogFooter>
@@ -160,11 +145,7 @@ export function DeleteAccountDialog({ userEmail }: { userEmail: string }) {
           >
             {isDeleting ? (
               <>
-                <HugeiconsIcon
-                  icon={Loading03Icon}
-                  strokeWidth={2}
-                  className="animate-spin"
-                />
+                <HugeiconsIcon icon={Loading03Icon} strokeWidth={2} className="animate-spin" />
                 Deleting…
               </>
             ) : (

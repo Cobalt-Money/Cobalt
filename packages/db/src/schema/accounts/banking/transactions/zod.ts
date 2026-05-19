@@ -10,9 +10,7 @@ export const userOverrideCategoryJsonSchema = z.object({
   primary: z.string(),
 });
 
-export type UserOverrideCategoryJson = z.infer<
-  typeof userOverrideCategoryJsonSchema
->;
+export type UserOverrideCategoryJson = z.infer<typeof userOverrideCategoryJsonSchema>;
 
 /** User-authored markdown notes (Milkdown). Plain string, capped at 100KB. */
 export const transactionNotesMarkdownSchema = z.string().max(100_000);
@@ -41,20 +39,16 @@ export const transactionCounterpartyTypeSchema = z.enum([
   "income_source",
 ]);
 
-export type TransactionCounterpartyType = z.infer<
-  typeof transactionCounterpartyTypeSchema
->;
+export type TransactionCounterpartyType = z.infer<typeof transactionCounterpartyTypeSchema>;
 
 /** Plaid `NumbersIBANNullable` — effectively an empty object in practice. */
 export const numbersIbanNullableJsonSchema = z.object({}).strict();
 
-export type NumbersIbanNullableJson = z.infer<
-  typeof numbersIbanNullableJsonSchema
->;
+export type NumbersIbanNullableJson = z.infer<typeof numbersIbanNullableJsonSchema>;
 
 export const counterpartyNumbersInternationalJsonSchema = z.object({
   bic: z.string().nullable().optional(),
-  iban: z.union([numbersIbanNullableJsonSchema, z.null()]).optional(),
+  iban: numbersIbanNullableJsonSchema.nullable().optional(),
 });
 
 export type CounterpartyNumbersInternationalJson = z.infer<
@@ -66,20 +60,14 @@ export const counterpartyNumbersBacsJsonSchema = z.object({
   sort_code: z.string().nullable().optional(),
 });
 
-export type CounterpartyNumbersBacsJson = z.infer<
-  typeof counterpartyNumbersBacsJsonSchema
->;
+export type CounterpartyNumbersBacsJson = z.infer<typeof counterpartyNumbersBacsJsonSchema>;
 
 export const counterpartyNumbersJsonSchema = z.object({
   bacs: counterpartyNumbersBacsJsonSchema.nullable().optional(),
-  international: counterpartyNumbersInternationalJsonSchema
-    .nullable()
-    .optional(),
+  international: counterpartyNumbersInternationalJsonSchema.nullable().optional(),
 });
 
-export type CounterpartyNumbersJson = z.infer<
-  typeof counterpartyNumbersJsonSchema
->;
+export type CounterpartyNumbersJson = z.infer<typeof counterpartyNumbersJsonSchema>;
 
 /** Plaid `counterparties[]` element. */
 export const transactionCounterpartyJsonSchema = z.object({
@@ -92,29 +80,20 @@ export const transactionCounterpartyJsonSchema = z.object({
   website: z.string().nullable(),
 });
 
-export type TransactionCounterpartyJson = z.infer<
-  typeof transactionCounterpartyJsonSchema
->;
+export type TransactionCounterpartyJson = z.infer<typeof transactionCounterpartyJsonSchema>;
 
-export const counterpartiesArrayJsonSchema = z
-  .array(transactionCounterpartyJsonSchema)
-  .nullable();
+export const counterpartiesArrayJsonSchema = z.array(transactionCounterpartyJsonSchema).nullable();
 
-export type CounterpartiesArrayJson = z.infer<
-  typeof counterpartiesArrayJsonSchema
->;
+export type CounterpartiesArrayJson = z.infer<typeof counterpartiesArrayJsonSchema>;
 
 /** `transaction_ids` on `recurring_stream` (non-null array of Plaid transaction ids). */
 export const recurringTransactionIdsJsonSchema = z.array(z.string());
 
-export type RecurringTransactionIdsJson = z.infer<
-  typeof recurringTransactionIdsJsonSchema
->;
+export type RecurringTransactionIdsJson = z.infer<typeof recurringTransactionIdsJsonSchema>;
 
 /** Refinements for `createSelectSchema(transaction, …)`. */
 export const transactionJsonbSelectRefinements = {
   counterparties: counterpartiesArrayJsonSchema,
-  userOverrideLocation: locationJsonSchema.nullable(),
 } as const;
 
 /** Refinements for `createSelectSchema(recurringStream, …)`. */

@@ -1,12 +1,7 @@
-import { CATEGORY_MAPPING } from "@cobalt-web/server-data/transactions/categories";
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import { Button } from "@cobalt-web/ui/components/button";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
   Calendar03Icon,
@@ -19,31 +14,26 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { CobaltDialog } from "../cobalt-dialog";
+import { AccountLogo } from "../accounts/account-logo";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@cobalt-web/ui/components/dialog";
+import { Icon } from "@cobalt-web/ui/components/icon";
 import { CobaltSelectPopover } from "../select-popover";
-import { CategoryIcon, PRIMARY_CATEGORY_ICON } from "./categories";
+import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "./categories";
+import { CategoryPicker } from "./detail/category-picker";
+import type { CategoryPickerOption } from "./detail/editable-category";
+import type { TagOption } from "./tags/tag-picker";
+import { TagPicker } from "./tags/tag-picker";
+import type { TransactionNotesInputHandle } from "./transaction-notes-input";
+import { TransactionNotesInput } from "./transaction-notes-input";
 
-type PrimaryCategory = keyof typeof CATEGORY_MAPPING;
-
-const PRIMARY_CATEGORIES = Object.keys(CATEGORY_MAPPING) as PrimaryCategory[];
-
-interface CategoryItem {
-  value: PrimaryCategory;
-  label: string;
-}
-
-const CATEGORY_ITEMS: readonly CategoryItem[] = PRIMARY_CATEGORIES.map(
-  (value) => ({
-    label: CATEGORY_MAPPING[value].label,
-    value,
-  })
-);
-
-/** Categories that represent inflow (negative amount per Plaid sign convention). */
-const INFLOW_CATEGORIES: ReadonlySet<PrimaryCategory> = new Set([
-  "INCOME",
-  "TRANSFER_IN",
-]);
+/** Group system keys that represent inflow (negative signed amount per Plaid convention). */
+const INFLOW_GROUP_KEYS: ReadonlySet<string> = new Set(["income", "transfers"]);
 
 type LocationJson = NonNullable<TransactionListItem["location"]>;
 
@@ -77,25 +67,15 @@ function renderLocationResults({
   onPick: (r: GeocodeSearchResult) => void;
 }) {
   if (loading) {
-    return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        Searching…
-      </div>
-    );
+    return <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Searching…</div>;
   }
   if (query.trim() === "") {
     return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        Type to search
-      </div>
+      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Type to search</div>
     );
   }
   if (results.length === 0) {
-    return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        No results
-      </div>
-    );
+    return <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">No results</div>;
   }
   return results.map((r) => (
     <button
@@ -127,11 +107,7 @@ function renderMerchantPickerResults({
   onUseTyped: () => void;
 }) {
   if (merchantSearch.loading && merchantSearch.results.length === 0) {
-    return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        Searching…
-      </div>
-    );
+    return <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Searching…</div>;
   }
   if (query.trim().length < 2) {
     if (hasMerchant) {
@@ -146,9 +122,7 @@ function renderMerchantPickerResults({
       );
     }
     return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        Type to search
-      </div>
+      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Type to search</div>
     );
   }
   if (merchantSearch.results.length === 0) {
@@ -179,11 +153,7 @@ function renderMerchantPickerResults({
         <div className="size-5 shrink-0 rounded-sm bg-foreground/5" />
       )}
       <span className="min-w-0 flex-1 truncate text-foreground">{r.name}</span>
-      {r.domain ? (
-        <span className="shrink-0 text-muted-foreground text-xs">
-          {r.domain}
-        </span>
-      ) : null}
+      {r.domain ? <span className="shrink-0 text-muted-foreground text-xs">{r.domain}</span> : null}
     </button>
   ));
 }
@@ -191,6 +161,10 @@ function renderMerchantPickerResults({
 export interface AddTransactionAccountOption {
   id: string;
   name: string;
+  /** Raw subtype — drives cash-glyph special case for `subtype === "cash"`. */
+  subtype: string | null;
+  /** Brandfetch domain (manual accounts) — feeds InstitutionLogo CDN candidates. */
+  logoDomain: string | null;
 }
 
 export interface MerchantSuggestionItem {
@@ -217,15 +191,19 @@ export interface AddTransactionFormValues {
   /** Brandfetch domain when picked from typeahead, else null. */
   merchantWebsite: string | null;
   description: string | null;
-  /** Plaid PFC primary category, or null. */
-  category: PrimaryCategory | null;
+  /** SRI-311: FK to user's category row, or null (defaults to uncategorized). */
+  categoryId: string | null;
   /** Geocoded location, or null. */
   location: LocationJson | null;
+  /** Tag ids selected by the user. */
+  tagIds: string[];
 }
 
 export interface AddTransactionFormProps {
   onSubmit: (values: AddTransactionFormValues) => void;
   accounts: readonly AddTransactionAccountOption[];
+  /** All non-deleted, non-hidden cats for the picker (Zero-fed). */
+  categoryOptions: readonly CategoryPickerOption[];
   submitting?: boolean;
   /** Fires when user hits Backspace with empty name input. Used by command palette to "morph back". */
   onBackspaceWhenEmpty?: () => void;
@@ -237,6 +215,10 @@ export interface AddTransactionFormProps {
   merchantSearch?: MerchantSearchState;
   /** Empty-state CTA — host opens cash dialog or morphs to the sub-page. */
   onCreateCashAccount?: () => void;
+  /** Available active tags for the picker; omit to hide the tag pill. */
+  availableTags?: readonly TagOption[];
+  /** Fires when user picks "Create <name> tag" — host opens add-tag dialog/sub-page. */
+  onRequestCreateTag?: (initialName: string) => void;
 }
 
 export interface AddTransactionDialogProps {
@@ -244,12 +226,15 @@ export interface AddTransactionDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: AddTransactionFormValues) => void;
   accounts: readonly AddTransactionAccountOption[];
+  categoryOptions: readonly CategoryPickerOption[];
   submitting?: boolean;
   /** Fires when user hits Backspace with empty name input. Used by command palette to "morph back". */
   onBackspaceWhenEmpty?: () => void;
   locationSearch?: GeocodeSearchState;
   merchantSearch?: MerchantSearchState;
   onCreateCashAccount?: () => void;
+  availableTags?: readonly TagOption[];
+  onRequestCreateTag?: (initialName: string) => void;
 }
 
 function todayIso(): string {
@@ -286,6 +271,7 @@ function formatDateLabel(iso: string): string {
 export function AddTransactionForm({
   onSubmit,
   accounts,
+  categoryOptions,
   submitting = false,
   onBackspaceWhenEmpty,
   submitLabel = "Create transaction",
@@ -293,11 +279,13 @@ export function AddTransactionForm({
   locationSearch,
   merchantSearch,
   onCreateCashAccount,
+  availableTags,
+  onRequestCreateTag,
 }: AddTransactionFormProps) {
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState<PrimaryCategory | null>(null);
+  const notesRef = useRef<TransactionNotesInputHandle>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryPickerOption | null>(null);
   const [date, setDate] = useState(todayIso());
   const [merchant, setMerchant] = useState("");
   const [merchantDomain, setMerchantDomain] = useState<string | null>(null);
@@ -306,13 +294,14 @@ export function AddTransactionForm({
   const [accountId, setAccountId] = useState<string>(accounts[0]?.id ?? "");
   const [location, setLocation] = useState<LocationJson | null>(null);
   const [locationQuery, setLocationQuery] = useState("");
+  const [tagIds, setTagIds] = useState<string[]>([]);
   const titleRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setName("");
-    setDescription("");
+    notesRef.current?.reset("");
     setAmount("");
-    setCategory(null);
+    setSelectedCategory(null);
     setDate(todayIso());
     setMerchant("");
     setMerchantDomain(null);
@@ -321,6 +310,7 @@ export function AddTransactionForm({
     setAccountId(accounts[0]?.id ?? "");
     setLocation(null);
     setLocationQuery("");
+    setTagIds([]);
     if (!autoFocus) {
       return;
     }
@@ -344,36 +334,36 @@ export function AddTransactionForm({
 
   const noAccounts = accounts.length === 0;
   const parsedAmount = Number(amount);
-  const validAmount =
-    amount.trim() !== "" && Number.isFinite(parsedAmount) && parsedAmount > 0;
+  const validAmount = amount.trim() !== "" && Number.isFinite(parsedAmount) && parsedAmount > 0;
   const canSubmit =
-    !submitting &&
-    !noAccounts &&
-    accountId !== "" &&
-    name.trim().length > 0 &&
-    validAmount;
+    !submitting && !noAccounts && accountId !== "" && name.trim().length > 0 && validAmount;
 
   const handleSubmit = () => {
     if (!canSubmit) {
       return;
     }
-    const isInflow = category !== null && INFLOW_CATEGORIES.has(category);
+    const isInflow =
+      selectedCategory !== null &&
+      selectedCategory.groupSystemKey !== null &&
+      INFLOW_GROUP_KEYS.has(selectedCategory.groupSystemKey);
     const signed = isInflow ? -parsedAmount : parsedAmount;
+    const description = (notesRef.current?.getMarkdown() ?? "").trim();
     onSubmit({
       accountId,
       amount: signed,
-      category,
+      categoryId: selectedCategory?.id ?? null,
       date,
-      description: description.trim() === "" ? null : description.trim(),
+      description: description === "" ? null : description,
       location,
       merchantName: merchant.trim() === "" ? null : merchant.trim(),
       merchantWebsite: merchantDomain,
       name: name.trim(),
+      tagIds,
     });
   };
 
-  const accountLabel =
-    accounts.find((a) => a.id === accountId)?.name ?? "Account";
+  const selectedAccount = accounts.find((a) => a.id === accountId);
+  const accountLabel = selectedAccount?.name ?? "Account";
 
   const selectedDate = useMemo(() => isoToDate(date), [date]);
 
@@ -446,9 +436,7 @@ export function AddTransactionForm({
         <span
           className={cn(
             "text-lg tabular-nums",
-            amount.trim() === ""
-              ? "text-muted-foreground/50"
-              : "text-foreground"
+            amount.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
           )}
         >
           $
@@ -468,59 +456,41 @@ export function AddTransactionForm({
         />
       </div>
 
-      <textarea
+      <div
         aria-label="Description"
-        className="block min-h-20 w-full resize-none bg-transparent text-base text-foreground leading-normal outline-none placeholder:text-muted-foreground/50"
-        maxLength={2000}
-        onChange={(e) => {
-          setDescription(e.target.value);
-        }}
-        placeholder="Add a note..."
-        value={description}
-      />
+        className="scrollbar-thin max-h-36 w-full overflow-y-auto text-base leading-normal"
+      >
+        <TransactionNotesInput maxLength={2000} placeholder="Add a note…" ref={notesRef} />
+      </div>
 
       <div className="flex flex-wrap items-center gap-1.5 pt-2">
-        <CobaltSelectPopover
-          emptyText="No categories"
-          itemKey={(item: CategoryItem) => item.value}
-          itemMatch={(item: CategoryItem, q) =>
-            item.label.toLowerCase().includes(q)
-          }
-          items={CATEGORY_ITEMS}
-          onSelect={(item: CategoryItem) => {
-            setCategory(item.value);
+        <CategoryPicker
+          onSelect={(item) => {
+            setSelectedCategory(item);
           }}
-          renderIcon={(item: CategoryItem) => (
-            <CategoryIcon icon={PRIMARY_CATEGORY_ICON[item.value]} />
-          )}
-          renderLabel={(item: CategoryItem) => item.label}
-          searchPlaceholder="Search categories…"
-          selectedKey={category}
+          options={categoryOptions}
+          selectedKey={selectedCategory?.id ?? null}
           trigger={
             <button
               className={cn(
                 "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs transition-colors",
-                category
+                selectedCategory
                   ? "border-foreground/15 bg-input/40 text-foreground"
-                  : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10"
+                  : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10",
               )}
               type="button"
             >
               <span className="flex size-[1.125rem] shrink-0 items-center justify-center">
-                {category ? (
+                {selectedCategory ? (
                   <CategoryIcon
-                    icon={PRIMARY_CATEGORY_ICON[category]}
+                    icon={resolveCategoryIcon(selectedCategory.iconKey) ?? UNKNOWN_CATEGORY_ICON}
                     sizeClassName="size-[1.125rem]"
                   />
                 ) : (
-                  <HugeiconsIcon
-                    className="size-[1.125rem]"
-                    icon={Folder02Icon}
-                    strokeWidth={2}
-                  />
+                  <HugeiconsIcon className="size-[1.125rem]" icon={Folder02Icon} strokeWidth={2} />
                 )}
               </span>
-              {category ? CATEGORY_MAPPING[category].label : "Category"}
+              {selectedCategory ? selectedCategory.name : "Category"}
             </button>
           }
         />
@@ -528,9 +498,7 @@ export function AddTransactionForm({
         <CobaltSelectPopover
           emptyText="No accounts"
           itemKey={(acc: AddTransactionAccountOption) => acc.id}
-          itemMatch={(acc: AddTransactionAccountOption, q) =>
-            acc.name.toLowerCase().includes(q)
-          }
+          itemMatch={(acc: AddTransactionAccountOption, q) => acc.name.toLowerCase().includes(q)}
           items={accounts}
           onSelect={(acc: AddTransactionAccountOption) => {
             setAccountId(acc.id);
@@ -543,41 +511,35 @@ export function AddTransactionForm({
               className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-input/40 px-2 text-foreground text-xs transition-colors"
               type="button"
             >
-              <img
-                alt=""
-                aria-hidden
-                className="size-5 shrink-0 object-contain"
-                src="/assets/vectors/cash.svg"
+              <AccountLogo
+                className="size-5 shrink-0"
+                logoDomain={selectedAccount?.logoDomain ?? null}
+                name={selectedAccount?.name ?? null}
+                source="manual"
+                subtype={selectedAccount?.subtype ?? "cash"}
               />
               {accountLabel}
             </button>
           }
         />
 
-        <CobaltSelectPopover
-          emptyText="No tags yet"
-          itemKey={(tag: string) => tag}
-          itemMatch={(tag: string, q) => tag.toLowerCase().includes(q)}
-          items={[] as readonly string[]}
-          onSelect={() => {
-            // Wire to tag state once tags backend lands.
-          }}
-          renderLabel={(tag: string) => tag}
-          searchPlaceholder="Search tags…"
-          trigger={
-            <button
-              className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 text-muted-foreground text-xs transition-colors hover:bg-foreground/10"
-              type="button"
-            >
-              <HugeiconsIcon
-                className="size-3.5 shrink-0"
-                icon={Tag01Icon}
-                strokeWidth={2}
-              />
-              Tags
-            </button>
-          }
-        />
+        {availableTags ? (
+          <TagPicker
+            onChange={setTagIds}
+            onRequestCreate={onRequestCreateTag}
+            options={[...availableTags]}
+            selectedIds={tagIds}
+            trigger={
+              <button
+                className="inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border border-foreground/15 bg-foreground/5 px-2 text-muted-foreground text-xs transition-colors hover:bg-foreground/10"
+                type="button"
+              >
+                <HugeiconsIcon className="size-3.5 shrink-0" icon={Tag01Icon} strokeWidth={2} />
+                {tagIds.length > 0 ? `Tags · ${tagIds.length}` : "Tags"}
+              </button>
+            }
+          />
+        ) : null}
 
         {merchantSearch ? (
           <Popover
@@ -595,7 +557,7 @@ export function AddTransactionForm({
                     "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs transition-colors",
                     merchant
                       ? "border-foreground/15 bg-input/40 text-foreground"
-                      : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10"
+                      : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10",
                   )}
                   type="button"
                 >
@@ -617,10 +579,7 @@ export function AddTransactionForm({
                 </button>
               }
             />
-            <PopoverContent
-              align="start"
-              className="w-72 gap-0 bg-[oklch(0.949_0_0)] p-1 dark:bg-[oklch(0.29_0_0)]"
-            >
+            <PopoverContent align="start" className="w-auto gap-0 bg-popover p-1 dark:bg-popover">
               <div className="flex items-center px-2.5 py-1.5">
                 <input
                   autoFocus
@@ -683,7 +642,7 @@ export function AddTransactionForm({
                     "inline-flex h-[1.625rem] shrink-0 items-center gap-1 rounded-full border px-2 text-xs transition-colors",
                     location
                       ? "border-foreground/15 bg-input/40 text-foreground"
-                      : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10"
+                      : "border-foreground/15 bg-foreground/5 text-muted-foreground hover:bg-foreground/10",
                   )}
                   type="button"
                 >
@@ -696,10 +655,7 @@ export function AddTransactionForm({
                 </button>
               }
             />
-            <PopoverContent
-              align="start"
-              className="gap-0 bg-[oklch(0.949_0_0)] p-1 dark:bg-[oklch(0.29_0_0)] w-72"
-            >
+            <PopoverContent align="start" className="gap-0 bg-popover p-1 dark:bg-popover w-auto">
               <div className="flex items-center px-2.5 py-1.5">
                 <input
                   autoFocus
@@ -743,30 +699,39 @@ export function AddTransactionDialog({
   onOpenChange,
   onSubmit,
   accounts,
+  categoryOptions,
   submitting = false,
   onBackspaceWhenEmpty,
   locationSearch,
   merchantSearch,
   onCreateCashAccount,
+  availableTags,
+  onRequestCreateTag,
 }: AddTransactionDialogProps) {
   return (
-    <CobaltDialog
-      className="w-[720px] sm:max-w-3xl"
-      onOpenChange={onOpenChange}
-      open={open}
-      title="New Transaction"
-      titleClassName="text-muted-foreground"
-      titleIcon={Money01Icon}
-    >
-      <AddTransactionForm
-        accounts={accounts}
-        locationSearch={locationSearch}
-        merchantSearch={merchantSearch}
-        onBackspaceWhenEmpty={onBackspaceWhenEmpty}
-        onCreateCashAccount={onCreateCashAccount}
-        onSubmit={onSubmit}
-        submitting={submitting}
-      />
-    </CobaltDialog>
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="w-[720px] sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-muted-foreground">
+            <Icon icon={Money01Icon} size="md" />
+            New Transaction
+          </DialogTitle>
+        </DialogHeader>
+        <DialogBody>
+          <AddTransactionForm
+            accounts={accounts}
+            availableTags={availableTags}
+            categoryOptions={categoryOptions}
+            locationSearch={locationSearch}
+            merchantSearch={merchantSearch}
+            onBackspaceWhenEmpty={onBackspaceWhenEmpty}
+            onCreateCashAccount={onCreateCashAccount}
+            onRequestCreateTag={onRequestCreateTag}
+            onSubmit={onSubmit}
+            submitting={submitting}
+          />
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }

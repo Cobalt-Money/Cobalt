@@ -1,0 +1,1 @@
+ALTER TABLE "financial_account" ADD COLUMN "logo_domain" text;

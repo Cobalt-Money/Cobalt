@@ -1,8 +1,5 @@
 import type { MappedFinancialEvent } from "../news/events/schemas.js";
-import {
-  getFinancialEventsForTickers,
-  getUserStockTickers,
-} from "../news/for-you/queries.js";
+import { getFinancialEventsForTickers, getUserStockTickers } from "../news/for-you/queries.js";
 import type {
   EnhancedBrokerageAccount,
   MergedBrokerageActivity,
@@ -29,9 +26,7 @@ export interface BrokerageDataResponse {
   activities: MergedBrokerageActivity[];
   activitiesByAccount: Record<string, MergedBrokerageActivity[]>;
   balances: Awaited<ReturnType<typeof getBalancesByUserId>>["balances"];
-  balancesByAccount: Awaited<
-    ReturnType<typeof getBalancesByUserId>
-  >["balancesByAccount"];
+  balancesByAccount: Awaited<ReturnType<typeof getBalancesByUserId>>["balancesByAccount"];
   holdingsNews: MappedFinancialEvent[];
   portfolioSnapshots: Awaited<ReturnType<typeof getPortfolioSnapshotsByUserId>>;
   positions: MergedBrokeragePosition[];
@@ -45,14 +40,9 @@ export interface BrokerageDataResponse {
  */
 export async function getMergedBrokerageDataByUserId(
   userId: string,
-  options: GetMergedBrokerageDataOptions = {}
+  options: GetMergedBrokerageDataOptions = {},
 ): Promise<BrokerageDataResponse> {
-  const {
-    startDate,
-    endDate,
-    positionsLimit = 50,
-    activitiesLimit = 25,
-  } = options;
+  const { startDate, endDate, positionsLimit = 50, activitiesLimit = 25 } = options;
 
   const [
     accounts,

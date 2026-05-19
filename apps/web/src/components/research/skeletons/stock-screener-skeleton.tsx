@@ -1,8 +1,7 @@
 import { Skeleton } from "@cobalt-web/ui/components/skeleton";
 import { cn } from "@cobalt-web/ui/lib/utils";
 
-const GRID_TEMPLATE_COLUMNS =
-  "2.75rem 8rem minmax(8rem, 14rem) repeat(6, minmax(0, 1fr))";
+const GRID_TEMPLATE_COLUMNS = "2.75rem 8rem minmax(8rem, 14rem) repeat(6, minmax(0, 1fr))";
 
 const HEADERS = [
   "",
@@ -23,23 +22,18 @@ export function StockScreenerSkeleton() {
     <div className="flex w-full min-w-0 flex-col gap-4">
       <table className="block w-full text-sm">
         <thead className="block">
-          <tr
-            className="grid items-center"
-            style={{ gridTemplateColumns: GRID_TEMPLATE_COLUMNS }}
-          >
+          <tr className="grid items-center" style={{ gridTemplateColumns: GRID_TEMPLATE_COLUMNS }}>
             {HEADERS.map((header, i) => (
               <th
                 className={cn(
                   "h-10 min-w-0 text-left font-normal text-muted-foreground",
                   i === 0 && "min-w-[2.75rem] shrink-0 pr-3",
-                  i === 1 && "pl-1"
+                  i === 1 && "pl-1",
                 )}
                 key={header || `col-${i}`}
                 scope="col"
               >
-                <span className="inline-flex h-full items-center">
-                  {header}
-                </span>
+                <span className="inline-flex h-full items-center">{header}</span>
               </th>
             ))}
           </tr>

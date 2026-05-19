@@ -69,13 +69,7 @@ function RssSourceFavicon({ link }: { readonly link: string }) {
       className="relative inline-flex size-4 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60"
     >
       {fav ? (
-        <img
-          alt=""
-          className="size-full object-cover"
-          decoding="async"
-          loading="lazy"
-          src={fav}
-        />
+        <img alt="" className="size-full object-cover" decoding="async" loading="lazy" src={fav} />
       ) : (
         <span className="flex size-full items-center justify-center text-[9px] font-bold text-muted-foreground">
           {initial}
@@ -111,9 +105,7 @@ function RssItemBody({ item }: { item: NewsMagazineSidebarItem }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <RssSourceFavicon link={item.link} />
-          <span className="text-xs text-muted-foreground">
-            {hostnameFromUrl(item.link)}
-          </span>
+          <span className="text-xs text-muted-foreground">{hostnameFromUrl(item.link)}</span>
         </div>
         {item.publishedAt === null ? null : (
           <time
@@ -138,8 +130,7 @@ function FeaturedEvent({
   onOpen?: (event: FinancialEventCard) => void;
 }) {
   const img = event.articles.find((a) => a.imageUrl?.trim())?.imageUrl ?? null;
-  const timeLabel =
-    typeof event.date === "number" ? compactTimeAgo(event.date) : "";
+  const timeLabel = typeof event.date === "number" ? compactTimeAgo(event.date) : "";
   const sourceName = event.articles[0]?.sourceName ?? null;
   const sourceUrl = event.articles[0]?.newsUrl ?? null;
 
@@ -156,8 +147,7 @@ function FeaturedEvent({
       {...wrapperProps}
       className={cn(
         "flex flex-col gap-6 text-left lg:grid lg:grid-cols-[minmax(0,1fr)_min(100%,320px)] lg:items-stretch lg:gap-10",
-        onOpen &&
-          "cursor-pointer rounded-2xl transition-colors hover:bg-accent/30"
+        onOpen && "cursor-pointer rounded-2xl transition-colors hover:bg-accent/30",
       )}
     >
       <div className="flex min-h-0 w-full min-w-0 flex-col gap-4">
@@ -185,9 +175,7 @@ function FeaturedEvent({
             <time
               className="shrink-0 text-xs tabular-nums text-muted-foreground"
               dateTime={
-                typeof event.date === "number"
-                  ? new Date(event.date).toISOString()
-                  : undefined
+                typeof event.date === "number" ? new Date(event.date).toISOString() : undefined
               }
             >
               {timeLabel}
@@ -220,8 +208,7 @@ function GridCard({
   onOpen?: (event: FinancialEventCard) => void;
 }) {
   const img = event.articles.find((a) => a.imageUrl?.trim())?.imageUrl ?? null;
-  const timeLabel =
-    typeof event.date === "number" ? compactTimeAgo(event.date) : "";
+  const timeLabel = typeof event.date === "number" ? compactTimeAgo(event.date) : "";
   const sourceName = event.articles[0]?.sourceName ?? null;
   const sourceUrl = event.articles[0]?.newsUrl ?? null;
 
@@ -238,7 +225,7 @@ function GridCard({
       {...wrapperProps}
       className={cn(
         "flex h-full flex-col overflow-hidden rounded-2xl border bg-card text-left transition-colors hover:bg-accent/40",
-        onOpen && "cursor-pointer"
+        onOpen && "cursor-pointer",
       )}
     >
       <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-muted/50">
@@ -271,9 +258,7 @@ function GridCard({
             <time
               className="shrink-0 text-xs tabular-nums text-muted-foreground"
               dateTime={
-                typeof event.date === "number"
-                  ? new Date(event.date).toISOString()
-                  : undefined
+                typeof event.date === "number" ? new Date(event.date).toISOString() : undefined
               }
             >
               {timeLabel}
@@ -319,7 +304,7 @@ export function BabyNews({
                 "relative shrink-0 pb-3 text-base transition-colors",
                 activeTab === id
                   ? "font-semibold text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
               key={id}
               onClick={() => setActiveTab(id)}
@@ -348,15 +333,9 @@ export function BabyNews({
                     <div key={event.id} className="space-y-10">
                       <FeaturedEvent event={event} onOpen={onOpenEvent} />
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {nextEvent1 && (
-                          <GridCard event={nextEvent1} onOpen={onOpenEvent} />
-                        )}
-                        {nextEvent2 && (
-                          <GridCard event={nextEvent2} onOpen={onOpenEvent} />
-                        )}
-                        {nextEvent3 && (
-                          <GridCard event={nextEvent3} onOpen={onOpenEvent} />
-                        )}
+                        {nextEvent1 && <GridCard event={nextEvent1} onOpen={onOpenEvent} />}
+                        {nextEvent2 && <GridCard event={nextEvent2} onOpen={onOpenEvent} />}
+                        {nextEvent3 && <GridCard event={nextEvent3} onOpen={onOpenEvent} />}
                       </div>
                     </div>
                   );

@@ -19,7 +19,7 @@ export const tickers = pgTable(
     index("tickers_exchange_idx").on(table.exchange),
     index("tickers_cik_idx").on(table.cik),
     index("tickers_is_active_idx").on(table.isActive),
-  ]
+  ],
 );
 
 export type Ticker = typeof tickers.$inferSelect;

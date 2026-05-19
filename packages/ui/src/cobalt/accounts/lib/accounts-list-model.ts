@@ -8,7 +8,7 @@ export interface AccountsInstitutionSection {
 
 export function filterAccountCardsForToolbar(
   items: readonly AccountCardViewModel[],
-  activeFilter: AccountsFilter
+  activeFilter: AccountsFilter,
 ): AccountCardViewModel[] {
   if (activeFilter === "all") {
     return [...items];
@@ -17,7 +17,7 @@ export function filterAccountCardsForToolbar(
 }
 
 export function groupAccountCardsByInstitution(
-  visible: readonly AccountCardViewModel[]
+  visible: readonly AccountCardViewModel[],
 ): AccountsInstitutionSection[] {
   const map = new Map<string, AccountCardViewModel[]>();
   for (const account of visible) {

@@ -3,17 +3,12 @@ import { KeepAccountsCheckedDialog } from "@cobalt-web/ui/cobalt/accounts/keep-a
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
-import type {
-  PlaidLinkOnExitMetadata,
-  PlaidLinkOnSuccessMetadata,
-} from "react-plaid-link";
+import type { PlaidLinkOnExitMetadata, PlaidLinkOnSuccessMetadata } from "react-plaid-link";
 import { toast } from "sonner";
 
-import {
-  institutionsApi,
-  plaidApi,
-  snaptradeApi,
-} from "@/lib/clients/api-client";
+import { institutionsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
+import { isDemoBlockedResponse } from "@/lib/clients/api-fetch";
+import { handleTierGateResponse } from "@/lib/upgrade-prompt";
 
 import { useOnboarding } from "./onboarding-context";
 
@@ -96,9 +91,7 @@ export function useAccountLauncher(onDismiss: () => void) {
   // Separate state for the pre-flight confirm dialog shown in update mode.
   // The workflow is already running at this point; cancelling the dialog
   // must resolve the hook with `cancelled: true` so the run terminates.
-  const [pendingConfirm, setPendingConfirm] = useState<PendingSession | null>(
-    null
-  );
+  const [pendingConfirm, setPendingConfirm] = useState<PendingSession | null>(null);
   const pendingPlaidRef = useRef(false);
   const { resolveLink, startOnboarding } = useOnboarding();
 
@@ -116,12 +109,10 @@ export function useAccountLauncher(onDismiss: () => void) {
         startOnboarding(session.runId);
         onDismiss();
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to finish connecting"
-        );
+        toast.error(error instanceof Error ? error.message : "Failed to finish connecting");
       }
     },
-    [onDismiss, resolveLink, startOnboarding]
+    [onDismiss, resolveLink, startOnboarding],
   );
 
   const onPlaidExit = useCallback(
@@ -146,7 +137,7 @@ export function useAccountLauncher(onDismiss: () => void) {
         }
       })();
     },
-    [resolveLink]
+    [resolveLink],
   );
 
   const { open: openPlaid, ready: plaidReady } = usePlaidLink({
@@ -175,6 +166,13 @@ export function useAccountLauncher(onDismiss: () => void) {
           json: { institutionId },
         });
         if (!res.ok) {
+          if (await handleTierGateResponse(res)) {
+            return;
+          }
+          // Demo-blocked responses already surface a toast via apiFetch.
+          if (await isDemoBlockedResponse(res)) {
+            return;
+          }
           throw new Error("Failed to start Plaid");
         }
         const data = await res.json();
@@ -201,12 +199,10 @@ export function useAccountLauncher(onDismiss: () => void) {
         pendingPlaidRef.current = true;
         setLinkToken(session.linkToken);
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to start Plaid Link"
-        );
+        toast.error(error instanceof Error ? error.message : "Failed to start Plaid Link");
       }
     },
-    [linkToken]
+    [linkToken],
   );
 
   const launchSnaptrade = useCallback(
@@ -217,6 +213,14 @@ export function useAccountLauncher(onDismiss: () => void) {
           json: { broker },
         });
         if (!res.ok) {
+          if (await handleTierGateResponse(res)) {
+            toast.dismiss(loadingId);
+            return;
+          }
+          if (await isDemoBlockedResponse(res)) {
+            toast.dismiss(loadingId);
+            return;
+          }
           throw new Error("Failed to open portal");
         }
         const { redirectURI } = await res.json();
@@ -225,14 +229,10 @@ export function useAccountLauncher(onDismiss: () => void) {
         window.location.href = redirectURI;
       } catch (error) {
         toast.dismiss(loadingId);
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to open connection portal"
-        );
+        toast.error(error instanceof Error ? error.message : "Failed to open connection portal");
       }
     },
-    [onDismiss]
+    [onDismiss],
   );
 
   const handleChoose = useCallback(
@@ -243,7 +243,7 @@ export function useAccountLauncher(onDismiss: () => void) {
       }
       launchPlaid(institution.id);
     },
-    [launchPlaid, launchSnaptrade]
+    [launchPlaid, launchSnaptrade],
   );
 
   const confirmUpdate = useCallback(() => {

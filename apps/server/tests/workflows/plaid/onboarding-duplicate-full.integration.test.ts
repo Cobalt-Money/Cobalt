@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 /**
  * Scenario A — full overlap duplicate detection.
  *
@@ -28,9 +29,10 @@ import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { and, eq } from "drizzle-orm";
 import { Products } from "plaid";
-import { getRun, resumeHook, start } from "workflow/api";
+import { getRun, start } from "workflow/api";
 
 import { plaidAddAccountWorkflow } from "../../../src/workflows/plaid/sync/workflow.js";
+import { resumeHookWithRetry } from "../../_helpers/resume-hook-with-retry.js";
 
 const TEST_USER_ID = "00000000-0000-4000-8000-000000000002";
 const INSTITUTION_ID = "ins_109508";
@@ -52,7 +54,7 @@ async function ensureTestUser(): Promise<void> {
     `INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at)
      VALUES ('${TEST_USER_ID}', 'plaid-dup-full-integration@test.local',
              'Integration-DupFull', false, NOW(), NOW())
-     ON CONFLICT (id) DO NOTHING`
+     ON CONFLICT (id) DO NOTHING`,
   );
 }
 
@@ -95,17 +97,11 @@ async function seedPriorConnection(): Promise<void> {
  */
 async function cleanup(newItemId: string | null): Promise<void> {
   if (newItemId) {
-    await db
-      .delete(plaidConnection)
-      .where(eq(plaidConnection.plaidItemId, newItemId));
+    await db.delete(plaidConnection).where(eq(plaidConnection.plaidItemId, newItemId));
   }
-  await db
-    .delete(plaidConnection)
-    .where(eq(plaidConnection.plaidItemId, SEED_ITEM_ID));
+  await db.delete(plaidConnection).where(eq(plaidConnection.plaidItemId, SEED_ITEM_ID));
   // Belt-and-suspenders sweep.
-  await db
-    .delete(plaidConnection)
-    .where(eq(plaidConnection.userId, TEST_USER_ID));
+  await db.delete(plaidConnection).where(eq(plaidConnection.userId, TEST_USER_ID));
 }
 
 interface ProgressEvent {
@@ -135,11 +131,7 @@ async function collectProgress(runId: string): Promise<ProgressEvent[]> {
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
     const status = await run.status;
-    if (
-      status === "completed" ||
-      status === "failed" ||
-      status === "cancelled"
-    ) {
+    if (status === "completed" || status === "failed" || status === "cancelled") {
       break;
     }
     await delay(200);
@@ -207,10 +199,8 @@ describe("plaid onboarding — Scenario A: full overlap duplicate", () => {
       const publicToken = sandboxRes.data.public_token;
 
       const hookToken = `plaid:link:${TEST_USER_ID}:${crypto.randomUUID()}`;
-      const run = await start(plaidAddAccountWorkflow, [
-        { hookToken, userId: TEST_USER_ID },
-      ]);
-      await resumeHook(hookToken, { publicToken });
+      const run = await start(plaidAddAccountWorkflow, [{ hookToken, userId: TEST_USER_ID }]);
+      await resumeHookWithRetry(hookToken, { publicToken });
 
       // Drive assertions off the progress stream. The stream closes when the
       // workflow hits `closeOnboardingProgressStep()` in the dup branch. We
@@ -225,18 +215,12 @@ describe("plaid onboarding — Scenario A: full overlap duplicate", () => {
       expect(events.length).toBeGreaterThan(0);
 
       // Derive itemId from the exchange phase for cleanup targeting.
-      const exchangeEvent = events.find(
-        (e) => e.phase === "exchange" && e.status === "done"
-      );
-      newItemId =
-        (exchangeEvent?.detail as { itemId?: string } | undefined)?.itemId ??
-        null;
+      const exchangeEvent = events.find((e) => e.phase === "exchange" && e.status === "done");
+      newItemId = (exchangeEvent?.detail as { itemId?: string } | undefined)?.itemId ?? null;
 
       // Progress contract: terminal "duplicate" phase present, with the
       // seeded account named in detail.duplicates.
-      const duplicateEvent = events.find(
-        (e) => e.phase === "duplicate" && e.status === "done"
-      );
+      const duplicateEvent = events.find((e) => e.phase === "duplicate" && e.status === "done");
       expect(duplicateEvent).toBeDefined();
       const dups = duplicateEvent?.detail?.duplicates ?? [];
       expect(dups.length).toBeGreaterThan(0);
@@ -268,8 +252,8 @@ describe("plaid onboarding — Scenario A: full overlap duplicate", () => {
         .where(
           and(
             eq(plaidConnection.plaidItemId, SEED_ITEM_ID),
-            eq(plaidConnection.userId, TEST_USER_ID)
-          )
+            eq(plaidConnection.userId, TEST_USER_ID),
+          ),
         )
         .limit(1);
       expect(seedConn).toBeDefined();

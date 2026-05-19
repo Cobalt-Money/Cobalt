@@ -10,7 +10,7 @@ export interface AccountRef {
  * Returns a Map keyed by SnapTrade account_id. Missing entries = orphaned/unsynced.
  */
 export async function lookupFinancialAccountsBySnaptradeIds(
-  snaptradeAccountIds: string[]
+  snaptradeAccountIds: string[],
 ): Promise<Map<string, AccountRef>> {
   if (snaptradeAccountIds.length === 0) {
     return new Map();

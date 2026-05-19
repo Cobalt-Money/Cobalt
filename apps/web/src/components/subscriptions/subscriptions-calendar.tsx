@@ -2,12 +2,7 @@ import { logoDevUrlByBrandName } from "@cobalt-web/clients/logo-dev";
 import { env } from "@cobalt-web/env/web";
 import { LogoImageWithFallback } from "@cobalt-web/ui/cobalt/logos/logo-image-fallback";
 import { Button } from "@cobalt-web/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@cobalt-web/ui/components/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@cobalt-web/ui/components/dialog";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
@@ -21,10 +16,7 @@ import { SegmentedGauge } from "./segmented-gauge";
 
 const logoDevToken = env.VITE_LOGO_DEV_PUBLISHABLE_KEY?.trim() ?? "";
 
-function billersOnDay(
-  date: Date,
-  subscriptions: readonly Subscription[]
-): Subscription[] {
+function billersOnDay(date: Date, subscriptions: readonly Subscription[]): Subscription[] {
   const day = date.getDate();
   const month = date.getMonth();
   return subscriptions.filter((sub) => {
@@ -38,10 +30,7 @@ function billersOnDay(
   });
 }
 
-function calcMonthlyTotal(
-  month: Date,
-  subscriptions: readonly Subscription[]
-): number {
+function calcMonthlyTotal(month: Date, subscriptions: readonly Subscription[]): number {
   const m = month.getMonth();
   let total = 0;
   for (const sub of subscriptions) {
@@ -57,7 +46,7 @@ function calcMonthlyTotal(
 function calcCumulativeTotal(
   month: Date,
   throughDay: number,
-  subscriptions: readonly Subscription[]
+  subscriptions: readonly Subscription[],
 ): number {
   const m = month.getMonth();
   let total = 0;
@@ -90,6 +79,23 @@ const FREQUENCY_LABEL: Record<string, string> = {
   WEEKLY: "Weekly",
 };
 
+function SubscriptionRow({ sub }: { sub: Subscription }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3 rounded-xl px-1.5 py-2">
+      <SubLogo sub={sub} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-sm font-medium leading-snug">{displayName(sub.name)}</span>
+        <span className="text-xs text-muted-foreground">
+          {FREQUENCY_LABEL[sub.billingCycle === "yearly" ? "ANNUALLY" : "MONTHLY"] ?? "Recurring"}
+        </span>
+      </div>
+      <span className="shrink-0 text-sm font-semibold tabular-nums">
+        <PrivateAmount>{USD.format(sub.amount)}</PrivateAmount>
+      </span>
+    </div>
+  );
+}
+
 function DayDialog({
   date,
   billers,
@@ -112,35 +118,17 @@ function DayDialog({
         </DialogHeader>
 
         {billers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No payments due on this date.
-          </p>
+          <p className="text-sm text-muted-foreground">No payments due on this date.</p>
         ) : (
-          <div className="flex min-w-0 flex-col gap-1">
-            {billers.map((sub) => (
-              <div
-                key={sub.id}
-                className="flex min-w-0 items-center gap-3 overflow-hidden rounded-2xl bg-input/30 px-3 py-2.5"
-              >
-                <SubLogo sub={sub} />
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-sm font-medium leading-snug">
-                    {sub.name}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {FREQUENCY_LABEL[
-                      sub.billingCycle === "yearly" ? "ANNUALLY" : "MONTHLY"
-                    ] ?? "Recurring"}
-                  </span>
-                </div>
-                <span className="shrink-0 text-sm font-semibold tabular-nums">
-                  <PrivateAmount>{USD.format(sub.amount)}</PrivateAmount>
-                </span>
-              </div>
-            ))}
+          <div className="flex min-w-0 flex-col">
+            <div className="flex min-w-0 flex-col">
+              {billers.map((sub) => (
+                <SubscriptionRow key={sub.id} sub={sub} />
+              ))}
+            </div>
 
             {billers.length > 1 && (
-              <div className="mt-1 flex items-center justify-between px-1 pt-2 border-t border-border/50">
+              <div className="mt-1 flex items-center justify-between border-t border-border px-1.5 pt-3">
                 <span className="text-xs text-muted-foreground">Total due</span>
                 <span className="text-sm font-semibold tabular-nums">
                   <PrivateAmount>{USD.format(dayTotal)}</PrivateAmount>
@@ -180,6 +168,13 @@ function logoLookupName(raw: string): string {
     } // cap at 2 words — enough for name matching
   }
   return kept.join(" ") || raw.trim();
+}
+
+/** Cleaned, title-cased name for display. "AMEX EPAYMENT ACH PMT 260420 ..." → "Amex Epayment" */
+function displayName(raw: string): string {
+  return logoLookupName(raw)
+    .toLowerCase()
+    .replaceAll(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function SubLogo({ sub }: { sub: Subscription }) {
@@ -252,10 +247,7 @@ function MonthGrid({
     <div className="flex flex-col gap-1 pb-8">
       <div className="grid grid-cols-7 gap-1">
         {WEEK_DAYS.map((d) => (
-          <div
-            key={d}
-            className="text-center text-xs text-muted-foreground font-medium py-1"
-          >
+          <div key={d} className="text-center text-xs text-muted-foreground font-medium py-1">
             {d}
           </div>
         ))}
@@ -273,7 +265,7 @@ function MonthGrid({
 
           const dayNumberClass = cn(
             "w-full text-center text-base font-semibold leading-none tabular-nums",
-            today ? "font-bold text-primary" : "text-muted-foreground"
+            today ? "font-bold text-primary" : "text-muted-foreground",
           );
 
           return (
@@ -284,7 +276,7 @@ function MonthGrid({
               className={cn(
                 // Match site header Command+K search control: `bg-input/30` / `hover:bg-input/50`
                 "flex h-24 flex-col rounded-2xl bg-input/30 p-1.5 text-center transition-colors hover:bg-input/50",
-                today && "ring-2 ring-primary"
+                today && "ring-2 ring-primary",
               )}
             >
               <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -307,7 +299,7 @@ function MonthGrid({
                   aria-hidden
                   className={cn(
                     "size-1.5 shrink-0 rounded-full",
-                    billers.length > 0 ? "bg-primary" : "opacity-0"
+                    billers.length > 0 ? "bg-primary" : "opacity-0",
                   )}
                 />
               </div>
@@ -326,8 +318,8 @@ function EmptyState() {
     <div className="flex flex-col items-center gap-3 rounded-2xl bg-input/30 px-6 py-8 text-center">
       <p className="text-base font-semibold">No subscriptions yet</p>
       <p className="max-w-xs text-sm text-muted-foreground">
-        We&apos;ll detect recurring payments automatically once you have a few
-        months of transactions. You can also add one manually.
+        We&apos;ll detect recurring payments automatically once you have a few months of
+        transactions. You can also add one manually.
       </p>
       <Button disabled size="sm" variant="outline" className="mt-1">
         Add subscription
@@ -347,17 +339,17 @@ export function SubscriptionsCalendar() {
 
   const monthTotal = useMemo(
     () => calcMonthlyTotal(currentDate, subscriptions),
-    [currentDate, subscriptions]
+    [currentDate, subscriptions],
   );
   const paidToDate = useMemo(
     () => calcCumulativeTotal(currentDate, today, subscriptions),
-    [currentDate, today, subscriptions]
+    [currentDate, today, subscriptions],
   );
   const remaining = monthTotal - paidToDate;
 
   const dialogBillers = useMemo(
     () => (dialogDate ? billersOnDay(dialogDate, subscriptions) : []),
-    [dialogDate, subscriptions]
+    [dialogDate, subscriptions],
   );
 
   const handleSelectDay = (date: Date) => {

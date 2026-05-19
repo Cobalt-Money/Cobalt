@@ -1,10 +1,10 @@
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 
 import { ConnectAccountEmpty } from "../empty/connect-account-empty";
-import { InstitutionLogo } from "../logos/institution-logo";
 import { AccountCard } from "./account-card";
+import { AccountLogo } from "./account-logo";
 import type { AccountsFilter } from "./accounts-toolbar";
-import { CashAccountLogo } from "./cash-account-logo";
 import {
   filterAccountCardsForToolbar,
   groupAccountCardsByInstitution,
@@ -16,21 +16,23 @@ export function AccountsList({
   isComplete,
   items,
   onConnectAccount,
+  onRenameAccount,
+  renderActions,
 }: {
   activeFilter: AccountsFilter;
   isComplete: boolean;
   items: AccountCardViewModel[];
   onConnectAccount?: () => void;
+  onRenameAccount?: (id: string, customName: string) => void;
+  /** App supplies the reconnect/disconnect controls per card. */
+  renderActions?: (account: AccountCardViewModel) => ReactNode;
 }) {
   const visible = useMemo(
     () => filterAccountCardsForToolbar(items, activeFilter),
-    [activeFilter, items]
+    [activeFilter, items],
   );
 
-  const byInstitution = useMemo(
-    () => groupAccountCardsByInstitution(visible),
-    [visible]
-  );
+  const byInstitution = useMemo(() => groupAccountCardsByInstitution(visible), [visible]);
 
   return (
     <div className="pt-4 pb-4 sm:pt-6 sm:pb-6">
@@ -44,64 +46,58 @@ export function AccountsList({
       ) : null}
       {visible.length > 0 ? (
         <div className="flex flex-col gap-10 sm:gap-12">
-          {byInstitution.map(
-            ({ institution, sectionAccounts }, sectionIndex) => {
-              const [lead] = sectionAccounts;
-              if (lead === undefined) {
-                return null;
-              }
-              return (
-                <section
-                  key={institution}
-                  aria-labelledby={`accounts-inst-${String(sectionIndex)}`}
-                  className="min-w-0"
-                >
-                  <div className="mb-4 flex items-center gap-2.5 sm:mb-5">
-                    {lead.source === "manual" ? (
-                      <CashAccountLogo className="size-7 sm:size-8" />
-                    ) : (
-                      <InstitutionLogo
-                        className="size-7 shrink-0 sm:size-8"
-                        institutionLogo={lead.institutionLogo}
-                        institutionLogosExtra={lead.institutionLogosExtra}
-                        institutionName={lead.institution}
-                        institutionUrl={lead.institutionUrl}
-                      />
-                    )}
-                    <h2
-                      className="truncate text-base font-semibold tracking-tight text-foreground sm:text-lg"
-                      id={`accounts-inst-${String(sectionIndex)}`}
-                    >
-                      {institution}
-                    </h2>
-                  </div>
-                  <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:gap-7 xl:grid-cols-3">
-                    {sectionAccounts.map((account) => (
-                      <AccountCard
-                        key={account.id}
-                        account={account}
-                        institutionLogo={
-                          account.source === "manual" ? (
-                            <CashAccountLogo className="size-8 sm:size-9" />
-                          ) : (
-                            <InstitutionLogo
-                              className="size-8 shrink-0 sm:size-9"
-                              institutionLogo={account.institutionLogo}
-                              institutionLogosExtra={
-                                account.institutionLogosExtra
-                              }
-                              institutionName={account.institution}
-                              institutionUrl={account.institutionUrl}
-                            />
-                          )
-                        }
-                      />
-                    ))}
-                  </div>
-                </section>
-              );
+          {byInstitution.map(({ institution, sectionAccounts }, sectionIndex) => {
+            const [lead] = sectionAccounts;
+            if (lead === undefined) {
+              return null;
             }
-          )}
+            return (
+              <section
+                key={institution}
+                aria-labelledby={`accounts-inst-${String(sectionIndex)}`}
+                className="min-w-0"
+              >
+                <div className="mb-4 flex items-center gap-2.5 sm:mb-5">
+                  <AccountLogo
+                    className="size-7 shrink-0 sm:size-8"
+                    institutionLogo={lead.institutionLogo}
+                    institutionLogosExtra={lead.institutionLogosExtra}
+                    logoDomain={lead.institutionUrl}
+                    name={lead.institution}
+                    source={lead.source}
+                    subtype={lead.subtype}
+                  />
+                  <h2
+                    className="truncate text-base font-semibold tracking-tight text-foreground sm:text-lg"
+                    id={`accounts-inst-${String(sectionIndex)}`}
+                  >
+                    {institution}
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:gap-7 xl:grid-cols-3">
+                  {sectionAccounts.map((account) => (
+                    <AccountCard
+                      key={account.id}
+                      account={account}
+                      actions={renderActions ? renderActions(account) : null}
+                      onRename={onRenameAccount}
+                      institutionLogo={
+                        <AccountLogo
+                          className="size-8 shrink-0 sm:size-9"
+                          institutionLogo={account.institutionLogo}
+                          institutionLogosExtra={account.institutionLogosExtra}
+                          logoDomain={account.institutionUrl}
+                          name={account.institution}
+                          source={account.source}
+                          subtype={account.subtype}
+                        />
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
       ) : null}
     </div>

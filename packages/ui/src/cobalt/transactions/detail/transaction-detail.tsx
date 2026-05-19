@@ -4,6 +4,8 @@ import type {
 } from "@cobalt-web/server-data/transactions/schemas";
 import { Separator } from "@cobalt-web/ui/components/separator";
 
+import { DeleteTransactionDialog } from "./delete-transaction-dialog";
+import type { ActivityTagMap } from "./transaction-detail-activity";
 import { TransactionDetailActivity } from "./transaction-detail-activity";
 import type { TransactionDetailEditHandlers } from "./transaction-detail-summary";
 import { TransactionDetailSummary } from "./transaction-detail-summary";
@@ -14,10 +16,12 @@ export type { TransactionDetailEditHandlers } from "./transaction-detail-summary
 export function TransactionDetailView({
   edit,
   editEvents = [],
+  tagsById,
   transaction,
 }: {
   edit?: TransactionDetailEditHandlers;
   editEvents?: TransactionActivityItem[];
+  tagsById?: ActivityTagMap;
   transaction: TransactionListItem;
 }) {
   return (
@@ -33,8 +37,17 @@ export function TransactionDetailView({
       <Separator />
       <TransactionDetailActivity
         editEvents={editEvents}
+        tagsById={tagsById}
         transaction={transaction}
       />
+      {edit?.onDelete ? (
+        <>
+          <Separator />
+          <div className="flex justify-start">
+            <DeleteTransactionDialog onConfirm={edit.onDelete} />
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

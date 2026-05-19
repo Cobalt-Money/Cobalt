@@ -1,12 +1,4 @@
-import {
-  bigint,
-  date,
-  integer,
-  numeric,
-  pgTable,
-  text,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { bigint, date, integer, numeric, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { tickers } from "./tickers";
 
@@ -47,7 +39,7 @@ export const fundamentals = pgTable(
     // Per-category sync timestamps (for staleness detection + resumability)
     profileSyncedAt: timestamp("profile_synced_at", { withTimezone: true }),
 
-    // Financials (SEC EDGAR companyfacts, weekly)
+    // Financials (FMP income/balance/cash-flow statements, refreshed daily on earnings reporters)
     revenue: bigint("revenue", { mode: "bigint" }),
     sector: text("sector"),
     sharesOutstandingDiluted: bigint("shares_outstanding_diluted", {
@@ -62,7 +54,7 @@ export const fundamentals = pgTable(
     totalLiabilities: bigint("total_liabilities", { mode: "bigint" }),
     website: text("website"),
   },
-  () => []
+  () => [],
 );
 
 export type Fundamentals = typeof fundamentals.$inferSelect;

@@ -15,11 +15,7 @@ import { user } from "../../users/auth/auth";
 import { financialAccount } from "../account";
 import { security } from "./security";
 
-export const activitySource = pgEnum("activity_source", [
-  "plaid",
-  "snaptrade",
-  "manual",
-]);
+export const activitySource = pgEnum("activity_source", ["plaid", "snaptrade", "manual"]);
 
 export const investmentActivity = pgTable(
   "investment_activity",
@@ -29,9 +25,7 @@ export const investmentActivity = pgTable(
       .references(() => financialAccount.id, { onDelete: "cascade" }),
     amount: numeric("amount", { precision: 19, scale: 4 }).notNull(),
     cancelTransactionId: text("cancel_transaction_id"), //what is this
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     currency: text("currency"),
     date: date("date").notNull(),
     externalId: text("external_id"),
@@ -69,7 +63,7 @@ export const investmentActivity = pgTable(
     uniqueIndex("investment_activity_source_external_id_idx")
       .on(t.source, t.externalId)
       .where(sql`external_id IS NOT NULL`),
-  ]
+  ],
 );
 
 export type InvestmentActivity = typeof investmentActivity.$inferSelect;

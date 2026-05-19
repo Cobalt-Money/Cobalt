@@ -1,5 +1,5 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { useMemo } from "react";
@@ -64,18 +64,17 @@ function openPnlToneClass(openPnl: number | null | undefined): string {
     return "text-muted-foreground";
   }
   if (openPnl > 0) {
-    return "text-green-550";
+    return "text-success";
   }
   if (openPnl < 0) {
-    return "text-red-600 dark:text-red-400";
+    return "text-destructive";
   }
   return "text-muted-foreground";
 }
 
 function PositionTableRow({ p }: { p: PositionRow }) {
   const sym = positionSymbol(p);
-  const sub =
-    p.symbolDescription?.trim() ?? p.securityTypeDescription?.trim() ?? null;
+  const sub = p.symbolDescription?.trim() ?? p.securityTypeDescription?.trim() ?? null;
   const mkt = positionMarketValue(p);
 
   return (
@@ -92,9 +91,7 @@ function PositionTableRow({ p }: { p: PositionRow }) {
                 </span>
               ) : null}
             </p>
-            {sub ? (
-              <p className="text-muted-foreground truncate text-xs">{sub}</p>
-            ) : null}
+            {sub ? <p className="text-muted-foreground truncate text-xs">{sub}</p> : null}
           </div>
         </div>
       </td>
@@ -106,8 +103,7 @@ function PositionTableRow({ p }: { p: PositionRow }) {
         )}
       </td>
       <td className="text-muted-foreground px-2 py-2 tabular-nums">
-        {p.averagePurchasePrice === undefined ||
-        p.averagePurchasePrice === null ? (
+        {p.averagePurchasePrice === undefined || p.averagePurchasePrice === null ? (
           "—"
         ) : (
           <PrivateAmount>{money(p.averagePurchasePrice)}</PrivateAmount>
@@ -160,50 +156,41 @@ export function PositionsTable({
         }
         return vb - va;
       }),
-    [scopedPositions]
+    [scopedPositions],
   );
 
   return (
-    <CobaltCard className="gap-0 overflow-hidden rounded-3xl py-0">
+    <Card variant="subtle" className="gap-0 overflow-hidden rounded-3xl py-0">
       <CardContent className="px-5 pt-3 pb-4">
         <div className="min-w-0 overflow-x-auto">
           <table className="w-full min-w-[880px] text-left text-sm">
             <thead>
               <tr className="text-muted-foreground text-[11px] tracking-wide uppercase">
-                <th className="py-1.5 pr-2 pl-0 text-left font-medium">
-                  Position
-                </th>
+                <th className="py-1.5 pr-2 pl-0 text-left font-medium">Position</th>
                 <th className="px-2 py-1.5 font-medium">Qty</th>
                 <th className="px-2 py-1.5 font-medium">Avg cost</th>
                 <th className="px-2 py-1.5 font-medium">Last price</th>
                 <th className="px-2 py-1.5 font-medium">Value</th>
                 <th className="px-2 py-1.5 font-medium">Open P&amp;L</th>
-                <th className="py-1.5 pr-0 pl-2 text-right font-medium">
-                  Account
-                </th>
+                <th className="py-1.5 pr-0 pl-2 text-right font-medium">Account</th>
               </tr>
             </thead>
             <tbody>
               {scopedPositions.length === 0 ? (
                 <tr>
-                  <td
-                    className="text-muted-foreground py-10 text-center"
-                    colSpan={7}
-                  >
+                  <td className="text-muted-foreground py-10 text-center" colSpan={7}>
                     {allPositions.length === 0
                       ? "No holdings in your portfolio"
                       : "No holdings for selected accounts"}
                   </td>
                 </tr>
               ) : (
-                positionsByValue.map((p) => (
-                  <PositionTableRow key={p.id} p={p} />
-                ))
+                positionsByValue.map((p) => <PositionTableRow key={p.id} p={p} />)
               )}
             </tbody>
           </table>
         </div>
       </CardContent>
-    </CobaltCard>
+    </Card>
   );
 }

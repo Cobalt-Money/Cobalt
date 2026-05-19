@@ -1,7 +1,5 @@
-import {
-  extractDominantColorFromSource,
-  extractPaletteFromSource,
-} from "./extract";
+import { beforeEach, vi, describe, expect, it } from "vitest";
+import { extractDominantColorFromSource, extractPaletteFromSource } from "./extract";
 
 const mocks = vi.hoisted(() => ({
   mockGetColor: vi.fn(),
@@ -32,8 +30,7 @@ describe("extract wrappers", () => {
       quality: 1,
     });
 
-    expect(mocks.mockGetColor).toHaveBeenCalledOnce();
-    expect(mocks.mockGetColor).toHaveBeenCalledWith(canvas, {
+    expect(mocks.mockGetColor).toHaveBeenCalledExactlyOnceWith(canvas, {
       colorSpace: "rgb",
       quality: 1,
     });

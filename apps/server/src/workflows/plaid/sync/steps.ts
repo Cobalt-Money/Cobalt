@@ -21,11 +21,7 @@ import {
   checkForDuplicateAccounts,
   getBankConnectionByItemId,
 } from "@cobalt-web/server-data/providers/plaid/link/queries";
-import { insertBalanceSnapshots } from "@cobalt-web/server-data/providers/plaid/snapshots/mutations";
-import {
-  getPostedTransactionsForAccount,
-  getSnapshotDatesForAccount,
-} from "@cobalt-web/server-data/providers/plaid/snapshots/queries";
+import { upsertBankBalanceSnapshotsForUser } from "@cobalt-web/server-data/snapshots/mutations";
 import { syncTransactionsPage } from "@cobalt-web/server-data/providers/plaid/transactions/actions";
 import {
   applyPendingOverrides,
@@ -67,9 +63,7 @@ export interface PlaidOnboardingProgress {
   at: number;
 }
 
-export async function emitOnboardingProgressStep(
-  event: Omit<PlaidOnboardingProgress, "at">
-) {
+export async function emitOnboardingProgressStep(event: Omit<PlaidOnboardingProgress, "at">) {
   "use step";
 
   const writer = getWritable<PlaidOnboardingProgress>({
@@ -88,14 +82,6 @@ export async function closeOnboardingProgressStep() {
   await getWritable<PlaidOnboardingProgress>({
     namespace: "progress",
   }).close();
-}
-
-function getTodayDateOnly(): string {
-  return new Date().toISOString().split("T").at(0) ?? "";
-}
-
-function toDateOnlyString(date: Date): string {
-  return date.toISOString().split("T").at(0) ?? "";
 }
 
 function isPlaidRateLimited(error: unknown): boolean {
@@ -121,8 +107,7 @@ function getPlaidErrorCode(error: unknown): string | undefined {
     error.response.data &&
     typeof error.response.data === "object" &&
     "error_code" in error.response.data &&
-    typeof (error.response.data as { error_code: unknown }).error_code ===
-      "string"
+    typeof (error.response.data as { error_code: unknown }).error_code === "string"
   ) {
     return (error.response.data as { error_code: string }).error_code;
   }
@@ -143,9 +128,7 @@ export async function updateItemStateStep(params: {
   "use step";
 
   if (!params.item_id) {
-    throw new FatalError(
-      `ITEM webhook missing item_id: ${params.webhook_code}`
-    );
+    throw new FatalError(`ITEM webhook missing item_id: ${params.webhook_code}`);
   }
 
   const result = await applyItemWebhookState({
@@ -160,7 +143,7 @@ export async function updateItemStateStep(params: {
 }
 
 async function resolvePlaidConnection(
-  plaidItemId: string
+  plaidItemId: string,
 ): Promise<{ id: string; userId: string }> {
   const [conn] = await db
     .select({ id: plaidConnection.id, userId: plaidConnection.userId })
@@ -173,10 +156,7 @@ async function resolvePlaidConnection(
   return conn;
 }
 
-export async function syncAccountsAndBalancesStep(
-  accessToken: string,
-  itemId: string
-) {
+export async function syncAccountsAndBalancesStep(accessToken: string, itemId: string) {
   "use step";
 
   try {
@@ -195,13 +175,13 @@ export async function syncAccountsAndBalancesStep(
               updatedAt: new Date(),
             },
             target: [financialAccount.source, financialAccount.externalId],
-            where: sql`external_id IS NOT NULL`,
+            targetWhere: sql`external_id IS NOT NULL`,
           });
 
         await upsertBalanceForPlaidAccount(account);
 
         return { accountId: account.account_id, success: true };
-      })
+      }),
     );
 
     return { accounts, accountsCount: accounts.length };
@@ -213,10 +193,7 @@ export async function syncAccountsAndBalancesStep(
   }
 }
 
-export async function reconcileOrphanAccountsStep(
-  accessToken: string,
-  itemId: string
-) {
+export async function reconcileOrphanAccountsStep(accessToken: string, itemId: string) {
   "use step";
 
   try {
@@ -245,14 +222,11 @@ export async function reconcileOrphanAccountsStep(
       })
       .from(financialAccount)
       .where(
-        and(
-          eq(financialAccount.source, "plaid"),
-          eq(financialAccount.plaidConnectionId, item.id)
-        )
+        and(eq(financialAccount.source, "plaid"), eq(financialAccount.plaidConnectionId, item.id)),
       );
 
     const orphanAccounts = dbAccounts.filter(
-      (a) => a.externalId !== null && !plaidAccountIds.has(a.externalId)
+      (a) => a.externalId !== null && !plaidAccountIds.has(a.externalId),
     );
 
     if (orphanAccounts.length === 0) {
@@ -271,7 +245,7 @@ export async function reconcileOrphanAccountsStep(
           subtype: orphan.subtype,
           type: orphan.type,
         },
-        plaidAccountsList
+        plaidAccountsList,
       );
 
       if (newAccount) {
@@ -282,8 +256,8 @@ export async function reconcileOrphanAccountsStep(
           .where(
             and(
               eq(financialAccount.source, "plaid"),
-              eq(financialAccount.externalId, newAccount.account_id)
-            )
+              eq(financialAccount.externalId, newAccount.account_id),
+            ),
           )
           .limit(1);
 
@@ -293,9 +267,7 @@ export async function reconcileOrphanAccountsStep(
         }
       }
 
-      await db
-        .delete(financialAccount)
-        .where(eq(financialAccount.id, orphan.id));
+      await db.delete(financialAccount).where(eq(financialAccount.id, orphan.id));
     }
 
     return { migrated, reconciled: orphanAccounts.length };
@@ -324,11 +296,11 @@ function findMatchingNewAccount(
     name?: string | null;
     official_name?: string | null;
     mask?: string | null;
-  }[]
+  }[],
 ): { account_id: string } | null {
   if (orphan.persistentAccountId) {
     const byPersistentId = accounts.find(
-      (a) => a.persistent_account_id === orphan.persistentAccountId
+      (a) => a.persistent_account_id === orphan.persistentAccountId,
     );
     if (byPersistentId) {
       return byPersistentId;
@@ -342,9 +314,7 @@ function findMatchingNewAccount(
   if (sameType.length === 1) {
     return sameType.at(0) ?? null;
   }
-  const sameSubtype = sameType.filter(
-    (a) => (a.subtype ?? null) === (orphan.subtype ?? null)
-  );
+  const sameSubtype = sameType.filter((a) => (a.subtype ?? null) === (orphan.subtype ?? null));
   if (sameSubtype.length === 1) {
     return sameSubtype.at(0) ?? null;
   }
@@ -367,7 +337,7 @@ function findMatchingNewAccount(
 async function migrateSnapshotsToNewAccount(
   orphanId: string,
   newId: string,
-  userId: string
+  userId: string,
 ): Promise<void> {
   const orphanRows = await db
     .select({ snapshotDate: snapshot.snapshotDate })
@@ -389,8 +359,8 @@ async function migrateSnapshotsToNewAccount(
             and(
               eq(snapshot.userId, userId),
               eq(snapshot.accountId, orphanId),
-              eq(snapshot.snapshotDate, date)
-            )
+              eq(snapshot.snapshotDate, date),
+            ),
           )
       : db
           .update(snapshot)
@@ -399,8 +369,8 @@ async function migrateSnapshotsToNewAccount(
             and(
               eq(snapshot.userId, userId),
               eq(snapshot.accountId, orphanId),
-              eq(snapshot.snapshotDate, date)
-            )
+              eq(snapshot.snapshotDate, date),
+            ),
           ));
   }
 }
@@ -408,7 +378,7 @@ async function migrateSnapshotsToNewAccount(
 export async function syncTransactionsStep(
   accessToken: string,
   itemId: string,
-  cursor?: string | null
+  cursor?: string | null,
 ) {
   "use step";
 
@@ -467,9 +437,7 @@ export async function syncBalancesStep(accessToken: string, _itemId: string) {
   try {
     const accounts = await fetchAccounts(accessToken);
 
-    await Promise.allSettled(
-      accounts.map((account) => upsertBalanceForPlaidAccount(account))
-    );
+    await Promise.allSettled(accounts.map((account) => upsertBalanceForPlaidAccount(account)));
     return { accounts };
   } catch (error) {
     if (isPlaidRateLimited(error)) {
@@ -504,139 +472,18 @@ export async function syncRecurringStep(accessToken: string, itemId: string) {
   }
 }
 
-export async function backfillHistoricalSnapshotsStep(
-  accounts: {
-    plaidAccountId: string;
-    currentBalance: number;
-    availableBalance: number | null;
-    creditLimit: number | null;
-  }[]
-) {
+/**
+ * Seeds today's snapshot row for every Plaid account belonging to a user.
+ * Called once at link / reauth / update-mode time so the chart has a starting
+ * point. Cron handles every subsequent day. Idempotent — re-running just
+ * refreshes today's row.
+ */
+export async function seedTodayPlaidSnapshotsStep(userId: string): Promise<void> {
   "use step";
-
-  let totalCreated = 0;
-  let totalSkipped = 0;
-  let oldestDate: string | null = null;
-
-  for (const account of accounts) {
-    try {
-      const result = await backfillAccountSnapshots(account);
-      totalCreated += result.created;
-      totalSkipped += result.skipped;
-
-      if (
-        result.oldestDate &&
-        (!oldestDate || result.oldestDate < oldestDate)
-      ) {
-        ({ oldestDate } = result);
-      }
-    } catch {
-      /* skip account on backfill failure */
-    }
-  }
-
-  return {
-    accountsProcessed: accounts.length,
-    oldestDate,
-    snapshotsCreated: totalCreated,
-    snapshotsSkipped: totalSkipped,
-  };
+  await upsertBankBalanceSnapshotsForUser(userId, "link");
 }
 
-async function backfillAccountSnapshots(account: {
-  plaidAccountId: string;
-  currentBalance: number;
-  availableBalance: number | null;
-  creditLimit: number | null;
-}): Promise<{ created: number; skipped: number; oldestDate: string | null }> {
-  const { plaidAccountId, currentBalance, availableBalance, creditLimit } =
-    account;
-
-  const transactions = await getPostedTransactionsForAccount(plaidAccountId);
-
-  if (transactions.length === 0) {
-    return { created: 0, oldestDate: null, skipped: 0 };
-  }
-
-  const oldestTxDate = transactions.at(-1)?.date;
-  if (!oldestTxDate) {
-    return { created: 0, oldestDate: null, skipped: 0 };
-  }
-
-  const dailyTotals = new Map<string, number>();
-  for (const tx of transactions) {
-    dailyTotals.set(tx.date, (dailyTotals.get(tx.date) ?? 0) + tx.amount);
-  }
-
-  const dates = getDateRange(new Date(oldestTxDate), new Date());
-  const historicalBalances = calculateHistoricalBalances(
-    currentBalance,
-    dailyTotals,
-    dates
-  );
-
-  const existingDates = new Set(
-    await getSnapshotDatesForAccount(plaidAccountId)
-  );
-  const snapshotsToInsert = historicalBalances.filter(
-    (snap) => !existingDates.has(snap.date)
-  );
-  const skipped = historicalBalances.length - snapshotsToInsert.length;
-
-  const todayStr = getTodayDateOnly();
-  const created = await insertBalanceSnapshots(
-    snapshotsToInsert.map((snap) => ({
-      availableBalance: snap.date === todayStr ? availableBalance : null,
-      creditLimit,
-      currentBalance: snap.balance,
-      plaidAccountId,
-      snapshotDate: snap.date,
-      snapshotSource: snap.date === todayStr ? "webhook" : "backfill",
-    }))
-  );
-
-  return {
-    created,
-    oldestDate: historicalBalances[0]?.date ?? null,
-    skipped,
-  };
-}
-
-function getDateRange(startDate: Date, endDate: Date): string[] {
-  const dates: string[] = [];
-  const endTime = endDate.getTime();
-  let cur = new Date(startDate);
-  while (cur.getTime() <= endTime) {
-    dates.push(toDateOnlyString(cur));
-    const next = new Date(cur);
-    next.setDate(next.getDate() + 1);
-    cur = next;
-  }
-  return dates;
-}
-
-function calculateHistoricalBalances(
-  currentBalance: number,
-  dailyTransactions: Map<string, number>,
-  dates: string[]
-): { date: string; balance: number }[] {
-  const balances: { date: string; balance: number }[] = [];
-  let runningBalance = currentBalance;
-
-  const sortedDates = [...dates].toSorted((a, b) => b.localeCompare(a));
-
-  for (const date of sortedDates) {
-    balances.push({ balance: runningBalance, date });
-    const dayTotal = dailyTransactions.get(date) ?? 0;
-    runningBalance += dayTotal;
-  }
-
-  return balances.toReversed();
-}
-
-export async function dispatchSnapshotWorkflowStep(
-  _userId: string
-): Promise<void> {
+export async function dispatchSnapshotWorkflowStep(_userId: string): Promise<void> {
   "use step";
 
   await Promise.resolve();
@@ -646,7 +493,7 @@ export async function dispatchSnapshotWorkflowStep(
 // Wrap Plaid REST calls + mutations in steps so each has retry + replay.
 
 export async function exchangePublicTokenStep(
-  publicToken: string
+  publicToken: string,
 ): Promise<{ accessToken: string; itemId: string }> {
   "use step";
 
@@ -677,7 +524,7 @@ export async function duplicateCheckStep(input: DuplicateCheckInput) {
       name: a.name || a.official_name || "Account",
       persistentAccountId: a.persistent_account_id ?? null,
       type: a.type,
-    }))
+    })),
   );
 }
 
@@ -705,9 +552,7 @@ export interface PersistOnboardingItemInput {
   userId: string;
 }
 
-export async function persistOnboardingItemStep(
-  input: PersistOnboardingItemInput
-): Promise<void> {
+export async function persistOnboardingItemStep(input: PersistOnboardingItemInput): Promise<void> {
   "use step";
 
   await persistOnboardingItem(input);
@@ -726,7 +571,7 @@ export async function triggerPlaidSyncStep(accessToken: string): Promise<void> {
  */
 export async function persistNewAccountsForItemStep(
   accessToken: string,
-  plaidItemId: string
+  plaidItemId: string,
 ): Promise<void> {
   "use step";
 
@@ -739,10 +584,7 @@ export async function persistNewAccountsForItemStep(
  * open user alerts for this Item. Called after the user finishes Plaid Link
  * in reauth mode.
  */
-export async function clearItemErrorStep(
-  plaidItemId: string,
-  userId: string
-): Promise<void> {
+export async function clearItemErrorStep(plaidItemId: string, userId: string): Promise<void> {
   "use step";
 
   await clearItemError(plaidItemId, userId);

@@ -17,7 +17,7 @@ interface DocumentInvocation {
 }
 
 function isDocumentSpec(
-  output: unknown
+  output: unknown,
 ): output is { root: string; elements: Record<string, unknown> } {
   return (
     typeof output === "object" &&
@@ -34,11 +34,7 @@ function extractTitle(spec: {
   elements: Record<string, { type?: string; props?: Record<string, unknown> }>;
 }): string {
   for (const el of Object.values(spec.elements)) {
-    if (
-      el.type === "PDFHeader" &&
-      el.props?.title &&
-      typeof el.props.title === "string"
-    ) {
+    if (el.type === "PDFHeader" && el.props?.title && typeof el.props.title === "string") {
       return el.props.title;
     }
   }

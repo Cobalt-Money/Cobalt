@@ -2,26 +2,30 @@ import { plaidClient } from "@cobalt-web/clients/plaid";
 import { env } from "@cobalt-web/env/server";
 import { CountryCode, Products } from "plaid";
 
-/** Create a Plaid link token for initial account connection. */
-export async function createLinkToken(
-  userId: string
-): Promise<{ link_token: string }> {
-  const response = await plaidClient.linkTokenCreate({
-    client_name: "Cobalt",
-    country_codes: [CountryCode.Us],
-    language: "en",
-    optional_products: [Products.Investments, Products.Liabilities],
-    products: [Products.Transactions],
-    user: { client_user_id: userId },
-    webhook: env.PLAID_WEBHOOK_URL,
-  });
+import { ApiError } from "../../../_shared/api-error.js";
 
-  return { link_token: response.data.link_token };
+/** Create a Plaid link token for initial account connection. */
+export async function createLinkToken(userId: string): Promise<{ link_token: string }> {
+  try {
+    const response = await plaidClient.linkTokenCreate({
+      client_name: "Cobalt",
+      country_codes: [CountryCode.Us],
+      language: "en",
+      optional_products: [Products.Investments, Products.Liabilities],
+      products: [Products.Transactions],
+      user: { client_user_id: userId },
+      webhook: env.PLAID_WEBHOOK_URL,
+    });
+
+    return { link_token: response.data.link_token };
+  } catch (error) {
+    throw toPlaidApiError(error, "link_token_failed", "Failed to create Plaid link token");
+  }
 }
 
 /** Exchange a Plaid public token for an access token. */
 export async function exchangePublicToken(
-  publicToken: string
+  publicToken: string,
 ): Promise<{ access_token: string; item_id: string }> {
   const response = await plaidClient.itemPublicTokenExchange({
     public_token: publicToken,
@@ -72,9 +76,14 @@ export async function fetchAccounts(accessToken: string) {
 export async function createLinkTokenForUpdate(
   accessToken: string,
   userId: string,
-  mode: "add-accounts" | "add-products" | "reauth"
+  mode: "add-accounts" | "add-products" | "reauth",
 ): Promise<{ link_token: string }> {
-  const itemGet = await plaidClient.itemGet({ access_token: accessToken });
+  let itemGet: Awaited<ReturnType<typeof plaidClient.itemGet>>;
+  try {
+    itemGet = await plaidClient.itemGet({ access_token: accessToken });
+  } catch (error) {
+    throw toPlaidApiError(error, "plaid_upstream_failed", "Plaid API failed");
+  }
   const billedProducts = itemGet.data.item.billed_products ?? [];
   const hasInvestments = billedProducts.includes(Products.Investments);
   const hasLiabilities = billedProducts.includes(Products.Liabilities);
@@ -100,10 +109,7 @@ export async function createLinkTokenForUpdate(
     additionalProducts.push(Products.Liabilities);
   }
 
-  return createLinkTokenWithProductFallback(
-    linkTokenParams,
-    additionalProducts
-  );
+  return createLinkTokenWithProductFallback(linkTokenParams, additionalProducts);
 }
 
 /**
@@ -112,23 +118,14 @@ export async function createLinkTokenForUpdate(
  */
 async function createLinkTokenWithProductFallback(
   baseParams: Parameters<typeof plaidClient.linkTokenCreate>[0],
-  additionalProducts: Products[]
+  additionalProducts: Products[],
 ): Promise<{ link_token: string }> {
-  const liabilitiesOnly = additionalProducts.filter(
-    (p) => p === Products.Liabilities
-  );
-  const investmentsOnly = additionalProducts.filter(
-    (p) => p === Products.Investments
-  );
+  const liabilitiesOnly = additionalProducts.filter((p) => p === Products.Liabilities);
+  const investmentsOnly = additionalProducts.filter((p) => p === Products.Investments);
 
   const toTry: Products[][] = [];
   const seen = new Set<string>();
-  for (const arr of [
-    additionalProducts,
-    liabilitiesOnly,
-    investmentsOnly,
-    [],
-  ]) {
+  for (const arr of [additionalProducts, liabilitiesOnly, investmentsOnly, []]) {
     const key = arr.join(",");
     if (!seen.has(key)) {
       seen.add(key);
@@ -137,9 +134,7 @@ async function createLinkTokenWithProductFallback(
   }
 
   for (const [idx, products] of toTry.entries()) {
-    const params = { ...baseParams } as Parameters<
-      typeof plaidClient.linkTokenCreate
-    >[0];
+    const params = { ...baseParams } as Parameters<typeof plaidClient.linkTokenCreate>[0];
     if (products.length > 0) {
       params.additional_consented_products = products;
     } else {
@@ -159,18 +154,11 @@ async function createLinkTokenWithProductFallback(
         continue;
       }
 
-      const plaidMsg = formatPlaidError(axiosErr.response?.data);
-      throw new Error(
-        plaidMsg ||
-          (error instanceof Error
-            ? error.message
-            : "Failed to create link token"),
-        { cause: error }
-      );
+      throw toPlaidApiError(error, "link_token_failed", "Failed to create Plaid link token");
     }
   }
 
-  throw new Error("Failed to create link token");
+  throw new ApiError(502, "link_token_failed", "Failed to create Plaid link token");
 }
 
 function formatPlaidError(body: unknown): string | null {
@@ -182,4 +170,18 @@ function formatPlaidError(body: unknown): string | null {
     return `${b.error_code}: ${b.error_message}`;
   }
   return b.error_message ?? b.error_code ?? null;
+}
+
+/**
+ * Convert a Plaid SDK throw (axios error w/ `response.data.error_code`) into
+ * an ApiError. Plaid is a pure upstream — surface as 502 to clients.
+ */
+function toPlaidApiError(error: unknown, code: string, fallbackMsg: string): ApiError {
+  if (error instanceof ApiError) {
+    return error;
+  }
+  const axiosErr = error as { response?: { data?: unknown } };
+  const plaidMsg = formatPlaidError(axiosErr.response?.data);
+  const msg = plaidMsg || (error instanceof Error ? error.message : fallbackMsg);
+  return new ApiError(502, code, msg);
 }

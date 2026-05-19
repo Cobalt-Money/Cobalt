@@ -8,6 +8,17 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Negate a numeric string preserving precision (avoids `-0`). */
+function signFlip(value: string): string {
+  if (value.startsWith("-")) {
+    return value.slice(1);
+  }
+  if (value === "0" || /^0+(?:\.0+)?$/.test(value)) {
+    return value;
+  }
+  return `-${value}`;
+}
+
 /**
  * Upserts a daily snapshot row per financial_account of a given provider for
  * a user. Reads the live `balance` row (kept current by sync) and writes one
@@ -16,12 +27,12 @@ function todayIso(): string {
  */
 async function upsertDailySnapshotsForSource(
   userId: string,
-  source: "plaid" | "snaptrade"
+  source: "plaid" | "snaptrade",
 ): Promise<{ upserted: number }> {
   const snapshotDate = todayIso();
 
   const accounts = await db.query.financialAccount.findMany({
-    columns: { id: true },
+    columns: { id: true, type: true },
     where: {
       source: { eq: source },
       userId: { eq: userId },
@@ -43,6 +54,23 @@ async function upsertDailySnapshotsForSource(
     if (!b) {
       return [];
     }
+    // Net-worth convention: assets stored positive, liabilities (credit / loan)
+    // stored negative. Live `balance` stays provider-faithful (positive); the
+    // sign flip lives only on snapshot rows so chart math is a plain SUM.
+    const liability = a.type === "credit" || a.type === "loan";
+    const signedCurrent = liability ? signFlip(b.current) : b.current;
+    // For SnapTrade, `current` is the full account market value and
+    // `available` is uninvested cash; positions value = current - cash.
+    // Plaid bank/credit accounts don't carry a positions component.
+    let positionsValue: string | null = null;
+    if (source === "snaptrade") {
+      const total = Number.parseFloat(b.current);
+      const cash = b.available === null ? 0 : Number.parseFloat(b.available);
+      const diff = total - cash;
+      if (Number.isFinite(diff)) {
+        positionsValue = diff.toFixed(4);
+      }
+    }
     return [
       {
         accountId: a.id,
@@ -50,7 +78,8 @@ async function upsertDailySnapshotsForSource(
         buyingPower: b.buyingPower,
         creditLimit: b.creditLimit,
         currency: b.currency,
-        current: b.current,
+        current: signedCurrent,
+        positionsValue,
       },
     ];
   });
@@ -66,6 +95,7 @@ async function upsertDailySnapshotsForSource(
     creditLimit: r.creditLimit,
     currency: r.currency,
     current: r.current,
+    positionsValue: r.positionsValue,
     snapshotDate,
     source,
     userId,
@@ -83,6 +113,7 @@ async function upsertDailySnapshotsForSource(
           creditLimit: sql`excluded.credit_limit`,
           currency: sql`excluded.currency`,
           current: sql`excluded.current`,
+          positionsValue: sql`excluded.positions_value`,
         },
         target: [snapshot.accountId, snapshot.snapshotDate],
       });
@@ -93,14 +124,14 @@ async function upsertDailySnapshotsForSource(
 
 export async function upsertBankBalanceSnapshotsForUser(
   userId: string,
-  _source: string
+  _source: string,
 ): Promise<{ upserted: number }> {
   return await upsertDailySnapshotsForSource(userId, "plaid");
 }
 
 export async function upsertSnapTradePortfolioSnapshotsForUser(
   userId: string,
-  _source: string
+  _source: string,
 ): Promise<{ upserted: number }> {
   return await upsertDailySnapshotsForSource(userId, "snaptrade");
 }
@@ -112,7 +143,7 @@ export async function upsertSnapTradePortfolioSnapshotsForUser(
  */
 export function upsertPlaidInvestmentSnapshotsForUser(
   _userId: string,
-  _source: string
+  _source: string,
 ): Promise<{ upserted: number }> {
   return Promise.resolve({ upserted: 0 });
 }

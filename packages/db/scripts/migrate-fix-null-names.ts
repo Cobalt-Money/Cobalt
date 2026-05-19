@@ -1,12 +1,11 @@
 import crypto from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import dotenv from "dotenv";
 import { Client } from "pg";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = import.meta.dirname;
 const monorepoRoot = path.resolve(__dirname, "../../..");
 dotenv.config({ path: path.resolve(monorepoRoot, "apps/server/.env") });
 
@@ -26,10 +25,7 @@ const local = readdirSync(migrationsDir)
     }
   })
   .map((name) => {
-    const sql = readFileSync(
-      path.join(migrationsDir, name, "migration.sql"),
-      "utf-8"
-    );
+    const sql = readFileSync(path.join(migrationsDir, name, "migration.sql"), "utf-8");
     return {
       hash: crypto.createHash("sha256").update(sql).digest("hex"),
       name,
@@ -42,9 +38,7 @@ const { rows } = await client.query<{
   id: number;
   hash: string;
   name: string | null;
-}>(
-  `SELECT id, hash, name FROM drizzle.__drizzle_migrations WHERE name IS NULL ORDER BY id`
-);
+}>(`SELECT id, hash, name FROM drizzle.__drizzle_migrations WHERE name IS NULL ORDER BY id`);
 
 console.log(`null-name rows in db: ${rows.length}\n`);
 const proposed: { id: number; name: string }[] = [];
@@ -54,17 +48,13 @@ for (const r of rows) {
     console.log(`  id=${r.id} hash=${r.hash.slice(0, 12)}… → ${m.name}`);
     proposed.push({ id: r.id, name: m.name });
   } else {
-    console.log(
-      `  id=${r.id} hash=${r.hash.slice(0, 12)}… → NO LOCAL MATCH (skip)`
-    );
+    console.log(`  id=${r.id} hash=${r.hash.slice(0, 12)}… → NO LOCAL MATCH (skip)`);
   }
 }
 
 console.log(`\nProposed UPDATEs:\n`);
 for (const p of proposed) {
-  console.log(
-    `UPDATE drizzle.__drizzle_migrations SET name = '${p.name}' WHERE id = ${p.id};`
-  );
+  console.log(`UPDATE drizzle.__drizzle_migrations SET name = '${p.name}' WHERE id = ${p.id};`);
 }
 
 if (process.argv.includes("--apply")) {
@@ -72,7 +62,7 @@ if (process.argv.includes("--apply")) {
   for (const p of proposed) {
     await client.query(
       `UPDATE drizzle.__drizzle_migrations SET name = $1 WHERE id = $2 AND name IS NULL`,
-      [p.name, p.id]
+      [p.name, p.id],
     );
   }
   console.log("done.");

@@ -26,15 +26,15 @@ export const conversationSchema = chatsRowSchema
     title: z.string(),
     updatedAt: z.string(),
   })
-  .omit({ chatId: true });
+  .omit({ chatId: true })
+  .openapi("Chat");
 
 export const conversationListResponseSchema = z.array(conversationSchema);
 
 // ── Message + parts (parts are assembled; not a single DB row shape) ─
 
 const chatMessagePartSchema = z.record(z.string(), z.any());
-const messageIdShape = messagesRowSchema.pick({ messageId: true }).shape
-  .messageId;
+const messageIdShape = messagesRowSchema.pick({ messageId: true }).shape.messageId;
 
 export const chatMessageSchema = messagesRowSchema
   .pick({
@@ -45,13 +45,14 @@ export const chatMessageSchema = messagesRowSchema
     id: messageIdShape,
     parts: z.array(chatMessagePartSchema),
   })
-  .omit({ messageId: true });
+  .omit({ messageId: true })
+  .openapi("ChatMessage");
 
 // ── Votes map: messageId → vote (picked from `messageVotes.vote`) ───
 
 export const messageVotesSchema = z.record(
   z.string(),
-  messageVotesRowSchema.pick({ vote: true }).shape.vote
+  messageVotesRowSchema.pick({ vote: true }).shape.vote,
 );
 
 // ── Chat detail envelope ───────────────────────────────────────────

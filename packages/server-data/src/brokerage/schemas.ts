@@ -2,11 +2,7 @@ import { z } from "@hono/zod-openapi";
 
 import { successResponseSchema } from "../accounts/schemas.js";
 
-// ── Error ───────────────────────────────────────────────────────────
-
-export const errorResponseSchema = z.object({
-  error: z.string(),
-});
+export { errorResponseSchema } from "../_shared/schemas.js";
 
 // ── Balances / positions / activities (flat list DTOs) ─────────────
 
@@ -16,19 +12,21 @@ export const errorResponseSchema = z.object({
  * now corresponds to `financialAccount.externalId` (with `source='snaptrade'`),
  * and the legacy `snapTradeAccountId` is the same external id.
  */
-export const balanceItemSchema = z.object({
-  accountId: z.string(),
-  buyingPower: z.union([z.number(), z.string()]).nullable(),
-  cash: z.union([z.number(), z.string()]).nullable(),
-  createdAt: z.string().nullable(),
-  currencyCode: z.string().nullable(),
-  currencyName: z.string().nullable(),
-  id: z.string(),
-  lastSync: z.string().nullable(),
-  snapTradeAccountId: z.string().nullable(),
-  updatedAt: z.string().nullable(),
-  userId: z.string(),
-});
+export const balanceItemSchema = z
+  .object({
+    accountId: z.string(),
+    buyingPower: z.string().nullable(),
+    cash: z.string().nullable(),
+    createdAt: z.string().nullable(),
+    currencyCode: z.string().nullable(),
+    currencyName: z.string().nullable(),
+    id: z.string(),
+    lastSync: z.string().nullable(),
+    snapTradeAccountId: z.string().nullable(),
+    updatedAt: z.string().nullable(),
+    userId: z.string(),
+  })
+  .openapi("BrokerageBalance");
 
 export const balancesResponseSchema = z.object({
   balances: z.array(balanceItemSchema),
@@ -40,37 +38,39 @@ export const balancesResponseSchema = z.object({
  * symbol/exchange metadata is preserved on the wire even though the new schema
  * normalizes it through the `security` table.
  */
-export const positionItemSchema = z.object({
-  accountId: z.string(),
-  averagePurchasePrice: z.union([z.number(), z.string()]).nullable(),
-  createdAt: z.string().nullable(),
-  currencyCode: z.string().nullable(),
-  currencyId: z.string().nullable(),
-  currencyName: z.string().nullable(),
-  exchangeCode: z.string().nullable(),
-  exchangeId: z.string().nullable(),
-  exchangeMicCode: z.string().nullable(),
-  exchangeName: z.string().nullable(),
-  figiCode: z.string().nullable(),
-  id: z.string(),
-  isQuotable: z.boolean().nullable(),
-  isTradable: z.boolean().nullable(),
-  lastSync: z.string().nullable(),
-  localId: z.string().nullable(),
-  openPnl: z.union([z.number(), z.string()]).nullable(),
-  price: z.union([z.number(), z.string()]).nullable(),
-  rawSymbol: z.string().nullable(),
-  securityTypeCode: z.string().nullable(),
-  securityTypeDescription: z.string().nullable(),
-  securityTypeId: z.string().nullable(),
-  snapTradeAccountId: z.string().nullable(),
-  symbol: z.string().nullable(),
-  symbolDescription: z.string().nullable(),
-  symbolId: z.string().nullable(),
-  units: z.union([z.number(), z.string()]).nullable(),
-  updatedAt: z.string().nullable(),
-  userId: z.string(),
-});
+export const positionItemSchema = z
+  .object({
+    accountId: z.string(),
+    averagePurchasePrice: z.string().nullable(),
+    createdAt: z.string().nullable(),
+    currencyCode: z.string().nullable(),
+    currencyId: z.string().nullable(),
+    currencyName: z.string().nullable(),
+    exchangeCode: z.string().nullable(),
+    exchangeId: z.string().nullable(),
+    exchangeMicCode: z.string().nullable(),
+    exchangeName: z.string().nullable(),
+    figiCode: z.string().nullable(),
+    id: z.string(),
+    isQuotable: z.boolean().nullable(),
+    isTradable: z.boolean().nullable(),
+    lastSync: z.string().nullable(),
+    localId: z.string().nullable(),
+    openPnl: z.string().nullable(),
+    price: z.string().nullable(),
+    rawSymbol: z.string().nullable(),
+    securityTypeCode: z.string().nullable(),
+    securityTypeDescription: z.string().nullable(),
+    securityTypeId: z.string().nullable(),
+    snapTradeAccountId: z.string().nullable(),
+    symbol: z.string().nullable(),
+    symbolDescription: z.string().nullable(),
+    symbolId: z.string().nullable(),
+    units: z.string().nullable(),
+    updatedAt: z.string().nullable(),
+    userId: z.string(),
+  })
+  .openapi("BrokeragePosition");
 
 export const positionsQuerySchema = z.object({
   accountId: z.string().optional(),
@@ -89,46 +89,48 @@ export const positionsResponseSchema = z.object({
  * `tradeDate` → `date`. The wire shape here is preserved for backward
  * compatibility with existing clients.
  */
-export const activityItemSchema = z.object({
-  accountId: z.string(),
-  activityId: z.string().nullable(),
-  amount: z.union([z.number(), z.string()]).nullable(),
-  createdAt: z.string().nullable(),
-  currencyCode: z.string().nullable(),
-  currencyId: z.string().nullable(),
-  currencyName: z.string().nullable(),
-  description: z.string().nullable(),
-  exchangeCode: z.string().nullable(),
-  exchangeId: z.string().nullable(),
-  exchangeMicCode: z.string().nullable(),
-  exchangeName: z.string().nullable(),
-  externalReferenceId: z.string().nullable(),
-  fee: z.union([z.number(), z.string()]).nullable(),
-  figiCode: z.string().nullable(),
-  fxRate: z.union([z.number(), z.string()]).nullable(),
-  id: z.string(),
-  institution: z.string().nullable(),
-  lastSync: z.string().nullable(),
-  optionSymbol: z.unknown().nullable(),
-  optionType: z.string().nullable(),
-  pagination: z.unknown().nullable(),
-  price: z.union([z.number(), z.string()]).nullable(),
-  rawSymbol: z.string().nullable(),
-  securityTypeCode: z.string().nullable(),
-  securityTypeDescription: z.string().nullable(),
-  securityTypeId: z.string().nullable(),
-  settlementDate: z.string().nullable(),
-  snapTradeAccountId: z.string().nullable(),
-  symbol: z.unknown().nullable(),
-  symbolDescription: z.string().nullable(),
-  symbolId: z.string().nullable(),
-  symbolTicker: z.string().nullable(),
-  tradeDate: z.string().nullable(),
-  type: z.string().nullable(),
-  units: z.union([z.number(), z.string()]).nullable(),
-  updatedAt: z.string().nullable(),
-  userId: z.string(),
-});
+export const activityItemSchema = z
+  .object({
+    accountId: z.string(),
+    activityId: z.string().nullable(),
+    amount: z.string().nullable(),
+    createdAt: z.string().nullable(),
+    currencyCode: z.string().nullable(),
+    currencyId: z.string().nullable(),
+    currencyName: z.string().nullable(),
+    description: z.string().nullable(),
+    exchangeCode: z.string().nullable(),
+    exchangeId: z.string().nullable(),
+    exchangeMicCode: z.string().nullable(),
+    exchangeName: z.string().nullable(),
+    externalReferenceId: z.string().nullable(),
+    fee: z.string().nullable(),
+    figiCode: z.string().nullable(),
+    fxRate: z.string().nullable(),
+    id: z.string(),
+    institution: z.string().nullable(),
+    lastSync: z.string().nullable(),
+    optionSymbol: z.unknown().nullable(),
+    optionType: z.string().nullable(),
+    pagination: z.unknown().nullable(),
+    price: z.string().nullable(),
+    rawSymbol: z.string().nullable(),
+    securityTypeCode: z.string().nullable(),
+    securityTypeDescription: z.string().nullable(),
+    securityTypeId: z.string().nullable(),
+    settlementDate: z.string().nullable(),
+    snapTradeAccountId: z.string().nullable(),
+    symbol: z.unknown().nullable(),
+    symbolDescription: z.string().nullable(),
+    symbolId: z.string().nullable(),
+    symbolTicker: z.string().nullable(),
+    tradeDate: z.string().nullable(),
+    type: z.string().nullable(),
+    units: z.string().nullable(),
+    updatedAt: z.string().nullable(),
+    userId: z.string(),
+  })
+  .openapi("BrokerageActivity");
 
 export const activitiesQuerySchema = z.object({
   accountId: z.string().optional(),
@@ -142,17 +144,17 @@ export const activitiesResponseSchema = z.object({
 });
 
 /**
- * Snapshot DTO. Sourced from `snapshot` (accounts/snapshot); `cash` /
- * `positions` / `value` correspond to the coerced `current - positions_value` /
- * `positions_value` / `current` columns surfaced by snapshot queries.
+ * Snapshot DTO. `value` = the snapshot row's `current` column — total account
+ * value at end-of-day. Single value, no client-side math.
  */
-export const portfolioSnapshotItemSchema = z.object({
-  accountId: z.string(),
-  cash: z.number(),
-  positions: z.number(),
-  snapshotDate: z.string(),
-  value: z.number(),
-});
+export const portfolioSnapshotItemSchema = z
+  .object({
+    accountId: z.string(),
+    id: z.string(),
+    snapshotDate: z.string(),
+    value: z.number(),
+  })
+  .openapi("PortfolioSnapshot");
 
 export const portfolioSnapshotsQuerySchema = z.object({
   accountId: z.string().optional(),
@@ -179,8 +181,8 @@ export const userTickersResponseSchema = z.object({
  * Sourced from `balance`; wire uses string ISO dates + string|number decimals.
  */
 export const enhancedAccountBalanceLineSchema = z.object({
-  buyingPower: z.union([z.number(), z.string()]).nullable(),
-  cash: z.union([z.number(), z.string()]).nullable(),
+  buyingPower: z.string().nullable(),
+  cash: z.string().nullable(),
   currencyCode: z.string().nullable(),
   currencyName: z.string().nullable(),
   id: z.string(),
@@ -193,7 +195,7 @@ export const enhancedAccountBalanceLineSchema = z.object({
  * `balance` value plus `lastSyncAt`.
  */
 export const enhancedAccountDetailSchema = z.object({
-  balance: z.union([z.number(), z.string()]).nullable(),
+  balance: z.string().nullable(),
   id: z.string(),
   lastSync: z.string().nullable(),
 });
@@ -205,19 +207,21 @@ export const enhancedAccountDetailSchema = z.object({
  * are preserved on the wire even where the new schema folds them into
  * different columns (e.g. `status`, `type`).
  */
-export const enhancedBrokerageAccountSchema = z.object({
-  accountDetails: enhancedAccountDetailSchema.nullable(),
-  accountStatus: z.string().nullable(),
-  accountType: z.string().nullable(),
-  balanceData: z.unknown().nullable(),
-  balances: z.array(enhancedAccountBalanceLineSchema),
-  cashRestrictions: z.unknown().nullable(),
-  createdDate: z.string(),
-  id: z.string(),
-  institutionName: z.string().nullable(),
-  name: z.string().nullable(),
-  userId: z.string(),
-});
+export const enhancedBrokerageAccountSchema = z
+  .object({
+    accountDetails: enhancedAccountDetailSchema.nullable(),
+    accountStatus: z.string().nullable(),
+    accountType: z.string().nullable(),
+    balanceData: z.unknown().nullable(),
+    balances: z.array(enhancedAccountBalanceLineSchema),
+    cashRestrictions: z.unknown().nullable(),
+    createdDate: z.string(),
+    id: z.string(),
+    institutionName: z.string().nullable(),
+    name: z.string().nullable(),
+    userId: z.string(),
+  })
+  .openapi("BrokerageAccount");
 
 // ── Brokerage accounts (list / disconnect) ─────────────────────────
 
@@ -240,10 +244,9 @@ export const brokerageAccountsListResponseSchema = z.object({
   accounts: z.array(brokerageAccountListItemSchema),
 });
 
-export const disconnectBrokerageAccountResponseSchema =
-  successResponseSchema.extend({
-    message: z.string(),
-  });
+export const disconnectBrokerageAccountResponseSchema = successResponseSchema.extend({
+  message: z.string(),
+});
 
 export const brokerageAccountIdParamSchema = z.object({
   accountId: z.string().uuid(),

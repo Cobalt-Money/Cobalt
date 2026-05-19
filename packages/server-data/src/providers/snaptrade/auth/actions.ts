@@ -3,6 +3,7 @@ import { db } from "@cobalt-web/db";
 import { snaptradeUser } from "@cobalt-web/db/schema/providers/snaptrade/user";
 import type { AuthenticationApiLoginSnapTradeUserRequest } from "snaptrade-typescript-sdk";
 
+import { ApiError } from "../../../_shared/api-error.js";
 import { getBrokerageUserByUserId } from "./queries.js";
 
 interface SnapTradeCredentials {
@@ -10,17 +11,24 @@ interface SnapTradeCredentials {
   providerUserSecret: string;
 }
 
-async function registerSnapTradeUser(
-  userId: string
-): Promise<SnapTradeCredentials> {
-  const response = await snaptradeClient.authentication.registerSnapTradeUser({
-    userId,
-  });
+async function registerSnapTradeUser(userId: string): Promise<SnapTradeCredentials> {
+  let response;
+  try {
+    response = await snaptradeClient.authentication.registerSnapTradeUser({ userId });
+  } catch (error) {
+    throw new ApiError(
+      502,
+      "snaptrade_upstream_failed",
+      error instanceof Error ? error.message : "SnapTrade registration failed",
+    );
+  }
 
   const responseData = response.data || response;
   if (!responseData?.userSecret || !responseData?.userId) {
-    throw new Error(
-      "Failed to get userSecret or userId from SnapTrade registration"
+    throw new ApiError(
+      502,
+      "snaptrade_upstream_failed",
+      "Failed to get userSecret or userId from SnapTrade registration",
     );
   }
 
@@ -44,7 +52,7 @@ interface ConnectionPortalResult {
 export async function generateConnectionPortal(
   userId: string,
   broker: string,
-  reconnectAuthorizationId?: string
+  reconnectAuthorizationId?: string,
 ): Promise<ConnectionPortalResult> {
   const existingUser = await getBrokerageUserByUserId(userId);
   const userSession = existingUser ?? (await registerSnapTradeUser(userId));
@@ -57,8 +65,16 @@ export async function generateConnectionPortal(
     userSecret: userSession.providerUserSecret,
   };
 
-  const response =
-    await snaptradeClient.authentication.loginSnapTradeUser(loginParams);
+  let response;
+  try {
+    response = await snaptradeClient.authentication.loginSnapTradeUser(loginParams);
+  } catch (error) {
+    throw new ApiError(
+      502,
+      "snaptrade_upstream_failed",
+      error instanceof Error ? error.message : "SnapTrade login failed",
+    );
+  }
 
   const responseData = (response.data || response) as {
     redirectURI?: string;
@@ -71,8 +87,10 @@ export async function generateConnectionPortal(
   const sessionId = responseData.sessionId || responseData.session_id;
 
   if (!redirectURI) {
-    throw new Error(
-      "Failed to get redirectURI from SnapTrade connection portal"
+    throw new ApiError(
+      502,
+      "snaptrade_upstream_failed",
+      "Failed to get redirectURI from SnapTrade connection portal",
     );
   }
 

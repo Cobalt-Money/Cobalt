@@ -8,10 +8,7 @@ import {
 } from "./steps";
 
 /** Fetch + persist the full liabilities snapshot for an item. */
-export async function syncLiabilities(
-  accessToken: string,
-  plaidItemId: string
-): Promise<void> {
+export async function syncLiabilities(accessToken: string, plaidItemId: string): Promise<void> {
   const fetched = await fetchPlaidLiabilitiesStep(accessToken);
 
   if (fetched.skipped) {

@@ -9,11 +9,7 @@ const AppSessionContext = createContext<AppSession | undefined>(undefined);
 export function AppSessionProvider({ children }: { children: ReactNode }) {
   const session = authClient.useSession();
 
-  return (
-    <AppSessionContext.Provider value={session}>
-      {children}
-    </AppSessionContext.Provider>
-  );
+  return <AppSessionContext.Provider value={session}>{children}</AppSessionContext.Provider>;
 }
 
 export function useAppSession() {

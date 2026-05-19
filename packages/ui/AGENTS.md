@@ -7,7 +7,7 @@ Shared React component library built with Shadcn, Tailwind CSS v4, and class-var
 ```
 src/
   components/       — All Shadcn UI components (every component is installed)
-  cobalt/           — Cobalt design system (compositions on top of Shadcn; do not overwrite on CLI add)
+  cobalt/           — Multi-primitive compositions + product domain code (accounts, transactions, brokerage, news)
   hooks/            — Shared React hooks (use-mobile, etc.)
   lib/              — Utilities (cn/clsx helper, etc.)
   styles/
@@ -20,19 +20,114 @@ Every Shadcn component is available. Import any component directly — no need t
 
 ## Conventions
 
-- Import Shadcn components via `@cobalt-web/ui/components/*` (e.g., `@cobalt-web/ui/components/button`)
-- Import Cobalt compositions via `@cobalt-web/ui/cobalt/*` (e.g., `@cobalt-web/ui/cobalt/command-palette`) when you need product-specific wiring; prefer editing base `components/*` for look-and-feel
+- Import Shadcn components via `@cobalt-web/ui/components/*` (e.g., `@cobalt-web/ui/components/button`) — these are Cobalt-tuned. Always prefer these in app code.
+- Import Cobalt compositions via `@cobalt-web/ui/cobalt/*` only for non-trivial multi-primitive wiring (e.g., `@cobalt-web/ui/cobalt/command-palette`)
 - Import hooks via `@cobalt-web/ui/hooks/*`
 - Import utilities via `@cobalt-web/ui/lib/*`
 - Global styles are at `@cobalt-web/ui/globals.css`
-- To add new Shadcn components, use the Shadcn CLI or manually add to `src/components/`
 - Uses `@base-ui/react` as the headless primitive layer
+
+### Variants on tuned base components
+
+- `Card` — `variant: default | subtle`. Subtle = ghost fill, no ring (use for dashboard/section panels).
+- `Toggle` — `variant: default | outline | subtle`. Subtle = h-7, dashed muted border (use for filter chips).
+- `Button` — no transition / press translate. Add motion only at callsite if needed.
+- `Dialog` / `DialogContent` — top-anchored by default (`top-[max(6rem,13svh)]`), light scrim (`bg-black/60`), subtle popover bg, `shadow-2xl`, no ring, `flex flex-col` body. Pass `position="center"` for centered. Set `overlayClassName="bg-black/25 ..."` for the very-light command-palette scrim. Don't re-emit any of the baked defaults.
+- `CommandDialog` — wraps `DialogContent` with command-palette tuning: `max-h-[min(55vh,35rem)] sm:max-w-2xl`, `rounded-3xl`, `bg-black/25` overlay, dark mode `bg-sidebar-accent`. Drop-in replacement for the deleted `CobaltCommandDialog`.
+- `Command` — root cmdk container. Bakes group spacing, item radius/padding (`rounded-lg`, `px-4 py-3`), selected-item bg, list scrollbar hide, group heading typography. Drop-in replacement for the deleted `CobaltCommandPaletteRoot`.
+- `CommandInput` — `variant: default | frameless`. `frameless` = no icon, no input-group box, larger text, `px-4 py-5` (Linear-style command palette search). Default keeps the search-icon input-group.
+
+### Layout & display primitives — prefer over raw Tailwind
+
+- **`HStack` / `VStack`** (`@cobalt-web/ui/components/stack`) — replaces `flex items-center gap-N` and `flex flex-col gap-N`. Props: `gap` (0/0.5/1/1.5/2/2.5/3/4/5/6/8/10/12), `align`, `justify`, `wrap`, `inline`. Use these by default for any flex container.
+- **`PageHeader`** (`@cobalt-web/ui/components/page-header`) — `<PageHeader title="..." description="..." actions={<>...</>} size="default|sm|lg" />`. Use for every route-level header.
+- **`Stat` / `StatValue`** (`@cobalt-web/ui/components/stat`) — numeric display with `tabular-nums`. Props: `label`, `value`, `delta`, `tone` (default/positive/negative/muted), `size` (sm/default/lg/xl). Use for any displayed number (balances, counts, percentages).
+- **`Icon`** (`@cobalt-web/ui/components/icon`) — wraps `HugeiconsIcon` with `strokeWidth=2` default and named sizes (`xs`/`sm`/`default`/`md`/`lg`/`xl`). Use instead of raw `<HugeiconsIcon icon={X} className="size-4">`.
+
+### Color tokens
+
+All semantic color goes through CSS variables in `src/styles/globals.css`. Use Tailwind's token classes — do **not** use raw color scales (`text-red-600`, `text-green-500`, etc.) for status/state. Raw colors are reserved for chart palettes and brand artwork.
+
+| Intent                                          | Token classes                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------- |
+| Status: error / negative balance                | `text-destructive`, `bg-destructive/10`, `border-destructive` |
+| Status: success / positive balance              | `text-success`, `bg-success/10`                               |
+| Status: warning                                 | `text-warning`, `bg-warning/10`                               |
+| Subtle panel surface (cards, popovers, dialogs) | `bg-popover`                                                  |
+| Primary card                                    | `bg-card`                                                     |
+| Hover/muted bg                                  | see "Token opacity scale" below                               |
+
+`--popover` is the **subtle gray panel color** (light: `oklch(0.949 0 0)`, dark: `oklch(0.29 0 0)`). Used by base `Popover`, `Tooltip`, `Dialog`, `DropdownMenu`, `Card variant="subtle"`. Do not re-emit literal `bg-[oklch(0.949_0_0)]` — use `bg-popover`.
+
+### Token opacity scale
+
+When applying opacity on token classes, stick to canonical pairs. Don't invent new opacities (`bg-input/35`, `bg-muted/45`) — pick the closest from below.
+
+**Form controls / search bars** (input fields, segmented controls):
+
+- Rest: `bg-input/30`
+- Hover: `bg-input/50`
+
+**Tag / chip / list-row surfaces** (selectable items, filter pills):
+
+- Rest: `bg-input/40`
+- Hover: `bg-input/60`
+
+**Menu / popover items** (dropdown rows, command items):
+
+- Rest: `bg-muted/50`
+- Hover: `bg-muted/80`
+
+**Subtle section panels** (in-card subgroups, hint regions):
+
+- Rest: `bg-muted/20` or `bg-foreground/5`
+
+**Borders**:
+
+- Hairline (subtle, internal): `border-foreground/5`, `border-foreground/10`
+- Visible (card-edge, chip): `border-foreground/15`, `border-border/60`
+
+**Rings**:
+
+- Card outline: `ring-foreground/5` (default Card has this)
+- Focus rings handled by `ring-ring/50` from base components
+
+### Radius scale
+
+By component family:
+
+- **Card / surface tiles**: `rounded-2xl` (base default)
+- **Dashboard cards / hero panels**: `rounded-3xl`
+- **Dialog / modal**: `rounded-4xl` (base default)
+- **Buttons / chips**: `rounded-4xl` (base default — pill shape)
+- **Toggles**: `rounded-4xl` (base default — pill shape)
+- **List items inside menus**: `rounded-lg` or `rounded-2xl` (in-dialog)
+- **Avatars / icon backgrounds**: `rounded-full` or `rounded-md` for square icons
+
+Don't override unless promoting a card to "hero" (then `rounded-3xl`).
+
+### Modal anchor offset
+
+Top-anchored dialogs use `top-[max(6rem,13svh)]` baked into base `DialogContent`. Don't re-emit. To opt out for a centered dialog: `<DialogContent position="center">`.
+
+### Account category palette
+
+Chart colors for net-worth / allocation buckets live in `src/lib/account-palette.ts` (`ACCOUNT_CATEGORY_COLORS`). Import there — do not duplicate hex values.
+
+```ts
+import { ACCOUNT_CATEGORY_COLORS } from "@cobalt-web/ui/lib/account-palette";
+// { checking, credit, investments, loans, savings }
+```
+
+### Adding new Shadcn components
+
+Use the Shadcn CLI or manually drop into `src/components/`. Base files in `components/*` are Cobalt-tuned — re-running `shadcn add <name>` on an already-tuned file will overwrite product styling. Diff before accepting.
 
 ## Cobalt design system (`src/cobalt/`)
 
-Product-level components and patterns built on Shadcn primitives. Prefer **tuning `components/*`** (e.g. `card.tsx`, `button.tsx`) for app-wide look, then compose in apps. Cobalt is for **non-trivial compositions** you do not want to merge into CLI-owned files:
+Reserved for **multi-primitive compositions and product domain code** (accounts, transactions, brokerage, news). Single-primitive look-and-feel lives in `components/*` as variants. Examples that belong in `cobalt/`:
 
-- **Command palette:** Base `Command*` + stock `CommandDialog` stay in `components/command.tsx` (CLI-safe). Product chrome — glass panel, lighter scrim, frameless search — is composed in `cobalt/command-palette.tsx` (`CobaltCommandDialog` uses `Dialog` + `DialogPortal` + `DialogOverlay` + Base UI `Popup`; do not add product-only props to `components/dialog.tsx`). Compose: `CobaltCommandDialog` → `CobaltCommandPaletteRoot` → `CobaltCommandInput` + `CommandList` / items.
+- **`CobaltDialog`** (form-shaped dialog with title icon + footer slots) — composes base `Dialog` + `DialogHeader` + `DialogTitle`. Visual chrome inherited from base; this is purely a shape composition.
 - **Theming:** Components are authored for **both light and dark** (`dark:` where needed).
 - **Backgrounds:** App shells should not rely on extra ambient gradient blobs behind content unless explicitly requested.
 

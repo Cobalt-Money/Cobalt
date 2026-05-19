@@ -29,7 +29,7 @@ export function BabyAIChat({ messages }: BabyAIChatProps) {
           {messages.map((msg) =>
             msg.role === "user" ? (
               <div
-                className="sticky top-0 z-10 w-full rounded-3xl bg-[oklch(0.949_0_0)] px-5 py-3.5 text-base text-foreground dark:bg-[oklch(0.29_0_0)]"
+                className="sticky top-0 z-10 w-full rounded-3xl bg-popover px-5 py-3.5 text-base text-foreground dark:bg-popover"
                 key={msg.id}
               >
                 <p>{msg.text}</p>
@@ -40,7 +40,7 @@ export function BabyAIChat({ messages }: BabyAIChatProps) {
                   <MessageResponse>{msg.text}</MessageResponse>
                 </MessageContent>
               </Message>
-            )
+            ),
           )}
         </div>
       </ConversationContent>

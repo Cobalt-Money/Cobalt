@@ -32,8 +32,7 @@ function BlogIndex() {
         <header className="mb-12">
           <h1 className="mb-3 font-bold font-manrope text-4xl">Blog</h1>
           <p className="text-gray-400 text-lg">
-            Product updates, design notes, and occasional essays from the Cobalt
-            team.
+            Product updates, design notes, and occasional essays from the Cobalt team.
           </p>
         </header>
 
@@ -42,15 +41,8 @@ function BlogIndex() {
         ) : (
           <ul className="space-y-8">
             {posts.map((post) => (
-              <li
-                className="border-white/10 border-b pb-8 last:border-b-0"
-                key={post.slug}
-              >
-                <Link
-                  className="group block"
-                  params={{ slug: post.slug }}
-                  to="/blog/$slug"
-                >
+              <li className="border-foreground/10 border-b pb-8 last:border-b-0" key={post.slug}>
+                <Link className="group block" params={{ slug: post.slug }} to="/blog/$slug">
                   <p className="mb-2 text-gray-500 text-sm">
                     {dateFormatter.format(new Date(post.frontmatter.date))}
                   </p>
@@ -58,9 +50,7 @@ function BlogIndex() {
                     {post.frontmatter.title}
                   </h2>
                   {post.frontmatter.description ? (
-                    <p className="text-gray-400">
-                      {post.frontmatter.description}
-                    </p>
+                    <p className="text-gray-400">{post.frontmatter.description}</p>
                   ) : null}
                 </Link>
               </li>

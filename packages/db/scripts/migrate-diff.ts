@@ -1,12 +1,11 @@
 import crypto from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import dotenv from "dotenv";
 import { Client } from "pg";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = import.meta.dirname;
 const monorepoRoot = path.resolve(__dirname, "../../..");
 
 dotenv.config({ path: path.resolve(monorepoRoot, "apps/server/.env") });
@@ -32,10 +31,7 @@ const dirs = readdirSync(migrationsDir)
   .toSorted();
 
 const local = dirs.map((name) => {
-  const sql = readFileSync(
-    path.join(migrationsDir, name, "migration.sql"),
-    "utf-8"
-  );
+  const sql = readFileSync(path.join(migrationsDir, name, "migration.sql"), "utf-8");
   const hash = crypto.createHash("sha256").update(sql).digest("hex");
   const dateStr = name.slice(0, 14);
   const folderMillis = Date.UTC(
@@ -44,7 +40,7 @@ const local = dirs.map((name) => {
     Number(dateStr.slice(6, 8)),
     Number(dateStr.slice(8, 10)),
     Number(dateStr.slice(10, 12)),
-    Number(dateStr.slice(12, 14))
+    Number(dateStr.slice(12, 14)),
   );
   return { folderMillis, hash, name };
 });
@@ -56,9 +52,7 @@ const { rows } = await client.query<{
   hash: string;
   created_at: string;
   name: string | null;
-}>(
-  `SELECT id, hash, created_at, name FROM drizzle.__drizzle_migrations ORDER BY id`
-);
+}>(`SELECT id, hash, created_at, name FROM drizzle.__drizzle_migrations ORDER BY id`);
 await client.end();
 
 const dbHashes = new Set(rows.map((r) => r.hash));
@@ -72,9 +66,7 @@ const extra = rows.filter((r) => !local.some((m) => m.hash === r.hash));
 
 console.log(`MISSING in db (will be re-applied — DANGER if SQL already ran):`);
 for (const m of missing) {
-  const nameMatch = dbNames.has(m.name)
-    ? " [name exists w/ different hash]"
-    : "";
+  const nameMatch = dbNames.has(m.name) ? " [name exists w/ different hash]" : "";
   console.log(`  - ${m.name}${nameMatch}`);
   console.log(`    hash:   ${m.hash}`);
   console.log(`    millis: ${m.folderMillis}`);
@@ -88,6 +80,6 @@ for (const r of extra) {
 console.log(`\nProposed catch-up INSERTs (do NOT run blindly):\n`);
 for (const m of missing) {
   console.log(
-    `INSERT INTO drizzle.__drizzle_migrations (hash, created_at, name) VALUES ('${m.hash}', ${m.folderMillis}, '${m.name}');`
+    `INSERT INTO drizzle.__drizzle_migrations (hash, created_at, name) VALUES ('${m.hash}', ${m.folderMillis}, '${m.name}');`,
   );
 }

@@ -2,20 +2,13 @@ import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { balance } from "@cobalt-web/db/schema/accounts/balance";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
-import {
-  ALERT_SOURCES,
-  ALERT_STATUSES,
-  userAlerts,
-} from "@cobalt-web/db/schema/users/alerts";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { ALERT_SOURCES, userAlerts } from "@cobalt-web/db/schema/users/alerts";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import type { AccountBase } from "plaid";
 
 import { upsertInstitutionByPlaidId } from "../../../institutions/mutations.js";
 import { getInstitutionById } from "../institutions/actions.js";
-import {
-  balanceRowFromPlaidAccount,
-  financialAccountInsertFromPlaid,
-} from "./lib.js";
+import { balanceRowFromPlaidAccount, financialAccountInsertFromPlaid } from "./lib.js";
 
 /** Persist Plaid item metadata to plaid_connection. */
 export async function persistItemMetadata(params: {
@@ -88,10 +81,7 @@ export async function applyItemWebhookState(params: {
   webhookCode: string;
   plaidItemId: string;
   error?: unknown;
-}): Promise<
-  | { success: true; webhookCode: string }
-  | { skipped: true; webhookCode: string }
-> {
+}): Promise<{ success: true; webhookCode: string } | { skipped: true; webhookCode: string }> {
   const { webhookCode, plaidItemId } = params;
 
   switch (webhookCode) {
@@ -107,8 +97,7 @@ export async function applyItemWebhookState(params: {
       await db
         .update(plaidConnection)
         .set({
-          error: (params.error ??
-            null) as (typeof plaidConnection.$inferInsert)["error"],
+          error: (params.error ?? null) as (typeof plaidConnection.$inferInsert)["error"],
           updatedAt: new Date(),
         })
         .where(eq(plaidConnection.plaidItemId, plaidItemId));
@@ -139,9 +128,7 @@ export async function applyItemWebhookState(params: {
 }
 
 /** Upsert balance for a single Plaid account. Resolves financial_account.id. */
-export async function upsertBalanceForPlaidAccount(
-  account: AccountBase
-): Promise<void> {
+export async function upsertBalanceForPlaidAccount(account: AccountBase): Promise<void> {
   const accountRow = await db.query.financialAccount.findFirst({
     columns: { id: true, userId: true },
     where: {
@@ -153,11 +140,7 @@ export async function upsertBalanceForPlaidAccount(
   if (!accountRow) {
     return;
   }
-  const balanceData = balanceRowFromPlaidAccount(
-    account,
-    accountRow.id,
-    accountRow.userId
-  );
+  const balanceData = balanceRowFromPlaidAccount(account, accountRow.id, accountRow.userId);
 
   await db
     .insert(balance)
@@ -176,7 +159,7 @@ export async function upsertBalanceForPlaidAccount(
 
 export async function syncNewAccountsForItem(
   plaidItemId: string,
-  accounts: AccountBase[]
+  accounts: AccountBase[],
 ): Promise<void> {
   if (accounts.length > 0) {
     const conn = await db.query.plaidConnection.findFirst({
@@ -207,10 +190,7 @@ export async function syncNewAccountsForItem(
     .where(eq(plaidConnection.plaidItemId, plaidItemId));
 }
 
-export async function clearItemError(
-  plaidItemId: string,
-  userId: string
-): Promise<void> {
+export async function clearItemError(plaidItemId: string, userId: string): Promise<void> {
   const item = await db.query.plaidConnection.findFirst({
     columns: { plaidItemId: true },
     where: {
@@ -234,12 +214,12 @@ export async function clearItemError(
 
   await db
     .update(userAlerts)
-    .set({ resolvedAt: new Date(), status: ALERT_STATUSES.RESOLVED })
+    .set({ resolvedAt: new Date() })
     .where(
       and(
         eq(userAlerts.source, ALERT_SOURCES.PLAID),
         eq(userAlerts.sourceId, plaidItemId),
-        inArray(userAlerts.status, [ALERT_STATUSES.UNREAD, ALERT_STATUSES.READ])
-      )
+        isNull(userAlerts.resolvedAt),
+      ),
     );
 }

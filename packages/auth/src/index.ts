@@ -4,13 +4,49 @@ import { db } from "@cobalt-web/db";
 import * as authSchema from "@cobalt-web/db/schema/users/auth/auth";
 import * as stripeSchema from "@cobalt-web/db/schema/users/subscriptions/stripe";
 import { env } from "@cobalt-web/env/server";
+import { Redis } from "@upstash/redis";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { jwt, lastLoginMethod, openAPI } from "better-auth/plugins";
+import { anonymous, jwt, lastLoginMethod, openAPI } from "better-auth/plugins";
 import { bearer } from "better-auth/plugins/bearer";
 import { Stripe } from "stripe";
 
 import { getAppleClientSecret } from "./apple-secret.js";
+import { seedUserCategories } from "./seed-user-categories.js";
+
+/**
+ * Upstash Redis used as Better Auth's secondaryStorage. Powers:
+ *   - Session cache (faster than Postgres lookup on cookieCache miss)
+ *   - Rate-limit counters for `/api/auth/*` routes (distributed across
+ *     Vercel function instances + regions; in-memory was leaky on serverless)
+ *   - Verification token storage if we ever enable email-OTP/magic-link
+ *
+ * HTTP-based client — no connection pool, ideal for serverless cold starts.
+ * Env vars are optional; when unset, Better Auth falls back to default
+ * in-memory storage and the rate-limit/session caching downgrades gracefully.
+ */
+const redis =
+  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+        token: env.UPSTASH_REDIS_REST_TOKEN,
+        url: env.UPSTASH_REDIS_REST_URL,
+      })
+    : null;
+
+const secondaryStorage = redis
+  ? {
+      delete: async (key: string) => {
+        await redis.del(key);
+      },
+      get: async (key: string) => {
+        const v = await redis.get<string>(key);
+        return v ?? null;
+      },
+      set: async (key: string, value: string, ttl?: number) => {
+        await (ttl ? redis.set(key, value, { ex: ttl }) : redis.set(key, value));
+      },
+    }
+  : undefined;
 
 const schema = { ...authSchema, ...stripeSchema };
 
@@ -47,6 +83,10 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
     },
+    // Stored OAuth provider tokens (Google access/refresh) are encrypted at
+    // rest via AES-256-GCM. Without this, a DB read leak surfaces plaintext
+    // bearer tokens for every linked account.
+    encryptOAuthTokens: true,
   },
   advanced: {
     crossSubDomainCookies:
@@ -64,6 +104,25 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          try {
+            await seedUserCategories(db, user.id);
+          } catch (error) {
+            console.error(`[auth] failed to seed categories for user ${user.id}:`, error);
+          }
+          // Lightweight audit trail for demo accounts so we can spot abnormal
+          // creation volume (spam, automation) without joining the user table.
+          const u = user as { isAnonymous?: boolean; email?: string | null };
+          if (u.isAnonymous) {
+            console.info(`[auth.audit] demo_user_created id=${user.id} email=${u.email ?? ""}`);
+          }
+        },
+      },
+    },
+  },
   disabledPaths: ["/token"],
   emailAndPassword: {
     enabled: false,
@@ -77,6 +136,18 @@ export const auth = betterAuth({
     bearer(),
     jwt({
       disableSettingJwtHeader: true,
+    }),
+    /**
+     * Powers the /api/demo/create endpoint. Adds `user.is_anonymous` column +
+     * `/sign-in/anonymous` route that mints a user + session in one call. Demo
+     * router calls that, then seeds fixtures. `requireNotDemo` middleware,
+     * cleanup cron, and the banner UI all branch on `user.isAnonymous` — every
+     * anonymous user in this app is a demo, so the flag is the single source.
+     */
+    anonymous({
+      emailDomainName: "demo.cobalt.internal",
+      // No link-account hook: demo users never upgrade in-place; if a visitor
+      // wants to keep their data they sign up fresh.
     }),
     // this basically allows us to not have to configure all of the clients ourselvers(cursor, claude code, etc.)
     oauthProvider({
@@ -97,7 +168,7 @@ export const auth = betterAuth({
         if (event.type === "invoice.payment_failed") {
           const invoice = event.data.object as Stripe.Invoice;
           console.warn(
-            `[stripe] payment failed for invoice ${invoice.id} (customer ${invoice.customer as string})`
+            `[stripe] payment failed for invoice ${invoice.id} (customer ${invoice.customer as string})`,
           );
         }
       },
@@ -109,40 +180,16 @@ export const auth = betterAuth({
           return referenceId === user.id;
         },
         enabled: true,
-        getCheckoutSessionParams: ({ plan }) => {
-          const hasTrial = plan.freeTrial && plan.freeTrial.days > 0;
-
-          if (hasTrial && plan.freeTrial) {
-            return {
-              params: {
-                allow_promotion_codes: true,
-                payment_method_collection: "if_required" as const,
-                subscription_data: {
-                  trial_period_days: plan.freeTrial.days,
-                  trial_settings: {
-                    end_behavior: {
-                      missing_payment_method: "cancel" as const,
-                    },
-                  },
-                },
-              },
-            };
-          }
-
-          return {
-            params: {
-              allow_promotion_codes: true,
-            },
-          };
-        },
+        getCheckoutSessionParams: () => ({
+          params: {
+            allow_promotion_codes: true,
+          },
+        }),
         onSubscriptionUpdate: async ({ subscription }) => {
           await Promise.resolve();
-          if (
-            subscription.status === "past_due" ||
-            subscription.status === "unpaid"
-          ) {
+          if (subscription.status === "past_due" || subscription.status === "unpaid") {
             console.warn(
-              `[stripe] subscription ${subscription.id} is ${subscription.status} (user ${subscription.referenceId})`
+              `[stripe] subscription ${subscription.id} is ${subscription.status} (user ${subscription.referenceId})`,
             );
           }
         },
@@ -152,9 +199,6 @@ export const auth = betterAuth({
             name: "cobalt-monthly",
           },
           {
-            freeTrial: {
-              days: 30,
-            },
             lookupKey: "cobalt_annual",
             name: "cobalt-annual",
           },
@@ -162,6 +206,13 @@ export const auth = betterAuth({
       },
     }),
   ],
+  rateLimit: {
+    // `secondary-storage` routes counters into the Upstash Redis adapter
+    // above when configured; otherwise Better Auth falls back to its default
+    // in-memory bucket (fine for dev, leaky on serverless prod).
+    storage: secondaryStorage ? "secondary-storage" : "memory",
+  },
+  secondaryStorage,
   secret: env.BETTER_AUTH_SECRET,
   session: {
     // Required by @better-auth/oauth-provider when JWT / secondary session storage is enabled.
@@ -187,6 +238,8 @@ export const auth = betterAuth({
   trustedOrigins,
   user: {
     additionalFields: {
+      // isAnonymous is registered by the anonymous() plugin itself; no need
+      // to declare here. It will appear on session.user automatically.
       lastSeenAt: {
         required: false,
         type: "date",

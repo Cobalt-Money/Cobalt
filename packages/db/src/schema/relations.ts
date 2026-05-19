@@ -2,12 +2,22 @@ import { defineRelations } from "drizzle-orm";
 
 import { financialAccount } from "./accounts/account";
 import { balance } from "./accounts/balance";
+import { category } from "./accounts/banking/categories/category";
+import { categoryGroup } from "./accounts/banking/categories/category-group";
 import { creditLiability } from "./accounts/banking/liabilities/credit";
 import { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
 import { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
+import { tag } from "./accounts/banking/tags/tag";
+import { transactionTag } from "./accounts/banking/tags/transaction-tag";
 import { recurring } from "./accounts/banking/transactions/recurring";
 import { transaction } from "./accounts/banking/transactions/transaction";
 import { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
+import { accountMappingCache } from "./imports/account-mapping-cache";
+import { categoryMappingCache } from "./imports/category-mapping-cache";
+import { csvColumnRoleCache } from "./imports/csv-column-role-cache";
+import { csvMappingCache } from "./imports/csv-mapping-cache";
+import { importJob } from "./imports/import-job";
+import { importStagedTransaction } from "./imports/import-staged-transaction";
 import { holding } from "./accounts/investments/holding";
 import { investmentActivity } from "./accounts/investments/investment-activity";
 import { orders } from "./accounts/investments/order";
@@ -34,9 +44,15 @@ import { subscription } from "./users/subscriptions/stripe";
 /** Tables referenced by relational queries — must cover every `r.*` use in `defineRelations`. */
 const schema = {
   account,
+  accountMappingCache,
   balance,
+  category,
+  categoryGroup,
+  categoryMappingCache,
   chats,
   creditLiability,
+  csvColumnRoleCache,
+  csvMappingCache,
   eventArticles,
   feedback,
   financialAccount,
@@ -44,6 +60,8 @@ const schema = {
   financialGoals,
   fundamentals,
   holding,
+  importJob,
+  importStagedTransaction,
   institution,
   investmentActivity,
   kalshiUsers,
@@ -64,9 +82,11 @@ const schema = {
   snaptradeUser,
   studentLoanLiability,
   subscription,
+  tag,
   tickers,
   transaction,
   transactionEdit,
+  transactionTag,
   user,
   userAlerts,
 } as const;
@@ -87,6 +107,29 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     user: r.one.user({
       from: r.balance.userId,
+      to: r.user.id,
+    }),
+  },
+
+  category: {
+    group: r.one.categoryGroup({
+      from: r.category.groupId,
+      optional: false,
+      to: r.categoryGroup.id,
+    }),
+    user: r.one.user({
+      from: r.category.userId,
+      to: r.user.id,
+    }),
+  },
+
+  categoryGroup: {
+    categories: r.many.category({
+      from: r.categoryGroup.id,
+      to: r.category.groupId,
+    }),
+    user: r.one.user({
+      from: r.categoryGroup.userId,
       to: r.user.id,
     }),
   },
@@ -228,6 +271,34 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
+  importJob: {
+    stagedTransactions: r.many.importStagedTransaction({
+      from: r.importJob.id,
+      to: r.importStagedTransaction.importJobId,
+    }),
+    transactions: r.many.transaction({
+      from: r.importJob.id,
+      to: r.transaction.importJobId,
+    }),
+    user: r.one.user({
+      from: r.importJob.userId,
+      to: r.user.id,
+    }),
+  },
+
+  importStagedTransaction: {
+    dedupeMatch: r.one.transaction({
+      from: r.importStagedTransaction.dedupeMatchId,
+      optional: true,
+      to: r.transaction.id,
+    }),
+    importJob: r.one.importJob({
+      from: r.importStagedTransaction.importJobId,
+      optional: false,
+      to: r.importJob.id,
+    }),
+  },
+
   investmentActivity: {
     account: r.one.financialAccount({
       from: r.investmentActivity.accountId,
@@ -343,6 +414,10 @@ export const relations = defineRelations(schema, (r) => ({
       optional: false,
       to: r.financialAccount.id,
     }),
+    category: r.one.category({
+      from: r.recurring.categoryId,
+      to: r.category.id,
+    }),
     user: r.one.user({
       from: r.recurring.userId,
       to: r.user.id,
@@ -423,6 +498,17 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
+  tag: {
+    transactionTags: r.many.transactionTag({
+      from: r.tag.id,
+      to: r.transactionTag.tagId,
+    }),
+    user: r.one.user({
+      from: r.tag.userId,
+      to: r.user.id,
+    }),
+  },
+
   tickers: {
     fundamentals: r.many.fundamentals({
       from: r.tickers.symbol,
@@ -436,9 +522,22 @@ export const relations = defineRelations(schema, (r) => ({
       optional: false,
       to: r.financialAccount.id,
     }),
+    category: r.one.category({
+      from: r.transaction.categoryId,
+      to: r.category.id,
+    }),
     edits: r.many.transactionEdit({
       from: r.transaction.id,
       to: r.transactionEdit.transactionId,
+    }),
+    importJob: r.one.importJob({
+      from: r.transaction.importJobId,
+      optional: true,
+      to: r.importJob.id,
+    }),
+    transactionTags: r.many.transactionTag({
+      from: r.transaction.id,
+      to: r.transactionTag.transactionId,
     }),
     user: r.one.user({
       from: r.transaction.userId,
@@ -455,6 +554,19 @@ export const relations = defineRelations(schema, (r) => ({
     user: r.one.user({
       from: r.transactionEdit.userId,
       to: r.user.id,
+    }),
+  },
+
+  transactionTag: {
+    tag: r.one.tag({
+      from: r.transactionTag.tagId,
+      optional: false,
+      to: r.tag.id,
+    }),
+    transaction: r.one.transaction({
+      from: r.transactionTag.transactionId,
+      optional: false,
+      to: r.transaction.id,
     }),
   },
 
@@ -486,6 +598,10 @@ export const relations = defineRelations(schema, (r) => ({
     holdings: r.many.holding({
       from: r.user.id,
       to: r.holding.userId,
+    }),
+    importJobs: r.many.importJob({
+      from: r.user.id,
+      to: r.importJob.userId,
     }),
     investmentActivities: r.many.investmentActivity({
       from: r.user.id,
@@ -534,6 +650,10 @@ export const relations = defineRelations(schema, (r) => ({
     subscriptions: r.many.subscription({
       from: r.user.id,
       to: r.subscription.referenceId,
+    }),
+    tags: r.many.tag({
+      from: r.user.id,
+      to: r.tag.userId,
     }),
     transactions: r.many.transaction({
       from: r.user.id,

@@ -1,10 +1,5 @@
 import { cn } from "@cobalt-web/ui/lib/utils";
-import {
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  useSpring,
-} from "motion/react";
+import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
 import type { HTMLMotionProps, SpringOptions } from "motion/react";
 import * as React from "react";
 
@@ -27,9 +22,7 @@ interface CursorContextType {
   cursorRef: React.RefObject<HTMLDivElement | null>;
 }
 
-const CursorContext = React.createContext<CursorContextType | undefined>(
-  undefined
-);
+const CursorContext = React.createContext<CursorContextType | undefined>(undefined);
 
 const useCursor = (): CursorContextType => {
   const context = React.useContext(CursorContext);
@@ -45,16 +38,13 @@ type CursorProviderProps = React.ComponentProps<"div"> & {
 
 function CursorProvider(
   { ref, children, ...props }: CursorProviderProps,
-  forwardedRef?: React.Ref<HTMLDivElement>
+  forwardedRef?: React.Ref<HTMLDivElement>,
 ) {
   const [cursorPos, setCursorPos] = React.useState({ x: 0, y: 0 });
   const [isActive, setIsActive] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const cursorRef = React.useRef<HTMLDivElement>(null);
-  React.useImperativeHandle(
-    forwardedRef || ref,
-    () => containerRef.current as HTMLDivElement
-  );
+  React.useImperativeHandle(forwardedRef || ref, () => containerRef.current as HTMLDivElement);
 
   React.useEffect(() => {
     if (!containerRef.current) {
@@ -85,17 +75,12 @@ function CursorProvider(
 
   const contextValue = React.useMemo(
     () => ({ containerRef, cursorPos, cursorRef, isActive }),
-    [cursorPos, isActive]
+    [cursorPos, isActive],
   );
 
   return (
     <CursorContext.Provider value={contextValue}>
-      <div
-        ref={containerRef}
-        data-slot="cursor-provider"
-        data-cursor-hidden={isActive}
-        {...props}
-      >
+      <div ref={containerRef} data-slot="cursor-provider" data-cursor-hidden={isActive} {...props}>
         {children}
       </div>
     </CursorContext.Provider>
@@ -108,13 +93,10 @@ type CursorProps = HTMLMotionProps<"div"> & {
 
 function Cursor(
   { ref, children, className, style, ...props }: CursorProps,
-  forwardedRef?: React.Ref<HTMLDivElement>
+  forwardedRef?: React.Ref<HTMLDivElement>,
 ) {
   const { cursorPos, isActive, containerRef, cursorRef } = useCursor();
-  React.useImperativeHandle(
-    forwardedRef || ref,
-    () => cursorRef.current as HTMLDivElement
-  );
+  React.useImperativeHandle(forwardedRef || ref, () => cursorRef.current as HTMLDivElement);
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -192,14 +174,11 @@ function CursorFollow(
     transition = { bounce: 0, damping: 50, stiffness: 500 },
     ...props
   }: CursorFollowProps,
-  forwardedRef?: React.Ref<HTMLDivElement>
+  forwardedRef?: React.Ref<HTMLDivElement>,
 ) {
   const { cursorPos, isActive, cursorRef } = useCursor();
   const cursorFollowRef = React.useRef<HTMLDivElement>(null);
-  React.useImperativeHandle(
-    forwardedRef || ref,
-    () => cursorFollowRef.current as HTMLDivElement
-  );
+  React.useImperativeHandle(forwardedRef || ref, () => cursorFollowRef.current as HTMLDivElement);
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);

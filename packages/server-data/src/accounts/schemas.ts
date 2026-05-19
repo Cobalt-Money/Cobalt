@@ -12,6 +12,7 @@ import type {
 } from "@cobalt-web/db/schema/providers/plaid/zod";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
+import { AccountSubtype, AccountType } from "plaid";
 
 // ── Row schemas from DB (with JSONB refinements) ────────────────────
 
@@ -25,6 +26,13 @@ const institutionRowSchema = createSelectSchema(institution, {
 });
 
 // ── Param / body schemas ────────────────────────────────────────────
+
+/** Filters for `listAccounts`. Both fields are Plaid SDK enums. */
+export const accountListQuerySchema = z.object({
+  subtype: z.enum(AccountSubtype).optional(),
+  type: z.enum(AccountType).optional(),
+});
+export type AccountListQuery = z.infer<typeof accountListQuerySchema>;
 
 export const accountIdParamSchema = z.object({
   id: z.string(),
@@ -63,7 +71,7 @@ const bankAccountDetailPickedSchema = financialAccountRowSchema
   .extend(
     balanceRowSchema.pick({
       currency: true,
-    }).shape
+    }).shape,
   )
   .extend({
     available: z.number().nullable(),
@@ -79,23 +87,25 @@ const bankAccountDetailPickedSchema = financialAccountRowSchema
       institutionId: true,
       institutionName: true,
       newAccountsAvailable: true,
-    }).shape
+    }).shape,
   )
   .extend(
     institutionRowSchema.pick({
       logo: true,
       url: true,
-    }).shape
+    }).shape,
   );
 
 /** Full bank account DTO returned by getAllAccountsWithInstitutions. */
-export const bankAccountSchema = bankAccountDetailPickedSchema.extend({
-  /** Currency code (ISO 4217). */
-  currency: z.string().nullable(),
-  hasInvestmentAccounts: z.boolean(),
-  /** ISO string on the wire. */
-  pendingDisconnectAt: z.string().nullable(),
-});
+export const bankAccountSchema = bankAccountDetailPickedSchema
+  .extend({
+    /** Currency code (ISO 4217). */
+    currency: z.string().nullable(),
+    hasInvestmentAccounts: z.boolean(),
+    /** ISO string on the wire. */
+    pendingDisconnectAt: z.string().nullable(),
+  })
+  .openapi("BankAccount");
 
 /** Subset of columns for list views; list-only computed flags in `extend`. */
 const bankAccountListPickedSchema = financialAccountRowSchema
@@ -112,7 +122,7 @@ const bankAccountListPickedSchema = financialAccountRowSchema
   .extend(
     balanceRowSchema.pick({
       currency: true,
-    }).shape
+    }).shape,
   )
   .extend({
     current: z.number().nullable(),
@@ -123,21 +133,23 @@ const bankAccountListPickedSchema = financialAccountRowSchema
     plaidConnectionRowSchema.pick({
       institutionName: true,
       newAccountsAvailable: true,
-    }).shape
+    }).shape,
   )
   .extend(institutionRowSchema.pick({ logo: true }).shape);
 
 /** Lightweight list item for the accounts page. */
-export const bankAccountListItemSchema = bankAccountListPickedSchema.extend({
-  canAddInvestments: z.boolean(),
-  /** Effective: `userOverrideCreditLimit ?? balance.creditLimit`. */
-  creditLimit: z.number().nullable(),
-  currency: z.string().nullable(),
-  hasInvestments: z.boolean(),
-  hasLiabilities: z.boolean(),
-  needsReauth: z.boolean(),
-  pendingDisconnectAt: z.string().nullable(),
-});
+export const bankAccountListItemSchema = bankAccountListPickedSchema
+  .extend({
+    canAddInvestments: z.boolean(),
+    /** Effective: `userOverrideCreditLimit ?? balance.creditLimit`. */
+    creditLimit: z.number().nullable(),
+    currency: z.string().nullable(),
+    hasInvestments: z.boolean(),
+    hasLiabilities: z.boolean(),
+    needsReauth: z.boolean(),
+    pendingDisconnectAt: z.string().nullable(),
+  })
+  .openapi("BankAccountListItem");
 
 /** Plaid item (bank connection) DTO. */
 export const plaidItemSchema = plaidConnectionRowSchema
@@ -157,17 +169,20 @@ export const plaidItemSchema = plaidConnectionRowSchema
     createdAt: z.string(),
     pendingDisconnectAt: z.string().nullable(),
     updatedAt: z.string(),
-  });
+  })
+  .openapi("PlaidItem");
 
 /** Plaid item alert DTO for items needing attention. */
-export const plaidItemAlertSchema = z.object({
-  institutionLogo: z.string().nullable(),
-  institutionName: z.string(),
-  needsReauth: z.boolean(),
-  newAccountsAvailable: z.boolean(),
-  pendingDisconnectAt: z.string().nullable(),
-  plaidItemId: z.string(),
-});
+export const plaidItemAlertSchema = z
+  .object({
+    institutionLogo: z.string().nullable(),
+    institutionName: z.string(),
+    needsReauth: z.boolean(),
+    newAccountsAvailable: z.boolean(),
+    pendingDisconnectAt: z.string().nullable(),
+    plaidItemId: z.string(),
+  })
+  .openapi("PlaidItemAlert");
 
 /** Account info for a specific Plaid item. */
 export const plaidAccountForItemSchema = financialAccountRowSchema
@@ -184,7 +199,8 @@ export const plaidAccountForItemSchema = financialAccountRowSchema
     plaidAccountId: z.string().nullable(),
     plaidItemId: z.string(),
     updatedAt: z.string(),
-  });
+  })
+  .openapi("PlaidAccount");
 
 // ── Response wrappers ───────────────────────────────────────────────
 

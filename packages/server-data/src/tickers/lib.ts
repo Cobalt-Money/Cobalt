@@ -11,12 +11,6 @@ export interface TickerSearchItem {
   active: boolean;
 }
 
-export interface TickerPrice {
-  symbol: string;
-  price: number;
-  timestamp: string;
-}
-
 // ── Transformers ──────────────────────────────────────────────────
 
 const TYPE_LABELS: Record<string, string> = {
@@ -38,29 +32,4 @@ export function dbTickerToSearchItem(row: Ticker): TickerSearchItem {
     symbol: row.symbol,
     type: TYPE_LABELS[row.type] ?? row.type,
   };
-}
-
-// ── Alpha Vantage quote helpers ───────────────────────────────────
-
-interface AlphaVantageQuoteFields {
-  "05. price": string;
-}
-
-interface QuoteResponse {
-  "Global Quote"?: AlphaVantageQuoteFields;
-  "Global Quote - DATA DELAYED BY 15 MINUTES"?: AlphaVantageQuoteFields;
-}
-
-export function extractPrice(raw: unknown): number | null {
-  const response = raw as QuoteResponse;
-  const quoteData =
-    response["Global Quote"] ??
-    response["Global Quote - DATA DELAYED BY 15 MINUTES"];
-
-  if (!quoteData) {
-    return null;
-  }
-
-  const price = Number.parseFloat(quoteData["05. price"]);
-  return Number.isNaN(price) ? null : price;
 }

@@ -1,23 +1,23 @@
 import { z } from "@hono/zod-openapi";
 
+export { errorResponseSchema } from "../_shared/schemas.js";
+
 // ── Shared ─────────────────────────────────────────────────────────
 
 export const symbolQuerySchema = z.object({
   symbol: z.string().min(1).openapi({ example: "AAPL" }),
 });
 
-export const errorResponseSchema = z.object({
-  error: z.string(),
-});
-
 // ── Quote ──────────────────────────────────────────────────────────
 
-export const quoteResponseSchema = z.object({
-  change: z.number(),
-  changePercent: z.number(),
-  companyName: z.string(),
-  currentPrice: z.number(),
-});
+export const quoteResponseSchema = z
+  .object({
+    change: z.number(),
+    changePercent: z.number(),
+    companyName: z.string(),
+    currentPrice: z.number(),
+  })
+  .openapi("Quote");
 
 // ── Overview (FMP profile, normalized in `fmpGetProfile`) ───────────
 
@@ -45,7 +45,7 @@ export const fmpProfileSchema = z.object({
 
 export type FmpProfile = z.infer<typeof fmpProfileSchema>;
 
-export const overviewResponseSchema = fmpProfileSchema.openapi({
+export const overviewResponseSchema = fmpProfileSchema.openapi("Overview", {
   description:
     "Normalized FMP company profile (stable `/profile` + optional P/E and revenue enrichment).",
 });
@@ -64,51 +64,83 @@ export const chartQuerySchema = z.object({
     .openapi({ example: "1D" }),
 });
 
-const priceDataSchema = z.object({
-  close: z.number().optional(),
-  high: z.number().optional(),
-  id: z.string().optional(),
-  low: z.number().optional(),
-  open: z.number().optional(),
-  price: z.number(),
-  time: z.string(),
-  volume: z.number(),
+export const priceDataSchema = z
+  .object({
+    close: z.number().optional(),
+    high: z.number().optional(),
+    id: z.string().optional(),
+    low: z.number().optional(),
+    open: z.number().optional(),
+    price: z.number(),
+    time: z.string().openapi({ example: "2025-05-13T14:30:00.000Z", format: "date-time" }),
+    volume: z.number(),
+  })
+  .openapi("ChartPoint");
+
+export const chartResponseSchema = z
+  .object({
+    data: z.array(priceDataSchema),
+  })
+  .openapi("ChartResponse");
+
+// ── Ticker history (for manual-holding cost-basis picker) ─────────
+
+export const tickerHistoryQuerySchema = z.object({
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .openapi({ description: "Reference date YYYY-MM-DD", example: "2023-06-15" }),
+  symbol: z.string().min(1).openapi({ example: "AAPL" }),
+  window: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(30)
+    .optional()
+    .openapi({ description: "Calendar days on each side of date (default 7)" }),
 });
 
-export const chartResponseSchema = z.object({
-  data: z.array(priceDataSchema),
-});
+export const tickerHistoryPointSchema = z
+  .object({
+    close: z.number(),
+    date: z.string(),
+    high: z.number(),
+    low: z.number(),
+  })
+  .openapi("TickerHistoryPoint");
 
-// ── Earnings ───────────────────────────────────────────────────────
-
-export const earningsResponseSchema = z.object({
-  earningsEstimates: z.unknown(),
-  earningsHistory: z.unknown(),
-});
-
-// ── Income statement ───────────────────────────────────────────────
-
-export const incomeStatementResponseSchema = z
-  .record(z.string(), z.unknown())
-  .openapi({
-    description: "Alpha Vantage income statement (all fields returned as-is)",
-  });
-
-// ── Balance sheet ──────────────────────────────────────────────────
-
-export const balanceSheetResponseSchema = z
-  .record(z.string(), z.unknown())
-  .openapi({
-    description: "Alpha Vantage balance sheet (all fields returned as-is)",
-  });
+export const tickerHistoryResponseSchema = z
+  .object({
+    points: z.array(tickerHistoryPointSchema),
+    requested: z.string(),
+    symbol: z.string(),
+  })
+  .openapi("TickerHistoryResponse");
 
 // ── News ───────────────────────────────────────────────────────────
 
-export const newsResponseSchema = z.object({
-  data: z.array(z.unknown()),
-  total_items: z.number(),
-  total_pages: z.number(),
-});
+export const researchArticleSchema = z
+  .object({
+    date: z.string(),
+    image_url: z.string().optional(),
+    news_url: z.string(),
+    sentiment: z.string(),
+    source_name: z.string(),
+    text: z.string(),
+    tickers: z.array(z.string()),
+    title: z.string(),
+    topics: z.array(z.string()),
+    type: z.string(),
+  })
+  .openapi("ResearchArticle");
+
+export const newsResponseSchema = z
+  .object({
+    data: z.array(researchArticleSchema),
+    total_items: z.number(),
+    total_pages: z.number(),
+  })
+  .openapi("ResearchNewsResponse");
 
 // ── Stock screener (FMP company-screener) ───────────────────────────
 
@@ -119,8 +151,7 @@ export const screenerQuerySchema = z.object({
   dividendLowerThan: z.coerce.number().optional(),
   dividendMoreThan: z.coerce.number().optional(),
   exchange: z.string().min(1).optional().openapi({
-    description:
-      "Ignored — this endpoint always returns NASDAQ and NYSE listings only.",
+    description: "Ignored — this endpoint always returns NASDAQ and NYSE listings only.",
     example: "NASDAQ",
   }),
   industry: z.string().min(1).optional(),
@@ -128,10 +159,7 @@ export const screenerQuerySchema = z.object({
     .enum(["true", "false"])
     .optional()
     .openapi({ description: "Filter actively trading names" }),
-  isEtf: z
-    .enum(["true", "false"])
-    .optional()
-    .openapi({ description: "ETF-only filter" }),
+  isEtf: z.enum(["true", "false"]).optional().openapi({ description: "ETF-only filter" }),
   limit: z.coerce.number().int().min(1).max(10_000).optional().openapi({
     example: 50,
   }),
@@ -144,9 +172,31 @@ export const screenerQuerySchema = z.object({
   volumeMoreThan: z.coerce.number().optional(),
 });
 
-export const screenerRowSchema = z.record(z.string(), z.unknown());
+export const screenerRowSchema = z
+  .object({
+    beta: z.number().nullable().optional(),
+    companyName: z.string().nullable().optional(),
+    country: z.string().nullable().optional(),
+    exchange: z.string().nullable().optional(),
+    exchangeShortName: z.string().nullable().optional(),
+    industry: z.string().nullable().optional(),
+    isActivelyTrading: z.boolean().nullable().optional(),
+    isEtf: z.boolean().nullable().optional(),
+    marketCap: z.number().nullable().optional(),
+    peRatio: z.number().nullable().optional(),
+    price: z.number().nullable().optional(),
+    revenue: z.number().nullable().optional(),
+    sector: z.string().nullable().optional(),
+    symbol: z.string(),
+    volume: z.number().nullable().optional(),
+  })
+  .loose()
+  .openapi("ScreenerRow");
 
 export const screenerResponseSchema = z.object({
   count: z.number(),
   results: z.array(screenerRowSchema),
 });
+
+export type ScreenerRow = z.infer<typeof screenerRowSchema>;
+export type ScreenerResponse = z.infer<typeof screenerResponseSchema>;

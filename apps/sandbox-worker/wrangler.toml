@@ -1,0 +1,16 @@
+name = "cobalt-sandbox"
+main = "src/index.ts"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Dynamic Workers (`worker_loader`) binding — supported replacement for the
+# gated `unsafe_eval` binding. Requires Workers Paid plan; daily-creation
+# billing begins 2026-05-26. SRI-312.
+[[worker_loaders]]
+binding = "LOADER"
+
+# AUTH_TOKEN secret set via `wrangler secret put AUTH_TOKEN` in prod, or via
+# .dev.vars locally.
+
+[observability]
+enabled = true

@@ -1,10 +1,8 @@
-import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Toggle } from "@cobalt-web/ui/components/toggle";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { Slider } from "@cobalt-web/ui/components/slider";
+import { DollarCircleIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
 export type AmountFilterType = "all" | "income" | "expense";
@@ -42,11 +40,15 @@ function formatBound(value: number): string {
 export function AmountFilter({
   value,
   onChange,
+  autoOpen,
+  onClose,
 }: {
   value: AmountFilterValue;
   onChange: (next: AmountFilterValue) => void;
+  autoOpen?: boolean;
+  onClose?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen ?? false);
   const { type, min, max } = value;
   const sliderMin = typeof min === "number" ? min : 0;
   const sliderMax = typeof max === "number" ? max : SLIDER_MAX;
@@ -67,23 +69,25 @@ export function AmountFilter({
   }
 
   return (
-    <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger
-        render={
-          <CobaltToggle
-            pressed={isActive}
-            size="sm"
-            type="button"
-            variant="outline"
-          />
+    <Popover
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          onClose?.();
         }
+      }}
+      open={open}
+    >
+      <PopoverTrigger
+        render={<Toggle variant="subtle" pressed={isActive} size="sm" type="button" />}
       >
+        <HugeiconsIcon className="size-3.5" icon={DollarCircleIcon} />
         {triggerLabel}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 gap-3 p-3">
         <div className="flex items-center gap-1">
           {TYPE_OPTIONS.map((t) => (
-            <CobaltToggle
+            <Toggle
               className="flex-1"
               key={t}
               onPressedChange={(pressed) => {
@@ -97,7 +101,7 @@ export function AmountFilter({
               variant="outline"
             >
               {TYPE_LABELS[t]}
-            </CobaltToggle>
+            </Toggle>
           ))}
         </div>
         <div className="flex flex-col gap-2">

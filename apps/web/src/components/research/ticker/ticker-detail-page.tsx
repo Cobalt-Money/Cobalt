@@ -36,9 +36,7 @@ function QuoteDisplay({
         })}
       </p>
       {crosshair ? (
-        <p className="text-muted-foreground text-sm tabular-nums">
-          {crosshair.timeLabel}
-        </p>
+        <p className="text-muted-foreground text-sm tabular-nums">{crosshair.timeLabel}</p>
       ) : (
         <p className={cn("text-sm tabular-nums", changeClass)}>
           {quote.change >= 0 ? "+" : ""}
@@ -56,41 +54,28 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
 
   const { data: quote, isLoading: quoteLoading } = useQuery(quoteQuery(sym));
   const [period, setPeriod] = useState<ChartPeriod>("1M");
-  const [chartCrosshair, setChartCrosshair] =
-    useState<ChartCrosshairHover | null>(null);
+  const [chartCrosshair, setChartCrosshair] = useState<ChartCrosshairHover | null>(null);
   const { data: chartPoints } = useQuery(chartQuery(sym, period));
 
   useEffect(() => {
     setChartCrosshair(null);
   }, [period, sym]);
 
-  const chartColor =
-    dominantHex && /^#[0-9a-f]{6}$/i.test(dominantHex)
-      ? dominantHex
-      : undefined;
+  const chartColor = dominantHex && /^#[0-9a-f]{6}$/i.test(dominantHex) ? dominantHex : undefined;
 
-  const changeClass =
-    (quote?.change ?? 0) < 0
-      ? "text-red-600 dark:text-red-400"
-      : "text-green-600 dark:text-green-400";
+  const changeClass = (quote?.change ?? 0) < 0 ? "text-destructive" : "text-success";
 
   const priceRow = quote ? (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
       <div className="flex min-w-0 flex-col gap-1">
-        <QuoteDisplay
-          changeClass={changeClass}
-          crosshair={chartCrosshair}
-          quote={quote}
-        />
+        <QuoteDisplay changeClass={changeClass} crosshair={chartCrosshair} quote={quote} />
       </div>
       <ChartPeriodToolbar period={period} setPeriod={setPeriod} />
     </div>
   ) : (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
       <div className="flex min-w-0 flex-col gap-1">
-        {quoteLoading ? null : (
-          <p className="text-muted-foreground text-sm">Quote unavailable</p>
-        )}
+        {quoteLoading ? null : <p className="text-muted-foreground text-sm">Quote unavailable</p>}
       </div>
       <ChartPeriodToolbar period={period} setPeriod={setPeriod} />
     </div>
@@ -104,7 +89,7 @@ export function TickerDetailPage({ symbol }: { symbol: string }) {
         {priceRow}
 
         <LightweightPriceChart
-          chartClassName="-mx-4 min-w-0 w-auto lg:-mx-6"
+          chartClassName="-mr-4 -ml-[calc(2rem+0.5rem-0.25rem+1rem)] min-w-0 w-auto sm:-ml-[calc(2rem+0.625rem-0.25rem+1rem)] lg:-mr-6 lg:-ml-[calc(2rem+0.625rem-0.25rem+1.5rem)]"
           data={chartPoints ?? []}
           lineColor={chartColor}
           onCrosshairHover={setChartCrosshair}

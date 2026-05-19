@@ -17,7 +17,7 @@ const BATCH_DELAY = "15s";
 
 export async function refreshFundamentalsWorkflow(
   todayStr: string,
-  yesterdayStr: string
+  yesterdayStr: string,
 ): Promise<{
   analystsRefreshed: number;
   earningsReporters: number;
@@ -36,18 +36,14 @@ export async function refreshFundamentalsWorkflow(
   const financialsResults: (FundamentalsInsert | null)[] = [];
   for (let i = 0; i < earningsInDb.length; i += CONCURRENCY) {
     const batch = earningsInDb.slice(i, i + CONCURRENCY);
-    const batchResults = await Promise.all(
-      batch.map((symbol) => refreshFinancials(symbol))
-    );
+    const batchResults = await Promise.all(batch.map((symbol) => refreshFinancials(symbol)));
     financialsResults.push(...batchResults);
     if (i + CONCURRENCY < earningsInDb.length) {
       await sleep(BATCH_DELAY);
     }
   }
 
-  const financialsToInsert = financialsResults.filter(
-    (r): r is FundamentalsInsert => r !== null
-  );
+  const financialsToInsert = financialsResults.filter((r): r is FundamentalsInsert => r !== null);
   await upsertFinancials(financialsToInsert);
 
   // 4. Refresh stale analyst data
@@ -56,9 +52,7 @@ export async function refreshFundamentalsWorkflow(
   const analystResults: (Partial<FundamentalsInsert> | null)[] = [];
   for (let i = 0; i < staleSymbols.length; i += CONCURRENCY) {
     const batch = staleSymbols.slice(i, i + CONCURRENCY);
-    const batchResults = await Promise.all(
-      batch.map((symbol) => refreshAnalysts(symbol))
-    );
+    const batchResults = await Promise.all(batch.map((symbol) => refreshAnalysts(symbol)));
     analystResults.push(...batchResults);
     if (i + CONCURRENCY < staleSymbols.length) {
       await sleep(BATCH_DELAY);
@@ -66,7 +60,7 @@ export async function refreshFundamentalsWorkflow(
   }
 
   const analystsToInsert = analystResults.filter(
-    (r): r is Partial<FundamentalsInsert> => r !== null
+    (r): r is Partial<FundamentalsInsert> => r !== null,
   );
   await upsertAnalysts(analystsToInsert);
 

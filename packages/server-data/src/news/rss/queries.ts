@@ -6,8 +6,7 @@ import type { RssArticleDTO, RssQueryResult } from "./schemas.js";
 
 // ── Helpers ───────────────────────────────────────────────────────
 
-const toISOStringOrNull = (val: Date | null): string | null =>
-  val ? val.toISOString() : null;
+const toISOStringOrNull = (val: Date | null): string | null => (val ? val.toISOString() : null);
 
 // ── Query ─────────────────────────────────────────────────────────
 
@@ -18,7 +17,7 @@ export async function getRssArticles(
     company?: string;
     limit?: number;
     offset?: number;
-  } = {}
+  } = {},
 ): Promise<RssQueryResult> {
   const { category, company, limit = 15, offset = 0 } = options;
 
@@ -45,10 +44,7 @@ export async function getRssArticles(
       title: rssArticles.title,
     })
     .from(rssArticles)
-    .innerJoin(
-      rssFeeds,
-      sql`${rssArticles.feedIds} @> to_jsonb(${rssFeeds.id})`
-    )
+    .innerJoin(rssFeeds, sql`${rssArticles.feedIds} @> to_jsonb(${rssFeeds.id})`)
     .where(and(...conditions))
     .orderBy(desc(rssArticles.publishedDate), desc(rssArticles.createdAt))
     .limit(limit)
@@ -94,9 +90,7 @@ export async function getRssArticles(
   });
 
   const companies = [...new Set(activeFeeds.map((f) => f.company))].toSorted();
-  const categories = [
-    ...new Set(activeFeeds.map((f) => f.category)),
-  ].toSorted();
+  const categories = [...new Set(activeFeeds.map((f) => f.category))].toSorted();
 
   return { articles, categories, companies };
 }

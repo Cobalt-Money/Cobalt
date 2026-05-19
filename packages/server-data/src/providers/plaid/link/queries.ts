@@ -1,11 +1,13 @@
 import { db } from "@cobalt-web/db";
 
+import { ApiError } from "../../../_shared/api-error.js";
 import type { DuplicateCheckCandidate } from "./lib.js";
 import { matchesDuplicateAccountMask } from "./lib.js";
 
 export interface AccountRef {
   id: string;
   userId: string;
+  type: string | null;
 }
 
 /**
@@ -13,13 +15,13 @@ export interface AccountRef {
  * Returns a Map keyed by Plaid account_id. Missing entries = orphaned/unsynced.
  */
 export async function lookupFinancialAccountsByPlaidIds(
-  plaidAccountIds: string[]
+  plaidAccountIds: string[],
 ): Promise<Map<string, AccountRef>> {
   if (plaidAccountIds.length === 0) {
     return new Map();
   }
   const rows = await db.query.financialAccount.findMany({
-    columns: { externalId: true, id: true, userId: true },
+    columns: { externalId: true, id: true, type: true, userId: true },
     where: {
       externalId: { in: plaidAccountIds },
       source: { eq: "plaid" },
@@ -28,7 +30,7 @@ export async function lookupFinancialAccountsByPlaidIds(
   const map = new Map<string, AccountRef>();
   for (const r of rows) {
     if (r.externalId !== null) {
-      map.set(r.externalId, { id: r.id, userId: r.userId });
+      map.set(r.externalId, { id: r.id, type: r.type, userId: r.userId });
     }
   }
   return map;
@@ -36,7 +38,7 @@ export async function lookupFinancialAccountsByPlaidIds(
 
 /** Resolve plaid_connection by Plaid item_id. Returns null if not found. */
 export async function lookupPlaidConnection(
-  plaidItemId: string
+  plaidItemId: string,
 ): Promise<{ id: string; userId: string } | null> {
   const row = await db.query.plaidConnection.findFirst({
     columns: { id: true, userId: true },
@@ -61,10 +63,7 @@ export async function getBankConnectionByItemId(plaidItemId: string) {
  * Get access token for a Plaid item with ownership check.
  * Throws if item not found or user doesn't own it.
  */
-export async function getAccessTokenForItem(
-  userId: string,
-  plaidItemId: string
-): Promise<string> {
+export async function getAccessTokenForItem(userId: string, plaidItemId: string): Promise<string> {
   const row = await db.query.plaidConnection.findFirst({
     columns: { plaidAccessToken: true },
     where: {
@@ -74,7 +73,8 @@ export async function getAccessTokenForItem(
   });
 
   if (!row) {
-    throw new Error("Item not found or access denied");
+    // Neutral error: do not distinguish "missing" from "not owned by caller".
+    throw new ApiError(404, "plaid_item_not_found", "Plaid item not found");
   }
 
   return row.plaidAccessToken;
@@ -90,7 +90,7 @@ export async function getAccessTokenForItem(
 export async function checkForDuplicateAccounts(
   userId: string,
   institutionId: string | null,
-  newAccounts: DuplicateCheckCandidate[]
+  newAccounts: DuplicateCheckCandidate[],
 ): Promise<{
   isDuplicate: boolean;
   duplicateAccounts: { name: string; createdAt: Date }[];
@@ -169,7 +169,7 @@ export async function checkForDuplicateAccounts(
  */
 export async function findExistingHealthyConnection(
   userId: string,
-  institutionId: string
+  institutionId: string,
 ): Promise<{
   id: string;
   plaidAccessToken: string;

@@ -44,10 +44,7 @@ export function charsPerSecForModel(modelId: string): number {
   return 400;
 }
 
-export function useSmoothText(
-  target: string,
-  opts?: SmoothTextOptions
-): string {
+export function useSmoothText(target: string, opts?: SmoothTextOptions): string {
   const charsPerSec = opts?.charsPerSec ?? 400;
   const bufferThreshold = opts?.bufferThreshold ?? 80;
   const msPerChar = 1000 / charsPerSec;
@@ -77,10 +74,7 @@ export function useSmoothText(
 
       if (elapsed >= effectiveMsPerChar) {
         const advance = Math.max(1, Math.floor(elapsed / effectiveMsPerChar));
-        lengthRef.current = Math.min(
-          target.length,
-          lengthRef.current + advance
-        );
+        lengthRef.current = Math.min(target.length, lengthRef.current + advance);
         setVisible(target.slice(0, lengthRef.current));
         lastTick = now;
       }

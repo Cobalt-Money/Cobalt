@@ -5,6 +5,22 @@
     {
       "path": "/api/cron/refresh-fundamentals",
       "schedule": "0 13 * * 1-5"
+    },
+    {
+      "path": "/api/cron/financial-events",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/rss",
+      "schedule": "15 */3 * * *"
+    },
+    {
+      "path": "/api/cron/snapshots",
+      "schedule": "0 22 * * *"
+    },
+    {
+      "path": "/api/cron/reset-demo",
+      "schedule": "30 */4 * * *"
     }
   ]
 }

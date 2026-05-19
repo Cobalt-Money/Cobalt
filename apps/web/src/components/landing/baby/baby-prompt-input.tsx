@@ -21,11 +21,7 @@ const EXPANDED_INPUT_GROUP =
 const PLUS_BUTTON_CLASS =
   "flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
 
-function BabyPromptInputInner({
-  onSubmit,
-}: {
-  onSubmit?: (text: string) => void;
-}) {
+function BabyPromptInputInner({ onSubmit }: { onSubmit?: (text: string) => void }) {
   const { textInput } = usePromptInputController();
   const [expanded, setExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -56,7 +52,7 @@ function BabyPromptInputInner({
       }
       requestAnimationFrame(checkOverflow);
     },
-    [expanded, checkOverflow, textInput]
+    [expanded, checkOverflow, textInput],
   );
 
   const didMountRef = useRef(false);
@@ -80,7 +76,7 @@ function BabyPromptInputInner({
         setExpanded(false);
       }
     },
-    [expanded, textInput.value]
+    [expanded, textInput.value],
   );
 
   const handleBlur = useCallback(() => {
@@ -108,11 +104,7 @@ function BabyPromptInputInner({
           </PromptInputBody>
           <div className="flex w-full items-center justify-between px-1.5 pb-2">
             <button type="button" className={PLUS_BUTTON_CLASS}>
-              <HugeiconsIcon
-                icon={PlusSignIcon}
-                className="size-4"
-                strokeWidth={2}
-              />
+              <HugeiconsIcon icon={PlusSignIcon} className="size-4" strokeWidth={2} />
             </button>
             <PromptInputSubmit disabled={!canSubmit} />
           </div>
@@ -120,11 +112,7 @@ function BabyPromptInputInner({
       ) : (
         <>
           <button type="button" className={cn(PLUS_BUTTON_CLASS, "ml-1.5")}>
-            <HugeiconsIcon
-              icon={PlusSignIcon}
-              className="size-4"
-              strokeWidth={2}
-            />
+            <HugeiconsIcon icon={PlusSignIcon} className="size-4" strokeWidth={2} />
           </button>
           <PromptInputBody>
             <PromptInputTextarea

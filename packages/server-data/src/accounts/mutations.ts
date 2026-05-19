@@ -4,59 +4,51 @@ import { balance } from "@cobalt-web/db/schema/accounts/balance";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { eq } from "drizzle-orm";
 
-/** Look up the owner of a Plaid account. */
-export async function getAccountOwner(plaidAccountId: string) {
+import { ApiError } from "../_shared/api-error.js";
+
+/**
+ * Resolve the internal `financial_account.id` for a (user, Plaid externalId)
+ * pair. Throws a neutral 404 if the row is missing OR not owned — never
+ * distinguishes the two (anti-enumeration).
+ */
+async function getOwnedPlaidAccountInternalId(
+  plaidAccountId: string,
+  userId: string,
+): Promise<string> {
   const row = await db.query.financialAccount.findFirst({
-    columns: { externalId: true, userId: true },
+    columns: { id: true },
     where: {
       externalId: { eq: plaidAccountId },
       source: { eq: "plaid" },
+      userId: { eq: userId },
     },
   });
-
-  if (!row?.externalId) {
-    return null;
+  if (!row) {
+    throw new ApiError(404, "account_not_found", "Account not found");
   }
-  return { plaidAccountId: row.externalId, userId: row.userId };
+  return row.id;
 }
 
 /** Set the user-override credit limit on the balance row for a Plaid account. */
 export async function setCreditLimitOverride(
   plaidAccountId: string,
-  creditLimit: number
+  userId: string,
+  creditLimit: number,
 ) {
-  const acct = await db.query.financialAccount.findFirst({
-    columns: { id: true },
-    where: {
-      externalId: { eq: plaidAccountId },
-      source: { eq: "plaid" },
-    },
-  });
-  if (!acct) {
-    return;
-  }
+  const internalId = await getOwnedPlaidAccountInternalId(plaidAccountId, userId);
   await db
     .update(balance)
     .set({ userOverrideCreditLimit: String(creditLimit) })
-    .where(eq(balance.accountId, acct.id));
+    .where(eq(balance.accountId, internalId));
 }
 
 /** Clear the user-override credit limit (revert to Plaid's value). */
-export async function clearCreditLimitOverride(plaidAccountId: string) {
-  const acct = await db.query.financialAccount.findFirst({
-    columns: { id: true },
-    where: {
-      externalId: { eq: plaidAccountId },
-      source: { eq: "plaid" },
-    },
-  });
-  if (!acct) {
-    return;
-  }
+export async function clearCreditLimitOverride(plaidAccountId: string, userId: string) {
+  const internalId = await getOwnedPlaidAccountInternalId(plaidAccountId, userId);
   await db
     .update(balance)
     .set({ userOverrideCreditLimit: null })
-    .where(eq(balance.accountId, acct.id));
+    .where(eq(balance.accountId, internalId));
 }
 
 /**
@@ -69,15 +61,14 @@ export async function clearCreditLimitOverride(plaidAccountId: string) {
  * given the access token so it can call Plaid's `/item/remove` (stops billing
  * and webhook delivery).
  */
-export async function disconnectBankConnection(
-  userId: string,
-  accountId: string
-) {
+export async function disconnectBankConnection(userId: string, accountId: string) {
+  // Single inline filter on userId — no leak of "exists but unowned".
   const row = await db.query.financialAccount.findFirst({
     columns: { id: true },
     where: {
       externalId: { eq: accountId },
       source: { eq: "plaid" },
+      userId: { eq: userId },
     },
     with: {
       plaidConnection: {
@@ -93,21 +84,13 @@ export async function disconnectBankConnection(
   });
 
   if (!row || !row.plaidConnection) {
-    return { accessToken: null, message: "Account not found", success: false };
+    throw new ApiError(404, "account_not_found", "Account not found");
   }
 
   const conn = row.plaidConnection;
 
-  if (conn.userId !== userId) {
-    return { accessToken: null, message: "Unauthorized", success: false };
-  }
-
   if (!conn.plaidItemId || !conn.plaidAccessToken) {
-    return {
-      accessToken: null,
-      message: "Invalid account data",
-      success: false,
-    };
+    throw new ApiError(409, "plaid_connection_invalid", "Plaid connection is in an invalid state");
   }
 
   await db.delete(financialAccount).where(eq(financialAccount.id, row.id));

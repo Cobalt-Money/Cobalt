@@ -1,8 +1,5 @@
-import type {
-  EventSummary,
-  ProcessedArticle,
-} from "@cobalt-web/server-data/news/events/lib";
-import { beforeEach, vi } from "vitest";
+import type { EventSummary, ProcessedArticle } from "@cobalt-web/server-data/news/events/lib";
+import { beforeEach, vi, describe, expect, it } from "vitest";
 import { getStepMetadata, RetryableError } from "workflow";
 
 import {
@@ -29,14 +26,12 @@ vi.mock(
   async () => {
     const actual = await vi.importActual<
       typeof import("../../../ai/agents/financial-events-summary/financial-events-summary-agent.js")
-    >(
-      "../../../ai/agents/financial-events-summary/financial-events-summary-agent.js"
-    );
+    >("../../../ai/agents/financial-events-summary/financial-events-summary-agent.js");
     return {
       ...actual,
       summarizeEventArticles: vi.fn(),
     };
-  }
+  },
 );
 
 const mockSummarize = vi.mocked(summarizeEventArticles);
@@ -106,25 +101,19 @@ describe("summarizeEventStep", () => {
   it("returns the agent's summary on success", async () => {
     mockSummarize.mockResolvedValueOnce(dummySummary);
 
-    const result = await summarizeEventStep(
-      "NVIDIA earnings",
-      undefined,
-      scraped()
-    );
+    const result = await summarizeEventStep("NVIDIA earnings", undefined, scraped());
 
     expect(result).toBe(dummySummary);
   });
 
   it("translates TransientSummaryError into a RetryableError with exponential backoff (attempt=1 → ~1000ms)", async () => {
-    mockSummarize.mockRejectedValueOnce(
-      new TransientSummaryError("schema mismatch")
-    );
+    mockSummarize.mockRejectedValueOnce(new TransientSummaryError("schema mismatch"));
     mockGetStepMetadata.mockReturnValue({ attempt: 1 } as unknown as ReturnType<
       typeof getStepMetadata
     >);
 
     const thrown = await summarizeEventStep("x", undefined, scraped()).catch(
-      (error) => error as unknown
+      (error) => error as unknown,
     );
 
     expect(thrown).toBeInstanceOf(RetryableError);
@@ -139,7 +128,7 @@ describe("summarizeEventStep", () => {
       attempt: 3,
     } as unknown as ReturnType<typeof getStepMetadata>);
     const result3 = (await summarizeEventStep("x", undefined, scraped()).catch(
-      (error) => error as unknown
+      (error) => error as unknown,
     )) as RetryableError;
     expect(delayMs(result3)).toBeGreaterThan(8900);
     expect(delayMs(result3)).toBeLessThanOrEqual(9000);
@@ -148,7 +137,7 @@ describe("summarizeEventStep", () => {
       attempt: 5,
     } as unknown as ReturnType<typeof getStepMetadata>);
     const result5 = (await summarizeEventStep("x", undefined, scraped()).catch(
-      (error) => error as unknown
+      (error) => error as unknown,
     )) as RetryableError;
     expect(delayMs(result5)).toBeGreaterThan(24_900);
     expect(delayMs(result5)).toBeLessThanOrEqual(25_000);
@@ -159,7 +148,7 @@ describe("summarizeEventStep", () => {
     mockSummarize.mockRejectedValueOnce(other);
 
     const thrown = await summarizeEventStep("x", undefined, scraped()).catch(
-      (error) => error as unknown
+      (error) => error as unknown,
     );
 
     expect(thrown).toBe(other);

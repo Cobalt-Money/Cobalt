@@ -3,11 +3,7 @@ import { holding } from "@cobalt-web/db/schema/accounts/investments/holding";
 import { security } from "@cobalt-web/db/schema/accounts/investments/security";
 import { and, eq, isNotNull } from "drizzle-orm";
 
-import {
-  decodeCursorForYou,
-  encodeCursorForYou,
-  transformFinancialEventsForUI,
-} from "../lib.js";
+import { decodeCursorForYou, encodeCursorForYou, transformFinancialEventsForUI } from "../lib.js";
 import type { ForYouResult } from "./schemas.js";
 
 // ── Get user stock tickers ─────────────────────────────────────────
@@ -36,7 +32,7 @@ export async function getFinancialEventsForTickers(
   tickers: string[],
   limit: number,
   cursor?: string,
-  topic?: string
+  topic?: string,
 ): Promise<ForYouResult> {
   const decoded = cursor ? decodeCursorForYou(cursor) : null;
 
@@ -48,7 +44,7 @@ export async function getFinancialEventsForTickers(
         const parts = [
           sql`${t.tickers} ?| array[${sql.join(
             tickers.map((ticker) => sql`${ticker}`),
-            sql`, `
+            sql`, `,
           )}]`,
         ];
 
@@ -58,7 +54,7 @@ export async function getFinancialEventsForTickers(
 
         if (decoded) {
           parts.push(
-            sql`(${lt(t.createdAt, new Date(decoded.createdAt))} OR (${eqOp(t.createdAt, new Date(decoded.createdAt))} AND ${lt(t.id, decoded.id)}))`
+            sql`(${lt(t.createdAt, new Date(decoded.createdAt))} OR (${eqOp(t.createdAt, new Date(decoded.createdAt))} AND ${lt(t.id, decoded.id)}))`,
           );
         }
 

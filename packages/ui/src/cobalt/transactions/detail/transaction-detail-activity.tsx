@@ -10,12 +10,22 @@ import {
   Note01Icon,
   PencilEdit01Icon,
   Shield01Icon,
+  Tag01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
+import type { ReactNode } from "react";
 
-import { CategoryIcon, getCategoryDisplayConfig } from "../categories";
+import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "../categories";
 import { formatDateStringShort } from "../lib/helpers";
+import type { TagColor } from "../tags/palette";
+import { TagChip } from "../tags/tag-chip";
+
+export interface ActivityTagInfo {
+  name: string;
+  color: TagColor;
+}
+export type ActivityTagMap = Map<string, ActivityTagInfo>;
 
 type BuiltinEventType = "authorized" | "pending" | "posted";
 type EditEventType = `edit_${TransactionActivityItem["field"]}`;
@@ -24,7 +34,7 @@ type ActivityEventType = BuiltinEventType | EditEventType;
 interface ActivityEvent {
   actor?: "user" | "system";
   date: string | null;
-  description: string;
+  description: ReactNode;
   id: string;
   type: ActivityEventType;
 }
@@ -55,9 +65,7 @@ function typeOrderRank(t: ActivityEventType): number {
   return i === -1 ? 0 : i;
 }
 
-function sortActivityEventsNewestFirst(
-  events: ActivityEvent[]
-): ActivityEvent[] {
+function sortActivityEventsNewestFirst(events: ActivityEvent[]): ActivityEvent[] {
   return [...events].toSorted((a, b) => {
     const tb = getEventSortTime(b);
     const ta = getEventSortTime(a);
@@ -72,7 +80,65 @@ function sortActivityEventsNewestFirst(
   });
 }
 
-function describeEditEvent(item: TransactionActivityItem): string {
+function renderTagChips(ids: string[], tagsById: ActivityTagMap | undefined): ReactNode {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1 align-middle">
+      {ids.map((id) => {
+        const meta = tagsById?.get(id);
+        if (meta) {
+          return <TagChip color={meta.color} key={id} name={meta.name} size="sm" />;
+        }
+        return (
+          <span
+            className="inline-flex h-5 items-center rounded-full border border-foreground/15 bg-foreground/5 px-1.5 text-muted-foreground text-xs"
+            key={id}
+          >
+            deleted tag
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+function describeTagsEdit(
+  item: TransactionActivityItem,
+  tagsById: ActivityTagMap | undefined,
+): ReactNode {
+  const oldArr = (Array.isArray(item.oldValue) ? item.oldValue : []) as string[];
+  const newArr = (Array.isArray(item.newValue) ? item.newValue : []) as string[];
+  const added = newArr.filter((id) => !oldArr.includes(id));
+  const removed = oldArr.filter((id) => !newArr.includes(id));
+
+  if (added.length === 0 && removed.length === 0) {
+    return "Tags updated";
+  }
+
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+      {added.length > 0 ? (
+        <>
+          <span>Added</span>
+          {renderTagChips(added, tagsById)}
+        </>
+      ) : null}
+      {added.length > 0 && removed.length > 0 ? (
+        <span className="text-muted-foreground">·</span>
+      ) : null}
+      {removed.length > 0 ? (
+        <>
+          <span>Removed</span>
+          {renderTagChips(removed, tagsById)}
+        </>
+      ) : null}
+    </span>
+  );
+}
+
+function describeEditEvent(
+  item: TransactionActivityItem,
+  tagsById: ActivityTagMap | undefined,
+): ReactNode {
   switch (item.field) {
     case "name": {
       return typeof item.newValue === "string"
@@ -86,11 +152,11 @@ function describeEditEvent(item: TransactionActivityItem): string {
       return `Merchant changed to "${item.newValue}"`;
     }
     case "category": {
-      const v = item.newValue as { primary?: string } | null;
-      if (!v?.primary) {
+      const v = item.newValue as { categoryId?: string | null } | null;
+      if (!v?.categoryId) {
         return "Category restored";
       }
-      return `Category changed to ${v.primary.replaceAll("_", " ").toLowerCase()}`;
+      return "Category updated";
     }
     case "date": {
       return typeof item.newValue === "string"
@@ -108,6 +174,9 @@ function describeEditEvent(item: TransactionActivityItem): string {
     case "location": {
       return item.newValue ? "Location updated" : "Location cleared";
     }
+    case "tags": {
+      return describeTagsEdit(item, tagsById);
+    }
     default: {
       return "Updated";
     }
@@ -116,7 +185,8 @@ function describeEditEvent(item: TransactionActivityItem): string {
 
 function buildActivityEvents(
   transaction: TransactionListItem,
-  editEvents: TransactionActivityItem[]
+  editEvents: TransactionActivityItem[],
+  tagsById: ActivityTagMap | undefined,
 ): ActivityEvent[] {
   const events: ActivityEvent[] = [];
 
@@ -152,7 +222,7 @@ function buildActivityEvents(
     events.push({
       actor: item.actor,
       date: item.createdAt,
-      description: describeEditEvent(item),
+      description: describeEditEvent(item, tagsById),
       id: item.id,
       type: `edit_${item.field}`,
     });
@@ -170,6 +240,7 @@ const eventMarkerTone: Record<ActivityEventType, string> = {
   edit_merchantName: "text-muted-foreground",
   edit_name: "text-muted-foreground",
   edit_notes: "text-muted-foreground",
+  edit_tags: "text-muted-foreground",
   pending: "text-muted-foreground",
   posted: "text-muted-foreground",
 };
@@ -189,29 +260,13 @@ function EventMarker({
   const tone = eventMarkerTone[event.type] ?? "text-muted-foreground";
 
   if (event.type === "edit_category" && rawItem?.field === "category") {
-    const value = rawItem.newValue as {
-      primary?: string;
-      detailed?: string;
-    } | null;
-    const fallback = transaction.category
-      ? {
-          detailed: transaction.categoryDetail ?? "",
-          primary: transaction.category,
-        }
-      : null;
-    const config = getCategoryDisplayConfig(
-      value?.primary
-        ? { detailed: value.detailed ?? "", primary: value.primary }
-        : fallback
-    );
+    const cat = transaction.category;
+    const icon = cat
+      ? (resolveCategoryIcon(cat.iconKey) ?? UNKNOWN_CATEGORY_ICON)
+      : UNKNOWN_CATEGORY_ICON;
     return (
-      <span
-        className={cn(
-          "inline-flex size-4 shrink-0 items-center justify-center",
-          tone
-        )}
-      >
-        <CategoryIcon icon={config.icon} />
+      <span className={cn("inline-flex size-4 shrink-0 items-center justify-center", tone)}>
+        <CategoryIcon icon={icon} />
       </span>
     );
   }
@@ -224,9 +279,7 @@ function EventMarker({
         className="size-4 shrink-0 object-contain"
         decoding="async"
         height={16}
-        src={
-          event.type === "pending" ? STATUS_PENDING_ICON : STATUS_POSTED_ICON
-        }
+        src={event.type === "pending" ? STATUS_PENDING_ICON : STATUS_POSTED_ICON}
         width={16}
       />
     );
@@ -239,15 +292,12 @@ function EventMarker({
     edit_location: Location01Icon as IconSvgElement,
     edit_name: PencilEdit01Icon as IconSvgElement,
     edit_notes: Note01Icon as IconSvgElement,
+    edit_tags: Tag01Icon as IconSvgElement,
   };
 
   const icon = iconByType[event.type];
   if (!icon) {
-    return (
-      <span
-        className={cn("size-2.5 rounded-full", tone.replace("text-", "bg-"))}
-      />
-    );
+    return <span className={cn("size-2.5 rounded-full", tone.replace("text-", "bg-"))} />;
   }
 
   return (
@@ -273,23 +323,15 @@ function ActivityEventRow({
 }) {
   return (
     <div className="relative flex items-start gap-3 pb-6 last:pb-0">
-      {isLast ? null : (
-        <div className="absolute top-5 bottom-0 left-[7px] w-px bg-border" />
-      )}
+      {isLast ? null : <div className="absolute top-5 bottom-0 left-[7px] w-px bg-border" />}
 
       <div className="relative z-10 flex h-5 w-4 shrink-0 items-center justify-center">
-        <EventMarker
-          event={event}
-          rawItem={rawItem}
-          transaction={transaction}
-        />
+        <EventMarker event={event} rawItem={rawItem} transaction={transaction} />
       </div>
 
       <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <p className="text-muted-foreground text-sm leading-5">
-            {event.description}
-          </p>
+          <p className="text-muted-foreground text-sm leading-5">{event.description}</p>
           {event.actor === "system" ? (
             <p className="text-muted-foreground text-xs">Automatic</p>
           ) : null}
@@ -306,12 +348,14 @@ function ActivityEventRow({
 
 export function TransactionDetailActivity({
   editEvents,
+  tagsById,
   transaction,
 }: {
   editEvents: TransactionActivityItem[];
+  tagsById?: ActivityTagMap;
   transaction: TransactionListItem;
 }) {
-  const events = buildActivityEvents(transaction, editEvents);
+  const events = buildActivityEvents(transaction, editEvents, tagsById);
 
   if (events.length === 0) {
     return null;

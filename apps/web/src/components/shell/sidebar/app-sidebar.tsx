@@ -10,11 +10,7 @@ import {
   SidebarMenuItem,
 } from "@cobalt-web/ui/components/sidebar";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import {
-  ArrowRight01Icon,
-  Delete02Icon,
-  PlusSignIcon,
-} from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, Delete02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouterState } from "@tanstack/react-router";
 import type { ComponentProps, MouseEvent } from "react";
@@ -115,9 +111,7 @@ function truncateTitle(title: string, maxLength = 25): string {
   return title.length > maxLength ? `${title.slice(0, maxLength)}...` : title;
 }
 
-function isCollapsibleChatPeriod(
-  period: ChatTimePeriod
-): period is "last30" | "older" {
+function isCollapsibleChatPeriod(period: ChatTimePeriod): period is "last30" | "older" {
   return period === "last30" || period === "older";
 }
 
@@ -143,9 +137,7 @@ function ChatRowItem({
           />
         }
       >
-        <span className="truncate">
-          {truncateTitle(chat.title ?? chat.chatId)}
-        </span>
+        <span className="truncate">{truncateTitle(chat.title ?? chat.chatId)}</span>
       </SidebarMenuButton>
       <SidebarMenuAction
         aria-label={`Delete ${chat.title ?? "chat"}`}
@@ -247,7 +239,7 @@ function ChatsGroup() {
                   aria-hidden
                   className={cn(
                     "size-3.5 shrink-0 transition-transform duration-100 ease-out",
-                    collapsed ? "rotate-0" : "rotate-90"
+                    collapsed ? "rotate-0" : "rotate-90",
                   )}
                   icon={ArrowRight01Icon}
                   strokeWidth={2}
@@ -262,9 +254,7 @@ function ChatsGroup() {
               <div
                 className={cn(
                   "grid transition-[grid-template-rows,opacity] duration-200 ease-in-out motion-reduce:duration-0",
-                  collapsed
-                    ? "grid-rows-[0fr] opacity-0"
-                    : "grid-rows-[1fr] opacity-100"
+                  collapsed ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
                 )}
               >
                 <div className="overflow-hidden" inert={collapsed}>
@@ -291,21 +281,22 @@ function ChatsGroup() {
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const session = useAppSession();
-  const authedUser = session.data?.user;
+  const authedUser = session.data?.user as
+    | { name: string; email?: string; image?: string | null; isAnonymous?: boolean }
+    | undefined;
   const navUser =
     authedUser === undefined
       ? null
       : {
           avatar: authedUser.image ?? "",
           email: authedUser.email ?? "",
+          isAnonymous: Boolean(authedUser.isAnonymous),
           name: authedUser.name,
         };
 
   return (
     <Sidebar collapsible="offcanvas" variant="inset" {...props}>
-      <SidebarHeader className="p-1.5">
-        {navUser ? <NavUser user={navUser} /> : null}
-      </SidebarHeader>
+      <SidebarHeader className="p-1.5">{navUser ? <NavUser user={navUser} /> : null}</SidebarHeader>
       <SidebarContent>
         <NavMain />
         <SidebarGroup className="p-1.5">

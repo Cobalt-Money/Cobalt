@@ -62,6 +62,7 @@
     "recharts": "3.8.0",
     "remark-frontmatter": "^5.0.0",
     "remark-mdx-frontmatter": "^5.2.0",
+    "shiki": "^4.0.2",
     "sonner": "catalog:",
     "tailwindcss": "catalog:",
     "tslib": "^2.8.1",

@@ -21,9 +21,7 @@ export const creditLiability = pgTable(
       .unique()
       .references(() => financialAccount.id, { onDelete: "cascade" }),
     aprs: jsonb("aprs"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     id: uuid("id").defaultRandom().primaryKey(),
     isOverdue: boolean("is_overdue").default(false).notNull(),
     lastPaymentAmount: numeric("last_payment_amount", {
@@ -49,7 +47,7 @@ export const creditLiability = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (t) => [index("credit_liability_user_id_idx").on(t.userId)]
+  (t) => [index("credit_liability_user_id_idx").on(t.userId)],
 );
 
 export type CreditLiability = typeof creditLiability.$inferSelect;

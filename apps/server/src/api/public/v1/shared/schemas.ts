@@ -23,10 +23,7 @@ export function errorResponse(status: number, description: string) {
 // ── Pagination ────────────────────────────────────────────────────
 
 export const paginationQuerySchema = z.object({
-  cursor: z
-    .string()
-    .optional()
-    .openapi({ description: "Cursor for next page" }),
+  cursor: z.string().optional().openapi({ description: "Cursor for next page" }),
   limit: z.coerce
     .number()
     .min(1)

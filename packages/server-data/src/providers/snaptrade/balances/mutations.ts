@@ -1,34 +1,34 @@
 import { db } from "@cobalt-web/db";
 import { balance } from "@cobalt-web/db/schema/accounts/balance";
 import { sql } from "drizzle-orm";
-import type { Balance } from "snaptrade-typescript-sdk";
+import type { Account, Balance } from "snaptrade-typescript-sdk";
 
 import { lookupFinancialAccountsBySnaptradeIds } from "../accounts/queries.js";
 import { toDecimalString } from "../lib.js";
 
 /**
- * Upsert a single balance row for a SnapTrade brokerage account. The unified
- * `balance` table holds one row per account; SnapTrade returns a Balance[] for
- * multi-currency accounts, so we collapse to the first entry. Cash maps to
- * `current`; the SnapTrade-specific `buying_power` and `currency`
- * fields are preserved.
+ * Upsert the balance row for a SnapTrade brokerage account. `current` holds
+ * the full account market value (cash + positions) sourced from
+ * `Account.balance.total.amount` when available; `available` holds uninvested
+ * cash from `Balance.cash`. Falls back to cash for `current` when account
+ * details aren't supplied so callers without access to details still write a
+ * non-null value.
  */
 export async function upsertAccountBalances(
   snaptradeAccountId: string,
   appUserId: string,
-  balancesData: Balance[]
+  balancesData: Balance[],
+  accountDetails?: Account,
 ): Promise<void> {
   if (balancesData.length === 0) {
     return;
   }
 
-  const accountMap = await lookupFinancialAccountsBySnaptradeIds([
-    snaptradeAccountId,
-  ]);
+  const accountMap = await lookupFinancialAccountsBySnaptradeIds([snaptradeAccountId]);
   const acct = accountMap.get(snaptradeAccountId);
   if (!acct) {
     throw new Error(
-      `financial_account not found for SnapTrade account ${snaptradeAccountId} (user ${appUserId})`
+      `financial_account not found for SnapTrade account ${snaptradeAccountId} (user ${appUserId})`,
     );
   }
 
@@ -39,11 +39,16 @@ export async function upsertAccountBalances(
   const currency = primary.currency || {};
   const currencyCode = currency.code || primary.currency_code || "USD";
 
+  const cashStr = toDecimalString(primary.cash) || "0";
+  const totalAmount = accountDetails?.balance?.total?.amount;
+  const totalStr = toDecimalString(totalAmount);
+
   const row = {
     accountId: acct.id,
+    available: cashStr,
     buyingPower: toDecimalString(primary.buying_power) || "0",
     currency: currencyCode,
-    current: toDecimalString(primary.cash) || "0",
+    current: totalStr ?? cashStr,
     lastSyncAt: new Date(),
     userId: acct.userId,
   };
@@ -53,6 +58,7 @@ export async function upsertAccountBalances(
     .values(row)
     .onConflictDoUpdate({
       set: {
+        available: sql`excluded.available`,
         buyingPower: sql`excluded.buying_power`,
         currency: sql`excluded.currency`,
         current: sql`excluded.current`,

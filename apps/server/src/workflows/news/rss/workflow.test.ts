@@ -5,7 +5,6 @@ import * as rssSteps from "./steps.js";
 import { rssSyncWorkflow } from "./workflow.js";
 
 vi.mock(import("./steps.js"));
-vi.mock(import("../../shared/steps.js"));
 vi.mock(import("workflow"), (() => ({
   sleep: vi.fn<() => Promise<void>>().mockResolvedValue(),
 })) as never);
@@ -172,14 +171,8 @@ describe("rssSyncWorkflow", () => {
     await rssSyncWorkflow();
 
     expect(vi.mocked(rssSteps.processFeedStep)).toHaveBeenCalledTimes(2);
-    expect(vi.mocked(rssSteps.processFeedStep)).toHaveBeenNthCalledWith(
-      1,
-      mockFeeds[0]
-    );
-    expect(vi.mocked(rssSteps.processFeedStep)).toHaveBeenNthCalledWith(
-      2,
-      mockFeeds[1]
-    );
+    expect(vi.mocked(rssSteps.processFeedStep)).toHaveBeenNthCalledWith(1, mockFeeds[0]);
+    expect(vi.mocked(rssSteps.processFeedStep)).toHaveBeenNthCalledWith(2, mockFeeds[1]);
   });
 
   it("throws error when listActiveFeedsStep fails", async () => {
@@ -205,9 +198,7 @@ describe("rssSyncWorkflow", () => {
       { ...firstFeed, id: "feed-3" },
     ];
 
-    vi.mocked(rssSteps.listActiveFeedsStep).mockResolvedValue(
-      threeFeedsScenario
-    );
+    vi.mocked(rssSteps.listActiveFeedsStep).mockResolvedValue(threeFeedsScenario);
 
     vi.mocked(rssSteps.processFeedStep)
       .mockResolvedValueOnce({

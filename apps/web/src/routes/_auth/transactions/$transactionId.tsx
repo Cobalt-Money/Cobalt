@@ -1,8 +1,11 @@
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import type { TransactionDetailEditHandlers } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
 import { TransactionDetailView } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail";
+import { deriveCategorySection } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
+import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
+import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { mutators, queries } from "@cobalt-web/zero";
-import { useZero } from "@rocicorp/zero/react";
+import { useQuery, useZero } from "@rocicorp/zero/react";
 import {
   createFileRoute,
   getRouteApi,
@@ -10,9 +13,18 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
+import { CategoryFormDialog } from "@/components/categories/category-form-dialog";
+import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
+import { useCategoryGroups } from "@/hooks/use-categories";
 import { useGeocodeSearch } from "@/hooks/use-geocode-search";
 import { useMerchantSearch } from "@/hooks/use-merchant-search";
+import {
+  useSetTransactionTags,
+  useTagOptions,
+  useTags,
+  useTransactionTagIds,
+} from "@/hooks/use-tags";
 import { useHistory, useTransactions } from "@/hooks/use-transactions";
 
 const transactionDetailRouteApi = getRouteApi(
@@ -26,6 +38,11 @@ export const Route = createFileRoute("/_auth/transactions/$transactionId")({
     context.zero.run(
       queries.transactions.activity({ transactionId: params.transactionId })
     );
+    context.zero.run(queries.tags.list());
+    context.zero.run(
+      queries.tags.forTransaction({ transactionId: params.transactionId })
+    );
+    context.zero.run(queries.categories.list());
   },
   staticData: { title: "Transaction" },
 });
@@ -56,6 +73,39 @@ function TransactionDetailRoute() {
 
   const editEvents = useHistory(transactionId);
 
+  const { options: availableTags } = useTagOptions();
+  const { data: allTags = [] } = useTags();
+  const [categoryRows] = useQuery(queries.categories.list());
+  const categoryOptions = useMemo(
+    () =>
+      categoryRows.map((cat) => {
+        const groupSystemKey = cat.group?.systemKey ?? null;
+        return {
+          groupName: cat.group?.name ?? "",
+          groupSystemKey,
+          iconKey: cat.iconKey,
+          id: cat.id,
+          name: cat.name,
+          sectionKey: deriveCategorySection(groupSystemKey),
+        };
+      }),
+    [categoryRows]
+  );
+  const { openAddTag } = useCommandMenu();
+  const { data: categoryGroups } = useCategoryGroups();
+  const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
+  const setTransactionTags = useSetTransactionTags();
+  const { data: currentTagIds = [] } = useTransactionTagIds(transactionId);
+  const tagsById = useMemo(() => {
+    const map = new Map<string, { name: string; color: TagColor }>();
+    for (const t of allTags) {
+      if (isTagColor(t.color)) {
+        map.set(t.id, { color: t.color, name: t.name });
+      }
+    }
+    return map;
+  }, [allTags]);
+
   const edit = useMemo<TransactionDetailEditHandlers>(() => {
     const id = transactionId;
 
@@ -65,6 +115,23 @@ function TransactionDetailRoute() {
     };
 
     return {
+      availableTags,
+      categoryOptions,
+      onCreateCategory: () => {
+        setCreateCategoryOpen(true);
+      },
+      onRequestCreateTag: (initialName: string) => {
+        openAddTag({ initialName });
+      },
+      onUpdateTags: (tagIds: string[]) => {
+        setTransactionTags.mutate(
+          { tagIds, transactionId: id },
+          {
+            onError: onError("tags"),
+          }
+        );
+      },
+      tagIds: currentTagIds,
       locationSearch: {
         loading: locationLoading,
         onQueryChange: setLocationQuery,
@@ -100,17 +167,20 @@ function TransactionDetailRoute() {
       onResetNotes: () => {
         void zero
           .mutate(
-            mutators.transaction.resetNotes({ editId: crypto.randomUUID(), id })
+            mutators.transaction.resetNotes({
+              editId: crypto.randomUUID(),
+              id,
+            })
           )
           .server.catch(onError("notes"));
       },
-      onUpdateCategory: (category) => {
+      onUpdateCategory: ({ categoryId }) => {
         void zero
           .mutate(
             mutators.transaction.updateCategory({
+              categoryId,
               editId: crypto.randomUUID(),
               id,
-              category,
             })
           )
           .server.catch(onError("category"));
@@ -204,6 +274,11 @@ function TransactionDetailRoute() {
     merchantResults,
     transaction?.source,
     navigate,
+    availableTags,
+    categoryOptions,
+    openAddTag,
+    setTransactionTags,
+    currentTagIds,
   ]);
 
   return (
@@ -213,6 +288,7 @@ function TransactionDetailRoute() {
           <TransactionDetailView
             edit={edit}
             editEvents={editEvents}
+            tagsById={tagsById}
             transaction={transaction}
           />
         ) : (
@@ -221,6 +297,12 @@ function TransactionDetailRoute() {
           </div>
         )}
       </div>
+      <CategoryFormDialog
+        groups={categoryGroups}
+        initial={null}
+        onOpenChange={setCreateCategoryOpen}
+        open={createCategoryOpen}
+      />
     </SidebarShellLayout>
   );
 }

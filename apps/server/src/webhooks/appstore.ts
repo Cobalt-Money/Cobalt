@@ -11,7 +11,7 @@ import { appstoreWebhookWorkflow } from "../workflows/appstore/workflow.js";
  * App Store Server Notifications V2 webhook.
  *
  * Configure in App Store Connect → App Information → App Store Server
- * Notifications (Version 2): `https://www.try-cobalt.com/webhooks/appstore`.
+ * Notifications (Version 2): `https://api.cobaltpf.com/webhooks/appstore`.
  *
  * @see https://developer.apple.com/documentation/appstoreservernotifications
  */
@@ -39,9 +39,7 @@ export const appstoreWebhookRouter = new Hono().post("/", async (c) => {
     const { notificationType, subtype, transaction } =
       await verifyAppStoreNotification(signedPayload);
 
-    console.log(
-      `[appstore] Received ${notificationType}${subtype ? ` (${subtype})` : ""}`
-    );
+    console.log(`[appstore] Received ${notificationType}${subtype ? ` (${subtype})` : ""}`);
 
     if (notificationType === "TEST") {
       return c.json({ notificationType, status: "ok" });
@@ -62,7 +60,7 @@ export const appstoreWebhookRouter = new Hono().post("/", async (c) => {
       },
     ]);
     console.log(
-      `[appstore] Triggered workflow for ${notificationType} (originalTransactionId=${transaction.originalTransactionId})`
+      `[appstore] Triggered workflow for ${notificationType} (originalTransactionId=${transaction.originalTransactionId})`,
     );
 
     return c.json({ notificationType, status: "processing" });

@@ -1,4 +1,4 @@
-import { CobaltToggle } from "@cobalt-web/ui/cobalt/toggle";
+import { Toggle } from "@cobalt-web/ui/components/toggle";
 import {
   Command,
   CommandEmpty,
@@ -7,11 +7,9 @@ import {
   CommandItem,
   CommandList,
 } from "@cobalt-web/ui/components/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
+import { BankIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useMemo, useState } from "react";
 
 import { InstitutionLogo } from "../../logos/institution-logo";
@@ -27,12 +25,16 @@ export function BankFilter({
   value,
   options,
   onChange,
+  autoOpen,
+  onClose,
 }: {
   value: readonly string[];
   options: readonly BankOption[];
   onChange: (next: readonly string[]) => void;
+  autoOpen?: boolean;
+  onClose?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen ?? false);
   const isActive = value.length > 0;
   let triggerLabel = "Bank";
   if (isActive) {
@@ -47,17 +49,19 @@ export function BankFilter({
   const selected = useMemo(() => new Set(value), [value]);
 
   return (
-    <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger
-        render={
-          <CobaltToggle
-            pressed={isActive}
-            size="sm"
-            type="button"
-            variant="outline"
-          />
+    <Popover
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          onClose?.();
         }
+      }}
+      open={open}
+    >
+      <PopoverTrigger
+        render={<Toggle variant="subtle" pressed={isActive} size="sm" type="button" />}
       >
+        <HugeiconsIcon className="size-3.5" icon={BankIcon} />
         {triggerLabel}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-0">

@@ -1,27 +1,53 @@
 import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { category } from "@cobalt-web/db/schema/accounts/banking/categories/category";
+import { categoryGroup } from "@cobalt-web/db/schema/accounts/banking/categories/category-group";
+import { transactionTag } from "@cobalt-web/db/schema/accounts/banking/tags/transaction-tag";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { institution } from "@cobalt-web/db/schema/providers/plaid/institution";
-import { and, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, lt, lte, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { z } from "zod";
 
+import { ApiError } from "./errors.js";
 import { toDateString } from "./lib.js";
-import type { transactionListQuerySchema } from "./schemas.js";
+import type { TransactionListItem, transactionListQuerySchema } from "./schemas.js";
 import { toTransactionListItem } from "./to-transaction-list-item.js";
 
 export type TransactionListQuery = z.infer<typeof transactionListQuerySchema>;
 
+interface CursorPayload {
+  d: string;
+  i: string;
+}
+
+function decodeCursor(cursor: string | undefined): CursorPayload | null {
+  if (!cursor) {
+    return null;
+  }
+  try {
+    const json = Buffer.from(cursor, "base64url").toString("utf-8");
+    const parsed = JSON.parse(json) as Partial<CursorPayload>;
+    if (typeof parsed.d !== "string" || typeof parsed.i !== "string") {
+      return null;
+    }
+    return { d: parsed.d, i: parsed.i };
+  } catch {
+    return null;
+  }
+}
+
+function encodeCursor(payload: CursorPayload): string {
+  return Buffer.from(JSON.stringify(payload), "utf-8").toString("base64url");
+}
+
 // ── Queries ─────────────────────────────────────────────────────────
 
-export async function getUserTransactions(
-  userId: string,
-  params: TransactionListQuery
-) {
+export async function getUserTransactions(userId: string, params: TransactionListQuery) {
   const {
-    page = 0,
-    pageSize = 50,
+    limit = 50,
+    cursor,
     accountType,
     pendingFilter,
     startDate,
@@ -31,6 +57,7 @@ export async function getUserTransactions(
     maxAmount,
     primaryCategory,
   } = params;
+  const cursorPayload = decodeCursor(cursor);
 
   const search = searchQuery?.trim();
   const searchPattern = search ? `%${search}%` : undefined;
@@ -55,42 +82,54 @@ export async function getUserTransactions(
     conditions.push(lte(transaction.amount, String(maxAmount)));
   }
   if (primaryCategory) {
-    conditions.push(eq(transaction.category, primaryCategory));
+    conditions.push(eq(categoryGroup.systemKey, primaryCategory));
   }
   if (searchPattern) {
     const orClause = or(
       ilike(transaction.name, searchPattern),
       ilike(transaction.merchantName, searchPattern),
-      sql`${transaction.notes}::text ILIKE ${searchPattern}`
+      sql`${transaction.notes}::text ILIKE ${searchPattern}`,
     );
     if (orClause) {
       conditions.push(orClause);
     }
+  }
+  if (cursorPayload) {
+    conditions.push(
+      or(
+        lt(transaction.date, cursorPayload.d),
+        and(eq(transaction.date, cursorPayload.d), lt(transaction.id, cursorPayload.i)),
+      ) as SQL,
+    );
   }
 
   const rows = await db
     .select({
       account: {
         externalId: financialAccount.externalId,
+        institutionName: financialAccount.institutionName,
+        logoDomain: financialAccount.logoDomain,
         name: financialAccount.name,
+        subtype: financialAccount.subtype,
         type: financialAccount.type,
       },
       address: transaction.address,
       amount: transaction.amount,
       authorizedDate: transaction.authorizedDate,
-      category: transaction.category,
-      categoryConfidence: transaction.categoryConfidence,
-      categoryDetail: transaction.categoryDetail,
+      categoryGroupName: categoryGroup.name,
+      categoryGroupSystemKey: categoryGroup.systemKey,
+      categoryIconKey: category.iconKey,
+      categoryId: transaction.categoryId,
+      categoryName: category.name,
+      categorySystemKey: category.systemKey,
       city: transaction.city,
       counterparties: transaction.counterparties,
       country: transaction.country,
       date: transaction.date,
       id: transaction.id,
-      institution: {
-        logo: institution.logo,
-        name: institution.name,
-        url: institution.url,
-      },
+      institutionLogo: institution.logo,
+      institutionName: institution.name,
+      institutionUrl: institution.url,
       lat: transaction.lat,
       lockedFields: transaction.lockedFields,
       logoUrl: transaction.logoUrl,
@@ -103,52 +142,82 @@ export async function getUserTransactions(
       region: transaction.region,
       source: transaction.source,
       storeNumber: transaction.storeNumber,
-      userOverrideLocation: transaction.userOverrideLocation,
       website: transaction.website,
     })
     .from(transaction)
     .innerJoin(financialAccount, eq(transaction.accountId, financialAccount.id))
-    .leftJoin(
-      plaidConnection,
-      eq(financialAccount.plaidConnectionId, plaidConnection.id)
-    )
-    .leftJoin(
-      institution,
-      eq(institution.plaidInstitutionId, plaidConnection.institutionId)
-    )
+    .leftJoin(category, eq(transaction.categoryId, category.id))
+    .leftJoin(categoryGroup, eq(category.groupId, categoryGroup.id))
+    .leftJoin(plaidConnection, eq(financialAccount.plaidConnectionId, plaidConnection.id))
+    .leftJoin(institution, eq(institution.plaidInstitutionId, plaidConnection.institutionId))
     .where(and(...conditions))
-    .orderBy(desc(transaction.date))
-    .limit(pageSize)
-    .offset(page * pageSize);
+    .orderBy(desc(transaction.date), desc(transaction.id))
+    .limit(limit + 1);
 
-  return rows.map((row) =>
+  const hasMore = rows.length > limit;
+  if (hasMore) {
+    rows.pop();
+  }
+  const lastRow = rows.at(-1);
+  const nextCursor =
+    hasMore && lastRow ? encodeCursor({ d: String(lastRow.date), i: lastRow.id }) : null;
+
+  const txIds = rows.map((r) => r.id);
+  const tagRows =
+    txIds.length > 0
+      ? await db
+          .select({ tagId: transactionTag.tagId, transactionId: transactionTag.transactionId })
+          .from(transactionTag)
+          .where(inArray(transactionTag.transactionId, txIds))
+      : [];
+  const tagsByTx = new Map<string, string[]>();
+  for (const t of tagRows) {
+    const arr = tagsByTx.get(t.transactionId);
+    if (arr) {
+      arr.push(t.tagId);
+    } else {
+      tagsByTx.set(t.transactionId, [t.tagId]);
+    }
+  }
+
+  const transactions = rows.map((row) =>
     toTransactionListItem({
       account: {
+        logoDomain: row.account.logoDomain,
         name: row.account.name,
         plaidAccountId: row.account.externalId,
+        subtype: row.account.subtype,
         type: row.account.type,
       },
-      institution: row.institution
-        ? {
-            logo: row.institution.logo ?? null,
-            name: row.institution.name ?? null,
-            url: row.institution.url ?? null,
-          }
-        : null,
+      institution:
+        row.institutionName || row.institutionUrl || row.account.institutionName
+          ? {
+              logo: row.institutionLogo ?? null,
+              name: row.institutionName ?? row.account.institutionName ?? null,
+              url: row.institutionUrl ?? null,
+            }
+          : null,
       transaction: {
         address: row.address,
         amount: Number(row.amount),
         authorizedDate: row.authorizedDate,
-        category: row.category,
-        categoryConfidence: row.categoryConfidence,
-        categoryDetail: row.categoryDetail,
+        category: row.categoryId
+          ? {
+              groupName: row.categoryGroupName ?? "",
+              groupSystemKey: row.categoryGroupSystemKey,
+              iconKey: row.categoryIconKey ?? "",
+              id: row.categoryId,
+              name: row.categoryName ?? "",
+              systemKey: row.categorySystemKey,
+            }
+          : null,
         city: row.city,
         counterparties: row.counterparties,
         country: row.country,
         date: row.date,
         id: row.id,
         lat: row.lat,
-        lockedFields: row.lockedFields,
+        lockedFields: row.lockedFields as TransactionListItem["lockedFields"],
         logoUrl: row.logoUrl,
         lon: row.lon,
         merchantName: row.merchantName,
@@ -159,11 +228,129 @@ export async function getUserTransactions(
         region: row.region,
         source: row.source,
         storeNumber: row.storeNumber,
-        userOverrideLocation: row.userOverrideLocation,
+        tagIds: tagsByTx.get(row.id) ?? [],
         website: row.website,
       },
-    })
+    }),
   );
+
+  return { hasMore, nextCursor, transactions };
+}
+
+export async function getTransactionById(
+  userId: string,
+  transactionId: string,
+): Promise<TransactionListItem> {
+  const [row] = await db
+    .select({
+      account: {
+        externalId: financialAccount.externalId,
+        institutionName: financialAccount.institutionName,
+        logoDomain: financialAccount.logoDomain,
+        name: financialAccount.name,
+        subtype: financialAccount.subtype,
+        type: financialAccount.type,
+      },
+      address: transaction.address,
+      amount: transaction.amount,
+      authorizedDate: transaction.authorizedDate,
+      categoryGroupName: categoryGroup.name,
+      categoryGroupSystemKey: categoryGroup.systemKey,
+      categoryIconKey: category.iconKey,
+      categoryId: transaction.categoryId,
+      categoryName: category.name,
+      categorySystemKey: category.systemKey,
+      city: transaction.city,
+      counterparties: transaction.counterparties,
+      country: transaction.country,
+      date: transaction.date,
+      id: transaction.id,
+      institutionLogo: institution.logo,
+      institutionName: institution.name,
+      institutionUrl: institution.url,
+      lat: transaction.lat,
+      lockedFields: transaction.lockedFields,
+      logoUrl: transaction.logoUrl,
+      lon: transaction.lon,
+      merchantName: transaction.merchantName,
+      name: transaction.name,
+      notes: transaction.notes,
+      pending: transaction.pending,
+      postalCode: transaction.postalCode,
+      region: transaction.region,
+      source: transaction.source,
+      storeNumber: transaction.storeNumber,
+      website: transaction.website,
+    })
+    .from(transaction)
+    .innerJoin(financialAccount, eq(transaction.accountId, financialAccount.id))
+    .leftJoin(category, eq(transaction.categoryId, category.id))
+    .leftJoin(categoryGroup, eq(category.groupId, categoryGroup.id))
+    .leftJoin(plaidConnection, eq(financialAccount.plaidConnectionId, plaidConnection.id))
+    .leftJoin(institution, eq(institution.plaidInstitutionId, plaidConnection.institutionId))
+    .where(and(eq(transaction.id, transactionId), eq(transaction.userId, userId)))
+    .limit(1);
+
+  if (!row) {
+    throw new ApiError(404, "transaction_not_found", "Transaction not found");
+  }
+
+  const tagRows = await db
+    .select({ tagId: transactionTag.tagId })
+    .from(transactionTag)
+    .where(eq(transactionTag.transactionId, row.id));
+
+  return toTransactionListItem({
+    account: {
+      logoDomain: row.account.logoDomain,
+      name: row.account.name,
+      plaidAccountId: row.account.externalId,
+      subtype: row.account.subtype,
+      type: row.account.type,
+    },
+    institution:
+      row.institutionName || row.institutionUrl || row.account.institutionName
+        ? {
+            logo: row.institutionLogo ?? null,
+            name: row.institutionName ?? row.account.institutionName ?? null,
+            url: row.institutionUrl ?? null,
+          }
+        : null,
+    transaction: {
+      address: row.address,
+      amount: Number(row.amount),
+      authorizedDate: row.authorizedDate,
+      category: row.categoryId
+        ? {
+            groupName: row.categoryGroupName ?? "",
+            groupSystemKey: row.categoryGroupSystemKey,
+            iconKey: row.categoryIconKey ?? "",
+            id: row.categoryId,
+            name: row.categoryName ?? "",
+            systemKey: row.categorySystemKey,
+          }
+        : null,
+      city: row.city,
+      counterparties: row.counterparties,
+      country: row.country,
+      date: row.date,
+      id: row.id,
+      lat: row.lat,
+      lockedFields: row.lockedFields as TransactionListItem["lockedFields"],
+      logoUrl: row.logoUrl,
+      lon: row.lon,
+      merchantName: row.merchantName,
+      name: row.name,
+      notes: row.notes ?? null,
+      pending: row.pending,
+      postalCode: row.postalCode,
+      region: row.region,
+      source: row.source,
+      storeNumber: row.storeNumber,
+      tagIds: tagRows.map((t) => t.tagId),
+      website: row.website,
+    },
+  });
 }
 
 export async function getRecurringStreams(userId: string) {
@@ -187,19 +374,35 @@ export async function getRecurringStreams(userId: string) {
           },
         },
       },
+      category: {
+        columns: { iconKey: true, id: true, name: true, systemKey: true },
+        with: {
+          group: {
+            columns: { name: true, systemKey: true },
+          },
+        },
+      },
     },
   });
 
   return rows.map((row) => {
     const inst = row.account.plaidConnection?.institution ?? null;
+    const cat = row.category ?? null;
     return {
       accountName: row.account.name,
       accountSubtype: row.account.subtype,
       accountType: row.account.type,
       averageAmount: Number(row.averageAmount),
-      category: row.category,
-      categoryConfidence: row.categoryConfidence,
-      categoryDetail: row.categoryDetail,
+      category: cat
+        ? {
+            groupName: cat.group.name,
+            groupSystemKey: cat.group.systemKey,
+            iconKey: cat.iconKey,
+            id: cat.id,
+            name: cat.name,
+            systemKey: cat.systemKey,
+          }
+        : null,
       description: row.description,
       firstDate: row.firstDate,
       frequency: row.frequency,
@@ -221,10 +424,11 @@ export async function getRecurringStreams(userId: string) {
   });
 }
 
-export async function getCreditSpending(
+export async function getSpending(
   userId: string,
   period: "1w" | "1m" | "3m" | "6m" | "1y" | "all",
-  accountId?: string
+  accountType: "credit" | "depository" | "all",
+  accountId?: string,
 ) {
   const now = new Date();
   const periodOffsets: Record<string, () => Date> = {
@@ -234,13 +438,21 @@ export async function getCreditSpending(
     "3m": () => new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()),
     "6m": () => new Date(now.getFullYear(), now.getMonth() - 6, now.getDate()),
   };
-  const startDate =
-    periodOffsets[period]?.()?.toISOString().split("T")[0] ?? null;
+  const startDate = periodOffsets[period]?.()?.toISOString().split("T")[0] ?? null;
 
   const conditions: SQL[] = [
     eq(transaction.userId, userId),
-    eq(financialAccount.type, "credit"),
+    eq(transaction.excluded, false),
+    or(eq(category.excludeFromInsights, false), sql`${category.id} IS NULL`) as SQL,
+    gte(transaction.amount, "0"),
   ];
+  if (accountType === "credit") {
+    conditions.push(eq(financialAccount.type, "credit"));
+  } else if (accountType === "depository") {
+    conditions.push(eq(financialAccount.type, "depository"));
+  } else {
+    conditions.push(inArray(financialAccount.type, ["credit", "depository"]));
+  }
   if (accountId) {
     conditions.push(eq(financialAccount.externalId, accountId));
   }
@@ -255,6 +467,7 @@ export async function getCreditSpending(
     })
     .from(transaction)
     .innerJoin(financialAccount, eq(transaction.accountId, financialAccount.id))
+    .leftJoin(category, eq(transaction.categoryId, category.id))
     .where(and(...conditions))
     .orderBy(desc(transaction.date));
 
@@ -266,10 +479,7 @@ export async function getCreditSpending(
     "6m": "monthly",
     all: "monthly",
   };
-  const averageLabelMap: Record<
-    string,
-    "daily" | "weekly" | "monthly" | "yearly"
-  > = {
+  const averageLabelMap: Record<string, "daily" | "weekly" | "monthly" | "yearly"> = {
     "1m": "daily",
     "1w": "daily",
     "1y": "monthly",
@@ -293,7 +503,7 @@ export async function getCreditSpending(
     } else {
       key = d.slice(0, 7);
     }
-    buckets.set(key, (buckets.get(key) ?? 0) + Math.abs(Number(row.amount)));
+    buckets.set(key, (buckets.get(key) ?? 0) + Number(row.amount));
   }
 
   const spending = [...buckets.entries()]
@@ -301,15 +511,22 @@ export async function getCreditSpending(
     .toSorted((a, b) => a.date.localeCompare(b.date));
   const totalSpending = spending.reduce(
     (sum: number, row: { amount: number; date: string }) => sum + row.amount,
-    0
+    0,
   );
-  const averageSpending =
-    spending.length > 0 ? totalSpending / spending.length : 0;
+  const averageSpending = spending.length > 0 ? totalSpending / spending.length : 0;
 
   return { averageLabel, averageSpending, spending, totalSpending };
 }
 
-export async function getTransactionActivity(transactionId: string) {
+export async function getTransactionActivity(userId: string, transactionId: string) {
+  const owned = await db.query.transaction.findFirst({
+    columns: { id: true },
+    where: { id: { eq: transactionId }, userId: { eq: userId } },
+  });
+  if (!owned) {
+    throw new ApiError(404, "transaction_not_found", "Transaction not found");
+  }
+
   const rows = await db.query.transactionEdit.findMany({
     columns: {
       actor: true,

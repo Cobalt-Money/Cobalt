@@ -36,24 +36,18 @@ export type { BankAccountDTO, BankAccountListItem };
 
 // ── Predicates (pure; easy to unit-test) ────────────────────────────
 
-export function isBankAccountListType(
-  account: Pick<BankAccountDTO, "type">
-): boolean {
+export function isBankAccountListType(account: Pick<BankAccountDTO, "type">): boolean {
   return account.type !== "credit" && account.type !== "investment";
 }
 
-export function isCreditCardAccount(
-  account: Pick<BankAccountDTO, "type">
-): boolean {
+export function isCreditCardAccount(account: Pick<BankAccountDTO, "type">): boolean {
   return account.type === "credit";
 }
 
-export const matchesPlaidAccountId =
-  (plaidAccountId: string) => (account: BankAccountDTO) =>
-    account.plaidAccountId === plaidAccountId;
+export const matchesPlaidAccountId = (plaidAccountId: string) => (account: BankAccountDTO) =>
+  account.plaidAccountId === plaidAccountId;
 
-const numOrNull = (v: string | null): number | null =>
-  v === null ? null : Number(v);
+const numOrNull = (v: string | null): number | null => (v === null ? null : Number(v));
 
 function extractBalance(b: BankAccountJoinedRow["balance"]) {
   return {
@@ -71,9 +65,7 @@ export function toBankAccountDTO(row: BankAccountJoinedRow): BankAccountDTO {
   const { connection } = row;
   const inst = connection.institution;
   const balanceFields = extractBalance(row.balance);
-  const hasInvestmentAccounts = row.siblingAccountTypes.some(
-    (t) => t === "investment"
-  );
+  const hasInvestmentAccounts = row.siblingAccountTypes.some((t) => t === "investment");
   const currency = balanceFields.currency ?? null;
 
   return {
@@ -98,9 +90,7 @@ export function toBankAccountDTO(row: BankAccountJoinedRow): BankAccountDTO {
 }
 
 /** Transform full BankAccountDTO to list item (removes unused fields). */
-export function toBankAccountListItem(
-  account: BankAccountDTO
-): BankAccountListItem {
+export function toBankAccountListItem(account: BankAccountDTO): BankAccountListItem {
   const billedProducts = account.billedProducts ?? [];
   const hasInvestments = billedProducts.includes("investments");
   const hasLiabilities = billedProducts.includes("liabilities");
@@ -109,8 +99,7 @@ export function toBankAccountListItem(
   const needsReauth = account.error !== null;
   const newAccountsAvailable = account.newAccountsAvailable ?? false;
   const { pendingDisconnectAt } = account;
-  const creditLimit =
-    account.userOverrideCreditLimit ?? account.creditLimit ?? null;
+  const creditLimit = account.userOverrideCreditLimit ?? account.creditLimit ?? null;
 
   return {
     canAddInvestments,

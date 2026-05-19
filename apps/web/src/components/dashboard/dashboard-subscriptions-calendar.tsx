@@ -1,4 +1,4 @@
-import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
@@ -30,17 +30,14 @@ export function DashboardSubscriptionsCalendar() {
   const [selected, setSelected] = useState<Date | undefined>(() => new Date());
 
   const [rawStreams, result] = useQuery(queries.transactions.recurring());
-  const streams = rawStreams as unknown as RecurringRow[];
+  const streams: RecurringRow[] = rawStreams;
   const isComplete = result.type === "complete";
 
-  const outflows = useMemo(
-    () => streams.filter((s) => s.streamType === "outflow"),
-    [streams]
-  );
+  const outflows = useMemo(() => streams.filter((s) => s.streamType === "outflow"), [streams]);
 
   const monthlyTotal = useMemo(
     () => outflows.reduce((sum, s) => sum + Math.abs(s.lastAmount), 0),
-    [outflows]
+    [outflows],
   );
 
   /** Days in the current month that have a past or predicted payment. */
@@ -85,7 +82,10 @@ export function DashboardSubscriptionsCalendar() {
       aria-label="Subscriptions and payments calendar"
       className="flex h-full min-h-0 w-full min-w-0 max-w-full flex-col"
     >
-      <CobaltCard className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden rounded-3xl py-4">
+      <Card
+        variant="subtle"
+        className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden rounded-3xl py-4"
+      >
         <CardContent className="flex min-h-0 w-full flex-1 flex-col p-0 px-5 pb-4 sm:px-6">
           <h2 className="text-foreground mb-5 text-lg font-medium whitespace-nowrap">
             Subscriptions &amp; payments
@@ -99,9 +99,7 @@ export function DashboardSubscriptionsCalendar() {
               <p className="text-muted-foreground text-right text-base">
                 Monthly total:{" "}
                 <span className="text-foreground font-semibold tabular-nums">
-                  <PrivateAmount>
-                    {formatMonthTotal(monthlyTotal)}
-                  </PrivateAmount>
+                  <PrivateAmount>{formatMonthTotal(monthlyTotal)}</PrivateAmount>
                 </span>
               </p>
             </div>
@@ -130,7 +128,7 @@ export function DashboardSubscriptionsCalendar() {
                 "[&_[data-slot=button][data-selected-single=true]]:!bg-primary",
                 "[&_[data-slot=button][data-selected-single=true]]:!text-primary-foreground",
                 "[&_[data-slot=button][data-selected-single=true]]:hover:!bg-primary/90",
-                "[&_.rdp-weekday]:text-base [&_[data-slot=button]]:text-lg"
+                "[&_.rdp-weekday]:text-base [&_[data-slot=button]]:text-lg",
               )}
               classNames={{
                 day: "relative rounded-2xl border-0 shadow-none",
@@ -141,7 +139,7 @@ export function DashboardSubscriptionsCalendar() {
               modifiers={{ subscription: subscriptionDays }}
               modifiersClassNames={{
                 subscription:
-                  "after:absolute after:bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full after:bg-[#ffffff] after:content-['']",
+                  "after:absolute after:bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full after:bg-primary after:content-['']",
               }}
               mode="single"
               onSelect={setSelected}
@@ -150,7 +148,7 @@ export function DashboardSubscriptionsCalendar() {
             />
           )}
         </CardContent>
-      </CobaltCard>
+      </Card>
     </section>
   );
 }

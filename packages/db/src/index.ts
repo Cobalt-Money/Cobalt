@@ -2,20 +2,30 @@ import { env } from "@cobalt-web/env/server";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
-import * as deprecatedSchema from "./schema/_deprecated";
 import * as financialAccountSchema from "./schema/accounts/account";
 import * as balanceSchema from "./schema/accounts/balance";
+import * as categorySchema from "./schema/accounts/banking/categories/category";
+import * as categoryGroupSchema from "./schema/accounts/banking/categories/category-group";
 import * as creditLiabilitySchema from "./schema/accounts/banking/liabilities/credit";
 import * as mortgageLiabilitySchema from "./schema/accounts/banking/liabilities/mortgage";
 import * as studentLoanLiabilitySchema from "./schema/accounts/banking/liabilities/student-loan";
+import * as tagSchema from "./schema/accounts/banking/tags/tag";
+import * as transactionTagSchema from "./schema/accounts/banking/tags/transaction-tag";
 import * as recurringSchema from "./schema/accounts/banking/transactions/recurring";
 import * as transactionSchema from "./schema/accounts/banking/transactions/transaction";
+import * as transactionEditSchema from "./schema/accounts/banking/transactions/transaction-edit";
 import * as holdingSchema from "./schema/accounts/investments/holding";
 import * as investmentActivitySchema from "./schema/accounts/investments/investment-activity";
 import * as orderSchema from "./schema/accounts/investments/order";
 import * as securitySchema from "./schema/accounts/investments/security";
 import * as kalshiSchema from "./schema/accounts/prediction-markets/kalshi";
 import * as snapshotSchema from "./schema/accounts/snapshot";
+import * as importJobSchema from "./schema/imports/import-job";
+import * as importStagedTransactionSchema from "./schema/imports/import-staged-transaction";
+import * as csvMappingCacheSchema from "./schema/imports/csv-mapping-cache";
+import * as csvColumnRoleCacheSchema from "./schema/imports/csv-column-role-cache";
+import * as accountMappingCacheSchema from "./schema/imports/account-mapping-cache";
+import * as categoryMappingCacheSchema from "./schema/imports/category-mapping-cache";
 import * as chatSchema from "./schema/ai/chat";
 import * as messageVotesSchema from "./schema/ai/message-votes";
 import * as financialGoalsSchema from "./schema/goals/financial-goals";
@@ -48,7 +58,12 @@ export const db = drizzle({
     ...balanceSchema,
     ...snapshotSchema,
     ...transactionSchema,
+    ...transactionEditSchema,
     ...recurringSchema,
+    ...tagSchema,
+    ...transactionTagSchema,
+    ...categorySchema,
+    ...categoryGroupSchema,
     ...creditLiabilitySchema,
     ...mortgageLiabilitySchema,
     ...studentLoanLiabilitySchema,
@@ -60,7 +75,6 @@ export const db = drizzle({
     ...plaidConnectionSchema,
     ...snaptradeAuthorizationSchema,
     ...snaptradeUserSchema,
-    ...deprecatedSchema,
     ...feedbackSchema,
     ...financialEventsSchema,
     ...financialGoalsSchema,
@@ -69,5 +83,11 @@ export const db = drizzle({
     ...userAlertsSchema,
     ...mobileSubscriptionsSchema,
     ...stripeSubscriptionsSchema,
+    ...importJobSchema,
+    ...importStagedTransactionSchema,
+    ...csvMappingCacheSchema,
+    ...csvColumnRoleCacheSchema,
+    ...accountMappingCacheSchema,
+    ...categoryMappingCacheSchema,
   },
 });

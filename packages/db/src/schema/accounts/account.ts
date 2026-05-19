@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  date,
   index,
   pgEnum,
   pgTable,
@@ -14,25 +15,32 @@ import { plaidConnection } from "../providers/plaid/connection";
 import { snaptradeAuthorization } from "../providers/snaptrade/authorization";
 import { user } from "../users/auth/auth";
 
-export const accountSource = pgEnum("account_source", [
-  "plaid",
-  "snaptrade",
-  "manual",
-]);
+export const accountSource = pgEnum("account_source", ["plaid", "snaptrade", "manual"]);
 
 export const financialAccount = pgTable(
   "financial_account",
   {
     /** Full account number; rarely populated by providers. */
     accountNumber: text("account_number"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    /**
+     * Watermark (latest CSV-imported transaction date) for this account.
+     * Plaid sync uses it to skip txns dated `<=` this — gap-fill semantics on
+     * CSV-then-Plaid promotion. NULL = no CSV import ever touched this row.
+     */
+    csvCoverageThrough: date("csv_coverage_through"),
+    /** User-edited display name override. Plaid sync never writes this. Falls back to `name` when null. */
+    customName: text("custom_name"),
     /** Provider's account ID (Plaid account_id / SnapTrade account id). */
     externalId: text("external_id"),
     id: uuid("id").defaultRandom().primaryKey(),
     /** Bank/brokerage display name (denormalized from institution). */
     institutionName: text("institution_name"),
+    /**
+     * Brandfetch domain (e.g. "chase.com"). UI builds CDN URL from this — themeable, resizable.
+     * Populated for manual accounts via Brandfetch typeahead; Plaid/SnapTrade fall back to lettermark.
+     */
+    logoDomain: text("logo_domain"),
     /** Last 4 digits of the account number. */
     mask: text("mask"),
     /** Short user-facing name (e.g. "Sapphire Reserve"). */
@@ -41,10 +49,9 @@ export const financialAccount = pgTable(
     officialName: text("official_name"),
     /** Plaid stable cross-Item ID for this account. */
     persistentAccountId: text("persistent_account_id"),
-    plaidConnectionId: uuid("plaid_connection_id").references(
-      () => plaidConnection.id,
-      { onDelete: "cascade" }
-    ),
+    plaidConnectionId: uuid("plaid_connection_id").references(() => plaidConnection.id, {
+      onDelete: "cascade",
+    }),
     /**
      * SnapTrade portfolio grouping label.
      * @deprecated Field deprecated upstream by SnapTrade; kept for read compatibility.
@@ -52,7 +59,7 @@ export const financialAccount = pgTable(
     portfolioGroup: text("portfolio_group"),
     snaptradeAuthorizationId: uuid("snaptrade_authorization_id").references(
       () => snaptradeAuthorization.id,
-      { onDelete: "cascade" }
+      { onDelete: "cascade" },
     ),
     /** Provider: plaid | snaptrade | manual. */
     source: accountSource("source").notNull(),
@@ -74,18 +81,16 @@ export const financialAccount = pgTable(
     index("financial_account_user_id_idx").on(t.userId),
     index("financial_account_user_type_idx").on(t.userId, t.type),
     index("financial_account_plaid_connection_id_idx").on(t.plaidConnectionId),
-    index("financial_account_snaptrade_auth_id_idx").on(
-      t.snaptradeAuthorizationId
-    ),
+    index("financial_account_snaptrade_auth_id_idx").on(t.snaptradeAuthorizationId),
     index("financial_account_persistent_id_idx").on(t.persistentAccountId),
     uniqueIndex("financial_account_source_external_id_idx")
       .on(t.source, t.externalId)
       .where(sql`external_id IS NOT NULL`),
     check(
       "financial_account_connection_arc",
-      sql`num_nonnulls(plaid_connection_id, snaptrade_authorization_id) <= 1`
+      sql`num_nonnulls(plaid_connection_id, snaptrade_authorization_id) <= 1`,
     ),
-  ]
+  ],
 );
 
 export type FinancialAccount = typeof financialAccount.$inferSelect;

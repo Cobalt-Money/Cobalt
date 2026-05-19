@@ -2,11 +2,12 @@ import { getFinancialEventDetails } from "@cobalt-web/server-data/news/detail/qu
 import {
   eventDetailResponseSchema,
   eventIdParamSchema,
-  eventNotFoundSchema,
 } from "@cobalt-web/server-data/news/detail/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
@@ -15,34 +16,19 @@ const route = createRoute({
   path: "/events/{eventId}",
   request: { params: eventIdParamSchema },
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: eventDetailResponseSchema },
-      },
-      description: "Event details",
-    },
-    404: {
-      content: {
-        "application/json": { schema: eventNotFoundSchema },
-      },
-      description: "Event not found",
-    },
+    200: jsonContent(eventDetailResponseSchema, "Event details"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    404: jsonContent(errorResponseWithCodeSchema, "Event not found"),
+    422: validationErrorResponse(eventIdParamSchema),
   },
   summary: "Get event details",
   tags: ["News"],
 });
 
-export const eventDetailRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const { eventId } = c.req.valid("param");
-    const event = await getFinancialEventDetails(c.var.user.id, eventId);
-
-    if (!event) {
-      return c.json({ error: "Event not found" }, 404);
-    }
-
-    c.header("Cache-Control", "private, max-age=60");
-    return c.json({ event }, 200);
-  }
-);
+export const eventDetailRouter = createApp().openapi(route, async (c) => {
+  const { eventId } = c.req.valid("param");
+  const event = await getFinancialEventDetails(c.var.user.id, eventId);
+  c.header("Cache-Control", "private, max-age=60");
+  return c.json({ event }, 200);
+});

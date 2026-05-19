@@ -1,5 +1,11 @@
 import { Queue } from "@cobalt-web/ui/components/ai-elements/queue";
-import { Cancel01Icon, PencilEdit01Icon } from "@hugeicons/core-free-icons";
+import { cobaltGhostSurfaceClass } from "@cobalt-web/ui/cobalt/prompt-input";
+import {
+  Cancel01Icon,
+  CheckmarkCircle02Icon,
+  ClockIcon,
+  Image01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 
@@ -17,14 +23,13 @@ export function PromptQueue({ items, onRemove, onUpdate }: PromptQueueProps) {
   }
 
   return (
-    <Queue className="mx-auto w-3/4 rounded-3xl rounded-b-none border-0 shadow-none">
+    <Queue className={`mb-2 w-full rounded-2xl px-3 pt-2 pb-2 ${cobaltGhostSurfaceClass}`}>
       <div className="flex items-center justify-between px-1">
-        <span className="font-medium text-muted-foreground text-sm">
-          Queued
-        </span>
-        <span className="text-muted-foreground text-xs">
-          {items.length} waiting
-        </span>
+        <div className="flex items-center gap-2 font-medium text-muted-foreground text-sm">
+          <HugeiconsIcon icon={ClockIcon} className="size-4" strokeWidth={2} />
+          <span>Queued</span>
+        </div>
+        <span className="text-muted-foreground text-xs">{items.length} waiting</span>
       </div>
       <ul className="flex flex-col gap-1">
         {items.map((item) => (
@@ -76,10 +81,9 @@ function QueueRow({ item, onRemove, onUpdate }: QueueRowProps) {
 
   if (editing) {
     return (
-      <li className="flex items-start gap-1 rounded-md bg-muted px-2 py-1.5">
+      <li className="flex items-start gap-1.5 rounded-xl bg-white px-3 py-2 ring-1 ring-primary/30 ring-inset focus-within:ring-primary/60 dark:bg-white/10">
         <textarea
-          className="min-h-[1.5rem] flex-1 resize-none bg-transparent text-foreground text-sm outline-none"
-          onBlur={commit}
+          className="min-h-[1.5rem] flex-1 resize-none bg-transparent text-foreground text-sm outline-none placeholder:text-muted-foreground/60"
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
@@ -94,31 +98,58 @@ function QueueRow({ item, onRemove, onUpdate }: QueueRowProps) {
           rows={1}
           value={draft}
         />
+        <div className="flex shrink-0 items-center gap-0.5 pt-0.5">
+          <button
+            aria-label="Cancel edit"
+            className="rounded p-1 text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={cancel}
+            type="button"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
+          </button>
+          <button
+            aria-label="Save edit"
+            className="rounded p-1 text-primary transition-colors hover:bg-primary/10"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={commit}
+            type="button"
+          >
+            <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3.5" />
+          </button>
+        </div>
       </li>
     );
   }
 
   return (
-    <li className="group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted">
-      <span className="flex-1 truncate text-muted-foreground">{item.text}</span>
-      <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-        <button
-          aria-label="Edit queued message"
-          className="rounded p-1 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
-          onClick={() => setEditing(true)}
-          type="button"
-        >
-          <HugeiconsIcon icon={PencilEdit01Icon} className="size-3" />
-        </button>
-        <button
-          aria-label="Remove queued message"
-          className="rounded p-1 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
-          onClick={onRemove}
-          type="button"
-        >
-          <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
-        </button>
-      </div>
+    <li className="group relative flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-foreground/5">
+      <button
+        aria-label="Edit queued message"
+        className="absolute inset-0 cursor-text rounded-md"
+        onClick={() => setEditing(true)}
+        type="button"
+      />
+      {item.files && item.files.length > 0 && (
+        <span className="pointer-events-none flex shrink-0 items-center gap-0.5 text-muted-foreground">
+          <HugeiconsIcon icon={Image01Icon} className="size-3.5" strokeWidth={2} />
+          {item.files.length}
+        </span>
+      )}
+      <span className="pointer-events-none flex-1 truncate text-muted-foreground">
+        {item.text || "Image attached"}
+      </span>
+      <button
+        aria-label="Remove queued message"
+        className="relative rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-foreground/5 hover:text-foreground group-hover:opacity-100"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        type="button"
+      >
+        <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
+      </button>
     </li>
   );
 }

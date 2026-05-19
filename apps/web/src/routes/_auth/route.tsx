@@ -1,14 +1,16 @@
 import { PrivacyProvider } from "@cobalt-web/ui/components/privacy";
 import { SidebarProvider } from "@cobalt-web/ui/components/sidebar";
+import { queries } from "@cobalt-web/zero";
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 
-import { AddAccountProvider } from "@/components/accounts/add-account-provider";
-import { AddCashAccountProvider } from "@/components/accounts/add-cash-account-host";
+import { OnboardingProgressProvider } from "@/components/accounts/onboarding-context";
+import { OnboardingProgress } from "@/components/accounts/onboarding-progress";
+import { DemoBanner } from "@/components/demo/demo-banner";
+import { ImportWizardHost } from "@/components/imports/import-wizard";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
 import { AppSidebar } from "@/components/shell/sidebar/app-sidebar";
 import { SettingsDialogProvider } from "@/components/shell/sidebar/nav/settings-dialog-provider";
-import { AddTransactionProvider } from "@/components/transactions/add-transaction-provider";
 import { useAppSession } from "@/lib/providers/app-session";
 import { ZeroProvider } from "@/lib/providers/zero-client";
 
@@ -22,29 +24,38 @@ import { ZeroProvider } from "@/lib/providers/zero-client";
  */
 export const Route = createFileRoute("/_auth")({
   component: AuthLayout,
+  loader: ({ context }) => {
+    context.zero?.run(queries.chats.list());
+  },
 });
 
-function AuthShellWithOutlet() {
+function AuthShellWithOutlet({ isDemo }: { isDemo: boolean }) {
+  // Setting `data-demo-banner` on this wrapper (vs `document.body` via an
+  // effect) keeps the demo-mode flag in React tree — CSS in globals.css
+  // targets `[data-demo-banner="1"] [data-slot="sidebar"]` etc. No effect,
+  // no global DOM mutation.
   return (
     <ZeroProvider>
-      <AddCashAccountProvider>
-        <AddAccountProvider>
-          <AddTransactionProvider>
-            <PrivacyProvider>
-              <SettingsDialogProvider>
-                <CommandMenuProvider>
+      <OnboardingProgressProvider>
+        <PrivacyProvider>
+          <SettingsDialogProvider>
+            <ImportWizardHost>
+              <CommandMenuProvider>
+                <div className="contents" data-demo-banner={isDemo ? "1" : undefined}>
+                  <DemoBanner />
                   <SidebarProvider className="min-h-0 flex-1">
                     <AppSidebar />
                     <AmbientInsetProvider>
                       <Outlet />
                     </AmbientInsetProvider>
                   </SidebarProvider>
-                </CommandMenuProvider>
-              </SettingsDialogProvider>
-            </PrivacyProvider>
-          </AddTransactionProvider>
-        </AddAccountProvider>
-      </AddCashAccountProvider>
+                </div>
+              </CommandMenuProvider>
+            </ImportWizardHost>
+          </SettingsDialogProvider>
+        </PrivacyProvider>
+        <OnboardingProgress />
+      </OnboardingProgressProvider>
     </ZeroProvider>
   );
 }
@@ -60,5 +71,8 @@ function AuthLayout() {
     return <Navigate replace to="/" />;
   }
 
-  return <AuthShellWithOutlet />;
+  // Anonymous plugin's isAnonymous field isn't inferred by authClient.useSession;
+  // narrow via runtime read instead of cast at every callsite.
+  const user = session.data.user as { isAnonymous?: boolean };
+  return <AuthShellWithOutlet isDemo={Boolean(user.isAnonymous)} />;
 }

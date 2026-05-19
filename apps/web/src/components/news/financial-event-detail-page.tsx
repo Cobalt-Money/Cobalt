@@ -1,64 +1,17 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
+import { Card } from "@cobalt-web/ui/components/card";
+import { EventArticleContent } from "@cobalt-web/ui/cobalt/news/event-article-content";
+import type { EventArticleSource } from "@cobalt-web/ui/cobalt/news/event-article-content";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import type { queries, Row } from "@cobalt-web/zero";
 import { LinkSquare01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { Link } from "@/components/links";
 import { useFinancialEventDetail } from "@/hooks/use-financial-event-detail";
 
-/** Narrow shape for synced financial event + articles (Zero row typing is permissive). */
-interface EventArticleRow {
-  readonly id: string;
-  readonly title: string;
-  readonly newsUrl: string;
-  readonly imageUrl?: string | null;
-  readonly sourceName?: string | null;
-  readonly text?: string | null;
-  readonly type?: string | null;
-}
-
-interface FinancialEventDetailRow {
-  readonly id: string;
-  readonly eventName: string;
-  readonly summary?: string | null;
-  readonly eventText?: string | null;
-  readonly sentiment?: string | null;
-  readonly keyPoints?: unknown;
-  readonly tickers?: unknown;
-  readonly date?: number | null;
-  readonly createdAt?: number | null;
-  readonly articles?: readonly EventArticleRow[];
-}
-
-function parseKeyPoints(raw: unknown): string[] {
-  if (raw === undefined || raw === null) {
-    return [];
-  }
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-  const out: string[] = [];
-  for (const x of raw) {
-    if (typeof x === "string" && x.trim()) {
-      out.push(x.trim());
-    } else if (x !== null && typeof x === "object" && "text" in x) {
-      const t = (x as { text?: unknown }).text;
-      if (typeof t === "string" && t.trim()) {
-        out.push(t.trim());
-      }
-    }
-  }
-  const seen = new Set<string>();
-  const deduped: string[] = [];
-  for (const s of out) {
-    if (seen.has(s)) {
-      continue;
-    }
-    seen.add(s);
-    deduped.push(s);
-  }
-  return deduped;
-}
+type FinancialEventDetailRow = Row<typeof queries.news.eventById>;
+type EventArticleRow = NonNullable<FinancialEventDetailRow["articles"]>[number];
 
 function parseTickers(raw: unknown): string[] {
   if (!Array.isArray(raw)) {
@@ -205,39 +158,16 @@ function HeroImage({ src }: { src: string }) {
   );
 }
 
-function KeyPointsSection({ lines }: { lines: readonly string[] }) {
-  if (lines.length === 0) {
-    return null;
-  }
-  return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold tracking-tight">Key points</h2>
-      <ul className="list-disc space-y-2 pl-5">
-        {lines.map((line) => (
-          <li className="text-muted-foreground leading-relaxed" key={line}>
-            {line}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 function VideoEmbedSection({ embedUrl }: { embedUrl: string }) {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-lg font-semibold tracking-tight">Video</h2>
-      <div
-        className={cn(
-          "bg-muted relative w-full overflow-hidden rounded-xl",
-          "aspect-video"
-        )}
-      >
+      <div className={cn("bg-muted relative w-full overflow-hidden rounded-xl", "aspect-video")}>
         <iframe
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
           className="absolute inset-0 size-full border-0"
-          sandbox="allow-scripts allow-presentation allow-popups allow-popups-to-escape-sandbox"
+          referrerPolicy="strict-origin-when-cross-origin"
           src={embedUrl}
           title="Related video"
         />
@@ -246,104 +176,132 @@ function VideoEmbedSection({ embedUrl }: { embedUrl: string }) {
   );
 }
 
-function SourceArticleCard({ article }: { article: EventArticleRow }) {
-  const host =
-    article.sourceName?.trim() || hostnameFromUrl(article.newsUrl) || "Source";
+function SourceArticleCard({ article, index }: { article: EventArticleRow; index: number }) {
+  const host = article.sourceName?.trim() || hostnameFromUrl(article.newsUrl) || "Source";
   const fav = faviconUrlForNewsUrl(article.newsUrl);
-  const snippet = article.text?.trim();
   return (
     <li>
       <a
-        className="border-border bg-card hover:bg-muted/40 -mx-3 flex gap-3 rounded-xl border px-3 py-3 transition-colors"
+        className="group block h-full"
         href={article.newsUrl}
         rel="noopener noreferrer"
         target="_blank"
       >
-        <span
-          aria-hidden
-          className="relative mt-0.5 inline-flex size-9 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60"
+        <Card
+          variant="subtle"
+          className="flex h-full flex-col gap-2.5 p-3.5 transition-colors group-hover:bg-[oklch(0.94_0_0)] dark:group-hover:bg-white/[0.08]"
         >
-          {fav ? (
-            <img
-              alt=""
-              className="size-full object-cover"
-              decoding="async"
-              loading="lazy"
-              src={fav}
-            />
-          ) : (
-            <span className="text-muted-foreground flex size-full items-center justify-center text-[10px] font-bold">
-              {host.slice(0, 2).toUpperCase()}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <span
+                aria-hidden
+                className="bg-background ring-border/60 relative inline-flex size-5 shrink-0 overflow-hidden rounded-full ring-1"
+              >
+                {fav ? (
+                  <img
+                    alt=""
+                    className="size-full object-cover"
+                    decoding="async"
+                    loading="lazy"
+                    src={fav}
+                  />
+                ) : (
+                  <span className="text-muted-foreground flex size-full items-center justify-center text-[8px] font-bold">
+                    {host.slice(0, 2).toUpperCase()}
+                  </span>
+                )}
+              </span>
+              <span className="text-muted-foreground truncate text-xs lowercase">{host}</span>
+            </div>
+            <span className="text-muted-foreground inline-flex shrink-0 items-center gap-1 text-[11px] tabular-nums">
+              <span>{index + 1}</span>
+              <HugeiconsIcon
+                aria-hidden
+                className="opacity-60 transition-opacity group-hover:opacity-100"
+                icon={LinkSquare01Icon}
+                size={12}
+                strokeWidth={2}
+              />
             </span>
-          )}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="text-foreground flex items-start justify-between gap-2 font-medium leading-snug">
-            <span className="min-w-0">{article.title}</span>
-            <HugeiconsIcon
-              aria-hidden
-              icon={LinkSquare01Icon}
-              size={16}
-              strokeWidth={2}
-              className="text-muted-foreground mt-0.5 shrink-0"
-            />
-          </span>
-          <span className="text-muted-foreground mt-1 block text-sm">
-            {host}
-          </span>
-          {snippet ? (
-            <span className="text-muted-foreground mt-2 line-clamp-3 block text-sm leading-relaxed">
-              {snippet}
-            </span>
-          ) : null}
-        </span>
+          </div>
+          <p className="text-foreground line-clamp-3 text-sm leading-snug font-medium">
+            {article.title}
+          </p>
+        </Card>
       </a>
     </li>
   );
 }
 
-function SourcesSection({
-  articles,
-}: {
-  articles: readonly EventArticleRow[];
-}) {
+function SourcesSection({ articles }: { articles: readonly EventArticleRow[] }) {
   if (articles.length === 0) {
     return null;
   }
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold tracking-tight">Sources</h2>
-      <ul className="flex flex-col gap-3">
-        {articles.map((a) => (
-          <SourceArticleCard article={a} key={a.id} />
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-lg font-semibold tracking-tight">Sources</h2>
+        <span className="text-muted-foreground text-xs tabular-nums">{articles.length}</span>
+      </div>
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {articles.map((a, i) => (
+          <SourceArticleCard article={a} index={i} key={a.id} />
         ))}
       </ul>
     </section>
   );
 }
 
-export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
-  const { event: raw } = useFinancialEventDetail(eventId);
+function renderArticleBody({
+  articleSources,
+  eventText,
+  summary,
+}: {
+  articleSources: readonly EventArticleSource[];
+  eventText: string | null;
+  summary: string | null;
+}) {
+  if (summary) {
+    return (
+      <section className="flex flex-col gap-2">
+        <EventArticleContent markdown={summary} sources={articleSources} />
+      </section>
+    );
+  }
+  if (eventText) {
+    return (
+      <section className="flex flex-col gap-2">
+        <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{eventText}</p>
+      </section>
+    );
+  }
+  return null;
+}
 
-  if (raw === undefined) {
+export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
+  const { event } = useFinancialEventDetail(eventId);
+
+  if (event === undefined) {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
         <p className="text-muted-foreground text-sm">
-          This story could not be loaded. It may have been removed or the link
-          is invalid.
+          This story could not be loaded. It may have been removed or the link is invalid.
         </p>
       </div>
     );
   }
 
-  const event = raw as FinancialEventDetailRow;
   const articles = event.articles ?? [];
-  const keyPoints = parseKeyPoints(event.keyPoints);
   const tickers = parseTickers(event.tickers);
   const summary = event.summary?.trim() || null;
   const eventText = event.eventText?.trim() || null;
-  const heroImage =
-    articles.find((a) => a.imageUrl?.trim())?.imageUrl?.trim() ?? null;
+  const articleSources: EventArticleSource[] = articles.map((a) => ({
+    id: a.id,
+    newsUrl: a.newsUrl,
+    sourceName: a.sourceName ?? null,
+    title: a.title,
+  }));
+  const heroImage = articles.find((a) => a.imageUrl?.trim())?.imageUrl?.trim() ?? null;
   const videoEmbed = pickVideoEmbed(articles);
   const ts = eventTimestampMs(event);
   const timeLabel =
@@ -356,32 +314,11 @@ export function FinancialEventDetailPage({ eventId }: { eventId: string }) {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8">
-      <StoryHeader
-        event={event}
-        timeLabel={timeLabel}
-        tickers={tickers}
-        ts={ts}
-      />
+      <StoryHeader event={event} timeLabel={timeLabel} tickers={tickers} ts={ts} />
 
       {heroImage ? <HeroImage src={heroImage} /> : null}
 
-      {summary ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold tracking-tight">Summary</h2>
-          <p className="text-muted-foreground leading-relaxed">{summary}</p>
-        </section>
-      ) : null}
-
-      <KeyPointsSection lines={keyPoints} />
-
-      {eventText && eventText !== summary ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold tracking-tight">Details</h2>
-          <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-            {eventText}
-          </p>
-        </section>
-      ) : null}
+      {renderArticleBody({ articleSources, eventText, summary })}
 
       {videoEmbed ? <VideoEmbedSection embedUrl={videoEmbed} /> : null}
 

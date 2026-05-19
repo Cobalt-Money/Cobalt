@@ -2,20 +2,34 @@ import { db } from "@cobalt-web/db";
 import { snaptradeAuthorization } from "@cobalt-web/db/schema/providers/snaptrade/authorization";
 import { eq } from "drizzle-orm";
 
+/**
+ * Look up the internal DB id for an existing SnapTrade authorization by its
+ * external authorizationId. Returns null when no row exists. Used both by
+ * `upsertSnaptradeAuthorization` to detect upsert vs insert and by workflows
+ * (e.g. holdings sync) that need the FK to attach accounts without touching
+ * the auth row.
+ */
+export async function getSnaptradeAuthorizationDbId(
+  brokerageAuthorizationId: string,
+): Promise<string | null> {
+  const row = await db.query.snaptradeAuthorization.findFirst({
+    columns: { id: true },
+    where: { authorizationId: { eq: brokerageAuthorizationId } },
+  });
+  return row?.id ?? null;
+}
+
 export async function upsertSnaptradeAuthorization(
   brokerageAuthorizationId: string,
   appUserId: string,
   brokerageSlug: string,
   brokerage: string,
   name: string,
-  type = "read"
+  type = "read",
 ): Promise<string> {
-  const existing = await db.query.snaptradeAuthorization.findFirst({
-    columns: { id: true },
-    where: { authorizationId: { eq: brokerageAuthorizationId } },
-  });
+  const existingId = await getSnaptradeAuthorizationDbId(brokerageAuthorizationId);
 
-  if (existing) {
+  if (existingId) {
     await db
       .update(snaptradeAuthorization)
       .set({
@@ -27,11 +41,9 @@ export async function upsertSnaptradeAuthorization(
         type,
         userId: appUserId,
       })
-      .where(
-        eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId)
-      );
+      .where(eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId));
 
-    return existing.id;
+    return existingId;
   }
 
   const [inserted] = await db
@@ -53,7 +65,7 @@ export async function upsertSnaptradeAuthorization(
 
 export async function updateSnaptradeAuthorizationStatus(
   brokerageAuthorizationId: string,
-  isDisabled: boolean
+  isDisabled: boolean,
 ): Promise<void> {
   await db
     .update(snaptradeAuthorization)
@@ -61,17 +73,13 @@ export async function updateSnaptradeAuthorizationStatus(
       disabledAt: isDisabled ? new Date() : null,
       isDisabled,
     })
-    .where(
-      eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId)
-    );
+    .where(eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId));
 }
 
 export async function deleteSnaptradeAuthorization(
-  brokerageAuthorizationId: string
+  brokerageAuthorizationId: string,
 ): Promise<void> {
   await db
     .delete(snaptradeAuthorization)
-    .where(
-      eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId)
-    );
+    .where(eq(snaptradeAuthorization.authorizationId, brokerageAuthorizationId));
 }

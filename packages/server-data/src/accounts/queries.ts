@@ -1,5 +1,6 @@
 import { db } from "@cobalt-web/db";
 
+import { ApiError } from "../_shared/api-error.js";
 import {
   isBankAccountListType,
   isCreditCardAccount,
@@ -9,6 +10,7 @@ import {
 } from "./lib.js";
 import type { BankAccountJoinedRow } from "./lib.js";
 import type {
+  AccountListQuery,
   BankAccountDTO,
   BankAccountListItem,
   PlaidAccountForItemDTO,
@@ -23,9 +25,7 @@ import type {
  * Joins financial_account ⨝ plaid_connection ⨝ balance ⨝ institution, plus
  * a sibling-types lookup to compute `hasInvestmentAccounts`.
  */
-export async function getAllAccountsWithInstitutions(
-  userId: string
-): Promise<BankAccountDTO[]> {
+export async function getAllAccountsWithInstitutions(userId: string): Promise<BankAccountDTO[]> {
   const rows = await db.query.financialAccount.findMany({
     columns: {
       externalId: true,
@@ -127,33 +127,51 @@ export async function getAllAccountsWithInstitutions(
 
 // ── Filtered queries ────────────────────────────────────────────────
 
-export async function getBankAccounts(
-  userId: string
-): Promise<BankAccountListItem[]> {
+/**
+ * List accounts filtered by Plaid `type` and/or `subtype`. Both filters are
+ * optional and combined as AND. Same DTO shape as `getAllAccountsWithInstitutions`.
+ */
+export async function listAccounts(
+  userId: string,
+  params: AccountListQuery = {},
+): Promise<BankAccountDTO[]> {
+  const all = await getAllAccountsWithInstitutions(userId);
+  return all.filter((a) => {
+    if (params.type && a.type !== params.type) {
+      return false;
+    }
+    if (params.subtype && a.subtype !== params.subtype) {
+      return false;
+    }
+    return true;
+  });
+}
+
+export async function getBankAccounts(userId: string): Promise<BankAccountListItem[]> {
   const all = await getAllAccountsWithInstitutions(userId);
   return all.filter(isBankAccountListType).map(toBankAccountListItem);
 }
 
-export async function getCreditCards(
-  userId: string
-): Promise<BankAccountListItem[]> {
+export async function getCreditCards(userId: string): Promise<BankAccountListItem[]> {
   const all = await getAllAccountsWithInstitutions(userId);
   return all.filter(isCreditCardAccount).map(toBankAccountListItem);
 }
 
 export async function getBankAccountById(
   userId: string,
-  accountId: string
-): Promise<BankAccountDTO | null> {
+  accountId: string,
+): Promise<BankAccountDTO> {
   const all = await getAllAccountsWithInstitutions(userId);
-  return all.find(matchesPlaidAccountId(accountId)) ?? null;
+  const found = all.find(matchesPlaidAccountId(accountId));
+  if (!found) {
+    throw new ApiError(404, "account_not_found", "Account not found");
+  }
+  return found;
 }
 
 // ── Plaid items ─────────────────────────────────────────────────────
 
-export async function getUserPlaidItems(
-  userId: string
-): Promise<PlaidItemDTO[]> {
+export async function getUserPlaidItems(userId: string): Promise<PlaidItemDTO[]> {
   const items = await db.query.plaidConnection.findMany({
     where: { userId: { eq: userId } },
   });
@@ -177,8 +195,21 @@ export async function getUserPlaidItems(
 
 export async function getPlaidAccountsForItem(
   userId: string,
-  plaidItemId: string
+  plaidItemId: string,
 ): Promise<PlaidAccountForItemDTO[]> {
+  // Verify the item exists and is owned by the caller before returning accounts.
+  // Single neutral 404 — never distinguish missing from unowned (anti-enumeration).
+  const item = await db.query.plaidConnection.findFirst({
+    columns: { id: true },
+    where: {
+      plaidItemId: { eq: plaidItemId },
+      userId: { eq: userId },
+    },
+  });
+  if (!item) {
+    throw new ApiError(404, "plaid_item_not_found", "Plaid item not found");
+  }
+
   const accounts = await db.query.financialAccount.findMany({
     columns: {
       createdAt: true,
@@ -227,9 +258,7 @@ export async function getPlaidAccountsForItem(
   });
 }
 
-export async function getPlaidItemsWithAlerts(
-  userId: string
-): Promise<PlaidItemAlertDTO[]> {
+export async function getPlaidItemsWithAlerts(userId: string): Promise<PlaidItemAlertDTO[]> {
   const items = await db.query.plaidConnection.findMany({
     columns: {
       error: true,
@@ -240,10 +269,7 @@ export async function getPlaidItemsWithAlerts(
       plaidItemId: true,
     },
     where: {
-      OR: [
-        { error: { isNotNull: true } },
-        { pendingDisconnectAt: { isNotNull: true } },
-      ],
+      OR: [{ error: { isNotNull: true } }, { pendingDisconnectAt: { isNotNull: true } }],
       userId: { eq: userId },
     },
   });

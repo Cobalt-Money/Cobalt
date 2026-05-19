@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   createLinkToken,
   createLinkTokenForUpdate,
@@ -5,24 +6,25 @@ import {
 import { findExistingHealthyConnection } from "@cobalt-web/server-data/providers/plaid/link/queries";
 import {
   createLinkTokenBodySchema,
-  errorResponseSchema,
   linkTokenResponseSchema,
   resolveLinkBodySchema,
   successResponseSchema,
 } from "@cobalt-web/server-data/providers/plaid/link/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { userCanAddConnection } from "@cobalt-web/server-data/subscriptions";
+import { createRoute } from "@hono/zod-openapi";
 import { v7 as uuidv7 } from "uuid";
 import { resumeHook, start } from "workflow/api";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { plaidAddAccountWorkflow } from "../../../workflows/plaid/sync/workflow.js";
-import { requireAuth } from "../middleware.js";
+import { requireAuth, requireNotDemo } from "../middleware.js";
 
 // ── Route definitions ───────────────────────────────────────────────
 
 const createLinkTokenRoute = createRoute({
   method: "post",
-  middleware: [requireAuth] as const,
+  middleware: [requireAuth, requireNotDemo] as const,
   path: "/createLinkToken",
   request: {
     body: {
@@ -31,15 +33,17 @@ const createLinkTokenRoute = createRoute({
     },
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: linkTokenResponseSchema } },
-      description:
-        "Link token minted; workflow parked on hook. Client must echo the Plaid Link outcome via /resolveLink",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
+    200: jsonContent(
+      linkTokenResponseSchema,
+      "Link token minted; workflow parked on hook. Client must echo the Plaid Link outcome via /resolveLink",
+    ),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    402: jsonContent(
+      errorResponseWithCodeSchema,
+      "Free-tier connection limit reached — upgrade required",
+    ),
+    422: validationErrorResponse(createLinkTokenBodySchema),
+    502: jsonContent(errorResponseWithCodeSchema, "Plaid API failed"),
   },
   summary: "Mint a Plaid link token and start the parked add-account workflow",
   tags: ["Plaid"],
@@ -47,7 +51,7 @@ const createLinkTokenRoute = createRoute({
 
 const resolveLinkRoute = createRoute({
   method: "post",
-  middleware: [requireAuth] as const,
+  middleware: [requireAuth, requireNotDemo] as const,
   path: "/resolveLink",
   request: {
     body: {
@@ -55,18 +59,11 @@ const resolveLinkRoute = createRoute({
     },
   },
   responses: {
-    200: {
-      content: { "application/json": { schema: successResponseSchema } },
-      description: "Workflow resumed",
-    },
-    400: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Invalid payload or foreign hook token",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
+    200: jsonContent(successResponseSchema, "Workflow resumed"),
+    400: jsonContent(errorResponseWithCodeSchema, "Invalid payload or foreign hook token"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    422: validationErrorResponse(resolveLinkBodySchema),
+    500: jsonContent(errorResponseWithCodeSchema, "Server error"),
   },
   summary: "Resolve a parked add-account workflow (Plaid onSuccess or onExit)",
   tags: ["Plaid"],
@@ -78,82 +75,91 @@ const resolveLinkRoute = createRoute({
 // routing info embedded — the workflow run holds that, and the token never
 // leaves the server↔client trust boundary.
 
-const linkRouter = new OpenAPIHono<AppEnv>()
+const linkRouter = createApp()
   .openapi(createLinkTokenRoute, async (c) => {
-    try {
-      // Body is optional. New client posts `{ institutionId }` (Plaid `ins_X`,
-      // optionally `plaid:`-prefixed) so the server can detect Scenario C
-      // up-front and mint an update-mode token tied to the existing access
-      // token. Older clients post nothing → fresh link.
-      const body = await c.req
-        .json<{ institutionId?: string }>()
-        .catch(() => ({}) as { institutionId?: string });
+    // Body is optional. New client posts `{ institutionId }` (Plaid `ins_X`,
+    // optionally `plaid:`-prefixed) so the server can detect Scenario C
+    // up-front and mint an update-mode token tied to the existing access
+    // token. Older clients post nothing → fresh link.
+    const body = await c.req
+      .json<{ institutionId?: string }>()
+      .catch(() => ({}) as { institutionId?: string });
 
-      const userId = c.var.user.id;
-      const insId = body.institutionId?.replace(/^plaid:/, "");
+    const userId = c.var.user.id;
+    const insId = body.institutionId?.replace(/^plaid:/, "");
 
-      // ── Scenario C: existing healthy connection at this institution.
-      if (insId?.startsWith("ins_")) {
-        const existing = await findExistingHealthyConnection(userId, insId);
-        if (existing) {
-          const tokenResult = await createLinkTokenForUpdate(
-            existing.plaidAccessToken,
-            userId,
-            "add-accounts"
-          );
-          const hookToken = uuidv7();
-          const run = await start(plaidAddAccountWorkflow, [
-            {
-              hookToken,
-              updateMode: {
-                accessToken: existing.plaidAccessToken,
-                plaidItemId: existing.plaidItemId,
-              },
-              userId,
-            },
-          ]);
-          return c.json(
-            {
-              hookToken,
-              institutionLogo: existing.institutionLogo,
-              institutionName: existing.institutionName,
-              institutionUrl: existing.institutionUrl,
-              link_token: tokenResult.link_token,
-              mode: "update" as const,
+    // ── Scenario C: existing healthy connection at this institution.
+    if (insId?.startsWith("ins_")) {
+      const existing = await findExistingHealthyConnection(userId, insId);
+      if (existing) {
+        const tokenResult = await createLinkTokenForUpdate(
+          existing.plaidAccessToken,
+          userId,
+          "add-accounts",
+        );
+        const hookToken = uuidv7();
+        const run = await start(plaidAddAccountWorkflow, [
+          {
+            hookToken,
+            updateMode: {
+              accessToken: existing.plaidAccessToken,
               plaidItemId: existing.plaidItemId,
-              runId: run.runId,
             },
-            200
-          );
-        }
+            userId,
+          },
+        ]);
+        return c.json(
+          {
+            hookToken,
+            institutionLogo: existing.institutionLogo,
+            institutionName: existing.institutionName,
+            institutionUrl: existing.institutionUrl,
+            link_token: tokenResult.link_token,
+            mode: "update" as const,
+            plaidItemId: existing.plaidItemId,
+            runId: run.runId,
+          },
+          200,
+        );
       }
+    }
 
-      // ── Fresh link.
-      const tokenResult = await createLinkToken(userId);
-      const hookToken = uuidv7();
-      const run = await start(plaidAddAccountWorkflow, [{ hookToken, userId }]);
+    // Fresh link path adds a new connection to the user's pooled count.
+    // Scenario C above is exempt — update-mode reuses an existing item.
+    if (!(await userCanAddConnection(userId))) {
       return c.json(
         {
-          hookToken,
-          link_token: tokenResult.link_token,
-          runId: run.runId,
+          code: "connection_limit_reached",
+          error: "Free tier allows 1 synced connection. Upgrade to Pro for unlimited.",
         },
-        200
+        402,
       );
-    } catch (error) {
-      console.error("[/createLinkToken] failed", error);
-      const message =
-        error instanceof Error ? error.message : "Error generating link token";
-      return c.json({ error: message }, 500);
     }
+
+    // ── Fresh link. ApiError thrown from createLinkToken bubbles to onError
+    // and surfaces as 502 `{code:"link_token_failed", ...}`.
+    const tokenResult = await createLinkToken(userId);
+    const hookToken = uuidv7();
+    const run = await start(plaidAddAccountWorkflow, [{ hookToken, userId }]);
+    return c.json(
+      {
+        hookToken,
+        link_token: tokenResult.link_token,
+        runId: run.runId,
+      },
+      200,
+    );
   })
   .openapi(resolveLinkRoute, async (c) => {
     const { cancelled, hookToken, publicToken } = c.req.valid("json");
 
     if (!cancelled && !publicToken) {
       return c.json(
-        { error: "Must provide publicToken or cancelled: true" },
-        400
+        {
+          code: "invalid_resolve_payload",
+          error: "Must provide publicToken or cancelled: true",
+        },
+        400,
       );
     }
 
@@ -161,9 +167,11 @@ const linkRouter = new OpenAPIHono<AppEnv>()
       await resumeHook(hookToken, { cancelled, publicToken });
       return c.json({ success: true }, 200);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to resume workflow";
-      return c.json({ error: message }, 500);
+      // resumeHook can throw if the hook token is unknown/expired/foreign.
+      // We can't distinguish reliably from the workflow runtime, so map all
+      // failures to a single neutral 500.
+      const message = error instanceof Error ? error.message : "Failed to resume workflow";
+      return c.json({ code: "resume_hook_failed", error: message }, 500);
     }
   });
 

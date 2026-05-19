@@ -38,14 +38,12 @@ function hostnameFromWebsite(url: string | null | undefined): string | null {
 
 /** Prefer merchant counterparty, else first counterparty with a website. */
 function websiteFromCounterparties(
-  counterparties: TransactionListItem["counterparties"]
+  counterparties: TransactionListItem["counterparties"],
 ): string | null {
   if (!counterparties?.length) {
     return null;
   }
-  const merchant = counterparties.find(
-    (c) => c.type === "merchant" && c.website?.trim()
-  );
+  const merchant = counterparties.find((c) => c.type === "merchant" && c.website?.trim());
   if (merchant?.website) {
     return merchant.website;
   }
@@ -55,14 +53,14 @@ function websiteFromCounterparties(
 
 /** Plaid counterparty logos (merchant first, then others, deduped). */
 function plaidLogoUrlsFromCounterparties(
-  counterparties: TransactionListItem["counterparties"]
+  counterparties: TransactionListItem["counterparties"],
 ): string[] {
   if (!counterparties?.length) {
     return [];
   }
   const out: string[] = [];
   const preferred = counterparties.find(
-    (c) => c.type === "merchant" && c.logo_url && isHttpUrl(c.logo_url)
+    (c) => c.type === "merchant" && c.logo_url && isHttpUrl(c.logo_url),
   );
   if (preferred?.logo_url) {
     out.push(preferred.logo_url);
@@ -82,7 +80,7 @@ function plaidLogoUrlsFromCounterparties(
  * 3. Plaid `logo_url` on the transaction, then counterparty `logo_url`s
  */
 function buildMerchantLogoCandidates(
-  row: Pick<TransactionListItem, "counterparties" | "logoUrl" | "website">
+  row: Pick<TransactionListItem, "counterparties" | "logoUrl" | "website">,
 ): string[] {
   const out: string[] = [];
   const clientId = env.VITE_BRANDFETCH_CLIENT_ID;
@@ -115,26 +113,16 @@ function buildMerchantLogoCandidates(
 }
 
 export function MerchantLogo(
-  props: Pick<
-    TransactionListItem,
-    "counterparties" | "logoUrl" | "merchantName" | "website"
-  > & {
+  props: Pick<TransactionListItem, "counterparties" | "logoUrl" | "merchantName" | "website"> & {
     /** Wrapper size (default `size-5` for table rows). */
     className?: string;
     deferUntilVisible?: boolean;
-  }
+  },
 ) {
-  const {
-    className,
-    counterparties,
-    deferUntilVisible,
-    logoUrl,
-    merchantName,
-    website,
-  } = props;
+  const { className, counterparties, deferUntilVisible, logoUrl, merchantName, website } = props;
   const candidates = useMemo(
     () => buildMerchantLogoCandidates({ counterparties, logoUrl, website }),
-    [counterparties, logoUrl, website]
+    [counterparties, logoUrl, website],
   );
   const alt = merchantName?.trim() ? `${merchantName} logo` : "";
   const fallbackText = (() => {

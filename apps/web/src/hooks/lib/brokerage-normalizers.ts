@@ -1,45 +1,11 @@
+import type { queries, Row, Snapshot } from "@cobalt-web/zero";
+
 import type { PortfolioSnapshotRow } from "@/components/brokerage/balance-chart-card";
 import type { PositionRow } from "@/components/brokerage/positions-table";
 import type { ActivityRow } from "@/components/brokerage/recent-activity-card";
 
-/** Holding row as returned by the unified zero `holding` query. */
-export interface RawHolding {
-  id: string;
-  accountId: string;
-  source: "snaptrade" | "plaid";
-  quantity: number;
-  averagePrice?: number | null;
-  costBasis?: number | null;
-  institutionPrice?: number | null;
-  institutionValue?: number | null;
-  openPnl?: number | null;
-  currency?: string | null;
-  lastSyncAt?: number | null;
-  account?: { id?: string; name?: string | null } | null;
-  security?: { tickerSymbol?: string | null; name?: string | null } | null;
-}
-
-/** Investment activity row as returned by the unified zero `investmentActivity` query. */
-export interface RawInvestmentActivity {
-  id: string;
-  accountId: string;
-  source: "snaptrade" | "plaid";
-  type: string;
-  subtype?: string | null;
-  amount: number;
-  price?: number | null;
-  date: string | number;
-  account?: { name?: string | null } | null;
-  security?: { tickerSymbol?: string | null; name?: string | null } | null;
-}
-
-/** Snapshot row covering both source values. */
-export interface RawSnapshot {
-  id: string;
-  accountId: string;
-  snapshotDate: number;
-  current?: number | null;
-}
+export type RawHolding = Row<typeof queries.brokerage.positions>;
+export type RawInvestmentActivity = Row<typeof queries.brokerage.recentActivities>;
 
 /**
  * Normalize a Holding row to the shape the positions table renders. Handles
@@ -96,7 +62,7 @@ export function activityToActivityRow(a: RawInvestmentActivity): ActivityRow {
   };
 }
 
-export function snapshotToRow(s: RawSnapshot): PortfolioSnapshotRow {
+export function snapshotToRow(s: Snapshot): PortfolioSnapshotRow {
   return {
     accountId: s.accountId,
     id: s.id,

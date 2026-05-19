@@ -1,23 +1,101 @@
 import { db } from "@cobalt-web/db";
 import { recurring } from "@cobalt-web/db/schema/accounts/banking/transactions/recurring";
 import { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
+import { LOCK_KEY_GUARDED_COLUMNS } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction-edit";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { and, eq, inArray, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import type { Transaction, TransactionStream } from "plaid";
 
-import {
-  lookupFinancialAccountsByPlaidIds,
-  lookupPlaidConnection,
-} from "../link/queries.js";
+import { lookupCategoryIdsBySystemKey } from "../../../transactions/categories/lookup.js";
+import { pfcDetailedToSystemKey } from "../../../transactions/categories/map.js";
+import type { CategorySystemKey } from "../../../transactions/categories/system-keys.js";
+import { lookupFinancialAccountsByPlaidIds, lookupPlaidConnection } from "../link/queries.js";
 import { fetchRecurringStreams } from "./actions.js";
 import { transactionToRecord } from "./lib.js";
 import type { UserOverrides } from "./queries.js";
 
 const externalIdNotNullWhere = sql`external_id IS NOT NULL`;
 
+/**
+ * Inverse of `LOCK_KEY_GUARDED_COLUMNS`: column name → lock key that gates it.
+ * Built once at module load. Adding a new lock-guarded column requires
+ * updating `LOCK_KEY_GUARDED_COLUMNS` in the schema package.
+ */
+const COLUMN_TO_LOCK_KEY: Partial<Record<keyof typeof transactionTable.$inferSelect, string>> =
+  (() => {
+    const out: Record<string, string> = {};
+    for (const [lockKey, cols] of Object.entries(LOCK_KEY_GUARDED_COLUMNS)) {
+      for (const col of cols) {
+        out[col] = lockKey;
+      }
+    }
+    return out;
+  })();
+
+/**
+ * Build the upsert `set` clause for `persistTransactions`. For every Plaid-
+ * managed column, gates the write on `lockedFields ? '<lockKey>'` if the
+ * column is guarded. Otherwise plain `excluded.X`. Driven entirely by
+ * `LOCK_KEY_GUARDED_COLUMNS`, so adding a new lock automatically extends
+ * gating without further edits here.
+ */
+function buildPlaidUpsertSet(): Record<string, SQL> {
+  /**
+   * Plaid-overwritable columns on `transaction`. Excludes: target keys
+   * (source, externalId, id), user-controlled columns (notes, excluded,
+   * lockedFields), audit columns (createdAt, userId), updatedAt (set to
+   * now()).
+   */
+  const plaidWritableColumns: (keyof typeof transactionTable.$inferSelect)[] = [
+    "accountId",
+    "accountOwner",
+    "address",
+    "amount",
+    "authorizedDate",
+    "categoryId",
+    "checkNumber",
+    "city",
+    "counterparties",
+    "country",
+    "currency",
+    "date",
+    "lat",
+    "logoUrl",
+    "lon",
+    "merchantEntityId",
+    "merchantName",
+    "name",
+    "paymentChannel",
+    "pending",
+    "pendingTransactionId",
+    "postalCode",
+    "region",
+    "storeNumber",
+    "transactionCode",
+    "website",
+  ];
+
+  const set: Record<string, SQL> = {};
+  for (const col of plaidWritableColumns) {
+    const snake = transactionTable[col].name;
+    const lockKey = COLUMN_TO_LOCK_KEY[col];
+    set[col] = lockKey
+      ? sql.raw(
+          `CASE WHEN "transaction"."locked_fields" ? '${lockKey}' THEN "transaction"."${snake}" ELSE excluded."${snake}" END`,
+        )
+      : sql.raw(`excluded."${snake}"`);
+  }
+  set.updatedAt = sql`now()`;
+  return set;
+}
+
+/** Exported for tests; otherwise treat as module-private. */
+export const PLAID_UPSERT_SET = buildPlaidUpsertSet();
+
 export async function setTransactionsCursor(
   plaidItemId: string,
-  cursor: string | undefined
+  cursor: string | undefined,
 ): Promise<void> {
   await db
     .update(plaidConnection)
@@ -25,9 +103,38 @@ export async function setTransactionsCursor(
     .where(eq(plaidConnection.plaidItemId, plaidItemId));
 }
 
-export async function persistTransactions(
-  transactions: Transaction[]
-): Promise<void> {
+/**
+ * For a set of (userId, systemKey) pairs, batch-resolve to categoryId per user.
+ * Always includes `uncategorized` in the per-user fetch so we have a fallback.
+ * Returns: Map<userId, Map<systemKey, categoryId>>.
+ */
+async function resolveCategoryIdsForUsers(
+  needs: Map<string, Set<CategorySystemKey>>,
+): Promise<Map<string, Map<CategorySystemKey, string>>> {
+  const out = new Map<string, Map<CategorySystemKey, string>>();
+  await Promise.all(
+    [...needs.entries()].map(async ([userId, keys]) => {
+      keys.add("uncategorized");
+      const map = await lookupCategoryIdsBySystemKey(userId, [...keys]);
+      out.set(userId, map);
+    }),
+  );
+  return out;
+}
+
+function pickCategoryId(
+  resolved: Map<string, Map<CategorySystemKey, string>>,
+  userId: string,
+  systemKey: CategorySystemKey,
+): string | null {
+  const userMap = resolved.get(userId);
+  if (!userMap) {
+    return null;
+  }
+  return userMap.get(systemKey) ?? userMap.get("uncategorized") ?? null;
+}
+
+export async function persistTransactions(transactions: Transaction[]): Promise<void> {
   if (transactions.length === 0) {
     return;
   }
@@ -35,13 +142,35 @@ export async function persistTransactions(
   const plaidAccountIds = [...new Set(transactions.map((t) => t.account_id))];
   const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
 
+  const needs = new Map<string, Set<CategorySystemKey>>();
+  for (const tx of transactions) {
+    const ref = accountMap.get(tx.account_id);
+    if (!ref) {
+      continue;
+    }
+    const key = pfcDetailedToSystemKey(tx.personal_finance_category?.detailed);
+    let set = needs.get(ref.userId);
+    if (!set) {
+      set = new Set();
+      needs.set(ref.userId, set);
+    }
+    set.add(key);
+  }
+  const resolved = await resolveCategoryIdsForUsers(needs);
+
   const records = transactions
     .map((tx) => {
       const ref = accountMap.get(tx.account_id);
       if (!ref) {
         return null;
       }
-      return transactionToRecord(tx, ref.id, ref.userId);
+      const systemKey = pfcDetailedToSystemKey(tx.personal_finance_category?.detailed);
+      const categoryId = pickCategoryId(resolved, ref.userId, systemKey);
+      if (!categoryId) {
+        // User missing seed (signup hook failure); skip until backfill.
+        return null;
+      }
+      return transactionToRecord(tx, ref.id, ref.userId, categoryId);
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
@@ -49,50 +178,48 @@ export async function persistTransactions(
     return;
   }
 
+  // Gap-fill guard: if an account has `csv_coverage_through` set, the user
+  // imported CSV history before linking Plaid. Drop any Plaid txn dated
+  // `<=` that watermark so we don't re-write history already on file.
+  const filtered = await dropTxnsCoveredByCsv(records);
+  if (filtered.length === 0) {
+    return;
+  }
+
   await db
     .insert(transactionTable)
-    .values(records)
+    .values(filtered)
     .onConflictDoUpdate({
-      set: {
-        accountId: sql`excluded.account_id`,
-        accountOwner: sql`excluded.account_owner`,
-        address: sql`excluded.address`,
-        amount: sql`excluded.amount`,
-        authorizedDate: sql`excluded.authorized_date`,
-        // Respect lockedFields: only overwrite if user has not locked the field.
-        category: sql`CASE WHEN ${transactionTable.lockedFields} ? 'category' THEN ${transactionTable.category} ELSE excluded.category END`,
-        categoryConfidence: sql`CASE WHEN ${transactionTable.lockedFields} ? 'category' THEN ${transactionTable.categoryConfidence} ELSE excluded.category_confidence END`,
-        categoryDetail: sql`CASE WHEN ${transactionTable.lockedFields} ? 'category' THEN ${transactionTable.categoryDetail} ELSE excluded.category_detail END`,
-        checkNumber: sql`excluded.check_number`,
-        city: sql`excluded.city`,
-        counterparties: sql`excluded.counterparties`,
-        country: sql`excluded.country`,
-        currency: sql`excluded.currency`,
-        date: sql`CASE WHEN ${transactionTable.lockedFields} ? 'date' THEN ${transactionTable.date} ELSE excluded.date END`,
-        lat: sql`excluded.lat`,
-        logoUrl: sql`excluded.logo_url`,
-        lon: sql`excluded.lon`,
-        merchantEntityId: sql`excluded.merchant_entity_id`,
-        merchantName: sql`excluded.merchant_name`,
-        name: sql`CASE WHEN ${transactionTable.lockedFields} ? 'name' THEN ${transactionTable.name} ELSE excluded.name END`,
-        paymentChannel: sql`excluded.payment_channel`,
-        pending: sql`excluded.pending`,
-        pendingTransactionId: sql`excluded.pending_transaction_id`,
-        postalCode: sql`excluded.postal_code`,
-        region: sql`excluded.region`,
-        storeNumber: sql`excluded.store_number`,
-        transactionCode: sql`excluded.transaction_code`,
-        updatedAt: sql`now()`,
-        website: sql`excluded.website`,
-      },
+      set: PLAID_UPSERT_SET,
       target: [transactionTable.source, transactionTable.externalId],
       targetWhere: externalIdNotNullWhere,
     });
 }
 
-export async function removeTransactionsByIds(
-  transactionIds: string[]
-): Promise<void> {
+async function dropTxnsCoveredByCsv<R extends { accountId: string; date: string }>(
+  records: R[],
+): Promise<R[]> {
+  const accountIds = [...new Set(records.map((r) => r.accountId))];
+  const accounts = await db.query.financialAccount.findMany({
+    columns: { csvCoverageThrough: true, id: true },
+    where: { id: { in: accountIds } },
+  });
+  const cutoff = new Map<string, string>();
+  for (const a of accounts) {
+    if (a.csvCoverageThrough) {
+      cutoff.set(a.id, a.csvCoverageThrough);
+    }
+  }
+  if (cutoff.size === 0) {
+    return records;
+  }
+  return records.filter((r) => {
+    const c = cutoff.get(r.accountId);
+    return !c || r.date > c;
+  });
+}
+
+export async function removeTransactionsByIds(transactionIds: string[]): Promise<void> {
   if (transactionIds.length === 0) {
     return;
   }
@@ -101,13 +228,13 @@ export async function removeTransactionsByIds(
     .where(
       and(
         eq(transactionTable.source, "plaid"),
-        inArray(transactionTable.externalId, transactionIds)
-      )
+        inArray(transactionTable.externalId, transactionIds),
+      ),
     );
 }
 
 export async function applyPendingOverrides(
-  overrides: Map<string, UserOverrides>
+  overrides: Map<string, UserOverrides>,
 ): Promise<number> {
   if (overrides.size === 0) {
     return 0;
@@ -130,26 +257,34 @@ export async function applyPendingOverrides(
       continue;
     }
 
+    /**
+     * Forward-port every guarded column whose lock key the user actually
+     * locked on the pending row. Driven by `LOCK_KEY_GUARDED_COLUMNS` so a
+     * new editable field auto-extends both the pending → posted handoff
+     * (here) and the upsert gate (in `persistTransactions`).
+     */
+    const carry: Partial<typeof transactionTable.$inferInsert> = {};
+    for (const [lockKey, cols] of Object.entries(LOCK_KEY_GUARDED_COLUMNS)) {
+      if (!override.lockedFields.includes(lockKey)) {
+        continue;
+      }
+      for (const col of cols) {
+        (carry as Record<string, unknown>)[col] = override[col as keyof typeof override];
+      }
+    }
+
     await db
       .update(transactionTable)
       .set({
-        category: override.lockedFields.includes("category")
-          ? override.category
-          : undefined,
-        categoryDetail: override.lockedFields.includes("category")
-          ? override.categoryDetail
-          : undefined,
+        ...carry,
         lockedFields: override.lockedFields,
-        name: override.lockedFields.includes("name")
-          ? override.name
-          : undefined,
         updatedAt: new Date(),
       })
       .where(
         and(
           eq(transactionTable.source, "plaid"),
-          eq(transactionTable.externalId, posted.externalId)
-        )
+          eq(transactionTable.externalId, posted.externalId),
+        ),
       );
 
     applied += 1;
@@ -170,7 +305,7 @@ function mapRecurringStreamBase(
   s: RecurringStreamRow,
   today: string,
   accountId: string,
-  userId: string
+  userId: string,
 ) {
   const isActive =
     s.is_active && s.predicted_next_date && s.predicted_next_date < today
@@ -191,11 +326,7 @@ function mapRecurringStreamBase(
 }
 
 function mapRecurringStreamMeta(s: RecurringStreamRow) {
-  const pfc = s.personal_finance_category;
   return {
-    category: pfc?.primary ?? null,
-    categoryConfidence: pfc?.confidence_level ?? null,
-    categoryDetail: pfc?.detailed ?? null,
     description: s.description ?? "",
     frequency: s.frequency ?? "UNKNOWN",
     merchantName: s.merchant_name ?? null,
@@ -205,13 +336,27 @@ function mapRecurringStreamMeta(s: RecurringStreamRow) {
   };
 }
 
-async function upsertRecurringStreams(
-  streams: RecurringStreamRow[]
-): Promise<void> {
+async function upsertRecurringStreams(streams: RecurringStreamRow[]): Promise<void> {
   const today = todayDateOnly();
 
   const plaidAccountIds = [...new Set(streams.map((s) => s.account_id))];
   const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
+
+  const needs = new Map<string, Set<CategorySystemKey>>();
+  for (const s of streams) {
+    const ref = accountMap.get(s.account_id);
+    if (!ref) {
+      continue;
+    }
+    const key = pfcDetailedToSystemKey(s.personal_finance_category?.detailed);
+    let set = needs.get(ref.userId);
+    if (!set) {
+      set = new Set();
+      needs.set(ref.userId, set);
+    }
+    set.add(key);
+  }
+  const resolved = await resolveCategoryIdsForUsers(needs);
 
   const rows = streams
     .map((s) => {
@@ -219,9 +364,15 @@ async function upsertRecurringStreams(
       if (!ref) {
         return null;
       }
+      const systemKey = pfcDetailedToSystemKey(s.personal_finance_category?.detailed);
+      const categoryId = pickCategoryId(resolved, ref.userId, systemKey);
+      if (!categoryId) {
+        return null;
+      }
       return {
         ...mapRecurringStreamBase(s, today, ref.id, ref.userId),
         ...mapRecurringStreamMeta(s),
+        categoryId,
       };
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
@@ -234,9 +385,7 @@ async function upsertRecurringStreams(
       .onConflictDoUpdate({
         set: {
           averageAmount: sql`excluded.average_amount`,
-          category: sql`excluded.category`,
-          categoryConfidence: sql`excluded.category_confidence`,
-          categoryDetail: sql`excluded.category_detail`,
+          categoryId: sql`excluded.category_id`,
           description: sql`excluded.description`,
           frequency: sql`excluded.frequency`,
           isActive: sql`excluded.is_active`,
@@ -256,7 +405,7 @@ async function upsertRecurringStreams(
 
 export async function syncRecurringForItem(
   accessToken: string,
-  plaidItemId: string
+  plaidItemId: string,
 ): Promise<{ added: number; modified: number; removed: number }> {
   const conn = await lookupPlaidConnection(plaidItemId);
   if (!conn) {
@@ -280,7 +429,7 @@ export async function syncRecurringForItem(
   const existingStreamIds = new Set(
     existingStreams
       .filter((s) => accountIdSet.has(s.accountId) && s.externalId !== null)
-      .map((s) => s.externalId as string)
+      .map((s) => s.externalId as string),
   );
 
   const { inflowStreams, outflowStreams, updatedDatetime } =
@@ -294,12 +443,8 @@ export async function syncRecurringForItem(
     })),
   ];
 
-  const added = allStreams.filter(
-    (s) => !existingStreamIds.has(s.stream_id)
-  ).length;
-  const modified = allStreams.filter((s) =>
-    existingStreamIds.has(s.stream_id)
-  ).length;
+  const added = allStreams.filter((s) => !existingStreamIds.has(s.stream_id)).length;
+  const modified = allStreams.filter((s) => existingStreamIds.has(s.stream_id)).length;
 
   await upsertRecurringStreams(allStreams);
 
@@ -313,20 +458,13 @@ export async function syncRecurringForItem(
     removed = removedStreamIds.length;
     await db
       .delete(recurring)
-      .where(
-        and(
-          eq(recurring.source, "plaid"),
-          inArray(recurring.externalId, removedStreamIds)
-        )
-      );
+      .where(and(eq(recurring.source, "plaid"), inArray(recurring.externalId, removedStreamIds)));
   }
 
   await db
     .update(plaidConnection)
     .set({
-      recurringUpdatedDatetime: updatedDatetime
-        ? new Date(updatedDatetime)
-        : null,
+      recurringUpdatedDatetime: updatedDatetime ? new Date(updatedDatetime) : null,
       updatedAt: new Date(),
     })
     .where(eq(plaidConnection.plaidItemId, plaidItemId));

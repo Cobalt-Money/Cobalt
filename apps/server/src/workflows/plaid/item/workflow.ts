@@ -7,10 +7,6 @@ import type {
 } from "plaid";
 
 import { insertAlertStep, resolveAlertsStep } from "../../shared/alert-steps";
-import {
-  captureWorkflowExceptionStep,
-  toSerializableError,
-} from "../../shared/steps";
 import { getPlaidItemStep, updateItemStateStep } from "../sync/steps";
 
 type ItemWebhook =
@@ -26,7 +22,7 @@ export interface PlaidItemWebhookResult {
 }
 
 export async function plaidItemWebhookWorkflow(
-  webhook: ItemWebhook
+  webhook: ItemWebhook,
 ): Promise<PlaidItemWebhookResult> {
   "use workflow";
 
@@ -44,8 +40,7 @@ export async function plaidItemWebhookWorkflow(
       }
     }
 
-    const errorPayload =
-      "error" in webhook ? (webhook as ItemErrorWebhook).error : undefined;
+    const errorPayload = "error" in webhook ? (webhook as ItemErrorWebhook).error : undefined;
 
     const result = await updateItemStateStep({
       error: errorPayload,
@@ -58,20 +53,14 @@ export async function plaidItemWebhookWorkflow(
     }
 
     if (itemId && itemUserId && itemData) {
-      const institutionName = itemData.institutionName ?? "Bank";
-      const alertMetadata = {
-        institutionLogo: itemData.institutionLogo ?? null,
-        institutionName,
-      };
+      const alertMetadata = { institutionLogo: itemData.institutionLogo ?? null };
 
       switch (webhook.webhook_code) {
         case "ERROR": {
           await insertAlertStep({
-            message: `Reconnect ${institutionName} to resume syncing transactions and balances.`,
             metadata: alertMetadata,
             source: ALERT_SOURCES.PLAID,
             sourceId: itemId,
-            title: `${institutionName} needs re-authentication`,
             type: ALERT_TYPES.REAUTH_NEEDED,
             userId: itemUserId,
           });
@@ -80,11 +69,9 @@ export async function plaidItemWebhookWorkflow(
 
         case "PENDING_DISCONNECT": {
           await insertAlertStep({
-            message: `Reconnect ${institutionName} now to avoid losing access.`,
             metadata: alertMetadata,
             source: ALERT_SOURCES.PLAID,
             sourceId: itemId,
-            title: `${institutionName} is about to disconnect`,
             type: ALERT_TYPES.PENDING_DISCONNECT,
             userId: itemUserId,
           });
@@ -93,11 +80,9 @@ export async function plaidItemWebhookWorkflow(
 
         case "NEW_ACCOUNTS_AVAILABLE": {
           await insertAlertStep({
-            message: `New accounts were added at ${institutionName}. Refresh to sync them.`,
             metadata: alertMetadata,
             source: ALERT_SOURCES.PLAID,
             sourceId: itemId,
-            title: `New accounts available at ${institutionName}`,
             type: ALERT_TYPES.NEW_ACCOUNTS,
             userId: itemUserId,
           });
@@ -120,13 +105,7 @@ export async function plaidItemWebhookWorkflow(
 
     return { itemId, success: true };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "plaid_item",
-      toSerializableError(error),
-      { itemId }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return { error: errorMessage, itemId, success: false };
   }
 }

@@ -1,9 +1,5 @@
 import type { ChartConfig } from "@cobalt-web/ui/components/chart";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@cobalt-web/ui/components/chart";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@cobalt-web/ui/components/chart";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { useMemo, useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
@@ -79,14 +75,10 @@ export function AllocationDonutChart({
   sliceHighlight = false,
   tooltipDisabled = false,
 }: AllocationDonutChartProps) {
-  const [internalHighlight, setInternalHighlight] = useState<number | null>(
-    null
-  );
+  const [internalHighlight, setInternalHighlight] = useState<number | null>(null);
 
   const isControlled = highlightedIndexProp !== undefined;
-  const highlightedIndex = isControlled
-    ? highlightedIndexProp
-    : internalHighlight;
+  const highlightedIndex = isControlled ? highlightedIndexProp : internalHighlight;
 
   const setHighlightedIndex = (index: number | null) => {
     if (isControlled) {
@@ -102,7 +94,7 @@ export function AllocationDonutChart({
         ...row,
         fill: `var(--color-${row.name})`,
       })),
-    [data]
+    [data],
   );
 
   const highlightActive = sliceHighlight && highlightedIndex !== null;
@@ -111,7 +103,7 @@ export function AllocationDonutChart({
     <div
       className={cn(
         "relative mx-auto flex w-full max-w-[min(100%,280px)] justify-center",
-        className
+        className,
       )}
       onMouseLeave={() => {
         if (sliceHighlight && !isControlled) {
@@ -129,9 +121,7 @@ export function AllocationDonutChart({
             <ChartTooltip
               content={
                 <ChartTooltipContent
-                  formatter={(value) =>
-                    typeof value === "number" ? `${value}%` : undefined
-                  }
+                  formatter={(value) => (typeof value === "number" ? `${value}%` : undefined)}
                   hideLabel
                   indicator="dot"
                 />
@@ -148,11 +138,7 @@ export function AllocationDonutChart({
             isAnimationActive={false}
             minAngle={18}
             nameKey="name"
-            onMouseEnter={
-              sliceHighlight
-                ? (_, index) => setHighlightedIndex(index)
-                : undefined
-            }
+            onMouseEnter={sliceHighlight ? (_, index) => setHighlightedIndex(index) : undefined}
             outerRadius="92%"
             paddingAngle={4}
             stroke="transparent"
@@ -161,9 +147,7 @@ export function AllocationDonutChart({
             {chartData.map((row, i) => (
               <Cell
                 fill={row.fill}
-                fillOpacity={
-                  highlightActive && highlightedIndex !== i ? muteOpacity : 1
-                }
+                fillOpacity={highlightActive && highlightedIndex !== i ? muteOpacity : 1}
                 key={row.name}
               />
             ))}

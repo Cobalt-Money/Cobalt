@@ -14,34 +14,22 @@ const RSS_SIDEBAR_LIMIT = 18;
  */
 export const newsQueries = {
   /** Single financial event by primary key (includes related `articles`). */
-  eventById: defineQuery(z.object({ eventId: z.string() }), ({ ctx, args }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.financialEvents.where("id", NO_MATCH_ID);
-    }
-    return zql.financialEvents
-      .where("id", args.eventId)
-      .related("articles", (q) => q.orderBy("date", "desc"));
-  }),
+  eventById: defineQuery(z.object({ eventId: z.string() }), ({ ctx, args }) =>
+    zql.financialEvents
+      .where("id", ctx?.userId ? args.eventId : NO_MATCH_ID)
+      .related("articles", (q) => q.orderBy("date", "desc")),
+  ),
 
   events: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.financialEvents.where("id", NO_MATCH_ID);
-    }
-    return zql.financialEvents
+    const base = zql.financialEvents
       .related("articles", (q) => q.orderBy("date", "desc"))
       .orderBy("date", "desc")
       .limit(FINANCIAL_EVENTS_LIMIT);
+    return ctx?.userId ? base : base.where("id", NO_MATCH_ID);
   }),
 
   rssSidebar: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.rssArticles.where("id", NO_MATCH_ID);
-    }
-    return zql.rssArticles
-      .orderBy("publishedDate", "desc")
-      .limit(RSS_SIDEBAR_LIMIT);
+    const base = zql.rssArticles.orderBy("publishedDate", "desc").limit(RSS_SIDEBAR_LIMIT);
+    return ctx?.userId ? base : base.where("id", NO_MATCH_ID);
   }),
 };

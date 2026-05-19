@@ -1,3 +1,4 @@
+import { beforeEach, afterEach, describe, expect, it } from "vitest";
 /**
  * DB-level unit test for `checkForDuplicateAccounts`.
  *
@@ -33,7 +34,7 @@ async function ensureTestUser(): Promise<void> {
     `INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at)
      VALUES ('${TEST_USER_ID}', 'check-dup-integration@test.local',
              'Integration-CheckDup', false, NOW(), NOW())
-     ON CONFLICT (id) DO NOTHING`
+     ON CONFLICT (id) DO NOTHING`,
   );
 }
 
@@ -63,12 +64,8 @@ async function seed(): Promise<void> {
 }
 
 async function cleanup(): Promise<void> {
-  await db
-    .delete(plaidConnection)
-    .where(eq(plaidConnection.plaidItemId, SEED_ITEM_ID));
-  await db
-    .delete(plaidConnection)
-    .where(eq(plaidConnection.userId, TEST_USER_ID));
+  await db.delete(plaidConnection).where(eq(plaidConnection.plaidItemId, SEED_ITEM_ID));
+  await db.delete(plaidConnection).where(eq(plaidConnection.userId, TEST_USER_ID));
   await db.execute(`DELETE FROM "user" WHERE id = '${TEST_USER_ID}'`);
 }
 
@@ -84,18 +81,14 @@ describe("checkForDuplicateAccounts — DB-level", () => {
   });
 
   it("detects full overlap on (institutionId, mask, type)", async () => {
-    const result = await checkForDuplicateAccounts(
-      TEST_USER_ID,
-      INSTITUTION_ID,
-      [
-        {
-          mask: "0000",
-          name: "Plaid Checking",
-          persistentAccountId: null,
-          type: "depository",
-        },
-      ]
-    );
+    const result = await checkForDuplicateAccounts(TEST_USER_ID, INSTITUTION_ID, [
+      {
+        mask: "0000",
+        name: "Plaid Checking",
+        persistentAccountId: null,
+        type: "depository",
+      },
+    ]);
 
     expect(result.isDuplicate).toBeTruthy();
     expect(result.duplicateAccounts).toHaveLength(1);
@@ -103,18 +96,14 @@ describe("checkForDuplicateAccounts — DB-level", () => {
   });
 
   it("returns no duplicate when masks differ", async () => {
-    const result = await checkForDuplicateAccounts(
-      TEST_USER_ID,
-      INSTITUTION_ID,
-      [
-        {
-          mask: "9999",
-          name: "Plaid Checking",
-          persistentAccountId: null,
-          type: "depository",
-        },
-      ]
-    );
+    const result = await checkForDuplicateAccounts(TEST_USER_ID, INSTITUTION_ID, [
+      {
+        mask: "9999",
+        name: "Plaid Checking",
+        persistentAccountId: null,
+        type: "depository",
+      },
+    ]);
 
     expect(result.isDuplicate).toBeFalsy();
     expect(result.duplicateAccounts).toStrictEqual([]);
@@ -135,18 +124,14 @@ describe("checkForDuplicateAccounts — DB-level", () => {
 
   it("scopes by userId — does not match another user's connections", async () => {
     const otherUserId = "00000000-0000-4000-8000-000000000099";
-    const result = await checkForDuplicateAccounts(
-      otherUserId,
-      INSTITUTION_ID,
-      [
-        {
-          mask: "0000",
-          name: "Plaid Checking",
-          persistentAccountId: null,
-          type: "depository",
-        },
-      ]
-    );
+    const result = await checkForDuplicateAccounts(otherUserId, INSTITUTION_ID, [
+      {
+        mask: "0000",
+        name: "Plaid Checking",
+        persistentAccountId: null,
+        type: "depository",
+      },
+    ]);
 
     expect(result.isDuplicate).toBeFalsy();
   });

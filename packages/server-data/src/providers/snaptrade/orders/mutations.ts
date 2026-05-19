@@ -12,19 +12,17 @@ const BATCH_SIZE = 100;
 export async function upsertAccountOrders(
   snaptradeAccountId: string,
   appUserId: string,
-  ordersData: AccountOrderRecord[]
+  ordersData: AccountOrderRecord[],
 ): Promise<void> {
   if (ordersData.length === 0) {
     return;
   }
 
-  const accountMap = await lookupFinancialAccountsBySnaptradeIds([
-    snaptradeAccountId,
-  ]);
+  const accountMap = await lookupFinancialAccountsBySnaptradeIds([snaptradeAccountId]);
   const acct = accountMap.get(snaptradeAccountId);
   if (!acct) {
     throw new Error(
-      `financial_account not found for SnapTrade account ${snaptradeAccountId} (user ${appUserId})`
+      `financial_account not found for SnapTrade account ${snaptradeAccountId} (user ${appUserId})`,
     );
   }
 
@@ -79,9 +77,7 @@ function toDate(value: string | null | undefined): Date | null {
   return value ? new Date(value) : null;
 }
 
-function toDecimalOrNull(
-  value: string | number | null | undefined
-): string | null {
+function toDecimalOrNull(value: string | number | null | undefined): string | null {
   return toDecimalString(value) || null;
 }
 
@@ -97,7 +93,7 @@ function buildRow(
   order: AccountOrderRecord,
   accountId: string,
   userId: string,
-  securityMap: Map<string, string>
+  securityMap: Map<string, string>,
 ) {
   const externalId = order.brokerage_order_id ?? order.id;
   if (!externalId) {
@@ -123,8 +119,7 @@ function buildRow(
     limitPrice: toDecimalOrNull(order.limit_price),
     openQuantity: toDecimalOrNull(order.open_quantity),
     optionSymbol: order.option_symbol ?? null,
-    optionType:
-      typeof order.option_type === "string" ? order.option_type : null,
+    optionType: typeof order.option_type === "string" ? order.option_type : null,
     orderType: order.order_type ?? null,
     securityId,
     status: order.status ?? null,

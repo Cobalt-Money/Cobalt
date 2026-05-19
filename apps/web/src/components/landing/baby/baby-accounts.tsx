@@ -86,9 +86,7 @@ function groupByInstitution(accounts: MockAccount[]): InstitutionGroup[] {
       });
     }
   }
-  return [...map.values()].toSorted((a, b) =>
-    a.institution.localeCompare(b.institution)
-  );
+  return [...map.values()].toSorted((a, b) => a.institution.localeCompare(b.institution));
 }
 
 const groups = groupByInstitution(MOCK_ACCOUNTS);
@@ -121,7 +119,7 @@ export function BabyAccounts() {
               {group.accounts.map((account) => (
                 <Card
                   key={account.id}
-                  className="flex min-h-[160px] flex-col gap-0 rounded-2xl border-0 bg-[oklch(0.949_0_0)] py-0 shadow-none ring-0 dark:bg-white/[0.06]"
+                  className="flex min-h-[160px] flex-col gap-0 rounded-2xl border-0 bg-popover py-0 shadow-none ring-0 dark:bg-white/[0.06]"
                 >
                   <CardContent className="flex flex-1 flex-col px-4 pt-3 pb-0 sm:px-5 sm:pt-4">
                     <div className="mb-3 flex items-start justify-between gap-3">
@@ -192,9 +190,7 @@ export function BabyAccounts() {
                       ) : (
                         <time
                           className="tabular-nums"
-                          dateTime={new Date(
-                            account.lastSyncedAt
-                          ).toISOString()}
+                          dateTime={new Date(account.lastSyncedAt).toISOString()}
                           title={formatLastSyncedTitle(account.lastSyncedAt)}
                         >
                           {formatLastSyncedLabel(account.lastSyncedAt)}

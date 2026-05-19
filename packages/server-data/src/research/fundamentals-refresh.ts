@@ -67,10 +67,7 @@ function str(v: unknown): string | null {
   return typeof v === "string" && v.trim() ? v.trim() : null;
 }
 
-function mapIncomeFields(
-  income: Record<string, unknown>,
-  now: Date
-): Partial<FundamentalsInsert> {
+function mapIncomeFields(income: Record<string, unknown>, now: Date): Partial<FundamentalsInsert> {
   return {
     eps: numDecimal(income.epsDiluted ?? income.eps),
     financialsSyncedAt: now,
@@ -78,15 +75,11 @@ function mapIncomeFields(
     netIncome: num(income.netIncome),
     operatingIncome: num(income.operatingIncome),
     revenue: num(income.revenue),
-    sharesOutstandingDiluted: num(
-      income.weightedAverageShsOutDil ?? income.weightedAverageShsOut
-    ),
+    sharesOutstandingDiluted: num(income.weightedAverageShsOutDil ?? income.weightedAverageShsOut),
   };
 }
 
-function mapBalanceFields(
-  balance: Record<string, unknown>
-): Partial<FundamentalsInsert> {
+function mapBalanceFields(balance: Record<string, unknown>): Partial<FundamentalsInsert> {
   return {
     cash: num(balance.cashAndCashEquivalents),
     longTermDebt: num(balance.longTermDebt),
@@ -96,10 +89,7 @@ function mapBalanceFields(
   };
 }
 
-function mapGradesFields(
-  grades: Record<string, unknown>,
-  now: Date
-): Partial<FundamentalsInsert> {
+function mapGradesFields(grades: Record<string, unknown>, now: Date): Partial<FundamentalsInsert> {
   return {
     analystBuy: int(grades.buy),
     analystConsensus: str(grades.consensus),
@@ -119,13 +109,10 @@ function mapGradesFields(
  * - After-hours reporters for yesterdayStr (numbers finalized overnight)
  */
 async function fetchNasdaq(date: string) {
-  const res = await fetch(
-    `https://api.nasdaq.com/api/calendar/earnings?date=${date}`,
-    {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; Cobalt/1.0)" },
-      signal: AbortSignal.timeout(15_000),
-    }
-  );
+  const res = await fetch(`https://api.nasdaq.com/api/calendar/earnings?date=${date}`, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; Cobalt/1.0)" },
+    signal: AbortSignal.timeout(15_000),
+  });
   if (!res.ok) {
     throw new Error(`Nasdaq calendar ${res.status} for ${date}`);
   }
@@ -137,7 +124,7 @@ async function fetchNasdaq(date: string) {
 
 export async function fetchEarningsReporters(
   todayStr: string,
-  yesterdayStr: string
+  yesterdayStr: string,
 ): Promise<string[]> {
   const [todayRows, yesterdayRows] = await Promise.all([
     fetchNasdaq(todayStr),
@@ -158,9 +145,7 @@ export async function fetchEarningsReporters(
 // ── DB queries ────────────────────────────────────────────────────────────────
 
 /** Returns which of the given symbols exist in our fundamentals table. */
-export async function intersectWithFundamentals(
-  symbols: string[]
-): Promise<string[]> {
+export async function intersectWithFundamentals(symbols: string[]): Promise<string[]> {
   if (symbols.length === 0) {
     return [];
   }
@@ -177,7 +162,7 @@ export async function intersectWithFundamentals(
  */
 export async function fetchStaleAnalystSymbols(
   excludeSymbols: string[],
-  limit: number
+  limit: number,
 ): Promise<string[]> {
   const staleAfter = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const rows = await db
@@ -188,15 +173,14 @@ export async function fetchStaleAnalystSymbols(
         excludeSymbols.length > 0
           ? sql`${fundamentals.symbol} NOT IN (${sql.join(
               excludeSymbols.map((s) => sql`${s}`),
-              sql`, `
+              sql`, `,
             )})`
           : sql`true`,
         or(
-          isNotNull(fundamentals.analystSyncedAt) &&
-            lt(fundamentals.analystSyncedAt, staleAfter),
-          sql`${fundamentals.analystSyncedAt} IS NULL`
-        )
-      )
+          isNotNull(fundamentals.analystSyncedAt) && lt(fundamentals.analystSyncedAt, staleAfter),
+          sql`${fundamentals.analystSyncedAt} IS NULL`,
+        ),
+      ),
     )
     .limit(limit);
   return rows.map((r) => r.symbol);
@@ -208,9 +192,7 @@ export async function fetchStaleAnalystSymbols(
  * Full financials refresh for a single symbol (income, balance, cash-flow, grades).
  * Throws on FMP errors so the caller's step can decide retry vs. silent failure.
  */
-export async function fetchAndMapFinancials(
-  symbol: string
-): Promise<FundamentalsInsert> {
+export async function fetchAndMapFinancials(symbol: string): Promise<FundamentalsInsert> {
   const [incomeRaw, balanceRaw, cashFlowRaw, gradesRaw] = await Promise.all([
     fmpStableGet("income-statement", { limit: 1, period: "annual", symbol }),
     fmpStableGet("balance-sheet-statement", {
@@ -242,9 +224,7 @@ export async function fetchAndMapFinancials(
  * Analyst-only refresh for a single symbol (grades-consensus).
  * Throws on FMP errors so the caller's step can decide retry vs. silent failure.
  */
-export async function fetchAndMapAnalysts(
-  symbol: string
-): Promise<Partial<FundamentalsInsert>> {
+export async function fetchAndMapAnalysts(symbol: string): Promise<Partial<FundamentalsInsert>> {
   const gradesRaw = await fmpStableGet("grades-consensus", { symbol });
   const grades = firstRow(gradesRaw);
   if (!grades) {
@@ -255,9 +235,7 @@ export async function fetchAndMapAnalysts(
 
 // ── DB upserts ────────────────────────────────────────────────────────────────
 
-export async function upsertFundamentalsRows(
-  rows: FundamentalsInsert[]
-): Promise<void> {
+export async function upsertFundamentalsRows(rows: FundamentalsInsert[]): Promise<void> {
   if (rows.length === 0) {
     return;
   }
@@ -292,9 +270,7 @@ export async function upsertFundamentalsRows(
     });
 }
 
-export async function upsertAnalystRows(
-  rows: Partial<FundamentalsInsert>[]
-): Promise<void> {
+export async function upsertAnalystRows(rows: Partial<FundamentalsInsert>[]): Promise<void> {
   const full = rows.filter((r): r is FundamentalsInsert => Boolean(r.symbol));
   if (full.length === 0) {
     return;

@@ -1,9 +1,5 @@
 import { Calendar } from "@cobalt-web/ui/components/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@cobalt-web/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { Calendar03Icon, Refresh01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
@@ -29,12 +25,7 @@ function dateToIso(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-export function EditableDate({
-  dateIso,
-  isOverridden,
-  onReset,
-  onSubmit,
-}: EditableDateProps) {
+export function EditableDate({ dateIso, isOverridden, onReset, onSubmit }: EditableDateProps) {
   const [open, setOpen] = useState(false);
   const selected = isoToDateOnly(dateIso);
 
@@ -55,9 +46,7 @@ export function EditableDate({
                   strokeWidth={2}
                 />
               </span>
-              <span className="text-foreground">
-                {formatDateStringLong(dateIso)}
-              </span>
+              <span className="text-foreground">{formatDateStringLong(dateIso)}</span>
               {isOverridden ? (
                 <span className="rounded-full bg-background px-1.5 py-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">
                   Edited
@@ -89,11 +78,7 @@ export function EditableDate({
           onClick={onReset}
           type="button"
         >
-          <HugeiconsIcon
-            className="size-3"
-            icon={Refresh01Icon}
-            strokeWidth={2}
-          />
+          <HugeiconsIcon className="size-3" icon={Refresh01Icon} strokeWidth={2} />
           Reset
         </button>
       ) : null}

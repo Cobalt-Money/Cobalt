@@ -25,7 +25,19 @@ function Command({
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        "flex size-full flex-col overflow-hidden rounded-4xl bg-popover p-1 text-popover-foreground",
+        "flex size-full flex-col gap-0 overflow-hidden rounded-4xl bg-popover p-1 text-popover-foreground",
+        // Group spacing: zero base padding, no extra gap between adjacent groups
+        "[&_[cmdk-group]]:p-0 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0",
+        // Group heading typography
+        "[&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
+        // List sizing inside dialogs + scrollbar hide
+        "[&_[data-slot=command-list]]:max-h-[min(45vh,28rem)] [&_[data-slot=command-list]]:pb-2 [&_[data-slot=command-list]]:[scrollbar-width:none] [&_[data-slot=command-list]::-webkit-scrollbar]:hidden",
+        // Item radius/padding/svg sizing
+        "[&_[cmdk-item]]:rounded-lg [&_[cmdk-item]]:px-4 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5",
+        // Selected item bg: light has visible tint, dark uses accent
+        "[&_[cmdk-item][aria-selected='true']]:bg-black/[0.09] dark:[&_[cmdk-item][aria-selected='true']]:bg-accent",
+        // Empty state padding
+        "[&_[cmdk-empty]]:px-4",
         className
       )}
       {...props}
@@ -39,12 +51,14 @@ function CommandDialog({
   children,
   className,
   showCloseButton = false,
+  overlayClassName,
   ...props
 }: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
   title?: string;
   description?: string;
   className?: string;
   showCloseButton?: boolean;
+  overlayClassName?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -55,8 +69,14 @@ function CommandDialog({
       </DialogHeader>
       <DialogContent
         className={cn(
-          "top-1/3 translate-y-0 overflow-hidden rounded-4xl! p-0",
+          "max-h-[min(55vh,35rem)] gap-0 rounded-3xl border border-border p-0 shadow-xs sm:max-w-2xl dark:bg-sidebar-accent",
+          "data-open:animate-none! data-closed:animate-none!",
           className
+        )}
+        overlayClassName={cn(
+          "bg-transparent supports-backdrop-filter:backdrop-blur-none",
+          "data-open:animate-none! data-closed:animate-none!",
+          overlayClassName
         )}
         showCloseButton={showCloseButton}
       >
@@ -66,17 +86,40 @@ function CommandDialog({
   );
 }
 
+type CommandInputVariant = "default" | "frameless";
+
 function CommandInput({
   className,
+  variant = "default",
   ...props
-}: React.ComponentProps<typeof CommandPrimitive.Input>) {
+}: React.ComponentProps<typeof CommandPrimitive.Input> & {
+  variant?: CommandInputVariant;
+}) {
+  if (variant === "frameless") {
+    return (
+      <div
+        data-slot="command-input-wrapper"
+        data-variant="frameless"
+        className="px-4 py-4"
+      >
+        <CommandPrimitive.Input
+          data-slot="command-input"
+          className={cn(
+            "w-full border-0 bg-transparent text-base outline-none placeholder:text-muted-foreground/60 focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
+            className
+          )}
+          {...props}
+        />
+      </div>
+    );
+  }
   return (
     <div data-slot="command-input-wrapper" className="p-1 pb-0">
       <InputGroup className="h-9 bg-input/30">
         <CommandPrimitive.Input
           data-slot="command-input"
           className={cn(
-            "w-full text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+            "w-full text-sm outline-hidden placeholder:text-muted-foreground/60 disabled:cursor-not-allowed disabled:opacity-50",
             className
           )}
           {...props}
@@ -130,7 +173,7 @@ function CommandGroup({
     <CommandPrimitive.Group
       data-slot="command-group"
       className={cn(
-        "overflow-hidden p-1 text-foreground **:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:py-2 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground",
+        "overflow-hidden p-1 text-foreground **:[[cmdk-group-heading]]:pl-4 **:[[cmdk-group-heading]]:pr-3 **:[[cmdk-group-heading]]:pt-0 **:[[cmdk-group-heading]]:pb-2 **:[[cmdk-group-heading]]:text-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground",
         className
       )}
       {...props}

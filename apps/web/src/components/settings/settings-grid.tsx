@@ -1,13 +1,10 @@
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@cobalt-web/ui/components/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@cobalt-web/ui/components/avatar";
 import { Button } from "@cobalt-web/ui/components/button";
 import { DialogTitle } from "@cobalt-web/ui/components/dialog";
 import { Input } from "@cobalt-web/ui/components/input";
 import { Separator } from "@cobalt-web/ui/components/separator";
 import { Switch } from "@cobalt-web/ui/components/switch";
+import { useDemo } from "@cobalt-web/ui/hooks/use-demo";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
   AccountSetting01Icon,
@@ -67,7 +64,7 @@ export function SettingsGrid({
       <div
         className={cn(
           "flex shrink-0 flex-col gap-0.5 border-border/60 border-r bg-muted/40",
-          compact ? "w-40 p-2 pt-3" : "w-44 p-3 pt-4"
+          compact ? "w-40 p-2 pt-3" : "w-44 p-3 pt-4",
         )}
       >
         <p className="mb-1 px-2 py-1 font-medium text-muted-foreground text-xs uppercase tracking-widest">
@@ -79,18 +76,13 @@ export function SettingsGrid({
               "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-left text-sm transition-colors",
               activeSection === section.id
                 ? "bg-muted font-medium text-foreground"
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
             )}
             key={section.id}
             onClick={() => onSectionChange(section.id)}
             type="button"
           >
-            <HugeiconsIcon
-              className="shrink-0"
-              icon={section.icon}
-              size={15}
-              strokeWidth={2}
-            />
+            <HugeiconsIcon className="shrink-0" icon={section.icon} size={15} strokeWidth={2} />
             {section.label}
           </button>
         ))}
@@ -98,20 +90,16 @@ export function SettingsGrid({
 
       {/* Right content */}
       <div
-        className={cn(
-          "flex flex-1 flex-col overflow-y-auto",
-          compact ? "p-5 pr-10" : "p-6 pr-12"
-        )}
+        className={cn("flex flex-1 flex-col overflow-y-auto", compact ? "p-5 pr-10" : "p-6 pr-12")}
       >
-        {activeSection === "profile" && (
-          <ProfileSection initials={initials} user={user} />
-        )}
+        {activeSection === "profile" && <ProfileSection initials={initials} user={user} />}
         {activeSection === "account" && (
-          <AccountSection userEmail={user?.email} />
+          <AccountSection
+            isDemo={Boolean((user as { isAnonymous?: boolean } | undefined)?.isAnonymous)}
+            userEmail={user?.email}
+          />
         )}
-        {activeSection === "appearance" && (
-          <AppearanceSection setTheme={setTheme} theme={theme} />
-        )}
+        {activeSection === "appearance" && <AppearanceSection setTheme={setTheme} theme={theme} />}
         {activeSection === "billing" && <BillingSection />}
       </div>
     </div>
@@ -155,15 +143,11 @@ function ProfileSection({
       <div className="flex items-center gap-4">
         <Avatar className="size-14 rounded-2xl">
           <AvatarImage alt={user?.name} src={user?.image ?? ""} />
-          <AvatarFallback className="rounded-2xl text-base">
-            {initials}
-          </AvatarFallback>
+          <AvatarFallback className="rounded-2xl text-base">{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
           <p className="truncate font-medium">{user?.name}</p>
-          <p className="truncate text-muted-foreground text-sm">
-            {user?.email}
-          </p>
+          <p className="truncate text-muted-foreground text-sm">{user?.email}</p>
         </div>
       </div>
 
@@ -186,15 +170,8 @@ function ProfileSection({
           <label className="font-medium text-sm" htmlFor="settings-email">
             Email
           </label>
-          <Input
-            disabled
-            id="settings-email"
-            type="email"
-            value={user?.email ?? ""}
-          />
-          <p className="text-muted-foreground text-xs">
-            Email cannot be changed here.
-          </p>
+          <Input disabled id="settings-email" type="email" value={user?.email ?? ""} />
+          <p className="text-muted-foreground text-xs">Email cannot be changed here.</p>
         </div>
       </div>
 
@@ -213,11 +190,43 @@ function ProfileSection({
 
 // ─── Account ─────────────────────────────────────────────────────────────────
 
-function AccountSection({ userEmail }: { userEmail: string | undefined }) {
+function AccountSection({ userEmail, isDemo }: { userEmail: string | undefined; isDemo: boolean }) {
+  const { enter, exit, pending } = useDemo();
   return (
     <div className="flex flex-col gap-6">
       <DialogTitle className="font-semibold text-base">Account</DialogTitle>
-      {userEmail && <DeleteAccountDialog userEmail={userEmail} />}
+
+      {/* Demo mode toggle — visible to everyone. Real users `Enter demo` to preview
+          with sample data; demo users exit back to their real session via the
+          banner exit too, surfaced here for discoverability. */}
+      <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
+        <div className="flex flex-col gap-0.5">
+          <p className="font-medium text-sm">Demo mode</p>
+          <p className="text-muted-foreground text-xs">
+            {isDemo
+              ? "You're viewing sample data. Exit to return to your account."
+              : "Preview Cobalt with sample data. Your real account stays untouched."}
+          </p>
+        </div>
+        <Button
+          disabled={pending}
+          onClick={() => {
+            void (isDemo ? exit() : enter());
+          }}
+          size="sm"
+          variant={isDemo ? "default" : "outline"}
+        >
+          {isDemo ? "Exit demo" : "Enter demo"}
+        </Button>
+      </div>
+
+      {isDemo ? (
+        <p className="text-muted-foreground text-sm">
+          Account management is disabled in demo mode. Sign up to manage your real account.
+        </p>
+      ) : (
+        userEmail && <DeleteAccountDialog userEmail={userEmail} />
+      )}
     </div>
   );
 }
@@ -236,10 +245,7 @@ function AppearanceSection({
       <DialogTitle className="font-semibold text-base">Appearance</DialogTitle>
 
       <div className="flex flex-col gap-3">
-        <SettingsRow
-          description="Use dark color scheme across the app"
-          label="Dark mode"
-        >
+        <SettingsRow description="Use dark color scheme across the app" label="Dark mode">
           <Switch
             checked={theme === "dark"}
             onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
@@ -257,17 +263,21 @@ type SubscriptionSource = "stripe" | "appstore" | null;
 function BillingSection() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
-  const [source, setSource] = useState<SubscriptionSource | "loading">(
-    "loading"
-  );
+  const [source, setSource] = useState<SubscriptionSource | "loading">("loading");
 
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       try {
         const res = await subscriptionsApi.index.$get();
+        if (!res.ok) {
+          if (!cancelled) {
+            setSource(null);
+          }
+          return;
+        }
         const data = await res.json();
-        if (!cancelled) {
+        if (!cancelled && "subscriptionSource" in data) {
           setSource(data.subscriptionSource);
         }
       } catch {
@@ -305,8 +315,8 @@ function BillingSection() {
     content = (
       <div className="flex flex-col gap-3">
         <p className="text-muted-foreground text-sm">
-          Manage your subscription, payment methods, and billing history through
-          the Stripe customer portal.
+          Manage your subscription, payment methods, and billing history through the Stripe customer
+          portal.
         </p>
         <Button
           className="w-fit"
@@ -318,9 +328,7 @@ function BillingSection() {
           <HugeiconsIcon icon={CreditCardIcon} size={15} strokeWidth={2} />
           {portalLoading ? "Opening…" : "Manage subscription"}
         </Button>
-        {portalError && (
-          <p className="text-destructive text-xs">{portalError}</p>
-        )}
+        {portalError && <p className="text-destructive text-xs">{portalError}</p>}
       </div>
     );
   } else if (source === "appstore") {
@@ -330,11 +338,7 @@ function BillingSection() {
       </p>
     );
   } else {
-    content = (
-      <p className="text-muted-foreground text-sm">
-        No active subscription found.
-      </p>
-    );
+    content = <p className="text-muted-foreground text-sm">No active subscription found.</p>;
   }
 
   return (
@@ -360,9 +364,7 @@ function SettingsRow({
     <div className="flex items-center justify-between gap-4">
       <div className="min-w-0">
         <p className="font-medium text-sm">{label}</p>
-        {description && (
-          <p className="text-muted-foreground text-xs">{description}</p>
-        )}
+        {description && <p className="text-muted-foreground text-xs">{description}</p>}
       </div>
       {children}
     </div>

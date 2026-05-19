@@ -39,8 +39,7 @@ export async function getUserLastSeen(userId: string) {
 
   let shouldShowUpdates: boolean;
   if (lastSeenAt) {
-    const hoursSinceLastSeen =
-      (Date.now() - lastSeenAt.getTime()) / (1000 * 60 * 60);
+    const hoursSinceLastSeen = (Date.now() - lastSeenAt.getTime()) / (1000 * 60 * 60);
     shouldShowUpdates = hoursSinceLastSeen >= UPDATE_THRESHOLD_HOURS;
   } else {
     // First time — user has never dismissed updates → always show

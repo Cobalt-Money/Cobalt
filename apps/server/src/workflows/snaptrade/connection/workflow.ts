@@ -3,14 +3,10 @@ import type { Account } from "snaptrade-typescript-sdk";
 
 import { insertAlertStep, resolveAlertsStep } from "../../shared/alert-steps";
 import {
-  captureWorkflowExceptionStep,
-  toSerializableError,
-} from "../../shared/steps";
-import {
   deleteSnaptradeAuthorizationStep,
   fetchAccountsStep,
-  getAuthorizationDisplayNameStep,
   getSnapTradeUserCredentialsStep,
+  seedTodaySnaptradeSnapshotsStep,
   syncAccountBalancesStep,
   syncAccountDetailsStep,
   syncAccountOrdersStep,
@@ -20,6 +16,7 @@ import {
   updateAuthorizationStatusStep,
   upsertAccountDetailsStep,
   upsertAccountsStep,
+  getSnaptradeAuthorizationDbIdStep,
   upsertSnaptradeAuthorizationStep,
 } from "./steps";
 import type {
@@ -32,7 +29,7 @@ import type {
 } from "./steps";
 
 export async function snaptradeConnectionAddedWorkflow(
-  params: ConnectionAddedParams
+  params: ConnectionAddedParams,
 ): Promise<SnapTradeWorkflowResult> {
   "use workflow";
 
@@ -44,22 +41,17 @@ export async function snaptradeConnectionAddedWorkflow(
     const authDbId = await upsertSnaptradeAuthorizationStep(
       brokerageAuthorizationId,
       userCredentials.appUserId,
-      brokerageId
+      brokerageId,
     );
 
     const accounts = await fetchAccountsStep(userCredentials);
 
     await upsertAccountsStep(accounts, authDbId, userCredentials.appUserId);
+    await seedTodaySnaptradeSnapshotsStep(userId);
 
     return { eventType: "CONNECTION_ADDED", success: true, userId };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "snaptrade_connection",
-      toSerializableError(error),
-      { eventType: "CONNECTION_ADDED", userId }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return {
       error: errorMessage,
@@ -72,7 +64,7 @@ export async function snaptradeConnectionAddedWorkflow(
 
 async function snaptradeConnectionRepairedWorkflow(
   params: ConnectionUpdatedParams,
-  eventType: "CONNECTION_UPDATED" | "CONNECTION_FIXED"
+  eventType: "CONNECTION_UPDATED" | "CONNECTION_FIXED",
 ): Promise<SnapTradeWorkflowResult> {
   const { userId, brokerageAuthorizationId } = params;
 
@@ -88,45 +80,32 @@ async function snaptradeConnectionRepairedWorkflow(
 
     const accounts = await fetchAccountsStep(userCredentials);
 
-    await upsertAccountsStep(
-      accounts,
-      brokerageAuthorizationId,
-      userCredentials.appUserId
-    );
+    await upsertAccountsStep(accounts, brokerageAuthorizationId, userCredentials.appUserId);
 
     return { eventType, success: true, userId };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "snaptrade_connection",
-      toSerializableError(error),
-      { eventType, userId }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return { error: errorMessage, eventType, success: false, userId };
   }
 }
 
 export async function snaptradeConnectionUpdatedWorkflow(
-  params: ConnectionUpdatedParams
+  params: ConnectionUpdatedParams,
 ): Promise<SnapTradeWorkflowResult> {
   "use workflow";
-  return await snaptradeConnectionRepairedWorkflow(
-    params,
-    "CONNECTION_UPDATED"
-  );
+  return await snaptradeConnectionRepairedWorkflow(params, "CONNECTION_UPDATED");
 }
 
 export async function snaptradeConnectionFixedWorkflow(
-  params: ConnectionUpdatedParams
+  params: ConnectionUpdatedParams,
 ): Promise<SnapTradeWorkflowResult> {
   "use workflow";
   return await snaptradeConnectionRepairedWorkflow(params, "CONNECTION_FIXED");
 }
 
 export async function snaptradeConnectionBrokenWorkflow(
-  params: ConnectionBrokenParams
+  params: ConnectionBrokenParams,
 ): Promise<SnapTradeWorkflowResult> {
   "use workflow";
 
@@ -135,28 +114,16 @@ export async function snaptradeConnectionBrokenWorkflow(
   try {
     await updateAuthorizationStatusStep(brokerageAuthorizationId, true);
 
-    const brokerageName = await getAuthorizationDisplayNameStep(
-      brokerageAuthorizationId
-    );
     await insertAlertStep({
-      message: `Reconnect ${brokerageName} to resume syncing positions and activity.`,
-      metadata: { brokerageName },
       source: ALERT_SOURCES.SNAPTRADE,
       sourceId: brokerageAuthorizationId,
-      title: `${brokerageName} connection broken`,
       type: ALERT_TYPES.CONNECTION_BROKEN,
       userId,
     });
 
     return { eventType: "CONNECTION_BROKEN", success: true, userId };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "snaptrade_connection",
-      toSerializableError(error),
-      { eventType: "CONNECTION_BROKEN", userId }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return {
       error: errorMessage,
@@ -168,7 +135,7 @@ export async function snaptradeConnectionBrokenWorkflow(
 }
 
 export async function snaptradeHoldingsUpdatedWorkflow(
-  params: HoldingsUpdatedParams
+  params: HoldingsUpdatedParams,
 ): Promise<SnapTradeWorkflowResult> {
   "use workflow";
 
@@ -177,30 +144,14 @@ export async function snaptradeHoldingsUpdatedWorkflow(
   try {
     const userCredentials = await getSnapTradeUserCredentialsStep(userId);
 
-    const authDbId = await upsertSnaptradeAuthorizationStep(
-      brokerageAuthorizationId,
-      userCredentials.appUserId,
-      ""
-    );
+    const authDbId = await getSnaptradeAuthorizationDbIdStep(brokerageAuthorizationId);
 
-    const detailsResult = await syncAccountDetailsStep(
-      accountId,
-      userCredentials
-    );
+    const detailsResult = await syncAccountDetailsStep(accountId, userCredentials);
 
     let accountData: Account | undefined;
-    if (
-      detailsResult.success &&
-      "data" in detailsResult &&
-      detailsResult.data
-    ) {
+    if (detailsResult.success && "data" in detailsResult && detailsResult.data) {
       accountData = detailsResult.data as Account;
-      await syncBrokerageAccountStep(
-        accountId,
-        authDbId,
-        userCredentials,
-        accountData
-      );
+      await syncBrokerageAccountStep(accountId, authDbId, userCredentials, accountData);
     } else {
       return {
         error: "Failed to fetch account details from SnapTrade API",
@@ -217,7 +168,7 @@ export async function snaptradeHoldingsUpdatedWorkflow(
     await Promise.all([
       upsertAccountDetailsStep(accountId, userCredentials, accountData),
       shouldSyncBalances
-        ? syncAccountBalancesStep(accountId, userCredentials)
+        ? syncAccountBalancesStep(accountId, userCredentials, accountData)
         : Promise.resolve({ success: false }),
       shouldSyncPositions
         ? syncAccountPositionsStep(accountId, userCredentials)
@@ -240,13 +191,7 @@ export async function snaptradeHoldingsUpdatedWorkflow(
       userId,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "snaptrade_holdings",
-      toSerializableError(error),
-      { accountId, userId }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return {
       error: errorMessage,
@@ -258,7 +203,7 @@ export async function snaptradeHoldingsUpdatedWorkflow(
 }
 
 export async function snaptradeConnectionDeletedWorkflow(
-  params: ConnectionDeletedParams
+  params: ConnectionDeletedParams,
 ): Promise<SnapTradeWorkflowResult> {
   "use workflow";
 
@@ -274,13 +219,7 @@ export async function snaptradeConnectionDeletedWorkflow(
 
     return { eventType: "CONNECTION_DELETED", success: true, userId };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "snaptrade_connection",
-      toSerializableError(error),
-      { eventType: "CONNECTION_DELETED", userId }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return {
       error: errorMessage,

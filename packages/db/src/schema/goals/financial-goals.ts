@@ -1,12 +1,4 @@
-import {
-  index,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  varchar,
-  decimal,
-} from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, uuid, varchar, decimal } from "drizzle-orm/pg-core";
 
 import { user } from "../users/auth/auth";
 
@@ -33,7 +25,7 @@ export const financialGoals = pgTable(
   (table) => [
     index("financial_goals_user_id_idx").on(table.userId),
     index("financial_goals_created_at_idx").on(table.createdAt),
-  ]
+  ],
 );
 
 export type FinancialGoal = typeof financialGoals.$inferSelect;

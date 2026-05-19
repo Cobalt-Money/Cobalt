@@ -5,6 +5,9 @@ export interface TransactionListItemAccountSlice {
   name: string;
   plaidAccountId: string | null;
   type: string;
+  subtype: string | null;
+  /** Brandfetch domain for manual accounts (`financial_account.logo_domain`). */
+  logoDomain: string | null;
 }
 
 export type TransactionListItemInstitutionSlice = {
@@ -13,14 +16,22 @@ export type TransactionListItemInstitutionSlice = {
   url: string | null;
 } | null;
 
+/** Joined `category` slice (id + display fields + group). Null when row not yet backfilled. */
+export type TransactionRowCategory = {
+  groupName: string;
+  groupSystemKey: string | null;
+  iconKey: string;
+  id: string;
+  name: string;
+  systemKey: string | null;
+} | null;
+
 /** Transaction row slice for {@link toTransactionListItem} (Drizzle or Zero). */
 export interface TransactionRowInput {
   amount: number;
   authorizedDate: string | Date | number | null | undefined;
   source: "plaid" | "manual";
-  category: string | null | undefined;
-  categoryConfidence: string | null | undefined;
-  categoryDetail: string | null | undefined;
+  category: TransactionRowCategory;
   counterparties: TransactionListItem["counterparties"];
   date: string | Date | number;
   id: string;
@@ -30,7 +41,7 @@ export interface TransactionRowInput {
   postalCode: string | null | undefined;
   country: string | null | undefined;
   lat: number | null | undefined;
-  lockedFields?: string[] | null;
+  lockedFields?: TransactionListItem["lockedFields"] | null;
   lon: number | null | undefined;
   storeNumber: string | null | undefined;
   logoUrl: string | null | undefined;
@@ -38,13 +49,11 @@ export interface TransactionRowInput {
   name: string;
   notes: TransactionListItem["notes"];
   pending: boolean | null | undefined;
-  userOverrideLocation: TransactionListItem["location"];
+  tagIds?: readonly string[] | null | undefined;
   website: string | null | undefined;
 }
 
-function synthesizeLocation(
-  row: TransactionRowInput
-): TransactionListItem["location"] {
+function synthesizeLocation(row: TransactionRowInput): TransactionListItem["location"] {
   const hasAny =
     row.address ||
     row.city ||
@@ -72,7 +81,9 @@ function synthesizeLocation(
 /**
  * Maps joined banking rows to the transaction list DTO (REST + Zero).
  * `date` / `authorizedDate` may be Drizzle date strings or Zero epoch ms.
- * `name`, `category`, `date` are the source of truth — no override fallback needed.
+ * All editable fields (name, category, date, location, …) live directly on
+ * the `transaction` row — user edits overwrite the column and `lockedFields`
+ * gates further Plaid sync. History lives in `transaction_edit`.
  */
 export function toTransactionListItem(input: {
   account: TransactionListItemAccountSlice;
@@ -82,23 +93,22 @@ export function toTransactionListItem(input: {
   const { account, institution: inst, transaction: row } = input;
 
   const normalizedDate = normalizeDateForTransactionList(row.date) ?? "";
-  const synthesizedLocation = synthesizeLocation(row);
 
   return {
+    accountLogoDomain: account.logoDomain,
     accountName: account.name,
+    accountSubtype: account.subtype,
     accountType: account.type,
     amount: row.amount,
     authorizedDate: normalizeDateForTransactionList(row.authorizedDate),
     category: row.category ?? null,
-    categoryConfidence: row.categoryConfidence ?? null,
-    categoryDetail: row.categoryDetail ?? null,
     counterparties: row.counterparties,
     date: normalizedDate,
     id: row.id,
     institutionLogo: inst?.logo ?? null,
     institutionName: inst?.name ?? null,
     institutionUrl: inst?.url ?? null,
-    location: row.userOverrideLocation ?? synthesizedLocation,
+    location: synthesizeLocation(row),
     lockedFields: row.lockedFields ?? [],
     logoUrl: row.logoUrl ?? null,
     merchantName: row.merchantName ?? null,
@@ -107,7 +117,7 @@ export function toTransactionListItem(input: {
     pending: row.pending ?? false,
     plaidAccountId: account.plaidAccountId,
     source: row.source,
-    userOverrideLocation: row.userOverrideLocation ?? null,
+    tagIds: row.tagIds ? [...row.tagIds] : [],
     website: row.website ?? null,
   };
 }

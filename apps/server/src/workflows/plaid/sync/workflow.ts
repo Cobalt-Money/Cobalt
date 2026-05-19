@@ -2,19 +2,11 @@ import type { RecurringTransactionsUpdateWebhook } from "plaid";
 import { createHook, sleep } from "workflow";
 import { start } from "workflow/api";
 
-import {
-  captureWorkflowExceptionStep,
-  toSerializableError,
-} from "../../shared/steps";
-import {
-  syncHoldings,
-  syncInvestmentTransactions,
-} from "../investments/orchestration";
+import { syncHoldings, syncInvestmentTransactions } from "../investments/orchestration";
 import { plaidInitialInvestmentSyncWorkflow } from "../investments/workflow";
 import { syncLiabilities } from "../liabilities/orchestration";
 import { plaidLiabilitiesSyncWorkflow } from "../liabilities/workflow";
 import {
-  backfillHistoricalSnapshotsStep,
   clearItemErrorStep,
   closeOnboardingProgressStep,
   duplicateCheckStep,
@@ -26,6 +18,7 @@ import {
   persistOnboardingItemStep,
   reconcileOrphanAccountsStep,
   removeItemStep,
+  seedTodayPlaidSnapshotsStep,
   syncAccountsAndBalancesStep,
   syncBalancesStep,
   syncRecurringStep,
@@ -65,9 +58,7 @@ export interface PlaidSyncResult {
 }
 
 /** Recurring / webhook-triggered sync. No progress stream, no first-time branch. */
-export async function plaidSyncWorkflow(
-  webhook: SyncUpdatesWebhook
-): Promise<PlaidSyncResult> {
+export async function plaidSyncWorkflow(webhook: SyncUpdatesWebhook): Promise<PlaidSyncResult> {
   "use workflow";
 
   try {
@@ -76,37 +67,20 @@ export async function plaidSyncWorkflow(
     await syncAccountsAndBalancesStep(item.plaidAccessToken, item.plaidItemId);
     await reconcileOrphanAccountsStep(item.plaidAccessToken, item.plaidItemId);
 
-    const [, balanceResult] = await Promise.all([
-      syncTransactionsStep(
-        item.plaidAccessToken,
-        item.plaidItemId,
-        item.transactionsCursor
-      ),
+    await Promise.all([
+      syncTransactionsStep(item.plaidAccessToken, item.plaidItemId, item.transactionsCursor),
       syncBalancesStep(item.plaidAccessToken, item.plaidItemId),
     ]);
 
+    // Snapshots are written by cron + at account creation only — recurring
+    // webhooks update live balances and let the next cron tick capture state.
     if (webhook.historical_update_complete) {
-      const backfillAccounts = balanceResult.accounts.map((a) => ({
-        availableBalance: a.balances.available ?? null,
-        creditLimit: a.balances.limit ?? null,
-        currentBalance: a.balances.current ?? 0,
-        plaidAccountId: a.account_id,
-      }));
-      await Promise.all([
-        backfillHistoricalSnapshotsStep(backfillAccounts),
-        syncRecurringStep(item.plaidAccessToken, item.plaidItemId),
-      ]);
+      await syncRecurringStep(item.plaidAccessToken, item.plaidItemId);
     }
 
     return { itemId: webhook.item_id, success: true };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "plaid_sync",
-      toSerializableError(error),
-      { itemId: webhook.item_id }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return {
       error: errorMessage,
@@ -117,7 +91,7 @@ export async function plaidSyncWorkflow(
 }
 
 export async function plaidRecurringTransactionsWorkflow(
-  webhook: RecurringTransactionsUpdateWebhook
+  webhook: RecurringTransactionsUpdateWebhook,
 ): Promise<PlaidSyncResult> {
   "use workflow";
 
@@ -128,13 +102,7 @@ export async function plaidRecurringTransactionsWorkflow(
 
     return { itemId: webhook.item_id, success: true };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "plaid_recurring",
-      toSerializableError(error),
-      { itemId: webhook.item_id }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return {
       error: errorMessage,
@@ -177,9 +145,7 @@ interface PlaidLinkResolution {
 }
 
 /** Wrapped in a step so `start()` doesn't run in workflow context. */
-async function startUpdateModeChildSyncsStep(
-  plaidItemId: string
-): Promise<void> {
+async function startUpdateModeChildSyncsStep(plaidItemId: string): Promise<void> {
   "use step";
   await Promise.all([
     start(plaidInitialInvestmentSyncWorkflow, [plaidItemId]),
@@ -198,17 +164,16 @@ async function startUpdateModeChildSyncsStep(
  *                  → park on iterable sync hook + parallel direct-API branches).
  */
 export async function plaidAddAccountWorkflow(
-  input: PlaidAddAccountInput
+  input: PlaidAddAccountInput,
 ): Promise<PlaidSyncResult> {
   "use workflow";
 
-  let itemId =
-    input.updateMode?.plaidItemId ?? input.reauthMode?.plaidItemId ?? "";
+  let itemId = input.updateMode?.plaidItemId ?? input.reauthMode?.plaidItemId ?? "";
 
   const emit = (
     phase: PlaidOnboardingPhase,
     status: "start" | "done",
-    detail?: Record<string, unknown>
+    detail?: Record<string, unknown>,
   ) => emitOnboardingProgressStep({ detail, itemId, phase, status });
 
   try {
@@ -256,7 +221,7 @@ export async function plaidAddAccountWorkflow(
 
       const item = await getPlaidItemStep(plaidItemId);
       await emit("transactions", "start");
-      const [txResult, balanceResult] = await Promise.all([
+      const [txResult] = await Promise.all([
         syncTransactionsStep(accessToken, plaidItemId, item.transactionsCursor),
         syncBalancesStep(accessToken, plaidItemId),
       ]);
@@ -265,16 +230,10 @@ export async function plaidAddAccountWorkflow(
         modified: txResult.modified,
       });
 
-      const backfillAccounts = balanceResult.accounts.map((a) => ({
-        availableBalance: a.balances.available ?? null,
-        creditLimit: a.balances.limit ?? null,
-        currentBalance: a.balances.current ?? 0,
-        plaidAccountId: a.account_id,
-      }));
       await emit("historical", "start");
       await Promise.all([
-        backfillHistoricalSnapshotsStep(backfillAccounts),
         syncRecurringStep(accessToken, plaidItemId),
+        seedTodayPlaidSnapshotsStep(input.userId),
       ]);
       await emit("historical", "done");
 
@@ -303,6 +262,7 @@ export async function plaidAddAccountWorkflow(
         syncTransactionsStep(accessToken, plaidItemId, item.transactionsCursor),
         syncBalancesStep(accessToken, plaidItemId),
       ]);
+      await seedTodayPlaidSnapshotsStep(input.userId);
       await emit("transactions", "done", {
         added: txResult.added,
         modified: txResult.modified,
@@ -371,30 +331,18 @@ export async function plaidAddAccountWorkflow(
     await emit("waiting_for_plaid", "start");
 
     await Promise.all([
-      handleSyncBranch(syncHook, accessToken, itemId, emit),
-      hasInvestments
-        ? handleHoldingsBranch(accessToken, emit)
-        : Promise.resolve(),
-      hasInvestments
-        ? handleInvestmentsTxBranch(accessToken, emit)
-        : Promise.resolve(),
-      hasLiabilities
-        ? handleLiabilitiesBranch(accessToken, itemId, emit)
-        : Promise.resolve(),
+      handleSyncBranch(syncHook, accessToken, itemId, input.userId, emit),
+      hasInvestments ? handleHoldingsBranch(accessToken, emit) : Promise.resolve(),
+      hasInvestments ? handleInvestmentsTxBranch(accessToken, emit) : Promise.resolve(),
+      hasLiabilities ? handleLiabilitiesBranch(accessToken, itemId, emit) : Promise.resolve(),
     ]);
 
     await emit("done", "done");
     await closeOnboardingProgressStep();
     return { itemId, success: true };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     await emit("error", "done", { message: errorMessage });
-    await captureWorkflowExceptionStep(
-      "plaid_add_account",
-      toSerializableError(error),
-      { itemId }
-    );
     await closeOnboardingProgressStep();
     return { error: errorMessage, itemId, success: false };
   }
@@ -405,16 +353,15 @@ async function handleSyncBranch(
   hook: AsyncIterable<PlaidOnboardingHookPayload>,
   accessToken: string,
   itemId: string,
+  userId: string,
   emit: (
     phase: PlaidOnboardingPhase,
     status: "start" | "done",
-    detail?: Record<string, unknown>
-  ) => Promise<void>
+    detail?: Record<string, unknown>,
+  ) => Promise<void>,
 ) {
   let initialDone = false;
   let historicalDone = false;
-  let cachedBalances: Awaited<ReturnType<typeof syncBalancesStep>> | null =
-    null;
 
   for await (const payload of hook) {
     if (payload.initial_update_complete && !initialDone) {
@@ -426,7 +373,7 @@ async function handleSyncBranch(
       await emit("accounts", "done");
 
       await emit("transactions", "start");
-      const [txResult, balanceResult] = await Promise.all([
+      const [txResult] = await Promise.all([
         syncTransactionsStep(accessToken, itemId, null),
         syncBalancesStep(accessToken, itemId),
       ]);
@@ -435,21 +382,15 @@ async function handleSyncBranch(
         modified: txResult.modified,
       });
 
-      cachedBalances = balanceResult;
       initialDone = true;
     }
 
-    if (payload.historical_update_complete && cachedBalances) {
-      const backfillAccounts = cachedBalances.accounts.map((a) => ({
-        availableBalance: a.balances.available ?? null,
-        creditLimit: a.balances.limit ?? null,
-        currentBalance: a.balances.current ?? 0,
-        plaidAccountId: a.account_id,
-      }));
+    if (payload.historical_update_complete) {
+      // Snapshots are seeded once at link time; cron handles nightly updates.
       await emit("historical", "start");
       await Promise.all([
-        backfillHistoricalSnapshotsStep(backfillAccounts),
         syncRecurringStep(accessToken, itemId),
+        seedTodayPlaidSnapshotsStep(userId),
       ]);
       await emit("historical", "done");
       historicalDone = true;
@@ -467,8 +408,8 @@ async function handleHoldingsBranch(
   emit: (
     phase: PlaidOnboardingPhase,
     status: "start" | "done",
-    detail?: Record<string, unknown>
-  ) => Promise<void>
+    detail?: Record<string, unknown>,
+  ) => Promise<void>,
 ) {
   await emit("holdings", "start");
   await syncHoldings(accessToken);
@@ -480,8 +421,8 @@ async function handleInvestmentsTxBranch(
   emit: (
     phase: PlaidOnboardingPhase,
     status: "start" | "done",
-    detail?: Record<string, unknown>
-  ) => Promise<void>
+    detail?: Record<string, unknown>,
+  ) => Promise<void>,
 ) {
   await emit("investment_transactions", "start");
   await syncInvestmentTransactions(accessToken);
@@ -494,8 +435,8 @@ async function handleLiabilitiesBranch(
   emit: (
     phase: PlaidOnboardingPhase,
     status: "start" | "done",
-    detail?: Record<string, unknown>
-  ) => Promise<void>
+    detail?: Record<string, unknown>,
+  ) => Promise<void>,
 ) {
   await emit("liabilities", "start");
   await syncLiabilities(accessToken, itemId);

@@ -22,7 +22,7 @@ const SYSTEM_PROMPT = [
   "First message:",
 ].join("\n");
 
-export function cleanTitle(raw: string): string {
+function cleanTitle(raw: string): string {
   const stripped = raw
     .trim()
     .replaceAll(/^["'`]|["'`.]$/g, "")

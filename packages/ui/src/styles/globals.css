@@ -28,7 +28,7 @@
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.949 0 0);
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
@@ -39,6 +39,10 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.58 0.22 27);
+  --success: var(--green-550);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.79 0.16 82);
+  --warning-foreground: oklch(0.205 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -66,7 +70,7 @@
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.29 0 0);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.87 0 0);
   --primary-foreground: oklch(0.205 0 0);
@@ -77,6 +81,10 @@
   --accent: oklch(0.371 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --success: var(--green-550);
+  --success-foreground: oklch(0.145 0 0);
+  --warning: oklch(0.83 0.15 82);
+  --warning-foreground: oklch(0.145 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
@@ -85,7 +93,7 @@
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.2 0.003 265);
+  --sidebar: oklch(21.75% 0.004190841822338395 264.4810440299903);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -93,7 +101,7 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-  --sidebar-inset: oklch(0.245 0.0015 265);
+  --sidebar-inset: oklch(24.37% 0.005871927504105834 271.17094816997667);
   --green-550: oklch(0.8402 0.2331 132.52);
 }
 
@@ -117,6 +125,10 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -183,12 +195,7 @@
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: var(--color-foreground) transparent;
-    scrollbar-color: color-mix(
-        in oklab,
-        var(--color-foreground) 18%,
-        transparent
-      )
-      transparent;
+    scrollbar-color: color-mix(in oklab, var(--color-foreground) 18%, transparent) transparent;
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
@@ -198,20 +205,52 @@
     background: transparent;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: color-mix(
-      in oklab,
-      var(--color-foreground) 18%,
-      transparent
-    );
+    background-color: color-mix(in oklab, var(--color-foreground) 18%, transparent);
     border-radius: 9999px;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: color-mix(
-      in oklab,
-      var(--color-foreground) 30%,
-      transparent
-    );
+    background-color: color-mix(in oklab, var(--color-foreground) 30%, transparent);
   }
+}
+
+/* Streamdown table wrapper: force thin scrollbar on the inner overflow container. */
+[data-streamdown="table-wrapper"] > div {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-foreground) 18%, transparent) transparent;
+}
+[data-streamdown="table-wrapper"] > div::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+[data-streamdown="table-wrapper"] > div::-webkit-scrollbar-track {
+  background: transparent;
+}
+[data-streamdown="table-wrapper"] > div::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, var(--color-foreground) 18%, transparent);
+  border-radius: 9999px;
+}
+[data-streamdown="table-wrapper"] > div::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklab, var(--color-foreground) 30%, transparent);
+}
+
+/* Streamdown code block body: thin scrollbar on overflow-x container. */
+[data-streamdown="code-block-body"] {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-foreground) 18%, transparent) transparent;
+}
+[data-streamdown="code-block-body"]::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+[data-streamdown="code-block-body"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+[data-streamdown="code-block-body"]::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, var(--color-foreground) 18%, transparent);
+  border-radius: 9999px;
+}
+[data-streamdown="code-block-body"]::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklab, var(--color-foreground) 30%, transparent);
 }
 
 /* Tiptap placeholder: the extension sets data-placeholder on empty nodes; CSS renders it. */
@@ -298,6 +337,7 @@
 
 .milkdown {
   --crepe-color-outline: var(--color-foreground);
+  --crepe-color-on-background: var(--color-muted-foreground);
 }
 .milkdown .ProseMirror {
   caret-color: var(--color-foreground);
@@ -308,7 +348,64 @@
 }
 .milkdown .crepe-placeholder::before {
   color: var(--color-muted-foreground);
+  opacity: 0.5;
 }
 [data-transaction-notes-slash][data-show="false"] {
   display: none;
+}
+
+/* Text-swap animation primitive — used by onboarding-progress.tsx (Transitions.dev pattern). */
+:root {
+  --text-swap-dur: 200ms;
+  --text-swap-translate-y: 8px;
+  --text-swap-blur: 2px;
+  --text-swap-ease: ease-out;
+}
+.t-text-swap {
+  display: inline-block;
+  transform: translateY(0);
+  filter: blur(0);
+  opacity: 1;
+  transition:
+    transform var(--text-swap-dur) var(--text-swap-ease),
+    filter var(--text-swap-dur) var(--text-swap-ease),
+    opacity var(--text-swap-dur) var(--text-swap-ease);
+  will-change: transform, filter, opacity;
+}
+.t-text-swap.is-exit {
+  transform: translateY(calc(var(--text-swap-translate-y) * -1));
+  filter: blur(var(--text-swap-blur));
+  opacity: 0;
+}
+.t-text-swap.is-enter-start {
+  transform: translateY(var(--text-swap-translate-y));
+  filter: blur(var(--text-swap-blur));
+  opacity: 0;
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-text-swap {
+    transition: none !important;
+  }
+}
+
+/* ── Demo banner offsets ─────────────────────────────────────────
+ * <DemoBanner /> renders fixed at top (z-50, h-9 = 2.25rem). App root is
+ * `h-svh overflow-hidden`, so padding body would push the shell past the
+ * viewport and clip scroll. Instead:
+ *   • Shrink the SidebarProvider wrapper (the flex parent of sidebar +
+ *     inset) by 36px and offset it from the top, so its child elements
+ *     start below the banner.
+ *   • Sidebar uses `position: fixed`, so we still need to shift its `top`
+ *     and `height` explicitly.
+ */
+[data-demo-banner="1"] [data-slot="sidebar-wrapper"] {
+  margin-top: 2.25rem;
+  height: calc(100svh - 2.25rem) !important;
+  min-height: 0 !important;
+}
+[data-demo-banner="1"] [data-slot="sidebar-container"],
+[data-demo-banner="1"] [data-slot="sidebar"] {
+  top: 2.25rem;
+  height: calc(100svh - 2.25rem);
 }

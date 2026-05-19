@@ -9,13 +9,12 @@ interface UserCreds {
 /** Get open + filled orders for a SnapTrade account. */
 export async function getUserAccountOrders(
   accountId: string,
-  creds: UserCreds
+  creds: UserCreds,
 ): Promise<AccountOrderRecord[] | undefined> {
-  const response =
-    await snaptradeClient.accountInformation.getUserAccountOrders({
-      accountId,
-      userId: creds.providerUserId,
-      userSecret: creds.userSecret,
-    });
+  const response = await snaptradeClient.accountInformation.getUserAccountOrders({
+    accountId,
+    userId: creds.providerUserId,
+    userSecret: creds.userSecret,
+  });
   return response.data as AccountOrderRecord[] | undefined;
 }

@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 
+import { TickerLogo } from "./brokerage/ticker-logo";
 import { InstitutionLogo } from "./logos/institution-logo";
 
 interface AccountToastInstitution {
@@ -9,13 +10,9 @@ interface AccountToastInstitution {
   institutionUrl: string | null;
 }
 
-const POSTED_ICON = (
-  <img alt="" className="size-4" src="/assets/vectors/posted.svg" />
-);
+const POSTED_ICON = <img alt="" className="size-4" src="/assets/vectors/posted.svg" />;
 
-const PENDING_ICON = (
-  <img alt="" className="size-4" src="/assets/vectors/pending.svg" />
-);
+const PENDING_ICON = <img alt="" className="size-4" src="/assets/vectors/pending.svg" />;
 
 export const cobaltToast = {
   accountDisconnected(account: AccountToastInstitution) {
@@ -54,6 +51,14 @@ export const cobaltToast = {
     });
   },
 
+  /** Bulk-action success — used by toolbar / palette shared notices. */
+  bulkSuccess(message: string, description?: string) {
+    return toast(message, {
+      description,
+      icon: POSTED_ICON,
+    });
+  },
+
   /** Generic failure toast — use when a mutation rejects. */
   error(message: string) {
     return toast(message, {
@@ -65,6 +70,36 @@ export const cobaltToast = {
   manualAccountCreated(name: string) {
     return toast("Account added", {
       description: name,
+      icon: POSTED_ICON,
+    });
+  },
+
+  /** Manual brokerage position added. */
+  positionAdded(ticker: string, quantity: number) {
+    return toast("Position added", {
+      description: (
+        <span className="flex items-center gap-2">
+          <TickerLogo size={16} symbol={ticker} />
+          <span>
+            {quantity} {ticker}
+          </span>
+        </span>
+      ),
+      icon: POSTED_ICON,
+    });
+  },
+
+  /** Manual brokerage position sold. */
+  positionSold(ticker: string, quantity: number) {
+    return toast("Position sold", {
+      description: (
+        <span className="flex items-center gap-2">
+          <TickerLogo size={16} symbol={ticker} />
+          <span>
+            {quantity} {ticker}
+          </span>
+        </span>
+      ),
       icon: POSTED_ICON,
     });
   },

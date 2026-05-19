@@ -25,11 +25,7 @@ interface TextPartProps {
 /** Text bubble with smoothed typewriter reveal layered under streamdown's
  * per-word animation. Hook only smooths while streaming; once the source text
  * stops growing, the RAF loop catches up and terminates. */
-const TextPart = memo(function TextPart({
-  text,
-  isStreaming,
-  hasWebSearchOutput,
-}: TextPartProps) {
+const TextPart = memo(function TextPart({ text, isStreaming, hasWebSearchOutput }: TextPartProps) {
   const { settings } = useAgentSettings();
   const smoothed = useSmoothText(text, {
     charsPerSec: charsPerSecForModel(settings.model),
@@ -102,9 +98,7 @@ export const MessagePartsRenderer = memo(function MessagePartsRenderer({
   isStreaming,
 }: MessagePartsRendererProps) {
   const hasWebSearchOutput = message.parts.some(
-    (p) =>
-      p.type === "tool-webSearch" &&
-      (p as { state?: string }).state === "output-available"
+    (p) => p.type === "tool-webSearch" && (p as { state?: string }).state === "output-available",
   );
 
   // Consolidate all reasoning parts into one block (ai-elements reasoning pattern).
@@ -136,6 +130,21 @@ export const MessagePartsRenderer = memo(function MessagePartsRenderer({
       );
     }
 
+    if (part.type === "file") {
+      if (!part.mediaType.startsWith("image/")) {
+        return null;
+      }
+      return (
+        <img
+          alt={part.filename ?? "attachment"}
+          className="my-2 max-h-80 rounded-lg"
+          // eslint-disable-next-line react/no-array-index-key
+          key={`${message.id}-file-${partIndex}`}
+          src={part.url}
+        />
+      );
+    }
+
     return (
       <ToolPartRenderer
         // eslint-disable-next-line react/no-array-index-key
@@ -151,10 +160,7 @@ export const MessagePartsRenderer = memo(function MessagePartsRenderer({
   return (
     <>
       {reasoningText.length > 0 && (
-        <ReasoningBlock
-          isStreaming={isReasoningStreaming}
-          text={reasoningText}
-        />
+        <ReasoningBlock isStreaming={isReasoningStreaming} text={reasoningText} />
       )}
       {items.map((item) => {
         if (item.kind === "step") {

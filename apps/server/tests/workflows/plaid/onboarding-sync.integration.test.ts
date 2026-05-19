@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 /**
  * End-to-end integration test for the Plaid onboarding streaming flow.
  *
@@ -31,9 +32,10 @@ import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import { eq } from "drizzle-orm";
 import { Products } from "plaid";
-import { getRun, resumeHook, start } from "workflow/api";
+import { getRun, start } from "workflow/api";
 
 import { plaidAddAccountWorkflow } from "../../../src/workflows/plaid/sync/workflow.js";
+import { resumeHookWithRetry } from "../../_helpers/resume-hook-with-retry.js";
 
 const TEST_USER_ID = "00000000-0000-4000-8000-000000000001";
 const WEBHOOK_URL = "http://localhost:4000/api/plaid/webhook";
@@ -47,7 +49,7 @@ async function ensureTestUser(): Promise<void> {
     `INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at)
      VALUES ('${TEST_USER_ID}', 'plaid-onboarding-integration@test.local',
              'Integration', false, NOW(), NOW())
-     ON CONFLICT (id) DO NOTHING`
+     ON CONFLICT (id) DO NOTHING`,
   );
 }
 
@@ -56,9 +58,7 @@ async function cleanupItem(itemId: string): Promise<void> {
     return;
   }
   // financial_account rows cascade via plaid_connection FK.
-  await db
-    .delete(plaidConnection)
-    .where(eq(plaidConnection.plaidItemId, itemId));
+  await db.delete(plaidConnection).where(eq(plaidConnection.plaidItemId, itemId));
 }
 
 /**
@@ -81,9 +81,7 @@ async function waitForPersist(userId: string): Promise<string> {
   throw new Error("Timed out waiting for plaid_connection to be persisted");
 }
 
-async function collectProgress(
-  runId: string
-): Promise<{ phase: string; status: string }[]> {
+async function collectProgress(runId: string): Promise<{ phase: string; status: string }[]> {
   const run = getRun(runId);
   const readable = run.getReadable({ namespace: "progress" });
   const reader = readable.getReader();
@@ -129,10 +127,8 @@ describe("plaid onboarding streaming (server-based integration)", () => {
       // with the sandbox public token — mirrors the /createLinkToken +
       // /resolveLink handoff the real client does.
       const hookToken = `plaid:link:${TEST_USER_ID}:${crypto.randomUUID()}`;
-      const run = await start(plaidAddAccountWorkflow, [
-        { hookToken, userId: TEST_USER_ID },
-      ]);
-      await resumeHook(hookToken, { publicToken });
+      const run = await start(plaidAddAccountWorkflow, [{ hookToken, userId: TEST_USER_ID }]);
+      await resumeHookWithRetry(hookToken, { publicToken });
 
       // 3. Collect progress stream in parallel. Resolves when stream closes.
       const progressPromise = collectProgress(run.runId);

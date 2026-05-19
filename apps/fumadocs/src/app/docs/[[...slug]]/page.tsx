@@ -10,10 +10,9 @@ import { createRelativeLink } from "fumadocs-ui/mdx";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { APIPage } from "@/components/api-page";
 import { getMDXComponents } from "@/components/mdx";
 import { gitConfig } from "@/lib/layout.shared";
-import { getPageImage, source } from "@/lib/source";
+import { getPageImage, source, type DocsPageData } from "@/lib/source";
 
 export default async function Page(props: {
   params: Promise<{ slug?: string[] }>;
@@ -24,20 +23,7 @@ export default async function Page(props: {
     notFound();
   }
 
-  // OpenAPI-generated pages
-  if (page.data.type === "openapi") {
-    return (
-      <DocsPage full>
-        <DocsTitle>{page.data.title}</DocsTitle>
-        <DocsBody>
-          <APIPage {...page.data.getAPIPageProps()} />
-        </DocsBody>
-      </DocsPage>
-    );
-  }
-
-  // Regular MDX pages
-  const { data } = page;
+  const data = page.data as unknown as DocsPageData;
   const MDX = data.body;
 
   return (

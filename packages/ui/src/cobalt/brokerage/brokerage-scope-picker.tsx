@@ -14,9 +14,7 @@ import { useMemo } from "react";
 
 import { InstitutionLogo } from "../logos/institution-logo";
 
-export type BrokerageScope =
-  | { type: "all" }
-  | { type: "include"; accountIds: readonly string[] };
+export type BrokerageScope = { type: "all" } | { type: "include"; accountIds: readonly string[] };
 
 /** Unified account shape for the scope picker — covers both SnapTrade and Plaid sources. */
 export interface ScopeAccount {
@@ -36,9 +34,7 @@ interface InstitutionGroup {
   url?: string | null;
 }
 
-function groupByInstitution(
-  accounts: readonly ScopeAccount[]
-): InstitutionGroup[] {
+function groupByInstitution(accounts: readonly ScopeAccount[]): InstitutionGroup[] {
   const map = new Map<string, InstitutionGroup>();
   for (const acc of accounts) {
     const key = acc.institutionName;
@@ -56,14 +52,11 @@ function groupByInstitution(
     }
   }
   return [...map.values()].toSorted((a, b) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+    a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
   );
 }
 
-function scopeSummaryLabel(
-  scope: BrokerageScope,
-  accounts: readonly ScopeAccount[]
-): string {
+function scopeSummaryLabel(scope: BrokerageScope, accounts: readonly ScopeAccount[]): string {
   if (scope.type === "all") {
     return "All accounts";
   }
@@ -82,10 +75,7 @@ function isIncluded(scope: BrokerageScope, id: string): boolean {
   return scope.accountIds.includes(id);
 }
 
-function isInstitutionActive(
-  scope: BrokerageScope,
-  accounts: ScopeAccount[]
-): boolean {
+function isInstitutionActive(scope: BrokerageScope, accounts: ScopeAccount[]): boolean {
   if (scope.type === "all") {
     return true;
   }
@@ -95,12 +85,20 @@ function isInstitutionActive(
 function toggleInstitution(
   scope: BrokerageScope,
   institutionAccounts: ScopeAccount[],
-  allAccounts: readonly ScopeAccount[]
+  allAccounts: readonly ScopeAccount[],
 ): BrokerageScope {
   const allIds = allAccounts.map((a) => a.id);
   const instIds = new Set(institutionAccounts.map((a) => a.id));
-  const currentIds: Set<string> =
-    scope.type === "all" ? new Set(allIds) : new Set(scope.accountIds);
+
+  // From "all", clicking an institution narrows to just that institution rather
+  // than de-selecting it out of everything.
+  if (scope.type === "all") {
+    return instIds.size === allIds.length
+      ? { type: "all" }
+      : { accountIds: [...instIds], type: "include" };
+  }
+
+  const currentIds = new Set(scope.accountIds);
 
   const allActive = institutionAccounts.every((a) => currentIds.has(a.id));
 
@@ -123,14 +121,13 @@ function toggleInstitution(
 function toggleAccount(
   accounts: readonly ScopeAccount[],
   scope: BrokerageScope,
-  id: string
+  id: string,
 ): BrokerageScope {
   const allIds = accounts.map((a) => a.id);
+  // From "all", clicking an account narrows to just that account rather than
+  // de-selecting it out of everything.
   if (scope.type === "all") {
-    const next = allIds.filter((aid) => aid !== id);
-    return next.length === 0
-      ? { type: "all" }
-      : { accountIds: next, type: "include" };
+    return allIds.length === 1 ? { type: "all" } : { accountIds: [id], type: "include" };
   }
   const set = new Set(scope.accountIds);
   if (set.has(id)) {
@@ -143,9 +140,7 @@ function toggleAccount(
   }
   if (set.size === 0) {
     const fallback = accounts[0]?.id;
-    return fallback
-      ? { accountIds: [fallback], type: "include" }
-      : { type: "all" };
+    return fallback ? { accountIds: [fallback], type: "include" } : { type: "all" };
   }
   return { accountIds: [...set], type: "include" };
 }
@@ -165,15 +160,8 @@ export function BrokerageScopePicker({
 
   if (accounts.length === 0) {
     return (
-      <div
-        className={cn(
-          "text-muted-foreground flex min-h-0 flex-col text-xs",
-          className
-        )}
-      >
-        <p className="text-[11px] font-medium tracking-[0.12em] uppercase">
-          Accounts
-        </p>
+      <div className={cn("text-muted-foreground flex min-h-0 flex-col text-xs", className)}>
+        <p className="text-[11px] font-medium tracking-[0.12em] uppercase">Accounts</p>
         <p className="mt-2 leading-snug">No accounts linked.</p>
       </div>
     );
@@ -189,7 +177,7 @@ export function BrokerageScopePicker({
           <Button
             className={cn(
               "max-w-[min(15rem,calc(100vw-2.5rem))] justify-between gap-2 font-normal",
-              className
+              className,
             )}
             size="default"
             type="button"
@@ -208,8 +196,8 @@ export function BrokerageScopePicker({
       <DropdownMenuContent
         align="end"
         className={cn(
-          "max-h-[min(340px,55vh)] w-[min(17rem,calc(100vw-1.5rem))] min-w-[12.5rem] overflow-y-auto rounded-2xl border border-border/50 bg-popover/98 p-1 shadow-md ring-0 backdrop-blur-sm",
-          "data-open:zoom-in-100 data-closed:zoom-out-100"
+          "max-h-[min(340px,55vh)] w-[min(17rem,calc(100vw-1.5rem))] min-w-[12.5rem] overflow-y-auto rounded-3xl border border-border bg-popover p-1 shadow-xs ring-0 dark:bg-sidebar-accent",
+          "data-open:zoom-in-100 data-closed:zoom-out-100",
         )}
         side="bottom"
         sideOffset={8}
@@ -218,8 +206,8 @@ export function BrokerageScopePicker({
         <div className="flex flex-wrap gap-1 px-2 pt-2 pb-1">
           <button
             className={cn(
-              "inline-flex h-6 cursor-pointer items-center rounded-full bg-input/30 px-2.5 text-xs transition-colors hover:bg-input/50",
-              isAll ? "text-foreground font-medium" : "text-muted-foreground"
+              "inline-flex h-6 cursor-pointer items-center rounded-full border border-border bg-input/30 px-2.5 text-xs transition-colors hover:bg-input/50",
+              isAll ? "text-foreground font-medium" : "text-muted-foreground",
             )}
             onClick={() => onScopeChange({ type: "all" })}
             type="button"
@@ -231,15 +219,11 @@ export function BrokerageScopePicker({
             return (
               <button
                 className={cn(
-                  "inline-flex h-6 cursor-pointer items-center gap-1 rounded-full bg-input/30 px-2.5 text-xs transition-colors hover:bg-input/50",
-                  active
-                    ? "text-foreground font-medium"
-                    : "text-muted-foreground"
+                  "inline-flex h-6 cursor-pointer items-center gap-1 rounded-full border border-border bg-input/30 px-2.5 text-xs transition-colors hover:bg-input/50",
+                  active ? "text-foreground font-medium" : "text-muted-foreground",
                 )}
                 key={g.name}
-                onClick={() =>
-                  onScopeChange(toggleInstitution(scope, g.accounts, accounts))
-                }
+                onClick={() => onScopeChange(toggleInstitution(scope, g.accounts, accounts))}
                 type="button"
               >
                 <InstitutionLogo
@@ -265,9 +249,7 @@ export function BrokerageScopePicker({
                   checked={included}
                   className="rounded-lg py-1.5 pr-7 pl-2 text-xs"
                   key={acc.id}
-                  onCheckedChange={() =>
-                    onScopeChange(toggleAccount(accounts, scope, acc.id))
-                  }
+                  onCheckedChange={() => onScopeChange(toggleAccount(accounts, scope, acc.id))}
                 >
                   <div className="flex min-w-0 items-center gap-2">
                     <InstitutionLogo

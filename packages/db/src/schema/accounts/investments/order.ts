@@ -29,9 +29,7 @@ export const orders = pgTable(
       scale: 10,
     }),
     childBrokerageOrderIds: jsonb("child_brokerage_order_ids"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     currency: text("currency"),
     executionPrice: numeric("execution_price", { precision: 28, scale: 10 }),
     expirationDate: timestamp("expiration_date", { withTimezone: true }),
@@ -70,7 +68,7 @@ export const orders = pgTable(
     index("orders_security_id_idx").on(t.securityId),
     index("orders_status_idx").on(t.status),
     index("orders_time_placed_idx").on(t.timePlaced),
-  ]
+  ],
 );
 
 export type Order = typeof orders.$inferSelect;

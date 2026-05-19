@@ -7,21 +7,15 @@ import { NO_MATCH_ID } from "../transactions/lib.js";
 /** Alerts domain — `queries.alerts.*` (user-facing reconnect/new-account alerts). */
 export const alertsQueries = {
   /**
-   * Active alerts (unread + read) for the signed-in user, newest first.
-   * Dismissed/resolved rows are filtered out; the partial unique index
-   * `user_alerts_active_dedup_idx` also keeps duplicate webhooks from
-   * spawning extra rows here.
+   * Active alerts for the signed-in user, newest first. An alert is active
+   * until `resolvedAt` is set; the partial unique index
+   * `user_alerts_dedup_idx` keeps duplicate webhooks from spawning extra
+   * rows here.
    */
-  active: defineQuery(({ ctx }: { ctx: Context }) => {
-    const userId = ctx?.userId;
-    if (!userId) {
-      return zql.userAlerts.where("id", NO_MATCH_ID);
-    }
-    return zql.userAlerts
-      .where("userId", userId)
-      .where(({ cmp, or }) =>
-        or(cmp("status", "=", "unread"), cmp("status", "=", "read"))
-      )
-      .orderBy("createdAt", "desc");
-  }),
+  active: defineQuery(({ ctx }: { ctx: Context }) =>
+    zql.userAlerts
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
+      .where("resolvedAt", "IS", null)
+      .orderBy("createdAt", "desc"),
+  ),
 };

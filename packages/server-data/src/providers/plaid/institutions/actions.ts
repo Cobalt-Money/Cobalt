@@ -1,9 +1,14 @@
 import { plaidClient } from "@cobalt-web/clients/plaid";
 import { CountryCode, Products } from "plaid";
 
+import { ApiError } from "../../../_shared/api-error.js";
+
+const plaidUpstreamError = (err: unknown, fallback: string) =>
+  new ApiError(502, "plaid_upstream_failed", err instanceof Error ? err.message : fallback);
+
 /** Fetch institution name and logo from Plaid. */
 export async function fetchInstitutionDetails(
-  institutionId: string
+  institutionId: string,
 ): Promise<{ logo: string | null; name: string | null }> {
   try {
     const inst = await plaidClient.institutionsGetById({
@@ -21,12 +26,31 @@ export async function fetchInstitutionDetails(
 
 /** Search institutions from Plaid. */
 export async function searchInstitutions(query?: string) {
-  if (query && query.length > 0) {
-    const response = await plaidClient.institutionsSearch({
+  try {
+    if (query && query.length > 0) {
+      const response = await plaidClient.institutionsSearch({
+        country_codes: [CountryCode.Us],
+        options: { include_optional_metadata: true },
+        products: [Products.Transactions],
+        query,
+      });
+      return response.data.institutions.map((inst) => ({
+        id: inst.institution_id,
+        logo: inst.logo ?? null,
+        name: inst.name,
+        primary_color: inst.primary_color ?? null,
+        url: inst.url ?? null,
+      }));
+    }
+
+    const response = await plaidClient.institutionsGet({
+      count: 9,
       country_codes: [CountryCode.Us],
-      options: { include_optional_metadata: true },
-      products: [Products.Transactions],
-      query,
+      offset: 0,
+      options: {
+        include_optional_metadata: true,
+        products: [Products.Transactions],
+      },
     });
     return response.data.institutions.map((inst) => ({
       id: inst.institution_id,
@@ -35,33 +59,23 @@ export async function searchInstitutions(query?: string) {
       primary_color: inst.primary_color ?? null,
       url: inst.url ?? null,
     }));
+  } catch (error) {
+    throw plaidUpstreamError(error, "Failed to search institutions");
   }
-
-  const response = await plaidClient.institutionsGet({
-    count: 9,
-    country_codes: [CountryCode.Us],
-    offset: 0,
-    options: {
-      include_optional_metadata: true,
-      products: [Products.Transactions],
-    },
-  });
-  return response.data.institutions.map((inst) => ({
-    id: inst.institution_id,
-    logo: inst.logo ?? null,
-    name: inst.name,
-    primary_color: inst.primary_color ?? null,
-    url: inst.url ?? null,
-  }));
 }
 
 /** Get institution details by ID from Plaid. */
 export async function getInstitutionById(institutionId: string) {
-  const response = await plaidClient.institutionsGetById({
-    country_codes: [CountryCode.Us],
-    institution_id: institutionId,
-    options: { include_optional_metadata: true },
-  });
+  let response;
+  try {
+    response = await plaidClient.institutionsGetById({
+      country_codes: [CountryCode.Us],
+      institution_id: institutionId,
+      options: { include_optional_metadata: true },
+    });
+  } catch (error) {
+    throw plaidUpstreamError(error, "Failed to fetch institution");
+  }
 
   const inst = response.data.institution;
   return {

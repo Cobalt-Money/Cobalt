@@ -33,5 +33,5 @@ const queueHandler = handleCallback<SnapshotMessage>(async (message) => {
 
 export const snapshotUserQueueRouter = new Hono().post(
   "/",
-  async (c) => await queueHandler(c.req.raw)
+  async (c) => await queueHandler(c.req.raw),
 );

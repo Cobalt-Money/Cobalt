@@ -4,10 +4,9 @@ import { memo } from "react";
 
 import { AskUserToolRenderer } from "./ask-user/ask-user-renderer";
 import { RenderChartToolRenderer } from "./charts/render-chart";
-import { BashToolRenderer } from "./code-agent/bash-renderer";
-import { ReadFileToolRenderer } from "./code-agent/readfile-renderer";
-import { SqlToolRenderer } from "./code-agent/sql-renderer";
-import { MathComputationToolRenderer } from "./computation/math-computation";
+import { BashToolRenderer } from "./finance-agent/bash-renderer";
+import { ReadFileToolRenderer } from "./finance-agent/readfile-renderer";
+import { SqlToolRenderer } from "./finance-agent/sql-renderer";
 import { RenderDocumentToolRenderer } from "./documents/render-document";
 import type { ToolRendererContext } from "./types";
 import { toolRendererKey } from "./types";
@@ -27,7 +26,7 @@ interface ToolPartShape {
 
 function arePartsEqual(
   prev: { part: MessagePart; context: ToolRendererContext },
-  next: { part: MessagePart; context: ToolRendererContext }
+  next: { part: MessagePart; context: ToolRendererContext },
 ): boolean {
   if (
     prev.context.messageId !== next.context.messageId ||
@@ -60,49 +59,26 @@ export const ToolPartRenderer = memo(function ToolPartRenderer({
   context: ToolRendererContext;
 }) {
   if (part.type === "tool-webSearch") {
-    return (
-      <WebSearchToolRenderer context={context} invocation={part as never} />
-    );
+    return <WebSearchToolRenderer context={context} invocation={part as never} />;
   }
 
   if (part.type === "tool-webExtract") {
-    return (
-      <WebExtractToolRenderer context={context} invocation={part as never} />
-    );
+    return <WebExtractToolRenderer context={context} invocation={part as never} />;
   }
 
   if (part.type === "tool-renderChart") {
-    return (
-      <RenderChartToolRenderer context={context} invocation={part as never} />
-    );
+    return <RenderChartToolRenderer context={context} invocation={part as never} />;
   }
 
   if (part.type === "tool-renderDocument") {
     if (part.state === "input-available" || part.state === "input-streaming") {
       return (
-        <div
-          key={toolRendererKey(context, "document-loading")}
-          className="py-1"
-        >
+        <div key={toolRendererKey(context, "document-loading")} className="py-1">
           <Shimmer className="text-sm">Cooking up the PDF</Shimmer>
         </div>
       );
     }
-    return (
-      <RenderDocumentToolRenderer
-        context={context}
-        invocation={part as never}
-      />
-    );
-  }
-
-  if (part.type === "tool-compute") {
-    return (
-      <MathComputationToolRenderer
-        context={context}
-        invocation={part as never}
-      />
-    );
+    return <RenderDocumentToolRenderer context={context} invocation={part as never} />;
   }
 
   if (part.type === "tool-askUser") {
@@ -118,9 +94,7 @@ export const ToolPartRenderer = memo(function ToolPartRenderer({
   }
 
   if (part.type === "tool-readFile") {
-    return (
-      <ReadFileToolRenderer context={context} invocation={part as never} />
-    );
+    return <ReadFileToolRenderer context={context} invocation={part as never} />;
   }
 
   return null;

@@ -11,7 +11,7 @@ import type { BalanceSnapshot, BalanceSnapshotQuery } from "./schemas.js";
  */
 export async function getBalanceSnapshotsByUserId(
   userId: string,
-  filters: BalanceSnapshotQuery
+  filters: BalanceSnapshotQuery,
 ): Promise<BalanceSnapshot[]> {
   const dateConstraint = {
     ...(filters.startDate ? { gte: filters.startDate } : {}),
@@ -41,21 +41,5 @@ export async function getBalanceSnapshotsByUserId(
     },
   });
 
-  return rows.map((row) =>
-    toBalanceSnapshotDTO({
-      account: {
-        externalId: row.account.externalId,
-        institutionName: row.account.institutionName,
-        name: row.account.name,
-        subtype: row.account.subtype,
-        type: row.account.type,
-      },
-      available: row.available,
-      createdAt: row.createdAt,
-      creditLimit: row.creditLimit,
-      current: row.current,
-      id: row.id,
-      snapshotDate: row.snapshotDate,
-    })
-  );
+  return rows.map((row) => toBalanceSnapshotDTO(row));
 }

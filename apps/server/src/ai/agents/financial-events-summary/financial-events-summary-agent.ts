@@ -5,23 +5,18 @@ import type {
   ProcessedArticle,
   TopicCategory,
 } from "@cobalt-web/server-data/news/events/lib";
-import {
-  generateText,
-  NoObjectGeneratedError,
-  NoOutputGeneratedError,
-  Output,
-} from "ai";
+import { generateText, NoObjectGeneratedError, NoOutputGeneratedError, Output } from "ai";
 import { z } from "zod";
 
 import { gatewayModel } from "../../model-provider.js";
 
 const SUMMARY_MODEL = "google/gemini-2.5-flash";
-const MAX_TOKENS = 2000;
+const MAX_TOKENS = 3000;
 const TEMPERATURE = 0.3;
 
 const eventSummarySchema = z.object({
   eventSummary: z.string(),
-  keyPoints: z.array(z.string()).min(4).max(6),
+  keyPoints: z.array(z.string()).max(8).default([]),
   overallSentiment: z.enum(["positive", "negative", "neutral"]),
   topics: z.array(z.enum(TOPIC_CATEGORIES)).min(1),
 });
@@ -62,7 +57,7 @@ ${article.extractedContent.text}
 export async function summarizeEventArticles(
   eventName: string,
   eventText: string | undefined,
-  articles: ProcessedArticle[]
+  articles: ProcessedArticle[],
 ): Promise<EventSummary> {
   const start = Date.now();
 
@@ -73,25 +68,34 @@ export async function summarizeEventArticles(
     throw new Error("AI_GATEWAY_API_KEY not configured");
   }
 
-  const hasVideo = articles.some(
-    (a) => a.originalArticle.type.toLowerCase() === "video"
-  );
+  const hasVideo = articles.some((a) => a.originalArticle.type.toLowerCase() === "video");
 
-  const prompt = `Analyze these financial news articles about "${eventName}" and provide a comprehensive, factual analysis based on the information provided.
+  const prompt = `Write a concise, Perplexity-style markdown article about "${eventName}" grounded strictly in the provided source articles.
 
 Event Description: ${eventText ?? "No description available"}
-${hasVideo ? "\nNOTE: This event includes video content - please highlight any video-specific information in your analysis." : ""}
+${hasVideo ? "\nNOTE: This event includes video content - reference video-specific information where relevant." : ""}
 
-Articles to Analyze:
+Source Articles (1-indexed):
 ${articles.map((a, i) => formatArticle(a, i)).join("\n")}
 
-Please provide:
-1. Executive Summary — 3-4 paragraphs grounded in the article text.
-2. Key Analysis Points — 4-6 detailed points covering metrics, announcements, analyst opinions, or context mentioned in the articles.
-3. Overall Sentiment — positive, negative, or neutral.
-4. Topics — one or more of: tech, government, analyst, AI, announcement, leadership, energy, earnings, other.
+OUTPUT REQUIREMENTS — produce four fields:
 
-Stay strictly factual. No predictions, no investment advice.`;
+1. eventSummary — a markdown article. Strict format:
+   - 2 to 4 sections, each starting with a "##" heading. Pick descriptive section titles based on the actual content (not generic headers like "Background" or "Overview" unless that genuinely fits).
+   - Each section: 1-2 tight paragraphs. No walls of text. No bullet lists.
+   - Inline citations as markdown links with the hash URL "#cite-N", where N is the 1-indexed source article. Format: [N](#cite-N).
+   - Place citations at the END of the relevant sentence or paragraph. Cite every factual claim. Cluster multiple sources at the same location when they corroborate the same fact: "...announced layoffs [1](#cite-1)[3](#cite-3)[5](#cite-5)."
+   - Use ONLY citation indices that exist in the source list above. Never fabricate.
+   - Do NOT include a "## Sources" section, raw URLs, or footnotes — the UI renders sources separately.
+   - Do NOT include the event name as a top-level "#" heading — that is also rendered separately by the UI.
+
+2. keyPoints — leave empty array. (Deprecated; kept for back-compat.)
+
+3. overallSentiment — "positive", "negative", or "neutral".
+
+4. topics — one or more of: tech, government, analyst, AI, announcement, leadership, energy, earnings, other.
+
+Stay strictly factual. No predictions, no investment advice. Quote sparingly; paraphrase by default.`;
 
   try {
     const result = await generateText({
@@ -135,9 +139,7 @@ Stay strictly factual. No predictions, no investment advice.`;
     if (
       NoObjectGeneratedError.isInstance(error) ||
       NoOutputGeneratedError.isInstance(error) ||
-      /did not match schema|No object generated|No output generated/i.test(
-        message
-      )
+      /did not match schema|No object generated|No output generated/i.test(message)
     ) {
       throw new TransientSummaryError(`AI output error: ${message}`);
     }

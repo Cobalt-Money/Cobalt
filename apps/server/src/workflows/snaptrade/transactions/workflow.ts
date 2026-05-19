@@ -1,8 +1,4 @@
 import {
-  captureWorkflowExceptionStep,
-  toSerializableError,
-} from "../../shared/steps";
-import {
   fetchAllActivitiesStep,
   fetchIncrementalActivitiesStep,
   getSnapTradeUserCredentialsStep,
@@ -12,7 +8,7 @@ import {
 import type { SnapTradeWorkflowResult, TransactionsParams } from "./steps";
 
 export async function snaptradeTransactionsInitialWorkflow(
-  params: TransactionsParams
+  params: TransactionsParams,
 ): Promise<SnapTradeWorkflowResult> {
   "use workflow";
 
@@ -21,16 +17,9 @@ export async function snaptradeTransactionsInitialWorkflow(
   try {
     const userCredentials = await getSnapTradeUserCredentialsStep(userId);
 
-    const { activities } = await fetchAllActivitiesStep(
-      accountId,
-      userCredentials
-    );
+    const { activities } = await fetchAllActivitiesStep(accountId, userCredentials);
 
-    await upsertActivitiesStep(
-      accountId,
-      userCredentials.appUserId,
-      activities
-    );
+    await upsertActivitiesStep(accountId, userCredentials.appUserId, activities);
 
     await refreshAccountDataStep(accountId, userCredentials);
 
@@ -40,13 +29,7 @@ export async function snaptradeTransactionsInitialWorkflow(
       userId,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "snaptrade_transactions",
-      toSerializableError(error),
-      { accountId, userId }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return {
       error: errorMessage,
@@ -58,7 +41,7 @@ export async function snaptradeTransactionsInitialWorkflow(
 }
 
 export async function snaptradeTransactionsUpdatedWorkflow(
-  params: TransactionsParams
+  params: TransactionsParams,
 ): Promise<SnapTradeWorkflowResult> {
   "use workflow";
 
@@ -67,26 +50,16 @@ export async function snaptradeTransactionsUpdatedWorkflow(
   try {
     const userCredentials = await getSnapTradeUserCredentialsStep(userId);
 
-    const incrementalResult = await fetchIncrementalActivitiesStep(
-      accountId,
-      userCredentials
-    );
+    const incrementalResult = await fetchIncrementalActivitiesStep(accountId, userCredentials);
 
     let { activities } = incrementalResult;
 
     if (incrementalResult.lastSyncDate === null) {
-      const fullResult = await fetchAllActivitiesStep(
-        accountId,
-        userCredentials
-      );
+      const fullResult = await fetchAllActivitiesStep(accountId, userCredentials);
       ({ activities } = fullResult);
     }
 
-    await upsertActivitiesStep(
-      accountId,
-      userCredentials.appUserId,
-      activities
-    );
+    await upsertActivitiesStep(accountId, userCredentials.appUserId, activities);
 
     await refreshAccountDataStep(accountId, userCredentials);
 
@@ -96,13 +69,7 @@ export async function snaptradeTransactionsUpdatedWorkflow(
       userId,
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await captureWorkflowExceptionStep(
-      "snaptrade_transactions",
-      toSerializableError(error),
-      { accountId, userId }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return {
       error: errorMessage,

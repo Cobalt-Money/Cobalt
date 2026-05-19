@@ -7,9 +7,7 @@ const dateDisplay = new Intl.DateTimeFormat("en-US", {
 });
 
 /** Date shown in the table: the posting `date` — matches the server's `orderBy("date", "desc")`. */
-export function getTransactionDisplayDateString(
-  row: Pick<TransactionListItem, "date">
-): string {
+export function getTransactionDisplayDateString(row: Pick<TransactionListItem, "date">): string {
   return row.date;
 }
 
@@ -19,7 +17,7 @@ export function getTransactionDisplayDateString(
  * only when name is empty.
  */
 export function getTransactionDisplayName(
-  row: Pick<TransactionListItem, "merchantName" | "name">
+  row: Pick<TransactionListItem, "merchantName" | "name">,
 ): string {
   return row.name?.trim() || row.merchantName?.trim() || "";
 }
@@ -31,9 +29,7 @@ export function transactionDateSortKey(row: TransactionListItem): number {
   return new Date(`${day}T12:00:00.000Z`).getTime();
 }
 
-export function formatTransactionDateDisplay(
-  row: Pick<TransactionListItem, "date">
-): string {
+export function formatTransactionDateDisplay(row: Pick<TransactionListItem, "date">): string {
   const raw = getTransactionDisplayDateString(row);
   const day = String(raw).split("T")[0] ?? String(raw);
   return dateDisplay.format(new Date(`${day}T12:00:00.000Z`));
@@ -90,9 +86,7 @@ const monthGroupHeading = new Intl.DateTimeFormat("en-US", {
  * Stable month bucket for grouping (calendar month of display date), e.g. `2025-03`.
  * Uses the same display date as {@link transactionDateSortKey}.
  */
-export function transactionMonthGroupKey(
-  row: Pick<TransactionListItem, "date">
-): string {
+export function transactionMonthGroupKey(row: Pick<TransactionListItem, "date">): string {
   const raw = getTransactionDisplayDateString(row);
   const day = String(raw).split("T")[0] ?? String(raw);
   const parts = day.split("-");
@@ -119,9 +113,7 @@ export function formatMonthGroupLabel(yearMonth: string): string {
 }
 
 /** Horizon truncates account name at last letter before trailing digits; simplified cap at 20 chars. */
-export function formatTransactionAccountDisplayName(
-  accountName: string
-): string {
+export function formatTransactionAccountDisplayName(accountName: string): string {
   if (accountName.length <= 20) {
     return accountName;
   }

@@ -1,0 +1,292 @@
+[
+  {
+    "name": "ThreeKnownFourSource",
+    "sourceLabels": ["Chase Checking", "Amex Gold", "Random Cafe", ""],
+    "userAccounts": [
+      {
+        "id": "acc_chase_chk",
+        "name": "Chase Bank — Checking",
+        "customName": null,
+        "officialName": "Chase Total Checking",
+        "institutionName": "Chase",
+        "mask": "1234",
+        "type": "depository",
+        "subtype": "Checking"
+      },
+      {
+        "id": "acc_amex_gold",
+        "name": "Amex Gold",
+        "customName": null,
+        "officialName": "American Express Gold Card",
+        "institutionName": "American Express",
+        "mask": "5678",
+        "type": "credit",
+        "subtype": "Credit Card"
+      },
+      {
+        "id": "acc_wf_sav",
+        "name": "Wells Fargo Savings",
+        "customName": null,
+        "officialName": "WF Savings",
+        "institutionName": "Wells Fargo",
+        "mask": "9999",
+        "type": "depository",
+        "subtype": "Savings"
+      }
+    ],
+    "expected": {
+      "byLabel": {
+        "Chase Checking": { "action": "link", "accountId": "acc_chase_chk" },
+        "Amex Gold": { "action": "link", "accountId": "acc_amex_gold" },
+        "Random Cafe": { "action": "create_new", "suggestedType": "depository" },
+        "": { "action": "skip" }
+      }
+    }
+  },
+  {
+    "name": "NewUserNoAccounts",
+    "sourceLabels": [
+      "Chase Sapphire Reserve",
+      "Schwab Brokerage",
+      "Mortgage",
+      "Fidelity 401k",
+      "Local Credit Union Checking"
+    ],
+    "userAccounts": [],
+    "expected": {
+      "byLabel": {
+        "Chase Sapphire Reserve": {
+          "action": "create_new",
+          "suggestedType": "credit",
+          "suggestedSubtype": "Credit Card"
+        },
+        "Schwab Brokerage": {
+          "action": "create_new",
+          "suggestedType": "investment",
+          "suggestedSubtype": "Brokerage"
+        },
+        "Mortgage": {
+          "action": "create_new",
+          "suggestedType": "loan",
+          "suggestedSubtype": "Mortgage"
+        },
+        "Fidelity 401k": {
+          "action": "create_new",
+          "suggestedType": "investment",
+          "suggestedSubtype": "401"
+        },
+        "Local Credit Union Checking": {
+          "action": "create_new",
+          "suggestedType": "depository",
+          "suggestedSubtype": "Checking"
+        }
+      }
+    }
+  },
+  {
+    "name": "AllCreditCards",
+    "sourceLabels": [
+      "Amex Platinum",
+      "Chase Sapphire Preferred",
+      "Citi Double Cash",
+      "Capital One Venture",
+      "Discover It"
+    ],
+    "userAccounts": [],
+    "expected": {
+      "byLabel": {
+        "Amex Platinum": {
+          "action": "create_new",
+          "suggestedType": "credit",
+          "suggestedSubtype": "Credit Card"
+        },
+        "Chase Sapphire Preferred": {
+          "action": "create_new",
+          "suggestedType": "credit",
+          "suggestedSubtype": "Credit Card"
+        },
+        "Citi Double Cash": {
+          "action": "create_new",
+          "suggestedType": "credit",
+          "suggestedSubtype": "Credit Card"
+        },
+        "Capital One Venture": {
+          "action": "create_new",
+          "suggestedType": "credit",
+          "suggestedSubtype": "Credit Card"
+        },
+        "Discover It": {
+          "action": "create_new",
+          "suggestedType": "credit",
+          "suggestedSubtype": "Credit Card"
+        }
+      }
+    }
+  },
+  {
+    "name": "AllChecking",
+    "sourceLabels": ["Chase Checking", "BofA Checking", "Wells Fargo Checking", "Ally Checking"],
+    "userAccounts": [],
+    "expected": {
+      "byLabel": {
+        "Chase Checking": {
+          "action": "create_new",
+          "suggestedType": "depository",
+          "suggestedSubtype": "Checking"
+        },
+        "BofA Checking": {
+          "action": "create_new",
+          "suggestedType": "depository",
+          "suggestedSubtype": "Checking"
+        },
+        "Wells Fargo Checking": {
+          "action": "create_new",
+          "suggestedType": "depository",
+          "suggestedSubtype": "Checking"
+        },
+        "Ally Checking": {
+          "action": "create_new",
+          "suggestedType": "depository",
+          "suggestedSubtype": "Checking"
+        }
+      }
+    }
+  },
+  {
+    "name": "InvestmentHeavy",
+    "sourceLabels": ["Fidelity Brokerage", "Schwab Roth IRA", "Robinhood", "Coinbase"],
+    "userAccounts": [],
+    "expected": {
+      "byLabel": {
+        "Fidelity Brokerage": {
+          "action": "create_new",
+          "suggestedType": "investment",
+          "suggestedSubtype": "Brokerage"
+        },
+        "Schwab Roth IRA": {
+          "action": "create_new",
+          "suggestedType": "investment",
+          "suggestedSubtype": "Roth"
+        },
+        "Robinhood": { "action": "create_new", "suggestedType": "investment" },
+        "Coinbase": { "action": "create_new", "suggestedType": "investment" }
+      }
+    }
+  },
+  {
+    "name": "Loans",
+    "sourceLabels": ["Mortgage", "Auto Loan", "Sallie Mae Student Loan"],
+    "userAccounts": [],
+    "expected": {
+      "byLabel": {
+        "Mortgage": {
+          "action": "create_new",
+          "suggestedType": "loan",
+          "suggestedSubtype": "Mortgage"
+        },
+        "Auto Loan": {
+          "action": "create_new",
+          "suggestedType": "loan",
+          "suggestedSubtype": "Auto"
+        },
+        "Sallie Mae Student Loan": {
+          "action": "create_new",
+          "suggestedType": "loan",
+          "suggestedSubtype": "Student"
+        }
+      }
+    }
+  },
+  {
+    "name": "JunkLabels",
+    "sourceLabels": ["Unknown", "", "-", "Summary", "Total"],
+    "userAccounts": [
+      {
+        "id": "acc_chase_chk",
+        "name": "Chase Checking",
+        "customName": null,
+        "officialName": null,
+        "institutionName": "Chase",
+        "mask": null,
+        "type": "depository",
+        "subtype": "Checking"
+      }
+    ],
+    "expected": {
+      "byLabel": {
+        "Unknown": { "action": "skip" },
+        "": { "action": "skip" },
+        "-": { "action": "skip" },
+        "Summary": { "action": "skip" },
+        "Total": { "action": "skip" }
+      }
+    }
+  },
+  {
+    "name": "PathBSingleDefault",
+    "sourceLabels": ["Default Account"],
+    "userAccounts": [],
+    "expected": {
+      "byLabel": {
+        "Default Account": { "action": "create_new", "suggestedType": "depository" }
+      }
+    }
+  },
+  {
+    "name": "FiftyLabelsStress",
+    "sourceLabels": [
+      "Chase Checking",
+      "Chase Savings",
+      "Chase Sapphire",
+      "Amex Gold",
+      "Amex Platinum",
+      "Citi Double Cash",
+      "Discover It",
+      "Capital One Venture",
+      "BofA Checking",
+      "BofA Savings",
+      "Wells Fargo Checking",
+      "Wells Fargo Savings",
+      "Ally Checking",
+      "Ally Savings",
+      "Marcus Savings",
+      "SoFi Checking",
+      "SoFi Savings",
+      "Fidelity Brokerage",
+      "Schwab Brokerage",
+      "Vanguard IRA",
+      "Robinhood",
+      "Coinbase",
+      "Mortgage",
+      "Auto Loan",
+      "Student Loan",
+      "HSA",
+      "401k",
+      "Roth IRA",
+      "Traditional IRA",
+      "HYSA",
+      "Apple Card",
+      "Apple Cash",
+      "Venmo",
+      "PayPal",
+      "Cash",
+      "Petty Cash",
+      "Random",
+      "-",
+      "",
+      "Unknown",
+      "Summary",
+      "Total",
+      "Cleared",
+      "Local CU Checking",
+      "Credit Union",
+      "Charles Schwab",
+      "Merrill Lynch",
+      "E*TRADE",
+      "Wealthfront",
+      "Betterment"
+    ],
+    "userAccounts": [],
+    "expected": { "byLabel": {} }
+  }
+]

@@ -6,7 +6,7 @@ import type {
 } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
 import { BrokerageScopePicker } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { format } from "date-fns";
@@ -21,15 +21,7 @@ const money = (amount: number) =>
     style: "currency",
   }).format(amount);
 
-const BALANCE_CHART_RANGE_OPTIONS = [
-  "1W",
-  "1M",
-  "3M",
-  "YTD",
-  "1Y",
-  "5Y",
-  "All",
-] as const;
+const BALANCE_CHART_RANGE_OPTIONS = ["1W", "1M", "3M", "YTD", "1Y", "5Y", "All"] as const;
 
 type BalanceChartRange = (typeof BALANCE_CHART_RANGE_OPTIONS)[number];
 
@@ -58,10 +50,10 @@ function openPnlToneClass(openPnl: number | null | undefined): string {
     return "text-muted-foreground";
   }
   if (openPnl > 0) {
-    return "text-green-550";
+    return "text-success";
   }
   if (openPnl < 0) {
-    return "text-red-600 dark:text-red-400";
+    return "text-destructive";
   }
   return "text-muted-foreground";
 }
@@ -285,8 +277,7 @@ export function BabyBrokerage({
   positions = mockPositions,
   activities = mockActivities,
 }: BabyBrokerageProps) {
-  const [balanceChartRange, setBalanceChartRange] =
-    useState<BalanceChartRange>("1M");
+  const [balanceChartRange, setBalanceChartRange] = useState<BalanceChartRange>("1M");
   const [brokerageScope, setBrokerageScope] = useState<BrokerageScope>({
     type: "all",
   });
@@ -295,7 +286,10 @@ export function BabyBrokerage({
     <div className="w-full min-w-0 space-y-4 px-4 py-2 sm:py-3">
       <div className="grid w-full items-start gap-4 lg:grid-cols-[1.15fr_0.85fr]">
         {/* Portfolio value card */}
-        <CobaltCard className="flex w-full min-h-0 flex-col gap-0 rounded-3xl py-0 h-[360px]">
+        <Card
+          variant="subtle"
+          className="flex w-full min-h-0 flex-col gap-0 rounded-3xl py-0 h-[360px]"
+        >
           <CardContent className="flex min-h-0 flex-1 flex-col gap-4 p-0">
             <div className="shrink-0 flex w-full items-center justify-between px-5 pt-4">
               <p className="text-left text-foreground text-2xl font-semibold tabular-nums tracking-tight">
@@ -310,28 +304,11 @@ export function BabyBrokerage({
             </div>
             <div className="min-h-0 w-full flex-1 [&_.recharts-tooltip-cursor]:stroke-border/40">
               <ResponsiveContainer height="100%" width="100%">
-                <AreaChart
-                  data={mockChartData}
-                  margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
-                >
+                <AreaChart data={mockChartData} margin={{ bottom: 0, left: 0, right: 0, top: 4 }}>
                   <defs>
-                    <linearGradient
-                      id="brokerageBalanceFill"
-                      x1="0"
-                      x2="0"
-                      y1="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor="var(--color-green-550)"
-                        stopOpacity={0.35}
-                      />
-                      <stop
-                        offset="100%"
-                        stopColor="var(--color-green-550)"
-                        stopOpacity={0}
-                      />
+                    <linearGradient id="brokerageBalanceFill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-green-550)" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="var(--color-green-550)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="display" hide />
@@ -369,10 +346,13 @@ export function BabyBrokerage({
               })}
             </div>
           </CardContent>
-        </CobaltCard>
+        </Card>
 
         {/* Recent activity card */}
-        <CobaltCard className="flex flex-col gap-0 rounded-3xl py-0 h-[360px] overflow-hidden">
+        <Card
+          variant="subtle"
+          className="flex flex-col gap-0 rounded-3xl py-0 h-[360px] overflow-hidden"
+        >
           <CardContent className="flex min-h-0 flex-1 flex-col gap-2 px-5 py-4 text-left">
             <div className="shrink-0">
               <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
@@ -381,10 +361,7 @@ export function BabyBrokerage({
             </div>
             <ul className="flex-1">
               {activities.map((act) => (
-                <li
-                  key={act.id}
-                  className="flex gap-3 py-2 first:pt-0 last:pb-0"
-                >
+                <li key={act.id} className="flex gap-3 py-2 first:pt-0 last:pb-0">
                   <TickerLogo size={36} symbol={act.symbolTicker ?? "—"} />
                   <div className="min-w-0 flex-1">
                     <p className="text-muted-foreground truncate text-sm font-medium text-left">
@@ -392,16 +369,12 @@ export function BabyBrokerage({
                     </p>
                     <p className="text-muted-foreground/70 truncate text-xs text-left">
                       {(act.type ?? "Activity") +
-                        (act.brokerageAccount?.name
-                          ? ` · ${act.brokerageAccount.name}`
-                          : "")}
+                        (act.brokerageAccount?.name ? ` · ${act.brokerageAccount.name}` : "")}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-foreground text-sm font-medium tabular-nums">
-                      {act.amount === undefined || act.amount === null
-                        ? "—"
-                        : money(act.amount)}
+                      {act.amount === undefined || act.amount === null ? "—" : money(act.amount)}
                     </p>
                     <p className="text-muted-foreground text-[11px] tabular-nums">
                       {formatEpochDate(act.tradeDate)}
@@ -411,27 +384,23 @@ export function BabyBrokerage({
               ))}
             </ul>
           </CardContent>
-        </CobaltCard>
+        </Card>
       </div>
 
       {/* Positions table */}
-      <CobaltCard className="gap-0 overflow-hidden rounded-3xl py-0">
+      <Card variant="subtle" className="gap-0 overflow-hidden rounded-3xl py-0">
         <CardContent className="px-5 pt-3 pb-4">
           <div className="min-w-0 overflow-x-auto">
             <table className="w-full min-w-[880px] text-left text-sm">
               <thead>
                 <tr className="text-muted-foreground text-[11px] tracking-wide uppercase">
-                  <th className="py-1.5 pr-2 pl-0 text-left font-medium">
-                    Position
-                  </th>
+                  <th className="py-1.5 pr-2 pl-0 text-left font-medium">Position</th>
                   <th className="px-2 py-1.5 font-medium">Qty</th>
                   <th className="px-2 py-1.5 font-medium">Avg cost</th>
                   <th className="px-2 py-1.5 font-medium">Last price</th>
                   <th className="px-2 py-1.5 font-medium">Value</th>
                   <th className="px-2 py-1.5 font-medium">Open P&amp;L</th>
-                  <th className="py-1.5 pr-0 pl-2 text-right font-medium">
-                    Account
-                  </th>
+                  <th className="py-1.5 pr-0 pl-2 text-right font-medium">Account</th>
                 </tr>
               </thead>
               <tbody>
@@ -441,9 +410,7 @@ export function BabyBrokerage({
                       <div className="flex items-center gap-3">
                         <TickerLogo size={40} symbol={pos.symbol ?? "—"} />
                         <div className="min-w-0">
-                          <p className="text-foreground font-medium">
-                            {pos.symbol ?? "—"}
-                          </p>
+                          <p className="text-foreground font-medium">{pos.symbol ?? "—"}</p>
                           {pos.symbolDescription ? (
                             <p className="text-muted-foreground truncate text-xs">
                               {pos.symbolDescription}
@@ -458,15 +425,12 @@ export function BabyBrokerage({
                         : pos.units.toLocaleString()}
                     </td>
                     <td className="text-muted-foreground px-2 py-2 tabular-nums">
-                      {pos.averagePurchasePrice === undefined ||
-                      pos.averagePurchasePrice === null
+                      {pos.averagePurchasePrice === undefined || pos.averagePurchasePrice === null
                         ? "—"
                         : money(pos.averagePurchasePrice)}
                     </td>
                     <td className="text-muted-foreground px-2 py-2 tabular-nums">
-                      {pos.price === undefined || pos.price === null
-                        ? "—"
-                        : money(pos.price)}
+                      {pos.price === undefined || pos.price === null ? "—" : money(pos.price)}
                     </td>
                     <td className="text-foreground px-2 py-2 font-medium tabular-nums">
                       {pos.units === undefined ||
@@ -476,15 +440,8 @@ export function BabyBrokerage({
                         ? "—"
                         : money(pos.units * pos.price)}
                     </td>
-                    <td
-                      className={cn(
-                        "px-2 py-2 tabular-nums",
-                        openPnlToneClass(pos.openPnl)
-                      )}
-                    >
-                      {pos.openPnl === undefined || pos.openPnl === null
-                        ? "—"
-                        : money(pos.openPnl)}
+                    <td className={cn("px-2 py-2 tabular-nums", openPnlToneClass(pos.openPnl))}>
+                      {pos.openPnl === undefined || pos.openPnl === null ? "—" : money(pos.openPnl)}
                     </td>
                     <td className="text-muted-foreground max-w-[12rem] truncate py-2 pr-0 pl-2 text-right text-xs">
                       {pos.brokerageAccount?.name?.trim() ?? "—"}
@@ -495,7 +452,7 @@ export function BabyBrokerage({
             </table>
           </div>
         </CardContent>
-      </CobaltCard>
+      </Card>
     </div>
   );
 }

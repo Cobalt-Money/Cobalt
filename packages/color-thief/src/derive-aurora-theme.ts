@@ -16,11 +16,7 @@ function parseHex(hex: string): { b: number; g: number; r: number } | null {
   };
 }
 
-function rgbToHsl(
-  r: number,
-  g: number,
-  b: number
-): { h: number; l: number; s: number } {
+function rgbToHsl(r: number, g: number, b: number): { h: number; l: number; s: number } {
   const rn = r / 255;
   const gn = g / 255;
   const bn = b / 255;

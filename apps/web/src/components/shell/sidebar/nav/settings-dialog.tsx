@@ -19,8 +19,7 @@ export function SettingsDialog({
   onOpenChange: (open: boolean) => void;
   defaultSection?: SettingsSection;
 }) {
-  const [activeSection, setActiveSection] =
-    useState<SettingsSection>(defaultSection);
+  const [activeSection, setActiveSection] = useState<SettingsSection>(defaultSection);
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
@@ -31,21 +30,14 @@ export function SettingsDialog({
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogContent
-        className="top-[max(6rem,13svh)] flex h-[640px] w-[768px] max-w-[calc(100vw-2rem)] translate-y-0 flex-col gap-0 overflow-hidden border-0 bg-[oklch(0.949_0_0)] p-0 shadow-2xl ring-0 sm:max-w-3xl dark:bg-[oklch(0.29_0_0)]"
-        overlayClassName="bg-black/25 supports-backdrop-filter:backdrop-blur-none"
-        showCloseButton
-      >
+      <DialogContent className="h-[640px] w-[768px] gap-0 p-0 sm:max-w-3xl" showCloseButton>
         <DialogHeader className="sr-only">
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
             Manage your profile, account, appearance, and billing.
           </DialogDescription>
         </DialogHeader>
-        <SettingsGrid
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-        />
+        <SettingsGrid activeSection={activeSection} onSectionChange={setActiveSection} />
       </DialogContent>
     </Dialog>
   );

@@ -1,8 +1,4 @@
-import {
-  Task,
-  TaskContent,
-  TaskTrigger,
-} from "@cobalt-web/ui/components/ai-elements/task";
+import { Task, TaskContent, TaskTrigger } from "@cobalt-web/ui/components/ai-elements/task";
 import type { UIMessage } from "ai";
 import type { ReactNode } from "react";
 
@@ -30,7 +26,7 @@ function getStepTitle(parts: MessagePart[], isStreaming: boolean): string {
     return "Step";
   }
   const entries = [...counts.entries()].map(([name, count]) =>
-    count > 1 ? `${name} × ${count}` : name
+    count > 1 ? `${name} × ${count}` : name,
   );
   return `Ran ${entries.join(", ")}`;
 }

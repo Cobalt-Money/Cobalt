@@ -13,14 +13,10 @@ export const chartCatalog = defineCatalog(schema, {
         description: z.string().optional(),
         height: z.number().optional().default(380),
         title: z.string().optional(),
-        xKey: z
-          .string()
-          .describe("Key in data objects for X-axis (e.g., 'date', 'period')"),
+        xKey: z.string().describe("Key in data objects for X-axis (e.g., 'date', 'period')"),
         yKeys: z
           .array(z.string())
-          .describe(
-            "Keys in data objects for Y-axis areas (e.g., ['value', 'total'])"
-          ),
+          .describe("Keys in data objects for Y-axis areas (e.g., ['value', 'total'])"),
       }),
     },
     BarChart: {
@@ -31,16 +27,10 @@ export const chartCatalog = defineCatalog(schema, {
         description: z.string().optional(),
         height: z.number().optional().default(380),
         title: z.string().optional(),
-        xKey: z
-          .string()
-          .describe(
-            "Key in data objects for X-axis (e.g., 'category', 'month')"
-          ),
+        xKey: z.string().describe("Key in data objects for X-axis (e.g., 'category', 'month')"),
         yKeys: z
           .array(z.string())
-          .describe(
-            "Keys in data objects for Y-axis bars (e.g., ['amount', 'count'])"
-          ),
+          .describe("Keys in data objects for Y-axis bars (e.g., ['amount', 'count'])"),
       }),
     },
     LineChart: {
@@ -51,14 +41,10 @@ export const chartCatalog = defineCatalog(schema, {
         description: z.string().optional(),
         height: z.number().optional().default(380),
         title: z.string().optional(),
-        xKey: z
-          .string()
-          .describe("Key in data objects for X-axis (e.g., 'date', 'label')"),
+        xKey: z.string().describe("Key in data objects for X-axis (e.g., 'date', 'label')"),
         yKeys: z
           .array(z.string())
-          .describe(
-            "Keys in data objects for Y-axis lines (e.g., ['value', 'revenue'])"
-          ),
+          .describe("Keys in data objects for Y-axis lines (e.g., ['value', 'revenue'])"),
       }),
     },
     PieChart: {
@@ -69,7 +55,7 @@ export const chartCatalog = defineCatalog(schema, {
           z.object({
             label: z.string(),
             value: z.number(),
-          })
+          }),
         ),
         dataKey: z.string().default("value").describe("Key for slice values"),
         description: z.string().optional(),

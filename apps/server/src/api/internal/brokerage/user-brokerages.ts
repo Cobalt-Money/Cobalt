@@ -1,11 +1,10 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getUserBrokeragesByUserId } from "@cobalt-web/server-data/brokerage/queries";
-import {
-  errorResponseSchema,
-  userBrokeragesResponseSchema,
-} from "@cobalt-web/server-data/brokerage/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { userBrokeragesResponseSchema } from "@cobalt-web/server-data/brokerage/schemas";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
@@ -13,30 +12,16 @@ const route = createRoute({
   middleware: [requirePaidUser] as const,
   path: "/user-brokerages",
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: userBrokeragesResponseSchema },
-      },
-      description: "List of connected brokerage names",
-    },
-    500: {
-      content: { "application/json": { schema: errorResponseSchema } },
-      description: "Server error",
-    },
+    200: jsonContent(userBrokeragesResponseSchema, "List of connected brokerage names"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
   },
   summary: "Get user brokerages",
   tags: ["Brokerage"],
 });
 
-export const userBrokeragesRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    try {
-      const data = await getUserBrokeragesByUserId(c.var.user.id);
-      c.header("Cache-Control", "private, max-age=60");
-      return c.json({ data }, 200);
-    } catch {
-      return c.json({ error: "Failed to fetch user brokerages" }, 500);
-    }
-  }
-);
+export const userBrokeragesRouter = createApp().openapi(route, async (c) => {
+  const data = await getUserBrokeragesByUserId(c.var.user.id);
+  c.header("Cache-Control", "private, max-age=60");
+  return c.json({ data }, 200);
+});

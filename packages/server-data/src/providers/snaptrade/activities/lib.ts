@@ -18,8 +18,7 @@ function resolveActivityNestedData(activity: UniversalActivity) {
     (symbolData.type as AnyRecord | undefined) ??
     (activity.security_type as AnyRecord | undefined) ??
     {};
-  const ticker =
-    (symbolData.symbol as string | undefined) ?? activity.symbol_ticker ?? null;
+  const ticker = (symbolData.symbol as string | undefined) ?? activity.symbol_ticker ?? null;
   return { currencyData, exchangeData, securityTypeData, symbolData, ticker };
 }
 
@@ -28,39 +27,23 @@ function mapActivityCore(
   dbAccountId: string,
   snaptradeAccountId: string,
   appUserId: string,
-  lastSync: Date
+  lastSync: Date,
 ) {
-  const { currencyData, exchangeData, ticker } =
-    resolveActivityNestedData(activity);
+  const { currencyData, exchangeData, ticker } = resolveActivityNestedData(activity);
   return {
     accountId: dbAccountId,
     activityId: activity.activity_id ?? activity.id,
     amount: toDecimalString(activity.amount) || "0",
-    currencyCode:
-      (currencyData.code as string | undefined) ??
-      activity.currency_code ??
-      "USD",
-    currencyId:
-      (currencyData.id as string | undefined) ?? activity.currency_id ?? null,
+    currencyCode: (currencyData.code as string | undefined) ?? activity.currency_code ?? "USD",
+    currencyId: (currencyData.id as string | undefined) ?? activity.currency_id ?? null,
     currencyName:
-      (currencyData.name as string | undefined) ??
-      activity.currency_name ??
-      "US Dollar",
+      (currencyData.name as string | undefined) ?? activity.currency_name ?? "US Dollar",
     description: activity.description ?? "",
-    exchangeCode:
-      (exchangeData.code as string | undefined) ??
-      activity.exchange_code ??
-      null,
-    exchangeId:
-      (exchangeData.id as string | undefined) ?? activity.exchange_id ?? null,
+    exchangeCode: (exchangeData.code as string | undefined) ?? activity.exchange_code ?? null,
+    exchangeId: (exchangeData.id as string | undefined) ?? activity.exchange_id ?? null,
     exchangeMicCode:
-      (exchangeData.mic_code as string | undefined) ??
-      activity.exchange_mic_code ??
-      null,
-    exchangeName:
-      (exchangeData.name as string | undefined) ??
-      activity.exchange_name ??
-      null,
+      (exchangeData.mic_code as string | undefined) ?? activity.exchange_mic_code ?? null,
+    exchangeName: (exchangeData.name as string | undefined) ?? activity.exchange_name ?? null,
     lastSync,
     snapTradeAccountId: snaptradeAccountId,
     symbol: (activity.symbol as string | null | undefined) ?? null,
@@ -85,41 +68,23 @@ function mapActivityFinancials(activity: UniversalActivity) {
 }
 
 function mapActivitySymbolFields(activity: UniversalActivity) {
-  const { symbolData, securityTypeData, ticker } =
-    resolveActivityNestedData(activity);
+  const { symbolData, securityTypeData, ticker } = resolveActivityNestedData(activity);
   return {
-    figiCode:
-      (symbolData.figi_code as string | undefined) ??
-      activity.figi_code ??
-      null,
-    rawSymbol:
-      (symbolData.raw_symbol as string | undefined) ??
-      activity.raw_symbol ??
-      ticker,
+    figiCode: (symbolData.figi_code as string | undefined) ?? activity.figi_code ?? null,
+    rawSymbol: (symbolData.raw_symbol as string | undefined) ?? activity.raw_symbol ?? ticker,
     securityTypeCode:
-      (securityTypeData.code as string | undefined) ??
-      activity.security_type_code ??
-      null,
+      (securityTypeData.code as string | undefined) ?? activity.security_type_code ?? null,
     securityTypeDescription:
       (securityTypeData.description as string | undefined) ??
       activity.security_type_description ??
       null,
     securityTypeId:
-      (securityTypeData.id as string | undefined) ??
-      activity.security_type_id ??
-      null,
-    settlementDate: activity.settlement_date
-      ? extractDateFromISO(activity.settlement_date)
-      : null,
+      (securityTypeData.id as string | undefined) ?? activity.security_type_id ?? null,
+    settlementDate: activity.settlement_date ? extractDateFromISO(activity.settlement_date) : null,
     symbolDescription:
-      (symbolData.description as string | undefined) ??
-      activity.symbol_description ??
-      null,
-    symbolId:
-      (symbolData.id as string | undefined) ?? activity.symbol_id ?? null,
-    tradeDate: activity.trade_date
-      ? extractDateFromISO(activity.trade_date)
-      : null,
+      (symbolData.description as string | undefined) ?? activity.symbol_description ?? null,
+    symbolId: (symbolData.id as string | undefined) ?? activity.symbol_id ?? null,
+    tradeDate: activity.trade_date ? extractDateFromISO(activity.trade_date) : null,
   };
 }
 
@@ -135,16 +100,10 @@ export function mapActivityRecord(
   dbAccountId: string,
   snaptradeAccountId: string,
   appUserId: string,
-  lastSync: Date
+  lastSync: Date,
 ) {
   return {
-    ...mapActivityCore(
-      activity,
-      dbAccountId,
-      snaptradeAccountId,
-      appUserId,
-      lastSync
-    ),
+    ...mapActivityCore(activity, dbAccountId, snaptradeAccountId, appUserId, lastSync),
     ...mapActivityMeta(activity),
   };
 }

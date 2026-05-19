@@ -35,6 +35,7 @@ import { Route as AuthHomeIndexRouteImport } from './routes/_auth/home/index'
 import { Route as AuthBrokerageIndexRouteImport } from './routes/_auth/brokerage/index'
 import { Route as AuthAiChatIndexRouteImport } from './routes/_auth/ai-chat/index'
 import { Route as AuthAccountsIndexRouteImport } from './routes/_auth/accounts/index'
+import { Route as AuthTransactionsCategoriesRouteImport } from './routes/_auth/transactions/categories'
 import { Route as AuthTransactionsTransactionIdRouteImport } from './routes/_auth/transactions/$transactionId'
 import { Route as AuthResearchSymbolRouteImport } from './routes/_auth/research/$symbol'
 import { Route as AuthNewsEventIdRouteImport } from './routes/_auth/news/$eventId'
@@ -169,6 +170,12 @@ const AuthAccountsIndexRoute = AuthAccountsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthAccountsRouteRoute,
 } as any)
+const AuthTransactionsCategoriesRoute =
+  AuthTransactionsCategoriesRouteImport.update({
+    id: '/categories',
+    path: '/categories',
+    getParentRoute: () => AuthTransactionsRouteRoute,
+  } as any)
 const AuthTransactionsTransactionIdRoute =
   AuthTransactionsTransactionIdRouteImport.update({
     id: '/$transactionId',
@@ -213,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/news/$eventId': typeof AuthNewsEventIdRoute
   '/research/$symbol': typeof AuthResearchSymbolRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/transactions/categories': typeof AuthTransactionsCategoriesRoute
   '/accounts/': typeof AuthAccountsIndexRoute
   '/ai-chat/': typeof AuthAiChatIndexRoute
   '/brokerage/': typeof AuthBrokerageIndexRoute
@@ -236,6 +244,7 @@ export interface FileRoutesByTo {
   '/news/$eventId': typeof AuthNewsEventIdRoute
   '/research/$symbol': typeof AuthResearchSymbolRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/transactions/categories': typeof AuthTransactionsCategoriesRoute
   '/accounts': typeof AuthAccountsIndexRoute
   '/ai-chat': typeof AuthAiChatIndexRoute
   '/brokerage': typeof AuthBrokerageIndexRoute
@@ -269,6 +278,7 @@ export interface FileRoutesById {
   '/_auth/news/$eventId': typeof AuthNewsEventIdRoute
   '/_auth/research/$symbol': typeof AuthResearchSymbolRoute
   '/_auth/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
+  '/_auth/transactions/categories': typeof AuthTransactionsCategoriesRoute
   '/_auth/accounts/': typeof AuthAccountsIndexRoute
   '/_auth/ai-chat/': typeof AuthAiChatIndexRoute
   '/_auth/brokerage/': typeof AuthBrokerageIndexRoute
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/news/$eventId'
     | '/research/$symbol'
     | '/transactions/$transactionId'
+    | '/transactions/categories'
     | '/accounts/'
     | '/ai-chat/'
     | '/brokerage/'
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/news/$eventId'
     | '/research/$symbol'
     | '/transactions/$transactionId'
+    | '/transactions/categories'
     | '/accounts'
     | '/ai-chat'
     | '/brokerage'
@@ -357,6 +369,7 @@ export interface FileRouteTypes {
     | '/_auth/news/$eventId'
     | '/_auth/research/$symbol'
     | '/_auth/transactions/$transactionId'
+    | '/_auth/transactions/categories'
     | '/_auth/accounts/'
     | '/_auth/ai-chat/'
     | '/_auth/brokerage/'
@@ -563,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAccountsIndexRouteImport
       parentRoute: typeof AuthAccountsRouteRoute
     }
+    '/_auth/transactions/categories': {
+      id: '/_auth/transactions/categories'
+      path: '/categories'
+      fullPath: '/transactions/categories'
+      preLoaderRoute: typeof AuthTransactionsCategoriesRouteImport
+      parentRoute: typeof AuthTransactionsRouteRoute
+    }
     '/_auth/transactions/$transactionId': {
       id: '/_auth/transactions/$transactionId'
       path: '/$transactionId'
@@ -685,11 +705,13 @@ const AuthSubscriptionsRouteRouteWithChildren =
 
 interface AuthTransactionsRouteRouteChildren {
   AuthTransactionsTransactionIdRoute: typeof AuthTransactionsTransactionIdRoute
+  AuthTransactionsCategoriesRoute: typeof AuthTransactionsCategoriesRoute
   AuthTransactionsIndexRoute: typeof AuthTransactionsIndexRoute
 }
 
 const AuthTransactionsRouteRouteChildren: AuthTransactionsRouteRouteChildren = {
   AuthTransactionsTransactionIdRoute: AuthTransactionsTransactionIdRoute,
+  AuthTransactionsCategoriesRoute: AuthTransactionsCategoriesRoute,
   AuthTransactionsIndexRoute: AuthTransactionsIndexRoute,
 }
 

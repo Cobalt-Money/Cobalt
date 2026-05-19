@@ -7,14 +7,20 @@ import { cn } from "@cobalt-web/ui/lib/utils";
  * shadow, or focus ring — same ghost fill as `AccountCard`.
  */
 export const cobaltPromptInputChrome =
-  "border-0 bg-[oklch(0.949_0_0)] shadow-none ring-0 dark:bg-[oklch(0.29_0_0)] has-[[data-slot=input-group-control]:focus-visible]:border-transparent has-[[data-slot=input-group-control]:focus-visible]:ring-0 has-[[data-slot][aria-invalid=true]]:border-transparent has-[[data-slot][aria-invalid=true]]:ring-0 dark:has-[[data-slot][aria-invalid=true]]:ring-0";
+  "border-0 bg-popover shadow-none ring-0 dark:bg-popover has-[[data-slot=input-group-control]:focus-visible]:border-transparent has-[[data-slot=input-group-control]:focus-visible]:ring-0 has-[[data-slot][aria-invalid=true]]:border-transparent has-[[data-slot][aria-invalid=true]]:ring-0 dark:has-[[data-slot][aria-invalid=true]]:ring-0";
+
+/**
+ * Ghost surface fill matching the composer InputGroup. Use for sibling panels
+ * (queue, ask-user) so they read as the same surface family as the composer.
+ */
+export const cobaltGhostSurfaceClass = "border-0 bg-popover shadow-none dark:bg-popover";
 
 /**
  * User message bubble: same ghost fill and radius as the composer `InputGroup`
  * (`rounded-2xl` matches the textarea + footer shell).
  */
 export const cobaltPromptUserBubbleClass =
-  "group-[.is-user]:rounded-2xl group-[.is-user]:bg-[oklch(0.949_0_0)] dark:group-[.is-user]:bg-white/[0.06]";
+  "group-[.is-user]:rounded-2xl group-[.is-user]:bg-popover dark:group-[.is-user]:bg-white/[0.06]";
 
 export type CobaltPromptInputProps = PromptInputProps;
 
@@ -23,11 +29,7 @@ export type CobaltPromptInputProps = PromptInputProps;
  * treatment (borderless, no shadow). Prefer this in product chat UIs; keep
  * `PromptInput` for stock ai-elements behavior.
  */
-function CobaltPromptInput({
-  className,
-  inputGroupClassName,
-  ...props
-}: CobaltPromptInputProps) {
+function CobaltPromptInput({ className, inputGroupClassName, ...props }: CobaltPromptInputProps) {
   return (
     <PromptInput
       className={className}

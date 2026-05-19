@@ -14,6 +14,7 @@ export default defineConfig({
     "packages/ui/src/components/**",
     "**/drizzle-zero.config.ts",
     ".claude/worktrees/**",
+    "apps/raycast/raycast-env.d.ts",
   ],
   overrides: [
     {
@@ -36,6 +37,10 @@ export default defineConfig({
         "vitest/prefer-called-once": "off",
         "vitest/prefer-describe-function-title": "off",
         "vitest/prefer-lowercase-title": "off",
+        // Explicit type params on `vi.fn(...)` regress on inferred mocks: forcing
+        // a generic overrides vitest's inference and breaks `.mockResolvedValue`,
+        // arg typing, etc. Let inference drive mock types in tests.
+        "vitest/require-mock-type-parameters": "off",
       },
     },
   ],

@@ -3,7 +3,7 @@ import type {
   ScopeAccount,
 } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
 import { BrokerageScopePicker } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
-import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { Button } from "@cobalt-web/ui/components/button";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
@@ -20,8 +20,6 @@ import {
   YAxis,
 } from "recharts";
 
-import type { PositionRow } from "./positions-table";
-
 export interface PortfolioSnapshotRow {
   id: string;
   accountId: string;
@@ -29,23 +27,13 @@ export interface PortfolioSnapshotRow {
   totalValue?: number | null;
 }
 
-export type { PositionRow } from "./positions-table";
-
 interface ChartPoint {
   display: string;
   label: number;
   v: number;
 }
 
-const BALANCE_CHART_RANGE_OPTIONS = [
-  "1W",
-  "1M",
-  "3M",
-  "YTD",
-  "1Y",
-  "5Y",
-  "All",
-] as const;
+const BALANCE_CHART_RANGE_OPTIONS = ["1W", "1M", "3M", "YTD", "1Y", "5Y", "All"] as const;
 
 type BalanceChartRange = (typeof BALANCE_CHART_RANGE_OPTIONS)[number];
 
@@ -106,21 +94,18 @@ function ChartHoverSync({
 
 export function BalanceChartCard({
   portfolioSnapshots,
-  positions,
   scopedAccountIds,
   scopeAccounts,
   brokerageScope,
   onScopeChange,
 }: {
   portfolioSnapshots: readonly PortfolioSnapshotRow[];
-  positions: readonly PositionRow[];
   scopedAccountIds: ReadonlySet<string> | null;
   scopeAccounts: ScopeAccount[];
   brokerageScope: BrokerageScope;
   onScopeChange: (scope: BrokerageScope) => void;
 }) {
-  const [balanceChartRange, setBalanceChartRange] =
-    useState<BalanceChartRange>("1M");
+  const [balanceChartRange, setBalanceChartRange] = useState<BalanceChartRange>("1M");
   const [hoveredValue, setHoveredValue] = useState<number | null>(null);
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -145,38 +130,27 @@ export function BalanceChartCard({
     }
   }, []);
 
+  // Resting headline = sum of the most-recent snapshot row per scoped account.
+  // snapshot.current already includes both cash + positions for snaptrade and
+  // total account value for plaid investment, so don't add live position
+  // values on top — that double-counts the positions component.
   const latestValue = useMemo(() => {
     const scopedSnaps =
       scopedAccountIds === null
         ? portfolioSnapshots
         : portfolioSnapshots.filter((s) => scopedAccountIds.has(s.accountId));
-    let snaptradePart = 0;
-    if (scopedSnaps.length > 0) {
-      const maxDate = Math.max(...scopedSnaps.map((s) => s.snapshotDate));
-      for (const s of scopedSnaps) {
-        if (s.snapshotDate === maxDate) {
-          snaptradePart += s.totalValue ?? 0;
-        }
-      }
-    }
-    let livePart = 0;
-    for (const p of positions) {
-      const acctId = p.accountId ?? p.brokerageAccount?.id ?? null;
-      if (acctId === null) {
-        continue;
-      }
-      if (scopedAccountIds !== null && !scopedAccountIds.has(acctId)) {
-        continue;
-      }
-      if (typeof p.institutionValue === "number") {
-        livePart += p.institutionValue;
-      }
-    }
-    if (scopedSnaps.length === 0 && livePart === 0) {
+    if (scopedSnaps.length === 0) {
       return null;
     }
-    return snaptradePart + livePart;
-  }, [portfolioSnapshots, positions, scopedAccountIds]);
+    const maxDate = Math.max(...scopedSnaps.map((s) => s.snapshotDate));
+    let total = 0;
+    for (const s of scopedSnaps) {
+      if (s.snapshotDate === maxDate) {
+        total += s.totalValue ?? 0;
+      }
+    }
+    return total;
+  }, [portfolioSnapshots, scopedAccountIds]);
 
   const chartPoints = useMemo(() => {
     const cutoff = rangeStartEpoch(balanceChartRange);
@@ -192,10 +166,7 @@ export function BalanceChartCard({
 
     const byDate = new Map<number, number>();
     for (const s of filtered) {
-      byDate.set(
-        s.snapshotDate,
-        (byDate.get(s.snapshotDate) ?? 0) + (s.totalValue ?? 0)
-      );
+      byDate.set(s.snapshotDate, (byDate.get(s.snapshotDate) ?? 0) + (s.totalValue ?? 0));
     }
 
     return [...byDate.entries()]
@@ -217,7 +188,10 @@ export function BalanceChartCard({
   }
 
   return (
-    <CobaltCard className="flex h-full min-h-0 flex-col gap-0 rounded-3xl py-0 lg:min-h-[400px]">
+    <Card
+      variant="subtle"
+      className="flex h-full min-h-0 flex-col gap-0 rounded-3xl py-0 lg:min-h-[400px]"
+    >
       <CardContent className="flex min-h-0 flex-1 flex-col gap-4 px-0 py-4">
         <div className="shrink-0 px-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
@@ -228,7 +202,7 @@ export function BalanceChartCard({
               <p
                 className={cn(
                   "text-muted-foreground text-xs tabular-nums transition-opacity",
-                  hoveredDate ? "opacity-100" : "opacity-0"
+                  hoveredDate ? "opacity-100" : "opacity-0",
                 )}
               >
                 {hoveredDate ?? "\u00A0"}
@@ -255,15 +229,9 @@ export function BalanceChartCard({
         >
           <div className="absolute inset-0">
             <ResponsiveContainer height="100%" width="100%">
-              <AreaChart
-                data={chartPoints}
-                margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
-              >
+              <AreaChart data={chartPoints} margin={{ bottom: 0, left: 0, right: 0, top: 4 }}>
                 <Tooltip content={() => null} />
-                <ChartHoverSync
-                  setHoveredDate={setHoveredDate}
-                  setHoveredValue={setHoveredValue}
-                />
+                <ChartHoverSync setHoveredDate={setHoveredDate} setHoveredValue={setHoveredValue} />
                 <XAxis dataKey="label" hide />
                 <YAxis domain={["auto", "auto"]} hide width={0} />
                 <Area
@@ -277,33 +245,13 @@ export function BalanceChartCard({
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <div
-            ref={coloredLayerRef}
-            className="pointer-events-none absolute inset-0"
-          >
+          <div ref={coloredLayerRef} className="pointer-events-none absolute inset-0">
             <ResponsiveContainer height="100%" width="100%">
-              <AreaChart
-                data={chartPoints}
-                margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
-              >
+              <AreaChart data={chartPoints} margin={{ bottom: 0, left: 0, right: 0, top: 4 }}>
                 <defs>
-                  <linearGradient
-                    id="balanceChartFill"
-                    x1="0"
-                    x2="0"
-                    y1="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="0%"
-                      stopColor="var(--color-green-550)"
-                      stopOpacity={0.35}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="var(--color-green-550)"
-                      stopOpacity={0}
-                    />
+                  <linearGradient id="balanceChartFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-green-550)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="var(--color-green-550)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="label" hide />
@@ -343,6 +291,6 @@ export function BalanceChartCard({
           })}
         </div>
       </CardContent>
-    </CobaltCard>
+    </Card>
   );
 }

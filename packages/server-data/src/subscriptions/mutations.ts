@@ -2,6 +2,7 @@ import { db } from "@cobalt-web/db";
 import { mobileSubscription } from "@cobalt-web/db/schema/users/subscriptions/mobile";
 import { eq } from "drizzle-orm";
 
+import { ApiError } from "../_shared/api-error.js";
 import type {
   AppStoreNotificationInput,
   AppStoreNotificationResult,
@@ -15,12 +16,12 @@ import type {
  */
 export async function syncAppStoreSubscription(
   userId: string,
-  input: AppStoreSyncInput
+  input: AppStoreSyncInput,
 ): Promise<AppStoreSyncMutationResult> {
   const now = new Date();
   let expiresAt = new Date(input.expiresAt);
   if (Number.isNaN(expiresAt.getTime())) {
-    throw new TypeError("Invalid expiresAt");
+    throw new ApiError(400, "invalid_expires_at", "Invalid expiresAt");
   }
 
   // Sandbox: Apple may send stale expiration times on re-purchase; treat sync as fresh.
@@ -30,8 +31,7 @@ export async function syncAppStoreSubscription(
 
   const status = expiresAt > now ? "active" : "expired";
   const { environment } = input;
-  const latestTransactionId =
-    input.latestTransactionId ?? input.originalTransactionId;
+  const latestTransactionId = input.latestTransactionId ?? input.originalTransactionId;
 
   const existingRecord = await db.query.mobileSubscription.findFirst({
     where: { originalTransactionId: { eq: input.originalTransactionId } },
@@ -48,12 +48,7 @@ export async function syncAppStoreSubscription(
         updatedAt: now,
         userId,
       })
-      .where(
-        eq(
-          mobileSubscription.originalTransactionId,
-          input.originalTransactionId
-        )
-      );
+      .where(eq(mobileSubscription.originalTransactionId, input.originalTransactionId));
 
     return {
       action: existingRecord.userId === userId ? "updated" : "transferred",
@@ -90,7 +85,7 @@ export async function syncAppStoreSubscription(
     .returning({ id: mobileSubscription.id });
 
   if (!row) {
-    throw new Error("Failed to upsert mobile subscription");
+    throw new ApiError(502, "appstore_upstream_failed", "Failed to upsert mobile subscription");
   }
 
   return {
@@ -109,7 +104,7 @@ export async function syncAppStoreSubscription(
  * we skip and let the next sync catch up.
  */
 export async function applyAppStoreNotification(
-  input: AppStoreNotificationInput
+  input: AppStoreNotificationInput,
 ): Promise<AppStoreNotificationResult> {
   const {
     environment,
@@ -160,7 +155,7 @@ export async function applyAppStoreNotification(
 
 function mapNotificationToStatus(
   notificationType: AppStoreNotificationInput["notificationType"],
-  currentStatus: string
+  currentStatus: string,
 ): string {
   switch (notificationType) {
     case "SUBSCRIBED":

@@ -21,9 +21,7 @@ export const mortgageLiability = pgTable(
       .unique()
       .references(() => financialAccount.id, { onDelete: "cascade" }),
     accountNumber: text("account_number"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     currentLateFee: numeric("current_late_fee", { precision: 19, scale: 4 }),
     escrowBalance: numeric("escrow_balance", { precision: 19, scale: 4 }),
     hasPmi: boolean("has_pmi"),
@@ -63,7 +61,7 @@ export const mortgageLiability = pgTable(
       scale: 4,
     }),
   },
-  (t) => [index("mortgage_liability_user_id_idx").on(t.userId)]
+  (t) => [index("mortgage_liability_user_id_idx").on(t.userId)],
 );
 
 export type MortgageLiability = typeof mortgageLiability.$inferSelect;

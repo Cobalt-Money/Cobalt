@@ -1,0 +1,23 @@
+{
+  "name": "@cobalt-web/bindings",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tanstack/ai-code-mode": "^0.1.9",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cobalt-web/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "^5",
+    "vitest": "^3.2.0"
+  }
+}

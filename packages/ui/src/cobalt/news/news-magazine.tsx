@@ -1,15 +1,12 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { Card } from "@cobalt-web/ui/components/card";
 import { ConnectAccountEmpty } from "@cobalt-web/ui/cobalt/empty/connect-account-empty";
 import { cn, decodeHtmlEntities } from "@cobalt-web/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-import type {
-  FinancialEventArticlePreview,
-  FinancialEventCard,
-} from "./financial-events-feed";
+import type { FinancialEventArticlePreview, FinancialEventCard } from "./financial-events-feed";
 import type { NewsTab } from "./news-toolbar";
 
 export type { NewsTab } from "./news-toolbar";
@@ -31,10 +28,7 @@ export interface NewsMagazineProps {
    * Wrap each event block (featured row or grid card) for client-side navigation,
    * e.g. `<Link to={...}>{inner}</Link>`. Default: render `inner` only.
    */
-  readonly renderEventLink?: (
-    event: FinancialEventCard,
-    inner: ReactNode
-  ) => ReactNode;
+  readonly renderEventLink?: (event: FinancialEventCard, inner: ReactNode) => ReactNode;
   /** Called when the "For You" empty-state CTA is clicked. */
   readonly onConnectAccount?: () => void;
 }
@@ -58,10 +52,7 @@ function eventTimestampMs(e: FinancialEventCard): number | null {
   return null;
 }
 
-function eventMatchesTopicSlug(
-  event: FinancialEventCard,
-  slug: string
-): boolean {
+function eventMatchesTopicSlug(event: FinancialEventCard, slug: string): boolean {
   const normalized = slug.toLowerCase();
   return event.topics.some((t) => t.trim().toLowerCase() === normalized);
 }
@@ -93,16 +84,12 @@ function hostnameFromUrl(url: string): string {
 
 function uniqueSourceArticles(
   articles: readonly FinancialEventArticlePreview[],
-  max = 6
+  max = 6,
 ): FinancialEventArticlePreview[] {
   const seen = new Set<string>();
   const out: FinancialEventArticlePreview[] = [];
   for (const a of articles) {
-    const label = (
-      a.sourceName?.trim() ||
-      hostnameFromUrl(a.newsUrl) ||
-      "?"
-    ).toLowerCase();
+    const label = (a.sourceName?.trim() || hostnameFromUrl(a.newsUrl) || "?").toLowerCase();
     if (seen.has(label)) {
       continue;
     }
@@ -143,13 +130,7 @@ function RssSourceFavicon({ link }: { readonly link: string }) {
       className="relative inline-flex size-5 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60"
     >
       {fav ? (
-        <img
-          alt=""
-          className="size-full object-cover"
-          decoding="async"
-          loading="lazy"
-          src={fav}
-        />
+        <img alt="" className="size-full object-cover" decoding="async" loading="lazy" src={fav} />
       ) : (
         <span className="text-muted-foreground flex size-full items-center justify-center text-[9px] font-bold">
           {initial}
@@ -172,11 +153,7 @@ function SourceIconRow({
     <div className="flex items-center">
       {sources.map((a, i) => {
         const fav = faviconUrlForArticle(a);
-        const initial = (
-          a.sourceName?.trim() ||
-          hostnameFromUrl(a.newsUrl) ||
-          "?"
-        )
+        const initial = (a.sourceName?.trim() || hostnameFromUrl(a.newsUrl) || "?")
           .slice(0, 2)
           .toUpperCase();
         return (
@@ -185,7 +162,7 @@ function SourceIconRow({
             className={cn(
               "relative inline-flex overflow-hidden rounded-full",
               ring,
-              i > 0 && "-ml-2"
+              i > 0 && "-ml-2",
             )}
             key={a.id}
           >
@@ -249,13 +226,13 @@ function FeaturedEvent({
   imageRight: boolean;
   renderEventLink?: (event: FinancialEventCard, inner: ReactNode) => ReactNode;
 }) {
-  const summary = event.summary?.trim() || event.eventText?.trim() || null;
+  const summary = event.eventText?.trim() || event.summary?.trim() || null;
   const img = event.articles.find((a) => a.imageUrl?.trim())?.imageUrl;
   const ts = eventTimestampMs(event);
   const timeLabel = ts === null ? null : compactTimeAgo(ts);
 
   const textColumn = (
-    <div className="flex min-h-0 w-full min-w-0 flex-col gap-4 lg:h-full">
+    <div className="flex min-h-0 w-full min-w-0 flex-col gap-4 md:h-full">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
         <h2 className="text-foreground shrink-0 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
           {event.eventName}
@@ -264,9 +241,7 @@ function FeaturedEvent({
       </div>
       <div className="flex w-full shrink-0 items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-          {event.articles.length > 0 ? (
-            <SourceIconRow articles={event.articles} />
-          ) : null}
+          {event.articles.length > 0 ? <SourceIconRow articles={event.articles} /> : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <TickerIconRow tickers={event.tickers} />
@@ -289,7 +264,8 @@ function FeaturedEvent({
       className={cn(
         "relative w-full max-w-full shrink-0 overflow-hidden rounded-2xl bg-muted shadow-sm",
         "aspect-[16/10]",
-        "lg:aspect-auto lg:h-full lg:min-h-[264px] lg:w-[min(100%,440px)] lg:max-w-[440px] lg:self-stretch"
+        "md:aspect-auto md:h-full md:min-h-[240px] md:w-[min(100%,360px)] md:max-w-[360px] md:self-stretch",
+        "lg:min-h-[264px] lg:w-[min(100%,440px)] lg:max-w-[440px]",
       )}
     >
       <img
@@ -305,7 +281,8 @@ function FeaturedEvent({
       className={cn(
         "w-full max-w-full shrink-0 rounded-2xl bg-gradient-to-br from-muted to-muted/30",
         "aspect-[16/10]",
-        "lg:aspect-auto lg:h-full lg:min-h-[264px] lg:w-[min(100%,440px)] lg:max-w-[440px] lg:self-stretch"
+        "md:aspect-auto md:h-full md:min-h-[240px] md:w-[min(100%,360px)] md:max-w-[360px] md:self-stretch",
+        "lg:min-h-[264px] lg:w-[min(100%,440px)] lg:max-w-[440px]",
       )}
     />
   );
@@ -313,10 +290,10 @@ function FeaturedEvent({
   const article = (
     <article
       className={cn(
-        "flex flex-col gap-6 lg:grid lg:items-stretch lg:gap-10",
+        "flex flex-col gap-6 md:grid md:items-stretch md:gap-8 lg:gap-10",
         imageRight
-          ? "lg:grid-cols-[minmax(0,1fr)_min(100%,440px)]"
-          : "lg:grid-cols-[min(100%,440px)_minmax(0,1fr)]"
+          ? "md:grid-cols-[minmax(0,1fr)_min(100%,360px)] lg:grid-cols-[minmax(0,1fr)_min(100%,440px)]"
+          : "md:grid-cols-[min(100%,360px)_minmax(0,1fr)] lg:grid-cols-[min(100%,440px)_minmax(0,1fr)]",
       )}
     >
       {imageRight ? (
@@ -351,7 +328,10 @@ function GridCard({
   const timeLabel = ts === null ? null : compactTimeAgo(ts);
 
   const card = (
-    <CobaltCard className="flex h-full flex-col gap-0 overflow-hidden p-0 transition-colors hover:bg-[oklch(0.94_0_0)] dark:hover:bg-white/[0.08]">
+    <Card
+      variant="subtle"
+      className="flex h-full flex-col gap-0 overflow-hidden p-0 transition-colors hover:bg-[oklch(0.94_0_0)] dark:hover:bg-white/[0.08]"
+    >
       <div className="bg-muted/50 relative aspect-[16/10] w-full shrink-0 overflow-hidden">
         {img ? (
           <img
@@ -388,7 +368,7 @@ function GridCard({
           </div>
         </div>
       </div>
-    </CobaltCard>
+    </Card>
   );
 
   if (renderEventLink) {
@@ -404,9 +384,7 @@ function GridCard({
  * 3. Repeat: **featured pair** (image left → image right) → **grid** (up to 3)
  * 4. Trailing orphan → single featured (image left)
  */
-function buildSections(
-  events: readonly FinancialEventCard[]
-): MagazineSection[] {
+function buildSections(events: readonly FinancialEventCard[]): MagazineSection[] {
   const sections: MagazineSection[] = [];
   const n = events.length;
   if (n === 0) {
@@ -483,9 +461,7 @@ function LatestNewsSidebar({
   readonly rssItems: readonly NewsMagazineSidebarItem[];
 }) {
   const ulRef = useRef<HTMLUListElement>(null);
-  const [visibleCount, setVisibleCount] = useState(() =>
-    Math.min(rssItems.length, 8)
-  );
+  const [visibleCount, setVisibleCount] = useState(() => Math.min(rssItems.length, 8));
 
   useLayoutEffect(() => {
     if (rssItems.length === 0) {
@@ -558,9 +534,7 @@ function LatestNewsSidebar({
 
   return (
     <>
-      <h3 className="text-foreground mb-4 text-lg font-bold tracking-tight">
-        Latest News
-      </h3>
+      <h3 className="text-foreground mb-4 text-lg font-bold tracking-tight">Latest News</h3>
       <ul className="space-y-1" ref={ulRef}>
         {visible.map((item) => (
           <li key={item.id}>
@@ -580,11 +554,9 @@ function LatestNewsSidebar({
                     className="ml-auto shrink-0 tabular-nums"
                     dateTime={new Date(item.publishedAt).toISOString()}
                   >
-                    {formatDistanceStrict(
-                      new Date(item.publishedAt),
-                      new Date(),
-                      { addSuffix: true }
-                    )}
+                    {formatDistanceStrict(new Date(item.publishedAt), new Date(), {
+                      addSuffix: true,
+                    })}
                   </time>
                 )}
               </p>
@@ -619,8 +591,8 @@ export function NewsMagazine({
 
   return (
     <div className={cn("w-full", className)}>
-      <div className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="min-w-0 space-y-10 lg:space-y-12">
+      <div className="flex flex-col gap-10 xl:grid xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start xl:gap-10">
+        <div className="min-w-0 space-y-6 sm:space-y-10 lg:space-y-12">
           {tab === "for-you" && sections.length === 0 ? (
             <ConnectAccountEmpty
               className="min-h-[320px]"
@@ -629,55 +601,58 @@ export function NewsMagazine({
               title="No personalized news yet"
             />
           ) : null}
-          {sections.map((sec) => {
-            if (sec.type === "featuredPair") {
+
+          {/* Below md: every event renders as a single-column grid card. The featured / featuredPair / grid section layout only kicks in at md+. */}
+          <div className="flex flex-col gap-4 md:hidden">
+            {activeEvents.map((e) => (
+              <GridCard event={e} key={`m-${e.id}`} renderEventLink={renderEventLink} />
+            ))}
+          </div>
+
+          <div className="hidden space-y-10 md:block lg:space-y-12">
+            {sections.map((sec) => {
+              if (sec.type === "featuredPair") {
+                return (
+                  <div
+                    className="flex flex-col gap-8 lg:gap-10"
+                    key={`fp-${sec.first.id}-${sec.second.id}`}
+                  >
+                    <FeaturedEvent
+                      event={sec.first}
+                      imageRight={false}
+                      renderEventLink={renderEventLink}
+                    />
+                    <FeaturedEvent
+                      event={sec.second}
+                      imageRight={true}
+                      renderEventLink={renderEventLink}
+                    />
+                  </div>
+                );
+              }
+              if (sec.type === "featured") {
+                return (
+                  <FeaturedEvent
+                    event={sec.event}
+                    imageRight={sec.imageRight}
+                    key={`f-${sec.event.id}`}
+                    renderEventLink={renderEventLink}
+                  />
+                );
+              }
+              const gridKey = sec.events.map((e) => e.id).join("-");
               return (
-                <div
-                  className="flex flex-col gap-8 lg:gap-10"
-                  key={`fp-${sec.first.id}-${sec.second.id}`}
-                >
-                  <FeaturedEvent
-                    event={sec.first}
-                    imageRight={false}
-                    renderEventLink={renderEventLink}
-                  />
-                  <FeaturedEvent
-                    event={sec.second}
-                    imageRight={true}
-                    renderEventLink={renderEventLink}
-                  />
+                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3" key={`g-${gridKey}`}>
+                  {sec.events.map((e) => (
+                    <GridCard event={e} key={e.id} renderEventLink={renderEventLink} />
+                  ))}
                 </div>
               );
-            }
-            if (sec.type === "featured") {
-              return (
-                <FeaturedEvent
-                  event={sec.event}
-                  imageRight={sec.imageRight}
-                  key={`f-${sec.event.id}`}
-                  renderEventLink={renderEventLink}
-                />
-              );
-            }
-            const gridKey = sec.events.map((e) => e.id).join("-");
-            return (
-              <div
-                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-                key={`g-${gridKey}`}
-              >
-                {sec.events.map((e) => (
-                  <GridCard
-                    event={e}
-                    key={e.id}
-                    renderEventLink={renderEventLink}
-                  />
-                ))}
-              </div>
-            );
-          })}
+            })}
+          </div>
         </div>
 
-        <aside className="border-border min-w-0 space-y-1 overflow-x-hidden border-t pt-8 lg:sticky lg:top-4 lg:border-t-0 lg:pt-0">
+        <aside className="hidden border-border min-w-0 space-y-1 overflow-x-hidden xl:block xl:sticky xl:top-4">
           <LatestNewsSidebar rssItems={rssItems} />
         </aside>
       </div>

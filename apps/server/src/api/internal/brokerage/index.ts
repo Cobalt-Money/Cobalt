@@ -3,6 +3,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { activitiesRouter } from "./activities.js";
 import { balancesRouter } from "./balances.js";
 import { holdingsNewsRouter } from "./holdings-news.js";
+import { manualHoldingsRouter } from "./manual-holdings.js";
 import { mergedBundleRouter } from "./merged-bundle.js";
 import { portfolioSnapshotsRouter } from "./portfolio-snapshots.js";
 import { positionsRouter } from "./positions.js";
@@ -18,4 +19,5 @@ export const brokerageRouter = new OpenAPIHono()
   .route("/", activitiesRouter)
   .route("/", portfolioSnapshotsRouter)
   .route("/", userBrokeragesRouter)
-  .route("/", userTickersRouter);
+  .route("/", userTickersRouter)
+  .route("/", manualHoldingsRouter);

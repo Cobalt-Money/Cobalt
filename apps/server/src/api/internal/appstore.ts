@@ -1,12 +1,13 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   appStoreSyncBodySchema,
-  appStoreSyncErrorSchema,
   appStoreSyncResponseSchema,
   syncAppStoreSubscription,
 } from "@cobalt-web/server-data/subscriptions";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../lib/openapi-helpers.js";
 import { requireAuth } from "./middleware.js";
 
 const syncRoute = createRoute({
@@ -21,69 +22,32 @@ const syncRoute = createRoute({
     },
   },
   responses: {
-    200: {
-      content: {
-        "application/json": { schema: appStoreSyncResponseSchema },
-      },
-      description: "Subscription created or updated",
-    },
-    400: {
-      content: {
-        "application/json": { schema: appStoreSyncErrorSchema },
-      },
-      description: "Invalid body or dates",
-    },
-    401: {
-      content: {
-        "application/json": { schema: appStoreSyncErrorSchema },
-      },
-      description: "Unauthorized",
-    },
-    500: {
-      content: {
-        "application/json": { schema: appStoreSyncErrorSchema },
-      },
-      description: "Server error",
-    },
+    200: jsonContent(appStoreSyncResponseSchema, "Subscription created or updated"),
+    400: jsonContent(errorResponseWithCodeSchema, "Invalid body or dates"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    422: validationErrorResponse(appStoreSyncBodySchema),
+    502: jsonContent(errorResponseWithCodeSchema, "App Store upstream failed"),
   },
   summary: "Sync App Store subscription (StoreKit)",
   tags: ["App Store"],
 });
 
-export const appstoreRouter = new OpenAPIHono<AppEnv>().openapi(
-  syncRoute,
-  async (c) => {
-    const body = c.req.valid("json");
-    const userId = c.var.user.id;
+export const appstoreRouter = createApp().openapi(syncRoute, async (c) => {
+  const body = c.req.valid("json");
+  const result = await syncAppStoreSubscription(c.var.user.id, {
+    environment: body.environment,
+    expiresAt: body.expiresAt,
+    latestTransactionId: body.latestTransactionId,
+    originalTransactionId: body.originalTransactionId,
+    productId: body.productId,
+  });
 
-    try {
-      const result = await syncAppStoreSubscription(userId, {
-        environment: body.environment,
-        expiresAt: body.expiresAt,
-        latestTransactionId: body.latestTransactionId,
-        originalTransactionId: body.originalTransactionId,
-        productId: body.productId,
-      });
-
-      return c.json(
-        {
-          action: result.action,
-          subscriptionId: result.subscriptionId,
-          success: true as const,
-        },
-        200
-      );
-    } catch (error) {
-      if (error instanceof TypeError) {
-        return c.json({ error: error.message || "Invalid request" }, 400);
-      }
-      return c.json(
-        {
-          details: error instanceof Error ? error.message : "Unknown error",
-          error: "Failed to sync subscription",
-        },
-        500
-      );
-    }
-  }
-);
+  return c.json(
+    {
+      action: result.action,
+      subscriptionId: result.subscriptionId,
+      success: true as const,
+    },
+    200,
+  );
+});

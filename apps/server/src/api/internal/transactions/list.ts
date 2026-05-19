@@ -1,11 +1,13 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getUserTransactions } from "@cobalt-web/server-data/transactions/queries";
 import {
   transactionListQuerySchema,
   transactionListResponseSchema,
 } from "@cobalt-web/server-data/transactions/schemas";
-import type { AppEnv } from "@cobalt-web/server-data/types";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
+import { createApp } from "../../../lib/create-app.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
@@ -17,27 +19,25 @@ const route = createRoute({
     query: transactionListQuerySchema,
   },
   responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: transactionListResponseSchema,
-        },
-      },
-      description: "List of transactions",
-    },
+    200: jsonContent(transactionListResponseSchema, "List of transactions"),
+    400: jsonContent(errorResponseWithCodeSchema, "Invalid date range"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
+    422: validationErrorResponse(transactionListQuerySchema),
   },
   summary: "List transactions",
   tags: ["Transactions"],
 });
 
-export const listRouter = new OpenAPIHono<AppEnv>().openapi(
-  route,
-  async (c) => {
-    const transactions = await getUserTransactions(
-      c.var.user.id,
-      c.req.valid("query")
+export const listRouter = createApp().openapi(route, async (c) => {
+  const query = c.req.valid("query");
+  if (query.startDate && query.endDate && query.startDate > query.endDate) {
+    return c.json(
+      { code: "invalid_date_range", error: "startDate must be on or before endDate" },
+      400,
     );
-    c.header("Cache-Control", "private, max-age=60");
-    return c.json({ transactions }, 200);
   }
-);
+  const result = await getUserTransactions(c.var.user.id, query);
+  c.header("Cache-Control", "private, max-age=60");
+  return c.json(result, 200);
+});

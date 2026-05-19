@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from "vitest";
 import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
 import type * as TanStackRouter from "@tanstack/react-router";
 import { render, screen, within } from "@testing-library/react";
@@ -16,17 +17,15 @@ vi.mock(import("@tanstack/react-router"), async (importOriginal) => {
   };
 });
 
-function createMockTransaction(
-  overrides: Partial<TransactionListItem> = {}
-): TransactionListItem {
+function createMockTransaction(overrides: Partial<TransactionListItem> = {}): TransactionListItem {
   return {
+    accountLogoDomain: null,
     accountName: "Checking",
+    accountSubtype: "checking",
     accountType: "depository",
     amount: -12.34,
     authorizedDate: null,
     category: null,
-    categoryConfidence: null,
-    categoryDetail: null,
     counterparties: null,
     date: "2025-01-15",
     id: "550e8400-e29b-41d4-a716-446655440001",
@@ -42,7 +41,7 @@ function createMockTransaction(
     pending: false,
     plaidAccountId: "plaid-acc-1",
     source: "plaid",
-    userOverrideLocation: null,
+    tagIds: [],
     website: null,
     ...overrides,
   };
@@ -66,7 +65,7 @@ describe(TransactionsTable, () => {
     expect(
       within(table).getByRole("checkbox", {
         name: "Select transaction Coffee Shop Purchase",
-      })
+      }),
     ).toBeTruthy();
   });
 });

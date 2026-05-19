@@ -1,20 +1,20 @@
 import { Button } from "@cobalt-web/ui/components/button";
+import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
-// import { SidebarTrigger } from "@cobalt-web/ui/components/sidebar";
+import { useSidebar } from "@cobalt-web/ui/components/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@cobalt-web/ui/components/tooltip";
 import {
   BellDotIcon,
   EyeIcon,
   SearchIcon,
+  SidebarLeftIcon,
   ViewOffSlashIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
 import { NotificationsSheet } from "@/components/alerts/notifications-sheet";
-import {
-  CommandMenuSearchShortcut,
-  useCommandMenu,
-} from "@/components/shell/command-menu";
+import { CommandMenuSearchShortcut, useCommandMenu } from "@/components/shell/command-menu";
 import { useUserAlerts } from "@/hooks/use-user-alerts";
 
 import { SiteHeaderPrimaryTitle } from "../site-header-primary-title";
@@ -25,11 +25,39 @@ export function SiteHeader() {
   const { alerts } = useUserAlerts();
   const hasAlerts = alerts.length > 0;
   const { hidden: privacyHidden, toggle: togglePrivacy } = usePrivacy();
+  const { toggleSidebar, state: sidebarState } = useSidebar();
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-stretch overflow-visible transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex h-full min-h-0 w-full min-w-0 items-center gap-2 px-4 py-2 lg:gap-3 lg:px-6">
-        {/* Sidebar toggle disabled for now — restore: <SidebarTrigger className="-ml-1" /> */}
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <button
+                aria-label="Toggle Sidebar"
+                className="shrink-0 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                onClick={toggleSidebar}
+                type="button"
+              >
+                <HugeiconsIcon
+                  aria-hidden
+                  className="size-5 sm:size-6"
+                  icon={SidebarLeftIcon}
+                  strokeWidth={2}
+                />
+              </button>
+            }
+          />
+          <TooltipContent>
+            <span className="inline-flex items-center gap-1.5">
+              <KbdGroup>
+                <Kbd>⌘</Kbd>
+                <Kbd>B</Kbd>
+              </KbdGroup>
+              <span>to {sidebarState === "expanded" ? "collapse" : "expand"} sidebar</span>
+            </span>
+          </TooltipContent>
+        </Tooltip>
         <SiteHeaderPrimaryTitle />
         <button
           type="button"
@@ -48,26 +76,31 @@ export function SiteHeader() {
           <CommandMenuSearchShortcut />
         </button>
         <div className="ml-auto flex shrink-0 items-center gap-0.5">
-          <Button
-            aria-label={privacyHidden ? "Show amounts" : "Hide amounts"}
-            aria-pressed={privacyHidden}
-            className="text-muted-foreground"
-            onClick={togglePrivacy}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <HugeiconsIcon
-              className="size-5"
-              icon={privacyHidden ? ViewOffSlashIcon : EyeIcon}
-              strokeWidth={2}
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label={privacyHidden ? "Show amounts" : "Hide amounts"}
+                  aria-pressed={privacyHidden}
+                  className="text-muted-foreground"
+                  onClick={togglePrivacy}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  <HugeiconsIcon
+                    className="size-5"
+                    icon={privacyHidden ? ViewOffSlashIcon : EyeIcon}
+                    strokeWidth={2}
+                  />
+                </Button>
+              }
             />
-          </Button>
+            <TooltipContent>{privacyHidden ? "Show amounts" : "Hide amounts"}</TooltipContent>
+          </Tooltip>
           <Button
             aria-label={
-              hasAlerts
-                ? `Notifications (${alerts.length} need attention)`
-                : "Notifications"
+              hasAlerts ? `Notifications (${alerts.length} need attention)` : "Notifications"
             }
             className="relative text-muted-foreground"
             onClick={() => setNotificationsOpen(true)}
@@ -75,11 +108,7 @@ export function SiteHeader() {
             type="button"
             variant="ghost"
           >
-            <HugeiconsIcon
-              className="size-5"
-              icon={BellDotIcon}
-              strokeWidth={2}
-            />
+            <HugeiconsIcon className="size-5" icon={BellDotIcon} strokeWidth={2} />
             {hasAlerts ? (
               <span
                 aria-hidden
@@ -89,10 +118,7 @@ export function SiteHeader() {
           </Button>
         </div>
       </div>
-      <NotificationsSheet
-        onOpenChange={setNotificationsOpen}
-        open={notificationsOpen}
-      />
+      <NotificationsSheet onOpenChange={setNotificationsOpen} open={notificationsOpen} />
     </header>
   );
 }

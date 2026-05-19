@@ -3,7 +3,7 @@ import type { Holding, InvestmentTransaction, Security } from "plaid";
 
 /** Fetch the current holdings snapshot from Plaid. */
 export async function fetchHoldings(
-  accessToken: string
+  accessToken: string,
 ): Promise<{ holdings: Holding[]; securities: Security[] }> {
   const response = await plaidClient.investmentsHoldingsGet({
     access_token: accessToken,
@@ -20,7 +20,7 @@ export async function fetchInvestmentTransactionsPage(
   startDate: string,
   endDate: string,
   offset: number,
-  count: number
+  count: number,
 ): Promise<{
   transactions: InvestmentTransaction[];
   securities: Security[];

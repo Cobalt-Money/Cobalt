@@ -12,7 +12,7 @@ export function TickerDetailAbout({ description }: { description: string }) {
       <p
         className={cn(
           "mt-3 text-base leading-relaxed sm:text-[1.0625rem]",
-          hasBody ? "text-foreground" : "text-muted-foreground"
+          hasBody ? "text-foreground" : "text-muted-foreground",
         )}
       >
         {hasBody ? trimmed : "No company description available."}

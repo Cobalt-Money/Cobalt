@@ -1,33 +1,26 @@
 import { db } from "@cobalt-web/db";
 import { env } from "@cobalt-web/env/server";
+import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { upsertMessage } from "@cobalt-web/server-data/chat/mutations";
+import { getUserLimits } from "@cobalt-web/server-data/subscriptions";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
   pruneMessages,
-  streamText,
 } from "ai";
 import type { UIMessage } from "ai";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { start } from "workflow/api";
 
-import { createCodeAgent } from "../../../ai/agents/code-agent/code-agent.js";
-import {
-  gatewayModel,
-  getProviderOptions,
-  parseModelWithReasoning,
-} from "../../../ai/model-provider.js";
+import { createFinanceAgent } from "../../../ai/agents/finance-agent/finance-agent.js";
+import { parseModelWithReasoning } from "../../../ai/model-provider.js";
 import type { ReasoningEffort } from "../../../ai/model-provider.js";
 import { generateChatTitleWorkflow } from "../../../workflows/chat-title/workflow.js";
-import { requirePaidUser } from "../middleware.js";
-
-const SYSTEM_PROMPT = [
-  "You are Cobalt, a personal financial AI assistant.",
-  "You help users understand their finances, spending, investments, and financial goals.",
-  "Be concise, clear, and actionable.",
-].join(" ");
+import { requireAuth } from "../middleware.js";
 
 const MAX_HISTORY = 20;
 
@@ -35,7 +28,7 @@ function extractMessageText(message: UIMessage): string {
   return message.parts
     .filter(
       (p): p is { text: string; type: "text" } =>
-        p.type === "text" && typeof (p as { text?: unknown }).text === "string"
+        p.type === "text" && typeof (p as { text?: unknown }).text === "string",
     )
     .map((p) => p.text)
     .join(" ")
@@ -45,7 +38,7 @@ function extractMessageText(message: UIMessage): string {
 async function startChatTitle(
   chatTitle: string | null,
   chatId: string,
-  message: UIMessage
+  message: UIMessage,
 ): Promise<void> {
   if (chatTitle || message.role !== "user") {
     return;
@@ -61,12 +54,28 @@ async function startChatTitle(
   }
 }
 
-export const chatStreamRouter = new Hono<AppEnv>().post(
-  "/:chatId/stream",
-  requirePaidUser,
-  async (c) => {
+/**
+ * SSE streaming endpoint. Preconditions (config, body shape, ownership) are
+ * checked BEFORE the stream starts and surface as JSON errors with stable codes.
+ * Once the stream begins, errors are delivered as SSE events via the AI SDK's
+ * `onError` hook — HTTP status cannot change after headers are flushed.
+ */
+export const chatStreamRouter = new Hono<AppEnv>()
+  // biome-ignore lint/suspicious/useAwait: hono onError callback signature
+  // oxlint-disable-next-line prefer-await-to-callbacks
+  .onError((err, c) => {
+    if (err instanceof HTTPException) {
+      return err.getResponse();
+    }
+    if (err instanceof ApiError) {
+      return c.json({ code: err.code, error: err.message }, err.status as ContentfulStatusCode);
+    }
+    console.error("[chat-stream error]", { method: c.req.method, path: c.req.path }, err);
+    return c.json({ error: "Internal server error" }, 500);
+  })
+  .post("/:chatId/stream", requireAuth, async (c) => {
     if (!env.AI_GATEWAY_API_KEY) {
-      return c.json({ error: "AI not configured" }, 503);
+      throw new ApiError(503, "ai_not_configured", "AI provider is not configured");
     }
 
     const chatId = c.req.param("chatId");
@@ -76,32 +85,24 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
       effort?: ReasoningEffort;
       message?: UIMessage;
       messages?: UIMessage[];
-      mode?: "standard" | "analyst";
       model?: string;
-      platform?: "web" | "mobile";
     }>();
 
-    const {
-      effort = "high",
-      message,
-      messages,
-      mode = "standard",
-      model,
-      platform = "web",
-    } = body ?? {};
+    const { effort = "high", message, messages, model } = body ?? {};
 
     if (!message?.id || !message.parts?.length) {
-      return c.json({ error: "message is required" }, 400);
+      throw new ApiError(400, "message_required", "message is required");
     }
     if (!Array.isArray(messages) || messages.length === 0) {
-      return c.json({ error: "messages history is required" }, 400);
+      throw new ApiError(400, "messages_required", "messages history is required");
     }
 
     const chat = await db.query.chats.findFirst({
       where: { chatId: { eq: chatId }, userId: { eq: userId } },
     });
     if (!chat) {
-      return c.json({ error: "Chat not found" }, 404);
+      // Single neutral code — never differentiate missing vs unowned.
+      throw new ApiError(404, "chat_not_found", "Chat not found");
     }
 
     const { baseModel: loggedBaseModel, useReasoning: loggedUseReasoning } =
@@ -109,11 +110,29 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
     console.log("[chat-stream]", {
       chatId,
       effort: loggedUseReasoning ? effort : undefined,
-      mode,
       model: loggedBaseModel,
       reasoning: loggedUseReasoning,
       userId,
     });
+
+    // Tier gate: free users get Haiku only and no extended thinking.
+    // Returns a stable 403 with the allowed model list so the client can
+    // surface an upgrade prompt instead of guessing at the cause.
+    const limits = await getUserLimits(userId);
+    if (!(limits.models as readonly string[]).includes(loggedBaseModel)) {
+      throw new ApiError(
+        403,
+        "model_not_allowed",
+        "Upgrade to Pro to use this model. Free tier is limited to Claude Haiku 4.5.",
+      );
+    }
+    if (loggedUseReasoning && !limits.extendedThinking) {
+      throw new ApiError(
+        403,
+        "extended_thinking_not_allowed",
+        "Upgrade to Pro to enable extended thinking.",
+      );
+    }
 
     await upsertMessage({ chatId, message });
     await startChatTitle(chat.title, chatId, message);
@@ -124,100 +143,69 @@ export const chatStreamRouter = new Hono<AppEnv>().post(
         ? allModelMessages.slice(-MAX_HISTORY)
         : allModelMessages;
 
-    if (mode === "analyst") {
-      const now = new Date();
-      const currentDate = now.toLocaleDateString("en-CA");
-      const currentDateFormatted = now.toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "long",
-        weekday: "long",
-        year: "numeric",
-      });
+    const now = new Date();
+    const currentDate = now.toLocaleDateString("en-CA");
+    const currentDateFormatted = now.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      weekday: "long",
+      year: "numeric",
+    });
 
-      const modelMessages = pruneMessages({
-        messages: trimmed,
-        reasoning: "all",
-        toolCalls: [
-          {
-            tools: [
-              "bash",
-              "readFile",
-              "runSql",
-              "webSearch",
-              "webExtract",
-              "renderChart",
-              "renderDocument",
-              "compute",
-              "askUser",
-            ],
-            type: "all",
-          },
-        ],
-      });
+    const modelMessages = pruneMessages({
+      messages: trimmed,
+      reasoning: "all",
+      toolCalls: [
+        {
+          tools: [
+            "bash",
+            "executeCode",
+            "webSearch",
+            "webExtract",
+            "renderChart",
+            "renderDocument",
+          ],
+          type: "all",
+        },
+      ],
+    });
 
-      const codeAgent = await createCodeAgent(model, userId, effort);
+    const financeAgent = await createFinanceAgent(model, userId, effort);
 
-      const stream = createUIMessageStream({
-        execute: async ({ writer }) => {
-          const result = await codeAgent.stream({
+    const stream = createUIMessageStream({
+      execute: async ({ writer }) => {
+        try {
+          const result = await financeAgent.stream({
             messages: modelMessages,
-            options: { currentDate, currentDateFormatted, platform },
+            options: { currentDate, currentDateFormatted },
           });
           const uiStream = result.toUIMessageStream({ sendReasoning: true });
           for await (const chunk of uiStream) {
             writer.write(chunk as Parameters<typeof writer.write>[0]);
           }
-        },
-        onError: (error) => {
-          console.error("[analyst stream error]", error);
-          return error instanceof Error ? error.message : "Stream error";
-        },
-        onFinish: async ({ responseMessage }) => {
-          const assistantMessage = responseMessage as UIMessage;
-          await upsertMessage({ chatId, message: assistantMessage });
-        },
-        originalMessages: messages,
-      });
-
-      return createUIMessageStreamResponse({ stream });
-    }
-
-    // Standard mode
-    const rawStandardModel = model ?? env.AI_GATEWAY_MODEL;
-    const { baseModel: standardBaseModel, useReasoning: standardUseReasoning } =
-      parseModelWithReasoning(rawStandardModel);
-    const standardProviderOptions = getProviderOptions(
-      standardBaseModel,
-      standardUseReasoning,
-      effort
-    );
-    const modelMessages = pruneMessages({
-      messages: trimmed,
-      reasoning: "all",
-    });
-    const assistantMessageId = crypto.randomUUID();
-    const result = streamText({
-      messages: modelMessages,
-      model: gatewayModel(standardBaseModel),
-      onFinish: async ({ text, reasoningText }) => {
-        const parts: UIMessage["parts"] = [];
-        if (reasoningText) {
-          parts.push({ text: reasoningText, type: "reasoning" });
+        } catch (error) {
+          // Wrap upstream AI provider errors with a stable code so the
+          // SSE `onError` callback below can surface "ai_upstream_failed".
+          throw new ApiError(
+            502,
+            "ai_upstream_failed",
+            error instanceof Error ? error.message : "AI provider failed",
+          );
         }
-        parts.push({ text, type: "text" });
-        const assistantMessage: UIMessage = {
-          id: assistantMessageId,
-          parts,
-          role: "assistant",
-        };
+      },
+      onError: (error) => {
+        console.error("[chat stream error]", error);
+        if (error instanceof ApiError) {
+          return `${error.code}: ${error.message}`;
+        }
+        return error instanceof Error ? error.message : "Stream error";
+      },
+      onFinish: async ({ responseMessage }) => {
+        const assistantMessage = responseMessage as UIMessage;
         await upsertMessage({ chatId, message: assistantMessage });
       },
-      ...(standardProviderOptions && {
-        providerOptions: standardProviderOptions,
-      }),
-      system: SYSTEM_PROMPT,
+      originalMessages: messages,
     });
 
-    return result.toUIMessageStreamResponse({ sendReasoning: true });
-  }
-);
+    return createUIMessageStreamResponse({ stream });
+  });

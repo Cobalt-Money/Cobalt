@@ -1,12 +1,4 @@
-import {
-  boolean,
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  varchar,
-} from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const user = pgTable(
   "user",
@@ -18,12 +10,18 @@ export const user = pgTable(
       .notNull(),
     id: text("id").primaryKey(),
     image: text("image"),
+    /**
+     * Better Auth anonymous plugin marker. Set by signInAnonymous when minting
+     * a demo session. Demo gating + cleanup cron read this flag — there is no
+     * separate `isDemo` because every anonymous user in this app is a demo.
+     */
+    isAnonymous: boolean("is_anonymous"),
     lastSeenAt: timestamp("last_seen_at"),
     name: text("name").notNull(),
     stripeCustomerId: text("stripe_customer_id").unique(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [index("user_email_idx").on(table.email)]
+  (table) => [index("user_email_idx").on(table.email)],
 );
 
 export const session = pgTable(
@@ -40,7 +38,7 @@ export const session = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => [index("session_user_id_idx").on(table.userId)]
+  (table) => [index("session_user_id_idx").on(table.userId)],
 );
 
 export const account = pgTable(
@@ -62,7 +60,7 @@ export const account = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => [index("account_user_id_idx").on(table.userId)]
+  (table) => [index("account_user_id_idx").on(table.userId)],
 );
 
 export const verification = pgTable(
@@ -75,7 +73,7 @@ export const verification = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
     value: text("value").notNull(),
   },
-  (table) => [index("verification_identifier_idx").on(table.identifier)]
+  (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
 /** OAuth 2.1 provider + JWT plugin tables for Better Auth. */
@@ -119,7 +117,7 @@ export const oauthClient = pgTable(
     index("oauth_client_user_id_idx").on(table.userId),
     index("oauth_client_client_id_idx").on(table.clientId),
     index("oauth_client_reference_id_idx").on(table.referenceId),
-  ]
+  ],
 );
 
 export const oauthRefreshToken = pgTable(
@@ -154,7 +152,7 @@ export const oauthRefreshToken = pgTable(
     index("oauth_refresh_token_user_id_idx").on(table.userId),
     index("oauth_refresh_token_reference_id_idx").on(table.referenceId),
     index("oauth_refresh_token_session_id_idx").on(table.sessionId),
-  ]
+  ],
 );
 
 export const oauthAccessToken = pgTable(
@@ -191,7 +189,7 @@ export const oauthAccessToken = pgTable(
     index("oauth_access_token_reference_id_idx").on(table.referenceId),
     index("oauth_access_token_refresh_id_idx").on(table.refreshId),
     index("oauth_access_token_session_id_idx").on(table.sessionId),
-  ]
+  ],
 );
 
 export const oauthConsent = pgTable(
@@ -218,7 +216,7 @@ export const oauthConsent = pgTable(
   (table) => [
     index("oauth_consent_client_user_idx").on(table.clientId, table.userId),
     index("oauth_consent_reference_id_idx").on(table.referenceId),
-  ]
+  ],
 );
 
 export const jwks = pgTable(
@@ -233,7 +231,7 @@ export const jwks = pgTable(
     privateKey: text("private_key").notNull(),
     publicKey: text("public_key").notNull(),
   },
-  () => []
+  () => [],
 );
 
 // Type exports

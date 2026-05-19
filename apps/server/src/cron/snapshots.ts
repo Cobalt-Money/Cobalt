@@ -5,13 +5,9 @@
  * topic (one message per user). The consumer at /api/queues/snapshot-user
  * drains in the background with queue-native retries. CRON_SECRET gated.
  *
- * NOT YET WIRED IN vercel.json. To activate:
- *   1. Add to `crons`:
- *        { "path": "/api/cron/snapshots", "schedule": "0 22 * * *" }
- *   2. Add `functions.<entry>.experimentalTriggers` for the queue
- *      consumer (see apps/server/src/queue/snapshot-user.ts for the
- *      path to wire). Entry key is the Nitro-compiled function path —
- *      verify in the Vercel dashboard after first deploy.
+ * Schedule lives in apps/server/vercel.json (`0 22 * * *`). Queue consumer
+ * trigger lives in apps/server/nitro.config.ts under
+ * `vercel.functionRules["/api/queues/snapshot-user"].experimentalTriggers`.
  */
 
 import { env } from "@cobalt-web/env/server";
@@ -40,12 +36,8 @@ export const cronSnapshotsRouter = new Hono().get("/snapshots", async (c) => {
   const date = todayIso();
   const results = await Promise.all(
     userIds.map((userId) =>
-      send(
-        "snapshots",
-        { userId },
-        { idempotencyKey: `snapshot-${userId}-${date}` }
-      )
-    )
+      send("snapshots", { userId }, { idempotencyKey: `snapshot-${userId}-${date}` }),
+    ),
   );
 
   return c.json({

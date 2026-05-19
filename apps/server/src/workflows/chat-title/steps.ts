@@ -6,9 +6,7 @@ import {
   MissingGatewayKeyError,
 } from "../../ai/agents/chat-title/chat-title-agent.js";
 
-export async function generateChatTitleStep(
-  firstMessage: string
-): Promise<string> {
+export async function generateChatTitleStep(firstMessage: string): Promise<string> {
   "use step";
 
   try {
@@ -27,8 +25,7 @@ export async function generateChatTitleStep(
       throw new FatalError(error.message);
     }
     const message = error instanceof Error ? error.message : String(error);
-    const status = (error as { response?: { status?: number } })?.response
-      ?.status;
+    const status = (error as { response?: { status?: number } })?.response?.status;
     if (status === 429 || /rate limit|429/i.test(message)) {
       throw new RetryableError("Title model rate limited", {
         retryAfter: "1m",
@@ -45,10 +42,7 @@ export async function generateChatTitleStep(
   }
 }
 
-export async function updateChatTitleStep(
-  chatId: string,
-  title: string
-): Promise<void> {
+export async function updateChatTitleStep(chatId: string, title: string): Promise<void> {
   "use step";
 
   try {

@@ -1,4 +1,5 @@
-import { CardContent, CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { CardContent, Card } from "@cobalt-web/ui/components/card";
+import { ACCOUNT_CATEGORY_COLORS } from "@cobalt-web/ui/lib/account-palette";
 import { brokerageInstitutionBranding } from "@cobalt-web/ui/cobalt/logos/brokerage-institution-branding";
 import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
 import { Button } from "@cobalt-web/ui/components/button";
@@ -13,18 +14,12 @@ import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { queries } from "@cobalt-web/zero";
+import type { Row, Snapshot } from "@cobalt-web/zero";
 import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  Cell,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 import { AllocationDonutChart } from "@/components/dashboard/net-worth-donut-chart";
 import { NetWorthSectionSkeleton } from "@/components/dashboard/skeletons/net-worth-section-skeleton";
@@ -60,41 +55,18 @@ const MONTH_LABELS = [
 const TIME_RANGES = ["1W", "1M", "1Y", "All"] as const;
 type TimeRange = (typeof TIME_RANGES)[number];
 
-const CATEGORY_COLORS = {
-  checking: "#3b82f6",
-  credit: "#ec4899",
-  investments: "#38bdf8",
-  loans: "#f97316",
-  savings: "#6366f1",
-} as const;
+type BankAccountRow = Row<typeof queries.accounts.bankAccounts>;
 
-interface BankSnapshotRow {
-  accountId: string;
-  snapshotDate: number;
-  current?: number | null;
-  account?: {
-    type?: string | null;
-    subtype?: string | null;
-    name?: string | null;
-    connection?: {
-      institutionName?: string | null;
-      institutionLogo?: string | null;
-      institution?: {
-        logo?: string | null;
-        url?: string | null;
-        name?: string | null;
-      } | null;
-    } | null;
-  } | null;
-}
+/** Snapshot row after client-side join with `bankAccounts` adds the `account` metadata. */
+type BankSnapshotRow = Snapshot & {
+  account?: Pick<BankAccountRow, "type" | "subtype" | "name"> | null;
+};
 
-interface PortfolioSnapshotRow {
-  accountId?: string | null;
-  snapshotDate: number;
-  current?: number | null;
+/** Portfolio snapshot post client-side enrichment with brokerage account name/institution. */
+type PortfolioSnapshotRow = Snapshot & {
   accountName?: string | null;
   institutionName?: string | null;
-}
+};
 
 // ── Account scope ─────────────────────────────────────────────────
 
@@ -181,10 +153,7 @@ function getBucketKey(ts: number, range: TimeRange): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function bucketLabels(
-  key: string,
-  range: TimeRange
-): { label: string; fullLabel: string } {
+function bucketLabels(key: string, range: TimeRange): { label: string; fullLabel: string } {
   if (range === "1W") {
     const [y, m, day] = key.split("-").map(Number);
     const d = new Date(y, (m ?? 1) - 1, day);
@@ -218,19 +187,10 @@ function bucketLabels(
  *
  * For each bucket, takes the last snapshot per account → sums (depository – credit + investments).
  */
-type BankBucketMap = Map<
-  string,
-  Map<string, { balance: number; type: string; date: number }>
->;
-type PortfolioBucketMap = Map<
-  string,
-  Map<string, { totalValue: number; date: number }>
->;
+type BankBucketMap = Map<string, Map<string, { balance: number; type: string; date: number }>>;
+type PortfolioBucketMap = Map<string, Map<string, { totalValue: number; date: number }>>;
 
-function buildBankBuckets(
-  snapshots: BankSnapshotRow[],
-  range: TimeRange
-): BankBucketMap {
+function buildBankBuckets(snapshots: readonly BankSnapshotRow[], range: TimeRange): BankBucketMap {
   const byBucket: BankBucketMap = new Map();
   for (const snap of snapshots) {
     const key = getBucketKey(snap.snapshotDate, range);
@@ -251,8 +211,8 @@ function buildBankBuckets(
 }
 
 function buildPortfolioBuckets(
-  snapshots: PortfolioSnapshotRow[],
-  range: TimeRange
+  snapshots: readonly PortfolioSnapshotRow[],
+  range: TimeRange,
 ): PortfolioBucketMap {
   const byBucket: PortfolioBucketMap = new Map();
   for (const snap of snapshots) {
@@ -274,14 +234,12 @@ function buildPortfolioBuckets(
 }
 
 function buildNetWorthSeries(
-  bankSnapshots: BankSnapshotRow[],
-  portfolioSnapshots: PortfolioSnapshotRow[],
+  bankSnapshots: readonly BankSnapshotRow[],
+  portfolioSnapshots: readonly PortfolioSnapshotRow[],
   since: number | null,
-  range: TimeRange
+  range: TimeRange,
 ): ChartPoint[] {
-  const filteredBank = since
-    ? bankSnapshots.filter((s) => s.snapshotDate >= since)
-    : bankSnapshots;
+  const filteredBank = since ? bankSnapshots.filter((s) => s.snapshotDate >= since) : bankSnapshots;
   const filteredPortfolio = since
     ? portfolioSnapshots.filter((s) => s.snapshotDate >= since)
     : portfolioSnapshots;
@@ -289,27 +247,23 @@ function buildNetWorthSeries(
   const bankByBucket = buildBankBuckets(filteredBank, range);
   const portfolioByBucket = buildPortfolioBuckets(filteredPortfolio, range);
 
-  const allKeys = new Set([
-    ...bankByBucket.keys(),
-    ...portfolioByBucket.keys(),
-  ]);
+  const allKeys = new Set([...bankByBucket.keys(), ...portfolioByBucket.keys()]);
 
   return [...allKeys]
     .toSorted() // lexicographic = chronological for all key formats
     .map((key) => {
-      let bankNet = 0;
-      for (const { balance, type } of bankByBucket.get(key)?.values() ?? []) {
-        bankNet += type === "credit" || type === "loan" ? -balance : balance;
+      // snapshot.current is signed at write time (liabilities negative).
+      // Net worth = plain sum across every account.
+      let total = 0;
+      for (const { balance } of bankByBucket.get(key)?.values() ?? []) {
+        total += balance;
       }
-
-      let portfolioTotal = 0;
       for (const { totalValue } of portfolioByBucket.get(key)?.values() ?? []) {
-        portfolioTotal += totalValue;
+        total += totalValue;
       }
-
       return {
         ...bucketLabels(key, range),
-        value: bankNet + portfolioTotal,
+        value: total,
       };
     });
 }
@@ -319,7 +273,7 @@ function buildNetWorthSeries(
 function scopeLabel(
   scope: AccountScope,
   bankAccounts: BankAccountEntry[],
-  portfolioAccounts: PortfolioAccountEntry[]
+  portfolioAccounts: PortfolioAccountEntry[],
 ): string {
   if (scope.type === "all") {
     return "All accounts";
@@ -328,15 +282,9 @@ function scopeLabel(
     return GROUP_LABELS[scope.group];
   }
   if (scope.type === "bank") {
-    return (
-      bankAccounts.find((a) => a.plaidAccountId === scope.plaidAccountId)
-        ?.name ?? "Account"
-    );
+    return bankAccounts.find((a) => a.plaidAccountId === scope.plaidAccountId)?.name ?? "Account";
   }
-  return (
-    portfolioAccounts.find((a) => a.accountKey === scope.accountKey)?.name ??
-    "Account"
-  );
+  return portfolioAccounts.find((a) => a.accountKey === scope.accountKey)?.name ?? "Account";
 }
 
 type NavSection = "bank" | "investments";
@@ -374,7 +322,7 @@ function NetWorthScopePicker({
       "flex w-full cursor-pointer items-center rounded-lg px-3 py-2 text-left text-xs transition-colors",
       active
         ? "bg-accent text-foreground font-medium"
-        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
     );
 
   const rightItemClass = (active: boolean) =>
@@ -439,27 +387,22 @@ function NetWorthScopePicker({
           <div className="bg-muted/40 flex min-w-0 flex-1 flex-col gap-0.5 overflow-y-auto rounded-xl p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {nav === "bank" && (
               <>
-                {(["bank", "checking", "savings", "loans"] as const).map(
-                  (g) => (
-                    <DropdownMenuItem
-                      className={rightItemClass(
-                        scope.type === "group" && scope.group === g
-                      )}
-                      key={g}
-                      onClick={() => onScopeChange({ group: g, type: "group" })}
-                    >
-                      {GROUP_LABELS[g]}
-                    </DropdownMenuItem>
-                  )
-                )}
+                {(["bank", "checking", "savings", "loans"] as const).map((g) => (
+                  <DropdownMenuItem
+                    className={rightItemClass(scope.type === "group" && scope.group === g)}
+                    key={g}
+                    onClick={() => onScopeChange({ group: g, type: "group" })}
+                  >
+                    {GROUP_LABELS[g]}
+                  </DropdownMenuItem>
+                ))}
                 {bankAccounts.length > 0 && (
                   <>
                     <div className="border-border/40 my-1 border-t" />
                     {bankAccounts.map((acc) => (
                       <DropdownMenuItem
                         className={rightItemClass(
-                          scope.type === "bank" &&
-                            scope.plaidAccountId === acc.plaidAccountId
+                          scope.type === "bank" && scope.plaidAccountId === acc.plaidAccountId,
                         )}
                         key={acc.plaidAccountId}
                         onClick={() =>
@@ -489,11 +432,9 @@ function NetWorthScopePicker({
               <>
                 <DropdownMenuItem
                   className={rightItemClass(
-                    scope.type === "group" && scope.group === "investments"
+                    scope.type === "group" && scope.group === "investments",
                   )}
-                  onClick={() =>
-                    onScopeChange({ group: "investments", type: "group" })
-                  }
+                  onClick={() => onScopeChange({ group: "investments", type: "group" })}
                 >
                   All investments
                 </DropdownMenuItem>
@@ -503,8 +444,7 @@ function NetWorthScopePicker({
                     {portfolioAccounts.map((acc) => (
                       <DropdownMenuItem
                         className={rightItemClass(
-                          scope.type === "portfolio" &&
-                            scope.accountKey === acc.accountKey
+                          scope.type === "portfolio" && scope.accountKey === acc.accountKey,
                         )}
                         key={acc.accountKey}
                         onClick={() =>
@@ -544,33 +484,27 @@ function NetWorthScopePicker({
   );
 }
 
-type ConnectionField = NonNullable<
-  NonNullable<BankSnapshotRow["account"]>["connection"]
->;
+type ConnectionField = NonNullable<BankAccountRow["plaidConnection"]>;
 
-function institutionFieldsFromConnection(
-  conn: ConnectionField | null | undefined
-) {
+function institutionFieldsFromConnection(conn: ConnectionField | null | undefined) {
   const inst = conn?.institution;
   return {
-    institutionLogo:
-      inst?.logo?.trim() || conn?.institutionLogo?.trim() || null,
-    institutionName:
-      inst?.name?.trim() || conn?.institutionName?.trim() || null,
+    institutionLogo: inst?.logo?.trim() || conn?.institutionLogo?.trim() || null,
+    institutionName: inst?.name?.trim() || conn?.institutionName?.trim() || null,
     institutionUrl: inst?.url?.trim() || null,
   };
 }
 
-function bankEntryFromSnapshot(s: BankSnapshotRow): BankAccountEntry | null {
-  if (!s.account?.name) {
+function bankEntryFromAccount(a: BankAccountRow): BankAccountEntry | null {
+  if (!a.name) {
     return null;
   }
   return {
-    ...institutionFieldsFromConnection(s.account.connection),
-    name: s.account.name,
-    plaidAccountId: s.accountId,
-    subtype: s.account.subtype,
-    type: s.account.type ?? "depository",
+    ...institutionFieldsFromConnection(a.plaidConnection),
+    name: a.name,
+    plaidAccountId: a.id,
+    subtype: a.subtype,
+    type: a.type ?? "depository",
   };
 }
 
@@ -583,34 +517,97 @@ export function NetWorthSection() {
   const [scope, setScope] = useState<AccountScope>({ type: "all" });
   const { mask } = usePrivacy();
 
-  // Snapshot history — drives both the chart and headline totals
-  const [rawBankSnapshots, bankResult] = useQuery(
-    queries.accounts.bankBalanceSnapshots()
-  );
+  // Snapshot history — drives both the chart and headline totals.
+  // Range scoped server-side to cap IVM hydrate cost.
+  const [rawBankSnapshots, bankResult] = useQuery(queries.accounts.bankBalanceSnapshots({ range }));
   const [rawPortfolioSnapshots, portfolioResult] = useQuery(
-    queries.brokerage.portfolioSnapshots()
+    queries.brokerage.portfolioSnapshots({ range }),
   );
-  const allBankSnapshots = rawBankSnapshots as unknown as BankSnapshotRow[];
-  const allPortfolioSnapshots =
-    rawPortfolioSnapshots as unknown as PortfolioSnapshotRow[];
+  // Account metadata (type/subtype/name + institution chips) — pulled from
+  // the small bankAccounts subscription. Snapshot query stays 0-relate so
+  // its IVM pipeline is a single stage.
+  const [allBankAccounts] = useQuery(queries.accounts.bankAccounts());
+  const [snaptradeAccounts] = useQuery(queries.brokerage.accounts());
+  const [plaidInvestmentAccounts] = useQuery(queries.brokerage.plaidInvestmentAccounts());
+  const [manualInvestmentAccounts] = useQuery(queries.brokerage.manualInvestmentAccounts());
 
-  const isDataComplete =
-    bankResult.type === "complete" && portfolioResult.type === "complete";
+  const accountById = useMemo(() => {
+    const m = new Map<string, BankAccountRow>();
+    for (const a of allBankAccounts) {
+      m.set(a.id, a);
+    }
+    return m;
+  }, [allBankAccounts]);
+
+  /** id → {name, institutionName} for snaptrade + plaid + manual investment accounts. */
+  const brokerageMetaById = useMemo(() => {
+    const m = new Map<string, { name: string | null; institutionName: string | null }>();
+    for (const a of snaptradeAccounts) {
+      m.set(a.id, { institutionName: a.institutionName ?? null, name: a.name ?? null });
+    }
+    for (const a of plaidInvestmentAccounts) {
+      const inst =
+        a.plaidConnection?.institution?.name ??
+        a.plaidConnection?.institutionName ??
+        a.institutionName ??
+        null;
+      m.set(a.id, { institutionName: inst, name: a.name ?? null });
+    }
+    for (const a of manualInvestmentAccounts) {
+      m.set(a.id, { institutionName: a.institutionName ?? null, name: a.name ?? null });
+    }
+    return m;
+  }, [snaptradeAccounts, plaidInvestmentAccounts, manualInvestmentAccounts]);
+
+  // Attach account metadata (type/subtype/name) to each snapshot row by
+  // joining with the bankAccounts map. Equivalent to the `.related("account")`
+  // we used to ship server-side, but free of IVM cost.
+  const allBankSnapshots = useMemo<BankSnapshotRow[]>(
+    () =>
+      rawBankSnapshots.map((s) => {
+        const acc = accountById.get(s.accountId);
+        return {
+          ...s,
+          account: acc
+            ? {
+                name: acc.name ?? null,
+                subtype: acc.subtype ?? null,
+                type: acc.type ?? null,
+              }
+            : null,
+        };
+      }),
+    [rawBankSnapshots, accountById],
+  );
+
+  /** Portfolio snapshots enriched with brokerage account name + institution from the join map. */
+  const allPortfolioSnapshots = useMemo<PortfolioSnapshotRow[]>(
+    () =>
+      rawPortfolioSnapshots.map((s) => {
+        const meta = brokerageMetaById.get(s.accountId);
+        return {
+          ...s,
+          accountName: meta?.name ?? null,
+          institutionName: meta?.institutionName ?? null,
+        };
+      }),
+    [rawPortfolioSnapshots, brokerageMetaById],
+  );
+
+  const isDataComplete = bankResult.type === "complete" && portfolioResult.type === "complete";
 
   // ── Unique account lists for the picker ──────────────────────────
 
   const bankAccountEntries = useMemo((): BankAccountEntry[] => {
-    const seen = new Map<string, BankAccountEntry>();
-    for (const s of allBankSnapshots) {
-      if (!seen.has(s.accountId)) {
-        const entry = bankEntryFromSnapshot(s);
-        if (entry) {
-          seen.set(s.accountId, entry);
-        }
+    const out: BankAccountEntry[] = [];
+    for (const a of allBankAccounts) {
+      const entry = bankEntryFromAccount(a);
+      if (entry) {
+        out.push(entry);
       }
     }
-    return [...seen.values()];
-  }, [allBankSnapshots]);
+    return out;
+  }, [allBankAccounts]);
 
   const portfolioAccountEntries = useMemo((): PortfolioAccountEntry[] => {
     const seen = new Map<string, PortfolioAccountEntry>();
@@ -640,9 +637,7 @@ export function NetWorthSection() {
       return allBankSnapshots;
     }
     if (scope.type === "bank") {
-      return allBankSnapshots.filter(
-        (s) => s.accountId === scope.plaidAccountId
-      );
+      return allBankSnapshots.filter((s) => s.accountId === scope.plaidAccountId);
     }
     if (scope.type === "group") {
       if (scope.group === "investments") {
@@ -653,14 +648,12 @@ export function NetWorthSection() {
       }
       if (scope.group === "checking") {
         return allBankSnapshots.filter(
-          (s) =>
-            s.account?.type === "depository" && s.account.subtype !== "savings"
+          (s) => s.account?.type === "depository" && s.account.subtype !== "savings",
         );
       }
       if (scope.group === "savings") {
         return allBankSnapshots.filter(
-          (s) =>
-            s.account?.type === "depository" && s.account.subtype === "savings"
+          (s) => s.account?.type === "depository" && s.account.subtype === "savings",
         );
       }
       if (scope.group === "loans") {
@@ -675,9 +668,7 @@ export function NetWorthSection() {
       return allPortfolioSnapshots;
     }
     if (scope.type === "portfolio") {
-      return allPortfolioSnapshots.filter(
-        (s) => s.accountId === scope.accountKey
-      );
+      return allPortfolioSnapshots.filter((s) => s.accountId === scope.accountKey);
     }
     if (scope.type === "group" && scope.group === "investments") {
       return allPortfolioSnapshots;
@@ -689,44 +680,51 @@ export function NetWorthSection() {
 
   /** Snapshots from the single most recent snapshot day across all bank accounts. */
   const latestBankSnapshots = useMemo(() => {
-    if (bankSnapshots.length === 0) {
+    // Source query is `orderBy("snapshotDate", "desc")` — index 0 is newest.
+    const newestDate = bankSnapshots[0]?.snapshotDate;
+    if (newestDate === undefined) {
       return [];
     }
-    const newestDate = Math.max(...bankSnapshots.map((s) => s.snapshotDate));
-    return bankSnapshots.filter((s) => s.snapshotDate === newestDate);
+    const out: BankSnapshotRow[] = [];
+    for (const s of bankSnapshots) {
+      if (s.snapshotDate !== newestDate) {
+        break;
+      }
+      out.push(s);
+    }
+    return out;
   }, [bankSnapshots]);
 
   /** Snapshots from the single most recent snapshot day across all portfolio accounts. */
   const latestPortfolioSnapshots = useMemo(() => {
-    if (portfolioSnapshots.length === 0) {
+    const newestDate = portfolioSnapshots[0]?.snapshotDate;
+    if (newestDate === undefined) {
       return [];
     }
-    const newestDate = Math.max(
-      ...portfolioSnapshots.map((s) => s.snapshotDate)
-    );
-    return portfolioSnapshots.filter((s) => s.snapshotDate === newestDate);
+    const out: PortfolioSnapshotRow[] = [];
+    for (const s of portfolioSnapshots) {
+      if (s.snapshotDate !== newestDate) {
+        break;
+      }
+      out.push(s);
+    }
+    return out;
   }, [portfolioSnapshots]);
 
   const checkingTotal = useMemo(
     () =>
       latestBankSnapshots
-        .filter(
-          (s) =>
-            s.account?.type === "depository" && s.account.subtype !== "savings"
-        )
+        .filter((s) => s.account?.type === "depository" && s.account.subtype !== "savings")
         .reduce((sum, s) => sum + (s.current ?? 0), 0),
-    [latestBankSnapshots]
+    [latestBankSnapshots],
   );
 
   const savingsTotal = useMemo(
     () =>
       latestBankSnapshots
-        .filter(
-          (s) =>
-            s.account?.type === "depository" && s.account.subtype === "savings"
-        )
+        .filter((s) => s.account?.type === "depository" && s.account.subtype === "savings")
         .reduce((sum, s) => sum + (s.current ?? 0), 0),
-    [latestBankSnapshots]
+    [latestBankSnapshots],
   );
 
   const depositoryTotal = checkingTotal + savingsTotal;
@@ -736,7 +734,7 @@ export function NetWorthSection() {
       latestBankSnapshots
         .filter((s) => s.account?.type === "credit")
         .reduce((sum, s) => sum + (s.current ?? 0), 0),
-    [latestBankSnapshots]
+    [latestBankSnapshots],
   );
 
   const loanTotal = useMemo(
@@ -744,29 +742,26 @@ export function NetWorthSection() {
       latestBankSnapshots
         .filter((s) => s.account?.type === "loan")
         .reduce((sum, s) => sum + (s.current ?? 0), 0),
-    [latestBankSnapshots]
+    [latestBankSnapshots],
   );
 
   const investmentTotal = useMemo(
-    () =>
-      latestPortfolioSnapshots.reduce((sum, s) => sum + (s.current ?? 0), 0),
-    [latestPortfolioSnapshots]
+    () => latestPortfolioSnapshots.reduce((sum, s) => sum + (s.current ?? 0), 0),
+    [latestPortfolioSnapshots],
   );
 
-  const totalNetWorth =
-    depositoryTotal + investmentTotal - creditTotal - loanTotal;
+  // snapshot.current is signed: assets positive, liabilities negative.
+  // Net worth = plain sum across every category.
+  const totalNetWorth = depositoryTotal + investmentTotal + creditTotal + loanTotal;
+  // Liability magnitudes for "you owe $X" displays + donut percentages.
+  const creditOwed = Math.abs(creditTotal);
+  const loanOwed = Math.abs(loanTotal);
 
   // ── Historical chart ─────────────────────────────────────────
 
   const chartData = useMemo(
-    () =>
-      buildNetWorthSeries(
-        bankSnapshots,
-        portfolioSnapshots,
-        rangeCutoff(range),
-        range
-      ),
-    [bankSnapshots, portfolioSnapshots, range]
+    () => buildNetWorthSeries(bankSnapshots, portfolioSnapshots, rangeCutoff(range), range),
+    [bankSnapshots, portfolioSnapshots, range],
   );
 
   const yDomain = useMemo((): [number, number] => {
@@ -782,8 +777,10 @@ export function NetWorthSection() {
 
   // ── Categories donut ─────────────────────────────────────────
 
-  const categoryBase =
-    checkingTotal + savingsTotal + investmentTotal + creditTotal + loanTotal;
+  // Donut shows category share by magnitude — liabilities use absolute value
+  // so credit / loan slices have positive width even though their snapshot
+  // sign is negative.
+  const categoryBase = checkingTotal + savingsTotal + investmentTotal + creditOwed + loanOwed;
 
   const categories = useMemo(() => {
     if (categoryBase === 0) {
@@ -792,51 +789,44 @@ export function NetWorthSection() {
     const pct = (v: number) => Math.round((v / categoryBase) * 100);
     return [
       {
-        color: CATEGORY_COLORS.checking,
+        color: ACCOUNT_CATEGORY_COLORS.checking,
         key: "checking",
         label: "Checking",
         pct: pct(checkingTotal),
         value: checkingTotal,
       },
       {
-        color: CATEGORY_COLORS.savings,
+        color: ACCOUNT_CATEGORY_COLORS.savings,
         key: "savings",
         label: "Savings",
         pct: pct(savingsTotal),
         value: savingsTotal,
       },
       {
-        color: CATEGORY_COLORS.investments,
+        color: ACCOUNT_CATEGORY_COLORS.investments,
         key: "investments",
         label: "Investments",
         pct: pct(investmentTotal),
         value: investmentTotal,
       },
       {
-        color: CATEGORY_COLORS.credit,
+        color: ACCOUNT_CATEGORY_COLORS.credit,
         key: "credit",
         label: "Credit",
-        pct: pct(creditTotal),
-        value: creditTotal,
+        pct: pct(creditOwed),
+        value: creditOwed,
       },
       {
-        color: CATEGORY_COLORS.loans,
+        color: ACCOUNT_CATEGORY_COLORS.loans,
         key: "loans",
         label: "Loans",
-        pct: pct(loanTotal),
-        value: loanTotal,
+        pct: pct(loanOwed),
+        value: loanOwed,
       },
     ]
       .filter((c) => c.value > 0)
       .toSorted((a, b) => b.pct - a.pct);
-  }, [
-    checkingTotal,
-    savingsTotal,
-    investmentTotal,
-    creditTotal,
-    loanTotal,
-    categoryBase,
-  ]);
+  }, [checkingTotal, savingsTotal, investmentTotal, creditOwed, loanOwed, categoryBase]);
 
   const categoryDonutConfig = useMemo((): ChartConfig => {
     const out: Record<string, { color: string; label: string }> = {};
@@ -848,7 +838,7 @@ export function NetWorthSection() {
 
   const categoryDonutData = useMemo(
     () => categories.map((c) => ({ name: c.key, value: c.pct })),
-    [categories]
+    [categories],
   );
 
   const categoryCenterValue =
@@ -858,17 +848,13 @@ export function NetWorthSection() {
 
   // ── Render ───────────────────────────────────────────────────
 
-  if (
-    !isDataComplete &&
-    allBankSnapshots.length === 0 &&
-    allPortfolioSnapshots.length === 0
-  ) {
+  if (!isDataComplete && allBankSnapshots.length === 0 && allPortfolioSnapshots.length === 0) {
     return <NetWorthSectionSkeleton />;
   }
 
   return (
     <section aria-label="Net worth overview" className="w-full min-w-0">
-      <CobaltCard className="overflow-hidden rounded-3xl py-3">
+      <Card variant="subtle" className="overflow-hidden rounded-3xl py-3">
         <CardContent className="p-0">
           <div className="flex flex-col lg:min-h-[380px] lg:flex-row lg:items-stretch">
             {/* Net worth history chart */}
@@ -880,7 +866,7 @@ export function NetWorthSection() {
                       {formatUsdInteger(
                         hoverIndex === null
                           ? totalNetWorth
-                          : (chartData[hoverIndex]?.value ?? totalNetWorth)
+                          : (chartData[hoverIndex]?.value ?? totalNetWorth),
                       )}
                     </PrivateAmount>
                   </p>
@@ -896,11 +882,7 @@ export function NetWorthSection() {
                 />
               </div>
 
-              <div
-                aria-label="Chart time range"
-                className="flex flex-wrap gap-1"
-                role="toolbar"
-              >
+              <div aria-label="Chart time range" className="flex flex-wrap gap-1" role="toolbar">
                 {TIME_RANGES.map((t) => {
                   const selected = range === t;
                   return (
@@ -956,9 +938,7 @@ export function NetWorthSection() {
                         {chartData.map((row, i) => (
                           <Cell
                             fill="var(--color-green-550)"
-                            fillOpacity={
-                              hoverIndex !== null && i !== hoverIndex ? 0.2 : 1
-                            }
+                            fillOpacity={hoverIndex !== null && i !== hoverIndex ? 0.2 : 1}
                             key={row.fullLabel}
                           />
                         ))}
@@ -973,13 +953,11 @@ export function NetWorthSection() {
             <div
               className={cn(
                 "border-border/60 flex w-full shrink-0 flex-col gap-4 border-t px-5 sm:px-6",
-                "lg:w-[min(100%,20rem)] lg:border-t-0 lg:border-l"
+                "lg:w-[min(100%,20rem)] lg:border-t-0 lg:border-l",
               )}
               onMouseLeave={() => setCategoryHover(null)}
             >
-              <p className="text-muted-foreground text-sm font-medium">
-                Categories
-              </p>
+              <p className="text-muted-foreground text-sm font-medium">Categories</p>
 
               {categories.length === 0 ? (
                 <ConnectAccountEmpty
@@ -1009,9 +987,7 @@ export function NetWorthSection() {
                       <div
                         className={cn(
                           "min-w-0 space-y-1 transition-opacity duration-150",
-                          categoryHover !== null &&
-                            categoryHover !== i &&
-                            "opacity-[0.28]"
+                          categoryHover !== null && categoryHover !== i && "opacity-[0.28]",
                         )}
                         key={c.key}
                         onMouseEnter={() => setCategoryHover(i)}
@@ -1022,13 +998,9 @@ export function NetWorthSection() {
                             className="size-2.5 shrink-0 rounded-full"
                             style={{ backgroundColor: c.color }}
                           />
-                          <span className="text-muted-foreground truncate">
-                            {c.label}
-                          </span>
+                          <span className="text-muted-foreground truncate">{c.label}</span>
                         </div>
-                        <p className="text-foreground pl-4 font-semibold tabular-nums">
-                          {c.pct}%
-                        </p>
+                        <p className="text-foreground pl-4 font-semibold tabular-nums">{c.pct}%</p>
                       </div>
                     ))}
                   </div>
@@ -1037,7 +1009,7 @@ export function NetWorthSection() {
             </div>
           </div>
         </CardContent>
-      </CobaltCard>
+      </Card>
     </section>
   );
 }

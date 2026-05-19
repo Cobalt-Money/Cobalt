@@ -16,27 +16,21 @@ function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export const cronRefreshFundamentalsRouter = new Hono().get(
-  "/refresh-fundamentals",
-  async (c) => {
-    const secret = env.CRON_SECRET;
-    if (!secret) {
-      return c.json({ error: "CRON_SECRET not configured" }, 503);
-    }
-    if (c.req.header("Authorization") !== `Bearer ${secret}`) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-
-    const today = new Date();
-    const yesterday = new Date(today);
-
-    yesterday.setDate(today.getDate() - 1);
-
-    const run = await start(refreshFundamentalsWorkflow, [
-      isoDate(today),
-      isoDate(yesterday),
-    ]);
-
-    return c.json({ date: isoDate(today), runId: run.runId, started: true });
+export const cronRefreshFundamentalsRouter = new Hono().get("/refresh-fundamentals", async (c) => {
+  const secret = env.CRON_SECRET;
+  if (!secret) {
+    return c.json({ error: "CRON_SECRET not configured" }, 503);
   }
-);
+  if (c.req.header("Authorization") !== `Bearer ${secret}`) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const today = new Date();
+  const yesterday = new Date(today);
+
+  yesterday.setDate(today.getDate() - 1);
+
+  const run = await start(refreshFundamentalsWorkflow, [isoDate(today), isoDate(yesterday)]);
+
+  return c.json({ date: isoDate(today), runId: run.runId, started: true });
+});

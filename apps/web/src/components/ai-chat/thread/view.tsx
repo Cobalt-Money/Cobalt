@@ -1,17 +1,20 @@
 import {
+  Attachment,
+  AttachmentPreview,
+  Attachments,
+} from "@cobalt-web/ui/components/ai-elements/attachments";
+import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
 } from "@cobalt-web/ui/components/ai-elements/conversation";
-import {
-  Message,
-  MessageContent,
-} from "@cobalt-web/ui/components/ai-elements/message";
+import { Message, MessageContent } from "@cobalt-web/ui/components/ai-elements/message";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import type { Message as ChatMessage, Part } from "@cobalt-web/zero";
 import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { useParams } from "@tanstack/react-router";
-import type { UIMessage } from "ai";
+import type { FileUIPart, UIMessage } from "ai";
 import { memo, useEffect, useMemo } from "react";
 
 import { useChat } from "@/components/ai-chat/state/chat-context";
@@ -21,24 +24,8 @@ import { MessagePartsRenderer } from "@/components/ai-chat/thread/message-parts"
  * Chat thread: Zero-backed messages grouped by user turn, plus one optional
  * in-flight assistant message while streaming (ai-elements Conversation + Message).
  */
-interface ChatMessagePart {
-  type: unknown;
-  text_text: unknown;
-  reasoning_text: unknown;
-  tool_state: unknown;
-  tool_toolCallId: unknown;
-  tool_input: unknown;
-  tool_output: unknown;
-  tool_errorText: unknown;
-  data: unknown;
-}
-
-interface ChatMessageRow {
-  messageId: unknown;
-  role: unknown;
-  createdAt: unknown;
-  parts: readonly ChatMessagePart[];
-}
+type ChatMessagePart = Part;
+type ChatMessageRow = ChatMessage & { readonly parts: readonly Part[] };
 
 function groupMessagesIntoSections(messages: readonly ChatMessageRow[]) {
   const sections: {
@@ -72,30 +59,62 @@ function groupMessagesIntoSections(messages: readonly ChatMessageRow[]) {
 function getTextContent(message: ChatMessageRow) {
   return message.parts
     .filter((p) => p.type === "text")
-    .map((p) => (typeof p.text_text === "string" ? p.text_text : ""))
+    .map((p) => p.text_text ?? "")
     .join("");
 }
 
-function partRowToUIPart(
-  p: ChatMessagePart
-): UIMessage["parts"][number] | null {
-  const type = typeof p.type === "string" ? p.type : null;
-  if (!type) {
+function isNullish<T>(v: T | null | undefined): v is null | undefined {
+  return v === null || v === undefined;
+}
+
+function getFileParts(message: ChatMessageRow): (FileUIPart & { id: string })[] {
+  const out: (FileUIPart & { id: string })[] = [];
+  for (let i = 0; i < message.parts.length; i += 1) {
+    const p = message.parts[i];
+    if (!p || p.type !== "file" || isNullish(p.file_url) || isNullish(p.file_mediaType)) {
+      continue;
+    }
+    out.push({
+      filename: p.file_filename ?? undefined,
+      id: `${message.messageId}-file-${i}`,
+      mediaType: p.file_mediaType,
+      type: "file",
+      url: p.file_url,
+    });
+  }
+  return out;
+}
+
+function filePartFromRow(p: ChatMessagePart): UIMessage["parts"][number] | null {
+  if (isNullish(p.file_url) || isNullish(p.file_mediaType)) {
     return null;
   }
+  const filePart: Record<string, unknown> = {
+    mediaType: p.file_mediaType,
+    type: "file",
+    url: p.file_url,
+  };
+  if (!isNullish(p.file_filename)) {
+    filePart.filename = p.file_filename;
+  }
+  return filePart as UIMessage["parts"][number];
+}
+
+function partRowToUIPart(p: ChatMessagePart): UIMessage["parts"][number] | null {
+  const { type } = p;
 
   if (type === "text") {
-    if (p.text_text === null || p.text_text === undefined) {
+    if (isNullish(p.text_text)) {
       return null;
     }
-    return { text: String(p.text_text), type: "text" };
+    return { text: p.text_text, type: "text" };
   }
 
   if (type === "reasoning") {
-    if (p.reasoning_text === null || p.reasoning_text === undefined) {
+    if (isNullish(p.reasoning_text)) {
       return null;
     }
-    return { text: String(p.reasoning_text), type: "reasoning" };
+    return { text: p.reasoning_text, type: "reasoning" };
   }
 
   if (type.startsWith("tool-")) {
@@ -107,10 +126,10 @@ function partRowToUIPart(
       toolCallId: p.tool_toolCallId,
       type,
     };
-    if (p.tool_input) {
+    if (!isNullish(p.tool_input)) {
       toolPart.input = p.tool_input;
     }
-    if (p.tool_output) {
+    if (!isNullish(p.tool_output)) {
       toolPart.output = p.tool_output;
     }
     if (p.tool_errorText) {
@@ -119,7 +138,11 @@ function partRowToUIPart(
     return toolPart as UIMessage["parts"][number];
   }
 
-  if (type.startsWith("data-") && p.data) {
+  if (type === "file") {
+    return filePartFromRow(p);
+  }
+
+  if (type.startsWith("data-") && !isNullish(p.data)) {
     return { data: p.data, type } as UIMessage["parts"][number];
   }
 
@@ -132,11 +155,11 @@ function partRowToUIPart(
 
 function rowToUIMessage(message: ChatMessageRow): UIMessage {
   return {
-    id: String(message.messageId),
+    id: message.messageId,
     parts: message.parts
       .map(partRowToUIPart)
       .filter((p): p is UIMessage["parts"][number] => p !== null),
-    role: String(message.role) as "user" | "assistant",
+    role: message.role as "user" | "assistant",
   };
 }
 
@@ -145,10 +168,7 @@ function rowToUIMessage(message: ChatMessageRow): UIMessage {
  * handing us a fresh row reference for unchanged content — without this, every
  * streamed chunk would force a full re-render of every settled message.
  */
-function rowPartsEqual(
-  a: readonly ChatMessagePart[],
-  b: readonly ChatMessagePart[]
-): boolean {
+function rowPartsEqual(a: readonly ChatMessagePart[], b: readonly ChatMessagePart[]): boolean {
   if (a.length !== b.length) {
     return false;
   }
@@ -185,6 +205,9 @@ function rowPartsEqual(
     if (ap.data !== bp.data) {
       return false;
     }
+    if (ap.file_url !== bp.file_url) {
+      return false;
+    }
   }
   return true;
 }
@@ -205,21 +228,30 @@ function rowsEqual(a: ChatMessageRow, b: ChatMessageRow): boolean {
 const UserBubble = memo(
   function UserBubble({ row }: { row: ChatMessageRow }) {
     const text = useMemo(() => getTextContent(row), [row]);
+    const files = useMemo(() => getFileParts(row), [row]);
     return (
       <Message className="w-full max-w-full" from="user">
         <MessageContent
           className={cn(
             "w-full max-w-full text-base leading-snug",
-            "group-[.is-user]:rounded-3xl group-[.is-user]:bg-[oklch(0.949_0_0)] group-[.is-user]:px-5 group-[.is-user]:py-3.5 group-[.is-user]:text-foreground",
-            "dark:group-[.is-user]:bg-[oklch(0.29_0_0)]"
+            "group-[.is-user]:rounded-3xl group-[.is-user]:bg-popover group-[.is-user]:px-5 group-[.is-user]:py-3.5 group-[.is-user]:text-foreground",
           )}
         >
-          <p className="whitespace-pre-wrap">{text}</p>
+          {files.length > 0 && (
+            <Attachments className="mb-2 w-full justify-start" variant="grid">
+              {files.map((file) => (
+                <Attachment data={file} key={file.id}>
+                  <AttachmentPreview />
+                </Attachment>
+              ))}
+            </Attachments>
+          )}
+          {text && <p className="whitespace-pre-wrap">{text}</p>}
         </MessageContent>
       </Message>
     );
   },
-  (prev, next) => rowsEqual(prev.row, next.row)
+  (prev, next) => rowsEqual(prev.row, next.row),
 );
 
 const AssistantBubble = memo(
@@ -233,30 +265,19 @@ const AssistantBubble = memo(
       </Message>
     );
   },
-  (prev, next) => rowsEqual(prev.row, next.row)
+  (prev, next) => rowsEqual(prev.row, next.row),
 );
 
 export default function ChatView() {
   const { chatId } = useParams({ from: "/_auth/ai-chat/$chatId" });
-  const [messages, messagesResult] = useQuery(
-    queries.chats.messages({ chatId })
-  );
-  const {
-    inFlightMessage,
-    isStreaming,
-    streamStartedAt,
-    clearStream,
-    setZeroMessages,
-  } = useChat();
+  const [messages, messagesResult] = useQuery(queries.chats.messages({ chatId }));
+  const { inFlightMessage, isStreaming, streamStartedAt, clearStream, setZeroMessages } = useChat();
 
   useEffect(() => {
     setZeroMessages(messages);
   }, [messages, setZeroMessages]);
 
-  const sections = useMemo(
-    () => groupMessagesIntoSections(messages),
-    [messages]
-  );
+  const sections = useMemo(() => groupMessagesIntoSections(messages), [messages]);
 
   /**
    * Once streaming ends, keep showing the overlay until Zero delivers the
@@ -267,10 +288,7 @@ export default function ChatView() {
     if (!isStreaming && inFlightMessage && streamStartedAt !== null) {
       const startMs = streamStartedAt.getTime();
       const synced = messages.some(
-        (m) =>
-          m.role === "assistant" &&
-          typeof m.createdAt === "number" &&
-          m.createdAt > startMs
+        (m) => m.role === "assistant" && typeof m.createdAt === "number" && m.createdAt > startMs,
       );
       if (synced) {
         clearStream();
@@ -297,10 +315,7 @@ export default function ChatView() {
               <div className="flex flex-col gap-8" key={sectionKey}>
                 {section.user && <UserBubble row={section.user} />}
                 {section.assistants.map((assistant) => (
-                  <AssistantBubble
-                    key={String(assistant.messageId)}
-                    row={assistant}
-                  />
+                  <AssistantBubble key={String(assistant.messageId)} row={assistant} />
                 ))}
               </div>
             );
@@ -309,10 +324,7 @@ export default function ChatView() {
           {inFlightMessage && (
             <Message className="max-w-full" from="assistant">
               <MessageContent className="w-full min-w-0 px-4 text-base leading-snug">
-                <MessagePartsRenderer
-                  isStreaming={isStreaming}
-                  message={inFlightMessage}
-                />
+                <MessagePartsRenderer isStreaming={isStreaming} message={inFlightMessage} />
               </MessageContent>
             </Message>
           )}

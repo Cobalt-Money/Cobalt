@@ -20,9 +20,7 @@ const INVESTMENT_SKIP_ERROR_CODES = new Set([
   "ADDITIONAL_CONSENT_REQUIRED",
 ]);
 
-type PlaidStepResult<T> =
-  | { kind: "ok"; data: T }
-  | { kind: "skip"; reason: string };
+type PlaidStepResult<T> = { kind: "ok"; data: T } | { kind: "skip"; reason: string };
 
 interface PlaidErrorInfo {
   errorCode?: string;
@@ -42,13 +40,10 @@ function getPlaidErrorInfo(error: unknown): PlaidErrorInfo {
   ) {
     return {};
   }
-  const { data } = (error as { response: { data: Record<string, unknown> } })
-    .response;
+  const { data } = (error as { response: { data: Record<string, unknown> } }).response;
   return {
-    errorCode:
-      typeof data.error_code === "string" ? data.error_code : undefined,
-    errorMessage:
-      typeof data.error_message === "string" ? data.error_message : undefined,
+    errorCode: typeof data.error_code === "string" ? data.error_code : undefined,
+    errorMessage: typeof data.error_message === "string" ? data.error_message : undefined,
   };
 }
 
@@ -70,10 +65,7 @@ function isRateLimited(error: unknown): boolean {
  * - rate limits → throw `RetryableError` (step retries after delay)
  * - anything else → rethrow (default step retry → eventual failure)
  */
-function classifyPlaidError<T>(
-  error: unknown,
-  operation: string
-): PlaidStepResult<T> {
+function classifyPlaidError<T>(error: unknown, operation: string): PlaidStepResult<T> {
   const { errorCode } = getPlaidErrorInfo(error);
 
   if (errorCode && INVESTMENT_SKIP_ERROR_CODES.has(errorCode)) {
@@ -91,7 +83,7 @@ function classifyPlaidError<T>(
 
 /** Fetch the current holdings snapshot from Plaid. */
 export async function fetchHoldingsStep(
-  accessToken: string
+  accessToken: string,
 ): Promise<PlaidStepResult<{ holdings: Holding[]; securities: Security[] }>> {
   "use step";
 
@@ -104,9 +96,7 @@ export async function fetchHoldingsStep(
 }
 
 /** Map + persist investment securities. */
-export async function upsertSecuritiesStep(
-  securities: Security[]
-): Promise<number> {
+export async function upsertSecuritiesStep(securities: Security[]): Promise<number> {
   "use step";
 
   if (securities.length === 0) {
@@ -117,9 +107,7 @@ export async function upsertSecuritiesStep(
 }
 
 /** Map + persist investment positions (holdings). */
-export async function upsertPositionsStep(
-  holdings: Holding[]
-): Promise<number> {
+export async function upsertPositionsStep(holdings: Holding[]): Promise<number> {
   "use step";
 
   if (holdings.length === 0) {
@@ -134,7 +122,7 @@ export async function fetchInvestmentTransactionsPageStep(
   accessToken: string,
   startDate: string,
   endDate: string,
-  offset: number
+  offset: number,
 ): Promise<
   PlaidStepResult<{
     transactions: InvestmentTransaction[];
@@ -150,7 +138,7 @@ export async function fetchInvestmentTransactionsPageStep(
       startDate,
       endDate,
       offset,
-      INVESTMENT_TRANSACTIONS_PAGE_SIZE
+      INVESTMENT_TRANSACTIONS_PAGE_SIZE,
     );
     return { data, kind: "ok" };
   } catch (error) {
@@ -159,9 +147,7 @@ export async function fetchInvestmentTransactionsPageStep(
 }
 
 /** Map + persist investment activities (transactions). */
-export async function upsertActivitiesStep(
-  transactions: InvestmentTransaction[]
-): Promise<number> {
+export async function upsertActivitiesStep(transactions: InvestmentTransaction[]): Promise<number> {
   "use step";
 
   if (transactions.length === 0) {

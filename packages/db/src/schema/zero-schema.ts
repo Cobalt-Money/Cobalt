@@ -15,9 +15,13 @@ export { investmentActivity } from "./accounts/investments/investment-activity";
 export { creditLiability } from "./accounts/banking/liabilities/credit";
 export { mortgageLiability } from "./accounts/banking/liabilities/mortgage";
 export { studentLoanLiability } from "./accounts/banking/liabilities/student-loan";
+export { category } from "./accounts/banking/categories/category";
+export { categoryGroup } from "./accounts/banking/categories/category-group";
 export { transaction } from "./accounts/banking/transactions/transaction";
 export { transactionEdit } from "./accounts/banking/transactions/transaction-edit";
 export { recurring } from "./accounts/banking/transactions/recurring";
+export { tag } from "./accounts/banking/tags/tag";
+export { transactionTag } from "./accounts/banking/tags/transaction-tag";
 export { feedback } from "./users/feedback";
 export { financialGoals } from "./goals/financial-goals";
 export { kalshiUsers } from "./accounts/prediction-markets/kalshi";
@@ -30,40 +34,18 @@ export { snaptradeAuthorization } from "./providers/snaptrade/authorization";
 export { snaptradeUser } from "./providers/snaptrade/user";
 export { mobileSubscription } from "./users/subscriptions/mobile";
 export { subscription } from "./users/subscriptions/stripe";
+export { fundamentals } from "./research/fundamentals";
+export { tickers } from "./research/tickers";
 
-// Legacy v1 `relations()` exports for drizzle-zero code generation only.
-// Runtime DB uses Relational Queries v2 from `./relations`.
-export {
-  accountRelations,
-  balanceRelations,
-  chatsRelations,
-  creditLiabilityRelations,
-  eventArticlesRelations,
-  feedbackRelations,
-  financialAccountRelations,
-  financialEventsRelations,
-  financialGoalsRelations,
-  holdingRelations,
-  institutionRelations,
-  investmentActivityRelations,
-  kalshiUserRelations,
-  messageVotesRelations,
-  messagesRelations,
-  mobileSubscriptionRelations,
-  mortgageLiabilityRelations,
-  ordersRelations,
-  partsRelations,
-  plaidConnectionRelations,
-  recurringStreamRelations,
-  securityRelations,
-  sessionRelations,
-  snapshotRelations,
-  snaptradeAuthorizationRelations,
-  snaptradeUserRelations,
-  studentLoanLiabilityRelations,
-  subscriptionRelations,
-  transactionEditRelations,
-  transactionRelations,
-  userAlertsRelations,
-  userRelations,
-} from "./zero-relations";
+// Imports — transaction.import_job_id FK forces importJob (and its peers)
+// to be in the schema graph drizzle-zero traverses, even though Zero won't
+// sync the rows themselves to the client.
+export { accountMappingCache } from "./imports/account-mapping-cache";
+export { categoryMappingCache } from "./imports/category-mapping-cache";
+export { csvColumnRoleCache } from "./imports/csv-column-role-cache";
+export { csvMappingCache } from "./imports/csv-mapping-cache";
+export { importJob } from "./imports/import-job";
+export { importStagedTransaction } from "./imports/import-staged-transaction";
+
+// v2 `defineRelations` for drizzle-zero@1.0-beta. Same source as DB runtime.
+export { relations } from "./relations";

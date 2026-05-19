@@ -1,14 +1,58 @@
 import { env } from "@cobalt-web/env/web";
-import { CobaltCard } from "@cobalt-web/ui/cobalt/card";
+import { Card } from "@cobalt-web/ui/components/card";
 import { Shimmer } from "@cobalt-web/ui/components/ai-elements/shimmer";
-import confetti from "canvas-confetti";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import { fireSideCannons } from "@/lib/confetti";
 
 import { useOnboarding } from "./onboarding-context";
 import { parseNdjson } from "./parse-ndjson";
 
 const FLOATING_CARD_CHROME =
   "-translate-x-1/2 fixed top-4 left-1/2 z-50 bg-sidebar shadow-none dark:bg-sidebar";
+
+/** Duration must match `--text-swap-dur` in globals.css `.t-text-swap`. */
+const TEXT_SWAP_DURATION_MS = 200;
+
+/**
+ * Three-phase text swap driven by the `.t-text-swap` stylesheet:
+ *   1. `.is-exit` — old text slides up + blurs + fades.
+ *   2. After `--text-swap-dur`, swap textContent and apply
+ *      `.is-enter-start` (jump to below, transitions disabled).
+ *   3. Force reflow, drop `.is-enter-start` so the new text animates in.
+ */
+function TextSwap({ value }: { value: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [displayed, setDisplayed] = useState(value);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || displayed === value) {
+      return;
+    }
+
+    el.classList.add("is-exit");
+    const t = setTimeout(() => {
+      setDisplayed(value);
+      el.classList.remove("is-exit");
+      el.classList.add("is-enter-start");
+      // Force reflow so the browser registers the "below" position before we
+      // drop the class and let the transition animate the entry back to 0.
+      void el.getBoundingClientRect().height;
+      el.classList.remove("is-enter-start");
+    }, TEXT_SWAP_DURATION_MS);
+
+    return () => {
+      clearTimeout(t);
+    };
+  }, [value, displayed]);
+
+  return (
+    <span className="t-text-swap" ref={ref}>
+      {displayed}
+    </span>
+  );
+}
 
 type Phase =
   | "exchange"
@@ -37,10 +81,7 @@ const BUCKET_LABELS: Record<Bucket, string> = {
   syncing: "Syncing your data",
 };
 
-const PHASE_TO_BUCKET: Record<
-  Exclude<Phase, "duplicate" | "error" | "cancelled">,
-  Bucket
-> = {
+const PHASE_TO_BUCKET: Record<Exclude<Phase, "duplicate" | "error" | "cancelled">, Bucket> = {
   accounts: "syncing",
   balances: "syncing",
   connecting: "connecting",
@@ -58,34 +99,6 @@ const PHASE_TO_BUCKET: Record<
 };
 
 const BUCKET_ORDER: Bucket[] = ["connecting", "syncing", "done"];
-
-function fireSideCannons() {
-  const end = Date.now() + 3000;
-  const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
-  const frame = () => {
-    if (Date.now() > end) {
-      return;
-    }
-    confetti({
-      angle: 60,
-      colors,
-      origin: { x: 0, y: 0.5 },
-      particleCount: 2,
-      spread: 55,
-      startVelocity: 60,
-    });
-    confetti({
-      angle: 120,
-      colors,
-      origin: { x: 1, y: 0.5 },
-      particleCount: 2,
-      spread: 55,
-      startVelocity: 60,
-    });
-    requestAnimationFrame(frame);
-  };
-  frame();
-}
 
 interface ProgressEvent {
   phase: Phase;
@@ -115,13 +128,10 @@ function useProgressStream(runId: string | null, onStale: () => void) {
 
     async function read() {
       try {
-        const res = await fetch(
-          `${env.VITE_SERVER_URL}/api/plaid/progress/${runId}`,
-          {
-            credentials: "include",
-            signal: controller.signal,
-          }
-        );
+        const res = await fetch(`${env.VITE_SERVER_URL}/api/plaid/progress/${runId}`, {
+          credentials: "include",
+          signal: controller.signal,
+        });
         if (!res.ok || !res.body) {
           if (res.status === 404 || res.status === 410) {
             onStale();
@@ -163,10 +173,7 @@ function useProgressStream(runId: string | null, onStale: () => void) {
 
 export function OnboardingProgress() {
   const { onboardingRunId, finishOnboarding } = useOnboarding();
-  const { events, streamError } = useProgressStream(
-    onboardingRunId,
-    finishOnboarding
-  );
+  const { events, streamError } = useProgressStream(onboardingRunId, finishOnboarding);
 
   const latestByPhase = new Map<Phase, ProgressEvent>();
   for (const event of events) {
@@ -256,10 +263,9 @@ function TerminalCard({
   title: string;
   tone: "warning" | "destructive";
 }) {
-  const titleColor =
-    tone === "destructive" ? "text-destructive" : "text-foreground";
+  const titleColor = tone === "destructive" ? "text-destructive" : "text-foreground";
   return (
-    <CobaltCard className={`${FLOATING_CARD_CHROME} w-96 gap-2 p-4`}>
+    <Card variant="subtle" className={`${FLOATING_CARD_CHROME} w-96 gap-2 p-4`}>
       <div className="flex items-start justify-between gap-3">
         <p className={`font-medium text-sm ${titleColor}`}>{title}</p>
         <button
@@ -272,7 +278,7 @@ function TerminalCard({
         </button>
       </div>
       <div className="mt-2 text-sm">{body}</div>
-    </CobaltCard>
+    </Card>
   );
 }
 
@@ -309,24 +315,22 @@ function OnboardingProgressCard({
 
   const activeBucket = BUCKET_ORDER.find((b) => bucketState[b] === "active");
   const firstPending = BUCKET_ORDER.find((b) => bucketState[b] === "pending");
-  const currentBucket: Bucket = isDone
-    ? "done"
-    : (activeBucket ?? firstPending ?? "connecting");
+  const currentBucket: Bucket = isDone ? "done" : (activeBucket ?? firstPending ?? "connecting");
 
-  const completedCount = BUCKET_ORDER.filter(
-    (b) => bucketState[b] === "done"
-  ).length;
+  const completedCount = BUCKET_ORDER.filter((b) => bucketState[b] === "done").length;
   const percent = Math.round((completedCount / BUCKET_ORDER.length) * 100);
   const currentLabel = BUCKET_LABELS[currentBucket];
 
   return (
-    <CobaltCard className={`${FLOATING_CARD_CHROME} w-80 gap-2 p-4`}>
+    <Card variant="subtle" className={`${FLOATING_CARD_CHROME} w-80 gap-2 p-4`}>
       <div className="mb-2 h-5 text-center text-sm">
         {isDone ? (
-          <span className="font-medium">{currentLabel}</span>
+          <span className="font-medium">
+            <TextSwap value={currentLabel} />
+          </span>
         ) : (
           <Shimmer as="span" className="font-medium">
-            {currentLabel}
+            <TextSwap value={currentLabel} />
           </Shimmer>
         )}
       </div>
@@ -341,6 +345,6 @@ function OnboardingProgressCard({
           Progress stream disconnected — your data will still finish importing.
         </div>
       ) : null}
-    </CobaltCard>
+    </Card>
   );
 }

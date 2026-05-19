@@ -25,7 +25,7 @@ export function Link(props: CustomLinkProps) {
         to: to as string,
       });
     },
-    [hash, params, search, to, instantNavigate]
+    [hash, params, search, to, instantNavigate],
   );
 
   return (

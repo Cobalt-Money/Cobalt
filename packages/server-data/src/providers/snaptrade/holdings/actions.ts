@@ -9,7 +9,7 @@ interface UserCreds {
 /** Get positions (holdings) for a SnapTrade account. */
 export async function getUserHoldings(
   accountId: string,
-  creds: UserCreds
+  creds: UserCreds,
 ): Promise<AccountHoldingsAccount | undefined> {
   const response = await snaptradeClient.accountInformation.getUserHoldings({
     accountId,

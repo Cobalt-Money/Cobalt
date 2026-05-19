@@ -1,19 +1,8 @@
-import {
-  index,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  pgEnum,
-} from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, uuid, pgEnum } from "drizzle-orm/pg-core";
 
 import { user } from "../users/auth/auth";
 
-export const feedbackTypeEnum = pgEnum("feedback_type", [
-  "general",
-  "bug",
-  "feature",
-]);
+export const feedbackTypeEnum = pgEnum("feedback_type", ["general", "bug", "feature"]);
 
 export const feedback = pgTable(
   "feedback",
@@ -33,7 +22,7 @@ export const feedback = pgTable(
     index("feedback_user_id_idx").on(table.userId),
     index("feedback_type_idx").on(table.type),
     index("feedback_created_at_idx").on(table.createdAt),
-  ]
+  ],
 );
 
 // Type exports

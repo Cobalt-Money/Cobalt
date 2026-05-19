@@ -1,12 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  syncHoldings,
-  syncInvestmentTransactions,
-} from "../investments/orchestration";
+import { syncHoldings, syncInvestmentTransactions } from "../investments/orchestration";
 import { syncLiabilities } from "../liabilities/orchestration";
 import {
-  backfillHistoricalSnapshotsStep,
   closeOnboardingProgressStep,
   duplicateCheckStep,
   emitOnboardingProgressStep,
@@ -16,21 +12,18 @@ import {
   persistOnboardingItemStep,
   reconcileOrphanAccountsStep,
   removeItemStep,
+  seedTodayPlaidSnapshotsStep,
   syncAccountsAndBalancesStep,
   syncBalancesStep,
   syncRecurringStep,
   syncTransactionsStep,
   triggerPlaidSyncStep,
 } from "./steps.js";
-import {
-  plaidAddAccountWorkflow,
-  plaidOnboardingHookToken,
-} from "./workflow.js";
+import { plaidAddAccountWorkflow, plaidOnboardingHookToken } from "./workflow.js";
 
 const HOOK_TOKEN = "plaid:link:user-1:test-hook";
 
 vi.mock(import("./steps.js"), () => ({
-  backfillHistoricalSnapshotsStep: vi.fn(),
   clearItemErrorStep: vi.fn(),
   closeOnboardingProgressStep: vi.fn(),
   dispatchSnapshotWorkflowStep: vi.fn(),
@@ -43,6 +36,7 @@ vi.mock(import("./steps.js"), () => ({
   persistOnboardingItemStep: vi.fn(),
   reconcileOrphanAccountsStep: vi.fn(),
   removeItemStep: vi.fn(),
+  seedTodayPlaidSnapshotsStep: vi.fn(),
   syncAccountsAndBalancesStep: vi.fn(),
   syncBalancesStep: vi.fn(),
   syncRecurringStep: vi.fn(),
@@ -58,15 +52,6 @@ vi.mock(import("../investments/orchestration"), () => ({
 
 vi.mock(import("../liabilities/orchestration"), () => ({
   syncLiabilities: vi.fn(),
-}));
-
-function fakeSerializable(err: unknown) {
-  return { message: err instanceof Error ? err.message : "x" };
-}
-
-vi.mock(import("../../shared/steps"), () => ({
-  captureWorkflowExceptionStep: vi.fn(),
-  toSerializableError: vi.fn(fakeSerializable),
 }));
 
 // Iterable hook: each call to `next()` yields the next queued payload.
@@ -99,9 +84,7 @@ vi.mock(import("workflow"), async () => {
             next() {
               const value = payloads.shift();
               return Promise.resolve(
-                value === undefined
-                  ? { done: true, value: undefined }
-                  : { done: false, value }
+                value === undefined ? { done: true, value: undefined } : { done: false, value },
               );
             },
           };
@@ -125,7 +108,7 @@ const mockReconcile = vi.mocked(reconcileOrphanAccountsStep);
 const mockTx = vi.mocked(syncTransactionsStep);
 const mockBalances = vi.mocked(syncBalancesStep);
 const mockRecurring = vi.mocked(syncRecurringStep);
-const mockBackfill = vi.mocked(backfillHistoricalSnapshotsStep);
+const mockSeedSnapshots = vi.mocked(seedTodayPlaidSnapshotsStep);
 const mockHoldings = vi.mocked(syncHoldings);
 const mockInvTx = vi.mocked(syncInvestmentTransactions);
 const mockLiabilities = vi.mocked(syncLiabilities);
@@ -140,7 +123,7 @@ function fakeItem(
     available_products?: string[];
     billed_products?: string[];
     institution_id?: string | null;
-  } = {}
+  } = {},
 ) {
   return {
     available_products: overrides.available_products ?? ["transactions"],
@@ -219,12 +202,7 @@ describe("plaidAddAccountWorkflow", () => {
       removed: 0,
       success: true,
     });
-    mockBackfill.mockResolvedValue({
-      accountsProcessed: 0,
-      oldestDate: null,
-      snapshotsCreated: 0,
-      snapshotsSkipped: 0,
-    });
+    mockSeedSnapshots.mockResolvedValue();
   });
 
   it("exchanges the public token and runs core sync steps on the happy path", async () => {
@@ -261,9 +239,7 @@ describe("plaidAddAccountWorkflow", () => {
     // Exchange must happen before validate, validate before persist.
     expect(phases.indexOf("exchange")).toBeLessThan(phases.indexOf("validate"));
     expect(phases.indexOf("validate")).toBeLessThan(phases.indexOf("persist"));
-    expect(phases.indexOf("persist")).toBeLessThan(
-      phases.indexOf("waiting_for_plaid")
-    );
+    expect(phases.indexOf("persist")).toBeLessThan(phases.indexOf("waiting_for_plaid"));
   });
 
   it("terminates with DUPLICATE_ACCOUNT when dup check matches, removes item, does not persist", async () => {
@@ -331,7 +307,7 @@ describe("plaidAddAccountWorkflow", () => {
     expect(phases).toContain("liabilities");
   });
 
-  it("skips historical backfill when only initial_update_complete arrives", async () => {
+  it("skips snapshot seed + recurring when only initial_update_complete arrives", async () => {
     mockHookPayloads.current = [
       { historical_update_complete: false, initial_update_complete: true },
     ];
@@ -341,7 +317,7 @@ describe("plaidAddAccountWorkflow", () => {
       userId: USER_ID,
     });
 
-    expect(mockBackfill).not.toHaveBeenCalled();
+    expect(mockSeedSnapshots).not.toHaveBeenCalled();
     expect(mockRecurring).not.toHaveBeenCalled();
   });
 

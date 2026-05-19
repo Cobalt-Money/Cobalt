@@ -10,7 +10,7 @@ function rowSymbolUpper(row: Record<string, unknown>): string {
  * (single batched query — no per-symbol FMP calls).
  */
 export async function enrichScreenerRowsWithRevenueAndRating(
-  rows: Record<string, unknown>[]
+  rows: Record<string, unknown>[],
 ): Promise<Record<string, unknown>[]> {
   const symbols = [...new Set(rows.map(rowSymbolUpper).filter(Boolean))];
   if (symbols.length === 0) {
@@ -35,13 +35,9 @@ export async function enrichScreenerRowsWithRevenueAndRating(
       };
     }
 
-    const price =
-      typeof row.price === "number" && Number.isFinite(row.price)
-        ? row.price
-        : null;
+    const price = typeof row.price === "number" && Number.isFinite(row.price) ? row.price : null;
     const eps = f.eps === null ? null : Number.parseFloat(String(f.eps));
-    const peRatio =
-      price !== null && eps !== null && eps !== 0 ? price / eps : undefined;
+    const peRatio = price !== null && eps !== null && eps !== 0 ? price / eps : undefined;
 
     return {
       ...row,
