@@ -128,3 +128,25 @@ export const chartQuery = (symbol: string, timePeriod: ChartPeriod) =>
     queryKey: ["ticker", symbol, "chart", timePeriod] as const,
     staleTime: 1000 * 60,
   });
+
+/**
+ * OHLC bars around a date for the manual-holding cost-basis / sell-price
+ * scrubbers. Cached by (symbol, date) so repeated opens of the picker for the
+ * same ticker+date hit the local cache instead of refetching.
+ */
+export const tickerHistoryQuery = (symbol: string, date: string) =>
+  queryOptions({
+    queryFn: async () => {
+      const res = await researchApi["ticker-history"].$get({
+        query: { date, symbol },
+      });
+      const json = await parseResponse<{
+        points: { close: number; date: string; high: number; low: number }[];
+      }>(res);
+      const history = json.points;
+      const latestPrice = history.length > 0 ? (history.at(-1)?.close ?? null) : null;
+      return { history, latestPrice };
+    },
+    queryKey: ["ticker", symbol, "history", date] as const,
+    staleTime: 1000 * 60 * 5,
+  });

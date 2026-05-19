@@ -6,14 +6,20 @@ import { useMemo } from "react";
 export function useAccounts() {
   const [bankRows, bankResult] = useQuery(queries.accounts.bankAccounts());
   const [brokerageRows, brokerageResult] = useQuery(queries.brokerage.accounts());
+  const [manualInvestmentRows, manualInvestmentResult] = useQuery(
+    queries.brokerage.manualInvestmentAccounts(),
+  );
 
   const items = useMemo(
-    () => mergeAndSortAccountCards(bankRows, brokerageRows),
-    [bankRows, brokerageRows],
+    () => mergeAndSortAccountCards(bankRows, brokerageRows, manualInvestmentRows),
+    [bankRows, brokerageRows, manualInvestmentRows],
   );
 
   return {
-    isComplete: bankResult.type === "complete" && brokerageResult.type === "complete",
+    isComplete:
+      bankResult.type === "complete" &&
+      brokerageResult.type === "complete" &&
+      manualInvestmentResult.type === "complete",
     items,
   };
 }

@@ -10,15 +10,17 @@ import { activityToActivityRow, holdingToPositionRow } from "./lib/brokerage-nor
 
 type SnaptradeAccountRow = Row<typeof queries.brokerage.accounts>;
 type PlaidInvestmentAccountRow = Row<typeof queries.brokerage.plaidInvestmentAccounts>;
+type ManualInvestmentAccountRow = Row<typeof queries.brokerage.manualInvestmentAccounts>;
 
 /**
  * Merged shape for the UI accounts list — base `financialAccount` columns
  * plus every relation either source can carry, all optional. SnapTrade rows
- * fill `snaptradeAuthorization` + `holdings`; Plaid rows fill `plaidConnection`.
+ * fill `snaptradeAuthorization` + `holdings`; Plaid rows fill `plaidConnection`;
+ * manual rows fill `balance` + `holdings`.
  */
 export type InvestmentAccountRow = FinancialAccount & {
   balance?: SnaptradeAccountRow["balance"];
-  holdings?: SnaptradeAccountRow["holdings"];
+  holdings?: SnaptradeAccountRow["holdings"] | ManualInvestmentAccountRow["holdings"];
   snaptradeAuthorization?: SnaptradeAccountRow["snaptradeAuthorization"] | null;
   plaidConnection?: PlaidInvestmentAccountRow["plaidConnection"] | null;
 };
@@ -34,14 +36,17 @@ export function useBrokerage() {
   const [plaidInvestmentAccounts, plaidInvestmentAccountsResult] = useQuery(
     queries.brokerage.plaidInvestmentAccounts(),
   );
+  const [manualInvestmentAccounts, manualInvestmentAccountsResult] = useQuery(
+    queries.brokerage.manualInvestmentAccounts(),
+  );
 
   const accounts = useMemo<InvestmentAccountRow[]>(() => {
     const pl: InvestmentAccountRow[] = plaidInvestmentAccounts.map((a) => ({
       ...a,
       institutionName: a.plaidConnection?.institution?.name ?? a.institutionName ?? null,
     }));
-    return [...snaptradeAccounts, ...pl];
-  }, [snaptradeAccounts, plaidInvestmentAccounts]);
+    return [...snaptradeAccounts, ...pl, ...manualInvestmentAccounts];
+  }, [snaptradeAccounts, plaidInvestmentAccounts, manualInvestmentAccounts]);
 
   const positions = useMemo<PositionRow[]>(
     () => allPositions.map(holdingToPositionRow),
@@ -50,7 +55,8 @@ export function useBrokerage() {
 
   const accountsComplete =
     snaptradeAccountsResult.type === "complete" &&
-    plaidInvestmentAccountsResult.type === "complete";
+    plaidInvestmentAccountsResult.type === "complete" &&
+    manualInvestmentAccountsResult.type === "complete";
   const positionsComplete = accountsComplete && allPositionsResult.type === "complete";
 
   return {

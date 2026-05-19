@@ -47,13 +47,14 @@ describe("getPortfolioSnapshotsByUserId", () => {
     expect(lastWhere().userId).toStrictEqual({ eq: "user-1" });
   });
 
-  it("filters via account relation: snaptrade OR (plaid + investment)", async () => {
+  it("filters via account relation: snaptrade OR (plaid + investment) OR (manual + investment)", async () => {
     await getPortfolioSnapshotsByUserId("user-1", {});
     const where = lastWhere();
     expect(where.account).toStrictEqual({
       OR: [
         { source: { eq: "snaptrade" } },
         { AND: [{ source: { eq: "plaid" } }, { type: { eq: "investment" } }] },
+        { AND: [{ source: { eq: "manual" } }, { type: { eq: "investment" } }] },
       ],
     });
   });

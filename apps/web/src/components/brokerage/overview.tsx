@@ -54,9 +54,23 @@ function snaptradeAccountToScope(a: BrokerageAccount): ScopeAccount {
   };
 }
 
+function manualAccountToScope(a: BrokerageAccount): ScopeAccount {
+  const base = a.name?.trim() || a.subtype?.trim() || a.type?.trim() || "Account";
+  return {
+    displayName: base,
+    id: a.id,
+    institutionLogo: null,
+    institutionName: a.institutionName?.trim() || base,
+    institutionUrl: a.logoDomain?.trim() ?? null,
+  };
+}
+
 function accountToScope(a: BrokerageAccount): ScopeAccount {
   if (a.source === "plaid") {
     return plaidAccountToScope(a);
+  }
+  if (a.source === "manual") {
+    return manualAccountToScope(a);
   }
   return snaptradeAccountToScope(a);
 }

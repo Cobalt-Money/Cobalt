@@ -2,6 +2,8 @@ import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialo
 import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/types";
 import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
 import { AddManualAccountForm } from "@cobalt-web/ui/cobalt/accounts/add-manual-account-dialog";
+import { AddPositionForm } from "@cobalt-web/ui/cobalt/accounts/add-position-dialog";
+import { SellPositionForm } from "@cobalt-web/ui/cobalt/accounts/sell-position-dialog";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { AddTransactionForm } from "@cobalt-web/ui/cobalt/transactions/add-transaction-dialog";
 import type { ExportFormat } from "@cobalt-web/ui/cobalt/transactions/lib/export";
@@ -65,12 +67,16 @@ import {
   useInstitutionSearch,
 } from "@/components/accounts/use-add-account-flow";
 import { useOpenImportWizard } from "@/components/imports/import-wizard";
-import { useQuery } from "@tanstack/react-query";
+import { useZero, useQuery as useZeroQuery } from "@rocicorp/zero/react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { mutators, queries } from "@cobalt-web/zero";
 import { importsApi } from "@/lib/clients/api-client";
+import type { SellManualHoldingBody } from "@cobalt-web/server-data/brokerage/manual-holdings/schemas";
+
+import { tickerHistoryQuery } from "@/hooks/research-queries";
 import { SettingsGrid } from "@/components/settings/settings-grid";
 import type { SettingsSection } from "@/components/settings/settings-grid";
 import { useAddManualAccountSubmit } from "@/hooks/use-add-manual-account-submit";
-import { useMerchantSearch } from "@/hooks/use-merchant-search";
 import { useAddTagSubmit } from "@/hooks/use-add-tag-submit";
 import { useAddTransactionData } from "@/hooks/use-add-transaction-data";
 import { useAllCategories } from "@/hooks/use-categories";
@@ -242,6 +248,8 @@ function isFormPage(activePage: string | undefined): boolean {
     activePage === "add-manual-account" ||
     activePage === "link-or-manual" ||
     activePage === "add-transaction" ||
+    activePage === "add-position" ||
+    activePage === "sell-position" ||
     activePage === "add-tag" ||
     activePage === "manage-tags"
   );
@@ -288,6 +296,8 @@ interface CommandMenuContextValue {
   openAddManualAccount: () => void;
   /** Open palette to the add-transaction sub-page. */
   openAddTransaction: () => void;
+  /** Open palette to the add-position sub-page. */
+  openAddPosition: () => void;
   /** Open palette to the add-tag sub-page, optionally seeded with a name. */
   openAddTag: (opts?: { initialName?: string }) => void;
   /** Open palette to the bulk-actions sub-page for the given transactions. */
@@ -339,6 +349,8 @@ function CommandMenuDialog({
   const [selectedInstitution, setSelectedInstitution] = useState<AddAccountInstitution | null>(
     null,
   );
+  /** True when manual-account form was entered via the Cash tile or "Create cash account" — locks type to depository. */
+  const [cashEntry, setCashEntry] = useState(false);
 
   const activePage = pages.at(-1);
   const inSearchTransactions = activePage === "search-transactions";
@@ -349,6 +361,8 @@ function CommandMenuDialog({
   const inAddManualAccount = activePage === "add-manual-account";
   const inLinkOrManual = activePage === "link-or-manual";
   const inAddTransaction = activePage === "add-transaction";
+  const inAddPosition = activePage === "add-position";
+  const inSellPosition = activePage === "sell-position";
   const inAddTag = activePage === "add-tag";
   const inManageTags = activePage === "manage-tags";
   const inBulkActions = activePage === "bulk-actions";
@@ -373,14 +387,58 @@ function CommandMenuDialog({
     inSearchTickers,
   );
 
+  // Per-form ticker typeahead for the add-position page.
+  const [positionTickerQuery, setPositionTickerQuery] = useState("");
+  const { filteredTickers: positionTickerMatches } = useTickerSearch(
+    positionTickerQuery,
+    inAddPosition,
+  );
+  const positionTickerSearch = useMemo(
+    () => ({
+      loading: false,
+      onQueryChange: setPositionTickerQuery,
+      results: positionTickerMatches.map((t) => ({
+        name: t.name,
+        price: t.price,
+        symbol: t.symbol,
+      })),
+    }),
+    [positionTickerMatches],
+  );
+  // Imperative ticker-history fetch backed by TanStack Query cache so repeated
+  // form opens for the same (ticker, date) don't re-hit FMP. Mirrors the
+  // chartQuery / quoteQuery pattern in research-queries.ts.
+  const queryClient = useQueryClient();
+  const loadTickerHistory = useCallback(
+    (ticker: string, date: string) => queryClient.fetchQuery(tickerHistoryQuery(ticker, date)),
+    [queryClient],
+  );
+
   // ── Add-account ─────────────────────────────────────────────────────────────
 
   const { data: plaidInstitutions = [] } = useInstitutionSearch(search, inAddAccount);
+  /** Separate query state for the in-form institution picker on add-manual-account. */
+  const [manualAccountInstitutionQuery, setManualAccountInstitutionQuery] = useState("");
+  const {
+    data: manualAccountInstitutionResults = [],
+    isFetching: manualAccountInstitutionLoading,
+  } = useInstitutionSearch(manualAccountInstitutionQuery, inAddManualAccount);
+  const manualAccountInstitutionSearch = useMemo(
+    () => ({
+      loading: manualAccountInstitutionLoading,
+      onQueryChange: setManualAccountInstitutionQuery,
+      results: manualAccountInstitutionResults.map((i) => ({
+        id: i.id,
+        logo: i.logo ?? null,
+        name: i.name,
+        url: i.url ?? null,
+      })),
+    }),
+    [manualAccountInstitutionResults, manualAccountInstitutionLoading],
+  );
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
   const { handleChoose: handleChooseConnect, updateModeDialog } = useAccountLauncher(dismiss);
   const { submit: submitAddManualAccount } = useAddManualAccountSubmit();
-  const [brandQuery, setBrandQuery] = useState("");
-  const { data: brandResults = [], isFetching: brandSearchLoading } = useMerchantSearch(brandQuery);
   const {
     availableTags: addTxAvailableTags,
     categoryOptions: addTxCategoryOptions,
@@ -389,6 +447,105 @@ function CommandMenuDialog({
     merchantSearch: addTxMerchantSearch,
     submit: submitAddTransaction,
   } = useAddTransactionData();
+  const [manualInvestmentAccounts] = useZeroQuery(queries.brokerage.manualInvestmentAccounts());
+  const positionAccountOptions = useMemo(
+    () =>
+      manualInvestmentAccounts.map((a) => ({
+        id: a.id,
+        institutionName: a.institutionName ?? null,
+        logoDomain: a.logoDomain ?? null,
+        name: a.name ?? "Untitled",
+        subtype: a.subtype ?? null,
+      })),
+    [manualInvestmentAccounts],
+  );
+  /** All manual holdings across the user's manual investment accounts — drives the Sell flow's picker. */
+  const [allManualPositions] = useZeroQuery(queries.brokerage.positions({ source: "manual" }));
+  const sellableHoldings = useMemo(
+    () =>
+      allManualPositions
+        .map((h) => {
+          const acct = manualInvestmentAccounts.find((a) => a.id === h.accountId);
+          const ticker = h.security?.tickerSymbol ?? null;
+          const qty = Number(h.quantity);
+          if (!(acct && ticker) || qty <= 0) {
+            return null;
+          }
+          return {
+            accountId: acct.id,
+            accountName: acct.name ?? "Account",
+            holdingId: h.id,
+            name: h.security?.name ?? null,
+            quantity: qty,
+            ticker,
+          };
+        })
+        .filter((h): h is NonNullable<typeof h> => h !== null),
+    [allManualPositions, manualInvestmentAccounts],
+  );
+  const zero = useZero();
+  const submitAddPosition = useCallback(
+    (values: {
+      accountId: string;
+      positions: {
+        ticker: string;
+        name: string | null;
+        quantity: number;
+        institutionPrice: number;
+        costBasis: number | null;
+        dateAcquired: string | null;
+      }[];
+    }) => {
+      // Web uses the Zero mutator for optimistic UI; mobile / external clients
+      // use the REST endpoint (POST /internal/brokerage/manual-holdings).
+      for (const p of values.positions) {
+        const { server } = zero.mutate(
+          mutators.brokerage.addManualHolding({
+            accountId: values.accountId,
+            dateAcquired: p.dateAcquired ?? undefined,
+            institutionPrice: p.institutionPrice,
+            name: p.name ?? undefined,
+            quantity: p.quantity,
+            ticker: p.ticker,
+          }),
+        );
+        cobaltToast.positionAdded(p.ticker, p.quantity);
+        void (async () => {
+          try {
+            const result = await server;
+            if (result.type === "error") {
+              cobaltToast.error(result.error.message || `Couldn't save ${p.ticker}.`);
+            }
+          } catch (error) {
+            console.error("Failed to save manual holding", p.ticker, error);
+            cobaltToast.error(`Couldn't save ${p.ticker}.`);
+          }
+        })();
+      }
+    },
+    [zero],
+  );
+  const submitSellPosition = useCallback(
+    (values: SellManualHoldingBody) => {
+      const holding = sellableHoldings.find((h) => h.holdingId === values.holdingId);
+      const { server } = zero.mutate(mutators.brokerage.sellManualHolding(values));
+      if (holding) {
+        cobaltToast.positionSold(holding.ticker, values.sellQuantity);
+      }
+      void (async () => {
+        try {
+          const result = await server;
+          if (result.type === "error") {
+            cobaltToast.error(result.error.message || "Couldn't record sale.");
+          }
+        } catch (error) {
+          console.error("Failed to record sale", error);
+          cobaltToast.error("Couldn't record sale.");
+        }
+      })();
+    },
+    [sellableHoldings, zero],
+  );
   const { isPending: submittingAddTag, submit: submitAddTagInner } = useAddTagSubmit();
   const submitAddTag = useCallback(
     async (values: Parameters<typeof submitAddTagInner>[0]) => {
@@ -499,6 +656,16 @@ function CommandMenuDialog({
   const enterAddTransaction = useCallback(() => {
     setSearch("");
     setPages((p) => [...p, "add-transaction"]);
+  }, [setPages, setSearch]);
+
+  const enterAddPosition = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "add-position"]);
+  }, [setPages, setSearch]);
+
+  const enterSellPosition = useCallback(() => {
+    setSearch("");
+    setPages((p) => [...p, "sell-position"]);
   }, [setPages, setSearch]);
 
   const enterAddTag = useCallback(
@@ -667,8 +834,9 @@ function CommandMenuDialog({
         return;
       }
       if (institution.provider === "manual") {
-        // Cash tile — no intermediate step, no institution prefill.
+        // Cash tile — no intermediate step, no institution prefill, lock type to depository.
         setSelectedInstitution(null);
+        setCashEntry(true);
         setSearch("");
         setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
         return;
@@ -677,6 +845,7 @@ function CommandMenuDialog({
       // tracking it manually. Stash the institution so the manual form can
       // prefill name + logoDomain if they pick "Add manually".
       setSelectedInstitution(institution);
+      setCashEntry(false);
       setSearch("");
       setPages((p) => [...p.slice(0, -1), "link-or-manual"]);
     },
@@ -822,6 +991,18 @@ function CommandMenuDialog({
       label: "Add Manual Transaction",
     },
     {
+      handleSelect: enterAddPosition,
+      icon: AppleStocksIcon,
+      keywords: ["buy", "holding", "stock", "ticker", "brokerage", "share", "manual"],
+      label: "Add Manual Position",
+    },
+    {
+      handleSelect: enterSellPosition,
+      icon: AppleStocksIcon,
+      keywords: ["sell", "close", "exit", "holding", "share", "stock", "manual"],
+      label: "Sell Manual Position",
+    },
+    {
       handleSelect: () => {
         handleOpenChange(false);
         openImportWizard();
@@ -937,6 +1118,8 @@ function CommandMenuDialog({
           inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
           inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl",
           inAddTransaction && "sm:max-w-3xl",
+          inAddPosition && "sm:max-w-3xl",
+          inSellPosition && "sm:max-w-3xl",
           inAddManualAccount && "sm:max-w-3xl",
           inLinkOrManual && "sm:max-w-xl",
           inAddTag && "sm:max-w-lg",
@@ -1000,6 +1183,7 @@ function CommandMenuDialog({
                 <button
                   className="flex flex-col items-start gap-1 rounded-lg border border-foreground/10 bg-foreground/[0.03] p-4 text-left transition-colors hover:bg-foreground/[0.07]"
                   onClick={() => {
+                    setCashEntry(false);
                     setSearch("");
                     setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
                   }}
@@ -1020,13 +1204,10 @@ function CommandMenuDialog({
                 Add an account
               </h2>
               <AddManualAccountForm
-                brandSearch={{
-                  loading: brandSearchLoading,
-                  onQueryChange: setBrandQuery,
-                  results: brandResults,
-                }}
                 initialLogoDomain={domainFromUrl(selectedInstitution?.url ?? null)}
+                institutionSearch={manualAccountInstitutionSearch}
                 initialName={selectedInstitution?.name}
+                initialType={cashEntry ? "depository" : undefined}
                 onBackspaceWhenEmpty={popPage}
                 onSubmit={(values) => {
                   void (async () => {
@@ -1057,6 +1238,8 @@ function CommandMenuDialog({
                 onBackspaceWhenEmpty={popPage}
                 onRequestCreateTag={addTxOnRequestCreateTag}
                 onCreateCashAccount={() => {
+                  setSelectedInstitution(null);
+                  setCashEntry(true);
                   setSearch("");
                   setPages((p) => [...p.slice(0, -1), "add-manual-account"]);
                 }}
@@ -1067,6 +1250,55 @@ function CommandMenuDialog({
                       handleOpenChange(false);
                     } catch {
                       // Toast already shown by provider.
+                    }
+                  })();
+                }}
+                submitting={false}
+              />
+            </div>
+          )}
+          {inAddPosition && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
+                <Icon className="shrink-0" icon={AppleStocksIcon} size="lg" />
+                New Position
+              </h2>
+              <AddPositionForm
+                accounts={positionAccountOptions}
+                onBackspaceWhenEmpty={popPage}
+                onLoadHistory={loadTickerHistory}
+                onSubmit={(values) => {
+                  void (async () => {
+                    try {
+                      await submitAddPosition(values);
+                      handleOpenChange(false);
+                    } catch {
+                      // Toast already shown by submit.
+                    }
+                  })();
+                }}
+                submitting={false}
+                tickerSearch={positionTickerSearch}
+              />
+            </div>
+          )}
+          {inSellPosition && (
+            <div className="flex flex-col gap-3 px-6 pt-5 pb-6">
+              <h2 className="flex items-center gap-2 font-semibold text-lg text-muted-foreground leading-none">
+                <Icon className="shrink-0" icon={AppleStocksIcon} size="lg" />
+                Sell Position
+              </h2>
+              <SellPositionForm
+                holdings={sellableHoldings}
+                onBackspaceWhenEmpty={popPage}
+                onLoadHistory={loadTickerHistory}
+                onSubmit={(values) => {
+                  void (async () => {
+                    try {
+                      await submitSellPosition(values);
+                      handleOpenChange(false);
+                    } catch {
+                      // Toast already shown by submit.
                     }
                   })();
                 }}
@@ -1444,6 +1676,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
   const openAddAccount = useCallback(() => openAt("add-account"), [openAt]);
   const openAddManualAccount = useCallback(() => openAt("add-manual-account"), [openAt]);
   const openAddTransaction = useCallback(() => openAt("add-transaction"), [openAt]);
+  const openAddPosition = useCallback(() => openAt("add-position"), [openAt]);
   const openAddTag = useCallback(
     (opts?: { initialName?: string }) => {
       setAddTagInitialName(opts?.initialName ?? "");
@@ -1484,6 +1717,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
       open,
       openAddAccount,
       openAddManualAccount,
+      openAddPosition,
       openAddTag,
       openAddTransaction,
       openBulkActions,
@@ -1495,6 +1729,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
       open,
       openAddAccount,
       openAddManualAccount,
+      openAddPosition,
       openAddTag,
       openAddTransaction,
       openBulkActions,
