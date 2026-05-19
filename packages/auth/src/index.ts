@@ -33,17 +33,46 @@ const redis =
       })
     : null;
 
+/**
+ * Reads swallow errors and return null so callers fall through to Postgres
+ * (session/verification rows are mirrored there). Writes rethrow — silently
+ * dropping a `set`/`delete` would leave stale sessions or skewed rate-limit
+ * counters, which is worse than a 5xx the user can retry.
+ *
+ * Original errors are logged server-side only; the rethrown message is generic
+ * so 5xx response bodies never leak Redis/Upstash provider details.
+ */
+const STORAGE_UNAVAILABLE = "session storage unavailable";
+
 const secondaryStorage = redis
   ? {
       delete: async (key: string) => {
-        await redis.del(key);
+        try {
+          await redis.del(key);
+        } catch (error) {
+          console.error("[auth] secondary-storage delete failed", {
+            error,
+            key,
+          });
+          throw new Error(STORAGE_UNAVAILABLE, { cause: error });
+        }
       },
       get: async (key: string) => {
-        const v = await redis.get<string>(key);
-        return v ?? null;
+        try {
+          const v = await redis.get<string>(key);
+          return v ?? null;
+        } catch (error) {
+          console.warn("[auth] secondary-storage get failed, falling back to db", { error, key });
+          return null;
+        }
       },
       set: async (key: string, value: string, ttl?: number) => {
-        await (ttl ? redis.set(key, value, { ex: ttl }) : redis.set(key, value));
+        try {
+          await (ttl ? redis.set(key, value, { ex: ttl }) : redis.set(key, value));
+        } catch (error) {
+          console.error("[auth] secondary-storage set failed", { error, key });
+          throw new Error(STORAGE_UNAVAILABLE, { cause: error });
+        }
       },
     }
   : undefined;
