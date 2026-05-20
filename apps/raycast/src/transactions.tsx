@@ -103,7 +103,10 @@ function TransactionMetadata({
       <Detail.Metadata.Label title="Amount" text={signedAmount} />
       <Detail.Metadata.Label title="Date" text={formatDate(tx.date)} />
       {tx.authorizedDate && tx.authorizedDate !== tx.date ? (
-        <Detail.Metadata.Label title="Authorized" text={formatDate(tx.authorizedDate)} />
+        <Detail.Metadata.Label
+          title="Authorized"
+          text={formatDate(tx.authorizedDate)}
+        />
       ) : null}
       <Detail.Metadata.Separator />
       {primaryCategory ? (
@@ -116,7 +119,9 @@ function TransactionMetadata({
       {tx.categoryDetail ? (
         <Detail.Metadata.Label title="Subcategory" text={tx.categoryDetail} />
       ) : null}
-      {tx.merchantName ? <Detail.Metadata.Label title="Merchant" text={tx.merchantName} /> : null}
+      {tx.merchantName ? (
+        <Detail.Metadata.Label title="Merchant" text={tx.merchantName} />
+      ) : null}
       {merchantUrl ? (
         <Detail.Metadata.Link
           title="Website"
@@ -125,11 +130,17 @@ function TransactionMetadata({
         />
       ) : null}
       <Detail.Metadata.Separator />
-      {tx.accountName ? <Detail.Metadata.Label title="Account" text={tx.accountName} /> : null}
+      {tx.accountName ? (
+        <Detail.Metadata.Label title="Account" text={tx.accountName} />
+      ) : null}
       {tx.institutionName ? (
         <Detail.Metadata.Label
           title="Institution"
-          icon={institutionIcon ? { mask: Image.Mask.Circle, source: institutionIcon } : undefined}
+          icon={
+            institutionIcon
+              ? { mask: Image.Mask.Circle, source: institutionIcon }
+              : undefined
+          }
           text={tx.institutionName}
         />
       ) : null}
@@ -148,7 +159,9 @@ function TransactionDetail({
   const amountStr = currency.format(Math.abs(tx.amount));
   const signedAmount = `${isCredit ? "+" : "-"}${amountStr}`;
   const primaryCategory =
-    typeof tx.category === "string" ? tx.category : (tx.category?.primary ?? null);
+    typeof tx.category === "string"
+      ? tx.category
+      : (tx.category?.primary ?? null);
   const merchantIcon = pickMerchantIcon({
     brandfetchClientId,
     counterparties: tx.counterparties,
@@ -178,7 +191,9 @@ function TransactionDetail({
 
   let merchantUrl: string | null = null;
   if (tx.website) {
-    merchantUrl = tx.website.startsWith("http") ? tx.website : `https://${tx.website}`;
+    merchantUrl = tx.website.startsWith("http")
+      ? tx.website
+      : `https://${tx.website}`;
   }
 
   return (
@@ -197,9 +212,15 @@ function TransactionDetail({
       actions={
         <ActionPanel>
           <Action.CopyToClipboard title="Copy Amount" content={amountStr} />
-          <Action.CopyToClipboard title="Copy Merchant" content={tx.merchantName ?? title} />
+          <Action.CopyToClipboard
+            title="Copy Merchant"
+            content={tx.merchantName ?? title}
+          />
           {merchantUrl ? (
-            <Action.OpenInBrowser title="Open Merchant Website" url={merchantUrl} />
+            <Action.OpenInBrowser
+              title="Open Merchant Website"
+              url={merchantUrl}
+            />
           ) : null}
         </ActionPanel>
       }
@@ -239,19 +260,22 @@ export default function Command() {
     [base, searchText],
   );
 
-  const { isLoading, data, revalidate, error, pagination } = useFetch(buildUrl, {
-    execute: !!accessToken,
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-    initialData: [] as TransactionItem[],
-    keepPreviousData: true,
-    mapResult(result: TransactionListResponse) {
-      return {
-        cursor: result.nextCursor ?? undefined,
-        data: result.transactions,
-        hasMore: result.hasMore,
-      };
+  const { isLoading, data, revalidate, error, pagination } = useFetch(
+    buildUrl,
+    {
+      execute: !!accessToken,
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      initialData: [] as TransactionItem[],
+      keepPreviousData: true,
+      mapResult(result: TransactionListResponse) {
+        return {
+          cursor: result.nextCursor ?? undefined,
+          data: result.transactions,
+          hasMore: result.hasMore,
+        };
+      },
     },
-  });
+  );
 
   const signOutAction = (
     <Action
@@ -289,7 +313,9 @@ export default function Command() {
         const isCredit = tx.amount < 0;
         const amountStr = currency.format(Math.abs(tx.amount));
         const primaryCategory =
-          typeof tx.category === "string" ? tx.category : (tx.category?.primary ?? null);
+          typeof tx.category === "string"
+            ? tx.category
+            : (tx.category?.primary ?? null);
 
         const institutionIcon = pickInstitutionIcon({
           accountName: tx.accountName,
@@ -313,7 +339,9 @@ export default function Command() {
             },
           },
           {
-            icon: tx.pending ? "categories/pending.svg" : "categories/posted.svg",
+            icon: tx.pending
+              ? "categories/pending.svg"
+              : "categories/posted.svg",
             tooltip: tx.pending ? "Pending" : "Posted",
           },
           {
@@ -342,14 +370,29 @@ export default function Command() {
                 <Action.Push
                   title="Show Details"
                   icon={Icon.Sidebar}
-                  target={<TransactionDetail brandfetchClientId={brandfetchClientId} tx={tx} />}
+                  target={
+                    <TransactionDetail
+                      brandfetchClientId={brandfetchClientId}
+                      tx={tx}
+                    />
+                  }
                 />
-                <Action.CopyToClipboard title="Copy Amount" content={amountStr} />
-                <Action.CopyToClipboard title="Copy Merchant" content={tx.merchantName ?? title} />
+                <Action.CopyToClipboard
+                  title="Copy Amount"
+                  content={amountStr}
+                />
+                <Action.CopyToClipboard
+                  title="Copy Merchant"
+                  content={tx.merchantName ?? title}
+                />
                 {tx.website ? (
                   <Action.OpenInBrowser
                     title="Open Merchant Website"
-                    url={tx.website.startsWith("http") ? tx.website : `https://${tx.website}`}
+                    url={
+                      tx.website.startsWith("http")
+                        ? tx.website
+                        : `https://${tx.website}`
+                    }
                   />
                 ) : null}
                 <Action
@@ -368,7 +411,9 @@ export default function Command() {
         <List.EmptyView
           icon={Icon.MagnifyingGlass}
           title="No transactions"
-          description={searchText ? "Try a different search" : "Nothing here yet"}
+          description={
+            searchText ? "Try a different search" : "Nothing here yet"
+          }
           actions={<ActionPanel>{signOutAction}</ActionPanel>}
         />
       ) : null}

@@ -49,7 +49,10 @@ async function exchangeCode(
   return JSON.parse(text) as TokenResponse;
 }
 
-async function refreshToken(base: string, refresh: string): Promise<TokenResponse> {
+async function refreshToken(
+  base: string,
+  refresh: string,
+): Promise<TokenResponse> {
   const body = new URLSearchParams({
     client_id: CLIENT_ID,
     grant_type: "refresh_token",
