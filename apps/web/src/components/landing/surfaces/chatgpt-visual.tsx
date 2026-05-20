@@ -53,7 +53,71 @@ function renderMarkdown(text: string) {
 
 export function ChatGPTVisual() {
   const conversations: Record<string, GPTEntry[]> = {
-    "Cobalt finances": [
+    "Budget my Lisbon trip": [
+      {
+        id: 1,
+        prompt: "help me budget a trip to Lisbon",
+        response:
+          "Let me pull your cash + monthly income to size the trip against your savings rate.",
+        tool: {
+          args: '{ "include": ["checking", "savings"] }',
+          name: "cobalt.accounts_summary",
+          result: '{ "available_cash": 8945, "monthly_income": 4200 }',
+        },
+      },
+      {
+        id: 2,
+        prompt: "how many days can I afford?",
+        response:
+          "A 5–7 day trip fits — budget **$1,200–$1,500** total (flights + stay + activities). Pulls from cash, not your emergency fund. Won't move your savings rate more than 0.3 months.",
+        tool: {
+          args: '{ "available": 8945, "monthly_income": 4200, "trip_duration": 7 }',
+          name: "cobalt.budget_recommendation",
+          result:
+            '{ "recommended_budget": 1350, "breakeven_months": 0.3, "savings_impact": "minimal" }',
+        },
+      },
+    ],
+    "Cancel unused subs": [
+      {
+        id: 3,
+        prompt: "which subscriptions should I cancel?",
+        response:
+          "You have **3 subscriptions** you haven't used in 60+ days: Planet Fitness ($60/mo), Adobe CC ($55/mo), Headspace ($13/mo). Canceling saves **$1,536/yr**.",
+        tool: {
+          args: '{ "unused_days": 60 }',
+          name: "cobalt.subscriptions_list",
+          result: "{ count: 3, annualized_savings: 1536 }",
+        },
+      },
+    ],
+    "Coffee spend": [
+      {
+        id: 4,
+        prompt: "how much have I spent on coffee this quarter?",
+        response:
+          "You spent **$312** on coffee over the last 90 days — 47 transactions, avg $6.63. Blue Bottle leads at $118.",
+        tool: {
+          args: '{ "category": "coffee", "period": "90d" }',
+          name: "cobalt.transactions_sum",
+          result: "{ total: 312.11, count: 47, top: 'Blue Bottle' }",
+        },
+      },
+    ],
+    "Emergency fund": [
+      {
+        id: 6,
+        prompt: "is my emergency fund big enough?",
+        response:
+          "Your high-yield savings holds **$18,400** — covers **4.4 months** of essential spend ($4,180/mo). Target of 6 months would be $25,080. Auto-transfer $1,100/mo for 6 months to close the gap.",
+        tool: {
+          args: '{ "months_target": 6 }',
+          name: "cobalt.emergency_fund_status",
+          result: "{ liquid: 18400, essential_monthly: 4180, months_covered: 4.4, gap: 6680 }",
+        },
+      },
+    ],
+    "Net worth check": [
       {
         id: 0,
         prompt: "what's my net worth right now?",
@@ -66,39 +130,42 @@ export function ChatGPTVisual() {
         },
       },
     ],
-    "Trip to Lisbon": [
+    "Roth vs Traditional": [
       {
-        id: 1,
-        prompt: "help me plan a trip to Lisbon",
+        id: 7,
+        prompt: "Roth or Traditional this year?",
         response:
-          "I'll help you plan your trip to Lisbon! Let me check your financial situation to see how much you can comfortably spend.",
+          "Your 24% bracket likely drops in retirement → **Traditional 401(k)** wins on expected tax. Backdoor Roth still makes sense for the $7K IRA — your MAGI is over the direct limit.",
         tool: {
-          args: '{ "include": ["checking", "savings"] }',
-          name: "cobalt.accounts_summary",
-          result: '{ "available_cash": 8945, "monthly_income": 4200 }',
+          args: '{ "year": 2026 }',
+          name: "cobalt.retirement_recommendation",
+          result:
+            "{ current_bracket: 0.24, projected_retirement_bracket: 0.22, backdoor_roth: true }",
         },
       },
+    ],
+    "Tax-loss harvest": [
       {
-        id: 2,
-        prompt: "how many days should I go for",
+        id: 5,
+        prompt: "any tax-loss harvesting opportunities?",
         response:
-          "Based on your available funds, a 5-7 day trip would be ideal. You could budget roughly $1,200-1,500 total (flights + accommodation + activities). With your monthly income, this won't strain your finances.",
+          "Two lots show paper losses: **VXUS** (-$420) and **EMB** (-$185). Selling now realizes **$605** of losses — offsets short-term gains first. Wash-sale window: stay out 31 days.",
         tool: {
-          args: '{ "available": 8945, "monthly_income": 4200, "trip_duration": 7 }',
-          name: "cobalt.budget_recommendation",
+          args: '{ "account_type": "taxable", "threshold": 100 }',
+          name: "cobalt.tax_loss_candidates",
           result:
-            '{ "recommended_budget": 1350, "breakeven_months": 0.3, "savings_impact": "minimal" }',
+            '{ candidates: [{symbol: "VXUS", loss: 420}, {symbol: "EMB", loss: 185}], total_loss: 605 }',
         },
       },
     ],
   };
 
-  const [entries, setEntries] = useState<GPTEntry[]>(conversations["Trip to Lisbon"]);
+  const [entries, setEntries] = useState<GPTEntry[]>(conversations["Budget my Lisbon trip"]);
   const [draft, setDraft] = useState("");
   const [streaming, setStreaming] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [showToolDetail, setShowToolDetail] = useState<number | null>(null);
-  const [activeConversation, setActiveConversation] = useState("Trip to Lisbon");
+  const [activeConversation, setActiveConversation] = useState("Budget my Lisbon trip");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const brandfetchClientId = process.env.VITE_BRANDFETCH_CLIENT_ID || "";
@@ -176,7 +243,15 @@ export function ChatGPTVisual() {
         <div className="mt-2 px-2 text-[11px] uppercase tracking-wider text-[#1a1a1a]/45 dark:text-white/40">
           Today
         </div>
-        {["Cobalt finances", "Trip to Lisbon", "React hooks refresher"].map((name) => (
+        {[
+          "Net worth check",
+          "Budget my Lisbon trip",
+          "Cancel unused subs",
+          "Coffee spend",
+          "Tax-loss harvest",
+          "Emergency fund",
+          "Roth vs Traditional",
+        ].map((name) => (
           <button
             className={`mt-0.5 w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
               activeConversation === name
@@ -212,17 +287,13 @@ export function ChatGPTVisual() {
               <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeWidth="2" />
             </svg>
           </div>
-          <div className="flex items-center gap-1.5 rounded-full border border-[#10a37f]/40 bg-[#10a37f]/10 px-2 py-0.5 text-[11px] text-[#10a37f]">
-            <span className="size-1.5 rounded-full bg-[#10a37f]" />
-            Cobalt connected
-          </div>
         </header>
 
         <div
           className="flex-1 overflow-y-auto px-6 py-5 text-[14px] text-[#1a1a1a]/90 dark:text-white/90 no-scrollbar"
           ref={scrollRef}
         >
-          <div className="mx-auto max-w-2xl space-y-5">
+          <div className="mx-auto max-w-md space-y-5">
             {entries.map((entry, idx) => {
               const isLast = idx === entries.length - 1;
               const text = isLast && isStreaming ? streaming : entry.response;
@@ -288,7 +359,7 @@ export function ChatGPTVisual() {
         </div>
 
         <div className="px-4 pb-4">
-          <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-full border border-black/10 dark:border-white/10 bg-[#f4f4f4] dark:bg-[#2f2f2f] px-3 py-1.5">
+          <div className="mx-auto flex max-w-md items-center gap-2 rounded-full border border-black/10 dark:border-white/10 bg-[#f4f4f4] dark:bg-[#2f2f2f] px-3 py-1.5">
             <button
               className="text-[#1a1a1a]/50 dark:text-white/50 hover:text-[#1a1a1a]/75 dark:text-white/80"
               type="button"
