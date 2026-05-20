@@ -2,12 +2,13 @@ import { AddPositionForm } from "@cobalt-web/ui/cobalt/accounts/add-position-dia
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { Icon } from "@cobalt-web/ui/components/icon";
 import { AppleStocksIcon } from "@hugeicons/core-free-icons";
-import { useZero, useQuery as useZeroQuery } from "@rocicorp/zero/react";
+import { useQuery as useZeroQuery } from "@rocicorp/zero/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { mutators, queries } from "@cobalt-web/zero";
+import { queries } from "@cobalt-web/zero";
 import { useCallback, useMemo, useState } from "react";
 
 import { tickerHistoryQuery } from "@/hooks/research-queries";
+import { useMutator } from "@/hooks/use-mutator";
 
 import { useTickerSearch } from "../search-tickers";
 
@@ -19,7 +20,7 @@ interface Props {
 }
 
 export function AddPositionPage({ onSuccess, onBackspaceWhenEmpty }: Props) {
-  const zero = useZero();
+  const run = useMutator();
   const queryClient = useQueryClient();
 
   const [manualInvestmentAccounts] = useZeroQuery(queries.brokerage.manualInvestmentAccounts());
@@ -73,31 +74,22 @@ export function AddPositionPage({ onSuccess, onBackspaceWhenEmpty }: Props) {
       // Web uses the Zero mutator for optimistic UI; mobile / external clients
       // use the REST endpoint (POST /internal/brokerage/manual-holdings).
       for (const p of values.positions) {
-        const { server } = zero.mutate(
-          mutators.brokerage.addManualHolding({
-            accountId: values.accountId,
-            dateAcquired: p.dateAcquired ?? undefined,
-            institutionPrice: p.institutionPrice,
-            name: p.name ?? undefined,
-            quantity: p.quantity,
-            ticker: p.ticker,
-          }),
+        run(
+          (m) =>
+            m.brokerage.addManualHolding({
+              accountId: values.accountId,
+              dateAcquired: p.dateAcquired ?? undefined,
+              institutionPrice: p.institutionPrice,
+              name: p.name ?? undefined,
+              quantity: p.quantity,
+              ticker: p.ticker,
+            }),
+          `Couldn't save ${p.ticker}.`,
         );
         cobaltToast.positionAdded(p.ticker, p.quantity);
-        void (async () => {
-          try {
-            const result = await server;
-            if (result.type === "error") {
-              cobaltToast.error(result.error.message || `Couldn't save ${p.ticker}.`);
-            }
-          } catch (error) {
-            console.error("Failed to save manual holding", p.ticker, error);
-            cobaltToast.error(`Couldn't save ${p.ticker}.`);
-          }
-        })();
       }
     },
-    [zero],
+    [run],
   );
 
   const handleSubmit = useCallback(

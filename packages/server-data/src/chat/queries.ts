@@ -4,6 +4,19 @@ import { ApiError } from "../_shared/api-error.js";
 import { partDbToUi } from "./lib.js";
 import type { ChatMessage, Conversation } from "./schemas.js";
 
+export async function getChat(
+  userId: string,
+  chatId: string,
+): Promise<{ chatId: string; title: string | null }> {
+  const chat = await db.query.chats.findFirst({
+    where: { chatId: { eq: chatId }, userId: { eq: userId } },
+  });
+  if (!chat) {
+    throw new ApiError(404, "chat_not_found", "Chat not found");
+  }
+  return { chatId: chat.chatId, title: chat.title };
+}
+
 export async function getChatsByUserId(userId: string): Promise<Conversation[]> {
   const items = await db.query.chats.findMany({
     orderBy: { updatedAt: "desc" },

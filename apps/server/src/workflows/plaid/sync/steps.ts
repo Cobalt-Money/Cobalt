@@ -1,7 +1,3 @@
-import { db } from "@cobalt-web/db";
-import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
-import { snapshot } from "@cobalt-web/db/schema/accounts/snapshot";
-import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connection";
 import {
   exchangePublicToken,
   fetchAccounts,
@@ -9,17 +5,22 @@ import {
   removeItem,
   triggerPlaidSync,
 } from "@cobalt-web/server-data/providers/plaid/link/actions";
-import { financialAccountInsertFromPlaid } from "@cobalt-web/server-data/providers/plaid/link/lib";
 import {
   applyItemWebhookState,
   clearItemError,
+  deletePlaidAccount,
+  migrateSnapshotsBetweenAccounts,
   persistOnboardingItem,
   syncNewAccountsForItem,
   upsertBalanceForPlaidAccount,
+  upsertPlaidAccount,
 } from "@cobalt-web/server-data/providers/plaid/link/mutations";
 import {
   checkForDuplicateAccounts,
+  findPlaidAccountByExternalId,
   getBankConnectionByItemId,
+  listPlaidAccounts,
+  lookupPlaidConnection,
 } from "@cobalt-web/server-data/providers/plaid/link/queries";
 import { upsertBankBalanceSnapshotsForUser } from "@cobalt-web/server-data/snapshots/mutations";
 import { syncTransactionsPage } from "@cobalt-web/server-data/providers/plaid/transactions/actions";
@@ -32,7 +33,6 @@ import {
 } from "@cobalt-web/server-data/providers/plaid/transactions/mutations";
 import { getUserOverrides } from "@cobalt-web/server-data/providers/plaid/transactions/queries";
 import type { UserOverrides } from "@cobalt-web/server-data/providers/plaid/transactions/queries";
-import { and, eq, sql } from "drizzle-orm";
 import type { AccountBase } from "plaid";
 import { FatalError, RetryableError, getWritable } from "workflow";
 
@@ -145,11 +145,7 @@ export async function updateItemStateStep(params: {
 async function resolvePlaidConnection(
   plaidItemId: string,
 ): Promise<{ id: string; userId: string }> {
-  const [conn] = await db
-    .select({ id: plaidConnection.id, userId: plaidConnection.userId })
-    .from(plaidConnection)
-    .where(eq(plaidConnection.plaidItemId, plaidItemId))
-    .limit(1);
+  const conn = await lookupPlaidConnection(plaidItemId);
   if (!conn) {
     throw new Error(`plaid_connection not found for item ${plaidItemId}`);
   }
@@ -162,24 +158,11 @@ export async function syncAccountsAndBalancesStep(accessToken: string, itemId: s
   try {
     const accounts = await fetchAccounts(accessToken);
     const conn = await resolvePlaidConnection(itemId);
-    const toInsert = financialAccountInsertFromPlaid(conn.id, conn.userId);
 
     await Promise.allSettled(
       accounts.map(async (account) => {
-        await db
-          .insert(financialAccount)
-          .values(toInsert(account))
-          .onConflictDoUpdate({
-            set: {
-              persistentAccountId: sql`coalesce(${financialAccount.persistentAccountId}, excluded.persistent_account_id)`,
-              updatedAt: new Date(),
-            },
-            target: [financialAccount.source, financialAccount.externalId],
-            targetWhere: sql`external_id IS NOT NULL`,
-          });
-
+        await upsertPlaidAccount(conn.id, conn.userId, account);
         await upsertBalanceForPlaidAccount(account);
-
         return { accountId: account.account_id, success: true };
       }),
     );
@@ -197,33 +180,14 @@ export async function reconcileOrphanAccountsStep(accessToken: string, itemId: s
   "use step";
 
   try {
-    const conn = await db
-      .select({ id: plaidConnection.id, userId: plaidConnection.userId })
-      .from(plaidConnection)
-      .where(eq(plaidConnection.plaidItemId, itemId))
-      .limit(1);
-
-    const item = conn.at(0);
+    const item = await lookupPlaidConnection(itemId);
     if (!item) {
       return { migrated: 0, reconciled: 0 };
     }
 
     const plaidAccountsList = await fetchAccounts(accessToken);
     const plaidAccountIds = new Set(plaidAccountsList.map((a) => a.account_id));
-    const dbAccounts = await db
-      .select({
-        externalId: financialAccount.externalId,
-        id: financialAccount.id,
-        mask: financialAccount.mask,
-        name: financialAccount.name,
-        persistentAccountId: financialAccount.persistentAccountId,
-        subtype: financialAccount.subtype,
-        type: financialAccount.type,
-      })
-      .from(financialAccount)
-      .where(
-        and(eq(financialAccount.source, "plaid"), eq(financialAccount.plaidConnectionId, item.id)),
-      );
+    const dbAccounts = await listPlaidAccounts(item.id);
 
     const orphanAccounts = dbAccounts.filter(
       (a) => a.externalId !== null && !plaidAccountIds.has(a.externalId),
@@ -249,25 +213,14 @@ export async function reconcileOrphanAccountsStep(accessToken: string, itemId: s
       );
 
       if (newAccount) {
-        // Resolve the new financial_account.id by external account_id.
-        const [newRow] = await db
-          .select({ id: financialAccount.id })
-          .from(financialAccount)
-          .where(
-            and(
-              eq(financialAccount.source, "plaid"),
-              eq(financialAccount.externalId, newAccount.account_id),
-            ),
-          )
-          .limit(1);
-
+        const newRow = await findPlaidAccountByExternalId(newAccount.account_id);
         if (newRow) {
-          await migrateSnapshotsToNewAccount(orphan.id, newRow.id, item.userId);
+          await migrateSnapshotsBetweenAccounts(orphan.id, newRow.id, item.userId);
           migrated += 1;
         }
       }
 
-      await db.delete(financialAccount).where(eq(financialAccount.id, orphan.id));
+      await deletePlaidAccount(orphan.id);
     }
 
     return { migrated, reconciled: orphanAccounts.length };
@@ -327,52 +280,6 @@ function findMatchingNewAccount(
     return name === orphanName || mask === orphanMask;
   });
   return match ?? byName[0] ?? null;
-}
-
-/**
- * Re-point snapshot rows from an orphan financial_account to the new one,
- * skipping any (account, date) pair that already exists on the new account
- * (the unique index would reject the row anyway).
- */
-async function migrateSnapshotsToNewAccount(
-  orphanId: string,
-  newId: string,
-  userId: string,
-): Promise<void> {
-  const orphanRows = await db
-    .select({ snapshotDate: snapshot.snapshotDate })
-    .from(snapshot)
-    .where(and(eq(snapshot.userId, userId), eq(snapshot.accountId, orphanId)));
-
-  const newRows = await db
-    .select({ snapshotDate: snapshot.snapshotDate })
-    .from(snapshot)
-    .where(and(eq(snapshot.userId, userId), eq(snapshot.accountId, newId)));
-  const newDates = new Set(newRows.map((r) => r.snapshotDate));
-
-  for (const row of orphanRows) {
-    const date = row.snapshotDate;
-    await (newDates.has(date)
-      ? db
-          .delete(snapshot)
-          .where(
-            and(
-              eq(snapshot.userId, userId),
-              eq(snapshot.accountId, orphanId),
-              eq(snapshot.snapshotDate, date),
-            ),
-          )
-      : db
-          .update(snapshot)
-          .set({ accountId: newId })
-          .where(
-            and(
-              eq(snapshot.userId, userId),
-              eq(snapshot.accountId, orphanId),
-              eq(snapshot.snapshotDate, date),
-            ),
-          ));
-  }
 }
 
 export async function syncTransactionsStep(

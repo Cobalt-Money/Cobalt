@@ -1,7 +1,11 @@
-import { db } from "@cobalt-web/db";
 import { confirmCategoryMapping } from "@cobalt-web/server-data/import/category-mapping/actions";
 import { lookupCategoryMappingCache } from "@cobalt-web/server-data/import/category-mapping/cache";
-import { getStagedCategoryLabels } from "@cobalt-web/server-data/import/category-mapping/queries";
+import {
+  getJob,
+  getStagedCategoryLabels,
+  listCategories,
+  listCategoryGroups,
+} from "@cobalt-web/server-data/import/category-mapping/queries";
 import { persistCategorySuggestions } from "@cobalt-web/server-data/import/shared/mutations";
 import {
   categorySuggestionsResponseSchema,
@@ -119,27 +123,9 @@ export const importsCategoryMapRouter = createApp()
   .openapi(suggestRoute, async (c) => {
     const { id } = c.req.valid("param");
     const labels = await getStagedCategoryLabels(id);
-    const userCategories = await db.query.category.findMany({
-      columns: {
-        groupId: true,
-        iconKey: true,
-        id: true,
-        name: true,
-        systemKey: true,
-      },
-      where: { userId: { eq: c.var.user.id } },
-    });
-    const userGroups = await db.query.categoryGroup.findMany({
-      columns: { id: true, name: true, systemKey: true },
-      where: { userId: { eq: c.var.user.id } },
-    });
-    const job = await db.query.importJob.findFirst({
-      columns: { categorySuggestions: true, userId: true },
-      where: { id: { eq: id } },
-    });
-    if (!job || job.userId !== c.var.user.id) {
-      return c.json({ error: "Import job not found" }, 404);
-    }
+    const userCategories = await listCategories(c.var.user.id);
+    const userGroups = await listCategoryGroups(c.var.user.id);
+    const job = await getJob(c.var.user.id, id);
     const userCategoryIdSet = new Set(userCategories.map((cat) => cat.id));
     // Stale guard: any cached link target whose category was deleted → re-infer.
     // Legacy create-action entries from prior sessions also force re-infer.

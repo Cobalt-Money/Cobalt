@@ -4,6 +4,19 @@ import { db } from "@cobalt-web/db";
 const UPDATE_THRESHOLD_HOURS = 24;
 
 /**
+ * Returns true if the user is anonymous (demo). Used by MCP to reject
+ * sessions backed by demo users — their rows get purged by the 24h cron
+ * and external clients would silently break.
+ */
+export async function isAnonymousUser(userId: string): Promise<boolean> {
+  const row = await db.query.user.findFirst({
+    columns: { isAnonymous: true },
+    where: { id: { eq: userId } },
+  });
+  return row?.isAnonymous ?? false;
+}
+
+/**
  * Returns distinct userIds that have at least one connected Plaid bank
  * connection or SnapTrade brokerage user. Used by cron fan-out (e.g. daily
  * snapshots) to know who needs a per-user workflow dispatched.

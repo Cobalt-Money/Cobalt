@@ -1,5 +1,5 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { getUserTransactions } from "@cobalt-web/server-data/transactions/queries";
+import { getTransactions } from "@cobalt-web/server-data/transactions/queries";
 import {
   transactionListQuerySchema,
   transactionListResponseSchema,
@@ -37,7 +37,7 @@ export const listRouter = createApp().openapi(route, async (c) => {
       400,
     );
   }
-  const result = await getUserTransactions(c.var.user.id, query);
+  const result = await getTransactions(c.var.user.id, query);
   c.header("Cache-Control", "private, max-age=60");
   return c.json(result, 200);
 });
