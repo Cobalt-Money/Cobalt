@@ -212,7 +212,7 @@ export default function Command() {
 
   const signOutAction = (
     <Action
-      title="Sign Out"
+      title="Sign out"
       icon={Icon.Logout}
       style={Action.Style.Destructive}
       shortcut={{ key: "l", modifiers: ["cmd", "shift"] }}

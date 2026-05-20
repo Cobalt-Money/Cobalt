@@ -2,7 +2,7 @@ import { getPreferenceValues } from "@raycast/api";
 
 import { authorize } from "../oauth";
 
-interface Input {
+type Input = {
   /**
    * JavaScript source to run inside the Cobalt sandbox. Has access to the
    * typed `cobalt.*` SDK scoped to the signed-in user (transactions,
@@ -22,10 +22,15 @@ interface Input {
    *   console.log(transactions.map(t => `${t.name} ${t.amount}`).join("\n"));
    */
   code: string;
+};
+
+interface McpTextContent {
+  text: string;
+  type: "text";
 }
 
 interface McpToolCallResult {
-  content: { text: string; type: "text" }[];
+  content: McpTextContent[];
   isError?: boolean;
 }
 
@@ -57,7 +62,7 @@ async function readMcpResponse(r: Response, expectedId: number | string): Promis
   let buffer = "";
 
   try {
-    while (true) {
+    for (;;) {
       const { done, value } = await reader.read();
       if (done) {
         break;

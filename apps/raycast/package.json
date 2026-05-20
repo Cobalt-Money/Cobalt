@@ -7,7 +7,7 @@
     "Productivity"
   ],
   "license": "MIT",
-  "author": "sriket",
+  "author": "sriket_komali",
   "scripts": {
     "build": "ray build --skip-types -e dist -o dist",
     "dev": "ray develop",
@@ -15,14 +15,14 @@
     "lint": "ray lint"
   },
   "dependencies": {
-    "@raycast/api": "^1.83.1",
-    "@raycast/utils": "^1.17.0"
+    "@raycast/api": "^1.104.17",
+    "@raycast/utils": "^2.2.5"
   },
   "devDependencies": {
-    "@raycast/eslint-config": "^1.0.11",
+    "@raycast/eslint-config": "^2.1.1",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.0",
-    "eslint": "^8.57.0",
+    "eslint": "^9.36.0",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4"
   },
@@ -193,6 +193,9 @@
         "wealth"
       ]
     }
+  ],
+  "platforms": [
+    "macOS"
   ],
   "preferences": [
     {
