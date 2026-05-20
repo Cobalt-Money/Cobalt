@@ -44,6 +44,7 @@ function TextSwap({ value }: { value: string }) {
 
     return () => {
       clearTimeout(t);
+      el.classList.remove("is-exit", "is-enter-start");
     };
   }, [value, displayed]);
 
@@ -295,30 +296,22 @@ function OnboardingProgressCard({
   }
   const isDone = latestByPhase.get("done")?.status === "done";
 
-  const bucketState: Record<Bucket, "pending" | "active" | "done"> = {
-    connecting: "pending",
-    done: "pending",
-    syncing: "pending",
-  };
-  for (const [phase, event] of latestByPhase) {
-    const bucket = PHASE_TO_BUCKET[phase as keyof typeof PHASE_TO_BUCKET];
+  // Walk events chronologically and track furthest-progressed bucket. Monotonic
+  // — never regresses. Avoids label/bar flicker when a phase `done` for bucket
+  // N arrives moments before a phase `start` for the same bucket.
+  let maxBucketIndex = 0;
+  for (const event of events) {
+    const bucket = PHASE_TO_BUCKET[event.phase as keyof typeof PHASE_TO_BUCKET];
     if (!bucket) {
       continue;
     }
-    if (event.status === "done" && bucketState[bucket] !== "active") {
-      bucketState[bucket] = "done";
-    }
-    if (event.status === "start") {
-      bucketState[bucket] = "active";
+    const idx = BUCKET_ORDER.indexOf(bucket);
+    if (idx > maxBucketIndex) {
+      maxBucketIndex = idx;
     }
   }
-
-  const activeBucket = BUCKET_ORDER.find((b) => bucketState[b] === "active");
-  const firstPending = BUCKET_ORDER.find((b) => bucketState[b] === "pending");
-  const currentBucket: Bucket = isDone ? "done" : (activeBucket ?? firstPending ?? "connecting");
-
-  const completedCount = BUCKET_ORDER.filter((b) => bucketState[b] === "done").length;
-  const percent = Math.round((completedCount / BUCKET_ORDER.length) * 100);
+  const currentBucket: Bucket = isDone ? "done" : BUCKET_ORDER[maxBucketIndex];
+  const percent = Math.round(((maxBucketIndex + (isDone ? 1 : 0)) / BUCKET_ORDER.length) * 100);
   const currentLabel = BUCKET_LABELS[currentBucket];
 
   return (
