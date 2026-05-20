@@ -1,6 +1,6 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
-  "name": "cobalt",
+  "name": "cobalt-finance",
   "description": "Access your Cobalt finances from Raycast.",
   "categories": [
     "Finance",
@@ -222,7 +222,7 @@
       "description": "Used for recurring/subscription brand logos via logo.dev (matches web)"
     }
   ],
-  "title": "Cobalt",
+  "title": "Cobalt Finance",
   "tools": [
     {
       "name": "execute-cobalt-code",
