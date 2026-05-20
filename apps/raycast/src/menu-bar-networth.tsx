@@ -55,9 +55,7 @@ function formatTitle(value: number, blurred: boolean): string {
   if (blurred) {
     return BLUR;
   }
-  return Math.abs(value) >= 10_000
-    ? usdCompact.format(value)
-    : usdFull.format(value);
+  return Math.abs(value) >= 10_000 ? usdCompact.format(value) : usdFull.format(value);
 }
 
 function formatFull(value: number, blurred: boolean): string {
@@ -95,9 +93,7 @@ function deltaIcon(delta: number): { source: Icon; tintColor: Color } {
   return { source: Icon.Minus, tintColor: Color.SecondaryText };
 }
 
-function useAccessToken(
-  base: string,
-): [string | null, (t: string | null) => void] {
+function useAccessToken(base: string): [string | null, (t: string | null) => void] {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   useEffect(() => {
     const run = async () => {
@@ -314,17 +310,14 @@ export default function Command() {
   const [accessToken, setAccessToken] = useAccessToken(base);
   const [blurred, setBlurred] = useState(false);
 
-  const { isLoading, data, revalidate, error } = useFetch(
-    `${base}/v1/networth?range=1M`,
-    {
-      execute: !!accessToken,
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-      keepPreviousData: true,
-      mapResult(result: NetWorthResponse) {
-        return { data: result };
-      },
+  const { isLoading, data, revalidate, error } = useFetch(`${base}/v1/networth?range=1M`, {
+    execute: !!accessToken,
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    keepPreviousData: true,
+    mapResult(result: NetWorthResponse) {
+      return { data: result };
     },
-  );
+  });
 
   const signOut = async () => {
     await logout();

@@ -18,6 +18,8 @@ export const user = pgTable(
     isAnonymous: boolean("is_anonymous"),
     lastSeenAt: timestamp("last_seen_at"),
     name: text("name").notNull(),
+    onboardedAt: timestamp("onboarded_at"),
+    onboardingStep: text("onboarding_step"),
     stripeCustomerId: text("stripe_customer_id").unique(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

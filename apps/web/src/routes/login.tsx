@@ -54,7 +54,10 @@ function RouteComponent() {
 
       <main className="relative flex flex-1 items-center justify-center px-6 py-12">
         <div className="flex w-full max-w-md flex-col items-center gap-6">
-          <SocialAuth callbackURL={callbackURL} />
+          <SocialAuth
+            callbackURL={callbackURL}
+            newUserCallbackURL={`${window.location.origin}/onboarding`}
+          />
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="h-px w-12 bg-border" />
             <span>or</span>

@@ -6,7 +6,13 @@ import { toast } from "sonner";
 
 import { authClient } from "@/lib/clients/auth-client";
 
-export default function SocialAuth({ callbackURL: callbackURLProp }: { callbackURL?: string }) {
+export default function SocialAuth({
+  callbackURL: callbackURLProp,
+  newUserCallbackURL,
+}: {
+  callbackURL?: string;
+  newUserCallbackURL?: string;
+}) {
   const [loading, setLoading] = useState(false);
 
   const callbackURL =
@@ -18,6 +24,7 @@ export default function SocialAuth({ callbackURL: callbackURLProp }: { callbackU
       await authClient.signIn.social(
         {
           callbackURL,
+          newUserCallbackURL,
           provider: "google",
         },
         {
@@ -41,6 +48,7 @@ export default function SocialAuth({ callbackURL: callbackURLProp }: { callbackU
       await authClient.signIn.social(
         {
           callbackURL,
+          newUserCallbackURL,
           provider: "apple",
         },
         {

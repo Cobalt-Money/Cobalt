@@ -302,6 +302,14 @@ export const auth = betterAuth({
         required: false,
         type: "date",
       },
+      onboardedAt: {
+        required: false,
+        type: "date",
+      },
+      onboardingStep: {
+        required: false,
+        type: "string",
+      },
     },
   },
 });

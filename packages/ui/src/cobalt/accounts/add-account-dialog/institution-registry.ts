@@ -33,7 +33,7 @@ const SNAPTRADE_SEEDS: readonly SnaptradeSeed[] = [
     slug: "BINANCE",
   },
   { domain: "getbux.com", id: "snaptrade:bux", name: "Bux", slug: "BUX" },
-  { domain: "chase.com", id: "snaptrade:chase", name: "Chase", slug: "CHASE" },
+  // { domain: "chase.com", id: "snaptrade:chase", name: "Chase", slug: "CHASE" },
   {
     domain: "coinbase.com",
     id: "snaptrade:coinbase",
@@ -172,12 +172,12 @@ const SNAPTRADE_SEEDS: readonly SnaptradeSeed[] = [
     name: "Webull Canada",
     slug: "WEBULL-CANADA",
   },
-  {
-    domain: "wellsfargo.com",
-    id: "snaptrade:wells-fargo",
-    name: "Wells Fargo",
-    slug: "WELLS-FARGO",
-  },
+  // {
+  //   domain: "wellsfargo.com",
+  //   id: "snaptrade:wells-fargo",
+  //   name: "Wells Fargo",
+  //   slug: "WELLS-FARGO",
+  // },
   {
     domain: "zerodha.com",
     id: "snaptrade:zerodha",

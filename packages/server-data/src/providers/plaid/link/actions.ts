@@ -5,7 +5,10 @@ import { CountryCode, Products } from "plaid";
 import { ApiError } from "../../../_shared/api-error.js";
 
 /** Create a Plaid link token for initial account connection. */
-export async function createLinkToken(userId: string): Promise<{ link_token: string }> {
+export async function createLinkToken(
+  userId: string,
+  options?: { routingNumber?: string | null },
+): Promise<{ link_token: string }> {
   try {
     const response = await plaidClient.linkTokenCreate({
       client_name: "Cobalt",
@@ -15,6 +18,9 @@ export async function createLinkToken(userId: string): Promise<{ link_token: str
       products: [Products.Transactions],
       user: { client_user_id: userId },
       webhook: env.PLAID_WEBHOOK_URL,
+      ...(options?.routingNumber
+        ? { institution_data: { routing_number: options.routingNumber } }
+        : {}),
     });
 
     return { link_token: response.data.link_token };

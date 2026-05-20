@@ -59,6 +59,7 @@
     "react-day-picker": "^9.14.0",
     "react-dom": "catalog:",
     "react-plaid-link": "^4.1.1",
+    "react-qr-code": "^2.0.21",
     "recharts": "3.8.0",
     "remark-frontmatter": "^5.0.0",
     "remark-mdx-frontmatter": "^5.2.0",
