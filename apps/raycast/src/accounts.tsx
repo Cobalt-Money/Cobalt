@@ -77,7 +77,9 @@ function isCreditAccount(a: AccountItem): boolean {
 
 function accountTypeLabel(a: AccountItem): string {
   if (a.subtype) {
-    return a.subtype.replaceAll("_", " ").replaceAll(/\b\w/g, (c) => c.toUpperCase());
+    return a.subtype
+      .replaceAll("_", " ")
+      .replaceAll(/\b\w/g, (c) => c.toUpperCase());
   }
   return a.type.replaceAll(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -93,7 +95,11 @@ function utilization(a: AccountItem): number | null {
   return Math.min(100, Math.max(0, (Math.abs(a.current) / limit) * 100));
 }
 
-function buildLimitLine(isCredit: boolean, limitStr: string | null, util: number | null): string {
+function buildLimitLine(
+  isCredit: boolean,
+  limitStr: string | null,
+  util: number | null,
+): string {
   if (!(isCredit && limitStr)) {
     return "";
   }
@@ -141,12 +147,21 @@ function AccountDetail({
         <Detail.Metadata>
           <Detail.Metadata.TagList title="Status">
             {a.needsReauth ? (
-              <Detail.Metadata.TagList.Item text="Needs Reauth" color={Color.Red} />
+              <Detail.Metadata.TagList.Item
+                text="Needs Reauth"
+                color={Color.Red}
+              />
             ) : (
-              <Detail.Metadata.TagList.Item text="Connected" color={Color.Green} />
+              <Detail.Metadata.TagList.Item
+                text="Connected"
+                color={Color.Green}
+              />
             )}
             {a.pendingDisconnectAt ? (
-              <Detail.Metadata.TagList.Item text="Pending Disconnect" color={Color.Orange} />
+              <Detail.Metadata.TagList.Item
+                text="Pending Disconnect"
+                color={Color.Orange}
+              />
             ) : null}
           </Detail.Metadata.TagList>
           <Detail.Metadata.Label title="Balance" text={balance} />
@@ -154,29 +169,44 @@ function AccountDetail({
             <Detail.Metadata.Label title="Credit Limit" text={limitStr} />
           ) : null}
           {util === null ? null : (
-            <Detail.Metadata.Label title="Utilization" text={`${util.toFixed(0)}%`} />
+            <Detail.Metadata.Label
+              title="Utilization"
+              text={`${util.toFixed(0)}%`}
+            />
           )}
           <Detail.Metadata.Separator />
           <Detail.Metadata.Label title="Type" text={accountTypeLabel(a)} />
-          {a.mask ? <Detail.Metadata.Label title="Account" text={`••••${a.mask}`} /> : null}
-          <Detail.Metadata.Label title="Currency" text={(a.currency ?? "USD").toUpperCase()} />
+          {a.mask ? (
+            <Detail.Metadata.Label title="Account" text={`••••${a.mask}`} />
+          ) : null}
+          <Detail.Metadata.Label
+            title="Currency"
+            text={(a.currency ?? "USD").toUpperCase()}
+          />
           <Detail.Metadata.Separator />
           {a.institutionName ? (
             <Detail.Metadata.Label
               title="Institution"
               icon={
-                institutionIcon ? { mask: Image.Mask.Circle, source: institutionIcon } : undefined
+                institutionIcon
+                  ? { mask: Image.Mask.Circle, source: institutionIcon }
+                  : undefined
               }
               text={a.institutionName}
             />
           ) : null}
-          <Detail.Metadata.Label title="Last updated" text={formatUpdated(a.updatedAt)} />
+          <Detail.Metadata.Label
+            title="Last updated"
+            text={formatUpdated(a.updatedAt)}
+          />
         </Detail.Metadata>
       }
       actions={
         <ActionPanel>
           <Action.CopyToClipboard title="Copy Balance" content={balance} />
-          {a.mask ? <Action.CopyToClipboard title="Copy Mask" content={a.mask} /> : null}
+          {a.mask ? (
+            <Action.CopyToClipboard title="Copy Mask" content={a.mask} />
+          ) : null}
         </ActionPanel>
       }
     />
@@ -200,15 +230,18 @@ export default function Command() {
     void run();
   }, [base]);
 
-  const { isLoading, data, revalidate, error } = useFetch(`${base}/v1/accounts`, {
-    execute: !!accessToken,
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-    initialData: [] as AccountItem[],
-    keepPreviousData: true,
-    mapResult(result: AccountsResponse) {
-      return { data: result.accounts };
+  const { isLoading, data, revalidate, error } = useFetch(
+    `${base}/v1/accounts`,
+    {
+      execute: !!accessToken,
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      initialData: [] as AccountItem[],
+      keepPreviousData: true,
+      mapResult(result: AccountsResponse) {
+        return { data: result.accounts };
+      },
     },
-  });
+  );
 
   const signOutAction = (
     <Action
@@ -318,12 +351,21 @@ export default function Command() {
                         title="Show Details"
                         icon={Icon.Sidebar}
                         target={
-                          <AccountDetail account={a} brandfetchClientId={brandfetchClientId} />
+                          <AccountDetail
+                            account={a}
+                            brandfetchClientId={brandfetchClientId}
+                          />
                         }
                       />
-                      <Action.CopyToClipboard title="Copy Balance" content={balance} />
+                      <Action.CopyToClipboard
+                        title="Copy Balance"
+                        content={balance}
+                      />
                       {a.mask ? (
-                        <Action.CopyToClipboard title="Copy Mask" content={a.mask} />
+                        <Action.CopyToClipboard
+                          title="Copy Mask"
+                          content={a.mask}
+                        />
                       ) : null}
                       <Action
                         title="Reload"
