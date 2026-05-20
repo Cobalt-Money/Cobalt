@@ -67,7 +67,9 @@ function formatDate(iso: string | null): string {
   return Number.isNaN(t) ? iso : dateDisplay.format(new Date(t));
 }
 
-function pickCategory(c: { primary?: string | null } | string | null): string | null {
+function pickCategory(
+  c: { primary?: string | null } | string | null,
+): string | null {
   return typeof c === "string" ? c : (c?.primary ?? null);
 }
 
@@ -164,7 +166,9 @@ function StreamDetail({
     logoMd,
     `# ${title}\n`,
     `## ${signedAvg} · ${frequencyLabel(stream.frequency)}\n`,
-    stream.predictedNextDate ? `\n**Next charge:** ${formatDate(stream.predictedNextDate)}\n` : "",
+    stream.predictedNextDate
+      ? `\n**Next charge:** ${formatDate(stream.predictedNextDate)}\n`
+      : "",
   ].join("");
 
   return (
@@ -185,7 +189,10 @@ function StreamDetail({
               />
             ) : null}
           </Detail.Metadata.TagList>
-          <Detail.Metadata.Label title="Frequency" text={frequencyLabel(stream.frequency)} />
+          <Detail.Metadata.Label
+            title="Frequency"
+            text={frequencyLabel(stream.frequency)}
+          />
           <Detail.Metadata.Label title="Average" text={signedAvg} />
           <Detail.Metadata.Label title="Last charge" text={last} />
           <Detail.Metadata.Label title="Monthly equivalent" text={monthly} />
@@ -194,8 +201,14 @@ function StreamDetail({
             title="Predicted next"
             text={formatDate(stream.predictedNextDate)}
           />
-          <Detail.Metadata.Label title="Last seen" text={formatDate(stream.lastDate)} />
-          <Detail.Metadata.Label title="First seen" text={formatDate(stream.firstDate)} />
+          <Detail.Metadata.Label
+            title="Last seen"
+            text={formatDate(stream.lastDate)}
+          />
+          <Detail.Metadata.Label
+            title="First seen"
+            text={formatDate(stream.firstDate)}
+          />
           <Detail.Metadata.Separator />
           {primaryCategory ? (
             <Detail.Metadata.Label
@@ -205,10 +218,16 @@ function StreamDetail({
             />
           ) : null}
           {stream.categoryDetail ? (
-            <Detail.Metadata.Label title="Subcategory" text={stream.categoryDetail} />
+            <Detail.Metadata.Label
+              title="Subcategory"
+              text={stream.categoryDetail}
+            />
           ) : null}
           {stream.merchantName ? (
-            <Detail.Metadata.Label title="Merchant" text={stream.merchantName} />
+            <Detail.Metadata.Label
+              title="Merchant"
+              text={stream.merchantName}
+            />
           ) : null}
           <Detail.Metadata.Separator />
           {stream.accountName ? (
@@ -218,7 +237,9 @@ function StreamDetail({
             <Detail.Metadata.Label
               title="Institution"
               icon={
-                institutionIcon ? { mask: Image.Mask.Circle, source: institutionIcon } : undefined
+                institutionIcon
+                  ? { mask: Image.Mask.Circle, source: institutionIcon }
+                  : undefined
               }
               text={stream.institutionName}
             />
@@ -232,7 +253,10 @@ function StreamDetail({
       actions={
         <ActionPanel>
           <Action.CopyToClipboard title="Copy Average" content={avg} />
-          <Action.CopyToClipboard title="Copy Merchant" content={stream.merchantName ?? title} />
+          <Action.CopyToClipboard
+            title="Copy Merchant"
+            content={stream.merchantName ?? title}
+          />
         </ActionPanel>
       }
     />
@@ -240,7 +264,8 @@ function StreamDetail({
 }
 
 export default function Command() {
-  const { apiUrl, brandfetchClientId, logoDevToken } = getPreferenceValues<Preferences>();
+  const { apiUrl, brandfetchClientId, logoDevToken } =
+    getPreferenceValues<Preferences>();
   const base = (apiUrl || "https://api.cobaltpf.com").replace(/\/+$/, "");
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
@@ -257,19 +282,22 @@ export default function Command() {
     void run();
   }, [base]);
 
-  const { isLoading, data, revalidate, error } = useFetch(`${base}/v1/transactions/recurring`, {
-    execute: !!accessToken,
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-    initialData: [] as RecurringStream[],
-    keepPreviousData: true,
-    mapResult(result: RecurringResponse) {
-      return { data: result.streams };
+  const { isLoading, data, revalidate, error } = useFetch(
+    `${base}/v1/transactions/recurring`,
+    {
+      execute: !!accessToken,
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      initialData: [] as RecurringStream[],
+      keepPreviousData: true,
+      mapResult(result: RecurringResponse) {
+        return { data: result.streams };
+      },
     },
-  });
+  );
 
   const signOutAction = (
     <Action
-      title="Sign Out"
+      title="Sign out"
       icon={Icon.Logout}
       style={Action.Style.Destructive}
       shortcut={{ key: "l", modifiers: ["cmd", "shift"] }}

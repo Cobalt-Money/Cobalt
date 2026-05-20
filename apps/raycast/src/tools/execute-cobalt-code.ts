@@ -24,8 +24,13 @@ interface Input {
   code: string;
 }
 
+interface McpTextContent {
+  text: string;
+  type: "text";
+}
+
 interface McpToolCallResult {
-  content: { text: string; type: "text" }[];
+  content: McpTextContent[];
   isError?: boolean;
 }
 
@@ -43,7 +48,10 @@ interface JsonRpcResponse {
  * — we have to read chunks ourselves, parse `data:` events, and stop on
  * the first JSON-RPC response that matches our request `id`.
  */
-async function readMcpResponse(r: Response, expectedId: number | string): Promise<JsonRpcResponse> {
+async function readMcpResponse(
+  r: Response,
+  expectedId: number | string,
+): Promise<JsonRpcResponse> {
   const ct = r.headers.get("content-type") ?? "";
   if (ct.includes("application/json")) {
     return (await r.json()) as JsonRpcResponse;
@@ -57,7 +65,7 @@ async function readMcpResponse(r: Response, expectedId: number | string): Promis
   let buffer = "";
 
   try {
-    while (true) {
+    for (;;) {
       const { done, value } = await reader.read();
       if (done) {
         break;

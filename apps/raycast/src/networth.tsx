@@ -1,4 +1,12 @@
-import { Action, ActionPanel, Color, Detail, getPreferenceValues, Icon, List } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Color,
+  Detail,
+  getPreferenceValues,
+  Icon,
+  List,
+} from "@raycast/api";
 import { showFailureToast, useFetch } from "@raycast/utils";
 import { useEffect, useState } from "react";
 
@@ -195,7 +203,9 @@ function NetWorthDetail({
       width: 700,
     },
   );
-  const chartMd = sparkPath ? `![chart](${encodeURI(`file://${sparkPath}`)})\n\n` : "";
+  const chartMd = sparkPath
+    ? `![chart](${encodeURI(`file://${sparkPath}`)})\n\n`
+    : "";
   const deltaLine = `${trending ? "▲" : "▼"} ${formatDelta(rangeDelta)}${rangePct ? ` · ${rangePct}` : ""} over ${range}`;
 
   const markdown = [
@@ -210,18 +220,36 @@ function NetWorthDetail({
       markdown={markdown}
       metadata={
         <Detail.Metadata>
-          <Detail.Metadata.Label title="Net Worth" text={usdInt.format(totals.netWorth)} />
+          <Detail.Metadata.Label
+            title="Net Worth"
+            text={usdInt.format(totals.netWorth)}
+          />
           <Detail.Metadata.Label
             title={`Change (${range})`}
             text={`${formatDelta(rangeDelta)}${rangePct ? ` · ${rangePct}` : ""}`}
           />
           <Detail.Metadata.Separator />
-          <Detail.Metadata.Label title="Checking" text={usdInt.format(totals.checking)} />
-          <Detail.Metadata.Label title="Savings" text={usdInt.format(totals.savings)} />
-          <Detail.Metadata.Label title="Investments" text={usdInt.format(totals.investments)} />
+          <Detail.Metadata.Label
+            title="Checking"
+            text={usdInt.format(totals.checking)}
+          />
+          <Detail.Metadata.Label
+            title="Savings"
+            text={usdInt.format(totals.savings)}
+          />
+          <Detail.Metadata.Label
+            title="Investments"
+            text={usdInt.format(totals.investments)}
+          />
           <Detail.Metadata.Separator />
-          <Detail.Metadata.Label title="Credit" text={usdInt.format(totals.credit)} />
-          <Detail.Metadata.Label title="Loans" text={usdInt.format(totals.loans)} />
+          <Detail.Metadata.Label
+            title="Credit"
+            text={usdInt.format(totals.credit)}
+          />
+          <Detail.Metadata.Label
+            title="Loans"
+            text={usdInt.format(totals.loans)}
+          />
           <Detail.Metadata.Separator />
           <Detail.Metadata.Label title="As of" text={formatDate(asOf)} />
           <Detail.Metadata.Label title="Snapshots" text={`${history.length}`} />
@@ -272,7 +300,12 @@ function HeaderSection({
             <Action.Push
               icon={Icon.LineChart}
               target={
-                <NetWorthDetail asOf={asOf} history={history} range={range} totals={totals} />
+                <NetWorthDetail
+                  asOf={asOf}
+                  history={history}
+                  range={range}
+                  totals={totals}
+                />
               }
               title="Show Trend"
             />
@@ -327,7 +360,10 @@ function CategoriesSection({
             accessories={buildCategoryAccessories(cat, value, totalsBase)}
             actions={
               <ActionPanel>
-                <Action.CopyToClipboard title="Copy Total" content={usdInt.format(value)} />
+                <Action.CopyToClipboard
+                  title="Copy Total"
+                  content={usdInt.format(value)}
+                />
                 {signOutAction}
               </ActionPanel>
             }
@@ -357,10 +393,15 @@ function HistorySection({
             icon={Icon.Calendar}
             title={formatDate(point.date)}
             subtitle={usdInt.format(point.value)}
-            accessories={[{ tag: { color: deltaColor(d), value: formatDelta(d) } }]}
+            accessories={[
+              { tag: { color: deltaColor(d), value: formatDelta(d) } },
+            ]}
             actions={
               <ActionPanel>
-                <Action.CopyToClipboard title="Copy Value" content={usdInt.format(point.value)} />
+                <Action.CopyToClipboard
+                  title="Copy Value"
+                  content={usdInt.format(point.value)}
+                />
                 {signOutAction}
               </ActionPanel>
             }
@@ -389,18 +430,21 @@ export default function Command() {
     void run();
   }, [base]);
 
-  const { isLoading, data, revalidate, error } = useFetch(`${base}/v1/networth?range=${range}`, {
-    execute: !!accessToken,
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-    keepPreviousData: true,
-    mapResult(result: NetWorthResponse) {
-      return { data: result };
+  const { isLoading, data, revalidate, error } = useFetch(
+    `${base}/v1/networth?range=${range}`,
+    {
+      execute: !!accessToken,
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      keepPreviousData: true,
+      mapResult(result: NetWorthResponse) {
+        return { data: result };
+      },
     },
-  });
+  );
 
   const signOutAction = (
     <Action
-      title="Sign Out"
+      title="Sign out"
       icon={Icon.Logout}
       style={Action.Style.Destructive}
       shortcut={{ key: "l", modifiers: ["cmd", "shift"] }}
@@ -412,7 +456,11 @@ export default function Command() {
   );
 
   const rangeDropdown = (
-    <List.Dropdown tooltip="Time range" value={range} onChange={(v) => setRange(v as Range)}>
+    <List.Dropdown
+      tooltip="Time range"
+      value={range}
+      onChange={(v) => setRange(v as Range)}
+    >
       <List.Dropdown.Item title="1 Week" value="1W" />
       <List.Dropdown.Item title="1 Month" value="1M" />
       <List.Dropdown.Item title="1 Year" value="1Y" />
@@ -422,7 +470,8 @@ export default function Command() {
 
   const totals = data?.totals;
   const history = data?.history ?? [];
-  const showEmpty = !isLoading && !error && accessToken && totals && history.length === 0;
+  const showEmpty =
+    !isLoading && !error && accessToken && totals && history.length === 0;
 
   return (
     <List
@@ -451,7 +500,9 @@ export default function Command() {
         />
       ) : null}
 
-      {totals ? <CategoriesSection signOutAction={signOutAction} totals={totals} /> : null}
+      {totals ? (
+        <CategoriesSection signOutAction={signOutAction} totals={totals} />
+      ) : null}
 
       {history.length > 0 ? (
         <HistorySection history={history} signOutAction={signOutAction} />
