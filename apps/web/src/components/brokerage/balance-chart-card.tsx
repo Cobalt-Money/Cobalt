@@ -8,29 +8,15 @@ import { Button } from "@cobalt-web/ui/components/button";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { format, startOfYear, subDays, subMonths, subYears } from "date-fns";
-import type { MouseEvent } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  Tooltip,
-  useActiveTooltipDataPoints,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { useCallback, useMemo, useState } from "react";
+import type { CanvasHoverInfo } from "./balance-chart-canvas";
+import { BalanceChartCanvas } from "./balance-chart-canvas";
 
 export interface PortfolioSnapshotRow {
   id: string;
   accountId: string;
   snapshotDate: number;
   totalValue?: number | null;
-}
-
-interface ChartPoint {
-  display: string;
-  label: number;
-  v: number;
 }
 
 const BALANCE_CHART_RANGE_OPTIONS = ["1W", "1M", "3M", "YTD", "1Y", "5Y", "All"] as const;
@@ -76,22 +62,6 @@ function rangeStartEpoch(range: BalanceChartRange): number {
   }
 }
 
-function ChartHoverSync({
-  setHoveredValue,
-  setHoveredDate,
-}: {
-  setHoveredValue: (v: number | null) => void;
-  setHoveredDate: (d: string | null) => void;
-}) {
-  const dataPoints = useActiveTooltipDataPoints<ChartPoint>();
-  useEffect(() => {
-    const pt = dataPoints?.[0];
-    setHoveredValue(pt?.v ?? null);
-    setHoveredDate(pt?.display ?? null);
-  }, [dataPoints, setHoveredValue, setHoveredDate]);
-  return null;
-}
-
 export function BalanceChartCard({
   portfolioSnapshots,
   scopedAccountIds,
@@ -106,29 +76,7 @@ export function BalanceChartCard({
   onScopeChange: (scope: BrokerageScope) => void;
 }) {
   const [balanceChartRange, setBalanceChartRange] = useState<BalanceChartRange>("1M");
-  const [hoveredValue, setHoveredValue] = useState<number | null>(null);
-  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const coloredLayerRef = useRef<HTMLDivElement>(null);
-
-  const handleChartMouseMove = useCallback((e: MouseEvent<HTMLDivElement>) => {
-    const container = chartContainerRef.current;
-    const coloredEl = coloredLayerRef.current;
-    if (!container || !coloredEl) {
-      return;
-    }
-    const rect = container.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const rightPct = Math.max(0, Math.min(100, (1 - x / rect.width) * 100));
-    coloredEl.style.clipPath = `inset(0 ${rightPct.toFixed(2)}% 0 0)`;
-  }, []);
-
-  const handleChartMouseLeave = useCallback(() => {
-    const coloredEl = coloredLayerRef.current;
-    if (coloredEl) {
-      coloredEl.style.clipPath = "";
-    }
-  }, []);
+  const [hoveredPoint, setHoveredPoint] = useState<CanvasHoverInfo | null>(null);
 
   // Resting headline = sum of the most-recent snapshot row per scoped account.
   // snapshot.current already includes both cash + positions for snaptrade and
@@ -171,21 +119,22 @@ export function BalanceChartCard({
 
     return [...byDate.entries()]
       .toSorted((a, b) => a[0] - b[0])
-      .map(([epoch, value]) => ({
-        display: format(new Date(epoch), "MMM d, yyyy"),
-        label: epoch,
-        v: value,
-      }));
+      .map(([epoch, value]) => ({ time: epoch, value }));
   }, [portfolioSnapshots, scopedAccountIds, balanceChartRange]);
 
+  const handleHoverChange = useCallback((info: CanvasHoverInfo | null) => {
+    setHoveredPoint(info);
+  }, []);
+
   let displayValue: string;
-  if (hoveredValue !== null) {
-    displayValue = money(hoveredValue);
+  if (hoveredPoint) {
+    displayValue = money(hoveredPoint.value);
   } else if (latestValue === null) {
     displayValue = "—";
   } else {
     displayValue = money(latestValue);
   }
+  const hoveredDate = hoveredPoint ? format(new Date(hoveredPoint.time), "MMM d, yyyy") : null;
 
   return (
     <Card
@@ -219,54 +168,12 @@ export function BalanceChartCard({
             ) : null}
           </div>
         </div>
-        <div
-          aria-label="Portfolio balance chart"
-          ref={chartContainerRef}
-          className="relative min-h-[200px] w-full min-w-0 flex-1 [&_.recharts-tooltip-cursor]:hidden"
-          onMouseLeave={handleChartMouseLeave}
-          onMouseMove={handleChartMouseMove}
-          role="img"
-        >
-          <div className="absolute inset-0">
-            <ResponsiveContainer height="100%" width="100%">
-              <AreaChart data={chartPoints} margin={{ bottom: 0, left: 0, right: 0, top: 4 }}>
-                <Tooltip content={() => null} />
-                <ChartHoverSync setHoveredDate={setHoveredDate} setHoveredValue={setHoveredValue} />
-                <XAxis dataKey="label" hide />
-                <YAxis domain={["auto", "auto"]} hide width={0} />
-                <Area
-                  dataKey="v"
-                  fill="transparent"
-                  isAnimationActive={false}
-                  stroke="rgba(120,120,130,0.45)"
-                  strokeWidth={2}
-                  type="monotone"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div ref={coloredLayerRef} className="pointer-events-none absolute inset-0">
-            <ResponsiveContainer height="100%" width="100%">
-              <AreaChart data={chartPoints} margin={{ bottom: 0, left: 0, right: 0, top: 4 }}>
-                <defs>
-                  <linearGradient id="balanceChartFill" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-green-550)" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="var(--color-green-550)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="label" hide />
-                <YAxis domain={["auto", "auto"]} hide width={0} />
-                <Area
-                  dataKey="v"
-                  fill="url(#balanceChartFill)"
-                  isAnimationActive={false}
-                  stroke="var(--color-green-550)"
-                  strokeWidth={2}
-                  type="monotone"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="relative min-h-[200px] w-full min-w-0 flex-1">
+          <BalanceChartCanvas
+            ariaLabel="Portfolio balance chart"
+            onHoverChange={handleHoverChange}
+            points={chartPoints}
+          />
         </div>
         <div
           aria-label="Chart time range"
