@@ -423,6 +423,7 @@ export function AddPositionForm({
           onBackspaceWhenEmpty();
         }
       }}
+      role="group"
     >
       <PositionRow onChange={setPosition} position={position} tickerSearch={tickerSearch} />
 

@@ -59,8 +59,8 @@ describe("getProviderOptions", () => {
       });
     });
 
-    it("returns adaptive thinking for sonnet-4.7", () => {
-      expect(getProviderOptions("anthropic/claude-sonnet-4.7", true)).toStrictEqual({
+    it("returns adaptive thinking for opus-4.7", () => {
+      expect(getProviderOptions("anthropic/claude-opus-4.7", true)).toStrictEqual({
         anthropic: { effort: "high", thinking: { type: "adaptive" } },
       });
     });
@@ -79,8 +79,8 @@ describe("getProviderOptions", () => {
       });
     });
 
-    it("returns fixed budget for claude-3-7-sonnet", () => {
-      expect(getProviderOptions("anthropic/claude-3-7-sonnet", true)).toStrictEqual({
+    it("returns fixed budget for claude-opus-4-1", () => {
+      expect(getProviderOptions("anthropic/claude-opus-4-1", true)).toStrictEqual({
         anthropic: { thinking: { budgetTokens: 12_000, type: "enabled" } },
       });
     });

@@ -7,7 +7,7 @@ import type { z } from "zod";
 
 import { ApiError } from "./errors.js";
 import { normalizeWebsite } from "./lib.js";
-import type { transactionPatchBodySchema } from "./schemas.js";
+import type { TransactionCreateBody, transactionPatchBodySchema } from "./schemas.js";
 import { setTransactionTags } from "./tags/mutations.js";
 
 export type TransactionPatchBody = z.infer<typeof transactionPatchBodySchema>;
@@ -279,4 +279,57 @@ export async function patchTransaction(
   if (tags !== undefined) {
     await setTransactionTags(userId, transactionId, tags);
   }
+}
+
+/**
+ * Insert a manual transaction onto a user-owned manual account. Mirrors the
+ * Zero `m.transaction.createTransaction` mutator so the OAuth / SDK path and
+ * the web-session path stay consistent: only manual accounts accept inserts,
+ * the new row is stamped `source: "manual"`, `pending: false`, and the
+ * `location` field is locked when supplied so a future provider sync (none
+ * for manual accounts today, defense in depth) cannot overwrite it.
+ *
+ * Returns the generated transaction id.
+ */
+export async function createManualTransaction(
+  userId: string,
+  body: TransactionCreateBody,
+): Promise<{ id: string }> {
+  const account = await db.query.financialAccount.findFirst({
+    columns: { source: true, userId: true },
+    where: { id: { eq: body.accountId } },
+  });
+  if (!account || account.userId !== userId) {
+    throw new ApiError(404, "account_not_found", "Account not found");
+  }
+  if (account.source !== "manual") {
+    throw new ApiError(
+      400,
+      "account_not_manual",
+      "Transactions can only be added to manual accounts",
+    );
+  }
+
+  const trimmedDesc = body.description?.trim();
+  const flatLocation = body.location ? locationToFlat(body.location) : LOCATION_FLAT_COLS;
+
+  const id = body.id ?? crypto.randomUUID();
+  await db.insert(transaction).values({
+    accountId: body.accountId,
+    amount: body.amount.toString(),
+    categoryId: body.categoryId ?? null,
+    currency: body.currency ?? "USD",
+    date: body.date,
+    id,
+    lockedFields: body.location ? ["location"] : [],
+    merchantName: body.merchantName?.trim() ?? null,
+    name: body.name.trim(),
+    notes: trimmedDesc && trimmedDesc.length > 0 ? trimmedDesc : null,
+    pending: false,
+    source: "manual",
+    userId,
+    website: body.website ? normalizeWebsite(body.website) : null,
+    ...flatLocation,
+  });
+  return { id };
 }

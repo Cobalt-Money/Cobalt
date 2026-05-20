@@ -48,6 +48,43 @@ export async function getInstitutionRoutingNumber(
   return list.length > 0 ? (list[0] ?? null) : null;
 }
 
+/**
+ * Plaid-source financial accounts belonging to a plaid_connection.
+ * Used by sync reconciliation to detect orphans (DB rows whose `externalId`
+ * is no longer returned by Plaid).
+ */
+export async function listPlaidAccounts(connectionId: string) {
+  return await db.query.financialAccount.findMany({
+    columns: {
+      externalId: true,
+      id: true,
+      mask: true,
+      name: true,
+      persistentAccountId: true,
+      subtype: true,
+      type: true,
+    },
+    where: {
+      plaidConnectionId: { eq: connectionId },
+      source: { eq: "plaid" },
+    },
+  });
+}
+
+/** Resolve financial_account.id by Plaid external account_id. */
+export async function findPlaidAccountByExternalId(
+  externalId: string,
+): Promise<{ id: string } | null> {
+  const row = await db.query.financialAccount.findFirst({
+    columns: { id: true },
+    where: {
+      externalId: { eq: externalId },
+      source: { eq: "plaid" },
+    },
+  });
+  return row ?? null;
+}
+
 /** Resolve plaid_connection by Plaid item_id. Returns null if not found. */
 export async function lookupPlaidConnection(
   plaidItemId: string,

@@ -1,6 +1,5 @@
 import { bindRoutes, route } from "@cobalt-web/bindings";
 import type { Binding, RouteSpec } from "@cobalt-web/bindings";
-import { db } from "@cobalt-web/db";
 import { getBankAccountById, listAccounts } from "@cobalt-web/server-data/accounts/queries";
 import { accountListQuerySchema } from "@cobalt-web/server-data/accounts/schemas";
 import {
@@ -18,13 +17,24 @@ import {
   positionsQuerySchema,
 } from "@cobalt-web/server-data/brokerage/schemas";
 import { fmpGetProfile, fmpGetQuote } from "@cobalt-web/server-data/research/fmp-ticker";
+import {
+  getCategory,
+  listCategories,
+} from "@cobalt-web/server-data/transactions/categories/queries";
 import { getResearchNews } from "@cobalt-web/server-data/research/queries";
 import { symbolQuerySchema } from "@cobalt-web/server-data/research/schemas";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
 import { balanceSnapshotQuerySchema } from "@cobalt-web/server-data/snapshots/schemas";
-import { patchTransaction } from "@cobalt-web/server-data/transactions/mutations";
-import { getUserTransactions } from "@cobalt-web/server-data/transactions/queries";
 import {
+  createManualTransaction,
+  patchTransaction,
+} from "@cobalt-web/server-data/transactions/mutations";
+import {
+  assertTransactionOwner,
+  getTransactions,
+} from "@cobalt-web/server-data/transactions/queries";
+import {
+  transactionCreateBodySchema,
   transactionListQuerySchema,
   transactionPatchBodySchema,
 } from "@cobalt-web/server-data/transactions/schemas";
@@ -48,6 +58,7 @@ export type { Binding };
 
 const emptySchema = z.object({});
 const accountIdSchema = z.object({ accountId: z.string().min(1) });
+const categoryIdSchema = z.object({ categoryId: z.string().min(1) });
 const tagIdSchema = z.object({ tagId: z.string().min(1) });
 const txnIdSchema = z.object({ transactionId: z.string().min(1) });
 const txnTagIdsSchema = z.object({
@@ -87,7 +98,9 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
   route({
     description:
       "List the user's accounts with institution metadata. Filter by Plaid `type` and/or `subtype`. SnapTrade brokerage data is under `brokerage_accounts`.",
-    handler: async (userId, params) => ({ accounts: await listAccounts(userId, params) }),
+    handler: async (userId, params) => ({
+      accounts: await listAccounts(userId, params),
+    }),
     name: "accounts_list",
     schema: accountListQuerySchema,
   }),
@@ -140,6 +153,21 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
     schema: emptySchema,
   }),
   route({
+    description: "Get a single category by id (user-scoped). Returns null if not found.",
+    handler: async (userId, { categoryId }) => ({
+      category: await getCategory(userId, categoryId),
+    }),
+    name: "categories_get",
+    schema: categoryIdSchema,
+  }),
+  route({
+    description:
+      "List the user's categories with their parent groups. Each category has { id, name, systemKey, groupId, iconKey, hidden, excludeFromInsights }. Use this to resolve a `categoryId` for `transactions.create`/`transactions.update` — match by `name` or `systemKey` (stable across users).",
+    handler: async (userId) => await listCategories(userId),
+    name: "categories_list",
+    schema: emptySchema,
+  }),
+  route({
     description: "Public market data: news articles for a symbol.",
     handler: async (_userId, { symbol }) => await getResearchNews(symbol),
     name: "research_news",
@@ -174,6 +202,7 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds: merged };
     },
     name: "tags_addToTransaction",
+    requiredScope: "cobalt:write",
     schema: txnTagIdsSchema,
   }),
   route({
@@ -208,6 +237,7 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds: next };
     },
     name: "tags_removeFromTransaction",
+    requiredScope: "cobalt:write",
     schema: txnTagIdsSchema,
   }),
   route({
@@ -217,34 +247,39 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds };
     },
     name: "tags_setOnTransaction",
+    requiredScope: "cobalt:write",
     schema: txnSetTagsSchema,
   }),
   route({
     description: "List the user's transactions (paginated, filterable).",
-    handler: (userId, args) => getUserTransactions(userId, args),
+    handler: (userId, args) => getTransactions(userId, args),
     name: "transactions_list",
     schema: transactionListQuerySchema,
   }),
   route({
+    description:
+      'Create a manual transaction on a user-owned manual account. Server stamps `source: "manual"`, `pending: false`, and `userId`. Plaid-linked accounts reject inserts.',
+    handler: async (userId, body) => await createManualTransaction(userId, body),
+    name: "transactions_create",
+    requiredScope: "cobalt:write",
+    schema: transactionCreateBodySchema,
+  }),
+  route({
     description: "Patch a transaction the user owns (mutation). Verifies ownership first.",
     handler: async (userId, { patch, transactionId }) => {
-      const owner = await db.query.transaction.findFirst({
-        columns: { id: true },
-        where: { id: { eq: transactionId }, userId: { eq: userId } },
-      });
-      if (!owner) {
-        throw new Error("transaction not found or not owned by user");
-      }
+      await assertTransactionOwner(userId, transactionId);
       await patchTransaction(transactionId, userId, patch);
       return { ok: true };
     },
     name: "transactions_update",
+    requiredScope: "cobalt:write",
     schema: transactionPatchSchema,
   }),
   route({
     description: "Create a new tag owned by the user. Returns the created tag id.",
     handler: async (userId, body) => await createTag(userId, body),
     name: "tags_create",
+    requiredScope: "cobalt:write",
     schema: createTagBodySchema,
   }),
   route({
@@ -255,10 +290,16 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { ok: true };
     },
     name: "tags_update",
+    requiredScope: "cobalt:write",
     schema: tagUpdateSchema,
   }),
 ];
 
-export function buildBindings(userId: string): Binding[] {
-  return bindRoutes(userId, ROUTES);
+/**
+ * `grantedScopes` is forwarded to `bindRoutes`. Omit it to disable per-route
+ * scope checks (trust mode for session-authenticated internal callers); pass
+ * the OAuth token's scope set to enforce `requiredScope` per route.
+ */
+export function buildBindings(userId: string, grantedScopes?: string[]): Binding[] {
+  return bindRoutes(userId, ROUTES, grantedScopes);
 }

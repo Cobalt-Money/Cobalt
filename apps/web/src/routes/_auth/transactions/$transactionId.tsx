@@ -4,8 +4,8 @@ import { TransactionDetailView } from "@cobalt-web/ui/cobalt/transactions/detail
 import { deriveCategorySection } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
 import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
-import { mutators, queries } from "@cobalt-web/zero";
-import { useQuery, useZero } from "@rocicorp/zero/react";
+import { queries } from "@cobalt-web/zero";
+import { useQuery } from "@rocicorp/zero/react";
 import {
   createFileRoute,
   getRouteApi,
@@ -16,13 +16,12 @@ import { useEffect, useMemo, useState } from "react";
 import { CategoryFormDialog } from "@/components/categories/category-form-dialog";
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
-import { useCategoryGroups } from "@/hooks/use-categories";
 import { useGeocodeSearch } from "@/hooks/use-geocode-search";
 import { useMerchantSearch } from "@/hooks/use-merchant-search";
+import { useMutator } from "@/hooks/use-mutator";
 import {
   useSetTransactionTags,
   useTagOptions,
-  useTags,
   useTransactionTagIds,
 } from "@/hooks/use-tags";
 import { useHistory, useTransactions } from "@/hooks/use-transactions";
@@ -50,7 +49,7 @@ export const Route = createFileRoute("/_auth/transactions/$transactionId")({
 function TransactionDetailRoute() {
   const { transactionId } = transactionDetailRouteApi.useParams();
   const navigate = useNavigate();
-  const zero = useZero();
+  const run = useMutator();
   const { isComplete, items } = useTransactions();
 
   const transaction = useMemo(
@@ -74,7 +73,7 @@ function TransactionDetailRoute() {
   const editEvents = useHistory(transactionId);
 
   const { options: availableTags } = useTagOptions();
-  const { data: allTags = [] } = useTags();
+  const [allTags] = useQuery(queries.tags.list());
   const [categoryRows] = useQuery(queries.categories.list());
   const categoryOptions = useMemo(
     () =>
@@ -92,7 +91,7 @@ function TransactionDetailRoute() {
     [categoryRows]
   );
   const { openAddTag } = useCommandMenu();
-  const { data: categoryGroups } = useCategoryGroups();
+  const [categoryGroups] = useQuery(queries.categories.listGroups());
   const [createCategoryOpen, setCreateCategoryOpen] = useState(false);
   const setTransactionTags = useSetTransactionTags();
   const { data: currentTagIds = [] } = useTransactionTagIds(transactionId);
@@ -108,11 +107,7 @@ function TransactionDetailRoute() {
 
   const edit = useMemo<TransactionDetailEditHandlers>(() => {
     const id = transactionId;
-
-    const onError = (label: string) => (err: unknown) => {
-      console.error(`Failed to update transaction ${label}`, err);
-      cobaltToast.error(`Couldn't save ${label}. Please try again.`);
-    };
+    const fb = (label: string) => `Couldn't save ${label}. Please try again.`;
 
     return {
       availableTags,
@@ -126,9 +121,7 @@ function TransactionDetailRoute() {
       onUpdateTags: (tagIds: string[]) => {
         setTransactionTags.mutate(
           { tagIds, transactionId: id },
-          {
-            onError: onError("tags"),
-          }
+          { onError: () => cobaltToast.error(fb("tags")) },
         );
       },
       tagIds: currentTagIds,
@@ -138,74 +131,31 @@ function TransactionDetailRoute() {
         results: locationResults,
       },
       onResetCategory: () => {
-        void zero
-          .mutate(
-            mutators.transaction.resetCategory({
-              editId: crypto.randomUUID(),
-              id,
-            })
-          )
-          .server.catch(onError("category"));
+        run((m) => m.transaction.resetCategory({ editId: crypto.randomUUID(), id }), fb("category"));
       },
       onResetDate: () => {
-        void zero
-          .mutate(
-            mutators.transaction.resetDate({ editId: crypto.randomUUID(), id })
-          )
-          .server.catch(onError("date"));
+        run((m) => m.transaction.resetDate({ editId: crypto.randomUUID(), id }), fb("date"));
       },
       onResetLocation: () => {
-        void zero
-          .mutate(
-            mutators.transaction.resetLocation({
-              editId: crypto.randomUUID(),
-              id,
-            })
-          )
-          .server.catch(onError("location"));
+        run((m) => m.transaction.resetLocation({ editId: crypto.randomUUID(), id }), fb("location"));
       },
       onResetNotes: () => {
-        void zero
-          .mutate(
-            mutators.transaction.resetNotes({
-              editId: crypto.randomUUID(),
-              id,
-            })
-          )
-          .server.catch(onError("notes"));
+        run((m) => m.transaction.resetNotes({ editId: crypto.randomUUID(), id }), fb("notes"));
       },
       onUpdateCategory: ({ categoryId }) => {
-        void zero
-          .mutate(
-            mutators.transaction.updateCategory({
-              categoryId,
-              editId: crypto.randomUUID(),
-              id,
-            })
-          )
-          .server.catch(onError("category"));
+        run(
+          (m) => m.transaction.updateCategory({ categoryId, editId: crypto.randomUUID(), id }),
+          fb("category"),
+        );
       },
       onUpdateDate: (date) => {
-        void zero
-          .mutate(
-            mutators.transaction.updateDate({
-              editId: crypto.randomUUID(),
-              id,
-              date,
-            })
-          )
-          .server.catch(onError("date"));
+        run((m) => m.transaction.updateDate({ editId: crypto.randomUUID(), id, date }), fb("date"));
       },
       onUpdateLocation: (location) => {
-        void zero
-          .mutate(
-            mutators.transaction.updateLocation({
-              editId: crypto.randomUUID(),
-              id,
-              location,
-            })
-          )
-          .server.catch(onError("location"));
+        run(
+          (m) => m.transaction.updateLocation({ editId: crypto.randomUUID(), id, location }),
+          fb("location"),
+        );
       },
       merchantSearch: {
         loading: merchantLoading,
@@ -218,56 +168,35 @@ function TransactionDetailRoute() {
         })),
       },
       onUpdateMerchant: ({ merchantName, website }) => {
-        void zero
-          .mutate(
-            mutators.transaction.updateMerchant({
+        run(
+          (m) =>
+            m.transaction.updateMerchant({
               editId: crypto.randomUUID(),
               id,
               merchantName,
               website,
-            })
-          )
-          .server.catch(onError("merchant"));
+            }),
+          fb("merchant"),
+        );
       },
       onUpdateName: (name) => {
-        void zero
-          .mutate(
-            mutators.transaction.updateName({
-              editId: crypto.randomUUID(),
-              id,
-              name,
-            })
-          )
-          .server.catch(onError("name"));
+        run((m) => m.transaction.updateName({ editId: crypto.randomUUID(), id, name }), fb("name"));
       },
       onUpdateNotes: (notes) => {
-        void zero
-          .mutate(
-            mutators.transaction.updateNotes({
-              editId: crypto.randomUUID(),
-              id,
-              notes,
-            })
-          )
-          .server.catch(onError("notes"));
+        run((m) => m.transaction.updateNotes({ editId: crypto.randomUUID(), id, notes }), fb("notes"));
       },
       onDelete:
         transaction?.source === "manual"
           ? () => {
-              // Fire-and-forget: navigate immediately; server runs in
-              // background. See `.agents/skills/cobalt/mutations/SKILL.md`.
-              const { server } = zero.mutate(
-                mutators.transaction.deleteTransaction({ id })
-              );
+              run((m) => m.transaction.deleteTransaction({ id }), fb("deletion"));
               cobaltToast.transactionDeleted();
               navigate({ replace: true, to: "/transactions" });
-              void server.catch(onError("deletion"));
             }
           : undefined,
     };
   }, [
     transactionId,
-    zero,
+    run,
     locationLoading,
     locationResults,
     merchantLoading,

@@ -8,29 +8,36 @@ import { MobileSection } from "@/components/landing/mobile-section";
 import { SurfaceSwitcher } from "@/components/landing/surface-switcher";
 import { Cursor, CursorProvider } from "@/components/ui/cursor";
 
+import { buildSeoMeta } from "@/lib/seo";
+
 export const Route = createFileRoute("/")({
   component: LandingPage,
-  head: () => ({
-    links: [
-      { href: "https://fonts.googleapis.com", rel: "preconnect" },
-      {
-        href: "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0,1&family=Figtree:wght@300..900&display=swap",
-        rel: "stylesheet",
-      },
-    ],
-    meta: [
-      { title: "Cobalt — Talk to your money" },
-      {
-        content:
-          "Other finance apps give you homework. Cobalt gives you answers — ask anything about your money, from anywhere.",
-        name: "description",
-      },
-      {
-        content: "app-id=6757945133",
-        name: "apple-itunes-app",
-      },
-    ],
-  }),
+  head: () => {
+    const seo = buildSeoMeta({ path: "/" });
+    return {
+      links: [
+        { href: "https://fonts.googleapis.com", rel: "preconnect" },
+        {
+          href: "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0,1&family=Figtree:wght@300..900&display=swap",
+          rel: "stylesheet",
+        },
+        ...seo.links,
+      ],
+      meta: [...seo.meta, { content: "app-id=6757945133", name: "apple-itunes-app" }],
+      scripts: [
+        {
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            logo: "https://cobaltpf.com/og-image.png",
+            name: "Cobalt",
+            url: "https://cobaltpf.com",
+          }),
+          type: "application/ld+json",
+        },
+      ],
+    };
+  },
 });
 
 function LandingStyles() {

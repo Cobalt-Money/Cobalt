@@ -1,42 +1,12 @@
-import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
-import type { Row } from "@cobalt-web/zero";
-import { mutators, queries } from "@cobalt-web/zero";
-import { useQuery, useZero } from "@rocicorp/zero/react";
+import type { queries, Row } from "@cobalt-web/zero";
 import { useCallback } from "react";
+import { useMutator } from "./use-mutator";
 
 export type CategoryRow = Row<typeof queries.categories.list>;
 export type GroupRow = Row<typeof queries.categories.listGroups>;
 
-/** All non-deleted cats incl hidden — settings/management view. */
-export function useAllCategories() {
-  const [data] = useQuery(queries.categories.list({ includeHidden: true }));
-  return { data };
-}
-
-/** All non-deleted groups for the user. */
-export function useCategoryGroups() {
-  const [data] = useQuery(queries.categories.listGroups());
-  return { data };
-}
-
-function fireAndForget(
-  server: Promise<{ type: "success" } | { type: "error"; error: { message: string } }>,
-  fallback: string,
-) {
-  void (async () => {
-    try {
-      const result = await server;
-      if (result.type === "error") {
-        cobaltToast.error(result.error.message || fallback);
-      }
-    } catch (error) {
-      cobaltToast.error(error instanceof Error ? error.message : fallback);
-    }
-  })();
-}
-
 export function useCreateCategory() {
-  const zero = useZero();
+  const run = useMutator();
   return useCallback(
     (input: {
       name: string;
@@ -45,16 +15,15 @@ export function useCreateCategory() {
       excludeFromInsights?: boolean;
     }): string => {
       const id = crypto.randomUUID();
-      const { server } = zero.mutate(mutators.categories.create({ id, ...input }));
-      fireAndForget(server, "Couldn't create category.");
+      run((m) => m.categories.create({ id, ...input }), "Couldn't create category.");
       return id;
     },
-    [zero],
+    [run],
   );
 }
 
 export function useUpdateCategory() {
-  const zero = useZero();
+  const run = useMutator();
   return useCallback(
     (input: {
       categoryId: string;
@@ -64,88 +33,80 @@ export function useUpdateCategory() {
       hidden?: boolean;
       excludeFromInsights?: boolean;
     }) => {
-      const { server } = zero.mutate(mutators.categories.update(input));
-      fireAndForget(server, "Couldn't update category.");
+      run((m) => m.categories.update(input), "Couldn't update category.");
     },
-    [zero],
+    [run],
   );
 }
 
 export function useHideCategory() {
-  const zero = useZero();
+  const run = useMutator();
   return useCallback(
     (input: { categoryId: string; reassignTo?: string | null }) => {
-      const { server } = zero.mutate(mutators.categories.hide(input));
-      fireAndForget(server, "Couldn't hide category.");
+      run((m) => m.categories.hide(input), "Couldn't hide category.");
     },
-    [zero],
+    [run],
   );
 }
 
 export function useDeleteCategory() {
-  const zero = useZero();
+  const run = useMutator();
   return useCallback(
     (categoryId: string) => {
-      const { server } = zero.mutate(mutators.categories.delete({ categoryId }));
-      fireAndForget(server, "Couldn't delete category.");
+      run((m) => m.categories.delete({ categoryId }), "Couldn't delete category.");
     },
-    [zero],
+    [run],
   );
 }
 
 export function useCreateGroup() {
-  const zero = useZero();
+  const run = useMutator();
   return useCallback(
     (name: string): string => {
       const id = crypto.randomUUID();
-      const { server } = zero.mutate(mutators.categories.createGroup({ id, name }));
-      fireAndForget(server, "Couldn't create group.");
+      run((m) => m.categories.createGroup({ id, name }), "Couldn't create group.");
       return id;
     },
-    [zero],
+    [run],
   );
 }
 
 export function useUpdateGroup() {
-  const zero = useZero();
+  const run = useMutator();
   return useCallback(
     (input: { groupId: string; name?: string }) => {
-      const { server } = zero.mutate(mutators.categories.updateGroup(input));
-      fireAndForget(server, "Couldn't update group.");
+      run((m) => m.categories.updateGroup(input), "Couldn't update group.");
     },
-    [zero],
+    [run],
   );
 }
 
 export function useDeleteGroup() {
-  const zero = useZero();
+  const run = useMutator();
   return useCallback(
     (groupId: string) => {
-      const { server } = zero.mutate(mutators.categories.deleteGroup({ groupId }));
-      fireAndForget(server, "Couldn't delete group.");
+      run((m) => m.categories.deleteGroup({ groupId }), "Couldn't delete group.");
     },
-    [zero],
+    [run],
   );
 }
 
 export function useReorderCategories() {
-  const zero = useZero();
+  const run = useMutator();
   return useCallback(
     (input: { groupId: string; categoryIds: string[] }) => {
-      const { server } = zero.mutate(mutators.categories.reorder(input));
-      fireAndForget(server, "Couldn't reorder categories.");
+      run((m) => m.categories.reorder(input), "Couldn't reorder categories.");
     },
-    [zero],
+    [run],
   );
 }
 
 export function useReorderGroups() {
-  const zero = useZero();
+  const run = useMutator();
   return useCallback(
     (groupIds: string[]) => {
-      const { server } = zero.mutate(mutators.categories.reorderGroups({ groupIds }));
-      fireAndForget(server, "Couldn't reorder groups.");
+      run((m) => m.categories.reorderGroups({ groupIds }), "Couldn't reorder groups.");
     },
-    [zero],
+    [run],
   );
 }

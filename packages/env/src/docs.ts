@@ -7,7 +7,7 @@ export const env = createEnv({
   runtimeEnv: process.env,
   server: {
     AI_GATEWAY_API_KEY: z.string().min(1).optional(),
-    AI_GATEWAY_MODEL: z.string().default("anthropic/claude-sonnet-4.6"),
+    AI_GATEWAY_MODEL: z.string().default("anthropic/claude-haiku-4.5"),
     OPENAPI_URL: z.url().default("http://localhost:3000/openapi.json"),
   },
 });

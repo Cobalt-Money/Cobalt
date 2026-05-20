@@ -8,12 +8,13 @@ import type {
 import { deriveCategorySection } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
 import type { CategoryPickerOption } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
 import type { TagOption } from "@cobalt-web/ui/cobalt/transactions/tags/tag-picker";
-import { mutators, queries } from "@cobalt-web/zero";
-import { useQuery, useZero } from "@rocicorp/zero/react";
+import { queries } from "@cobalt-web/zero";
+import { useQuery } from "@rocicorp/zero/react";
 import { useCallback, useMemo, useState } from "react";
 
 import { useGeocodeSearch } from "@/hooks/use-geocode-search";
 import { useMerchantSearch } from "@/hooks/use-merchant-search";
+import { useMutator } from "@/hooks/use-mutator";
 import { useTagOptions } from "@/hooks/use-tags";
 import { transactionsApi } from "@/lib/clients/api-client";
 
@@ -28,7 +29,7 @@ export interface AddTransactionData {
 
 /** All data + submit wiring for the command-palette `add-transaction` sub-page. */
 export function useAddTransactionData(): AddTransactionData {
-  const zero = useZero();
+  const run = useMutator();
 
   const [bankAccounts] = useQuery(queries.accounts.bankAccounts());
   const manualAccounts = useMemo<readonly AddTransactionAccountOption[]>(
@@ -94,45 +95,41 @@ export function useAddTransactionData(): AddTransactionData {
   const submit = useCallback(
     (values: AddTransactionFormValues): Promise<void> => {
       const newId = crypto.randomUUID();
-      const { server } = zero.mutate(
-        mutators.transaction.createTransaction({
-          accountId: values.accountId,
-          amount: values.amount,
-          categoryId: values.categoryId ?? undefined,
-          date: values.date,
-          description: values.description ?? undefined,
-          id: newId,
-          location: values.location ?? undefined,
-          merchantName: values.merchantName ?? undefined,
-          name: values.name,
-          website: values.merchantWebsite ?? undefined,
-        }),
+      const handle = run(
+        (m) =>
+          m.transaction.createTransaction({
+            accountId: values.accountId,
+            amount: values.amount,
+            categoryId: values.categoryId ?? undefined,
+            date: values.date,
+            description: values.description ?? undefined,
+            id: newId,
+            location: values.location ?? undefined,
+            merchantName: values.merchantName ?? undefined,
+            name: values.name,
+            website: values.merchantWebsite ?? undefined,
+          }),
+        "Couldn't add transaction.",
       );
       cobaltToast.transactionAdded(values.name);
       void (async () => {
-        try {
-          const result = await server;
-          if (result.type === "error") {
-            cobaltToast.error(result.error.message || "Couldn't add transaction.");
-            return;
+        const result = await handle.server;
+        if (result.type === "error") {
+          return;
+        }
+        if (values.tagIds.length > 0) {
+          const res = await transactionsApi[":transactionId"].$patch({
+            json: { tags: values.tagIds },
+            param: { transactionId: newId },
+          });
+          if (!res.ok) {
+            cobaltToast.error("Transaction created, but tagging failed.");
           }
-          if (values.tagIds.length > 0) {
-            const res = await transactionsApi[":transactionId"].$patch({
-              json: { tags: values.tagIds },
-              param: { transactionId: newId },
-            });
-            if (!res.ok) {
-              cobaltToast.error("Transaction created, but tagging failed.");
-            }
-          }
-        } catch (error) {
-          console.error("Failed to add transaction", error);
-          cobaltToast.error("Couldn't add transaction. Please try again.");
         }
       })();
       return Promise.resolve();
     },
-    [zero],
+    [run],
   );
 
   return {

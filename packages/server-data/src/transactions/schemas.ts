@@ -38,7 +38,7 @@ export const transactionLockedFieldsSchema = z
   .array(z.enum(LOCK_KEYS))
   .openapi("TransactionLockedFields");
 
-/** `transaction` row fields exposed on the list (see `getUserTransactions`). */
+/** `transaction` row fields exposed on the list (see `getTransactions`). */
 const transactionListItemRowSchema = createSelectSchema(transaction, {
   ...transactionJsonbSelectRefinements,
   lockedFields: transactionLockedFieldsSchema,
@@ -95,7 +95,7 @@ const transactionCategoryShape = categoryRowSlice
 
 export const transactionCategorySchema = transactionCategoryShape.nullable();
 
-/** List transaction DTO: picked `transaction` columns + joined account / institution (see `getUserTransactions`). */
+/** List transaction DTO: picked `transaction` columns + joined account / institution (see `getTransactions`). */
 export const transactionListItemSchema = transactionListItemRowSchema
   .pick({
     authorizedDate: true,
@@ -253,6 +253,31 @@ export const transactionPatchBodySchema = z
   .refine((v) => Object.keys(v).length > 0, {
     message: "At least one field is required",
   });
+
+/**
+ * Body for `createManualTransaction`. Mirrors the Zero `m.transaction.createTransaction`
+ * mutator: insertion is only permitted onto a manual (non-Plaid) account the
+ * user owns, and the row is force-stamped as `source: "manual"`, `pending: false`,
+ * `userId`, plus `lockedFields: ["location"]` whenever `location` is provided.
+ */
+export const transactionCreateBodySchema = z.object({
+  accountId: z.uuid(),
+  amount: z.number(),
+  categoryId: z.uuid().nullable().optional(),
+  currency: z.string().length(3).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  /** Plain-text or markdown. Persisted on `notes`. */
+  description: z.string().max(2000).optional(),
+  /** Caller-supplied row id so optimistic UI + tag-attach flows can pre-bind it. */
+  id: z.uuid().optional(),
+  location: locationJsonSchema.optional(),
+  merchantName: z.string().min(1).max(255).optional(),
+  name: z.string().min(1).max(255),
+  /** Accepts bare domain or full URL; normalized to lowercase bare domain. */
+  website: z.string().min(1).max(2048).optional(),
+});
+
+export type TransactionCreateBody = z.infer<typeof transactionCreateBodySchema>;
 
 /** Single Nominatim search result, normalised to our `LocationJson` plus `display_name`. */
 export const geocodeSearchResultSchema = z.object({

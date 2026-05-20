@@ -1,6 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 
-import type { db as Db } from "../index";
+import { db } from "../index";
 import { financialAccount } from "../schema/accounts/account";
 import { balance } from "../schema/accounts/balance";
 import { snapshot } from "../schema/accounts/snapshot";
@@ -70,7 +70,7 @@ const INTERVAL_DAYS: Record<DemoRecurringSeed["frequency"], number> = {
   WEEKLY: 7,
 };
 
-type Database = typeof Db;
+type Database = typeof db;
 interface InsertedTxn {
   id: string;
   fixture: DemoTxnSeed;
@@ -540,7 +540,8 @@ async function seedChatThreads(database: Database, userId: string, now: Date) {
  * Dates are shifted relative to "now" at call time so the demo always looks
  * fresh regardless of when the user enters demo mode.
  */
-export async function seedDemoUser(database: Database, userId: string): Promise<void> {
+export async function seedDemoUser(userId: string): Promise<void> {
+  const database = db;
   const now = new Date();
   const { byKey: catBySystemKey, uncategorizedId } = await loadUserCategories(database, userId);
 
