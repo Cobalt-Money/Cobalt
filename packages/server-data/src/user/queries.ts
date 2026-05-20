@@ -18,13 +18,18 @@ export async function isAnonymousUser(userId: string): Promise<boolean> {
 
 /**
  * Returns distinct userIds that have at least one connected Plaid bank
- * connection or SnapTrade brokerage user. Used by cron fan-out (e.g. daily
- * snapshots) to know who needs a per-user workflow dispatched.
+ * connection, SnapTrade brokerage user, or manually-created financial
+ * account. Used by cron fan-out (e.g. daily snapshots) to know who needs a
+ * per-user workflow dispatched.
  */
 export async function getUserIdsWithConnectedAccounts(): Promise<string[]> {
-  const [bankUsers, brokerageUsers] = await Promise.all([
+  const [bankUsers, brokerageUsers, manualUsers] = await Promise.all([
     db.query.plaidConnection.findMany({ columns: { userId: true } }),
     db.query.snaptradeUser.findMany({ columns: { userId: true } }),
+    db.query.financialAccount.findMany({
+      columns: { userId: true },
+      where: { source: { eq: "manual" } },
+    }),
   ]);
 
   const ids = new Set<string>();
@@ -32,6 +37,9 @@ export async function getUserIdsWithConnectedAccounts(): Promise<string[]> {
     ids.add(row.userId);
   }
   for (const row of brokerageUsers) {
+    ids.add(row.userId);
+  }
+  for (const row of manualUsers) {
     ids.add(row.userId);
   }
   return [...ids];

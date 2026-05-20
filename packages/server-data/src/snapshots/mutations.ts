@@ -27,7 +27,7 @@ function signFlip(value: string): string {
  */
 async function upsertDailySnapshotsForSource(
   userId: string,
-  source: "plaid" | "snaptrade",
+  source: "plaid" | "snaptrade" | "manual",
 ): Promise<{ upserted: number }> {
   const snapshotDate = todayIso();
 
@@ -134,6 +134,13 @@ export async function upsertSnapTradePortfolioSnapshotsForUser(
   _source: string,
 ): Promise<{ upserted: number }> {
   return await upsertDailySnapshotsForSource(userId, "snaptrade");
+}
+
+export async function upsertManualBalanceSnapshotsForUser(
+  userId: string,
+  _source: string,
+): Promise<{ upserted: number }> {
+  return await upsertDailySnapshotsForSource(userId, "manual");
 }
 
 /**

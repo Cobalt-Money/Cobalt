@@ -10,12 +10,17 @@
 
 import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
+import type { EventEmitter } from "node:events";
 import { setTimeout as delay } from "node:timers/promises";
+
+// Bun's ChildProcess type doesn't surface EventEmitter methods; intersect to
+// recover `.on(...)` typing without pulling all of @types/node into the build.
+type Process = ChildProcess & EventEmitter;
 
 const PORT = "4000";
 const READY_TIMEOUT_MS = 90_000;
 
-let server: ChildProcess | null = null;
+let server: Process | null = null;
 
 function log(event: string, fields: Record<string, unknown> = {}): void {
   console.log(
@@ -49,7 +54,7 @@ export async function setup(): Promise<void> {
       WORKFLOW_LOCAL_BASE_URL: `http://localhost:${PORT}`,
     },
     stdio: "pipe",
-  });
+  }) as Process;
 
   server?.stdout?.on("data", (data) => {
     const output = String(data);
