@@ -1,6 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { requireOAuth } from "../middleware.js";
+import { requireOAuth, requireScope } from "../middleware.js";
 import { accountsRouter } from "./accounts.js";
 import { networthRouter } from "./networth.js";
 import { tickersRouter } from "./tickers.js";
@@ -15,6 +15,10 @@ import { transactionsRouter } from "./transactions.js";
 // build time without env vars loaded.
 const v1Router = new OpenAPIHono();
 v1Router.use("/*", requireOAuth);
+// All current v1 routes only read data, so the umbrella scope check is
+// sufficient. Move this onto specific subroutes if/when a write endpoint
+// lands and should require `cobalt:write` instead.
+v1Router.use("/*", requireScope("cobalt:read"));
 v1Router.route("/accounts", accountsRouter);
 v1Router.route("/networth", networthRouter);
 v1Router.route("/tickers", tickersRouter);

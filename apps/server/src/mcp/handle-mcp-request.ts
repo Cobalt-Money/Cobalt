@@ -112,12 +112,13 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
     return unauthorizedResponse(origin, "MCP access is disabled for demo accounts.");
   }
 
+  const scopes = scopesFromClaims(verified);
   const authInfo = {
     clientId: clientIdFromClaims(verified),
     expiresAt: typeof verified.exp === "number" ? verified.exp : undefined,
     extra: { jwt: verified },
     resource: new URL("/api/mcp", origin),
-    scopes: scopesFromClaims(verified),
+    scopes,
     token: rawToken,
   };
 
@@ -130,7 +131,7 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
     { capabilities: { tools: { listChanged: true } } },
   );
 
-  registerMcpTools(server, userId);
+  registerMcpTools(server, userId, scopes);
 
   await server.connect(transport);
   return transport.handleRequest(req, { authInfo });
