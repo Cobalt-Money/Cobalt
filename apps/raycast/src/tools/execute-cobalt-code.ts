@@ -2,7 +2,7 @@ import { getPreferenceValues } from "@raycast/api";
 
 import { authorize } from "../oauth";
 
-type Input = {
+interface Input {
   /**
    * JavaScript source to run inside the Cobalt sandbox. Has access to the
    * typed `cobalt.*` SDK scoped to the signed-in user (transactions,
@@ -22,7 +22,7 @@ type Input = {
    *   console.log(transactions.map(t => `${t.name} ${t.amount}`).join("\n"));
    */
   code: string;
-};
+}
 
 interface McpTextContent {
   text: string;
