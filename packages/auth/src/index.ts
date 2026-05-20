@@ -95,6 +95,29 @@ const mcpResourceAudience = `${oauthIssuerOrigin}/api/mcp`;
 /** Only send Secure cookies when the auth server is actually on HTTPS. */
 const isSecureOrigin = env.BETTER_AUTH_URL.startsWith("https://");
 
+/**
+ * OAuth scope vocabulary.
+ *
+ * `openid`/`profile`/`email`/`offline_access` are OIDC identity scopes that
+ * Better Auth enforces on the `/userinfo` endpoint. `cobalt:read` and
+ * `cobalt:write` are Cobalt-specific: read covers `/v1/*` and the MCP
+ * `cobalt_execute_code` tool's read paths; write gates the SDK mutators
+ * (`transactions.update`, `tags.*`). Money movement and chat access are not
+ * exposed via OAuth at all, so they need no scope.
+ *
+ * Both arrays are exported so the consent page and discovery doc can stay in
+ * sync without re-declaring strings.
+ */
+export const COBALT_OAUTH_SCOPES = [
+  "openid",
+  "profile",
+  "email",
+  "offline_access",
+  "cobalt:read",
+  "cobalt:write",
+] as const;
+export type CobaltOAuthScope = (typeof COBALT_OAUTH_SCOPES)[number];
+
 const trustedOrigins = [
   env.CORS_ORIGIN,
   "http://localhost:3000",
@@ -185,8 +208,14 @@ export const auth = betterAuth({
       // MCP clients (Cursor, etc.) register without a session; see "Dynamic Registration" / MCP in
       // https://better-auth.com/docs/plugins/oauth-provider
       allowUnauthenticatedClientRegistration: true,
+      // Dynamic-registered MCP/public clients rarely request scopes
+      // explicitly. Default-granting the full set keeps the JWT scope claim
+      // honest about what tokens can actually do until per-route enforcement
+      // ships; the consent screen still asks the user before issue.
+      clientRegistrationDefaultScopes: [...COBALT_OAUTH_SCOPES],
       consentPage: `${spaOrigin}/oauth/consent`,
       loginPage: `${spaOrigin}/login`,
+      scopes: [...COBALT_OAUTH_SCOPES],
       // Required for MCP: clients send `resource` = MCP HTTPS URL at token exchange; must be allowed.
       validAudiences: [mcpResourceAudience, oauthIssuerOrigin],
     }),

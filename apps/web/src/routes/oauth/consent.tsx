@@ -55,15 +55,32 @@ function tryNavigateToClient(url: string): void {
   }
 }
 
-const SCOPE_LABELS: Record<string, string> = {
+const IDENTITY_SCOPE_LABELS: Record<string, string> = {
   email: "Read your email address",
   offline_access: "Stay signed in (refresh tokens)",
   openid: "Verify your identity",
   profile: "Read your basic profile",
 };
 
-function describeScope(scope: string): string {
-  return SCOPE_LABELS[scope] ?? scope;
+const IDENTITY_SCOPES = new Set(Object.keys(IDENTITY_SCOPE_LABELS));
+
+const COBALT_SCOPE_LABELS: Record<string, string> = {
+  "cobalt:read": "Read your accounts, transactions, and holdings",
+  "cobalt:write": "Edit transaction tags, categories, and notes",
+};
+
+/**
+ * Capabilities the access token can never grant, surfaced as explicit
+ * negatives so users see the boundary, not just what was approved. Kept in
+ * sync with `cobalt.*` SDK in apps/server/src/ai/agents/finance-agent/sdk-description.ts.
+ */
+const COBALT_NEGATIVE_CAPABILITIES = [
+  "Cannot move money or change account connections",
+  "Cannot access your chats",
+] as const;
+
+function describeIdentityScope(scope: string): string {
+  return IDENTITY_SCOPE_LABELS[scope] ?? scope;
 }
 
 interface PublicClient {
@@ -125,30 +142,30 @@ function ClientCard({
   );
 }
 
-/**
- * Hard-coded because OAuth scope claims are currently not enforced against the
- * MCP / public-API surface — every accepted token gets full data access. List
- * mirrors `cobalt.*` SDK surface in apps/server/src/ai/agents/finance-agent/sdk-description.ts.
- * Once scope vocabulary + middleware ship (SRI-339 #2'), drive this from the
- * requested scope set instead.
- */
-const COBALT_DATA_CAPABILITIES: { allowed: boolean; label: string }[] = [
-  { allowed: true, label: "Read your accounts, transactions, and holdings" },
-  { allowed: true, label: "Edit transaction tags, categories, and notes" },
-  { allowed: false, label: "Cannot move money or change account connections" },
-  { allowed: false, label: "Cannot access your chats" },
-];
+function partitionScopes(scopes: string[]): { identity: string[]; cobalt: string[] } {
+  const identity: string[] = [];
+  const cobalt: string[] = [];
+  for (const scope of scopes) {
+    if (IDENTITY_SCOPES.has(scope)) {
+      identity.push(scope);
+    } else if (COBALT_SCOPE_LABELS[scope]) {
+      cobalt.push(scope);
+    }
+  }
+  return { cobalt, identity };
+}
 
 function ScopeList({ scopes }: { scopes: string[] }) {
+  const { identity, cobalt } = partitionScopes(scopes);
   return (
     <div className="space-y-4">
-      {scopes.length > 0 ? (
+      {identity.length > 0 ? (
         <div>
           <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
             Identity
           </p>
           <ul className="space-y-2">
-            {scopes.map((scope) => (
+            {identity.map((scope) => (
               <li className="flex items-start gap-2 text-sm" key={scope}>
                 <HugeiconsIcon
                   className="text-foreground/70 mt-0.5 shrink-0"
@@ -156,7 +173,7 @@ function ScopeList({ scopes }: { scopes: string[] }) {
                   size={16}
                 />
                 <div className="min-w-0">
-                  <span>{describeScope(scope)}</span>
+                  <span>{describeIdentityScope(scope)}</span>
                   <code className="text-muted-foreground ml-1.5 text-xs">{scope}</code>
                 </div>
               </li>
@@ -169,19 +186,27 @@ function ScopeList({ scopes }: { scopes: string[] }) {
           Cobalt data
         </p>
         <ul className="space-y-2">
-          {COBALT_DATA_CAPABILITIES.map((cap) => (
-            <li className="flex items-start gap-2 text-sm" key={cap.label}>
+          {cobalt.map((scope) => (
+            <li className="flex items-start gap-2 text-sm" key={scope}>
               <HugeiconsIcon
-                className={cn(
-                  "mt-0.5 shrink-0",
-                  cap.allowed ? "text-foreground/70" : "text-muted-foreground",
-                )}
-                icon={cap.allowed ? CheckmarkCircle02Icon : Alert02Icon}
+                className="text-foreground/70 mt-0.5 shrink-0"
+                icon={CheckmarkCircle02Icon}
                 size={16}
               />
-              <span className={cn("min-w-0", cap.allowed ? "" : "text-muted-foreground")}>
-                {cap.label}
-              </span>
+              <div className="min-w-0">
+                <span>{COBALT_SCOPE_LABELS[scope]}</span>
+                <code className="text-muted-foreground ml-1.5 text-xs">{scope}</code>
+              </div>
+            </li>
+          ))}
+          {COBALT_NEGATIVE_CAPABILITIES.map((label) => (
+            <li className="flex items-start gap-2 text-sm" key={label}>
+              <HugeiconsIcon
+                className="text-muted-foreground mt-0.5 shrink-0"
+                icon={Alert02Icon}
+                size={16}
+              />
+              <span className="text-muted-foreground min-w-0">{label}</span>
             </li>
           ))}
         </ul>
