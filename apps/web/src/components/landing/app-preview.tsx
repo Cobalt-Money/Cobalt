@@ -3,6 +3,8 @@ import type { FinancialEventCard } from "@cobalt-web/ui/cobalt/news/financial-ev
 import type { NewsMagazineSidebarItem } from "@cobalt-web/ui/cobalt/news/news-magazine";
 import { TransactionDetailActivity } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-activity";
 import { TransactionDetailSummary } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-summary";
+import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
+import { TagChip } from "@cobalt-web/ui/cobalt/transactions/tags/tag-chip";
 import {
   Message,
   MessageContent,
@@ -87,6 +89,14 @@ function mockCat(
     systemKey,
   };
 }
+
+const MOCK_TAGS = {
+  "tag-business": { color: "blue", name: "Business" },
+  "tag-recurring": { color: "violet", name: "Recurring" },
+  "tag-reimbursable": { color: "amber", name: "Reimbursable" },
+  "tag-tax": { color: "green", name: "Tax-deductible" },
+  "tag-travel": { color: "cyan", name: "Travel" },
+} as const satisfies Record<string, { color: string; name: string }>;
 
 const MOCK_CATS = {
   ENTERTAINMENT: mockCat("entertainment", "Entertainment", "movies", "TV & Movies"),
@@ -184,6 +194,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionUrl: "fidelity.com",
     name: "Spotify",
     notes: note("Premium family plan — split with Rust."),
+    tagIds: ["tag-recurring"],
     website: "spotify.com",
   }),
   makeTx({
@@ -233,6 +244,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionUrl: "chase.com",
     name: "Netflix",
     notes: note("Standard plan. Consider downgrading — barely watched in March."),
+    tagIds: ["tag-recurring"],
     website: "netflix.com",
   }),
   makeTx({
@@ -244,6 +256,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     institutionUrl: "apple.com",
     name: "iCloud",
     notes: note("200GB tier — photo library keeps growing."),
+    tagIds: ["tag-recurring", "tag-tax"],
     website: "apple.com",
   }),
   makeTx({
@@ -256,6 +269,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     location: loc("19 W 57th St", "New York", "NY", "10019", 40.7638, -73.9737),
     name: "Nobu",
     notes: note("Birthday dinner with Priya. Black cod was worth it."),
+    tagIds: ["tag-business", "tag-reimbursable"],
     website: "noburestaurants.com",
   }),
   makeTx({
@@ -268,6 +282,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     location: loc("1288 Howard St, Apt 4B", "San Francisco", "CA", "94103", 37.7765, -122.4117),
     name: "March Rent",
     notes: note("Monthly rent — autopay. Lease renewal in June."),
+    tagIds: ["tag-recurring"],
   }),
   makeTx({
     amount: -42.5,
@@ -291,6 +306,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     location: loc("Mission St & 16th St", "San Francisco", "CA", "94103", 37.7651, -122.4196),
     name: "Uber",
     notes: note("Ride home after the company offsite dinner."),
+    tagIds: ["tag-business", "tag-travel"],
     website: "uber.com",
   }),
   makeTx({
@@ -315,6 +331,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     location: loc("301 Pine St", "San Francisco", "CA", "94104", 37.7923, -122.4014),
     name: "Equinox Fitness",
     notes: note("Monthly membership. Goal: hit classes 3x/week."),
+    tagIds: ["tag-recurring"],
     website: "equinox.com",
   }),
   makeTx({
@@ -350,6 +367,7 @@ const TRANSACTIONS: TransactionListItem[] = [
     location: loc("1301 Harrison St", "San Francisco", "CA", "94103", 37.7706, -122.4107),
     name: "Shell Gas Station",
     notes: note("Full tank before the Tahoe drive."),
+    tagIds: ["tag-travel"],
     website: "shell.com",
   }),
   makeTx({
@@ -1093,7 +1111,9 @@ function BackableScreen({
           <span>{label}</span>
         </button>
       </div>
-      <div className="min-h-0 flex-1 overflow-auto">{children}</div>
+      <div className="min-h-0 flex-1 overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {children}
+      </div>
     </div>
   );
 }
@@ -1141,14 +1161,33 @@ function NotesRenderer({ markdown }: { markdown: string }) {
   );
 }
 
+const BABY_TAGS_BY_ID = new Map<string, { name: string; color: TagColor }>(
+  Object.entries(MOCK_TAGS).map(([id, t]) => [id, { color: t.color as TagColor, name: t.name }]),
+);
+
 function TransactionsView() {
   const [selectedTx, setSelectedTx] = useState<TransactionListItem | null>(null);
 
   if (selectedTx) {
+    const tagIds = selectedTx.tagIds ?? [];
+    const tags = tagIds
+      .map((id) => {
+        const t = BABY_TAGS_BY_ID.get(id);
+        return t ? { color: t.color, id, name: t.name } : null;
+      })
+      .filter((x): x is { color: TagColor; id: string; name: string } => x !== null);
+
     return (
       <BackableScreen onBack={() => setSelectedTx(null)} label="Transactions">
         <div className="mx-auto flex w-full min-w-0 max-w-2xl flex-col gap-8 pt-[10vh] pb-8">
           <TransactionDetailSummary transaction={selectedTx} />
+          {tags.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {tags.map((t) => (
+                <TagChip color={t.color} key={t.id} name={t.name} />
+              ))}
+            </div>
+          ) : null}
           {selectedTx.notes ? <NotesRenderer markdown={selectedTx.notes} /> : null}
           <Separator />
           <TransactionDetailActivity editEvents={[]} transaction={selectedTx} />
@@ -1170,13 +1209,15 @@ function TransactionsView() {
     id: tx.id,
     logoUrl: tx.logoUrl,
     name: tx.name,
+    tagIds: [...(tx.tagIds ?? [])],
     website: tx.website,
   }));
 
   return (
-    <div className="h-full overflow-auto pt-2">
+    <div className="h-full overflow-auto pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <BabyTransactions
         items={babyItems}
+        tagsById={BABY_TAGS_BY_ID}
         onOpen={(t) => {
           const full = TRANSACTIONS.find((x) => x.id === t.id) ?? null;
           setSelectedTx(full);
@@ -1188,7 +1229,7 @@ function TransactionsView() {
 
 function SubscriptionsView() {
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-auto p-4">
+    <div className="flex min-h-0 flex-1 flex-col overflow-auto p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <BabySubscriptionsCalendar />
     </div>
   );

@@ -1,3 +1,8 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /app/
+Disallow: /login
+Disallow: /oauth/
+
+Sitemap: https://cobaltpf.com/sitemap.xml

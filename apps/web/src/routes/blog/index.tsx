@@ -1,9 +1,18 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { getBlogPosts } from "@/lib/blog";
+import { buildSeoMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/blog/")({
   component: BlogIndex,
+  head: () => {
+    const seo = buildSeoMeta({
+      description: "Product updates, design notes, and occasional essays from the Cobalt team.",
+      path: "/blog",
+      title: "Blog",
+    });
+    return { links: seo.links, meta: seo.meta };
+  },
   staticData: { title: "Blog" },
 });
 

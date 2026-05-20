@@ -29,14 +29,6 @@ const MODELS: ModelDef[] = [
     supportsReasoning: true,
   },
   {
-    id: "anthropic/claude-sonnet-4.6",
-    label: "Claude Sonnet 4.6",
-    maxEffort: "high",
-    proOnly: true,
-    shortLabel: "Sonnet 4.6",
-    supportsReasoning: true,
-  },
-  {
     id: HAIKU_MODEL_ID,
     label: "Claude Haiku 4.5",
     maxEffort: "high",
