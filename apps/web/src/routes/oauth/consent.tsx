@@ -1,14 +1,6 @@
 import { env } from "@cobalt-web/env/web";
 import { Alert, AlertDescription, AlertTitle } from "@cobalt-web/ui/components/alert";
 import { Button } from "@cobalt-web/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@cobalt-web/ui/components/card";
 import { Separator } from "@cobalt-web/ui/components/separator";
 import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { cn } from "@cobalt-web/ui/lib/utils";
@@ -133,27 +125,67 @@ function ClientCard({
   );
 }
 
+/**
+ * Hard-coded because OAuth scope claims are currently not enforced against the
+ * MCP / public-API surface — every accepted token gets full data access. List
+ * mirrors `cobalt.*` SDK surface in apps/server/src/ai/agents/finance-agent/sdk-description.ts.
+ * Once scope vocabulary + middleware ship (SRI-339 #2'), drive this from the
+ * requested scope set instead.
+ */
+const COBALT_DATA_CAPABILITIES: { allowed: boolean; label: string }[] = [
+  { allowed: true, label: "Read your accounts, transactions, and holdings" },
+  { allowed: true, label: "Edit transaction tags, categories, and notes" },
+  { allowed: false, label: "Cannot move money or change account connections" },
+  { allowed: false, label: "Cannot access your chats" },
+];
+
 function ScopeList({ scopes }: { scopes: string[] }) {
   return (
-    <div>
-      <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-        This app will be able to
-      </p>
-      <ul className="space-y-2">
-        {scopes.map((scope) => (
-          <li className="flex items-start gap-2 text-sm" key={scope}>
-            <HugeiconsIcon
-              className="text-foreground/70 mt-0.5 shrink-0"
-              icon={CheckmarkCircle02Icon}
-              size={16}
-            />
-            <div className="min-w-0">
-              <span>{describeScope(scope)}</span>
-              <code className="text-muted-foreground ml-1.5 text-xs">{scope}</code>
-            </div>
-          </li>
-        ))}
-      </ul>
+    <div className="space-y-4">
+      {scopes.length > 0 ? (
+        <div>
+          <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+            Identity
+          </p>
+          <ul className="space-y-2">
+            {scopes.map((scope) => (
+              <li className="flex items-start gap-2 text-sm" key={scope}>
+                <HugeiconsIcon
+                  className="text-foreground/70 mt-0.5 shrink-0"
+                  icon={CheckmarkCircle02Icon}
+                  size={16}
+                />
+                <div className="min-w-0">
+                  <span>{describeScope(scope)}</span>
+                  <code className="text-muted-foreground ml-1.5 text-xs">{scope}</code>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <div>
+        <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+          Cobalt data
+        </p>
+        <ul className="space-y-2">
+          {COBALT_DATA_CAPABILITIES.map((cap) => (
+            <li className="flex items-start gap-2 text-sm" key={cap.label}>
+              <HugeiconsIcon
+                className={cn(
+                  "mt-0.5 shrink-0",
+                  cap.allowed ? "text-foreground/70" : "text-muted-foreground",
+                )}
+                icon={cap.allowed ? CheckmarkCircle02Icon : Alert02Icon}
+                size={16}
+              />
+              <span className={cn("min-w-0", cap.allowed ? "" : "text-muted-foreground")}>
+                {cap.label}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -284,24 +316,24 @@ function RouteComponent() {
         </Link>
       </header>
       <main className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-auto p-4 sm:p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader className="items-center text-center">
+        <div className="w-full max-w-md space-y-6">
+          <div className="flex flex-col items-center text-center">
             <div className="bg-foreground/5 ring-foreground/10 mx-auto flex size-12 items-center justify-center rounded-full ring-1">
               <HugeiconsIcon className="text-foreground" icon={SecurityCheckIcon} size={24} />
             </div>
-            <CardTitle className="text-lg">Authorize access to Cobalt</CardTitle>
-            <CardDescription>
+            <h1 className="mt-3 font-semibold text-lg">Authorize access to Cobalt</h1>
+            <p className="text-muted-foreground mt-1 text-sm">
               An external application wants to connect to your Cobalt account. Only continue if you
               started this request from a trusted tool.
-            </CardDescription>
-          </CardHeader>
+            </p>
+          </div>
 
-          <CardContent className="space-y-4">
+          <div className="space-y-4">
             {clientId ? (
               <ClientCard client={client} clientId={clientId} isPending={clientQuery.isPending} />
             ) : null}
 
-            {scopes.length > 0 ? <ScopeList scopes={scopes} /> : null}
+            <ScopeList scopes={scopes} />
 
             <Separator />
 
@@ -320,9 +352,9 @@ function RouteComponent() {
                 Access denied. You can close this window.
               </p>
             ) : null}
-          </CardContent>
+          </div>
 
-          <CardFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             {isDone ? null : (
               <Button
                 className="w-full sm:w-auto"
@@ -356,20 +388,20 @@ function RouteComponent() {
             >
               {allowButtonLabel()}
             </Button>
-          </CardFooter>
-        </Card>
+          </div>
 
-        <p className="text-muted-foreground mt-4 text-center text-xs">
-          By continuing you agree to our{" "}
-          <Link className="underline underline-offset-4" to="/terms">
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link className="underline underline-offset-4" to="/privacy">
-            Privacy Policy
-          </Link>
-          .
-        </p>
+          <p className="text-muted-foreground text-center text-xs">
+            By continuing you agree to our{" "}
+            <Link className="underline underline-offset-4" to="/terms">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link className="underline underline-offset-4" to="/privacy">
+              Privacy Policy
+            </Link>
+            .
+          </p>
+        </div>
       </main>
     </div>
   );
