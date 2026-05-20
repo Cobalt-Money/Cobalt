@@ -2172,6 +2172,130 @@ export const DEMO_CHATS: DemoChatSeed[] = [
     ],
     title: "Savings goal check-in",
   },
+  {
+    daysAgo: 1,
+    messages: [
+      { minutesAgo: 30, role: "user", text: "Where is most of my dining spend going?" },
+      {
+        minutesAgo: 29,
+        role: "assistant",
+        text: "Last 30 days you spent **$612.40 across 18 dining transactions**. Top three: Anchor Oyster Bar ($142), Tartine ($98), Mission Chinese ($87). Weekends account for 68% of dollars but only 40% of visits — weeknight dinners are smaller tabs.",
+      },
+    ],
+    title: "Dining breakdown",
+  },
+  {
+    daysAgo: 2,
+    messages: [
+      { minutesAgo: 120, role: "user", text: "How much cash do I have across all accounts?" },
+      {
+        minutesAgo: 119,
+        role: "assistant",
+        text: "Total liquid cash: **$34,812**. Breakdown:\n- Chase Checking: $4,231\n- Ally HYSA: $28,140\n- Apple Cash: $2,441\n\nYour HYSA is earning 4.25% APY — about $99/mo in interest at the current balance.",
+      },
+    ],
+    title: "Cash position",
+  },
+  {
+    daysAgo: 3,
+    messages: [
+      { minutesAgo: 15, role: "user", text: "Am I overweight tech in my brokerage?" },
+      {
+        minutesAgo: 14,
+        role: "assistant",
+        text: "Yes — **~74% of your taxable brokerage is mega-cap tech** (AAPL, NVDA, MSFT, GOOGL, META, AMZN, TSLA, TSM). For comparison, the S&P 500's tech weighting is ~32%.\n\nNot inherently bad if intentional, but the correlation between these names is high — a sector drawdown hits the whole sleeve at once. Want suggestions to diversify with broad-market ETFs?",
+      },
+    ],
+    title: "Brokerage concentration",
+  },
+  {
+    daysAgo: 5,
+    messages: [
+      { minutesAgo: 90, role: "user", text: "What recurring subscriptions am I paying for?" },
+      {
+        minutesAgo: 89,
+        role: "assistant",
+        text: "Found **9 active recurring charges** totaling $187.45/mo:\n- Netflix $22.99\n- Spotify $11.99\n- NYT $17.00\n- iCloud+ $9.99\n- ChatGPT Plus $20.00\n- Claude Pro $20.00\n- Linear $8.00\n- 1Password $4.99\n- Gym $72.49\n\nNothing duplicated. ChatGPT + Claude is the biggest discretionary overlap — drop one for $20/mo savings.",
+      },
+    ],
+    title: "Subscription audit",
+  },
+  {
+    daysAgo: 7,
+    messages: [
+      { minutesAgo: 200, role: "user", text: "How's my credit card utilization?" },
+      {
+        minutesAgo: 199,
+        role: "assistant",
+        text: "Combined utilization: **18%** ($2,340 balances / $13,000 total limit).\n- Chase Sapphire: 22% ($1,540 / $7k)\n- Amex Gold: 16% ($800 / $5k — no preset limit, using pay-over-time)\n\nUnder 30% is the FICO sweet spot; you're fine. Sapphire is closest to the threshold — pay $150 there before statement close to drop to 20%.",
+      },
+    ],
+    title: "Credit utilization",
+  },
+  {
+    daysAgo: 10,
+    messages: [
+      { minutesAgo: 5, role: "user", text: "Did my 401k contribution go through this paycheck?" },
+      {
+        minutesAgo: 4,
+        role: "assistant",
+        text: "Yes — **$615.38 contribution posted 3 days ago** to your Empower 401(k). YTD contributions are $14,769, putting you on pace for $19,200 by year-end (vs $23,000 IRS limit).\n\nYou have headroom to bump deferral 4% if you want to max it.",
+      },
+    ],
+    title: "401k contribution check",
+  },
+  {
+    daysAgo: 12,
+    messages: [
+      { minutesAgo: 60, role: "user", text: "How much did the Tahoe trip cost?" },
+      {
+        minutesAgo: 59,
+        role: "assistant",
+        text: "Tahoe trip (Aug 14–18) totaled **$1,247.30** across 14 transactions:\n- Lodging (Airbnb): $620.00\n- Gas (4 fills): $182.40\n- Restaurants: $284.50\n- Groceries (Safeway): $96.20\n- Activities (ski rental, lift): $64.20\n\n~$940 hit credit cards; the rest came out of checking.",
+      },
+    ],
+    title: "Tahoe trip cost",
+  },
+  {
+    daysAgo: 15,
+    messages: [
+      { minutesAgo: 25, role: "user", text: "What's my real take-home after taxes and benefits?" },
+      {
+        minutesAgo: 24,
+        role: "assistant",
+        text: "Average net deposit over the last 6 paychecks: **$4,820 bi-weekly** = ~$10,444/mo. That's after federal + CA state withholding, FICA, $615 401k, and $185 health/dental.\n\nGross is roughly $7,100/paycheck, so your effective deduction rate is ~32%.",
+      },
+    ],
+    title: "Take-home pay",
+  },
+  {
+    daysAgo: 18,
+    messages: [
+      { minutesAgo: 45, role: "user", text: "Any unusual charges in the last week?" },
+      {
+        minutesAgo: 44,
+        role: "assistant",
+        text: 'Two stood out:\n1. **$89.00 at "PYP*UNKNOWN MERCHANT"** (PayPal) on 9/12 — no merchant string, no prior history. Worth checking.\n2. **$42.18 Lyft on 9/14 at 3:14am** — outside your usual ride pattern.\n\nEverything else looked routine.',
+      },
+    ],
+    title: "Unusual charges scan",
+  },
+  {
+    daysAgo: 22,
+    messages: [
+      {
+        minutesAgo: 75,
+        role: "user",
+        text: "If I want to buy a house in 3 years, am I on track for a down payment?",
+      },
+      {
+        minutesAgo: 74,
+        role: "assistant",
+        text: "Assuming **$150k down on an $850k home** (SF metro), and your current $1,083/mo HYSA cadence plus $28k starting balance:\n\n- 36 months × $1,083 = $38,988\n- Compounded at 4.25% APY: ~$41,400 added\n- Total in 3 years: **~$69,400**\n\nThat's $80k short. To close the gap you'd need to add ~$2,200/mo to savings — tight on current cash flow. Realistic options: smaller down (10% = $85k), longer timeline, or higher-COL adjustment.",
+      },
+    ],
+    title: "House down payment plan",
+  },
 ];
 
 export const DEMO_HOLDINGS: DemoHoldingSeed[] = [
