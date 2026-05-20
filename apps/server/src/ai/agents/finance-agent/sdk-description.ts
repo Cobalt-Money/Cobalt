@@ -29,10 +29,11 @@ export const COBALT_SDK_DESCRIPTION = [
   "    - cobalt.tags.setOnTransaction({ transactionId, tagIds }) — full replace; pass [] to clear",
   "  Transactions (user-scoped):",
   "    - cobalt.transactions.list({ startDate?, endDate?, primaryCategory?, accountType?, minAmount?, maxAmount?, searchQuery?, pendingFilter?, limit?, cursor? }) — returns { transactions, nextCursor, hasMore }; pass `nextCursor` back as `cursor` for the next page",
+  "    - cobalt.transactions.create({ accountId, amount, date, name, categoryId?, currency?, description?, id?, location?, merchantName?, website? }) — insert a manual transaction on a user-owned MANUAL account; Plaid-linked accounts reject. Sign convention follows Plaid (debit positive). `date` is YYYY-MM-DD. `currency` defaults to USD. `description` is stored as `notes`. `location` locks the field against future syncs. Returns { id } (server-generated if not supplied).",
   "    - cobalt.transactions.update({ transactionId, patch: { name?, date?, notes?, categoryId?, tags?, merchantName?, website?, location? } }) — patch only, cannot create. Pass `null` for name/date/notes/categoryId/merchantName/location to restore the original Plaid value. `location` is a composite { address, city, region, postal_code, country, lat, lon, store_number } object. `website` accepts a bare domain or full URL and is normalized to a bare lowercase domain. patch.tags is a FULL REPLACE of the tag set; to add or remove a single tag use cobalt.tags.addToTransaction / removeFromTransaction instead.",
   "  Research (global market data):",
   "    - cobalt.research.quote({ symbol })",
   "    - cobalt.research.overview({ symbol })",
   "    - cobalt.research.news({ symbol })",
-  "User-scoped calls are automatically restricted to the authenticated user — sandboxed code cannot supply or override `userId`. Most APIs are read-only; transactions.update is the primary mutator.",
+  "User-scoped calls are automatically restricted to the authenticated user — sandboxed code cannot supply or override `userId`. Most APIs are read-only; transactions.create and transactions.update are the mutators on transactions.",
 ].join("\n");

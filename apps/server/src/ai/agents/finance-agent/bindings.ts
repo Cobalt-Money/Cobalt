@@ -21,12 +21,16 @@ import { getResearchNews } from "@cobalt-web/server-data/research/queries";
 import { symbolQuerySchema } from "@cobalt-web/server-data/research/schemas";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
 import { balanceSnapshotQuerySchema } from "@cobalt-web/server-data/snapshots/schemas";
-import { patchTransaction } from "@cobalt-web/server-data/transactions/mutations";
+import {
+  createManualTransaction,
+  patchTransaction,
+} from "@cobalt-web/server-data/transactions/mutations";
 import {
   assertTransactionOwner,
   getTransactions,
 } from "@cobalt-web/server-data/transactions/queries";
 import {
+  transactionCreateBodySchema,
   transactionListQuerySchema,
   transactionPatchBodySchema,
 } from "@cobalt-web/server-data/transactions/schemas";
@@ -89,7 +93,9 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
   route({
     description:
       "List the user's accounts with institution metadata. Filter by Plaid `type` and/or `subtype`. SnapTrade brokerage data is under `brokerage_accounts`.",
-    handler: async (userId, params) => ({ accounts: await listAccounts(userId, params) }),
+    handler: async (userId, params) => ({
+      accounts: await listAccounts(userId, params),
+    }),
     name: "accounts_list",
     schema: accountListQuerySchema,
   }),
@@ -229,6 +235,14 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
     handler: (userId, args) => getTransactions(userId, args),
     name: "transactions_list",
     schema: transactionListQuerySchema,
+  }),
+  route({
+    description:
+      'Create a manual transaction on a user-owned manual account. Server stamps `source: "manual"`, `pending: false`, and `userId`. Plaid-linked accounts reject inserts.',
+    handler: async (userId, body) => await createManualTransaction(userId, body),
+    name: "transactions_create",
+    requiredScope: "cobalt:write",
+    schema: transactionCreateBodySchema,
   }),
   route({
     description: "Patch a transaction the user owns (mutation). Verifies ownership first.",
