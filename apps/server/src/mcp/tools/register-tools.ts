@@ -64,7 +64,7 @@ export function registerMcpTools(server: McpServer, userId: string, scopes: stri
           isError: true,
         };
       }
-      return executeCode(userId, code);
+      return executeCode(userId, code, scopes);
     },
   );
 }
