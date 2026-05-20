@@ -99,6 +99,7 @@ export function useAccountLauncher(onDismiss: () => void) {
     async (publicToken: string, _metadata: PlaidLinkOnSuccessMetadata) => {
       const session = sessionRef.current;
       sessionRef.current = null;
+      setLinkToken(null);
       if (!session) {
         return;
       }
@@ -120,6 +121,7 @@ export function useAccountLauncher(onDismiss: () => void) {
       pendingPlaidRef.current = false;
       const session = sessionRef.current;
       sessionRef.current = null;
+      setLinkToken(null);
       if (!session) {
         return;
       }

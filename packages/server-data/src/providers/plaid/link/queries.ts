@@ -36,6 +36,18 @@ export async function lookupFinancialAccountsByPlaidIds(
   return map;
 }
 
+/** First routing number for a Plaid institution, when known. Null otherwise. */
+export async function getInstitutionRoutingNumber(
+  plaidInstitutionId: string,
+): Promise<string | null> {
+  const row = await db.query.institution.findFirst({
+    columns: { routingNumbers: true },
+    where: { plaidInstitutionId: { eq: plaidInstitutionId } },
+  });
+  const list = row?.routingNumbers ?? [];
+  return list.length > 0 ? (list[0] ?? null) : null;
+}
+
 /** Resolve plaid_connection by Plaid item_id. Returns null if not found. */
 export async function lookupPlaidConnection(
   plaidItemId: string,
