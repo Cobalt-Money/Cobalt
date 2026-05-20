@@ -17,6 +17,10 @@ import {
   positionsQuerySchema,
 } from "@cobalt-web/server-data/brokerage/schemas";
 import { fmpGetProfile, fmpGetQuote } from "@cobalt-web/server-data/research/fmp-ticker";
+import {
+  getCategory,
+  listCategories,
+} from "@cobalt-web/server-data/transactions/categories/queries";
 import { getResearchNews } from "@cobalt-web/server-data/research/queries";
 import { symbolQuerySchema } from "@cobalt-web/server-data/research/schemas";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
@@ -54,6 +58,7 @@ export type { Binding };
 
 const emptySchema = z.object({});
 const accountIdSchema = z.object({ accountId: z.string().min(1) });
+const categoryIdSchema = z.object({ categoryId: z.string().min(1) });
 const tagIdSchema = z.object({ tagId: z.string().min(1) });
 const txnIdSchema = z.object({ transactionId: z.string().min(1) });
 const txnTagIdsSchema = z.object({
@@ -145,6 +150,21 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       tickers: await getUserTickersByUserId(userId),
     }),
     name: "brokerage_userTickers",
+    schema: emptySchema,
+  }),
+  route({
+    description: "Get a single category by id (user-scoped). Returns null if not found.",
+    handler: async (userId, { categoryId }) => ({
+      category: await getCategory(userId, categoryId),
+    }),
+    name: "categories_get",
+    schema: categoryIdSchema,
+  }),
+  route({
+    description:
+      "List the user's categories with their parent groups. Each category has { id, name, systemKey, groupId, iconKey, hidden, excludeFromInsights }. Use this to resolve a `categoryId` for `transactions.create`/`transactions.update` — match by `name` or `systemKey` (stable across users).",
+    handler: async (userId) => await listCategories(userId),
+    name: "categories_list",
     schema: emptySchema,
   }),
   route({
