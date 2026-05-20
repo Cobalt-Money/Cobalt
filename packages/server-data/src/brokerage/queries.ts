@@ -381,6 +381,7 @@ export async function getPortfolioSnapshotsByUserId(
         OR: [
           { source: { eq: "snaptrade" } },
           { AND: [{ source: { eq: "plaid" } }, { type: { eq: "investment" } }] },
+          { AND: [{ source: { eq: "manual" } }, { type: { eq: "investment" } }] },
         ],
       },
       snapshotDate: { gte: startDate, lte: endDate },
@@ -430,8 +431,8 @@ export async function getUserBrokeragesByUserId(userId: string) {
 
   const names = rows
     .map((r) => {
-      // Plaid: only investment accounts contribute to "user brokerages".
-      if (r.source === "plaid" && r.type !== "investment") {
+      // Plaid + manual: only investment accounts count as brokerages.
+      if ((r.source === "plaid" || r.source === "manual") && r.type !== "investment") {
         return null;
       }
       return r.institutionName ?? r.plaidConnection?.institutionName ?? null;
@@ -486,6 +487,7 @@ export async function getBrokerageAccountsByUserId(
       OR: [
         { source: { eq: "snaptrade" } },
         { source: { eq: "plaid" }, type: { eq: "investment" } },
+        { source: { eq: "manual" }, type: { eq: "investment" } },
       ],
       userId: { eq: userId },
     },

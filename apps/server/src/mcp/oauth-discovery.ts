@@ -1,3 +1,4 @@
+import { COBALT_OAUTH_SCOPES } from "@cobalt-web/auth";
 import { env } from "@cobalt-web/env/server";
 
 /** RFC 9728 protected resource metadata for the MCP HTTP endpoint. */
@@ -8,6 +9,6 @@ export function buildMcpProtectedResourceMetadata(mcpResourceUrl: string): Recor
   return {
     authorization_servers: [baseUrl],
     resource: mcpResourceUrl,
-    scopes_supported: ["openid", "profile", "email", "offline_access"],
+    scopes_supported: [...COBALT_OAUTH_SCOPES],
   };
 }

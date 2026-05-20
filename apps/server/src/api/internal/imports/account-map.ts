@@ -1,7 +1,10 @@
-import { db } from "@cobalt-web/db";
 import { confirmAccountMapping } from "@cobalt-web/server-data/import/account-mapping/actions";
 import { lookupAccountMappingCache } from "@cobalt-web/server-data/import/account-mapping/cache";
-import { getStagedAccountLabels } from "@cobalt-web/server-data/import/account-mapping/queries";
+import {
+  getJob,
+  getStagedAccountLabels,
+  listAccounts,
+} from "@cobalt-web/server-data/import/account-mapping/queries";
 import { persistAccountSuggestions } from "@cobalt-web/server-data/import/shared/mutations";
 import {
   accountSuggestionsResponseSchema,
@@ -111,30 +114,11 @@ export async function suggestAccountLabels(
 export const importsAccountMapRouter = createApp()
   .openapi(suggestRoute, async (c) => {
     const { id } = c.req.valid("param");
-    const job = await db.query.importJob.findFirst({
-      columns: { accountSuggestions: true, schemaMapping: true, userId: true },
-      where: { id: { eq: id } },
-    });
-    if (!job || job.userId !== c.var.user.id) {
-      return c.json({ error: "Import job not found" }, 404);
-    }
+    const job = await getJob(c.var.user.id, id);
     const path = job.schemaMapping?.account ? "A" : "B";
     const labels = path === "A" ? await getStagedAccountLabels(id) : ["Default"];
-    const accountRows = await db.query.financialAccount.findMany({
-      columns: {
-        customName: true,
-        id: true,
-        institutionName: true,
-        mask: true,
-        name: true,
-        officialName: true,
-        subtype: true,
-        type: true,
-      },
-      where: { userId: { eq: c.var.user.id } },
-      with: { plaidConnection: { columns: { institutionName: true } } },
-    });
-    const userAccountIdSet = new Set(accountRows.map((a) => a.id));
+    const userAccounts = await listAccounts(c.var.user.id);
+    const userAccountIdSet = new Set(userAccounts.map((a) => a.id));
     // Stale guard: any cached suggestion pointing at a deleted account → re-infer.
     const cacheStillValid =
       job.accountSuggestions !== null &&
@@ -145,16 +129,6 @@ export const importsAccountMapRouter = createApp()
     if (cacheStillValid && job.accountSuggestions) {
       return c.json({ path, sourceLabels: labels, suggestions: job.accountSuggestions }, 200);
     }
-    const userAccounts = accountRows.map((a) => ({
-      customName: a.customName,
-      id: a.id,
-      institutionName: a.institutionName ?? a.plaidConnection?.institutionName ?? null,
-      mask: a.mask,
-      name: a.name,
-      officialName: a.officialName,
-      subtype: a.subtype,
-      type: a.type,
-    }));
     const suggestions =
       path === "A" ? await suggestAccountLabels(c.var.user.id, labels, userAccounts) : [];
     await persistAccountSuggestions(id, suggestions);

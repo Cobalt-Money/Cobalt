@@ -12,7 +12,7 @@ const SNAPSHOT_RANGE = z.enum(["1W", "1M", "1Y", "All"]);
 const RANGE_DAYS: Record<"1W" | "1M" | "1Y", number> = { "1M": 30, "1W": 7, "1Y": 365 };
 
 const SOURCE_FILTER = z
-  .object({ source: z.enum(["plaid", "snaptrade", "all"]).optional() })
+  .object({ source: z.enum(["plaid", "snaptrade", "manual", "all"]).optional() })
   .optional();
 
 function snapshotCutoff(range: z.infer<typeof SNAPSHOT_RANGE> | undefined): number | null {
@@ -27,14 +27,31 @@ function snapshotCutoff(range: z.infer<typeof SNAPSHOT_RANGE> | undefined): numb
  * (financialAccount with source='snaptrade', plus holding/orders/investmentActivity/snapshot).
  */
 export const brokerageQueries = {
-  /** Linked SnapTrade brokerage accounts with balance, holdings, and authorization metadata. */
+  /**
+   * Brokerage accounts: SnapTrade-linked or user-added manual investment
+   * accounts. Plaid investment accounts surface via `plaidInvestmentAccounts`
+   * below — kept separate because Plaid balance/connection metadata is
+   * fetched through a different relation graph.
+   */
   accounts: defineQuery(({ ctx }: { ctx: Context }) =>
     zql.financialAccount
       .where("userId", ctx?.userId ?? NO_MATCH_ID)
-      .where("source", "snaptrade")
+      .where(({ or, and, cmp }) =>
+        or(cmp("source", "snaptrade"), and(cmp("source", "manual"), cmp("type", "investment"))),
+      )
       .related("balance")
       .related("holdings")
       .related("snaptradeAuthorization"),
+  ),
+
+  /** Manual investment-type accounts created by the user. */
+  manualInvestmentAccounts: defineQuery(({ ctx }: { ctx: Context }) =>
+    zql.financialAccount
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
+      .where("source", "manual")
+      .where("type", "investment")
+      .related("balance")
+      .related("holdings"),
   ),
 
   /** Plaid investment-type accounts. */
@@ -59,7 +76,11 @@ export const brokerageQueries = {
         .where("userId", ctx?.userId ?? NO_MATCH_ID)
         .whereExists("account", (acc) =>
           acc.where(({ or, cmp, and }) =>
-            or(cmp("source", "snaptrade"), and(cmp("source", "plaid"), cmp("type", "investment"))),
+            or(
+              cmp("source", "snaptrade"),
+              and(cmp("source", "plaid"), cmp("type", "investment")),
+              and(cmp("source", "manual"), cmp("type", "investment")),
+            ),
           ),
         )
         .where(({ and, cmp }) =>

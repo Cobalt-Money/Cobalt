@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 
+import { TickerLogo } from "./brokerage/ticker-logo";
 import { InstitutionLogo } from "./logos/institution-logo";
 
 interface AccountToastInstitution {
@@ -69,6 +70,36 @@ export const cobaltToast = {
   manualAccountCreated(name: string) {
     return toast("Account added", {
       description: name,
+      icon: POSTED_ICON,
+    });
+  },
+
+  /** Manual brokerage position added. */
+  positionAdded(ticker: string, quantity: number) {
+    return toast("Position added", {
+      description: (
+        <span className="flex items-center gap-2">
+          <TickerLogo size={16} symbol={ticker} />
+          <span>
+            {quantity} {ticker}
+          </span>
+        </span>
+      ),
+      icon: POSTED_ICON,
+    });
+  },
+
+  /** Manual brokerage position sold. */
+  positionSold(ticker: string, quantity: number) {
+    return toast("Position sold", {
+      description: (
+        <span className="flex items-center gap-2">
+          <TickerLogo size={16} symbol={ticker} />
+          <span>
+            {quantity} {ticker}
+          </span>
+        </span>
+      ),
       icon: POSTED_ICON,
     });
   },

@@ -1,6 +1,6 @@
 import { OAuth } from "@raycast/api";
 
-const CLIENT_ID = "QHYepxDSHmKhnBlmEfswkJhrrDItiguY";
+const CLIENT_ID = "jxihLeaSnvTNEHoALsPewQeLTUOVChxJ";
 const SCOPE = "openid profile email offline_access";
 
 const client = new OAuth.PKCEClient({

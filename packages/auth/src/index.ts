@@ -4,14 +4,78 @@ import { db } from "@cobalt-web/db";
 import * as authSchema from "@cobalt-web/db/schema/users/auth/auth";
 import * as stripeSchema from "@cobalt-web/db/schema/users/subscriptions/stripe";
 import { env } from "@cobalt-web/env/server";
+import { Redis } from "@upstash/redis";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { jwt, lastLoginMethod, openAPI } from "better-auth/plugins";
+import { anonymous, jwt, lastLoginMethod, openAPI } from "better-auth/plugins";
 import { bearer } from "better-auth/plugins/bearer";
 import { Stripe } from "stripe";
 
 import { getAppleClientSecret } from "./apple-secret.js";
 import { seedUserCategories } from "./seed-user-categories.js";
+
+/**
+ * Upstash Redis used as Better Auth's secondaryStorage. Powers:
+ *   - Session cache (faster than Postgres lookup on cookieCache miss)
+ *   - Rate-limit counters for `/api/auth/*` routes (distributed across
+ *     Vercel function instances + regions; in-memory was leaky on serverless)
+ *   - Verification token storage if we ever enable email-OTP/magic-link
+ *
+ * HTTP-based client — no connection pool, ideal for serverless cold starts.
+ * Env vars are optional; when unset, Better Auth falls back to default
+ * in-memory storage and the rate-limit/session caching downgrades gracefully.
+ */
+const redis =
+  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+        token: env.UPSTASH_REDIS_REST_TOKEN,
+        url: env.UPSTASH_REDIS_REST_URL,
+      })
+    : null;
+
+/**
+ * Reads swallow errors and return null so callers fall through to Postgres
+ * (session/verification rows are mirrored there). Writes rethrow — silently
+ * dropping a `set`/`delete` would leave stale sessions or skewed rate-limit
+ * counters, which is worse than a 5xx the user can retry.
+ *
+ * Original errors are logged server-side only; the rethrown message is generic
+ * so 5xx response bodies never leak Redis/Upstash provider details.
+ */
+const STORAGE_UNAVAILABLE = "session storage unavailable";
+
+const secondaryStorage = redis
+  ? {
+      delete: async (key: string) => {
+        try {
+          await redis.del(key);
+        } catch (error) {
+          console.error("[auth] secondary-storage delete failed", {
+            error,
+            key,
+          });
+          throw new Error(STORAGE_UNAVAILABLE, { cause: error });
+        }
+      },
+      get: async (key: string) => {
+        try {
+          const v = await redis.get<string>(key);
+          return v ?? null;
+        } catch (error) {
+          console.warn("[auth] secondary-storage get failed, falling back to db", { error, key });
+          return null;
+        }
+      },
+      set: async (key: string, value: string, ttl?: number) => {
+        try {
+          await (ttl ? redis.set(key, value, { ex: ttl }) : redis.set(key, value));
+        } catch (error) {
+          console.error("[auth] secondary-storage set failed", { error, key });
+          throw new Error(STORAGE_UNAVAILABLE, { cause: error });
+        }
+      },
+    }
+  : undefined;
 
 const schema = { ...authSchema, ...stripeSchema };
 
@@ -31,6 +95,29 @@ const mcpResourceAudience = `${oauthIssuerOrigin}/api/mcp`;
 /** Only send Secure cookies when the auth server is actually on HTTPS. */
 const isSecureOrigin = env.BETTER_AUTH_URL.startsWith("https://");
 
+/**
+ * OAuth scope vocabulary.
+ *
+ * `openid`/`profile`/`email`/`offline_access` are OIDC identity scopes that
+ * Better Auth enforces on the `/userinfo` endpoint. `cobalt:read` and
+ * `cobalt:write` are Cobalt-specific: read covers `/v1/*` and the MCP
+ * `cobalt_execute_code` tool's read paths; write gates the SDK mutators
+ * (`transactions.update`, `tags.*`). Money movement and chat access are not
+ * exposed via OAuth at all, so they need no scope.
+ *
+ * Both arrays are exported so the consent page and discovery doc can stay in
+ * sync without re-declaring strings.
+ */
+export const COBALT_OAUTH_SCOPES = [
+  "openid",
+  "profile",
+  "email",
+  "offline_access",
+  "cobalt:read",
+  "cobalt:write",
+] as const;
+export type CobaltOAuthScope = (typeof COBALT_OAUTH_SCOPES)[number];
+
 const trustedOrigins = [
   env.CORS_ORIGIN,
   "http://localhost:3000",
@@ -48,6 +135,10 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
     },
+    // Stored OAuth provider tokens (Google access/refresh) are encrypted at
+    // rest via AES-256-GCM. Without this, a DB read leak surfaces plaintext
+    // bearer tokens for every linked account.
+    encryptOAuthTokens: true,
   },
   advanced: {
     crossSubDomainCookies:
@@ -74,6 +165,12 @@ export const auth = betterAuth({
           } catch (error) {
             console.error(`[auth] failed to seed categories for user ${user.id}:`, error);
           }
+          // Lightweight audit trail for demo accounts so we can spot abnormal
+          // creation volume (spam, automation) without joining the user table.
+          const u = user as { isAnonymous?: boolean; email?: string | null };
+          if (u.isAnonymous) {
+            console.info(`[auth.audit] demo_user_created id=${user.id} email=${u.email ?? ""}`);
+          }
         },
       },
     },
@@ -92,6 +189,18 @@ export const auth = betterAuth({
     jwt({
       disableSettingJwtHeader: true,
     }),
+    /**
+     * Powers the /api/demo/create endpoint. Adds `user.is_anonymous` column +
+     * `/sign-in/anonymous` route that mints a user + session in one call. Demo
+     * router calls that, then seeds fixtures. `requireNotDemo` middleware,
+     * cleanup cron, and the banner UI all branch on `user.isAnonymous` — every
+     * anonymous user in this app is a demo, so the flag is the single source.
+     */
+    anonymous({
+      emailDomainName: "demo.cobalt.internal",
+      // No link-account hook: demo users never upgrade in-place; if a visitor
+      // wants to keep their data they sign up fresh.
+    }),
     // this basically allows us to not have to configure all of the clients ourselvers(cursor, claude code, etc.)
     oauthProvider({
       accessTokenExpiry: 60 * 60 * 24, // 24 hours — MCP clients don't reliably handle refresh tokens
@@ -99,8 +208,14 @@ export const auth = betterAuth({
       // MCP clients (Cursor, etc.) register without a session; see "Dynamic Registration" / MCP in
       // https://better-auth.com/docs/plugins/oauth-provider
       allowUnauthenticatedClientRegistration: true,
+      // Dynamic-registered MCP/public clients rarely request scopes
+      // explicitly. Default-granting the full set keeps the JWT scope claim
+      // honest about what tokens can actually do until per-route enforcement
+      // ships; the consent screen still asks the user before issue.
+      clientRegistrationDefaultScopes: [...COBALT_OAUTH_SCOPES],
       consentPage: `${spaOrigin}/oauth/consent`,
       loginPage: `${spaOrigin}/login`,
+      scopes: [...COBALT_OAUTH_SCOPES],
       // Required for MCP: clients send `resource` = MCP HTTPS URL at token exchange; must be allowed.
       validAudiences: [mcpResourceAudience, oauthIssuerOrigin],
     }),
@@ -149,6 +264,13 @@ export const auth = betterAuth({
       },
     }),
   ],
+  rateLimit: {
+    // `secondary-storage` routes counters into the Upstash Redis adapter
+    // above when configured; otherwise Better Auth falls back to its default
+    // in-memory bucket (fine for dev, leaky on serverless prod).
+    storage: secondaryStorage ? "secondary-storage" : "memory",
+  },
+  secondaryStorage,
   secret: env.BETTER_AUTH_SECRET,
   session: {
     // Required by @better-auth/oauth-provider when JWT / secondary session storage is enabled.
@@ -174,9 +296,19 @@ export const auth = betterAuth({
   trustedOrigins,
   user: {
     additionalFields: {
+      // isAnonymous is registered by the anonymous() plugin itself; no need
+      // to declare here. It will appear on session.user automatically.
       lastSeenAt: {
         required: false,
         type: "date",
+      },
+      onboardedAt: {
+        required: false,
+        type: "date",
+      },
+      onboardingStep: {
+        required: false,
+        type: "string",
       },
     },
   },

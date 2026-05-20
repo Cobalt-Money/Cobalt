@@ -1,7 +1,4 @@
-import {
-  getRecurringStreams,
-  getUserTransactions,
-} from "@cobalt-web/server-data/transactions/queries";
+import { getRecurringStreams, getTransactions } from "@cobalt-web/server-data/transactions/queries";
 import {
   recurringStreamsResponseSchema,
   transactionListQuerySchema,
@@ -42,7 +39,7 @@ const recurringRoute = createRoute({
 
 export const transactionsRouter = createApp()
   .openapi(listRoute, async (c) => {
-    const result = await getUserTransactions(c.var.user.id, c.req.valid("query"));
+    const result = await getTransactions(c.var.user.id, c.req.valid("query"));
     c.header("Cache-Control", "private, max-age=60");
     return c.json(result, 200);
   })

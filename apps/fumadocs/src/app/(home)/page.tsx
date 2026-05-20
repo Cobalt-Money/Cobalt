@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Cobalt Docs",
+  description:
+    "Documentation and API reference for the Cobalt financial platform.",
+  alternates: { canonical: "/" },
+};
 
 export default function HomePage() {
   return (

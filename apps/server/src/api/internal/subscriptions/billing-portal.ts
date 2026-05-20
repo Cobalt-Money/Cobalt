@@ -8,12 +8,12 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent } from "../../../lib/openapi-helpers.js";
-import { requireAuth } from "../middleware.js";
+import { requireAuth, requireNotDemo } from "../middleware.js";
 
 const route = createRoute({
   description: "Create a Stripe billing portal session for the authenticated user",
   method: "post",
-  middleware: [requireAuth] as const,
+  middleware: [requireAuth, requireNotDemo] as const,
   path: "/billingPortal",
   responses: {
     200: jsonContent(billingPortalResponseSchema, "Billing portal URL"),

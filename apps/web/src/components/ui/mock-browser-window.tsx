@@ -73,7 +73,7 @@ export function BrowserWindow({
   sidebarItems,
 }: BrowserWindowProps) {
   const sizeClasses = {
-    "2xl": "h-[56rem] w-full",
+    "2xl": "h-[26rem] w-full sm:h-full",
     lg: "h-96 max-w-4xl",
     md: "h-80 max-w-2xl",
     sm: "h-64 max-w-sm",
@@ -91,7 +91,7 @@ export function BrowserWindow({
   return (
     <div
       className={cn(
-        "relative rounded-2xl border flex flex-col",
+        "relative rounded-lg sm:rounded-2xl border flex flex-col overflow-hidden",
         "shadow-[0px_1px_1px_0px_rgba(0,_0,_0,_0.05),_0px_1px_1px_0px_rgba(255,_252,_240,_0.5)_inset,_0px_0px_0px_1px_hsla(0,_0%,_100%,_0.1)_inset,_0px_0px_1px_0px_rgba(28,_27,_26,_0.5)]",
         "dark:shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.15),_0px_2px_4px_-2px_rgba(0,0,0,0.1)]",
         sizeClasses[size],

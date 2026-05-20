@@ -1,10 +1,9 @@
 import { OnboardingHostContext } from "@cobalt-web/ui/cobalt/accounts/onboarding-host";
-import { mutators } from "@cobalt-web/zero";
-import { useZero } from "@rocicorp/zero/react";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import { plaidApi } from "@/lib/clients/api-client";
+import { useMutator } from "@/hooks/use-mutator";
 
 interface OnboardingContextValue {
   onboardingRunId: string | null;
@@ -49,25 +48,13 @@ export function useOnboarding(): OnboardingContextValue {
 
 export function OnboardingProgressProvider({ children }: { children: ReactNode }) {
   const [onboardingRunId, setOnboardingRunId] = useState<string | null>(readStoredRunId);
-  const zero = useZero();
+  const run = useMutator();
   const deleteManualAccount = useCallback(
     (accountId: string): Promise<void> => {
-      // Fire-and-forget: optimistic local removal; server confirmation runs
-      // in background. See `.agents/skills/cobalt/mutations/SKILL.md`.
-      const { server } = zero.mutate(mutators.accounts.deleteAccount({ id: accountId }));
-      void (async () => {
-        try {
-          const result = await server;
-          if (result.type === "error") {
-            console.error("Delete account rejected", result.error);
-          }
-        } catch (error) {
-          console.error("Failed to delete account", error);
-        }
-      })();
+      run((m) => m.accounts.deleteAccount({ id: accountId }), { silent: true });
       return Promise.resolve();
     },
-    [zero],
+    [run],
   );
 
   const startOnboarding = useCallback((runId: string) => {

@@ -1,13 +1,13 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
-  "name": "cobalt",
+  "name": "cobalt-finance",
   "description": "Access your Cobalt finances from Raycast.",
   "categories": [
     "Finance",
     "Productivity"
   ],
   "license": "MIT",
-  "author": "sriket",
+  "author": "sriket_komali",
   "scripts": {
     "build": "ray build --skip-types -e dist -o dist",
     "dev": "ray develop",
@@ -15,14 +15,14 @@
     "lint": "ray lint"
   },
   "dependencies": {
-    "@raycast/api": "^1.83.1",
-    "@raycast/utils": "^1.17.0"
+    "@raycast/api": "^1.104.17",
+    "@raycast/utils": "^2.2.5"
   },
   "devDependencies": {
-    "@raycast/eslint-config": "^1.0.11",
-    "@types/node": "^25.5.0",
-    "@types/react": "^19.2.0",
-    "eslint": "^8.57.0",
+    "@raycast/eslint-config": "^2.1.1",
+    "@types/node": "22.19.17",
+    "@types/react": "19.0.10",
+    "eslint": "^9.36.0",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4"
   },
@@ -194,6 +194,9 @@
       ]
     }
   ],
+  "platforms": [
+    "macOS"
+  ],
   "preferences": [
     {
       "name": "apiUrl",
@@ -219,7 +222,7 @@
       "description": "Used for recurring/subscription brand logos via logo.dev (matches web)"
     }
   ],
-  "title": "Cobalt",
+  "title": "Cobalt Finance",
   "tools": [
     {
       "name": "execute-cobalt-code",

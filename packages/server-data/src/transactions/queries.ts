@@ -44,7 +44,7 @@ function encodeCursor(payload: CursorPayload): string {
 
 // ── Queries ─────────────────────────────────────────────────────────
 
-export async function getUserTransactions(userId: string, params: TransactionListQuery) {
+export async function getTransactions(userId: string, params: TransactionListQuery) {
   const {
     limit = 50,
     cursor,
@@ -518,7 +518,11 @@ export async function getSpending(
   return { averageLabel, averageSpending, spending, totalSpending };
 }
 
-export async function getTransactionActivity(userId: string, transactionId: string) {
+/**
+ * Throws ApiError 404 if the transaction doesn't exist OR isn't owned by
+ * the user. Single neutral code — never differentiates missing vs unowned.
+ */
+export async function assertTransactionOwner(userId: string, transactionId: string): Promise<void> {
   const owned = await db.query.transaction.findFirst({
     columns: { id: true },
     where: { id: { eq: transactionId }, userId: { eq: userId } },
@@ -526,6 +530,10 @@ export async function getTransactionActivity(userId: string, transactionId: stri
   if (!owned) {
     throw new ApiError(404, "transaction_not_found", "Transaction not found");
   }
+}
+
+export async function getTransactionActivity(userId: string, transactionId: string) {
+  await assertTransactionOwner(userId, transactionId);
 
   const rows = await db.query.transactionEdit.findMany({
     columns: {

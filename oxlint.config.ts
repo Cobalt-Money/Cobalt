@@ -14,9 +14,31 @@ export default defineConfig({
     "packages/ui/src/components/**",
     "**/drizzle-zero.config.ts",
     ".claude/worktrees/**",
-    "apps/raycast/raycast-env.d.ts",
+    "apps/raycast/**",
   ],
   overrides: [
+    {
+      // SQL lives in `packages/server-data/<domain>/{queries,mutations}.ts`.
+      // Routes, workflows, cron, mcp, agents — anything under `apps/` — go
+      // through the repo layer. Package internals (server-data, db, auth's
+      // Better Auth adapter) are exempt because they own the db handle.
+      files: ["apps/**"],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                importNames: ["db"],
+                message:
+                  "Import `db` only inside packages/server-data/ or packages/db/. Routes/workflows should call repo functions from `@cobalt-web/server-data/<domain>/{queries,mutations}` instead.",
+                name: "@cobalt-web/db",
+              },
+            ],
+          },
+        ],
+      },
+    },
     {
       files: [
         "**/*.{test,spec}.{ts,tsx,js,jsx}",
@@ -33,6 +55,7 @@ export default defineConfig({
         // rewrites string args to the `import(...)` form, which this rule then
         // flags as a type annotation. False positive in test contexts.
         "@typescript-eslint/consistent-type-imports": "off",
+        "no-restricted-imports": "off",
         "vitest/no-importing-vitest-globals": "off",
         "vitest/prefer-called-once": "off",
         "vitest/prefer-describe-function-title": "off",

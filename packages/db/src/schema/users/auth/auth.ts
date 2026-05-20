@@ -10,8 +10,16 @@ export const user = pgTable(
       .notNull(),
     id: text("id").primaryKey(),
     image: text("image"),
+    /**
+     * Better Auth anonymous plugin marker. Set by signInAnonymous when minting
+     * a demo session. Demo gating + cleanup cron read this flag — there is no
+     * separate `isDemo` because every anonymous user in this app is a demo.
+     */
+    isAnonymous: boolean("is_anonymous"),
     lastSeenAt: timestamp("last_seen_at"),
     name: text("name").notNull(),
+    onboardedAt: timestamp("onboarded_at"),
+    onboardingStep: text("onboarding_step"),
     stripeCustomerId: text("stripe_customer_id").unique(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

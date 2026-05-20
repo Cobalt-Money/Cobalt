@@ -3,11 +3,11 @@ import type {
   ManageCategoriesCat,
   ManageCategoriesGroup,
 } from "@cobalt-web/ui/cobalt/transactions/categories/manage-categories-form";
+import { queries } from "@cobalt-web/zero";
+import { useQuery } from "@rocicorp/zero/react";
 import { useMemo, useState } from "react";
 
 import {
-  useAllCategories,
-  useCategoryGroups,
   useReorderCategories,
   useReorderGroups,
   useUpdateCategory,
@@ -40,8 +40,8 @@ const INITIAL_SUB: SubDialogState = {
 
 /** Hook returning all data + handlers needed to drive the manage-categories Form. */
 export function useManageCategoriesProps() {
-  const { data: categories } = useAllCategories();
-  const { data: groups } = useCategoryGroups();
+  const [categories] = useQuery(queries.categories.list({ includeHidden: true }));
+  const [groups] = useQuery(queries.categories.listGroups());
   const { items: allTxns } = useTransactions();
   const updateCat = useUpdateCategory();
   const updateGroup = useUpdateGroup();

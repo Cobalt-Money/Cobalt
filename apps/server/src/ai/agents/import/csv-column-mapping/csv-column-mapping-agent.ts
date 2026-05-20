@@ -83,7 +83,7 @@ export type CsvMappingAi = z.infer<typeof csvMappingAiSchema>;
 
 /**
  * Infer column → field mapping for a CSV from headers + sample rows.
- * Pure agent: one Haiku call + Sonnet fallback on parse failure, zod-validated.
+ * Pure agent: one Opus call + Opus retry on parse failure, zod-validated.
  * Caller owns cache lookup/persist.
  */
 export async function runCsvColumnMappingAgent({

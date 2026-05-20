@@ -1,3 +1,4 @@
+import { isAnonymousUser } from "@cobalt-web/server-data/user/queries";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 
@@ -104,12 +105,20 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
     return unauthorizedResponse(origin, "Access token is not associated with a Cobalt user.");
   }
 
+  // Demo (anonymous) accounts must not back MCP sessions. Tokens outlive the
+  // 24h demo-user cleanup cron and external MCP clients would silently break
+  // when the underlying row is purged. Reject upfront.
+  if (await isAnonymousUser(userId)) {
+    return unauthorizedResponse(origin, "MCP access is disabled for demo accounts.");
+  }
+
+  const scopes = scopesFromClaims(verified);
   const authInfo = {
     clientId: clientIdFromClaims(verified),
     expiresAt: typeof verified.exp === "number" ? verified.exp : undefined,
     extra: { jwt: verified },
     resource: new URL("/api/mcp", origin),
-    scopes: scopesFromClaims(verified),
+    scopes,
     token: rawToken,
   };
 
@@ -118,11 +127,35 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
   });
 
   const server = new McpServer(
-    { name: "cobalt", version: "0.1.0" },
+    {
+      description:
+        "Talk to your money. Query accounts, transactions, and balances from any MCP client.",
+      icons: [
+        {
+          mimeType: "image/png",
+          sizes: ["512x512"],
+          src: "https://cobaltpf.com/favicon-512x512.png",
+        },
+        {
+          mimeType: "image/png",
+          sizes: ["180x180"],
+          src: "https://cobaltpf.com/apple-touch-icon.png",
+        },
+        {
+          mimeType: "image/png",
+          sizes: ["32x32"],
+          src: "https://cobaltpf.com/favicon-32x32.png",
+        },
+      ],
+      name: "cobalt",
+      title: "Cobalt",
+      version: "0.1.0",
+      websiteUrl: "https://cobaltpf.com",
+    },
     { capabilities: { tools: { listChanged: true } } },
   );
 
-  registerMcpTools(server, userId);
+  registerMcpTools(server, userId, scopes);
 
   await server.connect(transport);
   return transport.handleRequest(req, { authInfo });

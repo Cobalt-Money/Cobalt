@@ -8,40 +8,69 @@ import { useEffect } from "react";
 
 import { UpgradePromptHost } from "../components/upgrade/upgrade-prompt-host";
 import { AppSessionProvider } from "../lib/providers/app-session";
+import { DemoProvider } from "../lib/providers/demo-provider";
 import type { RouterContext } from "../router";
 import "../bones/registry";
 import appCss from "@cobalt-web/ui/globals.css?url";
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_OG_IMAGE,
+  DEFAULT_TITLE,
+  SITE_NAME,
+  SITE_URL,
+  TWITTER_HANDLE,
+} from "@/lib/seo";
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootDocument,
 
   head: () => ({
     links: [
-      {
-        href: "https://fonts.googleapis.com",
-        rel: "preconnect",
-      },
+      { href: "https://fonts.googleapis.com", rel: "preconnect" },
       {
         crossOrigin: "anonymous",
         href: "https://fonts.gstatic.com",
         rel: "preconnect",
       },
+      { href: appCss, rel: "stylesheet" },
+      { href: "/favicon.svg", rel: "icon", type: "image/svg+xml" },
       {
-        href: appCss,
-        rel: "stylesheet",
+        href: "/favicon-32x32.png",
+        rel: "icon",
+        sizes: "32x32",
+        type: "image/png",
+      },
+      {
+        href: "/favicon-16x16.png",
+        rel: "icon",
+        sizes: "16x16",
+        type: "image/png",
+      },
+      {
+        href: "/apple-touch-icon.png",
+        rel: "apple-touch-icon",
+        sizes: "180x180",
       },
     ],
     meta: [
-      {
-        charSet: "utf-8",
-      },
-      {
-        content: "width=device-width, initial-scale=1",
-        name: "viewport",
-      },
-      {
-        title: "My App",
-      },
+      { charSet: "utf-8" },
+      { content: "width=device-width, initial-scale=1", name: "viewport" },
+      { content: "#000000", name: "theme-color" },
+      { title: DEFAULT_TITLE },
+      { content: DEFAULT_DESCRIPTION, name: "description" },
+
+      { content: DEFAULT_TITLE, property: "og:title" },
+      { content: DEFAULT_DESCRIPTION, property: "og:description" },
+      { content: "website", property: "og:type" },
+      { content: SITE_URL, property: "og:url" },
+      { content: DEFAULT_OG_IMAGE, property: "og:image" },
+      { content: SITE_NAME, property: "og:site_name" },
+
+      { content: "summary_large_image", name: "twitter:card" },
+      { content: TWITTER_HANDLE, name: "twitter:site" },
+      { content: DEFAULT_TITLE, name: "twitter:title" },
+      { content: DEFAULT_DESCRIPTION, name: "twitter:description" },
+      { content: DEFAULT_OG_IMAGE, name: "twitter:image" },
     ],
   }),
 });
@@ -77,12 +106,14 @@ function RootDocument() {
         >
           <QueryClientProvider client={queryClient}>
             <AppSessionProvider>
-              <TooltipProvider>
-                <div className="flex h-svh min-h-0 flex-col overflow-hidden">
-                  <Outlet />
-                </div>
-                <UpgradePromptHost />
-              </TooltipProvider>
+              <DemoProvider>
+                <TooltipProvider>
+                  <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+                    <Outlet />
+                  </div>
+                  <UpgradePromptHost />
+                </TooltipProvider>
+              </DemoProvider>
             </AppSessionProvider>
           </QueryClientProvider>
           <Toaster richColors />

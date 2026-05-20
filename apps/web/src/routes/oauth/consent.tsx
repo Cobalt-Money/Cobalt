@@ -1,14 +1,6 @@
 import { env } from "@cobalt-web/env/web";
 import { Alert, AlertDescription, AlertTitle } from "@cobalt-web/ui/components/alert";
 import { Button } from "@cobalt-web/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@cobalt-web/ui/components/card";
 import { Separator } from "@cobalt-web/ui/components/separator";
 import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { cn } from "@cobalt-web/ui/lib/utils";
@@ -63,15 +55,32 @@ function tryNavigateToClient(url: string): void {
   }
 }
 
-const SCOPE_LABELS: Record<string, string> = {
+const IDENTITY_SCOPE_LABELS: Record<string, string> = {
   email: "Read your email address",
   offline_access: "Stay signed in (refresh tokens)",
   openid: "Verify your identity",
   profile: "Read your basic profile",
 };
 
-function describeScope(scope: string): string {
-  return SCOPE_LABELS[scope] ?? scope;
+const IDENTITY_SCOPES = new Set(Object.keys(IDENTITY_SCOPE_LABELS));
+
+const COBALT_SCOPE_LABELS: Record<string, string> = {
+  "cobalt:read": "Read your accounts, transactions, and holdings",
+  "cobalt:write": "Edit transaction tags, categories, and notes",
+};
+
+/**
+ * Capabilities the access token can never grant, surfaced as explicit
+ * negatives so users see the boundary, not just what was approved. Kept in
+ * sync with `cobalt.*` SDK in apps/server/src/ai/agents/finance-agent/sdk-description.ts.
+ */
+const COBALT_NEGATIVE_CAPABILITIES = [
+  "Cannot move money or change account connections",
+  "Cannot access your chats",
+] as const;
+
+function describeIdentityScope(scope: string): string {
+  return IDENTITY_SCOPE_LABELS[scope] ?? scope;
 }
 
 interface PublicClient {
@@ -133,27 +142,75 @@ function ClientCard({
   );
 }
 
+function partitionScopes(scopes: string[]): { identity: string[]; cobalt: string[] } {
+  const identity: string[] = [];
+  const cobalt: string[] = [];
+  for (const scope of scopes) {
+    if (IDENTITY_SCOPES.has(scope)) {
+      identity.push(scope);
+    } else if (COBALT_SCOPE_LABELS[scope]) {
+      cobalt.push(scope);
+    }
+  }
+  return { cobalt, identity };
+}
+
 function ScopeList({ scopes }: { scopes: string[] }) {
+  const { identity, cobalt } = partitionScopes(scopes);
   return (
-    <div>
-      <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-        This app will be able to
-      </p>
-      <ul className="space-y-2">
-        {scopes.map((scope) => (
-          <li className="flex items-start gap-2 text-sm" key={scope}>
-            <HugeiconsIcon
-              className="text-foreground/70 mt-0.5 shrink-0"
-              icon={CheckmarkCircle02Icon}
-              size={16}
-            />
-            <div className="min-w-0">
-              <span>{describeScope(scope)}</span>
-              <code className="text-muted-foreground ml-1.5 text-xs">{scope}</code>
-            </div>
-          </li>
-        ))}
-      </ul>
+    <div className="space-y-4">
+      {identity.length > 0 ? (
+        <div>
+          <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+            Identity
+          </p>
+          <ul className="space-y-2">
+            {identity.map((scope) => (
+              <li className="flex items-start gap-2 text-sm" key={scope}>
+                <HugeiconsIcon
+                  className="text-foreground/70 mt-0.5 shrink-0"
+                  icon={CheckmarkCircle02Icon}
+                  size={16}
+                />
+                <div className="min-w-0">
+                  <span>{describeIdentityScope(scope)}</span>
+                  <code className="text-muted-foreground ml-1.5 text-xs">{scope}</code>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <div>
+        <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+          Cobalt data
+        </p>
+        <ul className="space-y-2">
+          {cobalt.map((scope) => (
+            <li className="flex items-start gap-2 text-sm" key={scope}>
+              <HugeiconsIcon
+                className="text-foreground/70 mt-0.5 shrink-0"
+                icon={CheckmarkCircle02Icon}
+                size={16}
+              />
+              <div className="min-w-0">
+                <span>{COBALT_SCOPE_LABELS[scope]}</span>
+                <code className="text-muted-foreground ml-1.5 text-xs">{scope}</code>
+              </div>
+            </li>
+          ))}
+          {COBALT_NEGATIVE_CAPABILITIES.map((label) => (
+            <li className="flex items-start gap-2 text-sm" key={label}>
+              <HugeiconsIcon
+                className="text-muted-foreground mt-0.5 shrink-0"
+                icon={Alert02Icon}
+                size={16}
+              />
+              <span className="text-muted-foreground min-w-0">{label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -284,24 +341,24 @@ function RouteComponent() {
         </Link>
       </header>
       <main className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-auto p-4 sm:p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader className="items-center text-center">
+        <div className="w-full max-w-md space-y-6">
+          <div className="flex flex-col items-center text-center">
             <div className="bg-foreground/5 ring-foreground/10 mx-auto flex size-12 items-center justify-center rounded-full ring-1">
               <HugeiconsIcon className="text-foreground" icon={SecurityCheckIcon} size={24} />
             </div>
-            <CardTitle className="text-lg">Authorize access to Cobalt</CardTitle>
-            <CardDescription>
+            <h1 className="mt-3 font-semibold text-lg">Authorize access to Cobalt</h1>
+            <p className="text-muted-foreground mt-1 text-sm">
               An external application wants to connect to your Cobalt account. Only continue if you
               started this request from a trusted tool.
-            </CardDescription>
-          </CardHeader>
+            </p>
+          </div>
 
-          <CardContent className="space-y-4">
+          <div className="space-y-4">
             {clientId ? (
               <ClientCard client={client} clientId={clientId} isPending={clientQuery.isPending} />
             ) : null}
 
-            {scopes.length > 0 ? <ScopeList scopes={scopes} /> : null}
+            <ScopeList scopes={scopes} />
 
             <Separator />
 
@@ -320,9 +377,9 @@ function RouteComponent() {
                 Access denied. You can close this window.
               </p>
             ) : null}
-          </CardContent>
+          </div>
 
-          <CardFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             {isDone ? null : (
               <Button
                 className="w-full sm:w-auto"
@@ -356,20 +413,20 @@ function RouteComponent() {
             >
               {allowButtonLabel()}
             </Button>
-          </CardFooter>
-        </Card>
+          </div>
 
-        <p className="text-muted-foreground mt-4 text-center text-xs">
-          By continuing you agree to our{" "}
-          <Link className="underline underline-offset-4" to="/terms">
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link className="underline underline-offset-4" to="/privacy">
-            Privacy Policy
-          </Link>
-          .
-        </p>
+          <p className="text-muted-foreground text-center text-xs">
+            By continuing you agree to our{" "}
+            <Link className="underline underline-offset-4" to="/terms">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link className="underline underline-offset-4" to="/privacy">
+              Privacy Policy
+            </Link>
+            .
+          </p>
+        </div>
       </main>
     </div>
   );

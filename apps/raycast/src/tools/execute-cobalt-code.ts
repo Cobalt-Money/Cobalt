@@ -24,8 +24,13 @@ interface Input {
   code: string;
 }
 
+interface McpTextContent {
+  text: string;
+  type: "text";
+}
+
 interface McpToolCallResult {
-  content: { text: string; type: "text" }[];
+  content: McpTextContent[];
   isError?: boolean;
 }
 
@@ -57,7 +62,7 @@ async function readMcpResponse(r: Response, expectedId: number | string): Promis
   let buffer = "";
 
   try {
-    while (true) {
+    for (;;) {
       const { done, value } = await reader.read();
       if (done) {
         break;

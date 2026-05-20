@@ -1,5 +1,9 @@
 import { Button } from "@cobalt-web/ui/components/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { cn } from "@cobalt-web/ui/lib/utils";
+
+import { InstitutionLogo } from "../logos/institution-logo";
+import { COMMON_CURRENCIES, CurrencyPicker } from "./currency-picker";
 import {
   AppleStocksIcon,
   CreditCardIcon,
@@ -19,16 +23,19 @@ import {
 
 export type ManualAccountType = "depository" | "credit" | "investment" | "loan";
 
-export interface BrandSuggestionItem {
-  brandId: string;
+export interface InstitutionSuggestionItem {
+  /** Stable id (e.g. Plaid institution id). */
+  id: string;
   name: string;
-  domain: string | null;
-  icon: string | null;
+  /** Domain or URL — used as `logoDomain` (InstitutionLogo strips to host). */
+  url: string | null;
+  /** Plaid CDN logo URL when present (rendered as a thumbnail in the picker). */
+  logo: string | null;
 }
 
-export interface BrandSearchState {
+export interface InstitutionSearchState {
   loading: boolean;
-  results: readonly BrandSuggestionItem[];
+  results: readonly InstitutionSuggestionItem[];
   onQueryChange: (query: string) => void;
 }
 
@@ -89,47 +96,136 @@ const TYPE_META: readonly TypeMeta[] = [
   },
 ];
 
-function renderBrandResults({
-  brandSearch,
+// eslint-disable-next-line complexity
+function InstitutionPickerButton({
+  institutionName,
+  logoDomain,
+  search,
   onPick,
 }: {
-  brandSearch: BrandSearchState;
-  onPick: (r: BrandSuggestionItem) => void;
+  institutionName: string | null;
+  logoDomain: string | null;
+  search?: InstitutionSearchState;
+  onPick: (inst: InstitutionSuggestionItem) => void;
 }) {
-  if (brandSearch.loading && brandSearch.results.length === 0) {
-    return <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">Searching…</div>;
-  }
-  if (brandSearch.results.length === 0) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  // Render the logo as a non-interactive square when no search wiring is
+  // provided — keeps the flow working for callers that don't supply a picker.
+  if (!search) {
     return (
-      <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
-        No matches — your typed name will be used.
+      <div
+        aria-hidden
+        className={cn(
+          "flex size-11 shrink-0 items-center justify-center rounded-md outline-none",
+          logoDomain
+            ? "bg-foreground/[0.03]"
+            : "border border-dashed border-foreground/20 text-muted-foreground",
+        )}
+      >
+        {logoDomain ? (
+          <InstitutionLogo
+            className="size-9"
+            institutionLogo={null}
+            institutionLogosExtra={null}
+            institutionName={institutionName}
+            institutionUrl={logoDomain}
+            source="manual"
+          />
+        ) : (
+          <span className="text-xl">+</span>
+        )}
       </div>
     );
   }
-  return brandSearch.results.slice(0, 8).map((r) => (
-    <button
-      className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
-      key={r.brandId}
-      onMouseDown={(e) => {
-        e.preventDefault();
-        onPick(r);
-      }}
-      type="button"
-    >
-      {r.icon ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          alt=""
-          className="size-5 shrink-0 rounded-sm bg-foreground/5 object-contain"
-          src={r.icon}
+
+  return (
+    <Popover onOpenChange={setOpen} open={open}>
+      <PopoverTrigger
+        render={
+          <button
+            aria-label="Pick institution"
+            className={cn(
+              "flex size-11 shrink-0 items-center justify-center rounded-md outline-none transition-colors",
+              logoDomain
+                ? "bg-foreground/[0.03] hover:bg-foreground/[0.07]"
+                : "border border-dashed border-foreground/20 text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+            )}
+            type="button"
+          >
+            {logoDomain ? (
+              <InstitutionLogo
+                className="size-9"
+                institutionLogo={null}
+                institutionLogosExtra={null}
+                institutionName={institutionName}
+                institutionUrl={logoDomain}
+                source="manual"
+              />
+            ) : (
+              <span className="text-xl">+</span>
+            )}
+          </button>
+        }
+      />
+      <PopoverContent align="start" className="w-80 p-1">
+        <input
+          aria-label="Search institutions"
+          autoFocus
+          className="mb-1 w-full rounded-md bg-transparent px-2.5 py-1.5 text-foreground text-sm outline-none placeholder:text-muted-foreground/50"
+          onChange={(e) => {
+            setQuery(e.target.value);
+            search.onQueryChange(e.target.value);
+          }}
+          placeholder="Search Chase, Coinbase, Vanguard…"
+          value={query}
         />
-      ) : (
-        <div className="size-5 shrink-0 rounded-sm bg-foreground/5" />
-      )}
-      <span className="min-w-0 flex-1 truncate text-foreground">{r.name}</span>
-      {r.domain ? <span className="shrink-0 text-muted-foreground text-xs">{r.domain}</span> : null}
-    </button>
-  ));
+        <div className="max-h-64 overflow-y-auto">
+          {(() => {
+            if (search.loading && search.results.length === 0) {
+              return (
+                <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
+                  Searching…
+                </div>
+              );
+            }
+            if (search.results.length === 0) {
+              return (
+                <div className="px-2.5 py-2 text-center text-muted-foreground text-sm">
+                  Type to search
+                </div>
+              );
+            }
+            return search.results.slice(0, 12).map((r) => (
+              <button
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+                key={r.id}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onPick(r);
+                  setOpen(false);
+                  setQuery("");
+                  search.onQueryChange("");
+                }}
+                type="button"
+              >
+                <InstitutionLogo
+                  className="size-5 shrink-0"
+                  institutionLogo={r.logo}
+                  institutionLogosExtra={null}
+                  institutionName={r.name}
+                  institutionUrl={r.url}
+                  source="plaid"
+                />
+                <span className="min-w-0 flex-1 truncate text-foreground">{r.name}</span>
+              </button>
+            ));
+          })()}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 function metaFor(type: ManualAccountType): TypeMeta {
@@ -148,11 +244,13 @@ export interface AddManualAccountFormProps {
   onBackspaceWhenEmpty?: () => void;
   submitLabel?: string;
   autoFocus?: boolean;
-  /** Brandfetch typeahead wiring; omit to disable suggestions. */
-  brandSearch?: BrandSearchState;
   /** Prefill from upstream institution selection (e.g. user picked Chase, opted to add manually). */
   initialName?: string;
   initialLogoDomain?: string | null;
+  /** Lock the account type and skip the type picker. Used by the Cash entry path. */
+  initialType?: ManualAccountType;
+  /** Wires the in-form institution picker (click the logo square). Omit to disable. */
+  institutionSearch?: InstitutionSearchState;
 }
 
 export interface AddManualAccountDialogProps {
@@ -161,9 +259,10 @@ export interface AddManualAccountDialogProps {
   onSubmit: (values: ManualAccountFormValues) => void;
   submitting?: boolean;
   onBackspaceWhenEmpty?: () => void;
-  brandSearch?: BrandSearchState;
   initialName?: string;
   initialLogoDomain?: string | null;
+  initialType?: ManualAccountType;
+  institutionSearch?: InstitutionSearchState;
 }
 
 function TypePicker({
@@ -214,9 +313,9 @@ function ManualAccountForm({
   submitting,
   submitLabel,
   autoFocus,
-  brandSearch,
   initialName,
   initialLogoDomain,
+  institutionSearch,
 }: {
   type: ManualAccountType;
   onSubmit: (values: ManualAccountFormValues) => void;
@@ -224,22 +323,22 @@ function ManualAccountForm({
   submitting: boolean;
   submitLabel: string;
   autoFocus: boolean;
-  brandSearch?: BrandSearchState;
   initialName?: string;
   initialLogoDomain?: string | null;
+  institutionSearch?: InstitutionSearchState;
 }) {
   const meta = useMemo(() => metaFor(type), [type]);
   const [name, setName] = useState(initialName ?? "");
+  /** Editable via the logo-square picker. */
   const [logoDomain, setLogoDomain] = useState<string | null>(initialLogoDomain ?? null);
-  /** Name string the current logoDomain was anchored to (initial prefill or last suggestion pick). */
-  const [logoAnchorName, setLogoAnchorName] = useState<string | null>(
-    initialLogoDomain ? (initialName ?? null) : null,
-  );
-  const [subtype, setSubtype] = useState<string>(meta.subtypes[0] ?? "");
+  const [institutionName, setInstitutionName] = useState<string | null>(initialName ?? null);
+  // Subtype is not user-editable in this flow — defaults to the first subtype
+  // for the picked type (e.g. "Brokerage" for investment). Server requires a
+  // non-empty value; UI doesn't expose granular control.
+  const [subtype] = useState<string>(meta.subtypes[0] ?? "");
   const [balance, setBalance] = useState("");
   const [creditLimit, setCreditLimit] = useState("");
   const [currency, setCurrency] = useState("USD");
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const titleRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -289,118 +388,79 @@ function ManualAccountForm({
     });
   };
 
-  const subtypeListId = `manual-account-subtype-${type}`;
-  const showResults = showSuggestions && brandSearch !== undefined && trimmedName.length >= 2;
-
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <div className="relative">
+      <div className="flex items-center gap-3">
+        <InstitutionPickerButton
+          institutionName={institutionName}
+          logoDomain={logoDomain}
+          onPick={(inst) => {
+            setLogoDomain(inst.url);
+            setInstitutionName(inst.name);
+            if (!name.trim()) {
+              setName(inst.name);
+            }
+          }}
+          search={institutionSearch}
+        />
         <input
           aria-label="Account name"
-          className="w-full min-w-0 cursor-text bg-transparent font-semibold text-2xl text-foreground leading-tight tracking-tight outline-none placeholder:text-muted-foreground/50"
+          className="min-w-0 flex-1 cursor-text bg-transparent font-semibold text-2xl text-foreground leading-tight tracking-tight outline-none placeholder:text-muted-foreground/50"
           maxLength={255}
-          onBlur={() => {
-            window.setTimeout(() => setShowSuggestions(false), 150);
-          }}
-          onChange={(e) => {
-            const v = e.target.value;
-            setName(v);
-            // Drop logo only if user diverged from the name it was anchored to.
-            if (logoAnchorName !== null && v.trim() !== logoAnchorName.trim()) {
-              setLogoDomain(null);
-              setLogoAnchorName(null);
-            }
-            brandSearch?.onQueryChange(v);
-            setShowSuggestions(true);
-          }}
-          onFocus={() => {
-            setShowSuggestions(true);
-            brandSearch?.onQueryChange(name);
-          }}
+          onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Backspace" && name === "" && onBackspaceWhenEmpty) {
               e.preventDefault();
               onBackspaceWhenEmpty();
-            }
-            if (e.key === "Escape") {
-              setShowSuggestions(false);
             }
           }}
           placeholder="Sapphire Reserve, Vanguard 401k, Wallet…"
           ref={titleRef}
           value={name}
         />
-        {showResults ? (
-          <div className="absolute top-full left-0 z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-foreground/10 bg-popover p-1 shadow-md">
-            {renderBrandResults({
-              brandSearch,
-              onPick: (r) => {
-                setName(r.name);
-                setLogoDomain(r.domain);
-                setLogoAnchorName(r.name);
-                setShowSuggestions(false);
-                brandSearch.onQueryChange("");
-              },
-            })}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <label className="flex items-center gap-2 text-muted-foreground">
-          <span className="shrink-0">Type</span>
-          <input
-            aria-label="Subtype"
-            className="min-w-0 cursor-text rounded-md border border-foreground/10 bg-transparent px-2 py-1 text-foreground outline-none focus:border-foreground/30"
-            list={subtypeListId}
-            maxLength={64}
-            onChange={(e) => setSubtype(e.target.value)}
-            placeholder="e.g. Checking"
-            value={subtype}
-          />
-          <datalist id={subtypeListId}>
-            {meta.subtypes.map((s) => (
-              <option key={s} value={s} />
-            ))}
-          </datalist>
-        </label>
-        <label className="flex items-center gap-2 text-muted-foreground">
-          <span className="shrink-0">Currency</span>
-          <input
-            aria-label="Currency"
-            className="w-16 cursor-text rounded-md border border-foreground/10 bg-transparent px-2 py-1 text-foreground uppercase outline-none focus:border-foreground/30"
-            maxLength={3}
-            minLength={3}
-            onChange={(e) => setCurrency(e.target.value)}
-            value={currency}
-          />
-        </label>
       </div>
 
       <div className="flex flex-col gap-2 pt-1">
-        <div>
-          <div className="text-muted-foreground text-xs">{meta.balanceLabel}</div>
-          <div className="flex items-baseline gap-0.5">
-            <span
-              className={cn(
-                "text-lg tabular-nums",
-                balance.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
-              )}
-            >
-              $
-            </span>
-            <input
-              aria-label={meta.balanceLabel}
-              className="min-w-0 flex-1 cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50"
-              inputMode="decimal"
-              min={0}
-              onChange={(e) => setBalance(e.target.value)}
-              placeholder="0.00"
-              step="0.01"
-              type="number"
-              value={balance}
-            />
-          </div>
+        <div className="flex items-center gap-1">
+          <span
+            className={cn(
+              "shrink-0 text-lg tabular-nums",
+              balance.trim() === "" ? "text-muted-foreground/50" : "text-foreground",
+            )}
+          >
+            {COMMON_CURRENCIES.find((c) => c.code === currency)?.symbol ?? currency}
+          </span>
+          <input
+            aria-label={meta.balanceLabel}
+            className="cursor-text bg-transparent text-lg text-foreground tabular-nums outline-none placeholder:text-muted-foreground/50 [field-sizing:content]"
+            inputMode="decimal"
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "" || /^\d*\.?\d*$/.test(v)) {
+                setBalance(v);
+              }
+            }}
+            placeholder={meta.balanceLabel}
+            size={
+              balance.trim() === ""
+                ? Math.max(8, meta.balanceLabel.length)
+                : Math.max(1, balance.length)
+            }
+            type="text"
+            value={balance}
+          />
+          <CurrencyPicker
+            onSelect={(opt) => setCurrency(opt.code)}
+            selectedKey={currency}
+            trigger={
+              <button
+                className="inline-flex h-9 shrink-0 items-center rounded-full bg-transparent px-2 font-medium text-base text-foreground transition-colors hover:bg-foreground/[0.07]"
+                type="button"
+              >
+                {currency}
+              </button>
+            }
+          />
         </div>
         {type === "credit" ? (
           <div>
@@ -445,11 +505,12 @@ export function AddManualAccountForm({
   onBackspaceWhenEmpty,
   submitLabel = "Create account",
   autoFocus = true,
-  brandSearch,
   initialName,
   initialLogoDomain,
+  initialType,
+  institutionSearch,
 }: AddManualAccountFormProps) {
-  const [type, setType] = useState<ManualAccountType | null>(null);
+  const [type, setType] = useState<ManualAccountType | null>(initialType ?? null);
 
   if (type === null) {
     return (
@@ -462,12 +523,16 @@ export function AddManualAccountForm({
   return (
     <ManualAccountForm
       autoFocus={autoFocus}
-      brandSearch={brandSearch}
       initialLogoDomain={initialLogoDomain}
       initialName={initialName}
-      onBackspaceWhenEmpty={() => {
-        setType(null);
-      }}
+      institutionSearch={institutionSearch}
+      onBackspaceWhenEmpty={
+        initialType
+          ? onBackspaceWhenEmpty
+          : () => {
+              setType(null);
+            }
+      }
       onSubmit={onSubmit}
       submitLabel={submitLabel}
       submitting={submitting}
@@ -482,9 +547,10 @@ export function AddManualAccountDialog({
   onSubmit,
   submitting = false,
   onBackspaceWhenEmpty,
-  brandSearch,
   initialName,
   initialLogoDomain,
+  initialType,
+  institutionSearch,
 }: AddManualAccountDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -494,9 +560,10 @@ export function AddManualAccountDialog({
         </DialogHeader>
         <DialogBody>
           <AddManualAccountForm
-            brandSearch={brandSearch}
             initialLogoDomain={initialLogoDomain}
             initialName={initialName}
+            initialType={initialType}
+            institutionSearch={institutionSearch}
             key={open ? "open" : "closed"}
             onBackspaceWhenEmpty={onBackspaceWhenEmpty}
             onSubmit={onSubmit}
