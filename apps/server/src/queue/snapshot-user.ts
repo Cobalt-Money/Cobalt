@@ -10,6 +10,7 @@
 
 import {
   upsertBankBalanceSnapshotsForUser,
+  upsertManualBalanceSnapshotsForUser,
   upsertPlaidInvestmentSnapshotsForUser,
   upsertSnapTradePortfolioSnapshotsForUser,
 } from "@cobalt-web/server-data/snapshots/mutations";
@@ -28,6 +29,7 @@ const queueHandler = handleCallback<SnapshotMessage>(async (message) => {
     upsertBankBalanceSnapshotsForUser(userId, SNAPSHOT_SOURCE),
     upsertSnapTradePortfolioSnapshotsForUser(userId, SNAPSHOT_SOURCE),
     upsertPlaidInvestmentSnapshotsForUser(userId, SNAPSHOT_SOURCE),
+    upsertManualBalanceSnapshotsForUser(userId, SNAPSHOT_SOURCE),
   ]);
 });
 

@@ -1,5 +1,6 @@
 import {
   upsertBankBalanceSnapshotsForUser,
+  upsertManualBalanceSnapshotsForUser,
   upsertPlaidInvestmentSnapshotsForUser,
   upsertSnapTradePortfolioSnapshotsForUser,
 } from "@cobalt-web/server-data/snapshots/mutations";
@@ -8,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock(import("@cobalt-web/server-data/snapshots/mutations"), () => ({
   upsertBankBalanceSnapshotsForUser: vi.fn(),
+  upsertManualBalanceSnapshotsForUser: vi.fn(),
   upsertPlaidInvestmentSnapshotsForUser: vi.fn(),
   upsertSnapTradePortfolioSnapshotsForUser: vi.fn(),
 }));
@@ -27,6 +29,7 @@ vi.mock(import("@vercel/queue"), () => ({
 const mockBank = vi.mocked(upsertBankBalanceSnapshotsForUser);
 const mockPlaidInv = vi.mocked(upsertPlaidInvestmentSnapshotsForUser);
 const mockSnaptrade = vi.mocked(upsertSnapTradePortfolioSnapshotsForUser);
+const mockManual = vi.mocked(upsertManualBalanceSnapshotsForUser);
 
 describe("snapshot-user queue consumer", () => {
   beforeEach(async () => {
@@ -51,6 +54,7 @@ describe("snapshot-user queue consumer", () => {
     expect(mockBank).toHaveBeenCalledWith("user-42", "cron");
     expect(mockSnaptrade).toHaveBeenCalledWith("user-42", "cron");
     expect(mockPlaidInv).toHaveBeenCalledWith("user-42", "cron");
+    expect(mockManual).toHaveBeenCalledWith("user-42", "cron");
   });
 
   it("propagates errors from any single upsert (queue retry contract)", async () => {

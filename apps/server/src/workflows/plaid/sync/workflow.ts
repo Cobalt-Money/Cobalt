@@ -231,10 +231,7 @@ export async function plaidAddAccountWorkflow(
       });
 
       await emit("historical", "start");
-      await Promise.all([
-        syncRecurringStep(accessToken, plaidItemId),
-        seedTodayPlaidSnapshotsStep(input.userId),
-      ]);
+      await syncRecurringStep(accessToken, plaidItemId);
       await emit("historical", "done");
 
       // Liabilities can fail when the product isn't on the item — fire as a
@@ -262,7 +259,6 @@ export async function plaidAddAccountWorkflow(
         syncTransactionsStep(accessToken, plaidItemId, item.transactionsCursor),
         syncBalancesStep(accessToken, plaidItemId),
       ]);
-      await seedTodayPlaidSnapshotsStep(input.userId);
       await emit("transactions", "done", {
         added: txResult.added,
         modified: txResult.modified,
