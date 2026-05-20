@@ -186,6 +186,7 @@ export function SellPositionForm({
           onBackspaceWhenEmpty();
         }
       }}
+      role="group"
     >
       <div className="flex items-center gap-3">
         {selected ? <TickerLogo className="shrink-0" size={28} symbol={selected.ticker} /> : null}
