@@ -58,16 +58,6 @@ function clientIdFromClaims(claims: Pick<McpAccessTokenPayload, "aud" | "azp">):
   return "unknown";
 }
 
-function scopesFromClaims(claims: Pick<McpAccessTokenPayload, "scope">): string[] {
-  if (Array.isArray(claims.scope)) {
-    return claims.scope.filter((scope): scope is string => typeof scope === "string");
-  }
-  if (typeof claims.scope === "string") {
-    return claims.scope.split(/\s+/).filter(Boolean);
-  }
-  return [];
-}
-
 /**
  * Streamable HTTP MCP entrypoint: requires `Authorization: Bearer <oauth access token>`.
  */
@@ -112,13 +102,12 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
     return unauthorizedResponse(origin, "MCP access is disabled for demo accounts.");
   }
 
-  const scopes = scopesFromClaims(verified);
   const authInfo = {
     clientId: clientIdFromClaims(verified),
     expiresAt: typeof verified.exp === "number" ? verified.exp : undefined,
     extra: { jwt: verified },
     resource: new URL("/api/mcp", origin),
-    scopes,
+    scopes: [],
     token: rawToken,
   };
 
@@ -155,7 +144,7 @@ export async function handleMcpHttpRequest(req: Request): Promise<Response> {
     { capabilities: { tools: { listChanged: true } } },
   );
 
-  registerMcpTools(server, userId, scopes);
+  registerMcpTools(server, userId);
 
   await server.connect(transport);
   return transport.handleRequest(req, { authInfo });

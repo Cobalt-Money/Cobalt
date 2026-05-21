@@ -11,11 +11,21 @@
 import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
+// `ChildProcess` extends EventEmitter at runtime but the Bun + Vitest type
+// stack used in this file's tsconfig drops the inherited `.on` overloads,
+// so we surface them locally.
+type ServerProc = ChildProcess & {
+  on(event: "error", listener: (err: Error) => void): ServerProc;
+  on(
+    event: "exit",
+    listener: (code: number | null, signal: NodeJS.Signals | null) => void,
+  ): ServerProc;
+};
 
 const PORT = "4000";
 const READY_TIMEOUT_MS = 90_000;
 
-let server: ChildProcess | null = null;
+let server: ServerProc | null = null;
 
 function log(event: string, fields: Record<string, unknown> = {}): void {
   console.log(
@@ -49,7 +59,7 @@ export async function setup(): Promise<void> {
       WORKFLOW_LOCAL_BASE_URL: `http://localhost:${PORT}`,
     },
     stdio: "pipe",
-  });
+  }) as ServerProc;
 
   server?.stdout?.on("data", (data) => {
     const output = String(data);
@@ -61,10 +71,10 @@ export async function setup(): Promise<void> {
     stderr.push(output);
     process.stderr.write(`[nitro-err] ${output}`);
   });
-  server?.on("error", (error) => {
+  server?.on("error", (error: Error) => {
     log("server_process_error", { message: error.message, name: error.name });
   });
-  server?.on("exit", (code, signal) => {
+  server?.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
     log("server_exit", { code, signal });
   });
 

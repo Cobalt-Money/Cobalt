@@ -91,6 +91,12 @@ export const oauthClient = pgTable(
     grantTypes: text("grant_types").array(),
     icon: text("icon"),
     id: text("id").primaryKey(),
+    // Better Auth 1.7+: optional JWKS for OAuth clients authenticating via
+    // `private_key_jwt`. NULL for the common public-PKCE MCP path
+    // (Cursor / Claude Code / Raycast / Zed) — populated only when an
+    // enterprise client registers with a signed JWT auth method.
+    jwks: text("jwks"),
+    jwksUri: text("jwks_uri"),
     metadata: jsonb("metadata"),
     name: text("name"),
     policy: text("policy"),

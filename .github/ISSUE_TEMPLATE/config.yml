@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Cobalt-Money/cobalt/security/policy
+    about: Do NOT open a public issue for security issues. See SECURITY.md for the private disclosure process.
+  - name: Self-hosting question
+    url: https://github.com/Cobalt-Money/cobalt/blob/main/README.md
+    about: Self-hosting is not officially supported. Issues asking for setup help will be closed.

@@ -1,5 +1,6 @@
 {
   "name": "server",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
@@ -19,7 +20,7 @@
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.84",
-    "@better-auth/oauth-provider": "1.5.6",
+    "@better-auth/oauth-provider": "1.7.0-beta.3",
     "@cobalt-web/auth": "workspace:*",
     "@cobalt-web/bindings": "workspace:*",
     "@cobalt-web/clients": "workspace:*",

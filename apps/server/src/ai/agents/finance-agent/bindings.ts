@@ -202,7 +202,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds: merged };
     },
     name: "tags_addToTransaction",
-    requiredScope: "cobalt:write",
     schema: txnTagIdsSchema,
   }),
   route({
@@ -237,7 +236,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds: next };
     },
     name: "tags_removeFromTransaction",
-    requiredScope: "cobalt:write",
     schema: txnTagIdsSchema,
   }),
   route({
@@ -247,7 +245,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds };
     },
     name: "tags_setOnTransaction",
-    requiredScope: "cobalt:write",
     schema: txnSetTagsSchema,
   }),
   route({
@@ -261,7 +258,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       'Create a manual transaction on a user-owned manual account. Server stamps `source: "manual"`, `pending: false`, and `userId`. Plaid-linked accounts reject inserts.',
     handler: async (userId, body) => await createManualTransaction(userId, body),
     name: "transactions_create",
-    requiredScope: "cobalt:write",
     schema: transactionCreateBodySchema,
   }),
   route({
@@ -272,14 +268,12 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { ok: true };
     },
     name: "transactions_update",
-    requiredScope: "cobalt:write",
     schema: transactionPatchSchema,
   }),
   route({
     description: "Create a new tag owned by the user. Returns the created tag id.",
     handler: async (userId, body) => await createTag(userId, body),
     name: "tags_create",
-    requiredScope: "cobalt:write",
     schema: createTagBodySchema,
   }),
   route({
@@ -290,16 +284,10 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { ok: true };
     },
     name: "tags_update",
-    requiredScope: "cobalt:write",
     schema: tagUpdateSchema,
   }),
 ];
 
-/**
- * `grantedScopes` is forwarded to `bindRoutes`. Omit it to disable per-route
- * scope checks (trust mode for session-authenticated internal callers); pass
- * the OAuth token's scope set to enforce `requiredScope` per route.
- */
-export function buildBindings(userId: string, grantedScopes?: string[]): Binding[] {
-  return bindRoutes(userId, ROUTES, grantedScopes);
+export function buildBindings(userId: string): Binding[] {
+  return bindRoutes(userId, ROUTES);
 }

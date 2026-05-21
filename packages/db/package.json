@@ -1,5 +1,6 @@
 {
   "name": "@cobalt-web/db",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "exports": {
     ".": {
