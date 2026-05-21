@@ -33,13 +33,22 @@
 export const RAYCAST_CLIENT_ID = "jxihLeaSnvTNEHoALsPewQeLTUOVChxJ";
 
 /**
+ * Claude.ai web — CIMD client. Trust rooted in DNS + TLS of claude.ai,
+ * which serves the metadata document Better Auth fetches and pins.
+ */
+export const CLAUDE_AI_CLIENT_ID = "https://claude.ai/oauth/mcp-oauth-client-metadata";
+
+/**
  * Set passed to `oauthProvider({ cachedTrustedClients })`. Also exported
  * for the consent screen so it can branch UI on trust tier.
  *
  * Keep small. The intent is "clients Cobalt itself ships or has
  * explicitly partnered with", not "clients we've seen behave well".
  */
-export const TRUSTED_CLIENT_IDS: ReadonlySet<string> = new Set([RAYCAST_CLIENT_ID]);
+export const TRUSTED_CLIENT_IDS: ReadonlySet<string> = new Set([
+  RAYCAST_CLIENT_ID,
+  CLAUDE_AI_CLIENT_ID,
+]);
 
 export function isTrustedClientId(clientId: string | null | undefined): boolean {
   return typeof clientId === "string" && TRUSTED_CLIENT_IDS.has(clientId);
