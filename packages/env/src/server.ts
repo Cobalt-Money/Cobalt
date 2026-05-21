@@ -17,7 +17,6 @@ const commaList = z
 export const env = createEnv({
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   server: {
     /** Dedicated connection URI for the agent_readonly Postgres role (SELECT-only + RLS). Falls back to DATABASE_URL in dev. */
     AGENT_DATABASE_URL: z.string().min(1).optional(),
@@ -80,4 +79,5 @@ export const env = createEnv({
     /** Pool for Zero mutate adapter (keep small if same DB as `DATABASE_URL`). */
     ZERO_DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(2),
   },
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });
