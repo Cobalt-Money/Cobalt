@@ -1,9 +1,5 @@
-import { defineConfig } from "oxfmt";
-import ultracite from "ultracite/oxfmt";
-
-export default defineConfig({
-  extends: [ultracite],
-  ignorePatterns: [
+{
+  "ignorePatterns": [
     ".agents/**",
     "apps/fumadocs/**",
     "apps/web/src/routes/**/$*.tsx",
@@ -11,6 +7,6 @@ export default defineConfig({
     "**/zero-schema.gen.ts",
     "packages/ui/src/components/**",
     "**/drizzle-zero.config.ts",
-    ".claude/worktrees/**",
-  ],
-});
+    ".claude/worktrees/**"
+  ]
+}
