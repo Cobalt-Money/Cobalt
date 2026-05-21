@@ -236,18 +236,6 @@ const TRANSACTIONS: TransactionListItem[] = [
     website: "pge.com",
   }),
   makeTx({
-    amount: -14.99,
-    category: MOCK_CATS.ENTERTAINMENT,
-    date: "2026-04-09",
-    id: "tx-6",
-    institutionName: "Chase",
-    institutionUrl: "chase.com",
-    name: "Netflix",
-    notes: note("Standard plan. Consider downgrading — barely watched in March."),
-    tagIds: ["tag-recurring"],
-    website: "netflix.com",
-  }),
-  makeTx({
     amount: -9.99,
     category: MOCK_CATS.GENERAL_SERVICES,
     date: "2026-04-08",
@@ -322,42 +310,6 @@ const TRANSACTIONS: TransactionListItem[] = [
     website: "wholefoodsmarket.com",
   }),
   makeTx({
-    amount: -29.99,
-    category: MOCK_CATS.GENERAL_SERVICES,
-    date: "2026-03-25",
-    id: "tx-13",
-    institutionName: "Wells Fargo",
-    institutionUrl: "wellsfargo.com",
-    location: loc("301 Pine St", "San Francisco", "CA", "94104", 37.7923, -122.4014),
-    name: "Equinox Fitness",
-    notes: note("Monthly membership. Goal: hit classes 3x/week."),
-    tagIds: ["tag-recurring"],
-    website: "equinox.com",
-  }),
-  makeTx({
-    amount: -18.5,
-    category: MOCK_CATS.ENTERTAINMENT,
-    date: "2026-03-24",
-    id: "tx-14",
-    institutionName: "Chase",
-    institutionUrl: "chase.com",
-    location: loc("135 4th St", "San Francisco", "CA", "94103", 37.7847, -122.4055),
-    name: "AMC Theaters",
-    notes: note("Saw Dune: Part Two finally. Worth the IMAX upcharge."),
-    website: "amctheatres.com",
-  }),
-  makeTx({
-    amount: -52.34,
-    category: MOCK_CATS.FOOD_AND_DRINK,
-    date: "2026-03-23",
-    id: "tx-15",
-    institutionName: "Apple",
-    institutionUrl: "apple.com",
-    name: "DoorDash",
-    notes: note("Late-night Thai from Lers Ros. Tip was 20%."),
-    website: "doordash.com",
-  }),
-  makeTx({
     amount: -45.67,
     category: MOCK_CATS.TRANSPORTATION,
     date: "2026-03-22",
@@ -371,16 +323,16 @@ const TRANSACTIONS: TransactionListItem[] = [
     website: "shell.com",
   }),
   makeTx({
-    amount: -11.32,
-    category: MOCK_CATS.TRANSPORTATION,
-    date: "2026-03-21",
-    id: "tx-17",
-    institutionName: "Wells Fargo",
-    institutionUrl: "wellsfargo.com",
-    location: loc("1455 Market St", "San Francisco", "CA", "94103", 37.7762, -122.4171),
-    name: "Lyft",
-    notes: note("Quick ride to the dentist appointment."),
-    website: "lyft.com",
+    amount: -132.18,
+    category: MOCK_CATS.GENERAL_MERCHANDISE,
+    date: "2026-03-20",
+    id: "tx-18",
+    institutionName: "Chase",
+    institutionUrl: "chase.com",
+    location: loc("450 10th St", "San Francisco", "CA", "94103", 37.7717, -122.4108),
+    name: "Costco Wholesale",
+    notes: note("Monthly bulk run — paper goods, coffee, frozen stuff."),
+    website: "costco.com",
   }),
 ];
 
@@ -1214,7 +1166,7 @@ function TransactionsView() {
   }));
 
   return (
-    <div className="h-full overflow-auto pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="h-full overflow-hidden pt-2">
       <BabyTransactions
         items={babyItems}
         tagsById={BABY_TAGS_BY_ID}

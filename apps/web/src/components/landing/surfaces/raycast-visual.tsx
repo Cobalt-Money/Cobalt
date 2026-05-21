@@ -1,8 +1,57 @@
+import { brandfetchDefaultLogoUrl } from "@cobalt-web/clients/brandfetch";
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
-import { LogoCDN } from "@cobalt-web/ui/cobalt/logos/logo-cdn";
 import { MerchantLogo } from "@cobalt-web/ui/cobalt/logos/merchant-logo";
 import { useState } from "react";
-import type { ReactNode } from "react";
+import type { ReactNode, SyntheticEvent } from "react";
+
+function brandfetchSymbolUrl(
+  domain: string,
+  clientId: string,
+  opts: { theme?: "light" | "dark"; size?: number },
+): string {
+  const host = domain.replace(/^www\./, "").toLowerCase();
+  const size = opts.size ?? 64;
+  const themePart = opts.theme ? `theme/${opts.theme}/` : "";
+  const path = `https://cdn.brandfetch.io/domain/${host}/w/${size}/h/${size}/${themePart}fallback/404/symbol`;
+  const url = new URL(path);
+  url.searchParams.set("c", clientId);
+  return url.toString();
+}
+
+function RaycastBrandSymbol() {
+  const clientId = (import.meta.env.VITE_BRANDFETCH_CLIENT_ID as string | undefined)?.trim() ?? "";
+  if (!clientId) {
+    return <div className="size-6" />;
+  }
+  const lightSrc = brandfetchSymbolUrl("raycast.com", clientId, { size: 64, theme: "light" });
+  const darkSrc = brandfetchSymbolUrl("raycast.com", clientId, { size: 64, theme: "dark" });
+  const fallbackSrc = brandfetchDefaultLogoUrl("raycast.com", clientId, {
+    h: 64,
+    svg: false,
+    w: 64,
+  });
+  const onError = (e: SyntheticEvent<HTMLImageElement>) => {
+    if (e.currentTarget.src !== fallbackSrc) {
+      e.currentTarget.src = fallbackSrc;
+    }
+  };
+  return (
+    <div className="flex size-6 items-center justify-center">
+      <img
+        alt="Raycast"
+        className="size-6 object-contain dark:hidden"
+        onError={onError}
+        src={darkSrc}
+      />
+      <img
+        alt="Raycast"
+        className="hidden size-6 object-contain dark:block"
+        onError={onError}
+        src={lightSrc}
+      />
+    </div>
+  );
+}
 
 type CommandId =
   | "transactions"
@@ -23,9 +72,7 @@ interface Command {
 }
 
 const COBALT_ICON = (
-  <div className="flex size-6 items-center justify-center rounded bg-black text-[12px] font-bold text-[#d4a017]">
-    C
-  </div>
+  <img alt="Cobalt" className="size-6 rounded object-cover" src="/cobalt-raycast.png" />
 );
 
 const COMMANDS: Command[] = [
@@ -474,16 +521,7 @@ export function RaycastVisual() {
       ) : (
         <>
           <div className="flex items-center gap-3 px-4 py-3.5">
-            <div className="flex size-6 items-center justify-center">
-              <LogoCDN
-                className="size-6"
-                clientId={process.env.VITE_BRANDFETCH_CLIENT_ID || ""}
-                domain="raycast.com"
-                fallbackText="R"
-                imgClassName="size-6"
-                logoApiSize={48}
-              />
-            </div>
+            <RaycastBrandSymbol />
             <input
               className={`flex-1 bg-transparent text-[16px] outline-none placeholder:text-[#1a1a1a]/30 dark:placeholder:text-white/35 ${TXT_STRONG}`}
               onChange={(e) => setQuery(e.target.value)}

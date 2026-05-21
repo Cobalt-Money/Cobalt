@@ -53,31 +53,6 @@ function renderMarkdown(text: string) {
 
 export function ChatGPTVisual() {
   const conversations: Record<string, GPTEntry[]> = {
-    "Budget my Lisbon trip": [
-      {
-        id: 1,
-        prompt: "help me budget a trip to Lisbon",
-        response:
-          "Let me pull your cash + monthly income to size the trip against your savings rate.",
-        tool: {
-          args: '{ "include": ["checking", "savings"] }',
-          name: "cobalt.accounts_summary",
-          result: '{ "available_cash": 8945, "monthly_income": 4200 }',
-        },
-      },
-      {
-        id: 2,
-        prompt: "how many days can I afford?",
-        response:
-          "A 5–7 day trip fits — budget **$1,200–$1,500** total (flights + stay + activities). Pulls from cash, not your emergency fund. Won't move your savings rate more than 0.3 months.",
-        tool: {
-          args: '{ "available": 8945, "monthly_income": 4200, "trip_duration": 7 }',
-          name: "cobalt.budget_recommendation",
-          result:
-            '{ "recommended_budget": 1350, "breakeven_months": 0.3, "savings_impact": "minimal" }',
-        },
-      },
-    ],
     "Cancel unused subs": [
       {
         id: 3,
@@ -114,6 +89,31 @@ export function ChatGPTVisual() {
           args: '{ "months_target": 6 }',
           name: "cobalt.emergency_fund_status",
           result: "{ liquid: 18400, essential_monthly: 4180, months_covered: 4.4, gap: 6680 }",
+        },
+      },
+    ],
+    "Lisbon trip": [
+      {
+        id: 1,
+        prompt: "help me budget a trip to Lisbon",
+        response:
+          "Let me pull your cash + monthly income to size the trip against your savings rate.",
+        tool: {
+          args: '{ "include": ["checking", "savings"] }',
+          name: "cobalt.accounts_summary",
+          result: '{ "available_cash": 8945, "monthly_income": 4200 }',
+        },
+      },
+      {
+        id: 2,
+        prompt: "how many days can I afford?",
+        response:
+          "A 5–7 day trip fits — budget **$1,200–$1,500** total (flights + stay + activities). Pulls from cash, not your emergency fund. Won't move your savings rate more than 0.3 months.",
+        tool: {
+          args: '{ "available": 8945, "monthly_income": 4200, "trip_duration": 7 }',
+          name: "cobalt.budget_recommendation",
+          result:
+            '{ "recommended_budget": 1350, "breakeven_months": 0.3, "savings_impact": "minimal" }',
         },
       },
     ],
@@ -160,12 +160,12 @@ export function ChatGPTVisual() {
     ],
   };
 
-  const [entries, setEntries] = useState<GPTEntry[]>(conversations["Budget my Lisbon trip"]);
+  const [entries, setEntries] = useState<GPTEntry[]>(conversations["Lisbon trip"]);
   const [draft, setDraft] = useState("");
   const [streaming, setStreaming] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [showToolDetail, setShowToolDetail] = useState<number | null>(null);
-  const [activeConversation, setActiveConversation] = useState("Budget my Lisbon trip");
+  const [activeConversation, setActiveConversation] = useState("Lisbon trip");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const brandfetchClientId = process.env.VITE_BRANDFETCH_CLIENT_ID || "";
@@ -214,7 +214,7 @@ export function ChatGPTVisual() {
 
   return (
     <div
-      className="flex h-[520px] w-full overflow-hidden rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#212121] shadow-2xl shadow-black/40"
+      className="mx-auto flex h-[520px] w-full max-w-3xl overflow-hidden rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#212121] shadow-2xl shadow-black/40"
       onClick={(e) => {
         if (!(e.target as HTMLElement).closest("a, input, button")) {
           inputRef.current?.focus();
@@ -245,7 +245,7 @@ export function ChatGPTVisual() {
         </div>
         {[
           "Net worth check",
-          "Budget my Lisbon trip",
+          "Lisbon trip",
           "Cancel unused subs",
           "Coffee spend",
           "Tax-loss harvest",
@@ -369,7 +369,7 @@ export function ChatGPTVisual() {
               </svg>
             </button>
             <input
-              className="flex-1 border-none bg-transparent text-[14px] text-white outline-none"
+              className="flex-1 border-none bg-transparent text-[14px] text-black outline-none dark:text-white"
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
