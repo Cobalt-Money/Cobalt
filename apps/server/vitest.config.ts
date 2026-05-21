@@ -6,6 +6,7 @@ export default defineConfig({
     exclude: ["**/node_modules/**", "**/*.integration.test.ts"],
     globals: true,
     include: ["src/**/*.{test,spec}.{ts,tsx}", "tests/**/*.{test,spec}.{ts,tsx}"],
+    setupFiles: ["./test-setup.ts"],
     server: {
       // @tanstack/ai-isolate-cloudflare 0.1.8 ships extensionless ESM imports
       // that Node's loader rejects under vitest. Inline-bundle through Vite so
