@@ -16,7 +16,7 @@ export interface TierLimits {
 }
 
 export const FREE_LIMITS: TierLimits = {
-  connections: 1,
+  connections: 2,
   extendedThinking: false,
   models: [MODELS.haiku],
 };

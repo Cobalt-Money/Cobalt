@@ -81,7 +81,7 @@ describe("subscription tier limits", () => {
     it("FREE_LIMITS exposes only Haiku and blocks every paid capability", () => {
       expect(FREE_LIMITS.models).toStrictEqual(["anthropic/claude-haiku-4.5"]);
       expect(FREE_LIMITS.extendedThinking).toBeFalsy();
-      expect(FREE_LIMITS.connections).toBe(1);
+      expect(FREE_LIMITS.connections).toBe(2);
     });
 
     it("PRO_LIMITS exposes Haiku + Opus and unlocks every capability", () => {
@@ -113,13 +113,18 @@ describe("subscription tier limits", () => {
       await expect(userCanAddConnection("u1")).resolves.toBeTruthy();
     });
 
-    it("blocks free user with 1 connection", async () => {
+    it("allows free user with 1 connection", async () => {
       plaidFindMany.mockResolvedValueOnce([{ id: "p1" }]);
+      await expect(userCanAddConnection("u1")).resolves.toBeTruthy();
+    });
+
+    it("blocks free user with 2 connections", async () => {
+      plaidFindMany.mockResolvedValueOnce([{ id: "p1" }, { id: "p2" }]);
       await expect(userCanAddConnection("u1")).resolves.toBeFalsy();
     });
 
     it("blocks free user when SnapTrade alone fills the pool", async () => {
-      snapFindMany.mockResolvedValueOnce([{ id: "s1" }]);
+      snapFindMany.mockResolvedValueOnce([{ id: "s1" }, { id: "s2" }]);
       await expect(userCanAddConnection("u1")).resolves.toBeFalsy();
     });
 

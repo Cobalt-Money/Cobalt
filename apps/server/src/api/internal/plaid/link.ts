@@ -135,7 +135,7 @@ const linkRouter = createApp()
       return c.json(
         {
           code: "connection_limit_reached",
-          error: "Free tier allows 1 synced connection. Upgrade to Pro for unlimited.",
+          error: "Free tier allows 2 synced connections. Upgrade to Pro for unlimited.",
         },
         402,
       );
