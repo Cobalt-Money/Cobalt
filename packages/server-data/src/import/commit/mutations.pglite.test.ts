@@ -7,6 +7,7 @@ import { describe, expect, test } from "vitest";
  * it runs without any env config or migration runner. A full integration test
  * that exercises mutations.ts directly comes next; this validates the toolchain.
  */
+
 // PGlite cold-boots a WASM Postgres per `new PGlite()`. On CI that easily
 // exceeds vitest's 5s default; bump per-test to 30s.
 const PGLITE_TIMEOUT_MS = 30_000;
