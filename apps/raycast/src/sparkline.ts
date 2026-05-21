@@ -21,10 +21,7 @@ interface SparklineOptions {
  * Pure SVG — no third-party calls. Caller controls color so the same series
  * can render green for assets, red for liabilities.
  */
-export function sparklineFile(
-  values: number[],
-  opts: SparklineOptions = {},
-): string | null {
+export function sparklineFile(values: number[], opts: SparklineOptions = {}): string | null {
   if (values.length < 2) {
     return null;
   }

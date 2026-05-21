@@ -148,7 +148,7 @@ export function BabyTransactions({ items, onOpen, tagsById }: BabyTransactionsPr
             }}
           >
             <div className="flex items-center p-3" role="cell">
-              <span className="font-normal tabular-nums text-muted-foreground text-sm">
+              <span className="inline-flex w-5 justify-center font-normal tabular-nums text-muted-foreground text-sm">
                 {section.rows.length}
               </span>
             </div>

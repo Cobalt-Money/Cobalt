@@ -166,19 +166,85 @@ export function MarketingNav() {
 }
 
 export function MarketingFooter() {
+  const year = new Date().getFullYear();
   return (
-    <footer className="shrink-0 overflow-hidden border-t">
-      <div className="mx-auto flex max-w-7xl items-end justify-between px-6 pt-12">
-        <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Cobalt. All rights reserved.
-        </p>
-      </div>
-      <div
-        aria-hidden="true"
-        className="select-none text-center font-semibold tracking-tighter text-foreground"
-        style={{ fontSize: "min(28vw, 28rem)", lineHeight: "0.85" }}
-      >
-        Cobalt
+    <footer className="shrink-0 border-t">
+      <div className="mx-auto max-w-7xl px-6 py-12">
+        <div className="grid grid-cols-3 gap-8 sm:grid-cols-4">
+          <div className="col-span-3 sm:col-span-1">
+            <p className="font-semibold text-foreground">Cobalt</p>
+            <p className="mt-2 text-sm text-muted-foreground">Talk to your money.</p>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Product</p>
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <li>
+                <a
+                  className="hover:text-foreground"
+                  href="https://docs.cobaltpf.com"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Docs
+                </a>
+              </li>
+              <li>
+                <a
+                  className="hover:text-foreground"
+                  href="https://apps.apple.com/app/id6757945133"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  iOS app
+                </a>
+              </li>
+              <li>
+                <Link className="hover:text-foreground" to="/login">
+                  Sign in
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Company</p>
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <li>
+                <a
+                  className="hover:text-foreground"
+                  href="https://github.com/cobalt-pf"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  GitHub
+                </a>
+              </li>
+              <li>
+                <a className="hover:text-foreground" href="mailto:hello@cobaltpf.com">
+                  Contact
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Legal</p>
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <li>
+                <Link className="hover:text-foreground" to="/terms">
+                  Terms
+                </Link>
+              </li>
+              <li>
+                <Link className="hover:text-foreground" to="/privacy">
+                  Privacy
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t pt-6 text-sm text-muted-foreground sm:flex-row sm:items-center">
+          <p>&copy; {year} Cobalt. All rights reserved.</p>
+          <p>Open source under AGPL-3.0.</p>
+        </div>
       </div>
     </footer>
   );
