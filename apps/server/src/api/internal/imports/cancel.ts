@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { requestCancel } from "@cobalt-web/server-data/import/shared/mutations";
 import {
   importJobIdParamSchema,
@@ -14,7 +15,10 @@ const route = createRoute({
   middleware: [requireAuth] as const,
   path: "/{id}/cancel",
   request: { params: importJobIdParamSchema },
-  responses: { 200: jsonContent(successResponseSchema, "Cancellation requested") },
+  responses: {
+    200: jsonContent(successResponseSchema, "Cancellation requested"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+  },
   summary: "Cancel an in-progress commit",
   tags: ["Imports"],
 });

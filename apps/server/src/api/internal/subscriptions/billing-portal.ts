@@ -18,6 +18,7 @@ const route = createRoute({
   responses: {
     200: jsonContent(billingPortalResponseSchema, "Billing portal URL"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Not available in demo mode"),
     409: jsonContent(errorResponseWithCodeSchema, "User has no Stripe customer"),
     502: jsonContent(errorResponseWithCodeSchema, "Stripe upstream failed"),
   },

@@ -4,6 +4,7 @@ import { env } from "@cobalt-web/env/server";
 import { put } from "@vercel/blob";
 import { and, eq, gte, isNotNull } from "drizzle-orm";
 
+import { ApiError } from "../../_shared/api-error";
 import { ImportGateError, runGates } from "./gates";
 
 const DUPLICATE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
@@ -89,7 +90,7 @@ export async function uploadAndStageImport({
     })
     .returning({ id: importJob.id });
   if (!job) {
-    throw new Error("Failed to create import job");
+    throw new ApiError(500, "import_job_create_failed", "Failed to create import job");
   }
 
   let blob;

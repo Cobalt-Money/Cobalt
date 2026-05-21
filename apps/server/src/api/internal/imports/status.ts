@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { getImportJobStatus } from "@cobalt-web/server-data/import/shared/queries";
 import {
   importJobIdParamSchema,
@@ -16,7 +17,8 @@ const route = createRoute({
   request: { params: importJobIdParamSchema },
   responses: {
     200: jsonContent(importStatusResponseSchema, "Import job status"),
-    404: { description: "Import job not found" },
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Import job not found"),
   },
   summary: "Get import job status",
   tags: ["Imports"],
@@ -26,7 +28,7 @@ export const importsStatusRouter = createApp().openapi(route, async (c) => {
   const { id } = c.req.valid("param");
   const result = await getImportJobStatus(c.var.user.id, id);
   if (!result) {
-    return c.json({ error: "Import job not found" }, 404);
+    return c.json({ code: "import_job_not_found", error: "Import job not found" }, 404);
   }
   return c.json(result, 200);
 });

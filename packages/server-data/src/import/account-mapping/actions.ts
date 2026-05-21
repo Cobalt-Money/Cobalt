@@ -6,6 +6,7 @@ import type {
 import { importJob } from "@cobalt-web/db/schema/imports/import-job";
 import { eq } from "drizzle-orm";
 
+import { ApiError } from "../../_shared/api-error";
 import { assertOwnedJob } from "../shared/queries";
 import type { AccountChoice, ConfirmAccountMappingBody } from "../shared/schemas";
 import { cacheAccountChoices } from "./cache";
@@ -85,7 +86,7 @@ export async function resolveAccountChoice(
   choice: AccountChoice,
 ): Promise<ResolvedAccount> {
   if (choice.kind === "skip") {
-    throw new Error("resolveAccountChoice called on skip");
+    throw new ApiError(500, "account_choice_skip_invariant", "resolveAccountChoice called on skip");
   }
   if (choice.kind === "existing") {
     await assertOwnedAccounts(userId, [choice.accountId]);
@@ -119,5 +120,5 @@ async function assertOwnedAccounts(userId: string, accountIds: string[]): Promis
   }
   const foundSet = new Set(found.map((a) => a.id));
   const missing = accountIds.find((id) => !foundSet.has(id));
-  throw new Error(`Cannot map to unowned account ${missing}`);
+  throw new ApiError(409, "account_unowned", `Cannot map to unowned account ${missing}`);
 }

@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   assertOwnedJob,
   getImportResolutions,
@@ -22,6 +23,7 @@ const route = createRoute({
       importResolutionsResponseSchema,
       "Confirmed account + category decisions for this import",
     ),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Account + category resolutions for this import",
   tags: ["Imports"],

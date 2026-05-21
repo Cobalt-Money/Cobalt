@@ -2,11 +2,8 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "tasks": {
-    "extract-openapi": {
-      "outputs": ["openapi.json"]
-    },
     "build": {
-      "dependsOn": ["^build", "server#extract-openapi"],
+      "dependsOn": ["^build"],
       "env": [
         "VITE_SERVER_URL",
         "VITE_ZERO_CACHE_URL",

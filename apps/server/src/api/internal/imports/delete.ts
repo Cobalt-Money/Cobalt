@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { deleteImportJob } from "@cobalt-web/server-data/import/shared/mutations";
 import { getImportJobStatus } from "@cobalt-web/server-data/import/shared/queries";
 import {
@@ -17,8 +18,9 @@ const route = createRoute({
   request: { params: importJobIdParamSchema },
   responses: {
     200: jsonContent(successResponseSchema, "Import job discarded"),
-    404: { description: "Import job not found" },
-    409: { description: "Cannot delete a committed job" },
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Import job not found"),
+    409: jsonContent(errorResponseWithCodeSchema, "Cannot delete a committed job"),
   },
   summary: "Discard an in-progress import job",
   tags: ["Imports"],
@@ -28,11 +30,14 @@ export const importsDeleteRouter = createApp().openapi(route, async (c) => {
   const { id } = c.req.valid("param");
   const job = await getImportJobStatus(c.var.user.id, id);
   if (!job) {
-    return c.json({ error: "Import job not found" }, 404);
+    return c.json({ code: "import_job_not_found", error: "Import job not found" }, 404);
   }
   if (job.status === "committed") {
     return c.json(
-      { error: "Cannot delete a committed import — its transactions are already saved." },
+      {
+        code: "import_job_committed",
+        error: "Cannot delete a committed import — its transactions are already saved.",
+      },
       409,
     );
   }
