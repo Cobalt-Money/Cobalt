@@ -1,3 +1,4 @@
+import { cimd } from "@better-auth/cimd";
 import { oauthProvider } from "@better-auth/oauth-provider";
 import { stripe } from "@better-auth/stripe";
 import { db } from "@cobalt-web/db";
@@ -13,6 +14,7 @@ import { Stripe } from "stripe";
 
 import { getAppleClientSecret } from "./apple-secret.js";
 import { seedUserCategories } from "./seed-user-categories.js";
+import { TRUSTED_CLIENT_IDS } from "./trusted-clients.js";
 
 /**
  * Upstash Redis used as Better Auth's secondaryStorage. Powers:
@@ -94,29 +96,6 @@ const mcpResourceAudience = `${oauthIssuerOrigin}/api/mcp`;
 
 /** Only send Secure cookies when the auth server is actually on HTTPS. */
 const isSecureOrigin = env.BETTER_AUTH_URL.startsWith("https://");
-
-/**
- * OAuth scope vocabulary.
- *
- * `openid`/`profile`/`email`/`offline_access` are OIDC identity scopes that
- * Better Auth enforces on the `/userinfo` endpoint. `cobalt:read` and
- * `cobalt:write` are Cobalt-specific: read covers `/v1/*` and the MCP
- * `cobalt_execute_code` tool's read paths; write gates the SDK mutators
- * (`transactions.update`, `tags.*`). Money movement and chat access are not
- * exposed via OAuth at all, so they need no scope.
- *
- * Both arrays are exported so the consent page and discovery doc can stay in
- * sync without re-declaring strings.
- */
-export const COBALT_OAUTH_SCOPES = [
-  "openid",
-  "profile",
-  "email",
-  "offline_access",
-  "cobalt:read",
-  "cobalt:write",
-] as const;
-export type CobaltOAuthScope = (typeof COBALT_OAUTH_SCOPES)[number];
 
 const trustedOrigins = [
   env.CORS_ORIGIN,
@@ -201,6 +180,22 @@ export const auth = betterAuth({
       // No link-account hook: demo users never upgrade in-place; if a visitor
       // wants to keep their data they sign up fresh.
     }),
+    /**
+     * Client ID Metadata Documents (CIMD) — MCP 2025-11-25 spec default.
+     * Clients identify themselves with an HTTPS `client_id` URL whose JSON
+     * body describes them; Better Auth fetches + validates the document on
+     * first use, rooting trust in DNS + TLS of the publishing domain.
+     *
+     * Coexists with DCR — local MCP apps (Cursor, Claude Code, Zed,
+     * Raycast) still register via `/register` because they can't host a
+     * public HTTPS metadata document. Plugin auto-advertises support in
+     * `/.well-known/oauth-authorization-server` via discoveryMetadata.
+     *
+     * Real consumers today: VS Code Copilot Chat, ChatGPT Apps, Claude
+     * Code (server-discovery driven). Plugin sits inert when no CIMD
+     * client connects.
+     */
+    cimd(),
     // this basically allows us to not have to configure all of the clients ourselvers(cursor, claude code, etc.)
     oauthProvider({
       accessTokenExpiry: 60 * 60 * 24, // 24 hours — MCP clients don't reliably handle refresh tokens
@@ -208,14 +203,15 @@ export const auth = betterAuth({
       // MCP clients (Cursor, etc.) register without a session; see "Dynamic Registration" / MCP in
       // https://better-auth.com/docs/plugins/oauth-provider
       allowUnauthenticatedClientRegistration: true,
-      // Dynamic-registered MCP/public clients rarely request scopes
-      // explicitly. Default-granting the full set keeps the JWT scope claim
-      // honest about what tokens can actually do until per-route enforcement
-      // ships; the consent screen still asks the user before issue.
-      clientRegistrationDefaultScopes: [...COBALT_OAUTH_SCOPES],
+      // Pre-blessed first-party clients (see `trusted-clients.ts`). Members
+      // are cached + locked against mutation through the OAuth CRUD
+      // endpoints, and the consent screen renders them with the "Verified"
+      // trust tier. Anyone NOT in this set still flows through DCR — they
+      // just render as "Unverified" on the consent screen so attacker
+      // metadata can't impersonate Cobalt or known brands (SRI-340).
+      cachedTrustedClients: new Set(TRUSTED_CLIENT_IDS),
       consentPage: `${spaOrigin}/oauth/consent`,
       loginPage: `${spaOrigin}/login`,
-      scopes: [...COBALT_OAUTH_SCOPES],
       // Required for MCP: clients send `resource` = MCP HTTPS URL at token exchange; must be allowed.
       validAudiences: [mcpResourceAudience, oauthIssuerOrigin],
     }),
@@ -301,6 +297,14 @@ export const auth = betterAuth({
       lastSeenAt: {
         required: false,
         type: "date",
+      },
+      onboardedAt: {
+        required: false,
+        type: "date",
+      },
+      onboardingStep: {
+        required: false,
+        type: "string",
       },
     },
   },

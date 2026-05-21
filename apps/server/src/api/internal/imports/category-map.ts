@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { confirmCategoryMapping } from "@cobalt-web/server-data/import/category-mapping/actions";
 import { lookupCategoryMappingCache } from "@cobalt-web/server-data/import/category-mapping/cache";
 import {
@@ -13,6 +14,7 @@ import {
   importJobIdParamSchema,
   successResponseSchema,
 } from "@cobalt-web/server-data/import/shared/schemas";
+import type { CategorySuggestionsResponse } from "@cobalt-web/server-data/import/shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import type { CategorySuggestion } from "../../../ai/agents/import/csv-category-mapping/csv-category-mapping-agent.js";
@@ -28,7 +30,8 @@ const suggestRoute = createRoute({
   request: { params: importJobIdParamSchema },
   responses: {
     200: jsonContent(categorySuggestionsResponseSchema, "Category suggestions"),
-    404: { description: "Import job not found" },
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Import job not found"),
   },
   summary: "Suggest category mapping (Step 4)",
   tags: ["Imports"],
@@ -48,6 +51,7 @@ const confirmRoute = createRoute({
   },
   responses: {
     200: jsonContent(successResponseSchema, "Category mapping confirmed"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Confirm category mapping",
   tags: ["Imports"],
@@ -142,19 +146,23 @@ export const importsCategoryMapRouter = createApp()
         return false;
       });
     if (categoryCacheValid && job.categorySuggestions) {
-      return c.json(
-        {
-          sourceLabels: labels,
-          suggestions: job.categorySuggestions,
-          userCategories,
-          userGroups,
-        },
-        200,
-      );
+      const body: CategorySuggestionsResponse = {
+        sourceLabels: labels,
+        suggestions: job.categorySuggestions as CategorySuggestionsResponse["suggestions"],
+        userCategories,
+        userGroups,
+      };
+      return c.json(body, 200);
     }
     const suggestions = await suggestCategoryLabels(c.var.user.id, labels, userCategories);
     await persistCategorySuggestions(id, suggestions);
-    return c.json({ sourceLabels: labels, suggestions, userCategories, userGroups }, 200);
+    const body: CategorySuggestionsResponse = {
+      sourceLabels: labels,
+      suggestions: suggestions as CategorySuggestionsResponse["suggestions"],
+      userCategories,
+      userGroups,
+    };
+    return c.json(body, 200);
   })
   .openapi(confirmRoute, async (c) => {
     const { id } = c.req.valid("param");

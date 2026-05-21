@@ -99,6 +99,7 @@ export function useAccountLauncher(onDismiss: () => void) {
     async (publicToken: string, _metadata: PlaidLinkOnSuccessMetadata) => {
       const session = sessionRef.current;
       sessionRef.current = null;
+      setLinkToken(null);
       if (!session) {
         return;
       }
@@ -120,6 +121,7 @@ export function useAccountLauncher(onDismiss: () => void) {
       pendingPlaidRef.current = false;
       const session = sessionRef.current;
       sessionRef.current = null;
+      setLinkToken(null);
       if (!session) {
         return;
       }
@@ -226,7 +228,7 @@ export function useAccountLauncher(onDismiss: () => void) {
         const { redirectURI } = await res.json();
         toast.dismiss(loadingId);
         onDismiss();
-        window.location.href = redirectURI;
+        window.open(redirectURI, "_blank", "noopener,noreferrer");
       } catch (error) {
         toast.dismiss(loadingId);
         toast.error(error instanceof Error ? error.message : "Failed to open connection portal");

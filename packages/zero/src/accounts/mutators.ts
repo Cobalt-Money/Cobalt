@@ -8,6 +8,19 @@ import { zql } from "../schema.js";
 
 const ACCOUNT_TYPE = ["depository", "credit", "investment", "loan"] as const;
 
+/**
+ * Per-type subtype vocabularies — kept in sync with `MANUAL_SUBTYPES_BY_TYPE`
+ * in `@cobalt-web/server-data/accounts/schemas`. Listed inline (not imported)
+ * so the Zero schema package stays free of server-only imports.
+ */
+const MANUAL_SUBTYPES_BY_TYPE = {
+  credit: ["credit card", "line of credit"],
+  depository: ["checking", "savings", "cash"],
+  investment: ["brokerage", "ira", "roth ira", "401k", "hsa", "crypto"],
+  loan: ["mortgage", "student", "auto", "personal"],
+} as const;
+const ALL_MANUAL_SUBTYPE = Object.values(MANUAL_SUBTYPES_BY_TYPE).flat() as [string, ...string[]];
+
 const createAccountSchema = z
   .object({
     creditLimit: z.number().positive().optional(),
@@ -15,9 +28,19 @@ const createAccountSchema = z
     currentBalance: z.number(),
     logoDomain: z.string().max(253).optional(),
     name: z.string().min(1).max(255),
-    subtype: z.string().min(1).max(64),
+    subtype: z.enum(ALL_MANUAL_SUBTYPE),
     type: z.enum(ACCOUNT_TYPE),
   })
+  .refine(
+    (v) =>
+      (
+        MANUAL_SUBTYPES_BY_TYPE[v.type as keyof typeof MANUAL_SUBTYPES_BY_TYPE] as readonly string[]
+      ).includes(v.subtype),
+    {
+      message: "subtype not valid for this account type",
+      path: ["subtype"],
+    },
+  )
   .refine((v) => v.creditLimit === undefined || v.type === "credit", {
     message: "creditLimit only valid for credit accounts",
     path: ["creditLimit"],

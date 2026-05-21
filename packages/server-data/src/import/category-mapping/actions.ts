@@ -3,6 +3,7 @@ import type { CategoryResolution } from "@cobalt-web/db/schema/imports/import-jo
 import { importJob } from "@cobalt-web/db/schema/imports/import-job";
 import { eq } from "drizzle-orm";
 
+import { ApiError } from "../../_shared/api-error";
 import { assertOwnedJob } from "../shared/queries";
 import type { ConfirmCategoryMappingBody } from "../shared/schemas";
 import { cacheCategoryChoices } from "./cache";
@@ -67,5 +68,5 @@ async function assertOwnedCategories(userId: string, categoryIds: string[]): Pro
   }
   const foundSet = new Set(found.map((c) => c.id));
   const missing = categoryIds.find((id) => !foundSet.has(id));
-  throw new Error(`Cannot map to unowned category ${missing}`);
+  throw new ApiError(409, "category_unowned", `Cannot map to unowned category ${missing}`);
 }

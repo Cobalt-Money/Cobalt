@@ -1,5 +1,6 @@
 {
   "name": "@cobalt-web/auth",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "exports": {
     ".": {
@@ -11,12 +12,13 @@
   },
   "scripts": {},
   "dependencies": {
-    "@better-auth/oauth-provider": "1.6.8",
-    "@better-auth/stripe": "1.6.8",
+    "@better-auth/cimd": "1.7.0-beta.3",
+    "@better-auth/oauth-provider": "1.7.0-beta.3",
+    "@better-auth/stripe": "1.7.0-beta.3",
     "@cobalt-web/db": "workspace:*",
     "@cobalt-web/env": "workspace:*",
     "@upstash/redis": "^1.38.0",
-    "better-auth": "1.6.8",
+    "better-auth": "1.7.0-beta.3",
     "dotenv": "catalog:",
     "drizzle-orm": "1.0.0-beta.18-7eb39f0",
     "jose": "^6.1.0",

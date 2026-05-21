@@ -1,7 +1,11 @@
 import { bindRoutes, route } from "@cobalt-web/bindings";
 import type { Binding, RouteSpec } from "@cobalt-web/bindings";
-import { getBankAccountById, listAccounts } from "@cobalt-web/server-data/accounts/queries";
-import { accountListQuerySchema } from "@cobalt-web/server-data/accounts/schemas";
+import { createManualAccount } from "@cobalt-web/server-data/accounts/mutations";
+import { getAccountById, listAccounts } from "@cobalt-web/server-data/accounts/queries";
+import {
+  accountListQuerySchema,
+  manualAccountCreateBodySchema,
+} from "@cobalt-web/server-data/accounts/schemas";
 import {
   getActivitiesByUserId,
   getBalancesByUserId,
@@ -26,7 +30,7 @@ import { symbolQuerySchema } from "@cobalt-web/server-data/research/schemas";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
 import { balanceSnapshotQuerySchema } from "@cobalt-web/server-data/snapshots/schemas";
 import {
-  createManualTransaction,
+  createManualTransactions,
   patchTransaction,
 } from "@cobalt-web/server-data/transactions/mutations";
 import {
@@ -34,7 +38,7 @@ import {
   getTransactions,
 } from "@cobalt-web/server-data/transactions/queries";
 import {
-  transactionCreateBodySchema,
+  transactionCreateInputSchema,
   transactionListQuerySchema,
   transactionPatchBodySchema,
 } from "@cobalt-web/server-data/transactions/schemas";
@@ -88,21 +92,29 @@ const tagUpdateSchema = z.object({
  */
 const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
   route({
-    description: "Get a single bank account by id (user-scoped).",
+    description:
+      "Get a single account by its internal `id` (the same id returned by `accounts.list`). Works for any source.",
     handler: async (userId, { accountId }) => ({
-      account: await getBankAccountById(userId, accountId),
+      account: await getAccountById(userId, accountId),
     }),
     name: "accounts_getById",
     schema: accountIdSchema,
   }),
   route({
     description:
-      "List the user's accounts with institution metadata. Filter by Plaid `type` and/or `subtype`. SnapTrade brokerage data is under `brokerage_accounts`.",
+      "List the user's accounts. Each row exposes the internal `id` — use it as `accountId` for `transactions.create`. Filter by `type` and/or `subtype` (both optional, AND-combined).",
     handler: async (userId, params) => ({
       accounts: await listAccounts(userId, params),
     }),
     name: "accounts_list",
     schema: accountListQuerySchema,
+  }),
+  route({
+    description:
+      'Create a new MANUAL financial account for the user (depository, credit, investment, or loan). Server stamps `source: "manual"` and seeds today\'s balance snapshot. Use the returned `id` as `accountId` for `transactions.create`. `currentBalance` is the opening balance; `creditLimit` only valid when `type === "credit"`. `logoDomain` is a Brandfetch domain (e.g. "chase.com") for the lettermark fallback.',
+    handler: async (userId, body) => await createManualAccount(userId, body),
+    name: "accounts_create",
+    schema: manualAccountCreateBodySchema,
   }),
   route({
     description: "List the user's brokerage accounts.",
@@ -202,7 +214,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds: merged };
     },
     name: "tags_addToTransaction",
-    requiredScope: "cobalt:write",
     schema: txnTagIdsSchema,
   }),
   route({
@@ -237,7 +248,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds: next };
     },
     name: "tags_removeFromTransaction",
-    requiredScope: "cobalt:write",
     schema: txnTagIdsSchema,
   }),
   route({
@@ -247,7 +257,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds };
     },
     name: "tags_setOnTransaction",
-    requiredScope: "cobalt:write",
     schema: txnSetTagsSchema,
   }),
   route({
@@ -258,11 +267,10 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
   }),
   route({
     description:
-      'Create a manual transaction on a user-owned manual account. Server stamps `source: "manual"`, `pending: false`, and `userId`. Plaid-linked accounts reject inserts.',
-    handler: async (userId, body) => await createManualTransaction(userId, body),
+      'Create manual transactions on user-owned manual accounts. Input is always an array (1–500 rows; pass `[body]` for a single insert). Returns `{ ids: [...] }` in input order. All-or-nothing: any unowned / non-manual account rejects the whole call. Server stamps `source: "manual"`, `pending: false`, and `userId`.',
+    handler: async (userId, bodies) => await createManualTransactions(userId, bodies),
     name: "transactions_create",
-    requiredScope: "cobalt:write",
-    schema: transactionCreateBodySchema,
+    schema: transactionCreateInputSchema,
   }),
   route({
     description: "Patch a transaction the user owns (mutation). Verifies ownership first.",
@@ -272,14 +280,12 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { ok: true };
     },
     name: "transactions_update",
-    requiredScope: "cobalt:write",
     schema: transactionPatchSchema,
   }),
   route({
     description: "Create a new tag owned by the user. Returns the created tag id.",
     handler: async (userId, body) => await createTag(userId, body),
     name: "tags_create",
-    requiredScope: "cobalt:write",
     schema: createTagBodySchema,
   }),
   route({
@@ -290,16 +296,10 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { ok: true };
     },
     name: "tags_update",
-    requiredScope: "cobalt:write",
     schema: tagUpdateSchema,
   }),
 ];
 
-/**
- * `grantedScopes` is forwarded to `bindRoutes`. Omit it to disable per-route
- * scope checks (trust mode for session-authenticated internal callers); pass
- * the OAuth token's scope set to enforce `requiredScope` per route.
- */
-export function buildBindings(userId: string, grantedScopes?: string[]): Binding[] {
-  return bindRoutes(userId, ROUTES, grantedScopes);
+export function buildBindings(userId: string): Binding[] {
+  return bindRoutes(userId, ROUTES);
 }

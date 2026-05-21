@@ -1,6 +1,7 @@
 import { auth } from "@cobalt-web/auth";
 import { seedDemoUser } from "@cobalt-web/db/demo/seed-demo-user";
 import { env } from "@cobalt-web/env/server";
+import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { deleteUser } from "@cobalt-web/server-data/user/mutations";
 import { OpenAPIHono } from "@hono/zod-openapi";
@@ -27,12 +28,16 @@ async function createDemoSession(req: Request): Promise<DemoSessionResult> {
     headers: req.headers,
   })) as Response;
   if (!response.ok) {
-    throw new Error(`signInAnonymous failed: ${response.status}`);
+    throw new ApiError(
+      502,
+      "anonymous_session_failed",
+      `signInAnonymous failed: ${response.status}`,
+    );
   }
   const payload = (await response.json()) as { user?: { id?: string } };
   const userId = payload.user?.id;
   if (!userId) {
-    throw new Error("signInAnonymous returned no user id");
+    throw new ApiError(502, "anonymous_session_failed", "signInAnonymous returned no user id");
   }
 
   await seedDemoUser(userId);
@@ -90,7 +95,7 @@ export const demoRouter = new OpenAPIHono<AppEnv>()
   .post("/enter", requireAuth, async (c) => {
     const originUser = c.var.user;
     if (originUser.isAnonymous) {
-      return c.json({ error: "Already in demo mode" }, 400);
+      return c.json({ code: "already_in_demo", error: "Already in demo mode" }, 400);
     }
 
     // signOut must succeed: signInAnonymous below will replace the session
@@ -101,7 +106,7 @@ export const demoRouter = new OpenAPIHono<AppEnv>()
       signOutCookies = await signOutAndCollectCookies(c.req.raw);
     } catch (error) {
       console.error("[demo] enter signOut failed", error);
-      return c.json({ error: "Failed to suspend current session" }, 500);
+      return c.json({ code: "signout_failed", error: "Failed to suspend current session" }, 500);
     }
 
     const { cookies, authToken, userId } = await createDemoSession(c.req.raw);
@@ -132,7 +137,7 @@ export const demoRouter = new OpenAPIHono<AppEnv>()
   .post("/exit", requireAuth, async (c) => {
     const currentUser = c.var.user;
     if (!currentUser.isAnonymous) {
-      return c.json({ error: "Not in demo mode" }, 400);
+      return c.json({ code: "not_in_demo", error: "Not in demo mode" }, 400);
     }
 
     const signedOrigin = await getSignedCookie(c, env.BETTER_AUTH_SECRET, DEMO_ORIGIN_COOKIE);

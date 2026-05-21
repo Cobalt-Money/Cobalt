@@ -12,14 +12,6 @@ export interface RouteSpec<S extends z.ZodTypeAny> {
   name: string;
   description: string;
   schema: S;
-  /**
-   * If set and `grantedScopes` is also passed to `bindRoutes`, calls to this
-   * route throw `insufficient_scope` unless the scope is granted. When
-   * `grantedScopes` is omitted (e.g. internal callers running under a full
-   * web session), the check is skipped — only OAuth-token callers need to
-   * narrow what they can touch.
-   */
-  requiredScope?: string;
   handler: (userId: string, args: z.infer<S>) => Promise<unknown>;
 }
 
@@ -30,36 +22,14 @@ export function route<S extends z.ZodTypeAny>(spec: RouteSpec<S>): RouteSpec<S> 
 const toJsonSchema = (s: z.ZodTypeAny): Record<string, unknown> =>
   z.toJSONSchema(s, { target: "draft-7" }) as Record<string, unknown>;
 
-export class InsufficientScopeError extends Error {
-  readonly requiredScope: string;
-  constructor(routeName: string, requiredScope: string) {
-    super(
-      `cobalt.${routeName.replaceAll("_", ".")}: missing required scope "${requiredScope}". Reauthorize with the scope to use this method.`,
-    );
-    this.name = "InsufficientScopeError";
-    this.requiredScope = requiredScope;
-  }
-}
-
 /**
  * Bind a list of `RouteSpec`s to a single `userId`. The `userId` is captured
  * in closure on the host — sandboxed code cannot see, supply, or override it.
- *
- * Pass `grantedScopes` to enforce per-route `requiredScope`. Omit it to allow
- * everything (the trust model for internal/session-authenticated callers).
  */
-export function bindRoutes(
-  userId: string,
-  routes: RouteSpec<z.ZodTypeAny>[],
-  grantedScopes?: string[],
-): Binding[] {
-  const granted = grantedScopes ? new Set(grantedScopes) : null;
+export function bindRoutes(userId: string, routes: RouteSpec<z.ZodTypeAny>[]): Binding[] {
   return routes.map((r) => ({
     description: r.description,
     handler: async (args: unknown) => {
-      if (granted !== null && r.requiredScope && !granted.has(r.requiredScope)) {
-        throw new InsufficientScopeError(r.name, r.requiredScope);
-      }
       const parsed = r.schema.parse(args ?? {});
       return await r.handler(userId, parsed);
     },

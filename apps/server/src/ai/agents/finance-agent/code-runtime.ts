@@ -38,15 +38,7 @@ function runUserCode(bindings: Binding[], userCode: string): Promise<RunResult> 
  * binding handlers' closure on the Vercel side; the sandbox Worker only sees
  * tool *schemas* and never the userId, so sandboxed code cannot supply or
  * override it.
- *
- * `grantedScopes` flows through to `buildBindings`: pass the OAuth token's
- * scope set when invoked by an external client (MCP), omit it for internal
- * session-authenticated callers that already have full trust.
  */
-export function runCobaltCode(
-  userId: string,
-  code: string,
-  grantedScopes?: string[],
-): Promise<RunResult> {
-  return runUserCode(buildBindings(userId, grantedScopes), code);
+export function runCobaltCode(userId: string, code: string): Promise<RunResult> {
+  return runUserCode(buildBindings(userId), code);
 }

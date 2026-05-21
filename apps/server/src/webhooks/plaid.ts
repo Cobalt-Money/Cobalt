@@ -128,6 +128,6 @@ export const plaidWebhookRouter = new Hono().post("/", async (c) => {
     return c.json({ status: "processing" });
   } catch (error) {
     console.error("[plaid] Webhook processing error:", error);
-    return c.json({ error: "Webhook processing failed" }, 500);
+    return c.json({ code: "webhook_processing_failed", error: "Webhook processing failed" }, 500);
   }
 });

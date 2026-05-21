@@ -1,0 +1,63 @@
+name: Bug report
+description: Report a bug in the hosted Cobalt product or this codebase.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report.
+
+        **Self-hosting note:** Cobalt does not officially support self-hosted
+        deployments. Bug reports against self-hosted setups will be labeled
+        `unsupported` and will not be prioritized, though PRs are welcome.
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment
+      description: Where did you encounter this?
+      options:
+        - Hosted Cobalt product
+        - Self-hosted (unsupported)
+        - Local development
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Hosted users can write "hosted". Self-hosted should include the commit SHA.
+      placeholder: hosted, or e.g. a172799
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug, what you expected, and what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps to trigger the bug.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: Browser, OS, mobile/desktop, anything else relevant.
+  - type: checkboxes
+    id: confirms
+    attributes:
+      label: Confirmations
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
+        - label: This report does not contain real financial data, account numbers, or PII.
+          required: true

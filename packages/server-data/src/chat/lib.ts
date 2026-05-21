@@ -1,6 +1,7 @@
 import type { PartInsert } from "@cobalt-web/db/schema/ai/chat";
 import type { parts } from "@cobalt-web/db/schema/schema";
-import type { UIMessage } from "ai";
+import { isToolUIPart } from "ai";
+import type { DynamicToolUIPart, ToolUIPart, UIMessage } from "ai";
 import type { InferSelectModel } from "drizzle-orm";
 
 type PartRow = InferSelectModel<typeof parts>;
@@ -85,15 +86,13 @@ function toolPart(p: PartRow, t: string): Record<string, unknown> | null {
     return null;
   }
   const out: Record<string, unknown> = {
+    input: p.tool_input ?? {},
     state: p.tool_state,
     toolCallId: p.tool_toolCallId,
     type: t,
   };
   if (p.tool_errorText) {
     out.errorText = p.tool_errorText;
-  }
-  if (p.tool_input) {
-    out.input = p.tool_input;
   }
   if (p.tool_output) {
     out.output = p.tool_output;
@@ -102,6 +101,38 @@ function toolPart(p: PartRow, t: string): Record<string, unknown> | null {
 }
 
 type UIMessagePart = UIMessage["parts"][number];
+
+type PartBase = Pick<PartInsert, "messageId" | "order" | "partId">;
+
+function mapToolPartToDb(part: ToolUIPart | DynamicToolUIPart, base: PartBase): PartInsert {
+  const input = "input" in part ? part.input : undefined;
+  const output = "output" in part ? part.output : undefined;
+  const errorText = "errorText" in part ? part.errorText : undefined;
+  return {
+    ...base,
+    tool_errorText: errorText ?? null,
+    tool_input: (input ?? {}) as Record<string, unknown>,
+    tool_output: output ? (output as Record<string, unknown>) : null,
+    tool_state: part.state,
+    tool_toolCallId: part.toolCallId,
+    type: part.type,
+  };
+}
+
+function mapDynamicPartToDb(part: UIMessagePart, base: PartBase): PartInsert | null {
+  if (isToolUIPart(part)) {
+    return mapToolPartToDb(part as ToolUIPart | DynamicToolUIPart, base);
+  }
+  const t = (part as { type: string }).type;
+  if (t.startsWith("data-") && "data" in part) {
+    return {
+      ...base,
+      data: (part as { type: string; data: unknown }).data as Record<string, unknown>,
+      type: t,
+    };
+  }
+  return null;
+}
 
 /**
  * Map a single AI SDK UIMessage part → DB `parts` insert row.
@@ -160,34 +191,7 @@ export function mapUIPartToDb(
       return { ...base, type: "step-start" };
     }
     default: {
-      const t = (part as { type: string }).type;
-      if (t.startsWith("tool-")) {
-        const tp = part as {
-          type: string;
-          toolCallId: string;
-          state: string;
-          input?: unknown;
-          output?: unknown;
-          errorText?: string;
-        };
-        return {
-          ...base,
-          tool_errorText: tp.errorText ?? null,
-          tool_input: tp.input ? (tp.input as Record<string, unknown>) : null,
-          tool_output: tp.output ? (tp.output as Record<string, unknown>) : null,
-          tool_state: tp.state,
-          tool_toolCallId: tp.toolCallId,
-          type: t,
-        };
-      }
-      if (t.startsWith("data-") && "data" in part) {
-        return {
-          ...base,
-          data: (part as { type: string; data: unknown }).data as Record<string, unknown>,
-          type: t,
-        };
-      }
-      return null;
+      return mapDynamicPartToDb(part, base);
     }
   }
 }

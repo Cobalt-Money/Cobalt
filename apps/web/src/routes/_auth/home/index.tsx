@@ -11,14 +11,14 @@ export const Route = createFileRoute("/_auth/home/")({
   loader: ({ context }) => {
     // Only prefetch what home actually mounts. Activities + brokerageAccounts
     // belong to other routes and were costing IVM hydrate work for nothing.
-    context.zero.run(queries.accounts.bankAccounts());
-    context.zero.run(queries.accounts.bankBalanceSnapshots({ range: "1Y" }));
-    context.zero.run(queries.brokerage.portfolioSnapshots({ range: "1Y" }));
-    context.zero.run(queries.transactions.list());
-    context.zero.run(queries.transactions.recurring());
-    context.zero.run(queries.brokerage.accounts());
-    context.zero.run(queries.brokerage.positions());
-    context.zero.run(queries.brokerage.plaidInvestmentAccounts());
+    context.zero?.run(queries.accounts.bankAccounts());
+    context.zero?.run(queries.accounts.bankBalanceSnapshots({ range: "1Y" }));
+    context.zero?.run(queries.brokerage.portfolioSnapshots({ range: "1Y" }));
+    context.zero?.run(queries.transactions.list());
+    context.zero?.run(queries.transactions.recurring());
+    context.zero?.run(queries.brokerage.accounts());
+    context.zero?.run(queries.brokerage.positions());
+    context.zero?.run(queries.brokerage.plaidInvestmentAccounts());
   },
   staticData: { title: "Home" },
 });

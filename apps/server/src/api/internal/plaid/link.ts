@@ -3,7 +3,10 @@ import {
   createLinkToken,
   createLinkTokenForUpdate,
 } from "@cobalt-web/server-data/providers/plaid/link/actions";
-import { findExistingHealthyConnection } from "@cobalt-web/server-data/providers/plaid/link/queries";
+import {
+  findExistingHealthyConnection,
+  getInstitutionRoutingNumber,
+} from "@cobalt-web/server-data/providers/plaid/link/queries";
 import {
   createLinkTokenBodySchema,
   linkTokenResponseSchema,
@@ -42,6 +45,7 @@ const createLinkTokenRoute = createRoute({
       errorResponseWithCodeSchema,
       "Free-tier connection limit reached — upgrade required",
     ),
+    403: jsonContent(errorResponseWithCodeSchema, "Not available in demo mode"),
     422: validationErrorResponse(createLinkTokenBodySchema),
     502: jsonContent(errorResponseWithCodeSchema, "Plaid API failed"),
   },
@@ -62,6 +66,7 @@ const resolveLinkRoute = createRoute({
     200: jsonContent(successResponseSchema, "Workflow resumed"),
     400: jsonContent(errorResponseWithCodeSchema, "Invalid payload or foreign hook token"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Not available in demo mode"),
     422: validationErrorResponse(resolveLinkBodySchema),
     500: jsonContent(errorResponseWithCodeSchema, "Server error"),
   },
@@ -138,7 +143,12 @@ const linkRouter = createApp()
 
     // ── Fresh link. ApiError thrown from createLinkToken bubbles to onError
     // and surfaces as 502 `{code:"link_token_failed", ...}`.
-    const tokenResult = await createLinkToken(userId);
+    // Pass routing_number (when known) so Plaid highlights the bank at the
+    // top of its picker — best UX we get; no API to skip picker entirely.
+    const routingNumber = insId?.startsWith("ins_")
+      ? await getInstitutionRoutingNumber(insId)
+      : null;
+    const tokenResult = await createLinkToken(userId, { routingNumber });
     const hookToken = uuidv7();
     const run = await start(plaidAddAccountWorkflow, [{ hookToken, userId }]);
     return c.json(

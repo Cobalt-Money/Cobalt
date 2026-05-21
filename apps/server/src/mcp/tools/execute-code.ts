@@ -3,9 +3,8 @@ import { runCobaltCode } from "../../ai/agents/finance-agent/code-runtime.js";
 export async function executeCode(
   userId: string,
   code: string,
-  grantedScopes: string[],
 ): Promise<{ content: { text: string; type: "text" }[]; isError?: boolean }> {
-  const result = await runCobaltCode(userId, code, grantedScopes);
+  const result = await runCobaltCode(userId, code);
 
   if (!result.ok) {
     return {

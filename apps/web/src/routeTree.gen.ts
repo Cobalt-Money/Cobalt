@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as OauthConsentRouteImport } from './routes/oauth/consent'
 import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
+import { Route as AuthOnboardingRouteImport } from './routes/_auth/onboarding'
 import { Route as AuthAlertsPreviewRouteImport } from './routes/_auth/alerts-preview'
 import { Route as AuthTransactionsRouteRouteImport } from './routes/_auth/transactions/route'
 import { Route as AuthSubscriptionsRouteRouteImport } from './routes/_auth/subscriptions/route'
@@ -84,6 +85,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   id: '/blog/$slug',
   path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthOnboardingRoute = AuthOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthAlertsPreviewRoute = AuthAlertsPreviewRouteImport.update({
   id: '/alerts-preview',
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteRouteWithChildren
   '/alerts-preview': typeof AuthAlertsPreviewRoute
+  '/onboarding': typeof AuthOnboardingRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/blog/': typeof BlogIndexRoute
@@ -237,6 +244,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/alerts-preview': typeof AuthAlertsPreviewRoute
+  '/onboarding': typeof AuthOnboardingRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/blog': typeof BlogIndexRoute
@@ -271,6 +279,7 @@ export interface FileRoutesById {
   '/_auth/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/_auth/transactions': typeof AuthTransactionsRouteRouteWithChildren
   '/_auth/alerts-preview': typeof AuthAlertsPreviewRoute
+  '/_auth/onboarding': typeof AuthOnboardingRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/oauth/consent': typeof OauthConsentRoute
   '/blog/': typeof BlogIndexRoute
@@ -305,6 +314,7 @@ export interface FileRouteTypes {
     | '/subscriptions'
     | '/transactions'
     | '/alerts-preview'
+    | '/onboarding'
     | '/blog/$slug'
     | '/oauth/consent'
     | '/blog/'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/alerts-preview'
+    | '/onboarding'
     | '/blog/$slug'
     | '/oauth/consent'
     | '/blog'
@@ -362,6 +373,7 @@ export interface FileRouteTypes {
     | '/_auth/subscriptions'
     | '/_auth/transactions'
     | '/_auth/alerts-preview'
+    | '/_auth/onboarding'
     | '/blog/$slug'
     | '/oauth/consent'
     | '/blog/'
@@ -456,6 +468,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/blog/$slug'
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_auth/onboarding': {
+      id: '/_auth/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthOnboardingRouteImport
+      parentRoute: typeof AuthRouteRoute
     }
     '/_auth/alerts-preview': {
       id: '/_auth/alerts-preview'
@@ -730,6 +749,7 @@ interface AuthRouteRouteChildren {
   AuthSubscriptionsRouteRoute: typeof AuthSubscriptionsRouteRouteWithChildren
   AuthTransactionsRouteRoute: typeof AuthTransactionsRouteRouteWithChildren
   AuthAlertsPreviewRoute: typeof AuthAlertsPreviewRoute
+  AuthOnboardingRoute: typeof AuthOnboardingRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
@@ -742,6 +762,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthSubscriptionsRouteRoute: AuthSubscriptionsRouteRouteWithChildren,
   AuthTransactionsRouteRoute: AuthTransactionsRouteRouteWithChildren,
   AuthAlertsPreviewRoute: AuthAlertsPreviewRoute,
+  AuthOnboardingRoute: AuthOnboardingRoute,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(

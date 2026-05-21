@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { assertOwnedJob, getStagedPreview } from "@cobalt-web/server-data/import/shared/queries";
 import {
   importJobIdParamSchema,
@@ -19,6 +20,7 @@ const route = createRoute({
       stagedPreviewResponseSchema,
       "A few staged rows for the commit-screen preview",
     ),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Sample of staged rows",
   tags: ["Imports"],

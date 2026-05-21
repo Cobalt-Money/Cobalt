@@ -24,11 +24,14 @@ vi.mock(
     }) as never,
 );
 
+const getRoutingMock = vi.fn().mockResolvedValue(null);
+
 vi.mock(
   import("@cobalt-web/server-data/providers/plaid/link/queries"),
   () =>
     ({
       findExistingHealthyConnection: findExistingMock,
+      getInstitutionRoutingNumber: getRoutingMock,
     }) as never,
 );
 
@@ -76,7 +79,7 @@ describe("plaid link route — tier gate", () => {
     canAddMock.mockResolvedValue(true);
     const res = await postCreate({});
     expect(res.status).toBe(200);
-    expect(createLinkTokenMock).toHaveBeenCalledWith("user1");
+    expect(createLinkTokenMock).toHaveBeenCalledWith("user1", { routingNumber: null });
     expect(startMock).toHaveBeenCalledTimes(1);
   });
 

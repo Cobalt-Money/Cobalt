@@ -36,6 +36,18 @@ export async function lookupFinancialAccountsByPlaidIds(
   return map;
 }
 
+/** First routing number for a Plaid institution, when known. Null otherwise. */
+export async function getInstitutionRoutingNumber(
+  plaidInstitutionId: string,
+): Promise<string | null> {
+  const row = await db.query.institution.findFirst({
+    columns: { routingNumbers: true },
+    where: { plaidInstitutionId: { eq: plaidInstitutionId } },
+  });
+  const list = row?.routingNumbers ?? [];
+  return list.length > 0 ? (list[0] ?? null) : null;
+}
+
 /**
  * Plaid-source financial accounts belonging to a plaid_connection.
  * Used by sync reconciliation to detect orphans (DB rows whose `externalId`

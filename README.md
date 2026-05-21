@@ -1,6 +1,52 @@
-# cobalt-web
+# Cobalt
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Start, Hono, and more.
+![Cobalt](apps/web/public/og-image.png)
+
+**Open-source AI personal finance management.**
+
+→ [**cobaltpf.com**](https://cobaltpf.com) — hosted product.
+
+Cobalt lets users connect their financial accounts — manually or through
+third-party providers (Plaid, SnapTrade) — to analyze, budget, and track
+their finances. AI in the Cobalt platform is used strictly for analysis
+and accounting. **Money transfers and spending are not possible.**
+
+## Privacy
+
+AI usage inside the Cobalt platform runs with **zero data retention**
+via [Vercel AI Gateway](https://vercel.com/docs/ai-gateway/privacy).
+Prompts and completions are not stored or used for training.
+
+Using Cobalt from **third-party services via MCP or external
+connectors** is at user discretion — data sent through those tools may
+be retained or used for training by the third party. Treat any MCP
+client outside Cobalt as untrusted with respect to data retention.
+
+## Source-available for transparency
+
+This repository is published under [AGPL-3.0](./LICENSE) so users,
+security researchers, and the broader community can audit exactly how
+Cobalt handles financial data. **Self-hosting is not officially
+supported.** The hosted product is the canonical way to use Cobalt.
+Issues requesting setup help for self-hosted deployments will be
+closed — see [`docs/oss/SCOPE.md`](./docs/oss/SCOPE.md).
+
+See [`RELICENSING.md`](./RELICENSING.md) for contribution and copyright
+terms (DCO sign-off required) and [`SECURITY.md`](./SECURITY.md) for
+vulnerability disclosure.
+
+## Disclaimer
+
+Cobalt is **not financial, investment, tax, or legal advice**. The
+software is provided "as is", without warranty of any kind. The hosted
+product is the only supported deployment. Running this code yourself is
+unsupported and at your own risk.
+
+---
+
+## Development
+
+This project uses [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack) — TypeScript monorepo with React, TanStack Start, Hono, Bun, Drizzle, and Postgres.
 
 ## Features
 

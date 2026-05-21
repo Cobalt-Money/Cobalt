@@ -15,6 +15,7 @@ const route = createRoute({
   responses: {
     200: jsonContent(deleteAccountResponseSchema, "Account deleted"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    403: jsonContent(errorResponseWithCodeSchema, "Not available in demo mode"),
     500: jsonContent(errorResponseWithCodeSchema, "Account deletion failed"),
   },
   summary: "Delete user account",
