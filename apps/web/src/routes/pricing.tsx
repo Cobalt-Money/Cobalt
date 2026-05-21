@@ -91,7 +91,7 @@ function PricingPage() {
   const proPrice = yearly ? ANNUAL_EFFECTIVE_MONTHLY : MONTHLY_PRICE;
 
   return (
-    <main className="flex flex-1 flex-col">
+    <main className="flex flex-col">
       <MarketingNav />
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-16 px-6 py-20">
         <h1 className="font-semibold text-5xl tracking-tight sm:text-6xl md:pl-10">Pricing</h1>

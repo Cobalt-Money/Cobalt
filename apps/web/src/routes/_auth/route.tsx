@@ -65,7 +65,10 @@ function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDe
         <PrivacyProvider>
           <SettingsDialogProvider>
             <ImportWizardHost>
-              <div className="contents" data-demo-banner={isDemo ? "1" : undefined}>
+              <div
+                className="flex h-svh min-h-0 flex-col overflow-hidden"
+                data-demo-banner={isDemo ? "1" : undefined}
+              >
                 {chromeless ? (
                   // Onboarding mounts CommandMenuProvider so the Connect step
                   // can call `openAddAccount()` and launch the real Plaid flow

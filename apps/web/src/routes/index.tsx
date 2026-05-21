@@ -59,7 +59,7 @@ function LandingPage() {
   return (
     <>
       <LandingStyles />
-      <main className="flex flex-1 flex-col">
+      <main className="flex flex-col">
         <MarketingNav />
         <Hero />
         <IntegrationsSection />
