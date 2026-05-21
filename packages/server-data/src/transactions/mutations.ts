@@ -282,54 +282,69 @@ export async function patchTransaction(
 }
 
 /**
- * Insert a manual transaction onto a user-owned manual account. Mirrors the
- * Zero `m.transaction.createTransaction` mutator so the OAuth / SDK path and
- * the web-session path stay consistent: only manual accounts accept inserts,
- * the new row is stamped `source: "manual"`, `pending: false`, and the
- * `location` field is locked when supplied so a future provider sync (none
- * for manual accounts today, defense in depth) cannot overwrite it.
+ * Insert one or many manual transactions onto user-owned manual accounts.
+ * Mirrors the Zero `m.transaction.createTransaction` mutator so the OAuth /
+ * SDK path and the web-session path stay consistent: only manual accounts
+ * accept inserts, rows are stamped `source: "manual"`, `pending: false`,
+ * `userId`, and `location` (when supplied) is added to `lockedFields` so a
+ * future provider sync can't overwrite it.
  *
- * Returns the generated transaction id.
+ * Validates ownership + `source === "manual"` for every distinct accountId
+ * in one query, then bulk-inserts in a single statement. All-or-nothing —
+ * any unowned / non-manual account rejects the whole call before any insert
+ * happens. `ids` order matches input order.
  */
-export async function createManualTransaction(
+export async function createManualTransactions(
   userId: string,
-  body: TransactionCreateBody,
-): Promise<{ id: string }> {
-  const account = await db.query.financialAccount.findFirst({
-    columns: { source: true, userId: true },
-    where: { id: { eq: body.accountId } },
-  });
-  if (!account || account.userId !== userId) {
-    throw new ApiError(404, "account_not_found", "Account not found");
-  }
-  if (account.source !== "manual") {
-    throw new ApiError(
-      400,
-      "account_not_manual",
-      "Transactions can only be added to manual accounts",
-    );
+  bodies: TransactionCreateBody[],
+): Promise<{ ids: string[] }> {
+  if (bodies.length === 0) {
+    return { ids: [] };
   }
 
-  const trimmedDesc = body.description?.trim();
-  const flatLocation = body.location ? locationToFlat(body.location) : LOCATION_FLAT_COLS;
-
-  const id = body.id ?? crypto.randomUUID();
-  await db.insert(transaction).values({
-    accountId: body.accountId,
-    amount: body.amount.toString(),
-    categoryId: body.categoryId ?? null,
-    currency: body.currency ?? "USD",
-    date: body.date,
-    id,
-    lockedFields: body.location ? ["location"] : [],
-    merchantName: body.merchantName?.trim() ?? null,
-    name: body.name.trim(),
-    notes: trimmedDesc && trimmedDesc.length > 0 ? trimmedDesc : null,
-    pending: false,
-    source: "manual",
-    userId,
-    website: body.website ? normalizeWebsite(body.website) : null,
-    ...flatLocation,
+  const distinctAccountIds = [...new Set(bodies.map((b) => b.accountId))];
+  const accounts = await db.query.financialAccount.findMany({
+    columns: { id: true, source: true, userId: true },
+    where: { id: { in: distinctAccountIds } },
   });
-  return { id };
+  const byId = new Map(accounts.map((a) => [a.id, a]));
+  for (const accountId of distinctAccountIds) {
+    const a = byId.get(accountId);
+    if (!a || a.userId !== userId) {
+      throw new ApiError(404, "account_not_found", "Account not found");
+    }
+    if (a.source !== "manual") {
+      throw new ApiError(
+        400,
+        "account_not_manual",
+        "Transactions can only be added to manual accounts",
+      );
+    }
+  }
+
+  const rows = bodies.map((body) => {
+    const trimmedDesc = body.description?.trim();
+    const flatLocation = body.location ? locationToFlat(body.location) : LOCATION_FLAT_COLS;
+    const id = body.id ?? crypto.randomUUID();
+    return {
+      accountId: body.accountId,
+      amount: body.amount.toString(),
+      categoryId: body.categoryId ?? null,
+      currency: body.currency ?? "USD",
+      date: body.date,
+      id,
+      lockedFields: body.location ? ["location"] : [],
+      merchantName: body.merchantName?.trim() ?? null,
+      name: body.name.trim(),
+      notes: trimmedDesc && trimmedDesc.length > 0 ? trimmedDesc : null,
+      pending: false,
+      source: "manual" as const,
+      userId,
+      website: body.website ? normalizeWebsite(body.website) : null,
+      ...flatLocation,
+    };
+  });
+
+  await db.insert(transaction).values(rows);
+  return { ids: rows.map((r) => r.id) };
 }

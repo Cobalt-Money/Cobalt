@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { updateStagedRow } from "@cobalt-web/server-data/import/shared/mutations";
 import { assertOwnedJob, getStagedRows } from "@cobalt-web/server-data/import/shared/queries";
 import {
@@ -20,6 +21,7 @@ const listRoute = createRoute({
   request: { params: importJobIdParamSchema },
   responses: {
     200: jsonContent(stagedRowsResponseSchema, "Full staged-row set for the expanded table view"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "All staged rows",
   tags: ["Imports"],
@@ -35,7 +37,8 @@ const patchRoute = createRoute({
   },
   responses: {
     200: jsonContent(successResponseSchema, "Staged row updated"),
-    404: { description: "Staged row not found" },
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Staged row not found"),
   },
   summary: "Patch editable fields on a staged row",
   tags: ["Imports"],
@@ -53,7 +56,7 @@ export const importsStagedRowsRouter = createApp()
     const body = c.req.valid("json");
     const ok = await updateStagedRow(c.var.user.id, id, rowId, body);
     if (!ok) {
-      return c.json({ error: "Staged row not found" }, 404);
+      return c.json({ code: "staged_row_not_found", error: "Staged row not found" }, 404);
     }
     return c.json({ success: true }, 200);
   });

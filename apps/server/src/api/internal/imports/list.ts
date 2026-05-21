@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { listResumableImportJobs } from "@cobalt-web/server-data/import/shared/queries";
 import { createRoute, z } from "@hono/zod-openapi";
 
@@ -29,6 +30,7 @@ const route = createRoute({
       }),
       "In-progress import jobs",
     ),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "List resumable import jobs",
   tags: ["Imports"],

@@ -4,6 +4,8 @@ import type {
   CategoryResolution,
 } from "@cobalt-web/db/schema/imports/import-job";
 
+import { ApiError } from "../../_shared/api-error";
+
 /** Read whether the job has been cancelled by the user mid-commit. */
 export async function isJobCancelled(jobId: string): Promise<boolean> {
   const job = await db.query.importJob.findFirst({
@@ -27,13 +29,13 @@ export async function loadCommitResolutions(
     where: { id: { eq: jobId } },
   });
   if (!job || job.userId !== userId) {
-    throw new Error("Import job not found");
+    throw new ApiError(404, "import_job_not_found", "Import job not found");
   }
   if (!job.accountResolution) {
-    throw new Error("Account mapping not confirmed");
+    throw new ApiError(409, "account_mapping_not_confirmed", "Account mapping not confirmed");
   }
   if (!job.categoryResolution) {
-    throw new Error("Category mapping not confirmed");
+    throw new ApiError(409, "category_mapping_not_confirmed", "Category mapping not confirmed");
   }
   return {
     accountResolution: job.accountResolution,

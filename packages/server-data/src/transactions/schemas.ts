@@ -279,6 +279,14 @@ export const transactionCreateBodySchema = z.object({
 
 export type TransactionCreateBody = z.infer<typeof transactionCreateBodySchema>;
 
+/**
+ * Input for the SDK `transactions.create` route — always an array (1–500
+ * rows). Single-row insert is just `[body]`. One shape keeps the schema +
+ * return type uniform.
+ */
+export const transactionCreateInputSchema = z.array(transactionCreateBodySchema).min(1).max(500);
+export type TransactionCreateInput = z.infer<typeof transactionCreateInputSchema>;
+
 /** Single Nominatim search result, normalised to our `LocationJson` plus `display_name`. */
 export const geocodeSearchResultSchema = z.object({
   displayName: z.string(),

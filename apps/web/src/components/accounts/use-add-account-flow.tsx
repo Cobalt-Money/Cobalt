@@ -228,7 +228,7 @@ export function useAccountLauncher(onDismiss: () => void) {
         const { redirectURI } = await res.json();
         toast.dismiss(loadingId);
         onDismiss();
-        window.location.href = redirectURI;
+        window.open(redirectURI, "_blank", "noopener,noreferrer");
       } catch (error) {
         toast.dismiss(loadingId);
         toast.error(error instanceof Error ? error.message : "Failed to open connection portal");

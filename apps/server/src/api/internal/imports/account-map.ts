@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { confirmAccountMapping } from "@cobalt-web/server-data/import/account-mapping/actions";
 import { lookupAccountMappingCache } from "@cobalt-web/server-data/import/account-mapping/cache";
 import {
@@ -12,6 +13,7 @@ import {
   importJobIdParamSchema,
   successResponseSchema,
 } from "@cobalt-web/server-data/import/shared/schemas";
+import type { AccountSuggestionsResponse } from "@cobalt-web/server-data/import/shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import type { AccountSuggestion } from "../../../ai/agents/import/csv-account-mapping/csv-account-mapping-agent.js";
@@ -27,7 +29,8 @@ const suggestRoute = createRoute({
   request: { params: importJobIdParamSchema },
   responses: {
     200: jsonContent(accountSuggestionsResponseSchema, "Account suggestions"),
-    404: { description: "Import job not found" },
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Import job not found"),
   },
   summary: "Suggest account mapping (Step 3)",
   tags: ["Imports"],
@@ -47,6 +50,7 @@ const confirmRoute = createRoute({
   },
   responses: {
     200: jsonContent(successResponseSchema, "Account mapping confirmed"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Confirm account mapping",
   tags: ["Imports"],
@@ -115,7 +119,7 @@ export const importsAccountMapRouter = createApp()
   .openapi(suggestRoute, async (c) => {
     const { id } = c.req.valid("param");
     const job = await getJob(c.var.user.id, id);
-    const path = job.schemaMapping?.account ? "A" : "B";
+    const path: "A" | "B" = job.schemaMapping?.account ? "A" : "B";
     const labels = path === "A" ? await getStagedAccountLabels(id) : ["Default"];
     const userAccounts = await listAccounts(c.var.user.id);
     const userAccountIdSet = new Set(userAccounts.map((a) => a.id));
@@ -127,12 +131,22 @@ export const importsAccountMapRouter = createApp()
         (s) => s.target === "create_new" || s.target === "skip" || userAccountIdSet.has(s.target),
       );
     if (cacheStillValid && job.accountSuggestions) {
-      return c.json({ path, sourceLabels: labels, suggestions: job.accountSuggestions }, 200);
+      const body: AccountSuggestionsResponse = {
+        path,
+        sourceLabels: labels,
+        suggestions: job.accountSuggestions as AccountSuggestionsResponse["suggestions"],
+      };
+      return c.json(body, 200);
     }
     const suggestions =
       path === "A" ? await suggestAccountLabels(c.var.user.id, labels, userAccounts) : [];
     await persistAccountSuggestions(id, suggestions);
-    return c.json({ path, sourceLabels: labels, suggestions }, 200);
+    const body: AccountSuggestionsResponse = {
+      path,
+      sourceLabels: labels,
+      suggestions: suggestions as AccountSuggestionsResponse["suggestions"],
+    };
+    return c.json(body, 200);
   })
   .openapi(confirmRoute, async (c) => {
     const { id } = c.req.valid("param");

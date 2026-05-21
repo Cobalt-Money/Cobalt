@@ -29,7 +29,6 @@ import { tagsRouter } from "./api/internal/tags/index.js";
 import { transactionsRouter } from "./api/internal/transactions/index.js";
 import { userRouter } from "./api/internal/user/index.js";
 import { zeroRouter } from "./api/internal/zero.js";
-import { v1Router } from "./api/public/v1/index.js";
 import { cronFinancialEventsRouter } from "./cron/financial-events.js";
 import { cronRefreshFundamentalsRouter } from "./cron/refresh-fundamentals.js";
 import { cronResetDemoRouter } from "./cron/reset-demo.js";
@@ -113,33 +112,6 @@ base.doc31("/openapi.json", {
   openapi: "3.1.0",
 });
 
-// ── Public API ──────────────────────────────────────────────────────
-
-// Third-party developer surface at `/v1`. Kept on its own `OpenAPIHono`
-// instance so it can publish an independent title, server URL, and auth
-// scheme at `/v1/openapi.json` without leaking internal routes.
-const publicApi = new OpenAPIHono().route("/v1", v1Router).doc("/v1/openapi.json", {
-  info: {
-    description:
-      "The Cobalt public API provides programmatic access to market data, portfolio analytics, and financial insights.",
-    title: "Cobalt Public API",
-    version: "1.0.0",
-  },
-  openapi: "3.1.0",
-  security: [{ bearerAuth: [] }],
-  servers: [{ description: "Production", url: "https://api.cobaltpf.com" }],
-});
-
-// `registerComponent` mutates the schema registry (not the Hono instance)
-// and doesn't return anything useful, so it runs as a side-effect statement
-// after the const. Not subject to the chain-return contract above.
-publicApi.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
-  bearerFormat: "OAuth 2.0 Access Token",
-  description: "OAuth 2.0 access token obtained via the authorization code flow",
-  scheme: "bearer",
-  type: "http",
-});
-
 // ── Root app ────────────────────────────────────────────────────────
 
 const app = new Hono()
@@ -197,12 +169,11 @@ const app = new Hono()
       ],
     }),
   )
-  .route("/", base)
-  .route("/", publicApi);
+  .route("/", base);
 
 // `typeof app` only carries the routes directly registered on `app`
-// (well-known / mcp / docs / `/v1` public API) because the `/api/*`
-// sub-routers are mounted on `base` via statement form to avoid TS2589.
+// (well-known / mcp / docs) because the `/api/*` sub-routers are
+// mounted on `base` via statement form to avoid TS2589.
 // Per-sub-router types are exported below so the web client can build
 // one typed `hc<…>()` proxy per feature — each proxy computes a shallow
 // schema type and avoids the recursion depth blow-up.

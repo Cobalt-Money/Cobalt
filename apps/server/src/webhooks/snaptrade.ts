@@ -174,17 +174,17 @@ export const snaptradeWebhookRouter = new Hono().post("/", async (c) => {
 
     if (!signature) {
       console.error("[snaptrade] Missing Signature header");
-      return c.json({ error: "Missing Signature header" }, 401);
+      return c.json({ code: "signature_missing", error: "Missing Signature header" }, 401);
     }
 
     try {
       if (!verifySignature(rawBody, signature)) {
         console.error("[snaptrade] Signature verification failed");
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ code: "signature_invalid", error: "Unauthorized" }, 401);
       }
     } catch (sigError) {
       console.error("[snaptrade] Signature verification error:", sigError);
-      return c.json({ error: "Invalid signature" }, 401);
+      return c.json({ code: "signature_invalid", error: "Invalid signature" }, 401);
     }
 
     const body = JSON.parse(rawBody) as Record<string, unknown>;
@@ -201,7 +201,7 @@ export const snaptradeWebhookRouter = new Hono().post("/", async (c) => {
         eventType: eventType ?? "missing",
         userId: userId ?? "missing",
       });
-      return c.json({ error: "Invalid payload" }, 400);
+      return c.json({ code: "invalid_payload", error: "Invalid payload" }, 400);
     }
 
     // Replay protection: drop events whose eventTimestamp is stale or far-future.
@@ -210,7 +210,7 @@ export const snaptradeWebhookRouter = new Hono().post("/", async (c) => {
         eventTimestamp: (body as { eventTimestamp?: unknown }).eventTimestamp,
         eventType,
       });
-      return c.json({ error: "Stale event" }, 401);
+      return c.json({ code: "stale_event", error: "Stale event" }, 401);
     }
 
     console.log(`[snaptrade] Received webhook: ${eventType}`, {
@@ -231,6 +231,6 @@ export const snaptradeWebhookRouter = new Hono().post("/", async (c) => {
     return c.json({ status: "processing" });
   } catch (error) {
     console.error("[snaptrade] Webhook processing error:", error);
-    return c.json({ error: "Internal server error" }, 500);
+    return c.json({ code: "webhook_processing_failed", error: "Internal server error" }, 500);
   }
 });

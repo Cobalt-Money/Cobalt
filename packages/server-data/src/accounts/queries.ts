@@ -127,26 +127,6 @@ export async function getAllAccountsWithInstitutions(userId: string): Promise<Ba
 
 // ── Filtered queries ────────────────────────────────────────────────
 
-/**
- * List accounts filtered by Plaid `type` and/or `subtype`. Both filters are
- * optional and combined as AND. Same DTO shape as `getAllAccountsWithInstitutions`.
- */
-export async function listAccounts(
-  userId: string,
-  params: AccountListQuery = {},
-): Promise<BankAccountDTO[]> {
-  const all = await getAllAccountsWithInstitutions(userId);
-  return all.filter((a) => {
-    if (params.type && a.type !== params.type) {
-      return false;
-    }
-    if (params.subtype && a.subtype !== params.subtype) {
-      return false;
-    }
-    return true;
-  });
-}
-
 export async function getBankAccounts(userId: string): Promise<BankAccountListItem[]> {
   const all = await getAllAccountsWithInstitutions(userId);
   return all.filter(isBankAccountListType).map(toBankAccountListItem);
@@ -155,6 +135,132 @@ export async function getBankAccounts(userId: string): Promise<BankAccountListIt
 export async function getCreditCards(userId: string): Promise<BankAccountListItem[]> {
   const all = await getAllAccountsWithInstitutions(userId);
   return all.filter(isCreditCardAccount).map(toBankAccountListItem);
+}
+
+const numOrNullFromStr = (v: string | null | undefined): number | null =>
+  v === null || v === undefined ? null : Number(v);
+
+/**
+ * Flat account row exposed by `listAccounts`. Carries the internal
+ * `financial_account.id` so the SDK / finance agent can use it as
+ * `accountId` for `transactions.create` on a manual account.
+ */
+export interface AccountListItem {
+  id: string;
+  name: string;
+  type: string;
+  subtype: string | null;
+  mask: string | null;
+  institutionName: string | null;
+  currency: string | null;
+  current: number | null;
+  creditLimit: number | null;
+}
+
+export async function listAccounts(
+  userId: string,
+  params: AccountListQuery = {},
+): Promise<AccountListItem[]> {
+  const rows = await db.query.financialAccount.findMany({
+    columns: {
+      customName: true,
+      id: true,
+      institutionName: true,
+      mask: true,
+      name: true,
+      subtype: true,
+      type: true,
+    },
+    where: { userId: { eq: userId } },
+    with: {
+      balance: {
+        columns: {
+          creditLimit: true,
+          currency: true,
+          current: true,
+          userOverrideCreditLimit: true,
+        },
+      },
+      plaidConnection: {
+        columns: { institutionName: true },
+      },
+    },
+  });
+
+  return rows
+    .filter((r) => {
+      if (params.type && r.type !== params.type) {
+        return false;
+      }
+      if (params.subtype && r.subtype !== params.subtype) {
+        return false;
+      }
+      return true;
+    })
+    .map((r) => ({
+      creditLimit:
+        numOrNullFromStr(r.balance?.userOverrideCreditLimit ?? null) ??
+        numOrNullFromStr(r.balance?.creditLimit ?? null),
+      currency: r.balance?.currency ?? null,
+      current: numOrNullFromStr(r.balance?.current ?? null),
+      id: r.id,
+      institutionName: r.plaidConnection?.institutionName ?? r.institutionName ?? null,
+      mask: r.mask,
+      name: r.customName ?? r.name,
+      subtype: r.subtype,
+      type: r.type,
+    }));
+}
+
+/**
+ * Single-account variant of `listAccounts` keyed on the internal
+ * `financial_account.id`. Works for any source (Plaid, SnapTrade, manual).
+ * Returns the same flat `AccountListItem` shape `listAccounts` produces.
+ * Throws a neutral 404 on missing/unowned.
+ */
+export async function getAccountById(userId: string, id: string): Promise<AccountListItem> {
+  const r = await db.query.financialAccount.findFirst({
+    columns: {
+      customName: true,
+      id: true,
+      institutionName: true,
+      mask: true,
+      name: true,
+      subtype: true,
+      type: true,
+      userId: true,
+    },
+    where: { id: { eq: id } },
+    with: {
+      balance: {
+        columns: {
+          creditLimit: true,
+          currency: true,
+          current: true,
+          userOverrideCreditLimit: true,
+        },
+      },
+      plaidConnection: {
+        columns: { institutionName: true },
+      },
+    },
+  });
+  if (!r || r.userId !== userId) {
+    throw new ApiError(404, "account_not_found", "Account not found");
+  }
+  return {
+    creditLimit:
+      numOrNullFromStr(r.balance?.userOverrideCreditLimit ?? null) ??
+      numOrNullFromStr(r.balance?.creditLimit ?? null),
+    currency: r.balance?.currency ?? null,
+    current: numOrNullFromStr(r.balance?.current ?? null),
+    id: r.id,
+    institutionName: r.plaidConnection?.institutionName ?? r.institutionName ?? null,
+    mask: r.mask,
+    name: r.customName ?? r.name,
+    subtype: r.subtype,
+    type: r.type,
+  };
 }
 
 export async function getBankAccountById(
