@@ -4,30 +4,115 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@cobalt-web/ui/components/accordion";
+import { Link } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 
-const FAQS = [
+const FAQS: { a: ReactNode; q: string }[] = [
   {
-    a: "We use Plaid to securely link banks, cards, brokerages, and crypto. Cobalt never sees your bank credentials — Plaid handles authentication directly with your institution.",
+    a: "We use third party services, Plaid and SnapTrade, to link financial institutions. You can also add accounts and transactions manually.",
     q: "How does Cobalt connect to my accounts?",
   },
   {
-    a: "Yes. Cobalt is open source under AGPL-3.0 — you can audit exactly what happens to your data. We never sell it, and AI requests run through providers we explicitly disclose.",
-    q: "Is my financial data private?",
+    a: (
+      <div className="flex flex-col gap-3">
+        <p>
+          Cobalt stores all of the financial data that you either enter manually or connect through
+          a financial institution. See{" "}
+          <Link
+            className="font-medium text-foreground hover:opacity-80"
+            style={{ textDecoration: "none" }}
+            to="/privacy"
+          >
+            our privacy policy
+          </Link>{" "}
+          and the third-party documentation from{" "}
+          <a
+            className="font-medium text-foreground hover:opacity-80"
+            href="https://plaid.com/safety/"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "none" }}
+            target="_blank"
+          >
+            Plaid
+          </a>{" "}
+          and{" "}
+          <a
+            className="font-medium text-foreground hover:opacity-80"
+            href="https://snaptrade.com/security"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "none" }}
+            target="_blank"
+          >
+            SnapTrade
+          </a>{" "}
+          for the full picture of what's collected.
+        </p>
+        <p>
+          We exercise{" "}
+          <a
+            className="font-medium text-foreground hover:opacity-80"
+            href="https://vercel.com/blog/zdr-on-ai-gateway"
+            rel="noopener noreferrer"
+            style={{ textDecoration: "none" }}
+            target="_blank"
+          >
+            zero data retention
+          </a>{" "}
+          with our AI providers when you use AI features inside Cobalt, so none of your data is used
+          for training.
+        </p>
+        <p>
+          If you use Cobalt from your own third-party apps via our API, only the data scoped to the
+          OAuth grant you approved is shared, and you can revoke access at any time from your Cobalt
+          settings.
+        </p>
+      </div>
+    ),
+    q: "Is this secure?",
   },
   {
-    a: "ChatGPT, Claude, Raycast, n8n, Cursor, and anything that speaks MCP. You can also hit the public REST API directly.",
+    a: "Any client that supports Dynamic Client Registration (RFC 7591) over MCP. Direct token-based API access coming soon.",
     q: "Which AI assistants work with Cobalt?",
   },
   {
-    a: "Yes — native iOS app on the App Store, fully in sync with the web app.",
+    a: "Yes, native iOS app on the App Store.",
     q: "Do you have a mobile app?",
   },
   {
-    a: "Free tier covers core accounts and chat. Paid tier unlocks unlimited connections and premium AI models. See the pricing page for details.",
+    a: (
+      <>
+        Free tier covers core accounts and chat. Paid tier unlocks unlimited connections and premium
+        AI models. See the{" "}
+        <Link
+          className="font-medium text-foreground hover:opacity-80"
+          style={{ textDecoration: "none" }}
+          to="/pricing"
+        >
+          pricing
+        </Link>{" "}
+        page for details.
+      </>
+    ),
     q: "How much does Cobalt cost?",
   },
   {
-    a: "Source is open under AGPL-3.0 so you can inspect and run it, but self-hosting is not officially supported. The hosted product is the recommended path.",
+    a: (
+      <>
+        Yes. Cobalt is open source under AGPL-3.0, so you can clone the repo and run your own
+        instance. Self-hosting is not officially supported (no managed onboarding, migrations, or
+        SLAs), but the code, schema, and deployment configs are all public on{" "}
+        <a
+          className="font-medium text-foreground hover:opacity-80"
+          href="https://github.com/Sriketk/cobalt-v2"
+          rel="noopener noreferrer"
+          style={{ textDecoration: "none" }}
+          target="_blank"
+        >
+          GitHub
+        </a>
+        .
+      </>
+    ),
     q: "Can I self-host Cobalt?",
   },
 ];

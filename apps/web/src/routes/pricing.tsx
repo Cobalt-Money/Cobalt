@@ -29,23 +29,32 @@ const ANNUAL_PRICE = 70;
 const ANNUAL_EFFECTIVE_MONTHLY = +(ANNUAL_PRICE / 12).toFixed(2);
 
 const freeFeatures = [
-  "Unlimited manual connections",
-  "AI chat on Claude Haiku 4.5",
-  "Use Cobalt from your favorite AI chatbot",
+  "2 synced bank or brokerage connections",
+  "Unlimited manual accounts",
+  "Budgets, categories, rules, AI chat",
+  "AI on Claude Haiku 4.5",
+  "Use Cobalt API to build your own finance apps",
   "Curated news, research, and market insights",
 ];
 
 const proFeatures = [
   "Unlimited synced bank + brokerage",
-  "Claude Opus 4.7 + extended thinking",
+  "Any Claude model + Analyst mode + extended thinking",
+  "CSV export",
   "Early access to new features",
 ];
 
-function CheckBullet({ label }: { label: string }) {
+function CheckBullet({ accent = false, label }: { accent?: boolean; label: string }) {
   return (
-    <li className="flex items-center gap-3 text-sm">
-      <span className="flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-foreground/15">
-        <HugeiconsIcon className="size-3 text-background" icon={Tick02Icon} strokeWidth={3} />
+    <li className="flex items-start gap-3 text-sm leading-6">
+      <span
+        className={
+          accent
+            ? "mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_1px_0_rgba(0,0,0,0.08)] ring-1 ring-primary/30"
+            : "mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-foreground/[0.04] text-foreground/80 ring-1 ring-foreground/10"
+        }
+      >
+        <HugeiconsIcon className="size-3" icon={Tick02Icon} strokeWidth={3.5} />
       </span>
       <span>{label}</span>
     </li>
@@ -130,18 +139,9 @@ function PricingPage() {
             </div>
             <div className="my-6 h-px w-full bg-border/40" />
             <ul className="flex flex-col gap-4">
-              <li className="flex items-center gap-3 font-medium text-sm">
-                <span className="flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
-                  <HugeiconsIcon
-                    className="size-3 text-primary"
-                    icon={Tick02Icon}
-                    strokeWidth={3}
-                  />
-                </span>
-                <span>All Free features +</span>
-              </li>
+              <CheckBullet accent label="All Free features +" />
               {proFeatures.map((label) => (
-                <CheckBullet key={label} label={label} />
+                <CheckBullet accent key={label} label={label} />
               ))}
             </ul>
             <div className="mt-10 flex-1" />

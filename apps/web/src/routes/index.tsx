@@ -163,7 +163,7 @@ function FinalCTA() {
   return (
     <section className="border-t px-6 py-28 text-center lg:py-36">
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-7">
-        <h2 className="font-display text-4xl tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+        <h2 className="font-semibold text-4xl tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
           Ready to talk
           <br />
           to your money?
