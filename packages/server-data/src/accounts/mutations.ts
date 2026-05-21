@@ -5,6 +5,8 @@ import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connectio
 import { eq } from "drizzle-orm";
 
 import { ApiError } from "../_shared/api-error.js";
+import { upsertManualBalanceSnapshotsForUser } from "../snapshots/mutations.js";
+import type { ManualAccountCreateBody } from "./schemas.js";
 
 /**
  * Resolve the internal `financial_account.id` for a (user, Plaid externalId)
@@ -110,4 +112,40 @@ export async function disconnectBankConnection(userId: string, accountId: string
     message: `Successfully disconnected ${conn.institutionName ?? "bank account"}`,
     success: true,
   };
+}
+
+/**
+ * Insert a manual financial account + its initial balance row, mirroring the
+ * Zero `m.accounts.createAccount` mutator so the OAuth / SDK path and the
+ * web-session path produce identical rows. Also seeds today's snapshot so the
+ * new account shows up in net-worth views immediately (Plaid/SnapTrade get
+ * this through their sync workflows; manual creates need it inline).
+ *
+ * Returns the new account id.
+ */
+export async function createManualAccount(
+  userId: string,
+  body: ManualAccountCreateBody,
+): Promise<{ id: string }> {
+  const accountId = crypto.randomUUID();
+  const trimmedLogo = body.logoDomain?.trim();
+  await db.insert(financialAccount).values({
+    id: accountId,
+    logoDomain: trimmedLogo && trimmedLogo.length > 0 ? trimmedLogo : null,
+    name: body.name.trim(),
+    source: "manual",
+    subtype: body.subtype.trim(),
+    type: body.type,
+    userId,
+  });
+  await db.insert(balance).values({
+    accountId,
+    creditLimit:
+      body.type === "credit" && body.creditLimit !== undefined ? body.creditLimit.toString() : null,
+    currency: body.currency,
+    current: body.currentBalance.toString(),
+    userId,
+  });
+  await upsertManualBalanceSnapshotsForUser(userId, "manual-create");
+  return { id: accountId };
 }
