@@ -35,7 +35,7 @@ export const env = createEnv({
     APPLE_SERVICE_ID: z.string().min(1),
     APPLE_TEAM_ID: z.string().min(1),
     /** Public web app origin for Stripe return URLs (billing portal, etc.). */
-    APP_URL: z.url().default("https://www.try-cobalt.com"),
+    APP_URL: z.url().default("https://cobaltpf.com"),
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
     /** Vercel Blob read/write token. Required for CSV import file storage. */
