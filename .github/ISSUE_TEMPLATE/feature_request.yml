@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest a feature or improvement for Cobalt.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Open an issue **before** opening a PR for any non-trivial feature.
+        Some features may not align with the product direction.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem does this feature solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What you think Cobalt should do.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context

@@ -114,7 +114,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       'Create a new MANUAL financial account for the user (depository, credit, investment, or loan). Server stamps `source: "manual"` and seeds today\'s balance snapshot. Use the returned `id` as `accountId` for `transactions.create`. `currentBalance` is the opening balance; `creditLimit` only valid when `type === "credit"`. `logoDomain` is a Brandfetch domain (e.g. "chase.com") for the lettermark fallback.',
     handler: async (userId, body) => await createManualAccount(userId, body),
     name: "accounts_create",
-    requiredScope: "cobalt:write",
     schema: manualAccountCreateBodySchema,
   }),
   route({
@@ -215,7 +214,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds: merged };
     },
     name: "tags_addToTransaction",
-    requiredScope: "cobalt:write",
     schema: txnTagIdsSchema,
   }),
   route({
@@ -250,7 +248,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds: next };
     },
     name: "tags_removeFromTransaction",
-    requiredScope: "cobalt:write",
     schema: txnTagIdsSchema,
   }),
   route({
@@ -260,7 +257,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { tagIds };
     },
     name: "tags_setOnTransaction",
-    requiredScope: "cobalt:write",
     schema: txnSetTagsSchema,
   }),
   route({
@@ -274,7 +270,6 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       'Create manual transactions on user-owned manual accounts. Input is always an array (1–500 rows; pass `[body]` for a single insert). Returns `{ ids: [...] }` in input order. All-or-nothing: any unowned / non-manual account rejects the whole call. Server stamps `source: "manual"`, `pending: false`, and `userId`.',
     handler: async (userId, bodies) => await createManualTransactions(userId, bodies),
     name: "transactions_create",
-    requiredScope: "cobalt:write",
     schema: transactionCreateInputSchema,
   }),
   route({
@@ -285,14 +280,12 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { ok: true };
     },
     name: "transactions_update",
-    requiredScope: "cobalt:write",
     schema: transactionPatchSchema,
   }),
   route({
     description: "Create a new tag owned by the user. Returns the created tag id.",
     handler: async (userId, body) => await createTag(userId, body),
     name: "tags_create",
-    requiredScope: "cobalt:write",
     schema: createTagBodySchema,
   }),
   route({
@@ -303,16 +296,10 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
       return { ok: true };
     },
     name: "tags_update",
-    requiredScope: "cobalt:write",
     schema: tagUpdateSchema,
   }),
 ];
 
-/**
- * `grantedScopes` is forwarded to `bindRoutes`. Omit it to disable per-route
- * scope checks (trust mode for session-authenticated internal callers); pass
- * the OAuth token's scope set to enforce `requiredScope` per route.
- */
-export function buildBindings(userId: string, grantedScopes?: string[]): Binding[] {
-  return bindRoutes(userId, ROUTES, grantedScopes);
+export function buildBindings(userId: string): Binding[] {
+  return bindRoutes(userId, ROUTES);
 }

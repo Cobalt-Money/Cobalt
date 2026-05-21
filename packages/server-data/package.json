@@ -1,5 +1,6 @@
 {
   "name": "@cobalt-web/server-data",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "exports": {
     "./_shared/*": "./src/_shared/*.ts",

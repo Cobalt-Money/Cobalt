@@ -1,6 +1,7 @@
 {
   "name": "zero-cache",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
     "predev": "pkill -f '@rocicorp/zero/out' 2>/dev/null; pkill -f zero-cache-dev 2>/dev/null; dotenv -e .env -- bash -c 'psql \"${ZERO_UPSTREAM_DB/sslmode=verify-full/sslmode=require}\" -c \"SELECT pg_drop_replication_slot(s.slot_name) FROM pg_replication_slots s WHERE s.slot_name LIKE '\\''zero_dev_0_%'\\'' AND active = false\" 2>/dev/null || true'; exit 0",
