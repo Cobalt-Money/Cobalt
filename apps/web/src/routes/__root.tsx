@@ -2,7 +2,13 @@ import { Toaster } from "@cobalt-web/ui/components/sonner";
 import { ThemeProvider } from "@cobalt-web/ui/components/theme-provider";
 import { TooltipProvider } from "@cobalt-web/ui/components/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRouteWithContext,
+  useLocation,
+} from "@tanstack/react-router";
 import { useEffect } from "react";
 // import { Agentation } from "agentation";
 
@@ -75,8 +81,16 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   }),
 });
 
+const MARKETING_PATHS = new Set(["/", "/pricing", "/terms", "/privacy", "/login"]);
+
+function isMarketingPath(pathname: string): boolean {
+  return MARKETING_PATHS.has(pathname) || pathname.startsWith("/blog");
+}
+
 function RootDocument() {
   const { queryClient } = Route.useRouteContext();
+  const { pathname } = useLocation();
+  const isMarketing = isMarketingPath(pathname);
 
   useEffect(() => {
     if (!import.meta.env.DEV) {
@@ -88,7 +102,7 @@ function RootDocument() {
   }, []);
 
   return (
-    <html className="h-svh overflow-hidden" lang="en" suppressHydrationWarning>
+    <html className={isMarketing ? "" : "h-svh overflow-hidden"} lang="en" suppressHydrationWarning>
       <head>
         {/*
           next-themes applies class after hydration on Vite SPAs; public/theme-init.js
@@ -97,7 +111,7 @@ function RootDocument() {
         <script src="/theme-init.js" />
         <HeadContent />
       </head>
-      <body className="h-svh overflow-hidden">
+      <body className={isMarketing ? "" : "h-svh overflow-hidden"}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -108,7 +122,13 @@ function RootDocument() {
             <AppSessionProvider>
               <DemoProvider>
                 <TooltipProvider>
-                  <div className="flex h-svh min-h-0 flex-col overflow-hidden">
+                  <div
+                    className={
+                      isMarketing
+                        ? "flex min-h-svh flex-col"
+                        : "flex h-svh min-h-0 flex-col overflow-hidden"
+                    }
+                  >
                     <Outlet />
                   </div>
                   <UpgradePromptHost />

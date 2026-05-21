@@ -59,7 +59,7 @@ function LandingPage() {
   return (
     <>
       <LandingStyles />
-      <main className="flex h-svh flex-col overflow-auto no-scrollbar">
+      <main className="flex flex-1 flex-col">
         <MarketingNav />
         <Hero />
         <IntegrationsSection />

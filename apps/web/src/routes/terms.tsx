@@ -18,7 +18,7 @@ export const Route = createFileRoute("/terms")({
 
 function TermsOfService() {
   return (
-    <main className="flex h-svh flex-col overflow-auto no-scrollbar">
+    <main className="flex flex-1 flex-col">
       <MarketingNav />
       <div className="container mx-auto max-w-4xl px-6 py-16">
         <h1 className="text-4xl font-bold mb-8">Terms of Service</h1>
