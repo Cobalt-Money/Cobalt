@@ -136,34 +136,22 @@ function tryNavigateToClient(url: string): void {
   }
 }
 
-const IDENTITY_SCOPE_LABELS: Record<string, string> = {
-  email: "Read your email address",
-  offline_access: "Stay signed in (refresh tokens)",
-  openid: "Verify your identity",
-  profile: "Read your basic profile",
-};
-
-const IDENTITY_SCOPES = new Set(Object.keys(IDENTITY_SCOPE_LABELS));
-
 /**
- * Capabilities the access token grants on the data side, surfaced so users
- * understand what an MCP client can do. The token doesn't carry per-resource
- * scopes today — bearer = full read + tag/category writes. Kept in sync with
- * `cobalt.*` SDK in apps/server/src/ai/agents/finance-agent/sdk-description.ts.
+ * Capabilities the access token grants. Tokens are not scoped — Allow = full
+ * access to everything bound on the agent SDK. Kept in sync with `cobalt.*`
+ * bindings in apps/server/src/ai/agents/finance-agent/bindings.ts.
  */
 const COBALT_CAPABILITIES = [
-  "Read your accounts, transactions, and holdings",
-  "Edit transaction tags, categories, and notes",
+  "Read your accounts, transactions, holdings, categories, and tags",
+  "Create manual accounts and transactions",
+  "Edit transaction categories, tags, and notes",
+  "Create, edit, and delete tags",
 ] as const;
 
 const COBALT_NEGATIVE_CAPABILITIES = [
   "Cannot move money or change account connections",
   "Cannot access your chats",
 ] as const;
-
-function describeIdentityScope(scope: string): string {
-  return IDENTITY_SCOPE_LABELS[scope] ?? scope;
-}
 
 interface PublicClient {
   client_id: string;
@@ -244,59 +232,34 @@ function ClientCard({
   );
 }
 
-function ScopeList({ scopes }: { scopes: string[] }) {
-  const identity = scopes.filter((s) => IDENTITY_SCOPES.has(s));
+function CapabilityList() {
   return (
-    <div className="space-y-4">
-      {identity.length > 0 ? (
-        <div>
-          <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-            Identity
-          </p>
-          <ul className="space-y-2">
-            {identity.map((scope) => (
-              <li className="flex items-start gap-2 text-sm" key={scope}>
-                <HugeiconsIcon
-                  className="text-foreground/70 mt-0.5 shrink-0"
-                  icon={CheckmarkCircle02Icon}
-                  size={16}
-                />
-                <div className="min-w-0">
-                  <span>{describeIdentityScope(scope)}</span>
-                  <code className="text-muted-foreground ml-1.5 text-xs">{scope}</code>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      <div>
-        <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-          Cobalt data
-        </p>
-        <ul className="space-y-2">
-          {COBALT_CAPABILITIES.map((label) => (
-            <li className="flex items-start gap-2 text-sm" key={label}>
-              <HugeiconsIcon
-                className="text-foreground/70 mt-0.5 shrink-0"
-                icon={CheckmarkCircle02Icon}
-                size={16}
-              />
-              <span className="min-w-0">{label}</span>
-            </li>
-          ))}
-          {COBALT_NEGATIVE_CAPABILITIES.map((label) => (
-            <li className="flex items-start gap-2 text-sm" key={label}>
-              <HugeiconsIcon
-                className="text-muted-foreground mt-0.5 shrink-0"
-                icon={Alert02Icon}
-                size={16}
-              />
-              <span className="text-muted-foreground min-w-0">{label}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div>
+      <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+        Cobalt data
+      </p>
+      <ul className="space-y-2">
+        {COBALT_CAPABILITIES.map((label) => (
+          <li className="flex items-start gap-2 text-sm" key={label}>
+            <HugeiconsIcon
+              className="text-foreground/70 mt-0.5 shrink-0"
+              icon={CheckmarkCircle02Icon}
+              size={16}
+            />
+            <span className="min-w-0">{label}</span>
+          </li>
+        ))}
+        {COBALT_NEGATIVE_CAPABILITIES.map((label) => (
+          <li className="flex items-start gap-2 text-sm" key={label}>
+            <HugeiconsIcon
+              className="text-muted-foreground mt-0.5 shrink-0"
+              icon={Alert02Icon}
+              size={16}
+            />
+            <span className="text-muted-foreground min-w-0">{label}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -324,15 +287,6 @@ function RouteComponent() {
     staleTime: 5 * 60 * 1000,
   });
   const client = clientQuery.data ?? null;
-
-  const scopes = useMemo(() => {
-    const params = new URLSearchParams(window.location.search);
-    const raw = params.get("scope");
-    if (!raw) {
-      return [];
-    }
-    return raw.split(/\s+/).filter(Boolean);
-  }, []);
 
   const postConsent = useCallback(
     async (accept: boolean) => {
@@ -456,7 +410,7 @@ function RouteComponent() {
               </Alert>
             ) : null}
 
-            <ScopeList scopes={scopes} />
+            <CapabilityList />
 
             <Separator />
 

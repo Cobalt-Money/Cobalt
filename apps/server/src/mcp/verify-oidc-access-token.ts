@@ -12,7 +12,6 @@ export interface McpAccessTokenPayload {
   aud?: string | string[];
   azp?: string;
   exp?: number;
-  scope?: string | string[];
   sub?: string;
 }
 
