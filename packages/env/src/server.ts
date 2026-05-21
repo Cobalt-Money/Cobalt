@@ -79,4 +79,5 @@ export const env = createEnv({
     /** Pool for Zero mutate adapter (keep small if same DB as `DATABASE_URL`). */
     ZERO_DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(2),
   },
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });

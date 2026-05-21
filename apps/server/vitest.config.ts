@@ -15,5 +15,6 @@ export default defineConfig({
         inline: [/@tanstack\/ai-isolate-cloudflare/],
       },
     },
+    setupFiles: ["./test-setup.ts"],
   },
 });
