@@ -7,11 +7,6 @@ import { describe, expect, test } from "vitest";
  * it runs without any env config or migration runner. A full integration test
  * that exercises mutations.ts directly comes next; this validates the toolchain.
  */
-
-// PGlite cold-boots a WASM Postgres per `new PGlite()`. On CI that easily
-// exceeds vitest's 5s default; bump per-test to 30s.
-const PGLITE_TIMEOUT_MS = 30_000;
-
 describe("pglite — partial unique index ON CONFLICT semantics", () => {
   test("ON CONFLICT without WHERE predicate fails to match a partial index", async () => {
     const pg = new PGlite();
@@ -40,7 +35,7 @@ describe("pglite — partial unique index ON CONFLICT semantics", () => {
         ["user-a", "hash-1", 10],
       ),
     ).rejects.toThrow(/no unique or exclusion constraint/);
-  }, PGLITE_TIMEOUT_MS);
+  });
 
   test("ON CONFLICT WITH the partial WHERE predicate matches and is silent", async () => {
     const pg = new PGlite();
@@ -72,5 +67,5 @@ describe("pglite — partial unique index ON CONFLICT semantics", () => {
 
     const total = await pg.query<{ count: string }>(`SELECT count(*)::text as count FROM t`);
     expect(total.rows[0]?.count).toBe("1");
-  }, PGLITE_TIMEOUT_MS);
+  });
 });
