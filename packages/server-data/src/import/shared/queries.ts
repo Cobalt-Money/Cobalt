@@ -4,6 +4,7 @@ import type { PendingAccountCreate } from "@cobalt-web/db/schema/imports/import-
 import { importStagedTransaction } from "@cobalt-web/db/schema/imports/import-staged-transaction";
 import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
 
+import { ApiError } from "../../_shared/api-error";
 import type { ImportStatusResponse } from "./schemas";
 
 export interface ResumableImportJob {
@@ -314,7 +315,7 @@ export async function assertOwnedJob(userId: string, jobId: string) {
     where: { id: { eq: jobId }, userId: { eq: userId } },
   });
   if (!job) {
-    throw new Error("Import job not found");
+    throw new ApiError(404, "import_job_not_found", "Import job not found");
   }
   return job;
 }

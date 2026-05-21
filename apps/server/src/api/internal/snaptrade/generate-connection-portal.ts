@@ -29,6 +29,7 @@ const route = createRoute({
       errorResponseWithCodeSchema,
       "Free-tier connection limit reached — upgrade required",
     ),
+    403: jsonContent(errorResponseWithCodeSchema, "Not available in demo mode"),
     422: validationErrorResponse(generatePortalQuerySchema),
     502: jsonContent(errorResponseWithCodeSchema, "SnapTrade upstream failed"),
   },

@@ -16,6 +16,7 @@ import { env } from "@cobalt-web/env/server";
 import { del } from "@vercel/blob";
 import { and, eq, inArray, sql } from "drizzle-orm";
 
+import { ApiError } from "../../_shared/api-error";
 import { cacheAccountChoices } from "../account-mapping/cache";
 import { hashImportRow } from "../shared/dedupe-hash";
 
@@ -67,7 +68,11 @@ export async function applyPendingAccountCreates(
   if (resolution.kind === "single") {
     if ("accountId" in resolution) {
       if (!ownedIds.has(resolution.accountId)) {
-        throw new Error(`Cannot commit — target account no longer exists. Re-confirm Step 3.`);
+        throw new ApiError(
+          409,
+          "account_resolution_stale",
+          "Cannot commit — target account no longer exists. Re-confirm Step 3.",
+        );
       }
       return resolution;
     }
@@ -75,7 +80,11 @@ export async function applyPendingAccountCreates(
       { create: resolution.pendingCreate, label: "__single__" },
     ]);
     if (!created) {
-      throw new Error(`Failed to create account "${resolution.pendingCreate.name}"`);
+      throw new ApiError(
+        500,
+        "account_create_failed",
+        `Failed to create account "${resolution.pendingCreate.name}"`,
+      );
     }
     return { accountId: created.accountId, kind: "single" };
   }
@@ -90,7 +99,9 @@ export async function applyPendingAccountCreates(
     }
     if (typeof entry === "string") {
       if (!ownedIds.has(entry)) {
-        throw new Error(
+        throw new ApiError(
+          409,
+          "account_resolution_stale",
           `Cannot commit — target account for "${label}" no longer exists. Re-confirm Step 3.`,
         );
       }
@@ -145,7 +156,7 @@ async function bulkInsertPendingAccounts(
       )
       .returning({ id: financialAccount.id });
     if (accounts.length !== pending.length) {
-      throw new Error("Failed to create one or more accounts");
+      throw new ApiError(500, "account_create_failed", "Failed to create one or more accounts");
     }
     await tx.insert(balance).values(
       accounts.map((a) => ({
@@ -158,7 +169,7 @@ async function bulkInsertPendingAccounts(
     return pending.map((p, i) => {
       const account = accounts[i];
       if (!account) {
-        throw new Error(`Missing returned account at index ${i}`);
+        throw new ApiError(500, "account_create_failed", `Missing returned account at index ${i}`);
       }
       return { accountId: account.id, label: p.label };
     });
@@ -200,7 +211,11 @@ export async function applyPendingCreates(
     return updated;
   }
   if (userGroupIds.size === 0 || !fallbackGroupId) {
-    throw new Error("Cannot create categories — no category groups exist for user");
+    throw new ApiError(
+      409,
+      "category_groups_missing",
+      "Cannot create categories — no category groups exist for user",
+    );
   }
   // Bulk insert; Postgres RETURNING preserves VALUES order so the i-th row
   // corresponds to creates[i]. Fall back to first group if the originally-chosen
@@ -217,12 +232,12 @@ export async function applyPendingCreates(
     )
     .returning({ id: category.id });
   if (created.length !== creates.length) {
-    throw new Error("Failed to create one or more categories");
+    throw new ApiError(500, "category_create_failed", "Failed to create one or more categories");
   }
   for (const [i, c] of creates.entries()) {
     const row = created[i];
     if (!row) {
-      throw new Error(`Missing returned category at index ${i}`);
+      throw new ApiError(500, "category_create_failed", `Missing returned category at index ${i}`);
     }
     updated[c.sourceLabel] = row.id;
   }
@@ -574,7 +589,11 @@ function resolveAccountId(sourceAccountName: string, resolution: AccountResoluti
       return resolution.accountId;
     }
     // Pending create should have been materialised by applyAccountCreatesStep.
-    throw new Error("Account resolution still has unmaterialised pending create");
+    throw new ApiError(
+      500,
+      "account_resolution_unmaterialised",
+      "Account resolution still has unmaterialised pending create",
+    );
   }
   const v = resolution.map[sourceAccountName];
   if (!v || v === "skip") {
@@ -583,7 +602,9 @@ function resolveAccountId(sourceAccountName: string, resolution: AccountResoluti
   if (typeof v === "string") {
     return v;
   }
-  throw new Error(
+  throw new ApiError(
+    500,
+    "account_resolution_unmaterialised",
     `Account resolution for "${sourceAccountName}" still has unmaterialised pending create`,
   );
 }

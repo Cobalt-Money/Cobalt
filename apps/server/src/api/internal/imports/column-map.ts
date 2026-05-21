@@ -1,4 +1,5 @@
 import type { CsvMapping } from "@cobalt-web/db/schema/imports/import-job";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { confirmColumnMapping } from "@cobalt-web/server-data/import/column-mapping/actions";
 import { lookupColumnMappingCache } from "@cobalt-web/server-data/import/column-mapping/cache";
 import {
@@ -28,7 +29,8 @@ const suggestRoute = createRoute({
   request: { params: importJobIdParamSchema },
   responses: {
     200: jsonContent(columnMappingResponseSchema, "AI-inferred column mapping"),
-    404: { description: "Import job not found" },
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Import job not found"),
   },
   summary: "Suggest column mapping (Step 2)",
   tags: ["Imports"],
@@ -44,6 +46,7 @@ const confirmRoute = createRoute({
   },
   responses: {
     200: jsonContent(columnMappingConfirmResponseSchema, "Mapping confirmed; rows staged"),
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
   },
   summary: "Confirm column mapping",
   tags: ["Imports"],
@@ -88,7 +91,7 @@ export const importsColumnMapRouter = createApp()
     const headers = await getRawRowsHeaders(id);
     const sampleRows = await getRawSampleRows(id, 20);
     if (headers.length === 0) {
-      return c.json({ error: "No raw rows for job" }, 404);
+      return c.json({ code: "no_raw_rows", error: "No raw rows for job" }, 404);
     }
     const job = await assertOwnedJob(c.var.user.id, id);
     if (job.schemaMapping) {

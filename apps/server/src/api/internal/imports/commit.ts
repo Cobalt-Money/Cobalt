@@ -1,3 +1,4 @@
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { runPreCommitGate } from "@cobalt-web/server-data/import/commit/pre-commit-gate";
 import { getImportJobStatus } from "@cobalt-web/server-data/import/shared/queries";
 import {
@@ -24,8 +25,9 @@ const route = createRoute({
   },
   responses: {
     200: jsonContent(successResponseSchema, "Commit workflow triggered"),
-    404: { description: "Import job not found" },
-    409: { description: "Job not ready for commit" },
+    401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
+    404: jsonContent(errorResponseWithCodeSchema, "Import job not found"),
+    409: jsonContent(errorResponseWithCodeSchema, "Job not ready for commit"),
     422: jsonContent(
       preCommitGateResponseSchema,
       "Pre-commit gate blocked the import, or raised warnings needing override",
@@ -40,11 +42,14 @@ export const importsCommitRouter = createApp().openapi(route, async (c) => {
   const { override } = c.req.valid("json");
   const job = await getImportJobStatus(c.var.user.id, id);
   if (!job) {
-    return c.json({ error: "Import job not found" }, 404);
+    return c.json({ code: "import_job_not_found", error: "Import job not found" }, 404);
   }
   if (job.status !== "category_mapped") {
     return c.json(
-      { error: `Cannot commit job in status "${job.status}"; expected "category_mapped"` },
+      {
+        code: "import_job_not_ready",
+        error: `Cannot commit job in status "${job.status}"; expected "category_mapped"`,
+      },
       409,
     );
   }

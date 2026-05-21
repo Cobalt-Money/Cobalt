@@ -26,13 +26,13 @@ export const appstoreWebhookRouter = new Hono().post("/", async (c) => {
     body = (await c.req.json()) as SignedPayloadBody;
   } catch (error) {
     console.error("[appstore] Invalid JSON body:", error);
-    return c.json({ error: "Invalid JSON" }, 400);
+    return c.json({ code: "invalid_json", error: "Invalid JSON" }, 400);
   }
 
   const { signedPayload } = body;
   if (typeof signedPayload !== "string" || signedPayload.length === 0) {
     console.error("[appstore] Missing signedPayload");
-    return c.json({ error: "Missing signedPayload" }, 400);
+    return c.json({ code: "signed_payload_missing", error: "Missing signedPayload" }, 400);
   }
 
   try {
@@ -67,11 +67,12 @@ export const appstoreWebhookRouter = new Hono().post("/", async (c) => {
   } catch (error) {
     if (error instanceof AppStoreVerificationError) {
       console.error(`[appstore] Verification failed: ${error.message}`);
-      return c.json({ error: "Signature verification failed" }, 401);
+      return c.json({ code: "signature_invalid", error: "Signature verification failed" }, 401);
     }
     console.error("[appstore] Webhook processing error:", error);
     // Return 200 so Apple doesn't retry indefinitely on our bugs.
     return c.json({
+      code: "webhook_processing_failed",
       error: error instanceof Error ? error.message : "Unknown error",
       status: "error",
     });

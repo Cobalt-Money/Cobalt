@@ -5,6 +5,7 @@ import { env } from "@cobalt-web/env/server";
 import { get } from "@vercel/blob";
 import { eq } from "drizzle-orm";
 
+import { ApiError } from "../../_shared/api-error";
 import { resolveAccountChoice } from "../account-mapping/actions";
 import type { ConfirmColumnMappingBody } from "../shared/schemas";
 import { parseFullCsv } from "../shared/parse-csv";
@@ -31,14 +32,18 @@ export async function confirmColumnMapping(
       keys: Object.keys(job),
       status: job.status,
     });
-    throw new Error("Import job has no uploaded file");
+    throw new ApiError(409, "upload_missing", "Import job has no uploaded file");
   }
   const result = await get(job.fileKey, {
     access: "private",
     token: env.BLOB_READ_WRITE_TOKEN,
   });
   if (!result || result.statusCode !== 200) {
-    throw new Error(`Failed to fetch upload blob: ${String(result?.statusCode ?? "no result")}`);
+    throw new ApiError(
+      502,
+      "upload_blob_unreadable",
+      `Failed to fetch upload blob: ${String(result?.statusCode ?? "no result")}`,
+    );
   }
   const text = await new Response(result.stream).text();
   const rows = await parseFullCsv(text);
