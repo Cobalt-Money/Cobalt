@@ -7,7 +7,7 @@ take security reports seriously and appreciate responsible disclosure.
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-Email: **security@cobalt.app** (replace with real address before launch)
+Email: **sriketk@try-cobalt.com**
 
 Please include:
 

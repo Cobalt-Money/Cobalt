@@ -45,7 +45,7 @@ consistent. Close as `not planned` after replying unless otherwise noted.
 ## Security issue posted publicly
 
 > This looks like a potential security issue. Please **do not** post
-> security findings publicly. Email **security@cobalt.app** with the
+> security findings publicly. Email **sriketk@try-cobalt.com** with the
 > details — see [`SECURITY.md`](../../SECURITY.md) for the disclosure
 > process.
 >
