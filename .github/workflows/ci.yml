@@ -9,6 +9,9 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+  NODE_OPTIONS: --max-old-space-size=8192
+
 jobs:
   check:
     name: Typecheck + Lint
