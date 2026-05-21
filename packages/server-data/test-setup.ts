@@ -1,3 +1,10 @@
+// Trigger the zod `.openapi(...)` prototype augmentation from
+// `@hono/zod-openapi` so that any schema module loaded in a test (e.g.
+// `transactions/schemas.ts`) can call `.openapi(name)` on a plain `zod`
+// schema imported from `@cobalt-web/db`. Without this side-effect import,
+// schema modules tree-shake the augmentation away and crash at load.
+import "@hono/zod-openapi";
+
 // Seed every env var `@cobalt-web/env/server` validates on import, so that
 // importing server-data modules in a unit-test context does not blow up the
 // t3-env schema. Tests never hit a real database / provider — actions and
