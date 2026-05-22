@@ -10,7 +10,6 @@ import { ImportWizardHost } from "@/components/imports/import-wizard";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
 import { AppSidebar } from "@/components/shell/sidebar/app-sidebar";
-import { SettingsDialogProvider } from "@/components/shell/sidebar/nav/settings-dialog-provider";
 import { useAppSession } from "@/lib/providers/app-session";
 import { ZeroProvider } from "@/lib/providers/zero-client";
 
@@ -63,35 +62,33 @@ function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDe
     <ZeroProvider>
       <OnboardingProgressProvider>
         <PrivacyProvider>
-          <SettingsDialogProvider>
-            <ImportWizardHost>
-              <div
-                className="flex h-svh min-h-0 flex-col overflow-hidden"
-                data-demo-banner={isDemo ? "1" : undefined}
-              >
-                {chromeless ? (
-                  // Onboarding mounts CommandMenuProvider so the Connect step
-                  // can call `openAddAccount()` and launch the real Plaid flow
-                  // without leaving the route. Sidebar + demo banner stay hidden.
-                  <CommandMenuProvider>
+          <ImportWizardHost>
+            <div
+              className="flex h-svh min-h-0 flex-col overflow-hidden"
+              data-demo-banner={isDemo ? "1" : undefined}
+            >
+              {chromeless ? (
+                // Onboarding mounts CommandMenuProvider so the Connect step
+                // can call `openAddAccount()` and launch the real Plaid flow
+                // without leaving the route. Sidebar + demo banner stay hidden.
+                <CommandMenuProvider>
+                  <AmbientInsetProvider>
+                    <Outlet />
+                  </AmbientInsetProvider>
+                </CommandMenuProvider>
+              ) : (
+                <CommandMenuProvider>
+                  <DemoBanner />
+                  <SidebarProvider className="min-h-0 flex-1">
+                    <AppSidebar />
                     <AmbientInsetProvider>
                       <Outlet />
                     </AmbientInsetProvider>
-                  </CommandMenuProvider>
-                ) : (
-                  <CommandMenuProvider>
-                    <DemoBanner />
-                    <SidebarProvider className="min-h-0 flex-1">
-                      <AppSidebar />
-                      <AmbientInsetProvider>
-                        <Outlet />
-                      </AmbientInsetProvider>
-                    </SidebarProvider>
-                  </CommandMenuProvider>
-                )}
-              </div>
-            </ImportWizardHost>
-          </SettingsDialogProvider>
+                  </SidebarProvider>
+                </CommandMenuProvider>
+              )}
+            </div>
+          </ImportWizardHost>
         </PrivacyProvider>
         <OnboardingProgress />
       </OnboardingProgressProvider>
@@ -103,15 +100,21 @@ function AuthLayout() {
   const session = useAppSession();
   const location = useLocation();
   const isOnboardingRoute = location.pathname === "/onboarding";
+  // Settings owns its own full-screen chrome (sidebar + back-to-app) per
+  // Linear/Vercel pattern. Same chromeless escape hatch as onboarding so
+  // providers stay mounted but AppSidebar/demo banner don't render.
+  const isSettingsRoute = location.pathname.startsWith("/settings");
 
-  // beforeLoad has already guaranteed session.data exists for non-pending case.
-  // We still null-guard for the pending state because beforeLoad short-circuits
-  // (returns undefined) while auth is loading.
   if (session.isPending || !session.data) {
     return null;
   }
 
   const user = session.data.user as { isAnonymous?: boolean };
 
-  return <AuthShellWithOutlet chromeless={isOnboardingRoute} isDemo={Boolean(user.isAnonymous)} />;
+  return (
+    <AuthShellWithOutlet
+      chromeless={isOnboardingRoute || isSettingsRoute}
+      isDemo={Boolean(user.isAnonymous)}
+    />
+  );
 }

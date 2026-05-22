@@ -22,6 +22,7 @@ import { Route as AuthOnboardingRouteImport } from './routes/_auth/onboarding'
 import { Route as AuthAlertsPreviewRouteImport } from './routes/_auth/alerts-preview'
 import { Route as AuthTransactionsRouteRouteImport } from './routes/_auth/transactions/route'
 import { Route as AuthSubscriptionsRouteRouteImport } from './routes/_auth/subscriptions/route'
+import { Route as AuthSettingsRouteRouteImport } from './routes/_auth/settings/route'
 import { Route as AuthResearchRouteRouteImport } from './routes/_auth/research/route'
 import { Route as AuthNewsRouteRouteImport } from './routes/_auth/news/route'
 import { Route as AuthHomeRouteRouteImport } from './routes/_auth/home/route'
@@ -30,6 +31,7 @@ import { Route as AuthAiChatRouteRouteImport } from './routes/_auth/ai-chat/rout
 import { Route as AuthAccountsRouteRouteImport } from './routes/_auth/accounts/route'
 import { Route as AuthTransactionsIndexRouteImport } from './routes/_auth/transactions/index'
 import { Route as AuthSubscriptionsIndexRouteImport } from './routes/_auth/subscriptions/index'
+import { Route as AuthSettingsIndexRouteImport } from './routes/_auth/settings/index'
 import { Route as AuthResearchIndexRouteImport } from './routes/_auth/research/index'
 import { Route as AuthNewsIndexRouteImport } from './routes/_auth/news/index'
 import { Route as AuthHomeIndexRouteImport } from './routes/_auth/home/index'
@@ -38,6 +40,10 @@ import { Route as AuthAiChatIndexRouteImport } from './routes/_auth/ai-chat/inde
 import { Route as AuthAccountsIndexRouteImport } from './routes/_auth/accounts/index'
 import { Route as AuthTransactionsCategoriesRouteImport } from './routes/_auth/transactions/categories'
 import { Route as AuthTransactionsTransactionIdRouteImport } from './routes/_auth/transactions/$transactionId'
+import { Route as AuthSettingsProfileRouteImport } from './routes/_auth/settings/profile'
+import { Route as AuthSettingsBillingRouteImport } from './routes/_auth/settings/billing'
+import { Route as AuthSettingsAppearanceRouteImport } from './routes/_auth/settings/appearance'
+import { Route as AuthSettingsAccountRouteImport } from './routes/_auth/settings/account'
 import { Route as AuthResearchSymbolRouteImport } from './routes/_auth/research/$symbol'
 import { Route as AuthNewsEventIdRouteImport } from './routes/_auth/news/$eventId'
 import { Route as AuthAiChatChatIdRouteImport } from './routes/_auth/ai-chat/$chatId'
@@ -106,6 +112,11 @@ const AuthSubscriptionsRouteRoute = AuthSubscriptionsRouteRouteImport.update({
   path: '/subscriptions',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthSettingsRouteRoute = AuthSettingsRouteRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthResearchRouteRoute = AuthResearchRouteRouteImport.update({
   id: '/research',
   path: '/research',
@@ -145,6 +156,11 @@ const AuthSubscriptionsIndexRoute = AuthSubscriptionsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthSubscriptionsRouteRoute,
+} as any)
+const AuthSettingsIndexRoute = AuthSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthSettingsRouteRoute,
 } as any)
 const AuthResearchIndexRoute = AuthResearchIndexRouteImport.update({
   id: '/',
@@ -188,6 +204,26 @@ const AuthTransactionsTransactionIdRoute =
     path: '/$transactionId',
     getParentRoute: () => AuthTransactionsRouteRoute,
   } as any)
+const AuthSettingsProfileRoute = AuthSettingsProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthSettingsRouteRoute,
+} as any)
+const AuthSettingsBillingRoute = AuthSettingsBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AuthSettingsRouteRoute,
+} as any)
+const AuthSettingsAppearanceRoute = AuthSettingsAppearanceRouteImport.update({
+  id: '/appearance',
+  path: '/appearance',
+  getParentRoute: () => AuthSettingsRouteRoute,
+} as any)
+const AuthSettingsAccountRoute = AuthSettingsAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthSettingsRouteRoute,
+} as any)
 const AuthResearchSymbolRoute = AuthResearchSymbolRouteImport.update({
   id: '/$symbol',
   path: '/$symbol',
@@ -216,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthHomeRouteRouteWithChildren
   '/news': typeof AuthNewsRouteRouteWithChildren
   '/research': typeof AuthResearchRouteRouteWithChildren
+  '/settings': typeof AuthSettingsRouteRouteWithChildren
   '/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/transactions': typeof AuthTransactionsRouteRouteWithChildren
   '/alerts-preview': typeof AuthAlertsPreviewRoute
@@ -226,6 +263,10 @@ export interface FileRoutesByFullPath {
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/news/$eventId': typeof AuthNewsEventIdRoute
   '/research/$symbol': typeof AuthResearchSymbolRoute
+  '/settings/account': typeof AuthSettingsAccountRoute
+  '/settings/appearance': typeof AuthSettingsAppearanceRoute
+  '/settings/billing': typeof AuthSettingsBillingRoute
+  '/settings/profile': typeof AuthSettingsProfileRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
   '/transactions/categories': typeof AuthTransactionsCategoriesRoute
   '/accounts/': typeof AuthAccountsIndexRoute
@@ -234,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/home/': typeof AuthHomeIndexRoute
   '/news/': typeof AuthNewsIndexRoute
   '/research/': typeof AuthResearchIndexRoute
+  '/settings/': typeof AuthSettingsIndexRoute
   '/subscriptions/': typeof AuthSubscriptionsIndexRoute
   '/transactions/': typeof AuthTransactionsIndexRoute
 }
@@ -251,6 +293,10 @@ export interface FileRoutesByTo {
   '/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/news/$eventId': typeof AuthNewsEventIdRoute
   '/research/$symbol': typeof AuthResearchSymbolRoute
+  '/settings/account': typeof AuthSettingsAccountRoute
+  '/settings/appearance': typeof AuthSettingsAppearanceRoute
+  '/settings/billing': typeof AuthSettingsBillingRoute
+  '/settings/profile': typeof AuthSettingsProfileRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
   '/transactions/categories': typeof AuthTransactionsCategoriesRoute
   '/accounts': typeof AuthAccountsIndexRoute
@@ -259,6 +305,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthHomeIndexRoute
   '/news': typeof AuthNewsIndexRoute
   '/research': typeof AuthResearchIndexRoute
+  '/settings': typeof AuthSettingsIndexRoute
   '/subscriptions': typeof AuthSubscriptionsIndexRoute
   '/transactions': typeof AuthTransactionsIndexRoute
 }
@@ -276,6 +323,7 @@ export interface FileRoutesById {
   '/_auth/home': typeof AuthHomeRouteRouteWithChildren
   '/_auth/news': typeof AuthNewsRouteRouteWithChildren
   '/_auth/research': typeof AuthResearchRouteRouteWithChildren
+  '/_auth/settings': typeof AuthSettingsRouteRouteWithChildren
   '/_auth/subscriptions': typeof AuthSubscriptionsRouteRouteWithChildren
   '/_auth/transactions': typeof AuthTransactionsRouteRouteWithChildren
   '/_auth/alerts-preview': typeof AuthAlertsPreviewRoute
@@ -286,6 +334,10 @@ export interface FileRoutesById {
   '/_auth/ai-chat/$chatId': typeof AuthAiChatChatIdRoute
   '/_auth/news/$eventId': typeof AuthNewsEventIdRoute
   '/_auth/research/$symbol': typeof AuthResearchSymbolRoute
+  '/_auth/settings/account': typeof AuthSettingsAccountRoute
+  '/_auth/settings/appearance': typeof AuthSettingsAppearanceRoute
+  '/_auth/settings/billing': typeof AuthSettingsBillingRoute
+  '/_auth/settings/profile': typeof AuthSettingsProfileRoute
   '/_auth/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
   '/_auth/transactions/categories': typeof AuthTransactionsCategoriesRoute
   '/_auth/accounts/': typeof AuthAccountsIndexRoute
@@ -294,6 +346,7 @@ export interface FileRoutesById {
   '/_auth/home/': typeof AuthHomeIndexRoute
   '/_auth/news/': typeof AuthNewsIndexRoute
   '/_auth/research/': typeof AuthResearchIndexRoute
+  '/_auth/settings/': typeof AuthSettingsIndexRoute
   '/_auth/subscriptions/': typeof AuthSubscriptionsIndexRoute
   '/_auth/transactions/': typeof AuthTransactionsIndexRoute
 }
@@ -311,6 +364,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/news'
     | '/research'
+    | '/settings'
     | '/subscriptions'
     | '/transactions'
     | '/alerts-preview'
@@ -321,6 +375,10 @@ export interface FileRouteTypes {
     | '/ai-chat/$chatId'
     | '/news/$eventId'
     | '/research/$symbol'
+    | '/settings/account'
+    | '/settings/appearance'
+    | '/settings/billing'
+    | '/settings/profile'
     | '/transactions/$transactionId'
     | '/transactions/categories'
     | '/accounts/'
@@ -329,6 +387,7 @@ export interface FileRouteTypes {
     | '/home/'
     | '/news/'
     | '/research/'
+    | '/settings/'
     | '/subscriptions/'
     | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
@@ -346,6 +405,10 @@ export interface FileRouteTypes {
     | '/ai-chat/$chatId'
     | '/news/$eventId'
     | '/research/$symbol'
+    | '/settings/account'
+    | '/settings/appearance'
+    | '/settings/billing'
+    | '/settings/profile'
     | '/transactions/$transactionId'
     | '/transactions/categories'
     | '/accounts'
@@ -354,6 +417,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/news'
     | '/research'
+    | '/settings'
     | '/subscriptions'
     | '/transactions'
   id:
@@ -370,6 +434,7 @@ export interface FileRouteTypes {
     | '/_auth/home'
     | '/_auth/news'
     | '/_auth/research'
+    | '/_auth/settings'
     | '/_auth/subscriptions'
     | '/_auth/transactions'
     | '/_auth/alerts-preview'
@@ -380,6 +445,10 @@ export interface FileRouteTypes {
     | '/_auth/ai-chat/$chatId'
     | '/_auth/news/$eventId'
     | '/_auth/research/$symbol'
+    | '/_auth/settings/account'
+    | '/_auth/settings/appearance'
+    | '/_auth/settings/billing'
+    | '/_auth/settings/profile'
     | '/_auth/transactions/$transactionId'
     | '/_auth/transactions/categories'
     | '/_auth/accounts/'
@@ -388,6 +457,7 @@ export interface FileRouteTypes {
     | '/_auth/home/'
     | '/_auth/news/'
     | '/_auth/research/'
+    | '/_auth/settings/'
     | '/_auth/subscriptions/'
     | '/_auth/transactions/'
   fileRoutesById: FileRoutesById
@@ -497,6 +567,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSubscriptionsRouteRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/settings': {
+      id: '/_auth/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthSettingsRouteRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/research': {
       id: '/_auth/research'
       path: '/research'
@@ -553,6 +630,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSubscriptionsIndexRouteImport
       parentRoute: typeof AuthSubscriptionsRouteRoute
     }
+    '/_auth/settings/': {
+      id: '/_auth/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthSettingsIndexRouteImport
+      parentRoute: typeof AuthSettingsRouteRoute
+    }
     '/_auth/research/': {
       id: '/_auth/research/'
       path: '/'
@@ -608,6 +692,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/transactions/$transactionId'
       preLoaderRoute: typeof AuthTransactionsTransactionIdRouteImport
       parentRoute: typeof AuthTransactionsRouteRoute
+    }
+    '/_auth/settings/profile': {
+      id: '/_auth/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AuthSettingsProfileRouteImport
+      parentRoute: typeof AuthSettingsRouteRoute
+    }
+    '/_auth/settings/billing': {
+      id: '/_auth/settings/billing'
+      path: '/billing'
+      fullPath: '/settings/billing'
+      preLoaderRoute: typeof AuthSettingsBillingRouteImport
+      parentRoute: typeof AuthSettingsRouteRoute
+    }
+    '/_auth/settings/appearance': {
+      id: '/_auth/settings/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof AuthSettingsAppearanceRouteImport
+      parentRoute: typeof AuthSettingsRouteRoute
+    }
+    '/_auth/settings/account': {
+      id: '/_auth/settings/account'
+      path: '/account'
+      fullPath: '/settings/account'
+      preLoaderRoute: typeof AuthSettingsAccountRouteImport
+      parentRoute: typeof AuthSettingsRouteRoute
     }
     '/_auth/research/$symbol': {
       id: '/_auth/research/$symbol'
@@ -708,6 +820,25 @@ const AuthResearchRouteRouteChildren: AuthResearchRouteRouteChildren = {
 const AuthResearchRouteRouteWithChildren =
   AuthResearchRouteRoute._addFileChildren(AuthResearchRouteRouteChildren)
 
+interface AuthSettingsRouteRouteChildren {
+  AuthSettingsAccountRoute: typeof AuthSettingsAccountRoute
+  AuthSettingsAppearanceRoute: typeof AuthSettingsAppearanceRoute
+  AuthSettingsBillingRoute: typeof AuthSettingsBillingRoute
+  AuthSettingsProfileRoute: typeof AuthSettingsProfileRoute
+  AuthSettingsIndexRoute: typeof AuthSettingsIndexRoute
+}
+
+const AuthSettingsRouteRouteChildren: AuthSettingsRouteRouteChildren = {
+  AuthSettingsAccountRoute: AuthSettingsAccountRoute,
+  AuthSettingsAppearanceRoute: AuthSettingsAppearanceRoute,
+  AuthSettingsBillingRoute: AuthSettingsBillingRoute,
+  AuthSettingsProfileRoute: AuthSettingsProfileRoute,
+  AuthSettingsIndexRoute: AuthSettingsIndexRoute,
+}
+
+const AuthSettingsRouteRouteWithChildren =
+  AuthSettingsRouteRoute._addFileChildren(AuthSettingsRouteRouteChildren)
+
 interface AuthSubscriptionsRouteRouteChildren {
   AuthSubscriptionsIndexRoute: typeof AuthSubscriptionsIndexRoute
 }
@@ -746,6 +877,7 @@ interface AuthRouteRouteChildren {
   AuthHomeRouteRoute: typeof AuthHomeRouteRouteWithChildren
   AuthNewsRouteRoute: typeof AuthNewsRouteRouteWithChildren
   AuthResearchRouteRoute: typeof AuthResearchRouteRouteWithChildren
+  AuthSettingsRouteRoute: typeof AuthSettingsRouteRouteWithChildren
   AuthSubscriptionsRouteRoute: typeof AuthSubscriptionsRouteRouteWithChildren
   AuthTransactionsRouteRoute: typeof AuthTransactionsRouteRouteWithChildren
   AuthAlertsPreviewRoute: typeof AuthAlertsPreviewRoute
@@ -759,6 +891,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthHomeRouteRoute: AuthHomeRouteRouteWithChildren,
   AuthNewsRouteRoute: AuthNewsRouteRouteWithChildren,
   AuthResearchRouteRoute: AuthResearchRouteRouteWithChildren,
+  AuthSettingsRouteRoute: AuthSettingsRouteRouteWithChildren,
   AuthSubscriptionsRouteRoute: AuthSubscriptionsRouteRouteWithChildren,
   AuthTransactionsRouteRoute: AuthTransactionsRouteRouteWithChildren,
   AuthAlertsPreviewRoute: AuthAlertsPreviewRoute,

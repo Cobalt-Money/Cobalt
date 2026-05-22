@@ -25,9 +25,10 @@ import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
 
 import { useOpenImportWizard } from "@/components/imports/import-wizard";
-import type { SettingsSection } from "@/components/settings/settings-grid";
 import { importsApi } from "@/lib/clients/api-client";
 import { logout } from "@/lib/zero-logout";
+
+type SettingsLinkSection = "profile" | "billing";
 
 type NavPath =
   | "/accounts"
@@ -58,7 +59,12 @@ const COMMAND_NAV_ROUTES: readonly {
     label: "Brokerage",
     path: "/brokerage",
   },
-  { icon: CreditCardIcon, keywords: ["bank"], label: "Accounts", path: "/accounts" },
+  {
+    icon: CreditCardIcon,
+    keywords: ["bank"],
+    label: "Accounts",
+    path: "/accounts",
+  },
   {
     icon: SearchDollarIcon,
     keywords: ["books", "notes"],
@@ -77,7 +83,12 @@ const COMMAND_NAV_ROUTES: readonly {
     label: "AI Chat",
     path: "/ai-chat",
   },
-  { icon: File02Icon, keywords: ["articles", "updates"], label: "News", path: "/news" },
+  {
+    icon: File02Icon,
+    keywords: ["articles", "updates"],
+    label: "News",
+    path: "/news",
+  },
 ];
 
 interface CommandAction {
@@ -124,7 +135,7 @@ interface NavCallbacks {
   sellPosition: () => void;
   addTag: () => void;
   manageTags: () => void;
-  settings: (section: SettingsSection) => void;
+  settings: (section: SettingsLinkSection) => void;
 }
 
 interface Props {

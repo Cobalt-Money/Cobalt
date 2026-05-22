@@ -16,12 +16,11 @@ import {
 } from "@cobalt-web/ui/components/sidebar";
 import { UserCircle02Icon, CreditCardIcon, Logout01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 
 import { logout } from "@/lib/zero-logout";
 
 import { navUserInitials } from "./lib";
-import { useSettingsDialog } from "./settings-dialog-provider";
 
 export function NavUser({
   user,
@@ -37,7 +36,6 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const router = useRouter();
   const initials = navUserInitials(user.name, user.email);
-  const { openSettings } = useSettingsDialog();
   const anonAvatar = (
     <div
       aria-label="Demo user"
@@ -105,14 +103,22 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => openSettings("profile")}>
-                <HugeiconsIcon icon={UserCircle02Icon} strokeWidth={2} />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openSettings("billing")}>
-                <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />
-                Billing
-              </DropdownMenuItem>
+              <DropdownMenuItem
+                render={
+                  <Link to="/settings/profile">
+                    <HugeiconsIcon icon={UserCircle02Icon} strokeWidth={2} />
+                    Account
+                  </Link>
+                }
+              />
+              <DropdownMenuItem
+                render={
+                  <Link to="/settings/billing">
+                    <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />
+                    Billing
+                  </Link>
+                }
+              />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem

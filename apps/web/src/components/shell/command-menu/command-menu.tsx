@@ -18,7 +18,6 @@ import {
 } from "@/components/accounts/use-add-account-flow";
 import { useQuery as useZeroQuery } from "@rocicorp/zero/react";
 import { queries } from "@cobalt-web/zero";
-import type { SettingsSection } from "@/components/settings/settings-grid";
 import { useTagOptions } from "@/hooks/use-tags";
 
 import { useAccountChoice } from "./use-account-choice";
@@ -39,7 +38,6 @@ import { DefaultViewPage } from "./pages/default-view";
 import { AddTransactionPage } from "./pages/add-transaction";
 import { SellPositionPage } from "./pages/sell-position";
 import { ManageTagsPage } from "./pages/manage-tags";
-import { SettingsPage } from "./pages/settings";
 import { ChatSearchResults, useChatSearch } from "./search-chats";
 import { TickerSearchResults, useTickerSearch } from "./search-tickers";
 import {
@@ -174,14 +172,13 @@ function CommandMenuDialog({
   bulkTargets: readonly TransactionResponse[];
   onClearBulkTargets: () => void;
 }) {
-  const [settingsSeed, setSettingsSeed] = useState<SettingsSection>("profile");
+  const navigate = useNavigate();
 
   const { activePage, isRoot, pop, push } = pageStack;
   const inSearchTransactions = activePage === "search-transactions";
   const inSearchChats = activePage === "search-chats";
   const inAddAccount = activePage === "add-account";
   const inSearchTickers = activePage === "search-tickers";
-  const inSettings = activePage === "settings";
   const inAddManualAccount = activePage === "add-manual-account";
   const inLinkOrManual = activePage === "link-or-manual";
   const inAddTransaction = activePage === "add-transaction";
@@ -265,12 +262,12 @@ function CommandMenuDialog({
     [enter, setAddTagInitialName],
   );
 
-  const enterSettings = useCallback(
-    (section: SettingsSection) => {
-      setSettingsSeed(section);
-      enter("settings");
+  const goToSettings = useCallback(
+    (section: "profile" | "billing") => {
+      void navigate({ to: `/settings/${section}` });
+      onOpenChange(false);
     },
-    [enter],
+    [navigate, onOpenChange],
   );
 
   const bulkActions = useBulkActions({
@@ -357,7 +354,6 @@ function CommandMenuDialog({
       <CommandDialog
         className={cn(
           inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",
-          inSettings && "h-[640px] max-h-[calc(100vh-8rem)] sm:max-w-3xl",
           inAddTransaction && "sm:max-w-3xl",
           inAddPosition && "sm:max-w-3xl",
           inSellPosition && "sm:max-w-3xl",
@@ -382,7 +378,7 @@ function CommandMenuDialog({
           }}
           shouldFilter={!isClientFilteredPage(activePage)}
         >
-          {inSettings || inFormPage ? null : (
+          {inFormPage ? null : (
             <CommandInput
               variant="frameless"
               onKeyDown={handleInputKeyDown}
@@ -391,7 +387,6 @@ function CommandMenuDialog({
               value={search}
             />
           )}
-          {inSettings && <SettingsPage initialSection={settingsSeed} />}
           {inLinkOrManual && selectedInstitution !== null && (
             <LinkOrManualPage
               institution={selectedInstitution}
@@ -435,7 +430,7 @@ function CommandMenuDialog({
             />
           )}
           {inManageTags && <ManageTagsPage onRequestCreate={enterAddTag} />}
-          {!inSettings && !inFormPage && inAddAccount && (
+          {!inFormPage && inAddAccount && (
             <AddAccountGrid
               compact
               onChoose={chooseInstitution}
@@ -443,7 +438,7 @@ function CommandMenuDialog({
               searchQuery={search}
             />
           )}
-          {!(inSettings || inAddAccount || inFormPage) && (
+          {!(inAddAccount || inFormPage) && (
             <CommandList>
               {inSearchChats && (
                 <ChatSearchResults
@@ -505,7 +500,7 @@ function CommandMenuDialog({
                     searchTickers: enterPage.searchTickers,
                     searchTransactions: enterPage.searchTransactions,
                     sellPosition: enterPage.sellPosition,
-                    settings: enterSettings,
+                    settings: goToSettings,
                   }}
                   onClose={() => handleOpenChange(false)}
                   open={open}
