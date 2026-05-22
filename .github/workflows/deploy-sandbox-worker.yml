@@ -1,0 +1,50 @@
+name: Deploy sandbox-worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/sandbox-worker/**"
+      - ".github/workflows/deploy-sandbox-worker.yml"
+
+# Avoid concurrent deploys racing each other.
+concurrency:
+  group: deploy-sandbox-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Deploy to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/sandbox-worker
+          command: deploy
+
+      # Smoke test: anonymous POST must return 401. Catches a deploy that
+      # accidentally bypasses the auth wrapper.
+      - name: Smoke test auth
+        run: |
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" -X POST \
+            https://cobalt-sandbox.sriketk5.workers.dev \
+            -H "Content-Type: application/json" \
+            -d '{"code":"return 1","tools":[]}')
+          echo "Anonymous POST returned: $STATUS"
+          if [ "$STATUS" != "401" ]; then
+            echo "::error::Smoke test failed: expected 401, got $STATUS"
+            exit 1
+          fi
