@@ -9,8 +9,25 @@ compatibility_flags = ["nodejs_compat"]
 [[worker_loaders]]
 binding = "LOADER"
 
-# AUTH_TOKEN secret set via `wrangler secret put AUTH_TOKEN` in prod, or via
-# .dev.vars locally.
+# Edge-side rate limit applied after the bearer auth check in src/index.ts.
+# Keyed by `cf-connecting-ip`. 60 reqs / 60s leaves headroom for legitimate
+# driver traffic (~1 call per chat turn) while killing leaked-token abuse
+# from any single source IP. Counters are shared across worker instances via
+# `namespace_id`; bump the suffix to reset bucket history.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "cobalt-sandbox-v1"
+
+[ratelimits.simple]
+limit = 60
+period = 60
+
+# AUTH_TOKEN — REQUIRED. Worker fails closed (503) if unset and rejects
+# requests without `Authorization: Bearer <token>` (401). Set via:
+#   prod:  wrangler secret put AUTH_TOKEN
+#   dev:   add AUTH_TOKEN=<value> to apps/sandbox-worker/.dev.vars
+# Driver side reads the matching value from SANDBOX_WORKER_AUTH_TOKEN on
+# Vercel — keep them in sync.
 
 [observability]
 enabled = true
