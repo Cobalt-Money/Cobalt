@@ -33,6 +33,7 @@
     "@json-render/react": "^0.4.4",
     "@mdx-js/rollup": "^3.1.1",
     "@milkdown/crepe": "^7.20.0",
+    "@number-flow/react": "^0.6.0",
     "@react-pdf/renderer": "^4.3.2",
     "@rocicorp/zero": "catalog:",
     "@tailwindcss/vite": "^4.1.18",
