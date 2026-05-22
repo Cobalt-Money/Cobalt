@@ -7,6 +7,8 @@ import {
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import { FadeUp } from "./fade-up";
+
 const FAQS: { a: ReactNode; q: string }[] = [
   {
     a: "We use third party services, Plaid and SnapTrade, to link financial institutions. You can also add accounts and transactions manually.",
@@ -119,21 +121,23 @@ const FAQS: { a: ReactNode; q: string }[] = [
 
 export function FaqSection() {
   return (
-    <section className="border-t px-6 py-24 lg:py-32" id="faq">
+    <section className="px-6 py-24 lg:py-32" id="faq">
       <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-12">
-        <div className="flex flex-col items-center gap-4 text-center">
+        <FadeUp className="flex flex-col items-center gap-4 text-center">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl md:text-6xl">FAQ</h2>
-        </div>
+        </FadeUp>
         <Accordion className="w-full rounded-none border-0">
           {FAQS.map((item, i) => (
-            <AccordionItem className="data-open:bg-transparent" key={item.q} value={`faq-${i}`}>
-              <AccordionTrigger className="text-left text-base font-medium sm:text-lg">
-                {item.q}
-              </AccordionTrigger>
-              <AccordionContent className="text-base text-muted-foreground">
-                {item.a}
-              </AccordionContent>
-            </AccordionItem>
+            <FadeUp delay={i * 0.05} key={item.q} y={12}>
+              <AccordionItem className="data-open:bg-transparent" value={`faq-${i}`}>
+                <AccordionTrigger className="text-left text-base font-medium sm:text-lg">
+                  {item.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  {item.a}
+                </AccordionContent>
+              </AccordionItem>
+            </FadeUp>
           ))}
         </Accordion>
       </div>

@@ -1,4 +1,7 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
+import { motion } from "motion/react";
+
+import { FadeUp, LANDING_EASE } from "./fade-up";
 import {
   BatteryCharging01Icon,
   CreditCardIcon,
@@ -179,23 +182,26 @@ export function MobilePhoneFrame() {
 
 export function MobileSection() {
   return (
-    <section className="border-t px-6 py-24 lg:py-32">
+    <section className="px-6 py-24 lg:py-32">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-16 text-center">
-        <div className="order-2">
+        <FadeUp className="order-2" y={24} duration={0.7}>
           <MobilePhoneFrame />
-        </div>
-        <div className="order-1 flex flex-col items-center">
+        </FadeUp>
+        <FadeUp className="order-1 flex flex-col items-center" delay={0.05}>
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
             Your money,
             <br />
             in your pocket.
           </h2>
           <div className="mt-8">
-            <a
-              className="inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-3 font-semibold text-background hover:opacity-90"
+            <motion.a
+              className="inline-flex items-center gap-2 rounded-xl bg-foreground px-5 py-3 font-semibold text-background"
               href="https://apps.apple.com/app/id6757945133"
               rel="noopener noreferrer"
               target="_blank"
+              transition={{ duration: 0.2, ease: LANDING_EASE }}
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.97 }}
             >
               <svg
                 aria-hidden="true"
@@ -207,9 +213,9 @@ export function MobileSection() {
                 <path d="M17.05 12.04c-.03-3.02 2.47-4.47 2.58-4.54-1.41-2.06-3.6-2.34-4.38-2.37-1.86-.19-3.64 1.1-4.59 1.1-.96 0-2.41-1.07-3.97-1.04-2.04.03-3.93 1.19-4.98 3.01-2.13 3.69-.54 9.13 1.53 12.12 1.01 1.46 2.21 3.1 3.78 3.04 1.52-.06 2.1-.98 3.94-.98 1.83 0 2.36.98 3.97.95 1.64-.03 2.68-1.49 3.68-2.96 1.16-1.69 1.64-3.34 1.66-3.42-.04-.01-3.18-1.22-3.22-4.85zM14.04 3.18c.83-1.01 1.39-2.41 1.23-3.81-1.2.05-2.65.8-3.5 1.8-.76.88-1.43 2.29-1.25 3.66 1.34.1 2.7-.68 3.52-1.65z" />
               </svg>
               <span>Download</span>
-            </a>
+            </motion.a>
           </div>
-        </div>
+        </FadeUp>
       </div>
     </section>
   );

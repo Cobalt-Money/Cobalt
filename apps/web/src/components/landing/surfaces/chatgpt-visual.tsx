@@ -312,9 +312,7 @@ export function ChatGPTVisual() {
                       }
                       type="button"
                     >
-                      <span className="flex size-4 items-center justify-center rounded bg-gradient-to-br from-amber-300 to-amber-600 text-[9px] font-bold text-black">
-                        C
-                      </span>
+                      <img alt="Cobalt" className="size-4 rounded" src="/favicon.svg" />
                       Used <span className="text-black dark:text-white">Cobalt</span>
                       <span className="text-[#1a1a1a]/45 dark:text-white/40">
                         · {entry.tool.name.replace("cobalt.", "")}

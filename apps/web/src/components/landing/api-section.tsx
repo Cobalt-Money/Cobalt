@@ -2,6 +2,8 @@ import { useTheme } from "next-themes";
 import { useEffect, useMemo, useState } from "react";
 import type { BundledLanguage, ThemedToken } from "shiki";
 
+import { FadeUp } from "./fade-up";
+
 type Lang = "curl" | "ts" | "python";
 
 const LANG_LABEL: Record<Lang, string> = {
@@ -521,18 +523,22 @@ export function ApiSection() {
   }, []);
 
   return (
-    <section className="border-t px-6 py-24 lg:py-32">
+    <section className="px-6 py-24 lg:py-32">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-12 text-center">
+        <FadeUp className="mb-12 text-center">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
             Your money, as an API
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
             No need to manage webhooks or infra just to access your finances.
           </p>
-        </div>
+        </FadeUp>
 
-        <div className="overflow-hidden rounded-2xl border bg-background shadow-2xl">
+        <FadeUp
+          className="overflow-hidden rounded-2xl border bg-background shadow-2xl"
+          delay={0.1}
+          y={24}
+        >
           {/* Top bar */}
           <div className="flex items-center gap-2 border-b px-3 py-2.5">
             <button
@@ -836,7 +842,7 @@ export function ApiSection() {
               </div>
             </div>
           </div>
-        </div>
+        </FadeUp>
       </div>
     </section>
   );
