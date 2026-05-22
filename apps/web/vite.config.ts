@@ -86,6 +86,21 @@ function patchServerRequirePlugin(): Plugin {
 }
 
 export default defineConfig({
+  optimizeDeps: {
+    include: [
+      "@visx/responsive",
+      "@visx/pattern",
+      "@visx/gradient",
+      "@visx/shape",
+      "@visx/curve",
+      "@visx/scale",
+      "@visx/event",
+      "@number-flow/react",
+      "d3-shape",
+      "d3-array",
+      "lodash/debounce",
+    ],
+  },
   plugins: [
     tailwindcss(),
     ssrStubPlugin(),

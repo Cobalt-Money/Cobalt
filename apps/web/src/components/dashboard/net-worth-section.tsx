@@ -19,7 +19,9 @@ import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo, useState } from "react";
-import { Bar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { BarChart } from "@cobalt-web/ui/components/charts/bar-chart";
+import { Bar } from "@cobalt-web/ui/components/charts/bar";
+import { BarXAxis } from "@cobalt-web/ui/components/charts/bar-x-axis";
 
 import { AllocationDonutChart } from "@/components/dashboard/net-worth-donut-chart";
 import { NetWorthSectionSkeleton } from "@/components/dashboard/skeletons/net-worth-section-skeleton";
@@ -764,17 +766,6 @@ export function NetWorthSection() {
     [bankSnapshots, portfolioSnapshots, range],
   );
 
-  const yDomain = useMemo((): [number, number] => {
-    if (chartData.length === 0) {
-      return [0, 10_000];
-    }
-    const vals = chartData.map((d) => d.value);
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
-    const pad = (max - min) * 0.1 || max * 0.1;
-    return [Math.max(0, min - pad), max + pad];
-  }, [chartData]);
-
   // ── Categories donut ─────────────────────────────────────────
 
   // Donut shows category share by magnitude — liabilities use absolute value
@@ -909,42 +900,23 @@ export function NetWorthSection() {
                     title="No snapshot history yet"
                   />
                 ) : (
-                  <ResponsiveContainer height="100%" width="100%">
-                    <BarChart
-                      barCategoryGap="12%"
-                      data={chartData}
-                      margin={{ bottom: 4, left: 4, right: 8, top: 8 }}
-                    >
-                      <XAxis
-                        axisLine={false}
-                        dataKey="label"
-                        interval={0}
-                        tick={{
-                          fill: "var(--muted-foreground)",
-                          fontSize: 10,
-                          fontWeight: 500,
-                        }}
-                        tickLine={false}
-                      />
-                      <YAxis domain={yDomain} hide />
-                      <Bar
-                        dataKey="value"
-                        isAnimationActive={false}
-                        maxBarSize={40}
-                        onMouseEnter={(_, index) => setHoverIndex(index)}
-                        onMouseLeave={() => setHoverIndex(null)}
-                        radius={[12, 12, 12, 12]}
-                      >
-                        {chartData.map((row, i) => (
-                          <Cell
-                            fill="var(--color-green-550)"
-                            fillOpacity={hoverIndex !== null && i !== hoverIndex ? 0.2 : 1}
-                            key={row.fullLabel}
-                          />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <BarChart
+                    aspectRatio="auto"
+                    className="h-full"
+                    data={chartData as unknown as Record<string, unknown>[]}
+                    margin={{ bottom: 40, left: 4, right: 8, top: 8 }}
+                    onHoveredIndexChange={setHoverIndex}
+                    xDataKey="label"
+                  >
+                    <Bar
+                      animate={false}
+                      dataKey="value"
+                      fadedOpacity={0.2}
+                      fill="var(--color-green-550)"
+                      lineCap={12}
+                    />
+                    <BarXAxis />
+                  </BarChart>
                 )}
               </div>
             </div>

@@ -3,14 +3,17 @@ import type {
   ScopeAccount,
 } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
 import { BrokerageScopePicker } from "@cobalt-web/ui/cobalt/brokerage/brokerage-scope-picker";
+import { AreaChart } from "@cobalt-web/ui/components/charts/area-chart";
+import { Area } from "@cobalt-web/ui/components/charts/area";
+import { ChartTooltip } from "@cobalt-web/ui/components/charts/tooltip";
+import type { TooltipData } from "@cobalt-web/ui/components/charts/chart-context";
 import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { Button } from "@cobalt-web/ui/components/button";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
-import { cn } from "@cobalt-web/ui/lib/utils";
+import NumberFlow from "@number-flow/react";
 import { format, startOfYear, subDays, subMonths, subYears } from "date-fns";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
-import type { CanvasHoverInfo } from "./balance-chart-canvas";
-import { BalanceChartCanvas } from "./balance-chart-canvas";
 
 export interface PortfolioSnapshotRow {
   id: string;
@@ -19,18 +22,14 @@ export interface PortfolioSnapshotRow {
   totalValue?: number | null;
 }
 
+interface ChartPoint {
+  time: number;
+  value: number;
+}
+
 const BALANCE_CHART_RANGE_OPTIONS = ["1W", "1M", "3M", "YTD", "1Y", "5Y", "All"] as const;
 
 type BalanceChartRange = (typeof BALANCE_CHART_RANGE_OPTIONS)[number];
-
-function money(amount: number, currency = "USD") {
-  return new Intl.NumberFormat("en-US", {
-    currency,
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 0,
-    style: "currency",
-  }).format(amount);
-}
 
 function rangeStartEpoch(range: BalanceChartRange): number {
   const now = new Date();
@@ -76,12 +75,12 @@ export function BalanceChartCard({
   onScopeChange: (scope: BrokerageScope) => void;
 }) {
   const [balanceChartRange, setBalanceChartRange] = useState<BalanceChartRange>("1M");
-  const [hoveredPoint, setHoveredPoint] = useState<CanvasHoverInfo | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<ChartPoint | null>(null);
 
-  // Resting headline = sum of the most-recent snapshot row per scoped account.
-  // snapshot.current already includes both cash + positions for snaptrade and
-  // total account value for plaid investment, so don't add live position
-  // values on top — that double-counts the positions component.
+  const handleTooltipChange = useCallback((data: TooltipData | null) => {
+    setHoveredPoint((data?.point as unknown as ChartPoint) ?? null);
+  }, []);
+
   const latestValue = useMemo(() => {
     const scopedSnaps =
       scopedAccountIds === null
@@ -100,7 +99,7 @@ export function BalanceChartCard({
     return total;
   }, [portfolioSnapshots, scopedAccountIds]);
 
-  const chartPoints = useMemo(() => {
+  const chartPoints = useMemo<ChartPoint[]>(() => {
     const cutoff = rangeStartEpoch(balanceChartRange);
     const filtered = portfolioSnapshots.filter((s) => {
       if (s.snapshotDate < cutoff) {
@@ -122,19 +121,18 @@ export function BalanceChartCard({
       .map(([epoch, value]) => ({ time: epoch, value }));
   }, [portfolioSnapshots, scopedAccountIds, balanceChartRange]);
 
-  const handleHoverChange = useCallback((info: CanvasHoverInfo | null) => {
-    setHoveredPoint(info);
-  }, []);
-
-  let displayValue: string;
-  if (hoveredPoint) {
-    displayValue = money(hoveredPoint.value);
-  } else if (latestValue === null) {
-    displayValue = "—";
-  } else {
-    displayValue = money(latestValue);
-  }
-  const hoveredDate = hoveredPoint ? format(new Date(hoveredPoint.time), "MMM d, yyyy") : null;
+  const displayedAmount = hoveredPoint?.value ?? latestValue;
+  const hoveredParts = useMemo(() => {
+    if (!hoveredPoint) {
+      return null;
+    }
+    const d = new Date(hoveredPoint.time);
+    return {
+      day: d.getDate(),
+      month: format(d, "MMM"),
+      year: d.getFullYear(),
+    };
+  }, [hoveredPoint]);
 
   return (
     <Card
@@ -146,16 +144,63 @@ export function BalanceChartCard({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
             <div className="min-w-0">
               <p className="text-foreground text-2xl font-semibold tabular-nums tracking-tight sm:text-2xl">
-                <PrivateAmount>{displayValue}</PrivateAmount>
+                <PrivateAmount>
+                  {displayedAmount === null ? (
+                    "—"
+                  ) : (
+                    <NumberFlow
+                      format={{
+                        currency: "USD",
+                        maximumFractionDigits: 0,
+                        style: "currency",
+                      }}
+                      spinTiming={{ duration: 250, easing: "ease-out" }}
+                      transformTiming={{ duration: 250, easing: "ease-out" }}
+                      value={displayedAmount}
+                    />
+                  )}
+                </PrivateAmount>
               </p>
-              <p
-                className={cn(
-                  "text-muted-foreground text-xs tabular-nums transition-opacity",
-                  hoveredDate ? "opacity-100" : "opacity-0",
-                )}
-              >
-                {hoveredDate ?? "\u00A0"}
-              </p>
+              <div className="text-muted-foreground flex h-4 items-center gap-1 overflow-hidden text-xs tabular-nums">
+                {hoveredParts ? (
+                  <>
+                    <div className="relative h-4 overflow-hidden">
+                      <AnimatePresence initial={false} mode="popLayout">
+                        <motion.span
+                          animate={{ opacity: 1, y: 0 }}
+                          className="block"
+                          exit={{ opacity: 0, y: -8 }}
+                          initial={{ opacity: 0, y: 8 }}
+                          key={hoveredParts.month}
+                          transition={{ damping: 30, stiffness: 400, type: "spring" }}
+                        >
+                          {hoveredParts.month}
+                        </motion.span>
+                      </AnimatePresence>
+                    </div>
+                    <NumberFlow
+                      spinTiming={{ duration: 200, easing: "ease-out" }}
+                      suffix=","
+                      transformTiming={{ duration: 200, easing: "ease-out" }}
+                      value={hoveredParts.day}
+                    />
+                    <div className="relative h-4 overflow-hidden">
+                      <AnimatePresence initial={false} mode="popLayout">
+                        <motion.span
+                          animate={{ opacity: 1, y: 0 }}
+                          className="block"
+                          exit={{ opacity: 0, y: -8 }}
+                          initial={{ opacity: 0, y: 8 }}
+                          key={hoveredParts.year}
+                          transition={{ damping: 30, stiffness: 400, type: "spring" }}
+                        >
+                          {hoveredParts.year}
+                        </motion.span>
+                      </AnimatePresence>
+                    </div>
+                  </>
+                ) : null}
+              </div>
             </div>
             {scopeAccounts.length > 0 ? (
               <div className="flex w-full shrink-0 justify-end sm:w-auto">
@@ -169,11 +214,24 @@ export function BalanceChartCard({
           </div>
         </div>
         <div className="relative min-h-[200px] w-full min-w-0 flex-1">
-          <BalanceChartCanvas
-            ariaLabel="Portfolio balance chart"
-            onHoverChange={handleHoverChange}
-            points={chartPoints}
-          />
+          {chartPoints.length >= 2 ? (
+            <AreaChart
+              aspectRatio="auto"
+              className="h-full"
+              data={chartPoints as unknown as Record<string, unknown>[]}
+              margin={{ bottom: 8, left: 0, right: 0, top: 8 }}
+              onTooltipChange={handleTooltipChange}
+              xDataKey="time"
+            >
+              <Area
+                dataKey="value"
+                fill="var(--color-green-550)"
+                stroke="var(--color-green-550)"
+                strokeWidth={2}
+              />
+              <ChartTooltip showBox={false} showDatePill={false} showDots={true} />
+            </AreaChart>
+          ) : null}
         </div>
         <div
           aria-label="Chart time range"

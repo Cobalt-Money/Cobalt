@@ -4,7 +4,7 @@ import { cn } from "@cobalt-web/ui/lib/utils";
 import { endOfMonth, format, getDay, isToday } from "date-fns";
 import { useMemo } from "react";
 
-import { SegmentedGauge } from "@/components/subscriptions/segmented-gauge";
+import { Gauge } from "@cobalt-web/ui/components/charts/gauge";
 
 const logoDevToken =
   (import.meta.env.VITE_LOGO_DEV_PUBLISHABLE_KEY as string | undefined)?.trim() ?? "";
@@ -337,11 +337,12 @@ export function BabySubscriptionsCalendar() {
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-      <SegmentedGauge
-        value={remaining}
-        max={monthTotal}
-        label={USD.format(remaining)}
-        sublabel="Left to pay this month"
+      <Gauge
+        activeFill="var(--color-green-550)"
+        centerValue={remaining}
+        defaultLabel="Left to pay this month"
+        formatOptions={{ currency: "USD", maximumFractionDigits: 0, style: "currency" }}
+        value={monthTotal > 0 ? Math.min(100, Math.max(0, (paidToDate / monthTotal) * 100)) : 0}
       />
 
       <div className="flex items-center justify-between">

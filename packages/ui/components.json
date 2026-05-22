@@ -24,6 +24,7 @@
     "@ai-elements": "https://elements.ai-sdk.dev/api/registry/{name}.json",
     "@kibo-ui": "https://www.kibo-ui.com/r/{name}.json",
     "@mapcn": "https://mapcn.dev/r/{name}.json",
-    "@magicui": "https://magicui.design/r/{name}"
+    "@magicui": "https://magicui.design/r/{name}",
+    "@bklit": "https://ui.bklit.com/r/{name}.json"
   }
 }
