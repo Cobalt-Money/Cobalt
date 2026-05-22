@@ -21,7 +21,13 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Lint (ultracite)
+        # ultracite spawns the oxlint Rust binary, which shells out to Node to
+        # evaluate `oxlint.config.ts`. Node has no native TS loader, so we
+        # register `tsx` via NODE_OPTIONS before the lint step runs. Tracked
+        # in SRI-341 as a CI hardening follow-up to PR #260.
         run: bun x ultracite check apps packages
+        env:
+          NODE_OPTIONS: --import tsx
       - name: Typecheck (turbo)
         run: bun x turbo check-types
         env:
