@@ -14,7 +14,7 @@ jobs:
     name: Typecheck + Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.5
@@ -39,7 +39,7 @@ jobs:
     env:
       SKIP_ENV_VALIDATION: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.5
