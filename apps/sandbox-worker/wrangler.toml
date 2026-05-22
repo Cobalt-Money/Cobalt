@@ -12,11 +12,12 @@ binding = "LOADER"
 # Edge-side rate limit applied after the bearer auth check in src/index.ts.
 # Keyed by `cf-connecting-ip`. 60 reqs / 60s leaves headroom for legitimate
 # driver traffic (~1 call per chat turn) while killing leaked-token abuse
-# from any single source IP. Counters are shared across worker instances via
-# `namespace_id`; bump the suffix to reset bucket history.
+# from any single source IP. Counters are shared across worker instances on
+# this CF account via `namespace_id` — Cloudflare requires this to be a
+# numeric string. Change the number to reset bucket history.
 [[ratelimits]]
 name = "RATE_LIMITER"
-namespace_id = "cobalt-sandbox-v1"
+namespace_id = "1001"
 
 [ratelimits.simple]
 limit = 60
