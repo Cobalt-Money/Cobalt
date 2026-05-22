@@ -4,7 +4,6 @@ import { LogoImageWithFallback } from "@cobalt-web/ui/cobalt/logos/logo-image-fa
 import { Button } from "@cobalt-web/ui/components/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@cobalt-web/ui/components/dialog";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
-import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { endOfMonth, format, getDay, isToday } from "date-fns";
 import { useMemo, useState } from "react";
@@ -12,7 +11,7 @@ import { useMemo, useState } from "react";
 import type { Subscription } from "@/hooks/use-subscriptions";
 import { useSubscriptions } from "@/hooks/use-subscriptions";
 
-import { SegmentedGauge } from "./segmented-gauge";
+import { Gauge } from "@cobalt-web/ui/components/charts/gauge";
 
 const logoDevToken = env.VITE_LOGO_DEV_PUBLISHABLE_KEY?.trim() ?? "";
 
@@ -333,7 +332,6 @@ export function SubscriptionsCalendar() {
   const currentDate = useMemo(() => new Date(), []);
   const today = currentDate.getDate();
   const [dialogDate, setDialogDate] = useState<Date | null>(null);
-  const { mask } = usePrivacy();
 
   const title = format(currentDate, "MMMM yyyy");
 
@@ -363,11 +361,12 @@ export function SubscriptionsCalendar() {
       {isEmpty ? (
         <EmptyState />
       ) : (
-        <SegmentedGauge
-          value={remaining}
-          max={monthTotal}
-          label={mask(USD.format(remaining))}
-          sublabel="Left to pay this month"
+        <Gauge
+          activeFill="var(--color-green-550)"
+          centerValue={remaining}
+          defaultLabel="Left to pay this month"
+          formatOptions={{ currency: "USD", maximumFractionDigits: 0, style: "currency" }}
+          value={monthTotal > 0 ? Math.min(100, Math.max(0, (paidToDate / monthTotal) * 100)) : 0}
         />
       )}
 
