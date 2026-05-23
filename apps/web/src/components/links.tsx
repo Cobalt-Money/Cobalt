@@ -9,12 +9,13 @@ type CustomLinkProps = LinkProps<"a"> &
   Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps<"a">>;
 
 /**
- * Link component that prefetches on hover and navigates on mousedown.
+ * Link component that prefetches (default: on hover) and navigates on mousedown.
+ * Pass `preload="viewport"` to prefetch when the link enters the viewport.
  */
 export function Link(props: CustomLinkProps) {
   const { handleMouseDown: instantNavigate } = useInstantNavigate();
 
-  const { hash, params, search, to, ...restProps } = props;
+  const { hash, params, preload = "intent", search, to, ...restProps } = props;
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -36,7 +37,7 @@ export function Link(props: CustomLinkProps) {
       search={search}
       to={to}
       onMouseDown={handleMouseDown}
-      preload="intent"
+      preload={preload}
     />
   );
 }
