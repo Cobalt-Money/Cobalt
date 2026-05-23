@@ -5,12 +5,18 @@ import {
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { z } from "@hono/zod-openapi";
 
-/** Plaid `location` jsonb on a transaction (named for OpenAPI components). */
-export const locationJsonSchema = _locationJsonSchema.openapi("TransactionLocation");
+/**
+ * Re-construct via `z.object(shape)` in this module body so the bundler keeps
+ * the `.openapi()` call adjacent to a z.object literal — same pattern as every
+ * other call site in this package. Shape values still come from the db schema.
+ */
+export const locationJsonSchema = z
+  .object(_locationJsonSchema.shape)
+  .openapi("TransactionLocation");
 
-/** Plaid `counterparties[]` element (named for OpenAPI components). */
-export const transactionCounterpartySchema =
-  _transactionCounterpartyJsonSchema.openapi("TransactionCounterparty");
+export const transactionCounterpartySchema = z
+  .object(_transactionCounterpartyJsonSchema.shape)
+  .openapi("TransactionCounterparty");
 
 /**
  * Per-field user-edit lock keys. Mirrors `LOCK_KEY_GUARDED_COLUMNS` in the DB
