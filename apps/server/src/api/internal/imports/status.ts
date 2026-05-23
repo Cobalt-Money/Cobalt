@@ -1,9 +1,9 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { getImportJobStatus } from "@cobalt-web/server-data/import/shared/queries";
+import { getImportJobStatus } from "@cobalt-web/server-data/imports/_shared/queries";
 import {
   importJobIdParamSchema,
   importStatusResponseSchema,
-} from "@cobalt-web/server-data/import/shared/schemas";
+} from "@cobalt-web/server-data/imports/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -30,5 +30,5 @@ export const importsStatusRouter = createApp().openapi(route, async (c) => {
   if (!result) {
     return c.json({ code: "import_job_not_found", error: "Import job not found" }, 404);
   }
-  return c.json(result, 200);
+  return c.json(importStatusResponseSchema.parse(result), 200);
 });

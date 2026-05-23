@@ -10,9 +10,11 @@ export const subscriptionStatusResponseSchema = z
   })
   .openapi("SubscriptionStatus");
 
-export const billingPortalResponseSchema = z.object({
-  url: z.string(),
-});
+export const billingPortalResponseSchema = z
+  .object({
+    url: z.string(),
+  })
+  .openapi("BillingPortal");
 
 // ── App Store sync: derived from `mobile_subscription` columns ───────────────
 
@@ -20,7 +22,7 @@ const mobileSubscriptionInsertSchema = createInsertSchema(mobileSubscription);
 const mobileSubscriptionRowSchema = createSelectSchema(mobileSubscription);
 
 /** POST body: insert subset + ISO string for `expiresAt` (wire vs `timestamp`). */
-export const appStoreSyncBodySchema = mobileSubscriptionInsertSchema
+export const syncAppStoreSubscriptionSchema = mobileSubscriptionInsertSchema
   .pick({
     environment: true,
     expiresAt: true,
@@ -39,7 +41,7 @@ export const appStoreSyncBodySchema = mobileSubscriptionInsertSchema
   });
 
 /** Parsed App Store sync payload (after Zod). */
-export type AppStoreSyncInput = z.infer<typeof appStoreSyncBodySchema>;
+export type AppStoreSyncInput = z.infer<typeof syncAppStoreSubscriptionSchema>;
 
 export const appStoreSyncResponseSchema = z
   .object({

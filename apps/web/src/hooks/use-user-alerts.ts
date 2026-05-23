@@ -1,4 +1,4 @@
-import { formatAlert } from "@cobalt-web/server-data/alerts/formatter";
+import { formatAlert } from "@cobalt-web/server-data/alerts/_shared/formatter";
 import type { UserAlert } from "@cobalt-web/zero";
 import { queries } from "@cobalt-web/zero";
 import { useQuery } from "@rocicorp/zero/react";

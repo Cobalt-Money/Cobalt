@@ -3,19 +3,19 @@ import {
   createLinkToken,
   createLinkTokenForUpdate,
 } from "@cobalt-web/server-data/providers/plaid/link/actions";
+import { successResponseSchema } from "@cobalt-web/server-data/providers/plaid/_shared";
 import {
-  findExistingHealthyConnection,
+  getExistingHealthyConnection,
   getInstitutionRoutingNumber,
 } from "@cobalt-web/server-data/providers/plaid/link/queries";
 import {
   createLinkTokenBodySchema,
   linkTokenResponseSchema,
   resolveLinkBodySchema,
-  successResponseSchema,
 } from "@cobalt-web/server-data/providers/plaid/link/schemas";
 import { userCanAddConnection } from "@cobalt-web/server-data/subscriptions";
 import { createRoute } from "@hono/zod-openapi";
-import { v7 as uuidv7 } from "uuid";
+import { randomBytes } from "node:crypto";
 import { resumeHook, start } from "workflow/api";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -23,6 +23,18 @@ import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpe
 import { plaidAddAccountWorkflow } from "../../../workflows/plaid/sync/workflow.js";
 import { requireAuth, requireNotDemo } from "../middleware.js";
 
+/** Opaque workflow-resume bearer. 256-bit random, base64url, prefixed for log grep. */
+function generateHookToken(): string {
+  return `cob_plink_${randomBytes(32).toString("base64url")}`;
+}
+
+// NOTE: `/createLinkToken` + `/resolveLink` are intentionally kept in this
+// single file rather than split into `link/create-token/` + `link/resolve/`
+// subfolders. Both are workflow-init/resume endpoints (not CRUD of a Plaid
+// resource): they share the parked-workflow + hook-token state machine and
+// the same `linkTokenResponseSchema` + `successResponseSchema` contracts.
+// Splitting would scatter that shared lifecycle across two files for no
+// readability gain — see `.agents/skills/cobalt/api-endpoints/SKILL.md`.
 // ── Route definitions ───────────────────────────────────────────────
 
 const createLinkTokenRoute = createRoute({
@@ -95,14 +107,14 @@ const linkRouter = createApp()
 
     // ── Scenario C: existing healthy connection at this institution.
     if (insId?.startsWith("ins_")) {
-      const existing = await findExistingHealthyConnection(userId, insId);
+      const existing = await getExistingHealthyConnection(userId, insId);
       if (existing) {
         const tokenResult = await createLinkTokenForUpdate(
           existing.plaidAccessToken,
           userId,
           "add-accounts",
         );
-        const hookToken = uuidv7();
+        const hookToken = generateHookToken();
         const run = await start(plaidAddAccountWorkflow, [
           {
             hookToken,
@@ -114,7 +126,7 @@ const linkRouter = createApp()
           },
         ]);
         return c.json(
-          {
+          linkTokenResponseSchema.parse({
             hookToken,
             institutionLogo: existing.institutionLogo,
             institutionName: existing.institutionName,
@@ -123,7 +135,7 @@ const linkRouter = createApp()
             mode: "update" as const,
             plaidItemId: existing.plaidItemId,
             runId: run.runId,
-          },
+          }),
           200,
         );
       }
@@ -149,14 +161,14 @@ const linkRouter = createApp()
       ? await getInstitutionRoutingNumber(insId)
       : null;
     const tokenResult = await createLinkToken(userId, { routingNumber });
-    const hookToken = uuidv7();
+    const hookToken = generateHookToken();
     const run = await start(plaidAddAccountWorkflow, [{ hookToken, userId }]);
     return c.json(
-      {
+      linkTokenResponseSchema.parse({
         hookToken,
         link_token: tokenResult.link_token,
         runId: run.runId,
-      },
+      }),
       200,
     );
   })
@@ -175,7 +187,7 @@ const linkRouter = createApp()
 
     try {
       await resumeHook(hookToken, { cancelled, publicToken });
-      return c.json({ success: true }, 200);
+      return c.json(successResponseSchema.parse({ success: true }), 200);
     } catch (error) {
       // resumeHook can throw if the hook token is unknown/expired/foreign.
       // We can't distinguish reliably from the workflow runtime, so map all

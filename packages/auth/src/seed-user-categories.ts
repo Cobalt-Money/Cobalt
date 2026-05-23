@@ -6,7 +6,7 @@ import { sql } from "drizzle-orm";
  * Idempotent: skipped if user already has any category_group row.
  *
  * Source of truth for the seed data lives in
- * `packages/server-data/src/transactions/categories/seed.ts`. This SQL must stay in
+ * `packages/server-data/src/categories/seed.ts`. This SQL must stay in
  * lockstep with that file and with `20260504100000_seed_system_categories/migration.sql`.
  */
 export async function seedUserCategories(database: typeof Db, userId: string): Promise<void> {

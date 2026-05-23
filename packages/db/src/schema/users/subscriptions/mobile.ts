@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, index } from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
 
@@ -10,7 +10,9 @@ export const mobileSubscription = pgTable(
       .notNull()
       .$defaultFn(() => "Production"),
     expiresAt: timestamp("expires_at"),
-    id: text("id").primaryKey(),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     latestTransactionId: text("latest_transaction_id"),
     originalTransactionId: text("original_transaction_id").notNull().unique(),
     productId: text("product_id").notNull(),

@@ -1,9 +1,9 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { generateConnectionPortal } from "@cobalt-web/server-data/providers/snaptrade/auth/actions";
 import {
   connectionPortalResponseSchema,
+  generateConnectionPortal,
   generatePortalQuerySchema,
-} from "@cobalt-web/server-data/providers/snaptrade/auth/schemas";
+} from "@cobalt-web/server-data/providers/snaptrade/auth";
 import { userCanAddConnection } from "@cobalt-web/server-data/subscriptions";
 import { createRoute } from "@hono/zod-openapi";
 
@@ -54,5 +54,5 @@ export const generateConnectionPortalRouter = createApp().openapi(route, async (
   }
 
   const result = await generateConnectionPortal(userId, broker, reconnectAuthorizationId);
-  return c.json(result, 200);
+  return c.json(connectionPortalResponseSchema.parse(result), 200);
 });

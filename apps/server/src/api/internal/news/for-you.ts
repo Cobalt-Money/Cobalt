@@ -1,6 +1,6 @@
 import {
-  getFinancialEventsForTickers,
-  getUserStockTickers,
+  getEventsForTickers,
+  getHoldingsTickers,
 } from "@cobalt-web/server-data/news/for-you/queries";
 import {
   forYouQuerySchema,
@@ -31,14 +31,14 @@ const route = createRoute({
 export const forYouRouter = createApp().openapi(route, async (c) => {
   const { limit, cursor, topic } = c.req.valid("query");
 
-  const tickers = await getUserStockTickers(c.var.user.id);
+  const tickers = await getHoldingsTickers(c.var.user.id);
 
   if (tickers.length === 0) {
-    return c.json({ events: [], hasMore: false }, 200);
+    return c.json(forYouResponseSchema.parse({ events: [], hasMore: false }), 200);
   }
 
-  const result = await getFinancialEventsForTickers(c.var.user.id, tickers, limit, cursor, topic);
+  const result = await getEventsForTickers(c.var.user.id, tickers, limit, cursor, topic);
 
   c.header("Cache-Control", "private, max-age=60");
-  return c.json(result, 200);
+  return c.json(forYouResponseSchema.parse(result), 200);
 });

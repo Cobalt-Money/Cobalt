@@ -1,6 +1,8 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { getUserTickersByUserId } from "@cobalt-web/server-data/brokerage/queries";
-import { userTickersResponseSchema } from "@cobalt-web/server-data/brokerage/schemas";
+import {
+  getUserTickers,
+  userTickersResponseSchema,
+} from "@cobalt-web/server-data/brokerage/user-tickers";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -21,7 +23,7 @@ const route = createRoute({
 });
 
 export const userTickersRouter = createApp().openapi(route, async (c) => {
-  const tickers = await getUserTickersByUserId(c.var.user.id);
+  const tickers = await getUserTickers(c.var.user.id);
   c.header("Cache-Control", "private, max-age=60");
-  return c.json({ tickers }, 200);
+  return c.json(userTickersResponseSchema.parse({ tickers }), 200);
 });

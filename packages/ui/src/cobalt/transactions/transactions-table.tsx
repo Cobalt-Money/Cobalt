@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { Checkbox } from "@cobalt-web/ui/components/checkbox";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
@@ -133,7 +133,7 @@ function truncateName(name: string, max = 40): string {
 
 const cellRow = "flex items-center leading-5";
 
-const columns: ColumnDef<TransactionListItem>[] = [
+const columns: ColumnDef<TransactionResponse>[] = [
   {
     cell: ({ row }) => (
       <div
@@ -359,10 +359,10 @@ type FlatItem =
     }
   | {
       kind: "row";
-      row: Row<TransactionListItem>;
+      row: Row<TransactionResponse>;
     };
 
-function flattenRowsByMonth(rows: Row<TransactionListItem>[]): FlatItem[] {
+function flattenRowsByMonth(rows: Row<TransactionResponse>[]): FlatItem[] {
   const items: FlatItem[] = [];
   let currentMonthKey: string | null = null;
   let currentDividerIndex = -1;
@@ -388,7 +388,7 @@ function flattenRowsByMonth(rows: Row<TransactionListItem>[]): FlatItem[] {
   return items;
 }
 
-type TransactionLocation = NonNullable<TransactionListItem["location"]>;
+type TransactionLocation = NonNullable<TransactionResponse["location"]>;
 
 /** `yyyy-mm-dd[...]` → noon-UTC Date, matching the detail page's date picker. */
 function isoToDateOnly(iso: string): Date {
@@ -497,7 +497,7 @@ function TransactionRowContextMenu({
   onDeleteTransaction,
   children,
 }: {
-  transaction: TransactionListItem;
+  transaction: TransactionResponse;
   categoryOptions?: readonly CategoryPickerOption[];
   tagOptions?: readonly TagOption[];
   merchantSearch?: MerchantSearchState;
@@ -593,7 +593,7 @@ function TransactionContextMenuContent({
   onSetLocation,
   onSetName,
 }: {
-  transaction: TransactionListItem;
+  transaction: TransactionResponse;
   categoryOptions?: readonly CategoryPickerOption[];
   tagOptions?: readonly TagOption[];
   merchantSearch?: MerchantSearchState;
@@ -935,7 +935,7 @@ export function TransactionsTable({
   categoryOptions?: readonly CategoryPickerOption[];
   hasActiveFilters?: boolean;
   isComplete: boolean;
-  items: TransactionListItem[];
+  items: TransactionResponse[];
   /** Right-click menu: geocode search state powering "Change location". */
   locationSearch?: GeocodeSearchState;
   /** Right-click menu: merchant search state powering "Change merchant". */
@@ -946,7 +946,7 @@ export function TransactionsTable({
   onDeleteTransaction?: (transactionId: string) => void;
   /** Called when the virtualized list's last row enters the render window. Use to load more rows. */
   onEndReached?: () => void;
-  onOpenTransaction?: (transaction: TransactionListItem) => void;
+  onOpenTransaction?: (transaction: TransactionResponse) => void;
   /** Right-click menu: set a transaction's category. Omit to hide the item. */
   onSetCategory?: (transactionId: string, categoryId: string) => void;
   /** Right-click menu: set a transaction's date (`yyyy-mm-dd`). Omit to hide. */
@@ -989,7 +989,7 @@ export function TransactionsTable({
   );
 
   const openTransaction = useCallback(
-    (row: Row<TransactionListItem>) => {
+    (row: Row<TransactionResponse>) => {
       if (onOpenTransaction) {
         onOpenTransaction(row.original);
         return;
@@ -1003,7 +1003,7 @@ export function TransactionsTable({
   );
 
   const onRowMouseDown = useCallback(
-    (row: Row<TransactionListItem>, e: MouseEvent) => {
+    (row: Row<TransactionResponse>, e: MouseEvent) => {
       if (!isCleanLeftClick(e)) {
         return;
       }
@@ -1023,7 +1023,7 @@ export function TransactionsTable({
   );
 
   const onRowActivate = useCallback(
-    (row: Row<TransactionListItem>, e: MouseEvent | KeyboardEvent) => {
+    (row: Row<TransactionResponse>, e: MouseEvent | KeyboardEvent) => {
       if ("key" in e) {
         if (e.key !== "Enter" && e.key !== " ") {
           return;

@@ -1,20 +1,19 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { successResponseSchema } from "@cobalt-web/server-data/brokerage/_shared";
 import {
   createManualHolding,
+  createManualHoldingSchema,
   deleteManualHolding,
+  getManualHoldingDetail,
+  manualHoldingIdParamSchema,
+  manualHoldingResponseSchema,
+  patchManualHoldingSchema,
   sellManualHolding,
+  sellManualHoldingSchema,
   setManualCashSleeve,
+  setManualCashSleeveSchema,
   updateManualHolding,
-} from "@cobalt-web/server-data/brokerage/manual-holdings/mutations";
-import {
-  createManualHoldingBodySchema,
-  manualHoldingCreatedSchema,
-  okSchema,
-  sellManualHoldingBodySchema,
-  setManualCashSleeveBodySchema,
-  updateManualHoldingBodySchema,
-  updateManualHoldingParamsSchema,
-} from "@cobalt-web/server-data/brokerage/manual-holdings/schemas";
+} from "@cobalt-web/server-data/brokerage/manual-holdings";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -27,17 +26,17 @@ const createRouteDef = createRoute({
   path: "/manual-holdings",
   request: {
     body: {
-      content: { "application/json": { schema: createManualHoldingBodySchema } },
+      content: { "application/json": { schema: createManualHoldingSchema } },
       required: true,
     },
   },
   responses: {
-    200: jsonContent(manualHoldingCreatedSchema, "Holding created"),
+    200: jsonContent(manualHoldingResponseSchema, "Holding created"),
     400: jsonContent(errorResponseWithCodeSchema, "Invalid input"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     404: jsonContent(errorResponseWithCodeSchema, "Account not found"),
-    422: validationErrorResponse(createManualHoldingBodySchema),
+    422: validationErrorResponse(createManualHoldingSchema),
   },
   summary: "Create a manual holding on a manual investment account",
   tags: ["Brokerage"],
@@ -49,18 +48,18 @@ const updateRouteDef = createRoute({
   path: "/manual-holdings/{holdingId}",
   request: {
     body: {
-      content: { "application/json": { schema: updateManualHoldingBodySchema } },
+      content: { "application/json": { schema: patchManualHoldingSchema } },
       required: true,
     },
-    params: updateManualHoldingParamsSchema,
+    params: manualHoldingIdParamSchema,
   },
   responses: {
-    200: jsonContent(okSchema, "Holding updated"),
+    200: jsonContent(manualHoldingResponseSchema, "Holding updated"),
     400: jsonContent(errorResponseWithCodeSchema, "Invalid input"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     404: jsonContent(errorResponseWithCodeSchema, "Holding not found"),
-    422: validationErrorResponse(updateManualHoldingBodySchema),
+    422: validationErrorResponse(patchManualHoldingSchema),
   },
   summary: "Update a manual holding (sparse patch)",
   tags: ["Brokerage"],
@@ -70,13 +69,13 @@ const deleteRouteDef = createRoute({
   method: "delete",
   middleware: [requirePaidUser] as const,
   path: "/manual-holdings/{holdingId}",
-  request: { params: updateManualHoldingParamsSchema },
+  request: { params: manualHoldingIdParamSchema },
   responses: {
-    200: jsonContent(okSchema, "Holding deleted"),
+    200: jsonContent(successResponseSchema, "Holding deleted"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     404: jsonContent(errorResponseWithCodeSchema, "Holding not found"),
-    422: validationErrorResponse(updateManualHoldingParamsSchema),
+    422: validationErrorResponse(manualHoldingIdParamSchema),
   },
   summary: "Delete a manual holding",
   tags: ["Brokerage"],
@@ -88,17 +87,17 @@ const sellRouteDef = createRoute({
   path: "/manual-holdings/sell",
   request: {
     body: {
-      content: { "application/json": { schema: sellManualHoldingBodySchema } },
+      content: { "application/json": { schema: sellManualHoldingSchema } },
       required: true,
     },
   },
   responses: {
-    200: jsonContent(okSchema, "Sell recorded"),
+    200: jsonContent(successResponseSchema, "Sell recorded"),
     400: jsonContent(errorResponseWithCodeSchema, "Invalid input or oversell"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     404: jsonContent(errorResponseWithCodeSchema, "Holding not found"),
-    422: validationErrorResponse(sellManualHoldingBodySchema),
+    422: validationErrorResponse(sellManualHoldingSchema),
   },
   summary: "Record a SELL against a manual holding",
   tags: ["Brokerage"],
@@ -110,17 +109,17 @@ const cashSleeveRouteDef = createRoute({
   path: "/manual-cash-sleeve",
   request: {
     body: {
-      content: { "application/json": { schema: setManualCashSleeveBodySchema } },
+      content: { "application/json": { schema: setManualCashSleeveSchema } },
       required: true,
     },
   },
   responses: {
-    200: jsonContent(okSchema, "Cash sleeve set"),
+    200: jsonContent(successResponseSchema, "Cash sleeve set"),
     400: jsonContent(errorResponseWithCodeSchema, "Invalid input"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     404: jsonContent(errorResponseWithCodeSchema, "Account not found"),
-    422: validationErrorResponse(setManualCashSleeveBodySchema),
+    422: validationErrorResponse(setManualCashSleeveSchema),
   },
   summary: "Set the uninvested cash sleeve on a manual investment account",
   tags: ["Brokerage"],
@@ -130,26 +129,28 @@ export const manualHoldingsRouter = createApp()
   .openapi(createRouteDef, async (c) => {
     const body = c.req.valid("json");
     const { holdingId } = await createManualHolding(c.var.user.id, body);
-    return c.json({ holdingId }, 200);
+    const created = await getManualHoldingDetail(c.var.user.id, holdingId);
+    return c.json(manualHoldingResponseSchema.parse(created), 200);
   })
   .openapi(updateRouteDef, async (c) => {
     const { holdingId } = c.req.valid("param");
     const body = c.req.valid("json");
     await updateManualHolding(c.var.user.id, holdingId, body);
-    return c.json({ ok: true as const }, 200);
+    const updated = await getManualHoldingDetail(c.var.user.id, holdingId);
+    return c.json(manualHoldingResponseSchema.parse(updated), 200);
   })
   .openapi(deleteRouteDef, async (c) => {
     const { holdingId } = c.req.valid("param");
     await deleteManualHolding(c.var.user.id, holdingId);
-    return c.json({ ok: true as const }, 200);
+    return c.json(successResponseSchema.parse({ success: true }), 200);
   })
   .openapi(sellRouteDef, async (c) => {
     const body = c.req.valid("json");
     await sellManualHolding(c.var.user.id, body);
-    return c.json({ ok: true as const }, 200);
+    return c.json(successResponseSchema.parse({ success: true }), 200);
   })
   .openapi(cashSleeveRouteDef, async (c) => {
     const { accountId, amount } = c.req.valid("json");
     await setManualCashSleeve(c.var.user.id, accountId, amount);
-    return c.json({ ok: true as const }, 200);
+    return c.json(successResponseSchema.parse({ success: true }), 200);
   });

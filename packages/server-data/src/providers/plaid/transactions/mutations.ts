@@ -7,10 +7,10 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { Transaction, TransactionStream } from "plaid";
 
-import { lookupCategoryIdsBySystemKey } from "../../../transactions/categories/lookup.js";
-import { pfcDetailedToSystemKey } from "../../../transactions/categories/map.js";
-import type { CategorySystemKey } from "../../../transactions/categories/system-keys.js";
-import { lookupFinancialAccountsByPlaidIds, lookupPlaidConnection } from "../link/queries.js";
+import { lookupCategoryIdsBySystemKey } from "../../../categories/lookup.js";
+import { pfcDetailedToSystemKey } from "../../../categories/map.js";
+import type { CategorySystemKey } from "../../../categories/system-keys.js";
+import { getFinancialAccountsByPlaidIds, lookupPlaidConnection } from "../link/queries.js";
 import { fetchRecurringStreams } from "./actions.js";
 import { transactionToRecord } from "./lib.js";
 import type { UserOverrides } from "./queries.js";
@@ -140,7 +140,7 @@ export async function persistTransactions(transactions: Transaction[]): Promise<
   }
 
   const plaidAccountIds = [...new Set(transactions.map((t) => t.account_id))];
-  const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
+  const accountMap = await getFinancialAccountsByPlaidIds(plaidAccountIds);
 
   const needs = new Map<string, Set<CategorySystemKey>>();
   for (const tx of transactions) {
@@ -340,7 +340,7 @@ async function upsertRecurringStreams(streams: RecurringStreamRow[]): Promise<vo
   const today = todayDateOnly();
 
   const plaidAccountIds = [...new Set(streams.map((s) => s.account_id))];
-  const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
+  const accountMap = await getFinancialAccountsByPlaidIds(plaidAccountIds);
 
   const needs = new Map<string, Set<CategorySystemKey>>();
   for (const s of streams) {

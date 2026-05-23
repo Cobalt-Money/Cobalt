@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
-export const createManualHoldingBodySchema = z
+export const createManualHoldingSchema = z
   .object({
     accountId: z.string(),
     costBasis: z.number().nonnegative().optional(),
@@ -14,13 +14,13 @@ export const createManualHoldingBodySchema = z
     quantity: z.number().positive(),
     ticker: z.string().min(1).max(32),
   })
-  .openapi("CreateManualHoldingBody");
+  .openapi("CreateManualHolding");
 
-export const updateManualHoldingParamsSchema = z.object({
+export const manualHoldingIdParamSchema = z.object({
   holdingId: z.uuid(),
 });
 
-export const updateManualHoldingBodySchema = z
+export const patchManualHoldingSchema = z
   .object({
     costBasis: z.number().nonnegative().nullable().optional(),
     institutionPrice: z.number().nonnegative().optional(),
@@ -31,22 +31,16 @@ export const updateManualHoldingBodySchema = z
       .optional(),
     quantity: z.number().positive().optional(),
   })
-  .openapi("UpdateManualHoldingBody");
+  .openapi("PatchManualHolding");
 
-export const setManualCashSleeveBodySchema = z
+export const setManualCashSleeveSchema = z
   .object({
     accountId: z.uuid(),
     amount: z.number().nonnegative(),
   })
-  .openapi("SetManualCashSleeveBody");
+  .openapi("SetManualCashSleeve");
 
-export const manualHoldingCreatedSchema = z
-  .object({
-    holdingId: z.uuid(),
-  })
-  .openapi("ManualHoldingCreated");
-
-export const sellManualHoldingBodySchema = z
+export const sellManualHoldingSchema = z
   .object({
     holdingId: z.uuid(),
     sellPrice: z.number().nonnegative(),
@@ -56,11 +50,31 @@ export const sellManualHoldingBodySchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .optional(),
   })
-  .openapi("SellManualHoldingBody");
+  .openapi("SellManualHolding");
 
-export const okSchema = z.object({ ok: z.literal(true) }).openapi("Ok");
+export const manualHoldingResponseSchema = z
+  .object({
+    accountId: z.uuid(),
+    averagePrice: z.string().nullable(),
+    costBasis: z.string().nullable(),
+    currency: z.string().nullable(),
+    id: z.uuid(),
+    institutionPrice: z.string().nullable(),
+    institutionPriceAsOf: z.string().nullable(),
+    institutionValue: z.string().nullable(),
+    quantity: z.string(),
+    securityId: z.uuid(),
+    ticker: z.string().nullable(),
+    updatedAt: z.string(),
+  })
+  .openapi("ManualHolding");
 
-export type CreateManualHoldingBody = z.infer<typeof createManualHoldingBodySchema>;
-export type UpdateManualHoldingBody = z.infer<typeof updateManualHoldingBodySchema>;
-export type SetManualCashSleeveBody = z.infer<typeof setManualCashSleeveBodySchema>;
-export type SellManualHoldingBody = z.infer<typeof sellManualHoldingBodySchema>;
+export type CreateManualHolding = z.infer<typeof createManualHoldingSchema>;
+export type PatchManualHolding = z.infer<typeof patchManualHoldingSchema>;
+export type SetManualCashSleeve = z.infer<typeof setManualCashSleeveSchema>;
+export type SellManualHolding = z.infer<typeof sellManualHoldingSchema>;
+export type ManualHoldingResponse = z.infer<typeof manualHoldingResponseSchema>;
+
+// Backwards-compatible aliases for existing external consumers.
+export const sellManualHoldingBodySchema = sellManualHoldingSchema;
+export type SellManualHoldingBody = SellManualHolding;

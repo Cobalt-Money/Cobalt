@@ -1,6 +1,9 @@
-import { fmpGetChart } from "@cobalt-web/server-data/research/fmp-ticker";
-import type { TimePeriod } from "@cobalt-web/server-data/research/fmp-ticker";
-import { chartQuerySchema, chartResponseSchema } from "@cobalt-web/server-data/research/schemas";
+import {
+  chartQuerySchema,
+  chartResponseSchema,
+  getChart,
+} from "@cobalt-web/server-data/research/chart";
+import type { TimePeriod } from "@cobalt-web/server-data/research/chart";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
@@ -67,7 +70,7 @@ const route = createRoute({
 export const chartRouter = createApp().openapi(route, async (c) => {
   const { symbol, timePeriod } = c.req.valid("query");
   const period = (timePeriod ?? "1M") as TimePeriod;
-  const points = await fmpGetChart(symbol, period);
+  const points = await getChart(symbol, period);
 
   const data = points.map((p, i) => ({
     close: p.close,
@@ -83,5 +86,5 @@ export const chartRouter = createApp().openapi(route, async (c) => {
   const isIntraday = period === "1D" || period === "1W";
   const cacheSeconds = isIntraday ? 900 : 86_400;
   c.header("Cache-Control", `public, s-maxage=${cacheSeconds}, stale-while-revalidate=3600`);
-  return c.json({ data }, 200);
+  return c.json(chartResponseSchema.parse({ data }), 200);
 });

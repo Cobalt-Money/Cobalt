@@ -1,9 +1,9 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { getTransactionActivity } from "@cobalt-web/server-data/transactions/queries";
 import {
+  getTransactionActivity,
   transactionActivityResponseSchema,
-  transactionIdParamSchema,
-} from "@cobalt-web/server-data/transactions/schemas";
+} from "@cobalt-web/server-data/transactions/activity";
+import { transactionIdSchema } from "@cobalt-web/server-data/transactions/_shared";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -16,14 +16,14 @@ const getActivityRoute = createRoute({
   middleware: [requirePaidUser] as const,
   path: "/{transactionId}/activity",
   request: {
-    params: transactionIdParamSchema,
+    params: transactionIdSchema,
   },
   responses: {
     200: jsonContent(transactionActivityResponseSchema, "Transaction activity"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     404: jsonContent(errorResponseWithCodeSchema, "Transaction not found"),
-    422: validationErrorResponse(transactionIdParamSchema),
+    422: validationErrorResponse(transactionIdSchema),
   },
   summary: "Get transaction activity",
   tags: ["Transactions"],

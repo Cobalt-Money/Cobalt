@@ -6,11 +6,7 @@ import { security } from "@cobalt-web/db/schema/accounts/investments/security";
 import { and, eq, sql } from "drizzle-orm";
 
 import { ApiError } from "../../_shared/api-error.js";
-import type {
-  CreateManualHoldingBody,
-  SellManualHoldingBody,
-  UpdateManualHoldingBody,
-} from "./schemas.js";
+import type { CreateManualHolding, PatchManualHolding, SellManualHolding } from "./schemas.js";
 
 const MANUAL_SOURCE = "manual" as const;
 const CASH_TICKER = "CASH";
@@ -192,7 +188,7 @@ async function upsertAccumulatedHolding(args: {
 
 export async function createManualHolding(
   userId: string,
-  input: CreateManualHoldingBody,
+  input: CreateManualHolding,
 ): Promise<{ holdingId: string }> {
   if (!Number.isFinite(input.quantity) || input.quantity <= 0) {
     throw new ApiError(400, "invalid_quantity", "Quantity must be > 0");
@@ -247,7 +243,7 @@ export async function createManualHolding(
 export async function updateManualHolding(
   userId: string,
   holdingId: string,
-  patch: UpdateManualHoldingBody,
+  patch: PatchManualHolding,
 ): Promise<void> {
   const existing = await getOwnedHolding(holdingId, userId);
   const current = await db.query.holding.findFirst({
@@ -316,10 +312,7 @@ export async function deleteManualHolding(userId: string, holdingId: string): Pr
  * separately is deferred to a future schema column.
  */
 // eslint-disable-next-line complexity
-export async function sellManualHolding(
-  userId: string,
-  input: SellManualHoldingBody,
-): Promise<void> {
+export async function sellManualHolding(userId: string, input: SellManualHolding): Promise<void> {
   if (!Number.isFinite(input.sellQuantity) || input.sellQuantity <= 0) {
     throw new ApiError(400, "invalid_quantity", "Sell quantity must be > 0");
   }

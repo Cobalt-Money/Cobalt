@@ -1,20 +1,23 @@
 import type { CsvMapping } from "@cobalt-web/db/schema/imports/import-job";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { confirmColumnMapping } from "@cobalt-web/server-data/import/column-mapping/actions";
-import { lookupColumnMappingCache } from "@cobalt-web/server-data/import/column-mapping/cache";
+import { confirmColumnMapping } from "@cobalt-web/server-data/imports/column-mapping/actions";
+import { lookupColumnMappingCache } from "@cobalt-web/server-data/imports/column-mapping/cache";
 import {
   lookupColumnRoles,
   reconstructMapping,
-} from "@cobalt-web/server-data/import/column-mapping/per-name-cache";
-import { persistSchemaMapping } from "@cobalt-web/server-data/import/shared/mutations";
-import { assertOwnedJob } from "@cobalt-web/server-data/import/shared/queries";
+} from "@cobalt-web/server-data/imports/column-mapping/per-name-cache";
+import { persistSchemaMapping } from "@cobalt-web/server-data/imports/_shared/mutations";
+import { assertOwnedJob } from "@cobalt-web/server-data/imports/_shared/queries";
 import {
   columnMappingConfirmResponseSchema,
   columnMappingResponseSchema,
-  confirmColumnMappingBodySchema,
+  confirmColumnMappingSchema,
   importJobIdParamSchema,
-} from "@cobalt-web/server-data/import/shared/schemas";
-import { getRawRowsHeaders, getRawSampleRows } from "@cobalt-web/server-data/import/upload/queries";
+} from "@cobalt-web/server-data/imports/_shared/schemas";
+import {
+  getRawRowsHeaders,
+  getRawSampleRows,
+} from "@cobalt-web/server-data/imports/upload/queries";
 import { createRoute } from "@hono/zod-openapi";
 
 import { runCsvColumnMappingAgent } from "../../../ai/agents/import/csv-column-mapping/csv-column-mapping-agent.js";
@@ -41,7 +44,7 @@ const confirmRoute = createRoute({
   middleware: [requireAuth] as const,
   path: "/{id}/column-map",
   request: {
-    body: { content: { "application/json": { schema: confirmColumnMappingBodySchema } } },
+    body: { content: { "application/json": { schema: confirmColumnMappingSchema } } },
     params: importJobIdParamSchema,
   },
   responses: {
@@ -98,7 +101,15 @@ export const importsColumnMapRouter = createApp()
       console.log(
         `[import.columnMapping] job=${id} source=resume (schemaMapping already persisted)`,
       );
-      return c.json({ fromCache: true, headers, mapping: job.schemaMapping, sampleRows }, 200);
+      return c.json(
+        columnMappingResponseSchema.parse({
+          fromCache: true,
+          headers,
+          mapping: job.schemaMapping,
+          sampleRows,
+        }),
+        200,
+      );
     }
     const { cacheSource, mapping } = await resolveColumnMapping(
       c.var.user.id,
@@ -107,11 +118,22 @@ export const importsColumnMapRouter = createApp()
       sampleRows,
     );
     await persistSchemaMapping(id, mapping);
-    return c.json({ fromCache: cacheSource !== "ai-agent", headers, mapping, sampleRows }, 200);
+    return c.json(
+      columnMappingResponseSchema.parse({
+        fromCache: cacheSource !== "ai-agent",
+        headers,
+        mapping,
+        sampleRows,
+      }),
+      200,
+    );
   })
   .openapi(confirmRoute, async (c) => {
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
     const { rejected, staged } = await confirmColumnMapping(c.var.user.id, id, body);
-    return c.json({ rejected, staged, success: true }, 200);
+    return c.json(
+      columnMappingConfirmResponseSchema.parse({ rejected, staged, success: true }),
+      200,
+    );
   });

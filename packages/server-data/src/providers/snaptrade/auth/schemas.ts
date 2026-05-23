@@ -5,9 +5,11 @@ export const generatePortalQuerySchema = z.object({
   reconnectAuthorizationId: z.string().optional(),
 });
 
-export const connectionPortalResponseSchema = z.object({
-  redirectURI: z.string(),
-  sessionId: z.string().optional(),
-});
+export const connectionPortalResponseSchema = z
+  .object({
+    redirectURI: z.string(),
+    sessionId: z.string().optional(),
+  })
+  .openapi("ConnectionPortal");
 
 export { errorResponseSchema } from "../../../_shared/schemas.js";

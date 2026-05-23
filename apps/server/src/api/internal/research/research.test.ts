@@ -17,36 +17,40 @@ vi.mock(import("@cobalt-web/server-data/subscriptions"), () => ({
   userHasActiveSubscription: vi.fn(() => Promise.resolve(true)),
 }));
 
-vi.mock(import("@cobalt-web/server-data/research/fmp-ticker"), () => ({
-  fmpGetChart: vi.fn(),
-  fmpGetProfile: vi.fn(),
-  fmpGetQuote: vi.fn(),
+vi.mock(import("@cobalt-web/server-data/research/quote"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  getQuote: vi.fn(),
 }));
 
-vi.mock(import("@cobalt-web/server-data/research/queries"), () => ({
+vi.mock(import("@cobalt-web/server-data/research/overview"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  getProfile: vi.fn(),
+}));
+
+vi.mock(import("@cobalt-web/server-data/research/chart"), async (importOriginal) => ({
+  ...(await importOriginal()),
+  getChart: vi.fn(),
+}));
+
+vi.mock(import("@cobalt-web/server-data/research/news"), async (importOriginal) => ({
+  ...(await importOriginal()),
   getResearchNews: vi.fn(),
 }));
 
-vi.mock(import("@cobalt-web/server-data/research/fmp-screener"), () => ({
-  DEFAULT_COMPANY_SCREENER: {},
-  fmpCompanyScreenerNasdaqNyse: vi.fn(),
-}));
-
-vi.mock(import("@cobalt-web/server-data/research/fmp-screener-metrics"), () => ({
+vi.mock(import("@cobalt-web/server-data/research/screener"), async (importOriginal) => ({
+  ...(await importOriginal()),
   enrichScreenerRowsWithRevenueAndRating: vi.fn((rows: Record<string, unknown>[]) =>
     Promise.resolve(rows),
   ),
-}));
-
-vi.mock(import("@cobalt-web/server-data/research/screener-query"), () => ({
+  fmpCompanyScreenerNasdaqNyse: vi.fn(),
   screenerQueryToCompanyParams: vi.fn(() => ({})),
 }));
 
-const { fmpGetChart, fmpGetProfile, fmpGetQuote } =
-  await import("@cobalt-web/server-data/research/fmp-ticker");
-const { getResearchNews } = await import("@cobalt-web/server-data/research/queries");
-const { fmpCompanyScreenerNasdaqNyse } =
-  await import("@cobalt-web/server-data/research/fmp-screener");
+const { getQuote } = await import("@cobalt-web/server-data/research/quote");
+const { getProfile } = await import("@cobalt-web/server-data/research/overview");
+const { getChart } = await import("@cobalt-web/server-data/research/chart");
+const { getResearchNews } = await import("@cobalt-web/server-data/research/news");
+const { fmpCompanyScreenerNasdaqNyse } = await import("@cobalt-web/server-data/research/screener");
 
 const { quoteRouter } = await import("./quote.js");
 const { overviewRouter } = await import("./overview.js");
@@ -54,9 +58,9 @@ const { chartRouter } = await import("./chart.js");
 const { newsRouter } = await import("./news.js");
 const { screenerRouter } = await import("./screener.js");
 
-const mockQuote = vi.mocked(fmpGetQuote);
-const mockProfile = vi.mocked(fmpGetProfile);
-const mockChart = vi.mocked(fmpGetChart);
+const mockQuote = vi.mocked(getQuote);
+const mockProfile = vi.mocked(getProfile);
+const mockChart = vi.mocked(getChart);
 const mockNews = vi.mocked(getResearchNews);
 const mockScreener = vi.mocked(fmpCompanyScreenerNasdaqNyse);
 
@@ -190,7 +194,19 @@ describe("research routes", () => {
   describe("research /news", () => {
     it("returns StockNews payload", async () => {
       const payload = {
-        data: [{ title: "Apple ships M5" }],
+        data: [
+          {
+            date: "2026-01-01",
+            news_url: "https://example.com/a",
+            sentiment: "Positive",
+            source_name: "Example",
+            text: "...",
+            tickers: ["AAPL"],
+            title: "Apple ships M5",
+            topics: ["earnings"],
+            type: "Article",
+          },
+        ],
         total_items: 1,
         total_pages: 1,
       };

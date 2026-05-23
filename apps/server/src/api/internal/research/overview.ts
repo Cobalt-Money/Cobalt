@@ -1,8 +1,8 @@
-import { fmpGetProfile } from "@cobalt-web/server-data/research/fmp-ticker";
 import {
+  getProfile,
   overviewResponseSchema,
   symbolQuerySchema,
-} from "@cobalt-web/server-data/research/schemas";
+} from "@cobalt-web/server-data/research/overview";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
@@ -28,7 +28,7 @@ const route = createRoute({
 
 export const overviewRouter = createApp().openapi(route, async (c) => {
   const { symbol } = c.req.valid("query");
-  const profile = await fmpGetProfile(symbol);
+  const profile = await getProfile(symbol);
   c.header("Cache-Control", "public, s-maxage=604800, stale-while-revalidate=86400");
-  return c.json(profile, 200);
+  return c.json(overviewResponseSchema.parse(profile), 200);
 });

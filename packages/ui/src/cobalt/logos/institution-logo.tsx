@@ -1,7 +1,7 @@
 import { brandfetchIconDomainUrls } from "@cobalt-web/clients/brandfetch";
 import { logoDevUrlByDomain } from "@cobalt-web/clients/logo-dev";
 import { env } from "@cobalt-web/env/web";
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { useMemo } from "react";
 
 import { LogoImageWithFallback } from "./logo-image-fallback";
@@ -41,7 +41,7 @@ export function institutionLogoDevUrlFromInstitutionUrl(
 }
 
 function buildInstitutionLogoCandidates(
-  row: Pick<TransactionListItem, "institutionUrl">,
+  row: Pick<TransactionResponse, "institutionUrl">,
 ): string[] {
   const out: string[] = [];
   const clientId = env.VITE_BRANDFETCH_CLIENT_ID;
@@ -56,7 +56,7 @@ function buildInstitutionLogoCandidates(
   return out;
 }
 
-export type InstitutionLogoSource = Pick<TransactionListItem, "institutionUrl"> & {
+export type InstitutionLogoSource = Pick<TransactionResponse, "institutionUrl"> & {
   institutionLogo?: string | null;
   /** Additional direct logo URLs tried after `institutionLogo` (e.g. SnapTrade Passiv fallbacks). */
   institutionLogosExtra?: readonly string[] | null;
@@ -118,7 +118,7 @@ function pickFallbackText(institutionName: string | null | undefined): string | 
  * (`type=icon` → lettermark), Logo.dev by host, then letter initial.
  */
 export function InstitutionLogo(
-  props: Pick<TransactionListItem, "institutionName" | "institutionUrl"> & {
+  props: Pick<TransactionResponse, "institutionName" | "institutionUrl"> & {
     className?: string;
     /** Plaid / institution CDN logo; tried before Brandfetch when HTTP(S). */
     institutionLogo?: string | null;

@@ -46,7 +46,7 @@ function transactionToRecordMeta(tx: Transaction) {
 
 /**
  * Map a Plaid Transaction → new `transaction` row.
- * Caller resolves `accountId`, `userId` (via lookupFinancialAccountsByPlaidIds)
+ * Caller resolves `accountId`, `userId` (via getFinancialAccountsByPlaidIds)
  * and `categoryId` (via PFC → systemKey → lookupCategoryIdsBySystemKey) before
  * calling.
  */

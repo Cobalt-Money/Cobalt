@@ -1,19 +1,19 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { confirmAccountMapping } from "@cobalt-web/server-data/import/account-mapping/actions";
-import { lookupAccountMappingCache } from "@cobalt-web/server-data/import/account-mapping/cache";
+import { confirmAccountMapping } from "@cobalt-web/server-data/imports/account-mapping/actions";
+import { lookupAccountMappingCache } from "@cobalt-web/server-data/imports/account-mapping/cache";
 import {
   getJob,
   getStagedAccountLabels,
   listAccounts,
-} from "@cobalt-web/server-data/import/account-mapping/queries";
-import { persistAccountSuggestions } from "@cobalt-web/server-data/import/shared/mutations";
+} from "@cobalt-web/server-data/imports/account-mapping/queries";
+import { persistAccountSuggestions } from "@cobalt-web/server-data/imports/_shared/mutations";
 import {
   accountSuggestionsResponseSchema,
-  confirmAccountMappingBodySchema,
+  confirmAccountMappingSchema,
   importJobIdParamSchema,
   successResponseSchema,
-} from "@cobalt-web/server-data/import/shared/schemas";
-import type { AccountSuggestionsResponse } from "@cobalt-web/server-data/import/shared/schemas";
+} from "@cobalt-web/server-data/imports/_shared/schemas";
+import type { AccountSuggestionsResponse } from "@cobalt-web/server-data/imports/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import type { AccountSuggestion } from "../../../ai/agents/import/csv-account-mapping/csv-account-mapping-agent.js";
@@ -43,7 +43,7 @@ const confirmRoute = createRoute({
   request: {
     body: {
       content: {
-        "application/json": { schema: confirmAccountMappingBodySchema },
+        "application/json": { schema: confirmAccountMappingSchema },
       },
     },
     params: importJobIdParamSchema,
@@ -136,7 +136,7 @@ export const importsAccountMapRouter = createApp()
         sourceLabels: labels,
         suggestions: job.accountSuggestions as AccountSuggestionsResponse["suggestions"],
       };
-      return c.json(body, 200);
+      return c.json(accountSuggestionsResponseSchema.parse(body), 200);
     }
     const suggestions =
       path === "A" ? await suggestAccountLabels(c.var.user.id, labels, userAccounts) : [];
@@ -146,11 +146,14 @@ export const importsAccountMapRouter = createApp()
       sourceLabels: labels,
       suggestions: suggestions as AccountSuggestionsResponse["suggestions"],
     };
-    return c.json(body, 200);
+    return c.json(accountSuggestionsResponseSchema.parse(body), 200);
   })
   .openapi(confirmRoute, async (c) => {
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
     await confirmAccountMapping(c.var.user.id, id, body);
-    return c.json({ message: "Account mapping confirmed", success: true }, 200);
+    return c.json(
+      successResponseSchema.parse({ message: "Account mapping confirmed", success: true }),
+      200,
+    );
   });

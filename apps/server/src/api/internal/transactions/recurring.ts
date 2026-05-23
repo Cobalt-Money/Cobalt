@@ -1,6 +1,6 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { getRecurringStreams } from "@cobalt-web/server-data/transactions/queries";
-import { recurringStreamsResponseSchema } from "@cobalt-web/server-data/transactions/schemas";
+import { getRecurringTransactions } from "@cobalt-web/server-data/recurring/queries";
+import { getRecurringTransactionResponseSchema } from "@cobalt-web/server-data/recurring/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -13,7 +13,7 @@ const route = createRoute({
   middleware: [requirePaidUser] as const,
   path: "/recurring",
   responses: {
-    200: jsonContent(recurringStreamsResponseSchema, "Recurring streams"),
+    200: jsonContent(getRecurringTransactionResponseSchema, "Recurring streams"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
   },
@@ -22,6 +22,6 @@ const route = createRoute({
 });
 
 export const recurringRouter = createApp().openapi(route, async (c) => {
-  const streams = await getRecurringStreams(c.var.user.id);
+  const streams = await getRecurringTransactions(c.var.user.id);
   return c.json({ streams }, 200);
 });

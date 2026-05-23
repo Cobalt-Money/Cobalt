@@ -1,10 +1,9 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { assertBrokerageAccountOwnedById } from "@cobalt-web/server-data/brokerage/errors";
-import { getPortfolioSnapshotsByUserId } from "@cobalt-web/server-data/brokerage/queries";
 import {
+  getPortfolioSnapshots,
   portfolioSnapshotsQuerySchema,
   portfolioSnapshotsResponseSchema,
-} from "@cobalt-web/server-data/brokerage/schemas";
+} from "@cobalt-web/server-data/brokerage/portfolio-snapshots";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -20,7 +19,6 @@ const route = createRoute({
     200: jsonContent(portfolioSnapshotsResponseSchema, "Portfolio snapshots"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
-    404: jsonContent(errorResponseWithCodeSchema, "Brokerage account not found"),
     422: validationErrorResponse(portfolioSnapshotsQuerySchema),
   },
   summary: "Get portfolio snapshots",
@@ -28,10 +26,7 @@ const route = createRoute({
 });
 
 export const portfolioSnapshotsRouter = createApp().openapi(route, async (c) => {
-  const query = c.req.valid("query");
-  if (query.accountId && query.accountId !== "all-accounts") {
-    await assertBrokerageAccountOwnedById(query.accountId, c.var.user.id);
-  }
-  const snapshots = await getPortfolioSnapshotsByUserId(c.var.user.id, query);
-  return c.json({ snapshots }, 200);
+  // Ownership inlined in WHERE — non-owners receive an empty list.
+  const snapshots = await getPortfolioSnapshots(c.var.user.id, c.req.valid("query"));
+  return c.json(portfolioSnapshotsResponseSchema.parse({ snapshots }), 200);
 });

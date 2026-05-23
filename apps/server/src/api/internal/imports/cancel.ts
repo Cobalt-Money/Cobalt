@@ -1,9 +1,9 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { requestCancel } from "@cobalt-web/server-data/import/shared/mutations";
+import { requestCancel } from "@cobalt-web/server-data/imports/_shared/mutations";
 import {
   importJobIdParamSchema,
   successResponseSchema,
-} from "@cobalt-web/server-data/import/shared/schemas";
+} from "@cobalt-web/server-data/imports/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -26,5 +26,5 @@ const route = createRoute({
 export const importsCancelRouter = createApp().openapi(route, async (c) => {
   const { id } = c.req.valid("param");
   await requestCancel(c.var.user.id, id);
-  return c.json({ message: "Cancel requested", success: true }, 200);
+  return c.json(successResponseSchema.parse({ message: "Cancel requested", success: true }), 200);
 });

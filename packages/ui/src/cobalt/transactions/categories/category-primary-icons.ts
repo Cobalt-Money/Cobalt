@@ -1,16 +1,13 @@
-import {
-  CATEGORY_MAPPING,
-  formatCategoryName,
-} from "@cobalt-web/server-data/transactions/categories/labels";
-import type { CategoryData } from "@cobalt-web/server-data/transactions/categories/labels";
+import { CATEGORY_MAPPING, formatCategoryName } from "@cobalt-web/server-data/categories/labels";
+import type { CategoryData } from "@cobalt-web/server-data/categories/labels";
 import { QuestionIcon } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 
-export type { CategoryData } from "@cobalt-web/server-data/transactions/categories/labels";
+export type { CategoryData } from "@cobalt-web/server-data/categories/labels";
 export {
   getDetailedCategoryDisplayName,
   getPrimaryCategoryLabel,
-} from "@cobalt-web/server-data/transactions/categories/labels";
+} from "@cobalt-web/server-data/categories/labels";
 
 const V = "?v=2";
 const BANK_FEES_ICON_SRC = `/assets/vectors/card.svg${V}`;

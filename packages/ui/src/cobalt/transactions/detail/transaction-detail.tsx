@@ -1,6 +1,6 @@
 import type {
   TransactionActivityItem,
-  TransactionListItem,
+  TransactionResponse,
 } from "@cobalt-web/server-data/transactions/schemas";
 import { Separator } from "@cobalt-web/ui/components/separator";
 
@@ -22,7 +22,7 @@ export function TransactionDetailView({
   edit?: TransactionDetailEditHandlers;
   editEvents?: TransactionActivityItem[];
   tagsById?: ActivityTagMap;
-  transaction: TransactionListItem;
+  transaction: TransactionResponse;
 }) {
   return (
     <div className="mx-auto flex w-full min-w-0 max-w-2xl flex-col gap-8 pt-[10vh] pb-8">

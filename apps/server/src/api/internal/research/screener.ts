@@ -1,13 +1,11 @@
 import {
   DEFAULT_COMPANY_SCREENER,
+  enrichScreenerRowsWithRevenueAndRating,
   fmpCompanyScreenerNasdaqNyse,
-} from "@cobalt-web/server-data/research/fmp-screener";
-import { enrichScreenerRowsWithRevenueAndRating } from "@cobalt-web/server-data/research/fmp-screener-metrics";
-import {
   screenerQuerySchema,
+  screenerQueryToCompanyParams,
   screenerResponseSchema,
-} from "@cobalt-web/server-data/research/schemas";
-import { screenerQueryToCompanyParams } from "@cobalt-web/server-data/research/screener-query";
+} from "@cobalt-web/server-data/research/screener";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
@@ -38,7 +36,6 @@ export const screenerRouter = createApp().openapi(route, async (c) => {
   };
   const results = await fmpCompanyScreenerNasdaqNyse(mergedParams);
   const enriched = await enrichScreenerRowsWithRevenueAndRating(results);
-  const body = screenerResponseSchema.parse({ count: enriched.length, results: enriched });
   c.header("Cache-Control", "private, s-maxage=60, stale-while-revalidate=300");
-  return c.json(body, 200);
+  return c.json(screenerResponseSchema.parse({ count: enriched.length, results: enriched }), 200);
 });

@@ -50,7 +50,7 @@ export interface PickerBinding {
   onSelect: (id: string) => void;
 }
 
-/** Per-key validators that mirror the server's `updateStagedRowBodySchema` so an invalid intermediate (e.g. "1.", "") doesn't trigger a save+reject flicker. */
+/** Per-key validators that mirror the server's `updateStagedRowSchema` so an invalid intermediate (e.g. "1.", "") doesn't trigger a save+reject flicker. */
 const INTERMEDIATE_TYPING_GUARDS: Partial<Record<PersistableKey, RegExp>> = {
   amount: /^-?\d*\.?\d*$/, // permissive: allows "-", "1.", "" while typing
 };

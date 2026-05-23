@@ -1,4 +1,5 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { successResponseSchema } from "@cobalt-web/server-data/transactions/_shared";
 import {
   bulkApplyTags,
   createTag,
@@ -7,13 +8,12 @@ import {
 } from "@cobalt-web/server-data/transactions/tags/mutations";
 import { getTag, listTags } from "@cobalt-web/server-data/transactions/tags/queries";
 import {
-  bulkApplyTagsBodySchema,
-  createTagBodySchema,
+  bulkApplyTagsSchema,
   createTagResponseSchema,
-  tagIdParamSchema,
+  createTagSchema,
+  patchTagSchema,
+  tagIdSchema,
   tagsListResponseSchema,
-  tagSuccessResponse,
-  updateTagBodySchema,
 } from "@cobalt-web/server-data/transactions/tags/schemas";
 import { createRoute, z } from "@hono/zod-openapi";
 
@@ -42,14 +42,14 @@ const createTagRoute = createRoute({
   path: "/",
   request: {
     body: {
-      content: { "application/json": { schema: createTagBodySchema } },
+      content: { "application/json": { schema: createTagSchema } },
     },
   },
   responses: {
     201: jsonContent(createTagResponseSchema, "Tag created"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
-    422: validationErrorResponse(createTagBodySchema),
+    422: validationErrorResponse(createTagSchema),
   },
   summary: "Create tag",
   tags: ["Tags"],
@@ -61,15 +61,15 @@ const updateTagRoute = createRoute({
   middleware: [requirePaidUser] as const,
   path: "/{tagId}",
   request: {
-    body: { content: { "application/json": { schema: updateTagBodySchema } } },
-    params: tagIdParamSchema,
+    body: { content: { "application/json": { schema: patchTagSchema } } },
+    params: tagIdSchema,
   },
   responses: {
-    200: jsonContent(tagSuccessResponse, "Tag updated"),
+    200: jsonContent(successResponseSchema, "Tag updated"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     404: jsonContent(errorResponseWithCodeSchema, "Tag not found"),
-    422: validationErrorResponse(updateTagBodySchema),
+    422: validationErrorResponse(patchTagSchema),
   },
   summary: "Update tag",
   tags: ["Tags"],
@@ -80,13 +80,13 @@ const deleteTagRoute = createRoute({
   method: "delete",
   middleware: [requirePaidUser] as const,
   path: "/{tagId}",
-  request: { params: tagIdParamSchema },
+  request: { params: tagIdSchema },
   responses: {
-    200: jsonContent(tagSuccessResponse, "Tag deleted"),
+    200: jsonContent(successResponseSchema, "Tag deleted"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     404: jsonContent(errorResponseWithCodeSchema, "Tag not found"),
-    422: validationErrorResponse(tagIdParamSchema),
+    422: validationErrorResponse(tagIdSchema),
   },
   summary: "Delete tag",
   tags: ["Tags"],
@@ -99,7 +99,7 @@ const bulkApplyRoute = createRoute({
   path: "/bulk-apply",
   request: {
     body: {
-      content: { "application/json": { schema: bulkApplyTagsBodySchema } },
+      content: { "application/json": { schema: bulkApplyTagsSchema } },
     },
   },
   responses: {
@@ -113,7 +113,7 @@ const bulkApplyRoute = createRoute({
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     404: jsonContent(errorResponseWithCodeSchema, "One or more tags not found"),
-    422: validationErrorResponse(bulkApplyTagsBodySchema),
+    422: validationErrorResponse(bulkApplyTagsSchema),
   },
   summary: "Bulk apply tags",
   tags: ["Tags"],

@@ -1,5 +1,8 @@
-import { getResearchNews } from "@cobalt-web/server-data/research/queries";
-import { newsResponseSchema, symbolQuerySchema } from "@cobalt-web/server-data/research/schemas";
+import {
+  getResearchNews,
+  newsResponseSchema,
+  symbolQuerySchema,
+} from "@cobalt-web/server-data/research/news";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
@@ -26,5 +29,5 @@ export const newsRouter = createApp().openapi(route, async (c) => {
   const { symbol } = c.req.valid("query");
   const news = await getResearchNews(symbol);
   c.header("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=1800");
-  return c.json(news, 200);
+  return c.json(newsResponseSchema.parse(news), 200);
 });

@@ -1,4 +1,4 @@
-import type { ImportStatusResponse } from "@cobalt-web/server-data/import/shared/schemas";
+import type { ImportStatusResponse } from "@cobalt-web/server-data/imports/_shared/schemas";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { Button } from "@cobalt-web/ui/components/button";
 import {

@@ -1,10 +1,9 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { assertBrokerageAccountOwnedByExternalId } from "@cobalt-web/server-data/brokerage/errors";
-import { getActivitiesByUserId } from "@cobalt-web/server-data/brokerage/queries";
 import {
   activitiesQuerySchema,
   activitiesResponseSchema,
-} from "@cobalt-web/server-data/brokerage/schemas";
+  getActivities,
+} from "@cobalt-web/server-data/brokerage/activities";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -20,7 +19,6 @@ const route = createRoute({
     200: jsonContent(activitiesResponseSchema, "Brokerage activities"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
-    404: jsonContent(errorResponseWithCodeSchema, "Brokerage account not found"),
     422: validationErrorResponse(activitiesQuerySchema),
   },
   summary: "Get brokerage activities",
@@ -28,11 +26,8 @@ const route = createRoute({
 });
 
 export const activitiesRouter = createApp().openapi(route, async (c) => {
-  const query = c.req.valid("query");
-  if (query.accountId) {
-    await assertBrokerageAccountOwnedByExternalId(query.accountId, c.var.user.id);
-  }
-  const result = await getActivitiesByUserId(c.var.user.id, query);
+  // Ownership inlined in WHERE — non-owners receive an empty list.
+  const result = await getActivities(c.var.user.id, c.req.valid("query"));
   c.header("Cache-Control", "private, max-age=60");
-  return c.json(result, 200);
+  return c.json(activitiesResponseSchema.parse(result), 200);
 });

@@ -1,9 +1,9 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { geocodeSearch } from "@cobalt-web/server-data/transactions/geocode";
 import {
+  geocodeSearch,
   geocodeSearchQuerySchema,
   geocodeSearchResponseSchema,
-} from "@cobalt-web/server-data/transactions/schemas";
+} from "@cobalt-web/server-data/geocode";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";

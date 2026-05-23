@@ -1,6 +1,5 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { getBalancesByUserId } from "@cobalt-web/server-data/brokerage/queries";
-import { balancesResponseSchema } from "@cobalt-web/server-data/brokerage/schemas";
+import { balancesResponseSchema, getBalances } from "@cobalt-web/server-data/brokerage/balances";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -21,7 +20,7 @@ const route = createRoute({
 });
 
 export const balancesRouter = createApp().openapi(route, async (c) => {
-  const result = await getBalancesByUserId(c.var.user.id);
+  const result = await getBalances(c.var.user.id);
   c.header("Cache-Control", "private, max-age=60");
-  return c.json(result, 200);
+  return c.json(balancesResponseSchema.parse(result), 200);
 });

@@ -1,11 +1,11 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { Location01Icon, Refresh01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 
 import type { GeocodeSearchState } from "../add-transaction-dialog";
 
-type LocationJson = NonNullable<TransactionListItem["location"]>;
+type LocationJson = NonNullable<TransactionResponse["location"]>;
 
 export interface GeocodeResult {
   displayName: string;

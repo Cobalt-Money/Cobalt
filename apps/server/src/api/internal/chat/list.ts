@@ -1,6 +1,5 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { getChatsByUserId } from "@cobalt-web/server-data/chat/queries";
-import { conversationListResponseSchema } from "@cobalt-web/server-data/chat/schemas";
+import { chatsResponseSchema, getChats } from "@cobalt-web/server-data/chat/list";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -13,7 +12,7 @@ const route = createRoute({
   middleware: [requirePaidUser] as const,
   path: "/list",
   responses: {
-    200: jsonContent(conversationListResponseSchema, "Chat list"),
+    200: jsonContent(chatsResponseSchema, "Chat list"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
   },
@@ -22,6 +21,6 @@ const route = createRoute({
 });
 
 export const chatListRouter = createApp().openapi(route, async (c) => {
-  const items = await getChatsByUserId(c.var.user.id);
-  return c.json(items, 200);
+  const items = await getChats(c.var.user.id);
+  return c.json(chatsResponseSchema.parse(items), 200);
 });

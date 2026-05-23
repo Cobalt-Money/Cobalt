@@ -22,5 +22,5 @@ const route = createRoute({
 export const tickerSearchRouter = createApp().openapi(route, async (c) => {
   const tickers = await searchTickers();
   c.header("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
-  return c.json({ count: tickers.length, tickers }, 200);
+  return c.json(tickerSearchResponseSchema.parse({ count: tickers.length, tickers }), 200);
 });

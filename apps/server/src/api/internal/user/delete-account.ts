@@ -34,5 +34,5 @@ export const deleteAccountRouter = createApp().openapi(route, async (c) => {
     console.warn("[delete-account] signOut failed", error);
   }
 
-  return c.json(result, 200);
+  return c.json(deleteAccountResponseSchema.parse(result), 200);
 });

@@ -14,7 +14,7 @@ export interface AccountRef {
  * Resolve financial_account rows for a batch of Plaid external account_ids.
  * Returns a Map keyed by Plaid account_id. Missing entries = orphaned/unsynced.
  */
-export async function lookupFinancialAccountsByPlaidIds(
+export async function getFinancialAccountsByPlaidIds(
   plaidAccountIds: string[],
 ): Promise<Map<string, AccountRef>> {
   if (plaidAccountIds.length === 0) {
@@ -216,7 +216,7 @@ export async function checkForDuplicateAccounts(
  * Skips connections in a Plaid error state or pending disconnect — those
  * should fall through to a fresh re-link rather than update mode.
  */
-export async function findExistingHealthyConnection(
+export async function getExistingHealthyConnection(
   userId: string,
   institutionId: string,
 ): Promise<{

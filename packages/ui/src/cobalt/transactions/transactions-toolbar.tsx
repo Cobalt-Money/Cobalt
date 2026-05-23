@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { Button } from "@cobalt-web/ui/components/button";
 import {
   DropdownMenu,
@@ -53,7 +53,7 @@ export interface TransactionsToolbarProps {
   /** Categories for the filter pill; omit to render manage-only dropdown. */
   categoryOptions?: readonly CategoryFilterOption[];
   /** Transactions for counting badge in filter menu. */
-  items?: readonly TransactionListItem[];
+  items?: readonly TransactionResponse[];
   onFiltersChange: (next: TransactionsToolbarFilters) => void;
   onExport?: (format: ExportFormat) => void;
   onAddTransaction?: () => void;

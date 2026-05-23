@@ -1,5 +1,5 @@
 import { AddAccountGrid } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/add-account-grid";
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import {
   Command,
   CommandDialog,
@@ -137,7 +137,7 @@ interface CommandMenuContextValue {
   /** Open palette to the add-tag sub-page, optionally seeded with a name. */
   openAddTag: (opts?: { initialName?: string }) => void;
   /** Open palette to the bulk-actions sub-page for the given transactions. */
-  openBulkActions: (transactions: readonly TransactionListItem[]) => void;
+  openBulkActions: (transactions: readonly TransactionResponse[]) => void;
 }
 
 const CommandMenuContext = createContext<CommandMenuContextValue | null>(null);
@@ -171,7 +171,7 @@ function CommandMenuDialog({
   setSearch: React.Dispatch<React.SetStateAction<string>>;
   addTagInitialName: string;
   setAddTagInitialName: React.Dispatch<React.SetStateAction<string>>;
-  bulkTargets: readonly TransactionListItem[];
+  bulkTargets: readonly TransactionResponse[];
   onClearBulkTargets: () => void;
 }) {
   const [settingsSeed, setSettingsSeed] = useState<SettingsSection>("profile");
@@ -528,7 +528,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
   const pageStack = usePageStack();
   const [search, setSearch] = useState("");
   const [addTagInitialName, setAddTagInitialName] = useState("");
-  const [bulkTargets, setBulkTargets] = useState<readonly TransactionListItem[]>([]);
+  const [bulkTargets, setBulkTargets] = useState<readonly TransactionResponse[]>([]);
   const clearBulkTargets = useCallback(() => setBulkTargets([]), []);
 
   const setOpen = useCallback(
@@ -572,7 +572,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
     [openAt],
   );
   const openBulkActions = useCallback(
-    (transactions: readonly TransactionListItem[]) => {
+    (transactions: readonly TransactionResponse[]) => {
       setBulkTargets([...transactions]);
       openAt("bulk-actions");
     },

@@ -26,7 +26,7 @@ vi.mock(import("@cobalt-web/db/schema/accounts/account"), () => ({}) as never);
 vi.mock(import("@cobalt-web/db/schema/accounts/investments/holding"), () => ({}) as never);
 vi.mock(import("@cobalt-web/db/schema/accounts/investments/security"), () => ({}) as never);
 
-const { getPortfolioSnapshotsByUserId } = await import("./queries.js");
+const { getPortfolioSnapshots } = await import("./queries.js");
 
 function lastWhere(): Record<string, unknown> {
   const call = findManyMock.mock.calls.at(-1);
@@ -36,19 +36,19 @@ function lastWhere(): Record<string, unknown> {
   return (call[0] as { where: Record<string, unknown> }).where;
 }
 
-describe("getPortfolioSnapshotsByUserId", () => {
+describe("getPortfolioSnapshots", () => {
   beforeEach(() => {
     findManyMock.mockReset();
     findManyMock.mockResolvedValue([]);
   });
 
   it("scopes to userId", async () => {
-    await getPortfolioSnapshotsByUserId("user-1", {});
+    await getPortfolioSnapshots("user-1", {});
     expect(lastWhere().userId).toStrictEqual({ eq: "user-1" });
   });
 
   it("filters via account relation: snaptrade OR (plaid + investment) OR (manual + investment)", async () => {
-    await getPortfolioSnapshotsByUserId("user-1", {});
+    await getPortfolioSnapshots("user-1", {});
     const where = lastWhere();
     expect(where.account).toStrictEqual({
       OR: [
@@ -60,7 +60,7 @@ describe("getPortfolioSnapshotsByUserId", () => {
   });
 
   it("applies date range from params", async () => {
-    await getPortfolioSnapshotsByUserId("user-1", {
+    await getPortfolioSnapshots("user-1", {
       endDate: "2026-05-10",
       startDate: "2026-05-01",
     });
@@ -68,12 +68,12 @@ describe("getPortfolioSnapshotsByUserId", () => {
   });
 
   it("scopes to a specific accountId when provided", async () => {
-    await getPortfolioSnapshotsByUserId("user-1", { accountId: "acct-9" });
+    await getPortfolioSnapshots("user-1", { accountId: "acct-9" });
     expect(lastWhere().accountId).toStrictEqual({ eq: "acct-9" });
   });
 
   it("ignores accountId='all-accounts' sentinel", async () => {
-    await getPortfolioSnapshotsByUserId("user-1", { accountId: "all-accounts" });
+    await getPortfolioSnapshots("user-1", { accountId: "all-accounts" });
     expect(lastWhere().accountId).toBeUndefined();
   });
 
@@ -88,7 +88,7 @@ describe("getPortfolioSnapshotsByUserId", () => {
       },
     ]);
 
-    const rows = await getPortfolioSnapshotsByUserId("user-1", {});
+    const rows = await getPortfolioSnapshots("user-1", {});
 
     expect(rows).toStrictEqual([
       {
@@ -111,7 +111,7 @@ describe("getPortfolioSnapshotsByUserId", () => {
       },
     ]);
 
-    const rows = await getPortfolioSnapshotsByUserId("user-1", {});
+    const rows = await getPortfolioSnapshots("user-1", {});
 
     expect(rows[0]).toMatchObject({ snapshotDate: "2026-05-09", value: 5000 });
   });

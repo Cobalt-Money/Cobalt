@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import {
   mapZeroTransactionEditRow,
   mapZeroTransactionListRow,
@@ -56,7 +56,7 @@ export function useTransactions(filters: Filters = {}) {
   const items = useMemo(() => {
     const mapped = rows
       .map((row) => mapZeroTransactionListRow(row))
-      .filter((item): item is TransactionListItem => item !== null);
+      .filter((item): item is TransactionResponse => item !== null);
     const q = filters.query?.trim().toLowerCase();
     const from = filters.dateFrom;
     const to = filters.dateTo;

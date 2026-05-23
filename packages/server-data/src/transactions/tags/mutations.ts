@@ -6,9 +6,9 @@ import { transactionEdit } from "@cobalt-web/db/schema/accounts/banking/transact
 import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { ApiError } from "../errors.js";
-import type { BulkApplyTagsBody, CreateTagBody, UpdateTagBody } from "./schemas.js";
+import type { BulkApplyTags, CreateTag, PatchTag } from "./schemas.js";
 
-export async function createTag(userId: string, body: CreateTagBody): Promise<{ id: string }> {
+export async function createTag(userId: string, body: CreateTag): Promise<{ id: string }> {
   const [row] = await db
     .insert(tag)
     .values({
@@ -24,7 +24,7 @@ export async function createTag(userId: string, body: CreateTagBody): Promise<{ 
   return { id: row.id };
 }
 
-export async function updateTag(userId: string, tagId: string, body: UpdateTagBody): Promise<void> {
+export async function updateTag(userId: string, tagId: string, body: PatchTag): Promise<void> {
   const updates: Partial<typeof tag.$inferInsert> = {};
   if (body.name !== undefined) {
     updates.name = body.name;
@@ -148,7 +148,7 @@ export async function setTransactionTags(
  */
 export function bulkApplyTags(
   userId: string,
-  body: BulkApplyTagsBody,
+  body: BulkApplyTags,
 ): Promise<{ updatedCount: number }> {
   const { addTagIds, removeTagIds, transactionIds } = body;
   const addSet = [...new Set(addTagIds)];

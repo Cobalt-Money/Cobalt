@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { MerchantLogo } from "@cobalt-web/ui/cobalt/logos/merchant-logo";
 import { mapZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 import type { ZeroTransactionListRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
@@ -78,7 +78,7 @@ const buildSearchQuery = (trimmedSearch: string) => {
     .limit(50);
 };
 
-const toListItem = (row: unknown): TransactionListItem | null =>
+const toListItem = (row: unknown): TransactionResponse | null =>
   mapZeroTransactionListRow(row as ZeroTransactionListRow);
 
 const isNotNull = <T,>(value: T | null): value is T => value !== null;
@@ -96,7 +96,7 @@ export function useTransactionSearch(rawSearch: string, enabled: boolean) {
     { enabled, ttl: settled ? "1m" : "none" },
   );
 
-  const filteredTransactions = useMemo<TransactionListItem[]>(
+  const filteredTransactions = useMemo<TransactionResponse[]>(
     () => (enabled ? transactionRows.map(toListItem).filter(isNotNull) : []),
     [enabled, transactionRows],
   );
@@ -130,7 +130,7 @@ export function TransactionSearchResults({
   trimmedSearch,
   onSelect,
 }: {
-  filteredTransactions: TransactionListItem[];
+  filteredTransactions: TransactionResponse[];
   trimmedSearch: string;
   onSelect: (id: string) => void;
 }) {

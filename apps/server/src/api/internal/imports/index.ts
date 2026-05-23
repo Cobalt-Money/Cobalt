@@ -1,3 +1,7 @@
+// All imports routes use `requireAuth` (not `requirePaidUser`) — CSV import is
+// available to free + paid users alike. Paid-tier limits (connection cap,
+// transaction count) are enforced downstream by the commit workflow + plan
+// gates, not at HTTP entry. See SRI-102 for the pricing policy.
 import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { importsAccountMapRouter } from "./account-map.js";

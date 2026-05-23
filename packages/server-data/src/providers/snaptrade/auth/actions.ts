@@ -4,6 +4,7 @@ import { snaptradeUser } from "@cobalt-web/db/schema/providers/snaptrade/user";
 import type { AuthenticationApiLoginSnapTradeUserRequest } from "snaptrade-typescript-sdk";
 
 import { ApiError } from "../../../_shared/api-error.js";
+import { toConnectionPortal } from "./lib.js";
 import { getBrokerageUserByUserId } from "./queries.js";
 
 interface SnapTradeCredentials {
@@ -76,15 +77,7 @@ export async function generateConnectionPortal(
     );
   }
 
-  const responseData = (response.data || response) as {
-    redirectURI?: string;
-    redirect_uri?: string;
-    sessionId?: string;
-    session_id?: string;
-  };
-
-  const redirectURI = responseData.redirectURI || responseData.redirect_uri;
-  const sessionId = responseData.sessionId || responseData.session_id;
+  const { redirectURI, sessionId } = toConnectionPortal(response.data ?? response);
 
   if (!redirectURI) {
     throw new ApiError(

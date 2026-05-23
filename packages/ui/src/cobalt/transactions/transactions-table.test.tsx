@@ -1,5 +1,5 @@
 import { vi, describe, expect, it } from "vitest";
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import type * as TanStackRouter from "@tanstack/react-router";
 import { render, screen, within } from "@testing-library/react";
 
@@ -17,7 +17,7 @@ vi.mock(import("@tanstack/react-router"), async (importOriginal) => {
   };
 });
 
-function createMockTransaction(overrides: Partial<TransactionListItem> = {}): TransactionListItem {
+function createMockTransaction(overrides: Partial<TransactionResponse> = {}): TransactionResponse {
   return {
     accountLogoDomain: null,
     accountName: "Checking",

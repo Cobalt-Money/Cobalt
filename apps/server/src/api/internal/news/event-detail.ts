@@ -30,5 +30,5 @@ export const eventDetailRouter = createApp().openapi(route, async (c) => {
   const { eventId } = c.req.valid("param");
   const event = await getFinancialEventDetails(c.var.user.id, eventId);
   c.header("Cache-Control", "private, max-age=60");
-  return c.json({ event }, 200);
+  return c.json(eventDetailResponseSchema.parse({ event }), 200);
 });

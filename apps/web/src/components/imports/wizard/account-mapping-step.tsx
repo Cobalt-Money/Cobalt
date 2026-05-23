@@ -1,7 +1,7 @@
 import type {
   AccountSuggestionsResponse,
-  ConfirmAccountMappingBody,
-} from "@cobalt-web/server-data/import/shared/schemas";
+  ConfirmAccountMapping,
+} from "@cobalt-web/server-data/imports/_shared/schemas";
 import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
 import { CobaltSelectPopover } from "@cobalt-web/ui/cobalt/select-popover";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
@@ -222,7 +222,7 @@ function AccountMappingStepInner({
     institutionQuery.trim().length === 0 ? DEFAULT_INSTITUTIONS : (institutionSearch.data ?? []);
 
   const confirmMut = useMutation({
-    mutationFn: async (body: ConfirmAccountMappingBody) => {
+    mutationFn: async (body: ConfirmAccountMapping) => {
       const res = await importsApi[":id"]["account-map"].$post({
         json: body,
         param: { id: jobId },

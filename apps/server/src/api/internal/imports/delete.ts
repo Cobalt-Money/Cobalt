@@ -1,10 +1,10 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { deleteImportJob } from "@cobalt-web/server-data/import/shared/mutations";
-import { getImportJobStatus } from "@cobalt-web/server-data/import/shared/queries";
+import { deleteImportJob } from "@cobalt-web/server-data/imports/_shared/mutations";
+import { getImportJobStatus } from "@cobalt-web/server-data/imports/_shared/queries";
 import {
   importJobIdParamSchema,
   successResponseSchema,
-} from "@cobalt-web/server-data/import/shared/schemas";
+} from "@cobalt-web/server-data/imports/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -42,5 +42,5 @@ export const importsDeleteRouter = createApp().openapi(route, async (c) => {
     );
   }
   await deleteImportJob(c.var.user.id, id);
-  return c.json({ message: "Import discarded", success: true }, 200);
+  return c.json(successResponseSchema.parse({ message: "Import discarded", success: true }), 200);
 });

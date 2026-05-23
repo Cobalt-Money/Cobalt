@@ -9,7 +9,7 @@ import type { ForYouResult } from "./schemas.js";
 // ── Get user stock tickers ─────────────────────────────────────────
 
 /** Distinct tickers from all the user's holdings (Plaid + SnapTrade unified). */
-export async function getUserStockTickers(userId: string): Promise<string[]> {
+export async function getHoldingsTickers(userId: string): Promise<string[]> {
   const rows = await db
     .selectDistinct({ ticker: security.tickerSymbol })
     .from(holding)
@@ -27,7 +27,7 @@ export async function getUserStockTickers(userId: string): Promise<string[]> {
 
 // ── Get financial events for tickers ───────────────────────────────
 
-export async function getFinancialEventsForTickers(
+export async function getEventsForTickers(
   _userId: string,
   tickers: string[],
   limit: number,

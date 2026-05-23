@@ -1,7 +1,7 @@
 import type {
   ColumnMappingResponse,
-  ConfirmColumnMappingBody,
-} from "@cobalt-web/server-data/import/shared/schemas";
+  ConfirmColumnMapping,
+} from "@cobalt-web/server-data/imports/_shared/schemas";
 import { ColumnMappingBoard } from "@cobalt-web/ui/cobalt/imports/column-mapping-board";
 import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
@@ -403,7 +403,7 @@ function ColumnMappingStepInner({ data, jobId }: { data: ColumnMappingResponse; 
   const [emptyResult, setEmptyResult] = useState<{ rejected: number; staged: number } | null>(null);
 
   const confirmMut = useMutation({
-    mutationFn: async (body: ConfirmColumnMappingBody) => {
+    mutationFn: async (body: ConfirmColumnMapping) => {
       const res = await importsApi[":id"]["column-map"].$post({ json: body, param: { id: jobId } });
       if (!res.ok) {
         throw new Error("Failed to confirm mapping");
@@ -468,7 +468,7 @@ function ColumnMappingStepInner({ data, jobId }: { data: ColumnMappingResponse; 
       );
       return;
     }
-    const amountMapping: ConfirmColumnMappingBody["mapping"]["amount"] = transactionTypeCol
+    const amountMapping: ConfirmColumnMapping["mapping"]["amount"] = transactionTypeCol
       ? {
           debitValues,
           kind: "magnitude_type",
@@ -481,7 +481,7 @@ function ColumnMappingStepInner({ data, jobId }: { data: ColumnMappingResponse; 
           parensNegative: state.parensNegative,
           signConvention: state.signConvention,
         };
-    const resolvedSingleAccountChoice: ConfirmColumnMappingBody["singleAccountChoice"] =
+    const resolvedSingleAccountChoice: ConfirmColumnMapping["singleAccountChoice"] =
       hasAccount || !singleAccountChoice
         ? undefined
         : buildSingleAccountChoice(singleAccountChoice);
@@ -640,7 +640,7 @@ function ColumnMappingStepInner({ data, jobId }: { data: ColumnMappingResponse; 
 
 function buildSingleAccountChoice(
   choice: SingleAccountChoice,
-): NonNullable<ConfirmColumnMappingBody["singleAccountChoice"]> {
+): NonNullable<ConfirmColumnMapping["singleAccountChoice"]> {
   if (choice.kind === "existing") {
     return { accountId: choice.accountId, kind: "existing" };
   }

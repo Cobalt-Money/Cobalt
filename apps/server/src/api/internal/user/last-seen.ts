@@ -41,9 +41,9 @@ const postRoute = createRoute({
 export const lastSeenRouter = createApp()
   .openapi(getRoute, async (c) => {
     const result = await getUserLastSeen(c.var.user.id);
-    return c.json(result, 200);
+    return c.json(lastSeenResponseSchema.parse(result), 200);
   })
   .openapi(postRoute, async (c) => {
     const result = await updateLastSeen(c.var.user.id);
-    return c.json(result, 200);
+    return c.json(lastSeenResponseSchema.parse(result), 200);
   });

@@ -22,5 +22,5 @@ const list = createRoute({
 export const alertsRouter = createApp().openapi(list, async (c) => {
   const alerts = await getActiveAlerts(c.var.user.id);
   c.header("Cache-Control", "private, max-age=30");
-  return c.json({ alerts }, 200);
+  return c.json(alertListResponseSchema.parse({ alerts }), 200);
 });

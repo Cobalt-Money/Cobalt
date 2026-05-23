@@ -11,7 +11,7 @@ export const transactionEditActor = pgEnum("transaction_edit_actor", ["system", 
  * Field name being edited. Stored as plain `text` (not enum) because the set of
  * editable fields evolves with the schema and pg enum migrations are painful
  * (`ALTER TYPE ... ADD VALUE` cannot run inside a transaction). Validation lives
- * in the Zod schema for `transactionActivityItemSchema`.
+ * in the Zod schema for `transactionActivityEventSchema`.
  */
 export const TRANSACTION_EDIT_FIELDS = [
   "amount",

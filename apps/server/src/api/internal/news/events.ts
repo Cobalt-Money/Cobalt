@@ -35,5 +35,5 @@ export const eventsRouter = createApp().openapi(route, async (c) => {
 
   c.header("Cache-Control", "private, max-age=60");
 
-  return c.json(result, 200);
+  return c.json(eventsResponseSchema.parse(result), 200);
 });

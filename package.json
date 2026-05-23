@@ -47,7 +47,7 @@
     "zero:keepalive": "bun run --cwd apps/zero-cache verify:keepalive",
     "zero:generate": "bun run --cwd packages/zero generate:zero",
     "check": "ultracite check apps packages && turbo check-types",
-    "precommit": "bun check && bun run test",
+    "precommit": "bun check && bun run test && bun run build",
     "test": "turbo test",
     "fix": "ultracite fix",
     "dump": "bun run scripts/dump.ts",
