@@ -6,11 +6,11 @@ import { Overview } from "@/components/brokerage/overview";
 export const Route = createFileRoute("/_auth/brokerage/")({
   component: Overview,
   loader: ({ context }) => {
-    context.zero.run(queries.brokerage.accounts());
-    context.zero.run(queries.brokerage.positions());
-    context.zero.run(queries.brokerage.recentActivities());
-    context.zero.run(queries.brokerage.portfolioSnapshots());
-    context.zero.run(queries.brokerage.plaidInvestmentAccounts());
+    context.zero.preload(queries.brokerage.accounts(), { ttl: "5m" });
+    context.zero.preload(queries.brokerage.positions(), { ttl: "5m" });
+    context.zero.preload(queries.brokerage.recentActivities(), { ttl: "5m" });
+    context.zero.preload(queries.brokerage.portfolioSnapshots(), { ttl: "5m" });
+    context.zero.preload(queries.brokerage.plaidInvestmentAccounts(), { ttl: "5m" });
   },
   staticData: { title: "Brokerage" },
 });

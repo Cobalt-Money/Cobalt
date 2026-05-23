@@ -13,8 +13,8 @@ import { useAccountsLayout } from "./accounts-layout-context";
 export const Route = createFileRoute("/_auth/accounts/")({
   component: AccountsListPage,
   loader: ({ context }) => {
-    context.zero.run(queries.accounts.bankAccounts());
-    context.zero.run(queries.brokerage.accounts());
+    context.zero.preload(queries.accounts.bankAccounts(), { ttl: "5m" });
+    context.zero.preload(queries.brokerage.accounts(), { ttl: "5m" });
   },
   staticData: { title: "Accounts" },
 });

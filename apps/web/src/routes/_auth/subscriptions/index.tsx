@@ -6,7 +6,7 @@ import { SubscriptionsCalendar } from "@/components/subscriptions/subscriptions-
 export const Route = createFileRoute("/_auth/subscriptions/")({
   component: SubscriptionsPage,
   loader: ({ context }) => {
-    context.zero.run(queries.transactions.recurring());
+    context.zero.preload(queries.transactions.recurring(), { ttl: "5m" });
   },
   staticData: { title: "Subscriptions" },
 });

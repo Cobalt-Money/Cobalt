@@ -199,11 +199,12 @@ function CommandMenuDialog({
 
   // ── Search hooks ────────────────────────────────────────────────────────────
 
-  const { filteredTransactions } = useTransactionSearch(trimmedSearch, open);
+  const { filteredTransactions, handleHighlight: handleTransactionHighlight } =
+    useTransactionSearch(search, open && inSearchTransactions);
 
   const { filteredChats, handleHighlight: handleChatHighlight } = useChatSearch(
-    trimmedSearch,
-    open,
+    search,
+    open && inSearchChats,
   );
 
   const { filteredTickers, isLoadingUniverse, tickerRows } = useTickerSearch(
@@ -372,7 +373,13 @@ function CommandMenuDialog({
         title="Command palette"
       >
         <Command
-          onValueChange={handleChatHighlight}
+          onValueChange={(value) => {
+            if (inSearchChats) {
+              handleChatHighlight(value);
+            } else if (inSearchTransactions) {
+              handleTransactionHighlight(value);
+            }
+          }}
           shouldFilter={!isClientFilteredPage(activePage)}
         >
           {inSettings || inFormPage ? null : (

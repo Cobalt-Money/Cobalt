@@ -18,7 +18,6 @@ interface Filters {
   query?: string;
   dateFrom?: string;
   dateTo?: string;
-  limit?: number;
 }
 
 /**
@@ -35,8 +34,7 @@ export function transactionsListQuery(filters: Filters) {
     (filters.status && filters.status !== "all") ||
     (filters.bank && filters.bank.length > 0) ||
     (filters.tagIds && filters.tagIds.length > 0) ||
-    (filters.categoryIds && filters.categoryIds.length > 0) ||
-    filters.limit !== undefined;
+    (filters.categoryIds && filters.categoryIds.length > 0);
 
   if (!hasFilters) {
     return queries.transactions.list();
@@ -47,7 +45,6 @@ export function transactionsListQuery(filters: Filters) {
     amountMin: filters.amountMin,
     bank: filters.bank ? [...filters.bank] : [],
     categoryIds: filters.categoryIds ? [...filters.categoryIds] : [],
-    limit: filters.limit,
     status: filters.status ?? "all",
     tagIds: filters.tagIds ? [...filters.tagIds] : [],
   });

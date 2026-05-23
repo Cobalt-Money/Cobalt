@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_auth")({
   },
   component: AuthLayout,
   loader: ({ context }) => {
-    context.zero?.run(queries.chats.list());
+    context.zero?.preload(queries.chats.list(), { ttl: "5m" });
   },
 });
 

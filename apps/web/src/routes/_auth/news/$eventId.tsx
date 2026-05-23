@@ -6,7 +6,7 @@ import { FinancialEventDetailPage } from "@/components/news/financial-event-deta
 export const Route = createFileRoute("/_auth/news/$eventId")({
   component: NewsEventDetailRoute,
   loader: ({ context, params }) => {
-    context.zero.run(queries.news.eventById({ eventId: params.eventId }));
+    context.zero.preload(queries.news.eventById({ eventId: params.eventId }), { ttl: "5m" });
   },
   staticData: { title: "Event" },
 });

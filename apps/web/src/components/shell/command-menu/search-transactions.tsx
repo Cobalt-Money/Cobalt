@@ -7,10 +7,21 @@ import { CommandEmpty, CommandGroup, CommandItem } from "@cobalt-web/ui/componen
 import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { zql } from "@cobalt-web/zero";
-import { useQuery } from "@rocicorp/zero/react";
-import { useMemo } from "react";
+import { queries, zql } from "@cobalt-web/zero";
+import { useQuery, useZero } from "@rocicorp/zero/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
+
+const SEARCH_DEBOUNCE_MS = 300;
+
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -74,10 +85,15 @@ const isNotNull = <T,>(value: T | null): value is T => value !== null;
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
-export function useTransactionSearch(trimmedSearch: string, enabled: boolean) {
+export function useTransactionSearch(rawSearch: string, enabled: boolean) {
+  const zero = useZero();
+  const debouncedSearch = useDebouncedValue(rawSearch, SEARCH_DEBOUNCE_MS);
+  const settled = debouncedSearch === rawSearch;
+  const trimmedSearch = debouncedSearch.trim();
+
   const [transactionRows] = useQuery(
     trimmedSearch.length > 0 ? buildSearchQuery(trimmedSearch) : buildRecentQuery(),
-    { enabled },
+    { enabled, ttl: settled ? "1m" : "none" },
   );
 
   const filteredTransactions = useMemo<TransactionListItem[]>(
@@ -85,7 +101,26 @@ export function useTransactionSearch(trimmedSearch: string, enabled: boolean) {
     [enabled, transactionRows],
   );
 
-  return { filteredTransactions };
+  const prefetchedRef = useRef<Set<string>>(new Set());
+
+  const handleHighlight = useCallback(
+    (value: string) => {
+      if (!enabled) {
+        return;
+      }
+      const [transactionId] = value.split(" ", 1);
+      if (!transactionId || prefetchedRef.current.has(transactionId)) {
+        return;
+      }
+      prefetchedRef.current.add(transactionId);
+      zero.preload(queries.transactions.activity({ transactionId }), {
+        ttl: "1m",
+      });
+    },
+    [enabled, zero],
+  );
+
+  return { filteredTransactions, handleHighlight };
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────

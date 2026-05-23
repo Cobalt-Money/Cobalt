@@ -11,10 +11,6 @@ import { TransactionsToolbar } from "@cobalt-web/ui/cobalt/transactions/transact
 import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { isTagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { queries } from "@cobalt-web/zero";
-import {
-  TRANSACTION_LIST_DEFAULT_LIMIT,
-  TRANSACTION_LIST_MAX_LIMIT,
-} from "@cobalt-web/zero/transactions/lib";
 import { useQuery } from "@rocicorp/zero/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { RowSelectionState } from "@tanstack/react-table";
@@ -34,9 +30,9 @@ import type { TransactionsSearch } from "./route";
 export const Route = createFileRoute("/_auth/transactions/")({
   component: TransactionsListPage,
   loader: ({ context, deps }) => {
-    context.zero.run(queries.accounts.bankAccounts());
-    context.zero.run(transactionsListQuery(deps));
-    context.zero.run(queries.tags.list());
+    context.zero.preload(queries.accounts.bankAccounts(), { ttl: "5m" });
+    context.zero.preload(transactionsListQuery(deps), { ttl: "5m" });
+    context.zero.preload(queries.tags.list(), { ttl: "5m" });
   },
   loaderDeps: ({ search }): TransactionsSearch => ({
     amount: search.amount,
@@ -52,18 +48,6 @@ export const Route = createFileRoute("/_auth/transactions/")({
   }),
   staticData: { title: "Transactions" },
 });
-
-function filterSignature(search: TransactionsSearch): string {
-  return [
-    search.amount,
-    search.amountMin,
-    search.amountMax,
-    search.bank?.join(","),
-    search.categoryIds?.join(","),
-    search.status,
-    search.tagIds?.join(","),
-  ].join("|");
-}
 
 function TransactionsListPage() {
   const search = Route.useSearch();
@@ -111,14 +95,6 @@ function TransactionsListPage() {
     }
     return map;
   }, [allTags]);
-  // Reset paging window when filters change so we don't keep an oversized subscription.
-  const filterKey = filterSignature(search);
-  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
-  const [limit, setLimit] = useState<number>(TRANSACTION_LIST_DEFAULT_LIMIT);
-  if (prevFilterKey !== filterKey) {
-    setPrevFilterKey(filterKey);
-    setLimit(TRANSACTION_LIST_DEFAULT_LIMIT);
-  }
   const { isComplete, items } = useTransactions({
     amount: search.amount,
     amountMax: search.amountMax,
@@ -127,12 +103,10 @@ function TransactionsListPage() {
     categoryIds: search.categoryIds,
     dateFrom: search.dateFrom,
     dateTo: search.dateTo,
-    limit,
     query: search.query,
     status: search.status,
     tagIds: search.tagIds,
   });
-  const canLoadMore = isComplete && items.length >= limit && limit < TRANSACTION_LIST_MAX_LIMIT;
   const hasActiveFilters = Boolean(
     (search.amount && search.amount !== "all") ||
     typeof search.amountMin === "number" ||
@@ -148,9 +122,6 @@ function TransactionsListPage() {
   const handleClearFilters = useCallback(() => {
     navigate({ replace: true, search: {}, to: "/transactions" });
   }, [navigate]);
-  const handleEndReached = useCallback(() => {
-    setLimit((prev) => Math.min(prev + TRANSACTION_LIST_DEFAULT_LIMIT, TRANSACTION_LIST_MAX_LIMIT));
-  }, []);
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const selectedCount = Object.keys(rowSelection).length;
@@ -330,7 +301,6 @@ function TransactionsListPage() {
           onClearFilters={handleClearFilters}
           onConnectAccount={openAddAccount}
           onDeleteTransaction={handleDeleteTransaction}
-          onEndReached={canLoadMore ? handleEndReached : undefined}
           onRowSelectionChange={setRowSelection}
           onSetCategory={handleSetCategory}
           onSetDate={handleSetDate}
