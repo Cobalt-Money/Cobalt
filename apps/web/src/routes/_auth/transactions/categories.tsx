@@ -7,8 +7,8 @@ import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layo
 export const Route = createFileRoute("/_auth/transactions/categories")({
   component: CategoriesPage,
   loader: ({ context }) => {
-    context.zero.run(queries.categories.list({ includeHidden: true }));
-    context.zero.run(queries.categories.listGroups());
+    context.zero.preload(queries.categories.list({ includeHidden: true }), { ttl: "5m" });
+    context.zero.preload(queries.categories.listGroups(), { ttl: "5m" });
   },
   staticData: { title: "Categories" },
 });

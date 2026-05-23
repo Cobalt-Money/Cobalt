@@ -26,7 +26,8 @@ import {
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
 
 import { InstitutionLogo } from "../../logos/institution-logo";
 import { CategoryIcon, resolveCategoryIcon, UNKNOWN_CATEGORY_ICON } from "../categories";
@@ -491,8 +492,19 @@ function AmountSubContent({
   onChange: (next: AmountFilterValue) => void;
 }) {
   const { type, min, max } = value;
-  const sliderMin = typeof min === "number" ? min : 0;
-  const sliderMax = typeof max === "number" ? max : SLIDER_MAX;
+  const [liveMin, setLiveMin] = useState<number>(typeof min === "number" ? min : 0);
+  const [liveMax, setLiveMax] = useState<number>(typeof max === "number" ? max : SLIDER_MAX);
+  useEffect(() => {
+    setLiveMin(typeof min === "number" ? min : 0);
+    setLiveMax(typeof max === "number" ? max : SLIDER_MAX);
+  }, [min, max]);
+  const commitRange = useDebouncedCallback((nextMin: number, nextMax: number) => {
+    onChange({
+      max: nextMax < SLIDER_MAX ? nextMax : undefined,
+      min: nextMin > 0 ? nextMin : undefined,
+      type,
+    });
+  }, 300);
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-1">
@@ -516,8 +528,8 @@ function AmountSubContent({
       </div>
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between text-muted-foreground text-xs">
-          <span>{formatBound(sliderMin)}</span>
-          <span>{formatBound(sliderMax)}</span>
+          <span>{formatBound(liveMin)}</span>
+          <span>{formatBound(liveMax)}</span>
         </div>
         <Slider
           max={SLIDER_MAX}
@@ -527,14 +539,12 @@ function AmountSubContent({
               return;
             }
             const [nextMin, nextMax] = values as [number, number];
-            onChange({
-              max: nextMax < SLIDER_MAX ? nextMax : undefined,
-              min: nextMin > 0 ? nextMin : undefined,
-              type,
-            });
+            setLiveMin(nextMin);
+            setLiveMax(nextMax);
+            commitRange(nextMin, nextMax);
           }}
           step={SLIDER_STEP}
-          value={[sliderMin, sliderMax]}
+          value={[liveMin, liveMax]}
         />
       </div>
     </div>

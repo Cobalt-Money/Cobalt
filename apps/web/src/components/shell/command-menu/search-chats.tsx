@@ -3,10 +3,21 @@ import { queries, zql } from "@cobalt-web/zero";
 import { Delete02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DeleteChatDialog } from "@/components/shell/sidebar/delete-chat-dialog";
+
 import type { MouseEvent } from "react";
 
-import { DeleteChatDialog } from "@/components/shell/sidebar/delete-chat-dialog";
+const SEARCH_DEBOUNCE_MS = 300;
+
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -57,12 +68,15 @@ const buildSearchQuery = (trimmedSearch: string) => {
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
-export function useChatSearch(trimmedSearch: string, enabled: boolean) {
+export function useChatSearch(rawSearch: string, enabled: boolean) {
   const zero = useZero();
+  const debouncedSearch = useDebouncedValue(rawSearch, SEARCH_DEBOUNCE_MS);
+  const settled = debouncedSearch === rawSearch;
+  const trimmedSearch = debouncedSearch.trim();
 
   const [chatRows] = useQuery(
     trimmedSearch.length > 0 ? buildSearchQuery(trimmedSearch) : buildRecentQuery(),
-    { enabled },
+    { enabled, ttl: settled ? "1m" : "none" },
   );
 
   const typedRows: ChatSearchRow[] = chatRows;
@@ -83,7 +97,7 @@ export function useChatSearch(trimmedSearch: string, enabled: boolean) {
         return;
       }
       prefetchedRef.current.add(chatId);
-      zero.preload(queries.chats.messages({ chatId }));
+      zero.preload(queries.chats.messages({ chatId }), { ttl: "1m" });
     },
     [enabled, zero],
   );

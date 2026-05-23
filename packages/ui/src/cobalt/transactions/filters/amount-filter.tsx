@@ -3,7 +3,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/componen
 import { Slider } from "@cobalt-web/ui/components/slider";
 import { DollarCircleIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
 
 export type AmountFilterType = "all" | "income" | "expense";
 
@@ -50,8 +51,23 @@ export function AmountFilter({
 }) {
   const [open, setOpen] = useState(autoOpen ?? false);
   const { type, min, max } = value;
-  const sliderMin = typeof min === "number" ? min : 0;
-  const sliderMax = typeof max === "number" ? max : SLIDER_MAX;
+  // Live slider state — UI updates instantly while dragging, URL commit is
+  // debounced so we don't spam new Zero query hashes (one per pixel of drag).
+  const [liveMin, setLiveMin] = useState<number>(typeof min === "number" ? min : 0);
+  const [liveMax, setLiveMax] = useState<number>(typeof max === "number" ? max : SLIDER_MAX);
+  useEffect(() => {
+    setLiveMin(typeof min === "number" ? min : 0);
+    setLiveMax(typeof max === "number" ? max : SLIDER_MAX);
+  }, [min, max]);
+  const commitRange = useDebouncedCallback((nextMin: number, nextMax: number) => {
+    onChange({
+      max: nextMax < SLIDER_MAX ? nextMax : undefined,
+      min: nextMin > 0 ? nextMin : undefined,
+      type,
+    });
+  }, 300);
+  const sliderMin = liveMin;
+  const sliderMax = liveMax;
   const hasRange = sliderMin > 0 || sliderMax < SLIDER_MAX;
   const hasType = type !== "all";
   const isActive = hasType || hasRange;
@@ -117,11 +133,9 @@ export function AmountFilter({
                 return;
               }
               const [nextMin, nextMax] = values as [number, number];
-              onChange({
-                max: nextMax < SLIDER_MAX ? nextMax : undefined,
-                min: nextMin > 0 ? nextMin : undefined,
-                type,
-              });
+              setLiveMin(nextMin);
+              setLiveMax(nextMax);
+              commitRange(nextMin, nextMax);
             }}
             step={SLIDER_STEP}
             value={[sliderMin, sliderMax]}

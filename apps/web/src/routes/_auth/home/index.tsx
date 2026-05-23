@@ -11,14 +11,14 @@ export const Route = createFileRoute("/_auth/home/")({
   loader: ({ context }) => {
     // Only prefetch what home actually mounts. Activities + brokerageAccounts
     // belong to other routes and were costing IVM hydrate work for nothing.
-    context.zero?.run(queries.accounts.bankAccounts());
-    context.zero?.run(queries.accounts.bankBalanceSnapshots({ range: "1Y" }));
-    context.zero?.run(queries.brokerage.portfolioSnapshots({ range: "1Y" }));
-    context.zero?.run(queries.transactions.list());
-    context.zero?.run(queries.transactions.recurring());
-    context.zero?.run(queries.brokerage.accounts());
-    context.zero?.run(queries.brokerage.positions());
-    context.zero?.run(queries.brokerage.plaidInvestmentAccounts());
+    context.zero?.preload(queries.accounts.bankAccounts(), { ttl: "5m" });
+    context.zero?.preload(queries.accounts.bankBalanceSnapshots({ range: "1Y" }), { ttl: "5m" });
+    context.zero?.preload(queries.brokerage.portfolioSnapshots({ range: "1Y" }), { ttl: "5m" });
+    context.zero?.preload(queries.transactions.list(), { ttl: "5m" });
+    context.zero?.preload(queries.transactions.recurring(), { ttl: "5m" });
+    context.zero?.preload(queries.brokerage.accounts(), { ttl: "5m" });
+    context.zero?.preload(queries.brokerage.positions(), { ttl: "5m" });
+    context.zero?.preload(queries.brokerage.plaidInvestmentAccounts(), { ttl: "5m" });
   },
   staticData: { title: "Home" },
 });

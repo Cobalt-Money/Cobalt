@@ -33,15 +33,17 @@ const transactionDetailRouteApi = getRouteApi(
 export const Route = createFileRoute("/_auth/transactions/$transactionId")({
   component: TransactionDetailRoute,
   loader: ({ context, params }) => {
-    context.zero.run(queries.transactions.list());
-    context.zero.run(
-      queries.transactions.activity({ transactionId: params.transactionId })
+    context.zero.preload(queries.transactions.list(), { ttl: "5m" });
+    context.zero.preload(
+      queries.transactions.activity({ transactionId: params.transactionId }),
+      { ttl: "5m" }
     );
-    context.zero.run(queries.tags.list());
-    context.zero.run(
-      queries.tags.forTransaction({ transactionId: params.transactionId })
+    context.zero.preload(queries.tags.list(), { ttl: "5m" });
+    context.zero.preload(
+      queries.tags.forTransaction({ transactionId: params.transactionId }),
+      { ttl: "5m" }
     );
-    context.zero.run(queries.categories.list());
+    context.zero.preload(queries.categories.list(), { ttl: "5m" });
   },
   staticData: { title: "Transaction" },
 });

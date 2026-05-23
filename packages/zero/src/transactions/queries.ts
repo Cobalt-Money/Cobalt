@@ -7,7 +7,6 @@ import {
   NO_MATCH_ID,
   recurringForUser,
   spendingTransactionsForUser,
-  TRANSACTION_LIST_MAX_LIMIT,
   transactionsForUser,
 } from "./lib.js";
 
@@ -18,7 +17,6 @@ const listArgsSchema = z
     amountMin: z.number().nonnegative().optional(),
     bank: z.array(z.string()).optional(),
     categoryIds: z.array(z.string()).optional(),
-    limit: z.number().int().positive().max(TRANSACTION_LIST_MAX_LIMIT).optional(),
     status: z.enum(["all", "pending", "posted"]).optional(),
     tagIds: z.array(z.string()).optional(),
   })

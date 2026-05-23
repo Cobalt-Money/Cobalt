@@ -14,9 +14,9 @@ import { useNewsLayout } from "./news-layout-context";
 export const Route = createFileRoute("/_auth/news/")({
   component: NewsIndexPage,
   loader: ({ context }) => {
-    context.zero.run(queries.news.events());
-    context.zero.run(queries.news.rssSidebar());
-    context.zero.run(queries.brokerage.positions());
+    context.zero.preload(queries.news.events(), { ttl: "5m" });
+    context.zero.preload(queries.news.rssSidebar(), { ttl: "5m" });
+    context.zero.preload(queries.brokerage.positions(), { ttl: "5m" });
   },
   staticData: { title: "News" },
 });
