@@ -1,9 +1,9 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { assertOwnedJob, getStagedPreview } from "@cobalt-web/server-data/import/shared/queries";
+import { assertOwnedJob, getStagedPreview } from "@cobalt-web/server-data/imports/_shared/queries";
 import {
   importJobIdParamSchema,
   stagedPreviewResponseSchema,
-} from "@cobalt-web/server-data/import/shared/schemas";
+} from "@cobalt-web/server-data/imports/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -30,5 +30,5 @@ export const importsStagedPreviewRouter = createApp().openapi(route, async (c) =
   const { id } = c.req.valid("param");
   await assertOwnedJob(c.var.user.id, id);
   const rows = await getStagedPreview(id);
-  return c.json({ rows }, 200);
+  return c.json(stagedPreviewResponseSchema.parse({ rows }), 200);
 });

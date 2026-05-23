@@ -7,13 +7,18 @@ import {
   updateLinkTokenBodySchema,
 } from "@cobalt-web/server-data/providers/plaid/link/schemas";
 import { createRoute } from "@hono/zod-openapi";
-import { v7 as uuidv7 } from "uuid";
+import { randomBytes } from "node:crypto";
 import { start } from "workflow/api";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { plaidAddAccountWorkflow } from "../../../workflows/plaid/sync/workflow.js";
 import { requireAuth } from "../middleware.js";
+
+/** Opaque workflow-resume bearer. 256-bit random, base64url, prefixed for log grep. */
+function generateHookToken(): string {
+  return `cob_pupd_${randomBytes(32).toString("base64url")}`;
+}
 
 const updateLinkTokenRoute = createRoute({
   method: "post",
@@ -56,7 +61,7 @@ const updateRouter = createApp().openapi(updateLinkTokenRoute, async (c) => {
   // 502 plaid_upstream_failed / link_token_failed from createLinkTokenForUpdate.
   const accessToken = await getAccessTokenForItem(userId, plaidItemId);
   const tokenResult = await createLinkTokenForUpdate(accessToken, userId, "reauth");
-  const hookToken = uuidv7();
+  const hookToken = generateHookToken();
   const run = await start(plaidAddAccountWorkflow, [
     {
       hookToken,
@@ -65,13 +70,13 @@ const updateRouter = createApp().openapi(updateLinkTokenRoute, async (c) => {
     },
   ]);
   return c.json(
-    {
+    linkTokenResponseSchema.parse({
       hookToken,
       link_token: tokenResult.link_token,
       mode: "reauth" as const,
       plaidItemId,
       runId: run.runId,
-    },
+    }),
     200,
   );
 });

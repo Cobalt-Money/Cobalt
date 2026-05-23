@@ -1,46 +1,43 @@
 import { bindRoutes, route } from "@cobalt-web/bindings";
 import type { Binding, RouteSpec } from "@cobalt-web/bindings";
-import { createManualAccount } from "@cobalt-web/server-data/accounts/mutations";
-import { getAccountById, listAccounts } from "@cobalt-web/server-data/accounts/queries";
+import { getAccountDetail } from "@cobalt-web/server-data/accounts/detail";
+import { getAccounts, getAccountsSchema } from "@cobalt-web/server-data/accounts/list";
 import {
-  accountListQuerySchema,
-  manualAccountCreateBodySchema,
-} from "@cobalt-web/server-data/accounts/schemas";
+  createManualAccount,
+  createManualAccountSchema,
+} from "@cobalt-web/server-data/accounts/manual/create";
 import {
-  getActivitiesByUserId,
-  getBalancesByUserId,
-  getBrokerageAccountsByUserId,
-  getPortfolioSnapshotsByUserId,
-  getPositionsByUserId,
-  getUserBrokeragesByUserId,
-  getUserTickersByUserId,
+  getActivities,
+  getBalances,
+  getBrokerageAccounts,
+  getPortfolioSnapshots,
+  getPositions,
+  getUserBrokerages,
+  getUserTickers,
 } from "@cobalt-web/server-data/brokerage/queries";
 import {
   activitiesQuerySchema,
   portfolioSnapshotsQuerySchema,
   positionsQuerySchema,
 } from "@cobalt-web/server-data/brokerage/schemas";
-import { fmpGetProfile, fmpGetQuote } from "@cobalt-web/server-data/research/fmp-ticker";
-import {
-  getCategory,
-  listCategories,
-} from "@cobalt-web/server-data/transactions/categories/queries";
-import { getResearchNews } from "@cobalt-web/server-data/research/queries";
-import { symbolQuerySchema } from "@cobalt-web/server-data/research/schemas";
+import { getProfile } from "@cobalt-web/server-data/research/overview";
+import { getQuote } from "@cobalt-web/server-data/research/quote";
+import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
+import { getCategoryDetail } from "@cobalt-web/server-data/categories/detail";
+import { getCategories } from "@cobalt-web/server-data/categories/list";
+import { getResearchNews } from "@cobalt-web/server-data/research/news";
+import { symbolQuerySchema } from "@cobalt-web/server-data/research/_shared";
 import { getBalanceSnapshotsByUserId } from "@cobalt-web/server-data/snapshots/queries";
 import { balanceSnapshotQuerySchema } from "@cobalt-web/server-data/snapshots/schemas";
 import {
   createManualTransactions,
   patchTransaction,
 } from "@cobalt-web/server-data/transactions/mutations";
+import { getTransactions } from "@cobalt-web/server-data/transactions/queries";
 import {
-  assertTransactionOwner,
-  getTransactions,
-} from "@cobalt-web/server-data/transactions/queries";
-import {
-  transactionCreateInputSchema,
-  transactionListQuerySchema,
-  transactionPatchBodySchema,
+  createTransactionSchema,
+  getTransactionsSchema,
+  patchTransactionSchema,
 } from "@cobalt-web/server-data/transactions/schemas";
 import {
   createTag,
@@ -49,13 +46,10 @@ import {
 } from "@cobalt-web/server-data/transactions/tags/mutations";
 import {
   getTag,
-  getTagIdsForTransaction,
+  getTagsForTransaction,
   listTags,
 } from "@cobalt-web/server-data/transactions/tags/queries";
-import {
-  createTagBodySchema,
-  updateTagBodySchema,
-} from "@cobalt-web/server-data/transactions/tags/schemas";
+import { createTagSchema, patchTagSchema } from "@cobalt-web/server-data/transactions/tags/schemas";
 import { z } from "zod";
 
 export type { Binding };
@@ -74,11 +68,11 @@ const txnSetTagsSchema = z.object({
   transactionId: z.string().min(1),
 });
 const transactionPatchSchema = z.object({
-  patch: transactionPatchBodySchema,
+  patch: patchTransactionSchema,
   transactionId: z.string().min(1),
 });
 const tagUpdateSchema = z.object({
-  patch: updateTagBodySchema,
+  patch: patchTagSchema,
   tagId: z.string().min(1),
 });
 
@@ -95,7 +89,7 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
     description:
       "Get a single account by its internal `id` (the same id returned by `accounts.list`). Works for any source.",
     handler: async (userId, { accountId }) => ({
-      account: await getAccountById(userId, accountId),
+      account: await getAccountDetail(userId, accountId),
     }),
     name: "accounts_getById",
     schema: accountIdSchema,
@@ -104,54 +98,54 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
     description:
       "List the user's accounts. Each row exposes the internal `id` — use it as `accountId` for `transactions.create`. Filter by `type` and/or `subtype` (both optional, AND-combined).",
     handler: async (userId, params) => ({
-      accounts: await listAccounts(userId, params),
+      accounts: await getAccounts(userId, params),
     }),
     name: "accounts_list",
-    schema: accountListQuerySchema,
+    schema: getAccountsSchema,
   }),
   route({
     description:
       'Create a new MANUAL financial account for the user (depository, credit, investment, or loan). Server stamps `source: "manual"` and seeds today\'s balance snapshot. Use the returned `id` as `accountId` for `transactions.create`. `currentBalance` is the opening balance; `creditLimit` only valid when `type === "credit"`. `logoDomain` is a Brandfetch domain (e.g. "chase.com") for the lettermark fallback.',
     handler: async (userId, body) => await createManualAccount(userId, body),
     name: "accounts_create",
-    schema: manualAccountCreateBodySchema,
+    schema: createManualAccountSchema,
   }),
   route({
     description: "List the user's brokerage accounts.",
     handler: async (userId) => ({
-      accounts: await getBrokerageAccountsByUserId(userId),
+      accounts: await getBrokerageAccounts(userId),
     }),
     name: "brokerage_accounts",
     schema: emptySchema,
   }),
   route({
     description: "List brokerage activities (paginated, user-scoped).",
-    handler: async (userId, args) => await getActivitiesByUserId(userId, args),
+    handler: async (userId, args) => await getActivities(userId, args),
     name: "brokerage_activities",
     schema: activitiesQuerySchema,
   }),
   route({
     description: "Get current brokerage balances for the user.",
-    handler: async (userId) => await getBalancesByUserId(userId),
+    handler: async (userId) => await getBalances(userId),
     name: "brokerage_balances",
     schema: emptySchema,
   }),
   route({
     description: "Portfolio value snapshots over time (user-scoped).",
-    handler: async (userId, args) => await getPortfolioSnapshotsByUserId(userId, args),
+    handler: async (userId, args) => await getPortfolioSnapshots(userId, args),
     name: "brokerage_portfolioSnapshots",
     schema: portfolioSnapshotsQuerySchema,
   }),
   route({
     description: "List brokerage positions (paginated, user-scoped).",
-    handler: async (userId, args) => await getPositionsByUserId(userId, args),
+    handler: async (userId, args) => await getPositions(userId, args),
     name: "brokerage_positions",
     schema: positionsQuerySchema,
   }),
   route({
     description: "List the user's connected brokerages.",
     handler: async (userId) => ({
-      brokerages: await getUserBrokeragesByUserId(userId),
+      brokerages: await getUserBrokerages(userId),
     }),
     name: "brokerage_userBrokerages",
     schema: emptySchema,
@@ -159,23 +153,30 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
   route({
     description: "List tickers held by the user.",
     handler: async (userId) => ({
-      tickers: await getUserTickersByUserId(userId),
+      tickers: await getUserTickers(userId),
     }),
     name: "brokerage_userTickers",
     schema: emptySchema,
   }),
   route({
     description: "Get a single category by id (user-scoped). Returns null if not found.",
-    handler: async (userId, { categoryId }) => ({
-      category: await getCategory(userId, categoryId),
-    }),
+    handler: async (userId, { categoryId }) => {
+      try {
+        return { category: await getCategoryDetail(userId, categoryId) };
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return { category: null };
+        }
+        throw error;
+      }
+    },
     name: "categories_get",
     schema: categoryIdSchema,
   }),
   route({
     description:
       "List the user's categories with their parent groups. Each category has { id, name, systemKey, groupId, iconKey, hidden, excludeFromInsights }. Use this to resolve a `categoryId` for `transactions.create`/`transactions.update` — match by `name` or `systemKey` (stable across users).",
-    handler: async (userId) => await listCategories(userId),
+    handler: async (userId) => await getCategories(userId),
     name: "categories_list",
     schema: emptySchema,
   }),
@@ -187,13 +188,13 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
   }),
   route({
     description: "Public market data: normalized company profile (FMP).",
-    handler: async (_userId, { symbol }) => await fmpGetProfile(symbol),
+    handler: async (_userId, { symbol }) => await getProfile(symbol),
     name: "research_overview",
     schema: symbolQuerySchema,
   }),
   route({
     description: "Public market data: latest quote for a symbol (FMP).",
-    handler: async (_userId, { symbol }) => await fmpGetQuote(symbol),
+    handler: async (_userId, { symbol }) => await getQuote(symbol),
     name: "research_quote",
     schema: symbolQuerySchema,
   }),
@@ -208,8 +209,8 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
   route({
     description: "Add tags to a transaction (idempotent merge).",
     handler: async (userId, { tagIds, transactionId }) => {
-      const existing = await getTagIdsForTransaction(userId, transactionId);
-      const merged = [...new Set([...existing, ...tagIds])];
+      const existing = await getTagsForTransaction(userId, transactionId);
+      const merged = [...new Set([...existing.map((t) => t.id), ...tagIds])];
       await setTransactionTags(userId, transactionId, merged);
       return { tagIds: merged };
     },
@@ -217,9 +218,9 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
     schema: txnTagIdsSchema,
   }),
   route({
-    description: "Get tag ids attached to a transaction.",
+    description: "Get tags attached to a transaction.",
     handler: async (userId, { transactionId }) => ({
-      tagIds: await getTagIdsForTransaction(userId, transactionId),
+      tags: await getTagsForTransaction(userId, transactionId),
     }),
     name: "tags_forTransaction",
     schema: txnIdSchema,
@@ -241,9 +242,9 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
   route({
     description: "Remove tags from a transaction.",
     handler: async (userId, { tagIds, transactionId }) => {
-      const existing = await getTagIdsForTransaction(userId, transactionId);
+      const existing = await getTagsForTransaction(userId, transactionId);
       const drop = new Set(tagIds);
-      const next = existing.filter((id) => !drop.has(id));
+      const next = existing.map((t) => t.id).filter((id) => !drop.has(id));
       await setTransactionTags(userId, transactionId, next);
       return { tagIds: next };
     },
@@ -263,19 +264,18 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
     description: "List the user's transactions (paginated, filterable).",
     handler: (userId, args) => getTransactions(userId, args),
     name: "transactions_list",
-    schema: transactionListQuerySchema,
+    schema: getTransactionsSchema,
   }),
   route({
     description:
       'Create manual transactions on user-owned manual accounts. Input is always an array (1–500 rows; pass `[body]` for a single insert). Returns `{ ids: [...] }` in input order. All-or-nothing: any unowned / non-manual account rejects the whole call. Server stamps `source: "manual"`, `pending: false`, and `userId`.',
     handler: async (userId, bodies) => await createManualTransactions(userId, bodies),
     name: "transactions_create",
-    schema: transactionCreateInputSchema,
+    schema: z.array(createTransactionSchema).min(1).max(500),
   }),
   route({
     description: "Patch a transaction the user owns (mutation). Verifies ownership first.",
     handler: async (userId, { patch, transactionId }) => {
-      await assertTransactionOwner(userId, transactionId);
       await patchTransaction(transactionId, userId, patch);
       return { ok: true };
     },
@@ -286,7 +286,7 @@ const ROUTES: RouteSpec<z.ZodTypeAny>[] = [
     description: "Create a new tag owned by the user. Returns the created tag id.",
     handler: async (userId, body) => await createTag(userId, body),
     name: "tags_create",
-    schema: createTagBodySchema,
+    schema: createTagSchema,
   }),
   route({
     description:

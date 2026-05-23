@@ -1,5 +1,5 @@
 import { vi, describe, expect, it } from "vitest";
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { render, screen } from "@testing-library/react";
 
 import { TransactionDetailView } from "./transaction-detail";
@@ -12,7 +12,7 @@ vi.mock(import("@cobalt-web/ui/components/ui/map"), () => ({
   MarkerContent: () => null,
 }));
 
-function createMockTransaction(overrides: Partial<TransactionListItem> = {}): TransactionListItem {
+function createMockTransaction(overrides: Partial<TransactionResponse> = {}): TransactionResponse {
   return {
     accountLogoDomain: null,
     accountName: "Checking",

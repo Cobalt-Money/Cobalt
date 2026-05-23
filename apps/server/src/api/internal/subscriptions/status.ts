@@ -26,10 +26,10 @@ export const statusRouter = createApp().openapi(route, async (c) => {
   const source = await userSubscriptionSource(c.var.user.id);
   c.header("Cache-Control", "private, no-store");
   return c.json(
-    {
+    subscriptionStatusResponseSchema.parse({
       hasActiveSubscription: source !== null,
       subscriptionSource: source,
-    },
+    }),
     200,
   );
 });

@@ -4,10 +4,10 @@ import {
   billingPortalResponseSchema,
   createBillingPortalSession,
 } from "@cobalt-web/server-data/subscriptions";
-import { createRoute } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
-import { jsonContent } from "../../../lib/openapi-helpers.js";
+import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
 import { requireAuth, requireNotDemo } from "../middleware.js";
 
 const route = createRoute({
@@ -20,6 +20,7 @@ const route = createRoute({
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Not available in demo mode"),
     409: jsonContent(errorResponseWithCodeSchema, "User has no Stripe customer"),
+    422: validationErrorResponse(z.object({})),
     502: jsonContent(errorResponseWithCodeSchema, "Stripe upstream failed"),
   },
   summary: "Create billing portal session",
@@ -29,5 +30,5 @@ const route = createRoute({
 export const billingPortalRouter = createApp().openapi(route, async (c) => {
   const appUrl = env.APP_URL;
   const url = await createBillingPortalSession(c.var.user.id, `${appUrl}/settings`);
-  return c.json({ url }, 200);
+  return c.json(billingPortalResponseSchema.parse({ url }), 200);
 });

@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -16,7 +18,9 @@ import { user } from "../users/auth/auth";
 export const chats = pgTable(
   "chats",
   {
-    chatId: varchar("chat_id").primaryKey(),
+    chatId: varchar("chat_id")
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     title: text("title"),
     updatedAt: timestamp("updated_at")
@@ -62,7 +66,9 @@ export const parts = pgTable(
       .references(() => messages.messageId, { onDelete: "cascade" })
       .notNull(),
     order: integer("order").notNull().default(0),
-    partId: varchar("part_id").primaryKey(),
+    partId: varchar("part_id")
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
     providerMetadata: jsonb("provider_metadata"),
     reasoning_text: text("reasoning_text"),
     source_document_filename: varchar("source_document_filename"),

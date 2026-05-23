@@ -12,7 +12,7 @@ import type {
   StudentLoan,
 } from "plaid";
 
-import { lookupFinancialAccountsByPlaidIds, lookupPlaidConnection } from "../link/queries.js";
+import { getFinancialAccountsByPlaidIds, lookupPlaidConnection } from "../link/queries.js";
 
 const BATCH_SIZE = 100;
 
@@ -82,7 +82,7 @@ export async function upsertBankBalancesForPlaidAccounts(accounts: AccountBase[]
   }
 
   const plaidAccountIds = [...new Set(accounts.map((a) => a.account_id))];
-  const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
+  const accountMap = await getFinancialAccountsByPlaidIds(plaidAccountIds);
 
   const rows = accounts
     .map((a) => {
@@ -130,7 +130,7 @@ export async function upsertCreditLiabilities(liabilities: CreditCardLiability[]
       liabilities.map((l) => l.account_id).filter((id): id is string => typeof id === "string"),
     ),
   ];
-  const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
+  const accountMap = await getFinancialAccountsByPlaidIds(plaidAccountIds);
 
   const rows = liabilities
     .map((l) => {
@@ -190,7 +190,7 @@ export async function upsertMortgageLiabilities(
       liabilities.map((l) => l.account_id).filter((id): id is string => typeof id === "string"),
     ),
   ];
-  const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
+  const accountMap = await getFinancialAccountsByPlaidIds(plaidAccountIds);
 
   const rows = liabilities
     .map((l) => {
@@ -268,7 +268,7 @@ export async function upsertStudentLoanLiabilities(loans: StudentLoan[]): Promis
   const plaidAccountIds = [
     ...new Set(loans.map((l) => l.account_id).filter((id): id is string => typeof id === "string")),
   ];
-  const accountMap = await lookupFinancialAccountsByPlaidIds(plaidAccountIds);
+  const accountMap = await getFinancialAccountsByPlaidIds(plaidAccountIds);
 
   const rows = loans
     .map((l) => {

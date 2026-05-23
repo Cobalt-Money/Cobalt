@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
 import { Edit02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -183,7 +183,7 @@ export function MerchantPickerList({
 }
 
 interface EditableMerchantLogoProps {
-  transaction: Pick<TransactionListItem, "counterparties" | "logoUrl" | "merchantName" | "website">;
+  transaction: Pick<TransactionResponse, "counterparties" | "logoUrl" | "merchantName" | "website">;
   merchantSearch: MerchantSearchState;
   onSubmit: (args: { merchantName: string | null; website: string | null }) => void;
 }

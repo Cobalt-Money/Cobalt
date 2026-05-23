@@ -1,4 +1,4 @@
-import { generateFallbackTitle } from "@cobalt-web/server-data/chat/lib";
+import { generateFallbackTitle } from "@cobalt-web/server-data/chat/_shared";
 
 import { generateChatTitleStep, updateChatTitleStep } from "./steps.js";
 

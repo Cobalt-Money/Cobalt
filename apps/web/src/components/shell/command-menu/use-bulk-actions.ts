@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import type { ExportFormat } from "@cobalt-web/ui/cobalt/transactions/lib/export";
 import {
@@ -11,7 +11,7 @@ import { useBulkSetCategory, useBulkSetExcluded } from "@/hooks/use-bulk-transac
 import { useBulkApplyTags } from "@/hooks/use-tags";
 
 interface UseBulkActionsArgs {
-  targets: readonly TransactionListItem[];
+  targets: readonly TransactionResponse[];
   /** Called after every successful (or failed-then-toasted) bulk action — typically closes palette + clears selection. */
   onDone: () => void;
 }

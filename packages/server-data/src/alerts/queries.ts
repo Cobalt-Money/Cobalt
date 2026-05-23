@@ -5,7 +5,7 @@ import { snaptradeAuthorization } from "@cobalt-web/db/schema/providers/snaptrad
 import { ALERT_SOURCES } from "@cobalt-web/db/schema/users/alerts";
 import { and, eq, inArray, isNotNull } from "drizzle-orm";
 
-import { formatAlert } from "./formatter.js";
+import { formatAlert } from "./_shared/formatter.js";
 import type { AlertDTO } from "./schemas.js";
 
 /**

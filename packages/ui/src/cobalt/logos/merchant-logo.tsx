@@ -1,6 +1,6 @@
 import { brandfetchIconDomainUrls } from "@cobalt-web/clients/brandfetch";
 import { env } from "@cobalt-web/env/web";
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { useMemo } from "react";
 
 import { LogoImageWithFallback } from "./logo-image-fallback";
@@ -38,7 +38,7 @@ function hostnameFromWebsite(url: string | null | undefined): string | null {
 
 /** Prefer merchant counterparty, else first counterparty with a website. */
 function websiteFromCounterparties(
-  counterparties: TransactionListItem["counterparties"],
+  counterparties: TransactionResponse["counterparties"],
 ): string | null {
   if (!counterparties?.length) {
     return null;
@@ -53,7 +53,7 @@ function websiteFromCounterparties(
 
 /** Plaid counterparty logos (merchant first, then others, deduped). */
 function plaidLogoUrlsFromCounterparties(
-  counterparties: TransactionListItem["counterparties"],
+  counterparties: TransactionResponse["counterparties"],
 ): string[] {
   if (!counterparties?.length) {
     return [];
@@ -80,7 +80,7 @@ function plaidLogoUrlsFromCounterparties(
  * 3. Plaid `logo_url` on the transaction, then counterparty `logo_url`s
  */
 function buildMerchantLogoCandidates(
-  row: Pick<TransactionListItem, "counterparties" | "logoUrl" | "website">,
+  row: Pick<TransactionResponse, "counterparties" | "logoUrl" | "website">,
 ): string[] {
   const out: string[] = [];
   const clientId = env.VITE_BRANDFETCH_CLIENT_ID;
@@ -113,7 +113,7 @@ function buildMerchantLogoCandidates(
 }
 
 export function MerchantLogo(
-  props: Pick<TransactionListItem, "counterparties" | "logoUrl" | "merchantName" | "website"> & {
+  props: Pick<TransactionResponse, "counterparties" | "logoUrl" | "merchantName" | "website"> & {
     /** Wrapper size (default `size-5` for table rows). */
     className?: string;
     deferUntilVisible?: boolean;

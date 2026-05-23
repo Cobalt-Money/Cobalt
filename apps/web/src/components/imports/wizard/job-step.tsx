@@ -1,4 +1,4 @@
-import type { ImportStatusResponse } from "@cobalt-web/server-data/import/shared/schemas";
+import type { ImportStatusResponse } from "@cobalt-web/server-data/imports/_shared/schemas";
 import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";

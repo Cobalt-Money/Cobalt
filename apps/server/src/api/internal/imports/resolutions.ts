@@ -2,11 +2,11 @@ import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/sch
 import {
   assertOwnedJob,
   getImportResolutions,
-} from "@cobalt-web/server-data/import/shared/queries";
+} from "@cobalt-web/server-data/imports/_shared/queries";
 import {
   importJobIdParamSchema,
   importResolutionsResponseSchema,
-} from "@cobalt-web/server-data/import/shared/schemas";
+} from "@cobalt-web/server-data/imports/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -33,5 +33,5 @@ export const importsResolutionsRouter = createApp().openapi(route, async (c) => 
   const { id } = c.req.valid("param");
   await assertOwnedJob(c.var.user.id, id);
   const resolutions = await getImportResolutions(id);
-  return c.json(resolutions, 200);
+  return c.json(importResolutionsResponseSchema.parse(resolutions), 200);
 });

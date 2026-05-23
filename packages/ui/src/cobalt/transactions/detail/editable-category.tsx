@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { ArrowRight01Icon, Refresh01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
@@ -27,7 +27,7 @@ export interface CategoryPickerOption {
 }
 
 interface EditableCategoryProps {
-  category: TransactionListItem["category"];
+  category: TransactionResponse["category"];
   isOverridden: boolean;
   onReset: () => void;
   onSubmit: (value: { categoryId: string }) => void;

@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import * as XLSX from "xlsx";
 
 import { getTransactionDisplayDateString, getTransactionDisplayName } from "./helpers";
@@ -17,7 +17,7 @@ interface ExportRow {
   Subcategory: string;
 }
 
-function toExportRow(item: TransactionListItem): ExportRow {
+function toExportRow(item: TransactionResponse): ExportRow {
   const cat = item.category;
   return {
     Account: item.accountName ?? "",
@@ -32,16 +32,16 @@ function toExportRow(item: TransactionListItem): ExportRow {
   };
 }
 
-function buildWorksheet(items: TransactionListItem[]): XLSX.WorkSheet {
+function buildWorksheet(items: TransactionResponse[]): XLSX.WorkSheet {
   const rows = items.map(toExportRow);
   return XLSX.utils.json_to_sheet(rows);
 }
 
-export function buildTransactionsCsv(items: TransactionListItem[]): string {
+export function buildTransactionsCsv(items: TransactionResponse[]): string {
   return XLSX.utils.sheet_to_csv(buildWorksheet(items));
 }
 
-export function buildTransactionsXlsx(items: TransactionListItem[]): ArrayBuffer {
+export function buildTransactionsXlsx(items: TransactionResponse[]): ArrayBuffer {
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, buildWorksheet(items), "Transactions");
   return XLSX.write(workbook, {
@@ -75,11 +75,11 @@ function downloadBlob(content: string | ArrayBuffer, filename: string, mime: str
  * TSV string of selected rows (header + data, tab-separated).
  * Pastes cleanly into Excel / Google Sheets / Numbers.
  */
-export function buildTransactionsTsv(items: TransactionListItem[]): string {
+export function buildTransactionsTsv(items: TransactionResponse[]): string {
   return XLSX.utils.sheet_to_csv(buildWorksheet(items), { FS: "\t" });
 }
 
-export function exportTransactions(items: TransactionListItem[], format: ExportFormat): void {
+export function exportTransactions(items: TransactionResponse[], format: ExportFormat): void {
   const filename = buildTransactionsFilename(items.length, format);
   if (format === "csv") {
     downloadBlob(buildTransactionsCsv(items), filename, "text/csv;charset=utf-8;");

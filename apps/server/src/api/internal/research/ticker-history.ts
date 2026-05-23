@@ -1,9 +1,9 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { fmpGetHistoricalRange } from "@cobalt-web/server-data/research/fmp-ticker";
 import {
+  getHistoricalRange,
   tickerHistoryQuerySchema,
   tickerHistoryResponseSchema,
-} from "@cobalt-web/server-data/research/schemas";
+} from "@cobalt-web/server-data/research/ticker-history";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -40,14 +40,14 @@ export const tickerHistoryRouter = createApp().openapi(route, async (c) => {
   const w = window ?? 7;
   const from = shiftDate(date, -w);
   const to = shiftDate(date, w);
-  const points = await fmpGetHistoricalRange(symbol, from, to);
+  const points = await getHistoricalRange(symbol, from, to);
   c.header("Cache-Control", "public, s-maxage=300, stale-while-revalidate=60");
   return c.json(
-    {
+    tickerHistoryResponseSchema.parse({
       points: points.map((p) => ({ close: p.close, date: p.date, high: p.high, low: p.low })),
       requested: date,
       symbol,
-    },
+    }),
     200,
   );
 });

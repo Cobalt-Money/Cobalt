@@ -30,7 +30,7 @@ vi.mock(
   import("@cobalt-web/server-data/providers/plaid/link/queries"),
   () =>
     ({
-      findExistingHealthyConnection: findExistingMock,
+      getExistingHealthyConnection: findExistingMock,
       getInstitutionRoutingNumber: getRoutingMock,
     }) as never,
 );

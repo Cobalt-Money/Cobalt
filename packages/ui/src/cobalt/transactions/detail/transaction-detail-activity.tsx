@@ -1,6 +1,6 @@
 import type {
   TransactionActivityItem,
-  TransactionListItem,
+  TransactionResponse,
 } from "@cobalt-web/server-data/transactions/schemas";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
@@ -184,7 +184,7 @@ function describeEditEvent(
 }
 
 function buildActivityEvents(
-  transaction: TransactionListItem,
+  transaction: TransactionResponse,
   editEvents: TransactionActivityItem[],
   tagsById: ActivityTagMap | undefined,
 ): ActivityEvent[] {
@@ -255,7 +255,7 @@ function EventMarker({
 }: {
   event: ActivityEvent;
   rawItem?: TransactionActivityItem;
-  transaction: TransactionListItem;
+  transaction: TransactionResponse;
 }) {
   const tone = eventMarkerTone[event.type] ?? "text-muted-foreground";
 
@@ -319,7 +319,7 @@ function ActivityEventRow({
   event: ActivityEvent;
   isLast: boolean;
   rawItem?: TransactionActivityItem;
-  transaction: TransactionListItem;
+  transaction: TransactionResponse;
 }) {
   return (
     <div className="relative flex items-start gap-3 pb-6 last:pb-0">
@@ -353,7 +353,7 @@ export function TransactionDetailActivity({
 }: {
   editEvents: TransactionActivityItem[];
   tagsById?: ActivityTagMap;
-  transaction: TransactionListItem;
+  transaction: TransactionResponse;
 }) {
   const events = buildActivityEvents(transaction, editEvents, tagsById);
 

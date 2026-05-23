@@ -1,7 +1,7 @@
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { getChatMessagesForUser, getVotesForChat } from "@cobalt-web/server-data/chat/queries";
-import { chatDetailResponseSchema, chatIdParamSchema } from "@cobalt-web/server-data/chat/schemas";
+import { chatIdSchema } from "@cobalt-web/server-data/chat/_shared";
+import { chatResponseSchema, getChatDetail } from "@cobalt-web/server-data/chat/detail";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -14,13 +14,13 @@ const route = createRoute({
   method: "get",
   middleware: [requirePaidUser] as const,
   path: "/{chatId}",
-  request: { params: chatIdParamSchema },
+  request: { params: chatIdSchema },
   responses: {
-    200: jsonContent(chatDetailResponseSchema, "Chat detail"),
+    200: jsonContent(chatResponseSchema, "Chat detail"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
-    404: jsonContent(chatDetailResponseSchema, "Not found — empty messages"),
-    422: validationErrorResponse(chatIdParamSchema),
+    404: jsonContent(chatResponseSchema, "Not found — empty messages"),
+    422: validationErrorResponse(chatIdSchema),
   },
   summary: "Get chat messages",
   tags: ["Chat"],
@@ -31,16 +31,13 @@ export const chatDetailRouter = createApp().openapi(route, async (c) => {
   const userId = c.var.user.id;
 
   try {
-    const [messages, votes] = await Promise.all([
-      getChatMessagesForUser(userId, chatId),
-      getVotesForChat(userId, chatId),
-    ]);
-    return c.json({ id: chatId, messages, votes }, 200);
+    const result = await getChatDetail(userId, chatId);
+    return c.json(chatResponseSchema.parse(result), 200);
   } catch (error) {
     // Preserve legacy client behavior: missing/unowned chat → 404 with empty envelope.
     // Other errors bubble to the central onError handler.
     if (error instanceof ApiError && error.code === "chat_not_found") {
-      return c.json({ id: chatId, messages: [], votes: {} }, 404);
+      return c.json(chatResponseSchema.parse({ id: chatId, messages: [], votes: {} }), 404);
     }
     throw error;
   }

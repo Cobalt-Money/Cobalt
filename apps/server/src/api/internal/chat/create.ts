@@ -1,6 +1,5 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { createChat } from "@cobalt-web/server-data/chat/mutations";
-import { chatIdParamSchema } from "@cobalt-web/server-data/chat/schemas";
+import { createChat, createChatResponseSchema } from "@cobalt-web/server-data/chat/create";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -13,7 +12,7 @@ const route = createRoute({
   middleware: [requirePaidUser] as const,
   path: "/",
   responses: {
-    201: jsonContent(chatIdParamSchema, "Chat created"),
+    201: jsonContent(createChatResponseSchema, "Chat created"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
   },
@@ -25,5 +24,5 @@ const route = createRoute({
 export const chatCreateRouter = createApp().openapi(route, async (c) => {
   const userId = c.var.user.id;
   const chatId = await createChat(userId);
-  return c.json({ chatId }, 201);
+  return c.json(createChatResponseSchema.parse({ chatId }), 201);
 });

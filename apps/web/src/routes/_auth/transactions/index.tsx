@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { deriveCategorySection } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
 import type { CategoryPickerOption } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
@@ -225,7 +225,7 @@ function TransactionsListPage() {
     [run],
   );
   const handleSetLocation = useCallback(
-    (transactionId: string, location: NonNullable<TransactionListItem["location"]>) => {
+    (transactionId: string, location: NonNullable<TransactionResponse["location"]>) => {
       run(
         (m) =>
           m.transaction.updateLocation({

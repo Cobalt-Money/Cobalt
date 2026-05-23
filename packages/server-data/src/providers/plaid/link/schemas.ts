@@ -45,10 +45,6 @@ export const resolveLinkBodySchema = z.object({
   publicToken: z.string().optional(),
 });
 
-export const successResponseSchema = z.object({
-  success: z.boolean(),
-});
-
 export const errorResponseSchema = z.object({
   code: z.string().optional(),
   error: z.string(),

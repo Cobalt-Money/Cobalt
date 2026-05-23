@@ -26,7 +26,7 @@ export type {
 } from "./schemas.js";
 export {
   appStoreNotificationTypeSchema,
-  appStoreSyncBodySchema,
+  syncAppStoreSubscriptionSchema,
   appStoreSyncErrorSchema,
   appStoreSyncResponseSchema,
   billingPortalResponseSchema,

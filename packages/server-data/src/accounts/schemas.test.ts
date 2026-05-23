@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { manualAccountCreateBodySchema, MANUAL_SUBTYPES_BY_TYPE } from "./schemas.js";
+import { createManualAccountSchema, MANUAL_SUBTYPES_BY_TYPE } from "./schemas.js";
 
 const base = {
   currentBalance: 100,
   name: "Test",
 };
 
-describe("manualAccountCreateBodySchema", () => {
+describe("createManualAccountSchema", () => {
   it("accepts a valid depository checking row", () => {
-    const result = manualAccountCreateBodySchema.safeParse({
+    const result = createManualAccountSchema.safeParse({
       ...base,
       subtype: "checking",
       type: "depository",
@@ -18,7 +18,7 @@ describe("manualAccountCreateBodySchema", () => {
   });
 
   it("defaults currency to USD when omitted", () => {
-    const result = manualAccountCreateBodySchema.parse({
+    const result = createManualAccountSchema.parse({
       ...base,
       subtype: "savings",
       type: "depository",
@@ -27,7 +27,7 @@ describe("manualAccountCreateBodySchema", () => {
   });
 
   it("rejects a subtype that does not belong to the chosen type", () => {
-    const result = manualAccountCreateBodySchema.safeParse({
+    const result = createManualAccountSchema.safeParse({
       ...base,
       subtype: "credit card",
       type: "depository",
@@ -38,7 +38,7 @@ describe("manualAccountCreateBodySchema", () => {
   });
 
   it("rejects Title-Case subtype (must be lowercase token)", () => {
-    const result = manualAccountCreateBodySchema.safeParse({
+    const result = createManualAccountSchema.safeParse({
       ...base,
       subtype: "Checking",
       type: "depository",
@@ -47,7 +47,7 @@ describe("manualAccountCreateBodySchema", () => {
   });
 
   it("rejects creditLimit on a non-credit account", () => {
-    const result = manualAccountCreateBodySchema.safeParse({
+    const result = createManualAccountSchema.safeParse({
       ...base,
       creditLimit: 5000,
       subtype: "checking",
@@ -59,7 +59,7 @@ describe("manualAccountCreateBodySchema", () => {
   });
 
   it("accepts creditLimit on a credit account", () => {
-    const result = manualAccountCreateBodySchema.safeParse({
+    const result = createManualAccountSchema.safeParse({
       ...base,
       creditLimit: 5000,
       subtype: "credit card",
@@ -72,7 +72,7 @@ describe("manualAccountCreateBodySchema", () => {
     const failures: string[] = [];
     for (const [type, subtypes] of Object.entries(MANUAL_SUBTYPES_BY_TYPE)) {
       for (const subtype of subtypes) {
-        const result = manualAccountCreateBodySchema.safeParse({
+        const result = createManualAccountSchema.safeParse({
           ...base,
           subtype,
           type,

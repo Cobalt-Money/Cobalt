@@ -1,4 +1,4 @@
-import { formatAlert } from "@cobalt-web/server-data/alerts/formatter";
+import { formatAlert } from "@cobalt-web/server-data/alerts/_shared/formatter";
 import { Button } from "@cobalt-web/ui/components/button";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";

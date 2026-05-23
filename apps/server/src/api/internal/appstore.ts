@@ -1,8 +1,8 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
-  appStoreSyncBodySchema,
   appStoreSyncResponseSchema,
   syncAppStoreSubscription,
+  syncAppStoreSubscriptionSchema,
 } from "@cobalt-web/server-data/subscriptions";
 import { createRoute } from "@hono/zod-openapi";
 
@@ -14,18 +14,20 @@ const syncRoute = createRoute({
   description:
     "Persist App Store subscription data after StoreKit reports a purchase. Does not require an existing subscription (users who just bought must be able to sync).",
   method: "post",
+  // requireAuth (not requirePaidUser): users who just completed a StoreKit
+  // purchase have no active subscription yet — this endpoint is what creates it.
   middleware: [requireAuth] as const,
   path: "/sync",
   request: {
     body: {
-      content: { "application/json": { schema: appStoreSyncBodySchema } },
+      content: { "application/json": { schema: syncAppStoreSubscriptionSchema } },
     },
   },
   responses: {
     200: jsonContent(appStoreSyncResponseSchema, "Subscription created or updated"),
     400: jsonContent(errorResponseWithCodeSchema, "Invalid body or dates"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
-    422: validationErrorResponse(appStoreSyncBodySchema),
+    422: validationErrorResponse(syncAppStoreSubscriptionSchema),
     502: jsonContent(errorResponseWithCodeSchema, "App Store upstream failed"),
   },
   summary: "Sync App Store subscription (StoreKit)",
@@ -43,11 +45,11 @@ export const appstoreRouter = createApp().openapi(syncRoute, async (c) => {
   });
 
   return c.json(
-    {
+    appStoreSyncResponseSchema.parse({
       action: result.action,
       subscriptionId: result.subscriptionId,
       success: true as const,
-    },
+    }),
     200,
   );
 });

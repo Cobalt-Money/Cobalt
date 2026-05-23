@@ -2,10 +2,10 @@ import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/sch
 import {
   holdingsNewsQuerySchema,
   holdingsNewsResponseSchema,
-} from "@cobalt-web/server-data/brokerage/merged-schemas";
+} from "@cobalt-web/server-data/brokerage/holdings-news";
 import {
-  getFinancialEventsForTickers,
-  getUserStockTickers,
+  getEventsForTickers,
+  getHoldingsTickers,
 } from "@cobalt-web/server-data/news/for-you/queries";
 import { createRoute } from "@hono/zod-openapi";
 
@@ -32,15 +32,15 @@ const route = createRoute({
 
 export const holdingsNewsRouter = createApp().openapi(route, async (c) => {
   const { limit } = c.req.valid("query");
-  const tickers = await getUserStockTickers(c.var.user.id);
+  const tickers = await getHoldingsTickers(c.var.user.id);
 
   if (tickers.length === 0) {
     c.header("Cache-Control", "private, max-age=60");
-    return c.json({ news: [] }, 200);
+    return c.json(holdingsNewsResponseSchema.parse({ news: [] }), 200);
   }
 
-  const result = await getFinancialEventsForTickers(c.var.user.id, tickers, limit);
+  const result = await getEventsForTickers(c.var.user.id, tickers, limit);
 
   c.header("Cache-Control", "private, max-age=60");
-  return c.json({ news: result.events }, 200);
+  return c.json(holdingsNewsResponseSchema.parse({ news: result.events }), 200);
 });

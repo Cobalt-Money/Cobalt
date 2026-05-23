@@ -2,15 +2,18 @@ import { db } from "@cobalt-web/db";
 import type { TagColor } from "@cobalt-web/db/tag-palette";
 
 import { ApiError } from "../errors.js";
-import type { TagDto } from "./schemas.js";
+import type { Tag, TagWithUsage } from "./schemas.js";
 
+type TagRow = Awaited<ReturnType<typeof db.query.tag.findFirst>>;
 type TagRowWithCount = Awaited<
   ReturnType<
-    typeof db.query.tag.findMany<{ with: { transactionTags: { columns: { tagId: true } } } }>
+    typeof db.query.tag.findMany<{
+      with: { transactionTags: { columns: { tagId: true } } };
+    }>
   >
 >[number];
 
-function toDto(row: TagRowWithCount): TagDto {
+function toTag(row: NonNullable<TagRow>): Tag {
   return {
     archivedAt: row.archivedAt?.toISOString() ?? null,
     color: row.color as TagColor,
@@ -18,12 +21,15 @@ function toDto(row: TagRowWithCount): TagDto {
     id: row.id,
     name: row.name,
     updatedAt: row.updatedAt.toISOString(),
-    usageCount: row.transactionTags.length,
   };
 }
 
+function toTagWithUsage(row: TagRowWithCount): TagWithUsage {
+  return { ...toTag(row), usageCount: row.transactionTags.length };
+}
+
 /** Lists every tag owned by the user (active + archived) with usage counts. */
-export async function listTags(userId: string): Promise<TagDto[]> {
+export async function listTags(userId: string): Promise<TagWithUsage[]> {
   const rows = await db.query.tag.findMany({
     orderBy: { name: "asc" },
     where: { userId: { eq: userId } },
@@ -33,32 +39,33 @@ export async function listTags(userId: string): Promise<TagDto[]> {
       },
     },
   });
-  return rows.map(toDto);
+  return rows.map(toTagWithUsage);
 }
 
-export async function getTag(userId: string, tagId: string): Promise<TagDto | null> {
+export async function getTag(userId: string, tagId: string): Promise<TagWithUsage | null> {
   const row = await db.query.tag.findFirst({
     where: { id: { eq: tagId }, userId: { eq: userId } },
     with: { transactionTags: { columns: { tagId: true } } },
   });
-  return row ? toDto(row) : null;
+  return row ? toTagWithUsage(row) : null;
 }
 
-/** Returns the set of tag ids currently attached to a transaction owned by the user. */
-export async function getTagIdsForTransaction(
-  userId: string,
-  transactionId: string,
-): Promise<string[]> {
+/** Returns bare tag rows (no usage count) for every tag attached to a transaction owned by the user. */
+export async function getTagsForTransaction(userId: string, transactionId: string): Promise<Tag[]> {
   const txn = await db.query.transaction.findFirst({
-    columns: { id: true },
+    columns: {},
     where: { id: { eq: transactionId }, userId: { eq: userId } },
+    with: {
+      transactionTags: {
+        columns: {},
+        with: {
+          tag: true,
+        },
+      },
+    },
   });
   if (!txn) {
     throw new ApiError(404, "transaction_not_found", "Transaction not found");
   }
-  const rows = await db.query.transactionTag.findMany({
-    columns: { tagId: true },
-    where: { transactionId: { eq: transactionId } },
-  });
-  return rows.map((r) => r.tagId);
+  return txn.transactionTags.map((jt) => toTag(jt.tag));
 }

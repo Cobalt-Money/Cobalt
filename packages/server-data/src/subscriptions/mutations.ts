@@ -62,7 +62,6 @@ export async function syncAppStoreSubscription(
       createdAt: now,
       environment,
       expiresAt,
-      id: crypto.randomUUID(),
       latestTransactionId,
       originalTransactionId: input.originalTransactionId,
       productId: input.productId,

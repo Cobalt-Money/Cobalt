@@ -1,7 +1,9 @@
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { toBrokerageAccountListItem } from "@cobalt-web/server-data/brokerage/lib";
-import { getBrokerageAccountsByUserId } from "@cobalt-web/server-data/brokerage/queries";
+import {
+  getBrokerageAccounts,
+  toBrokerageAccountListItem,
+} from "@cobalt-web/server-data/brokerage/queries";
 import {
   brokerageAccountIdParamSchema,
   brokerageAccountsListResponseSchema,
@@ -51,10 +53,10 @@ const deleteRoute = createRoute({
 
 export const brokerageSnaptradeRouter = createApp()
   .openapi(listRoute, async (c) => {
-    const accounts = await getBrokerageAccountsByUserId(c.var.user.id);
+    const accounts = await getBrokerageAccounts(c.var.user.id);
     const items = accounts.map(toBrokerageAccountListItem);
     c.header("Cache-Control", "private, max-age=60");
-    return c.json({ accounts: items }, 200);
+    return c.json(brokerageAccountsListResponseSchema.parse({ accounts: items }), 200);
   })
   .openapi(deleteRoute, async (c) => {
     const entitled = await userHasActiveSubscription(c.var.user.id);

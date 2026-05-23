@@ -9,7 +9,7 @@ import type {
   Security as PlaidSecurity,
 } from "plaid";
 
-import { lookupFinancialAccountsByPlaidIds } from "../link/queries.js";
+import { getFinancialAccountsByPlaidIds } from "../link/queries.js";
 import { lookupSecuritiesByPlaidIds } from "./queries.js";
 
 const BATCH_SIZE = 100;
@@ -92,7 +92,7 @@ export async function upsertInvestmentPositions(holdings: PlaidHolding[]): Promi
   const plaidSecurityIds = [...new Set(holdings.map((h) => h.security_id))];
 
   const [accountMap, securityMap] = await Promise.all([
-    lookupFinancialAccountsByPlaidIds(plaidAccountIds),
+    getFinancialAccountsByPlaidIds(plaidAccountIds),
     lookupSecuritiesByPlaidIds(plaidSecurityIds),
   ]);
 
@@ -163,7 +163,7 @@ export async function upsertInvestmentActivities(
   ];
 
   const [accountMap, securityMap] = await Promise.all([
-    lookupFinancialAccountsByPlaidIds(plaidAccountIds),
+    getFinancialAccountsByPlaidIds(plaidAccountIds),
     lookupSecuritiesByPlaidIds(plaidSecurityIds),
   ]);
 

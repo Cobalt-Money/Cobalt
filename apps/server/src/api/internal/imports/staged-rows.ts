@@ -1,13 +1,13 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { updateStagedRow } from "@cobalt-web/server-data/import/shared/mutations";
-import { assertOwnedJob, getStagedRows } from "@cobalt-web/server-data/import/shared/queries";
+import { updateStagedRow } from "@cobalt-web/server-data/imports/_shared/mutations";
+import { assertOwnedJob, getStagedRows } from "@cobalt-web/server-data/imports/_shared/queries";
 import {
   importJobIdParamSchema,
+  stagedRowResponseSchema,
   stagedRowsResponseSchema,
-  successResponseSchema,
-  updateStagedRowBodySchema,
   updateStagedRowParamSchema,
-} from "@cobalt-web/server-data/import/shared/schemas";
+  updateStagedRowSchema,
+} from "@cobalt-web/server-data/imports/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -32,11 +32,11 @@ const patchRoute = createRoute({
   middleware: [requireAuth] as const,
   path: "/{id}/staged-rows/{rowId}",
   request: {
-    body: { content: { "application/json": { schema: updateStagedRowBodySchema } } },
+    body: { content: { "application/json": { schema: updateStagedRowSchema } } },
     params: updateStagedRowParamSchema,
   },
   responses: {
-    200: jsonContent(successResponseSchema, "Staged row updated"),
+    200: jsonContent(stagedRowResponseSchema, "Updated staged row"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     404: jsonContent(errorResponseWithCodeSchema, "Staged row not found"),
   },
@@ -49,14 +49,14 @@ export const importsStagedRowsRouter = createApp()
     const { id } = c.req.valid("param");
     await assertOwnedJob(c.var.user.id, id);
     const data = await getStagedRows(id);
-    return c.json(data, 200);
+    return c.json(stagedRowsResponseSchema.parse(data), 200);
   })
   .openapi(patchRoute, async (c) => {
     const { id, rowId } = c.req.valid("param");
     const body = c.req.valid("json");
-    const ok = await updateStagedRow(c.var.user.id, id, rowId, body);
-    if (!ok) {
+    const row = await updateStagedRow(c.var.user.id, id, rowId, body);
+    if (!row) {
       return c.json({ code: "staged_row_not_found", error: "Staged row not found" }, 404);
     }
-    return c.json({ success: true }, 200);
+    return c.json(stagedRowResponseSchema.parse(row), 200);
   });

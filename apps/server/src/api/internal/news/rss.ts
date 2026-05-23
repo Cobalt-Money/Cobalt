@@ -28,5 +28,5 @@ export const rssRouter = createApp().openapi(route, async (c) => {
   const result = await getRssArticles(c.var.user.id, query);
 
   c.header("Cache-Control", "private, max-age=60");
-  return c.json(result, 200);
+  return c.json(rssResponseSchema.parse(result), 200);
 });

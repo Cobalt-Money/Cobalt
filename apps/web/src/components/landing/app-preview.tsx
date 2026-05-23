@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import type { FinancialEventCard } from "@cobalt-web/ui/cobalt/news/financial-events-feed";
 import type { NewsMagazineSidebarItem } from "@cobalt-web/ui/cobalt/news/news-magazine";
 import { TransactionDetailActivity } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-activity";
@@ -79,7 +79,7 @@ function mockCat(
   systemKey: string,
   name: string,
   iconKey = systemKey,
-): NonNullable<TransactionListItem["category"]> {
+): NonNullable<TransactionResponse["category"]> {
   return {
     groupName,
     groupSystemKey,
@@ -115,9 +115,9 @@ const MOCK_CATS = {
 } as const;
 
 function makeTx(
-  overrides: Partial<TransactionListItem> &
-    Pick<TransactionListItem, "id" | "name" | "amount" | "date">,
-): TransactionListItem {
+  overrides: Partial<TransactionResponse> &
+    Pick<TransactionResponse, "id" | "name" | "amount" | "date">,
+): TransactionResponse {
   return {
     accountLogoDomain: null,
     accountName: "Chase Checking",
@@ -150,7 +150,7 @@ function loc(
   postal: string,
   lat: number,
   lon: number,
-): NonNullable<TransactionListItem["location"]> {
+): NonNullable<TransactionResponse["location"]> {
   return {
     address,
     city,
@@ -163,18 +163,18 @@ function loc(
   };
 }
 
-function note(text: string): NonNullable<TransactionListItem["notes"]> {
+function note(text: string): NonNullable<TransactionResponse["notes"]> {
   return text;
 }
 
 function noteWithBullets(
   intro: string,
   items: string[],
-): NonNullable<TransactionListItem["notes"]> {
+): NonNullable<TransactionResponse["notes"]> {
   return [intro, ...items.map((item) => `- ${item}`)].join("\n");
 }
 
-const TRANSACTIONS: TransactionListItem[] = [
+const TRANSACTIONS: TransactionResponse[] = [
   makeTx({
     amount: -4.5,
     category: MOCK_CATS.FOOD_AND_DRINK,
@@ -1118,7 +1118,7 @@ const BABY_TAGS_BY_ID = new Map<string, { name: string; color: TagColor }>(
 );
 
 function TransactionsView() {
-  const [selectedTx, setSelectedTx] = useState<TransactionListItem | null>(null);
+  const [selectedTx, setSelectedTx] = useState<TransactionResponse | null>(null);
 
   if (selectedTx) {
     const tagIds = selectedTx.tagIds ?? [];

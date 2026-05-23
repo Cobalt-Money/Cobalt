@@ -1,5 +1,8 @@
-import { fmpGetQuote } from "@cobalt-web/server-data/research/fmp-ticker";
-import { quoteResponseSchema, symbolQuerySchema } from "@cobalt-web/server-data/research/schemas";
+import {
+  getQuote,
+  quoteResponseSchema,
+  symbolQuerySchema,
+} from "@cobalt-web/server-data/research/quote";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
@@ -25,7 +28,7 @@ const route = createRoute({
 
 export const quoteRouter = createApp().openapi(route, async (c) => {
   const { symbol } = c.req.valid("query");
-  const quote = await fmpGetQuote(symbol);
+  const quote = await getQuote(symbol);
   c.header("Cache-Control", "public, s-maxage=900, stale-while-revalidate=3600");
-  return c.json(quote, 200);
+  return c.json(quoteResponseSchema.parse(quote), 200);
 });

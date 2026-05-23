@@ -1,7 +1,7 @@
 import type {
   CategorySuggestionsResponse,
-  ConfirmCategoryMappingBody,
-} from "@cobalt-web/server-data/import/shared/schemas";
+  ConfirmCategoryMapping,
+} from "@cobalt-web/server-data/imports/_shared/schemas";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import {
   CategoryIcon,
@@ -131,7 +131,7 @@ function CategoryMappingStepInner({
   );
 
   const confirmMut = useMutation({
-    mutationFn: async (body: ConfirmCategoryMappingBody) => {
+    mutationFn: async (body: ConfirmCategoryMapping) => {
       const res = await importsApi[":id"]["category-map"].$post({
         json: body,
         param: { id: jobId },

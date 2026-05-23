@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 
 const dateDisplay = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
@@ -7,7 +7,7 @@ const dateDisplay = new Intl.DateTimeFormat("en-US", {
 });
 
 /** Date shown in the table: the posting `date` — matches the server's `orderBy("date", "desc")`. */
-export function getTransactionDisplayDateString(row: Pick<TransactionListItem, "date">): string {
+export function getTransactionDisplayDateString(row: Pick<TransactionResponse, "date">): string {
   return row.date;
 }
 
@@ -17,19 +17,19 @@ export function getTransactionDisplayDateString(row: Pick<TransactionListItem, "
  * only when name is empty.
  */
 export function getTransactionDisplayName(
-  row: Pick<TransactionListItem, "merchantName" | "name">,
+  row: Pick<TransactionResponse, "merchantName" | "name">,
 ): string {
   return row.name?.trim() || row.merchantName?.trim() || "";
 }
 
 /** Sort key for date column — same hierarchy as horizon (`authorizedDate` || `date`). */
-export function transactionDateSortKey(row: TransactionListItem): number {
+export function transactionDateSortKey(row: TransactionResponse): number {
   const raw = getTransactionDisplayDateString(row);
   const day = String(raw).split("T")[0] ?? String(raw);
   return new Date(`${day}T12:00:00.000Z`).getTime();
 }
 
-export function formatTransactionDateDisplay(row: Pick<TransactionListItem, "date">): string {
+export function formatTransactionDateDisplay(row: Pick<TransactionResponse, "date">): string {
   const raw = getTransactionDisplayDateString(row);
   const day = String(raw).split("T")[0] ?? String(raw);
   return dateDisplay.format(new Date(`${day}T12:00:00.000Z`));
@@ -86,7 +86,7 @@ const monthGroupHeading = new Intl.DateTimeFormat("en-US", {
  * Stable month bucket for grouping (calendar month of display date), e.g. `2025-03`.
  * Uses the same display date as {@link transactionDateSortKey}.
  */
-export function transactionMonthGroupKey(row: Pick<TransactionListItem, "date">): string {
+export function transactionMonthGroupKey(row: Pick<TransactionResponse, "date">): string {
   const raw = getTransactionDisplayDateString(row);
   const day = String(raw).split("T")[0] ?? String(raw);
   const parts = day.split("-");

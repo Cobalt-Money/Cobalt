@@ -1,20 +1,20 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { confirmCategoryMapping } from "@cobalt-web/server-data/import/category-mapping/actions";
-import { lookupCategoryMappingCache } from "@cobalt-web/server-data/import/category-mapping/cache";
+import { confirmCategoryMapping } from "@cobalt-web/server-data/imports/category-mapping/actions";
+import { lookupCategoryMappingCache } from "@cobalt-web/server-data/imports/category-mapping/cache";
 import {
   getJob,
   getStagedCategoryLabels,
   listCategories,
   listCategoryGroups,
-} from "@cobalt-web/server-data/import/category-mapping/queries";
-import { persistCategorySuggestions } from "@cobalt-web/server-data/import/shared/mutations";
+} from "@cobalt-web/server-data/imports/category-mapping/queries";
+import { persistCategorySuggestions } from "@cobalt-web/server-data/imports/_shared/mutations";
 import {
   categorySuggestionsResponseSchema,
-  confirmCategoryMappingBodySchema,
+  confirmCategoryMappingSchema,
   importJobIdParamSchema,
   successResponseSchema,
-} from "@cobalt-web/server-data/import/shared/schemas";
-import type { CategorySuggestionsResponse } from "@cobalt-web/server-data/import/shared/schemas";
+} from "@cobalt-web/server-data/imports/_shared/schemas";
+import type { CategorySuggestionsResponse } from "@cobalt-web/server-data/imports/_shared/schemas";
 import { createRoute } from "@hono/zod-openapi";
 
 import type { CategorySuggestion } from "../../../ai/agents/import/csv-category-mapping/csv-category-mapping-agent.js";
@@ -44,7 +44,7 @@ const confirmRoute = createRoute({
   request: {
     body: {
       content: {
-        "application/json": { schema: confirmCategoryMappingBodySchema },
+        "application/json": { schema: confirmCategoryMappingSchema },
       },
     },
     params: importJobIdParamSchema,
@@ -152,7 +152,7 @@ export const importsCategoryMapRouter = createApp()
         userCategories,
         userGroups,
       };
-      return c.json(body, 200);
+      return c.json(categorySuggestionsResponseSchema.parse(body), 200);
     }
     const suggestions = await suggestCategoryLabels(c.var.user.id, labels, userCategories);
     await persistCategorySuggestions(id, suggestions);
@@ -162,11 +162,14 @@ export const importsCategoryMapRouter = createApp()
       userCategories,
       userGroups,
     };
-    return c.json(body, 200);
+    return c.json(categorySuggestionsResponseSchema.parse(body), 200);
   })
   .openapi(confirmRoute, async (c) => {
     const { id } = c.req.valid("param");
     const body = c.req.valid("json");
     await confirmCategoryMapping(c.var.user.id, id, body);
-    return c.json({ message: "Category mapping confirmed", success: true }, 200);
+    return c.json(
+      successResponseSchema.parse({ message: "Category mapping confirmed", success: true }),
+      200,
+    );
   });

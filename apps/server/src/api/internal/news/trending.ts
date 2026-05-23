@@ -1,4 +1,4 @@
-import { getUserStockTickers } from "@cobalt-web/server-data/news/for-you/queries";
+import { getHoldingsTickers } from "@cobalt-web/server-data/news/for-you/queries";
 import { getTrendingHeadlines } from "@cobalt-web/server-data/news/trending/queries";
 import {
   trendingQuerySchema,
@@ -29,14 +29,14 @@ const route = createRoute({
 
 export const trendingRouter = createApp().openapi(route, async (c) => {
   const { limit } = c.req.valid("query");
-  const tickers = await getUserStockTickers(c.var.user.id);
+  const tickers = await getHoldingsTickers(c.var.user.id);
 
   if (tickers.length === 0) {
-    return c.json({ headlines: [] }, 200);
+    return c.json(trendingResponseSchema.parse({ headlines: [] }), 200);
   }
 
   const headlines = await getTrendingHeadlines(c.var.user.id, tickers, limit);
 
   c.header("Cache-Control", "private, max-age=60");
-  return c.json({ headlines }, 200);
+  return c.json(trendingResponseSchema.parse({ headlines }), 200);
 });

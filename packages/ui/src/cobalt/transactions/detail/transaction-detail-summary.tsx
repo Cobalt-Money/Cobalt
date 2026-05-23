@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -23,7 +23,7 @@ import {
   TransactionDetailLocationCard,
 } from "./transaction-detail-location";
 
-type LocationJson = NonNullable<TransactionListItem["location"]>;
+type LocationJson = NonNullable<TransactionResponse["location"]>;
 
 const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -79,7 +79,7 @@ export function TransactionDetailSummary({
   transaction,
 }: {
   edit?: TransactionDetailEditHandlers;
-  transaction: TransactionListItem;
+  transaction: TransactionResponse;
 }) {
   const isDebit = transaction.amount > 0;
   const amountColor = isDebit ? "text-destructive" : "text-success";
@@ -244,7 +244,7 @@ function TagsRow({
   );
 }
 
-function ReadOnlyCategoryRow({ category }: { category: TransactionListItem["category"] }) {
+function ReadOnlyCategoryRow({ category }: { category: TransactionResponse["category"] }) {
   if (!category) {
     return null;
   }

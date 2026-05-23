@@ -13,7 +13,7 @@ import {
 import { Calendar } from "@cobalt-web/ui/components/calendar";
 import { Slider } from "@cobalt-web/ui/components/slider";
 import { Toggle } from "@cobalt-web/ui/components/toggle";
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
   Activity03Icon,
@@ -113,7 +113,7 @@ interface AddFilterMenuProps {
   bankOptions: readonly BankOption[];
   tagOptions?: readonly TagOption[];
   categoryOptions?: readonly CategoryFilterOption[];
-  items?: readonly TransactionListItem[];
+  items?: readonly TransactionResponse[];
   onChangeAmount: (next: AmountFilterValue) => void;
   onChangeStatus: (next: StatusFilterValue) => void;
   onChangeBanks: (next: readonly string[]) => void;

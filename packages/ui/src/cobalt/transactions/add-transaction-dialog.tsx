@@ -1,4 +1,4 @@
-import type { TransactionListItem } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { Button } from "@cobalt-web/ui/components/button";
 import { Calendar } from "@cobalt-web/ui/components/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
@@ -35,7 +35,7 @@ import { TransactionNotesInput } from "./transaction-notes-input";
 /** Group system keys that represent inflow (negative signed amount per Plaid convention). */
 const INFLOW_GROUP_KEYS: ReadonlySet<string> = new Set(["income", "transfers"]);
 
-type LocationJson = NonNullable<TransactionListItem["location"]>;
+type LocationJson = NonNullable<TransactionResponse["location"]>;
 
 export interface GeocodeSearchResult {
   displayName: string;

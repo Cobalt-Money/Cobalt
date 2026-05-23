@@ -15,6 +15,7 @@ Project-specific guidance that complements generic skills (e.g. Rocicorp Zero, D
 
 ## Chapters
 
+- **[API endpoints](api-endpoints/SKILL.md)** — folder-per-endpoint layout, schema naming, Drizzle query patterns, ownership inline-WHERE, response drift validation.
 - **[Data fetching](data-fetching/SKILL.md)** — Zero vs TanStack Query, route loaders, prefetch, cache reuse, router context.
 - **[Mutations](mutations/SKILL.md)** — Zero custom mutators vs REST (Hono RPC), when to use both, optimistic UX, server-data convergence.
 - **[Workflows](workflows/SKILL.md)** — `workflow.ts` + `steps.ts` + `lib.ts`, server-data boundaries, step granularity, naming.

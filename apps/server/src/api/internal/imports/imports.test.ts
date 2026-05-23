@@ -17,12 +17,12 @@ vi.mock(import("@cobalt-web/server-data/subscriptions"), () => ({
   userHasActiveSubscription: vi.fn(() => Promise.resolve(true)),
 }));
 
-vi.mock(import("@cobalt-web/server-data/import/shared/queries"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/_shared/queries"), () => ({
   assertOwnedJob: vi.fn(),
   getImportJobStatus: vi.fn(),
   getRejectedRows: vi.fn(() => Promise.resolve([])),
 }));
-vi.mock(import("@cobalt-web/server-data/import/shared/mutations"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/_shared/mutations"), () => ({
   deleteImportJob: vi.fn(),
   markImportJobCancelled: vi.fn(),
   markImportJobCommitting: vi.fn(),
@@ -32,44 +32,57 @@ vi.mock(import("@cobalt-web/server-data/import/shared/mutations"), () => ({
   persistSchemaMapping: vi.fn(),
   requestCancel: vi.fn(),
   setProgress: vi.fn(),
-  updateStagedRow: vi.fn(() => Promise.resolve(true)),
+  updateStagedRow: vi.fn(() =>
+    Promise.resolve({
+      amount: "0.00",
+      date: "2024-01-01",
+      id: "00000000-0000-0000-0000-000000000000",
+      merchant: "test",
+      notes: null,
+      originalDescription: null,
+      parseError: null,
+      sourceAccountName: "test",
+      sourceCategoryName: null,
+      tags: [],
+    }),
+  ),
 }));
-vi.mock(import("@cobalt-web/server-data/import/upload/queries"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/upload/queries"), () => ({
   getRawRowsHeaders: vi.fn(() => Promise.resolve([])),
   getRawSampleRows: vi.fn(() => Promise.resolve([])),
 }));
-vi.mock(import("@cobalt-web/server-data/import/column-mapping/actions"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/column-mapping/actions"), () => ({
   confirmColumnMapping: vi.fn(),
 }));
-vi.mock(import("@cobalt-web/server-data/import/column-mapping/cache"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/column-mapping/cache"), () => ({
   cacheConfirmedMapping: vi.fn(),
   lookupColumnMappingCache: vi.fn(() => Promise.resolve(null)),
 }));
-vi.mock(import("@cobalt-web/server-data/import/column-mapping/per-name-cache"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/column-mapping/per-name-cache"), () => ({
   lookupColumnRoles: vi.fn(() => Promise.resolve(new Map())),
   reconstructMapping: vi.fn(() => null),
 }));
-vi.mock(import("@cobalt-web/server-data/import/account-mapping/actions"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/account-mapping/actions"), () => ({
   confirmAccountMapping: vi.fn(),
 }));
-vi.mock(import("@cobalt-web/server-data/import/account-mapping/cache"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/account-mapping/cache"), () => ({
   cacheAccountChoice: vi.fn(),
   lookupAccountMappingCache: vi.fn(() => Promise.resolve(new Map())),
 }));
-vi.mock(import("@cobalt-web/server-data/import/account-mapping/queries"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/account-mapping/queries"), () => ({
   getStagedAccountLabels: vi.fn(() => Promise.resolve([])),
 }));
-vi.mock(import("@cobalt-web/server-data/import/commit/pre-commit-gate"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/commit/pre-commit-gate"), () => ({
   runPreCommitGate: vi.fn(() => Promise.resolve({ blocked: false, reasons: [], warnings: [] })),
 }));
-vi.mock(import("@cobalt-web/server-data/import/category-mapping/actions"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/category-mapping/actions"), () => ({
   confirmCategoryMapping: vi.fn(),
 }));
-vi.mock(import("@cobalt-web/server-data/import/category-mapping/cache"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/category-mapping/cache"), () => ({
   cacheCategoryChoice: vi.fn(),
   lookupCategoryMappingCache: vi.fn(() => Promise.resolve(new Map())),
 }));
-vi.mock(import("@cobalt-web/server-data/import/category-mapping/queries"), () => ({
+vi.mock(import("@cobalt-web/server-data/imports/category-mapping/queries"), () => ({
   getStagedCategoryLabels: vi.fn(() => Promise.resolve([])),
 }));
 vi.mock(import("../../../ai/agents/import/csv-column-mapping/csv-column-mapping-agent.js"), () => ({
@@ -93,12 +106,12 @@ vi.mock(import("workflow/api"), () => ({
 }));
 
 const { assertOwnedJob, getImportJobStatus } =
-  await import("@cobalt-web/server-data/import/shared/queries");
+  await import("@cobalt-web/server-data/imports/_shared/queries");
 const mockAssertOwnedJob = vi.mocked(assertOwnedJob);
 const { getRawRowsHeaders, getRawSampleRows } =
-  await import("@cobalt-web/server-data/import/upload/queries");
+  await import("@cobalt-web/server-data/imports/upload/queries");
 const { lookupColumnMappingCache } =
-  await import("@cobalt-web/server-data/import/column-mapping/cache");
+  await import("@cobalt-web/server-data/imports/column-mapping/cache");
 const { runCsvColumnMappingAgent } =
   await import("../../../ai/agents/import/csv-column-mapping/csv-column-mapping-agent.js");
 const { runCsvAccountMappingAgent } =
