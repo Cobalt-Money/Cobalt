@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "../auth/auth";
@@ -14,7 +12,7 @@ export const mobileSubscription = pgTable(
     expiresAt: timestamp("expires_at"),
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => randomUUID()),
+      .$defaultFn(() => crypto.randomUUID()),
     latestTransactionId: text("latest_transaction_id"),
     originalTransactionId: text("original_transaction_id").notNull().unique(),
     productId: text("product_id").notNull(),
