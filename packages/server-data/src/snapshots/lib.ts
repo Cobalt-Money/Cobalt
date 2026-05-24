@@ -9,6 +9,7 @@ export function toBalanceSnapshotDTO(row: {
     subtype: string | null;
     type: string;
   };
+  accountId: string;
   available: string | null;
   createdAt: Date;
   creditLimit: string | null;
@@ -18,6 +19,7 @@ export function toBalanceSnapshotDTO(row: {
 }): BalanceSnapshot {
   const { account } = row;
   return {
+    accountId: row.accountId,
     accountName: account.name,
     accountSubtype: account.subtype,
     accountType: account.type,

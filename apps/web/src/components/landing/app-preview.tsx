@@ -119,6 +119,7 @@ function makeTx(
     Pick<TransactionResponse, "id" | "name" | "amount" | "date">,
 ): TransactionResponse {
   return {
+    accountId: "preview-account",
     accountLogoDomain: null,
     accountName: "Chase Checking",
     accountSubtype: "checking",

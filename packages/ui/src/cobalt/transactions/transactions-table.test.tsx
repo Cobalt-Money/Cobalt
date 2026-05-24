@@ -19,6 +19,7 @@ vi.mock(import("@tanstack/react-router"), async (importOriginal) => {
 
 function createMockTransaction(overrides: Partial<TransactionResponse> = {}): TransactionResponse {
   return {
+    accountId: "test-account-id",
     accountLogoDomain: null,
     accountName: "Checking",
     accountSubtype: "checking",

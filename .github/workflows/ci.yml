@@ -47,3 +47,70 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Run tests
         run: bun x turbo test
+
+  test-integration:
+    name: Integration tests (Postgres)
+    runs-on: ubuntu-latest
+    # Mirrors the local stub in apps/server/test-setup.ts so Nitro boots in
+    # CI without real provider creds. Anything talking to a network must be
+    # mocked at the test level (no real Plaid/SnapTrade/Stripe calls).
+    env:
+      AI_GATEWAY_API_KEY: test-ai-gateway-key
+      APPLE_APP_BUNDLE_IDENTIFIER: test.bundle.id
+      APPLE_KEY_ID: test-key-id
+      APPLE_PRIVATE_KEY: test-private-key
+      APPLE_SERVICE_ID: test-service-id
+      APPLE_TEAM_ID: test-team-id
+      BETTER_AUTH_SECRET: test-secret-that-is-at-least-32-characters-long
+      BETTER_AUTH_URL: http://localhost:4000
+      BLOB_READ_WRITE_TOKEN: vercel_blob_rw_test_token
+      CORS_ORIGIN: http://localhost:3000
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/cobalt
+      GOOGLE_CLIENT_ID: test-google-client
+      GOOGLE_CLIENT_SECRET: test-google-secret
+      GOOGLE_IOS_CLIENT_ID: test-google-ios-client
+      LOCAL_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/cobalt
+      PLAID_CLIENT_ID: test-plaid-client
+      PLAID_CLIENT_SECRET: test-plaid-secret
+      PLAID_ENV: sandbox
+      SNAPTRADE_CLIENT_ID: test-snaptrade-client
+      SNAPTRADE_CONSUMER_KEY: test-snaptrade-key
+      STOCK_NEWS_API_KEY: test-stock-news
+      STRIPE_SECRET_KEY: sk_test_dummy
+      STRIPE_WEBHOOK_SECRET: whsec_test_dummy
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cobalt
+        ports:
+          - 5433:5432
+        # Wait until Postgres accepts connections before steps run; without
+        # this the migrate step races the container startup.
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.5
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Apply migrations to CI Postgres
+        run: bun run db:migrate:local
+      - name: Run integration tests (server)
+        # Don't bail at first failure — surface the full picture so we can
+        # tell whether the spawn / env / DB or a specific test is broken.
+        run: bun --cwd apps/server run test:integration
+        continue-on-error: true
+        id: integration
+      - name: Fail job if integration tests failed
+        if: steps.integration.outcome == 'failure'
+        run: |
+          echo "::warning::Integration tests failed — see logs above."
+          exit 1

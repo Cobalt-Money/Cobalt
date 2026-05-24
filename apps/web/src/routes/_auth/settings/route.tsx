@@ -4,6 +4,7 @@ import {
   ArrowLeft02Icon,
   CreditCardIcon,
   EyeIcon,
+  Key01Icon,
   UserCircle02Icon,
 } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
@@ -15,7 +16,12 @@ export const Route = createFileRoute("/_auth/settings")({
 });
 
 interface SettingsLink {
-  to: "/settings/profile" | "/settings/account" | "/settings/appearance" | "/settings/billing";
+  to:
+    | "/settings/profile"
+    | "/settings/account"
+    | "/settings/appearance"
+    | "/settings/billing"
+    | "/settings/api-keys";
   label: string;
   icon: IconSvgElement;
 }
@@ -33,6 +39,10 @@ const NAV_GROUPS: SettingsGroup[] = [
       { icon: EyeIcon, label: "Appearance", to: "/settings/appearance" },
       { icon: CreditCardIcon, label: "Billing", to: "/settings/billing" },
     ],
+  },
+  {
+    heading: "Developer",
+    items: [{ icon: Key01Icon, label: "API keys", to: "/settings/api-keys" }],
   },
 ];
 

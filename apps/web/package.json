@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.144",
+    "@better-auth/api-key": "1.7.0-beta.3",
     "@better-auth/stripe": "1.7.0-beta.3",
     "@cobalt-web/auth": "workspace:*",
     "@cobalt-web/clients": "workspace:*",

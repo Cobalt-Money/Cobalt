@@ -1,3 +1,4 @@
+import { apiKey } from "@better-auth/api-key";
 import { cimd } from "@better-auth/cimd";
 import { oauthProvider } from "@better-auth/oauth-provider";
 import { stripe } from "@better-auth/stripe";
@@ -162,6 +163,21 @@ export const auth = betterAuth({
     }),
     openAPI(),
     bearer(),
+    apiKey({
+      defaultPrefix: "ck_live_",
+      enableMetadata: true,
+      // Route key lookups + rate-limit counters through Upstash Redis
+      // (configured as secondaryStorage below). Sub-ms vs ~5-15ms Postgres
+      // roundtrip on every `/v1/*` request. `fallbackToDatabase` keeps
+      // pre-existing keys readable while Redis warms.
+      fallbackToDatabase: true,
+      rateLimit: {
+        enabled: true,
+        maxRequests: 10_000,
+        timeWindow: 1000 * 60 * 60 * 24,
+      },
+      storage: secondaryStorage ? "secondary-storage" : "database",
+    }),
     jwt({
       disableSettingJwtHeader: true,
     }),

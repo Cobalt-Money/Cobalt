@@ -11,6 +11,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
 import { accountsRouter } from "./api/internal/accounts/index.js";
+import { v1 } from "./api/public/v1/index.js";
 import { alertsRouter } from "./api/internal/alerts/index.js";
 import { appstoreRouter } from "./api/internal/appstore.js";
 import { authRouter } from "./api/internal/auth.js";
@@ -169,7 +170,8 @@ const app = new Hono()
       ],
     }),
   )
-  .route("/", base);
+  .route("/", base)
+  .route("/v1", v1);
 
 // `typeof app` only carries the routes directly registered on `app`
 // (well-known / mcp / docs) because the `/api/*` sub-routers are

@@ -63,6 +63,7 @@
     "@tanstack/react-virtual": "^3.13.23",
     "ai": "^6.0.168",
     "dotenv": "catalog:",
+    "nitro": "^3.0.260522-beta",
     "plaid": "^41.4.0",
     "workflow": "^4.2.2",
     "zod": "catalog:"

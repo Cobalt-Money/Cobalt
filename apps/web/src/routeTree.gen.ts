@@ -43,6 +43,7 @@ import { Route as AuthTransactionsTransactionIdRouteImport } from './routes/_aut
 import { Route as AuthSettingsProfileRouteImport } from './routes/_auth/settings/profile'
 import { Route as AuthSettingsBillingRouteImport } from './routes/_auth/settings/billing'
 import { Route as AuthSettingsAppearanceRouteImport } from './routes/_auth/settings/appearance'
+import { Route as AuthSettingsApiKeysRouteImport } from './routes/_auth/settings/api-keys'
 import { Route as AuthSettingsAccountRouteImport } from './routes/_auth/settings/account'
 import { Route as AuthResearchSymbolRouteImport } from './routes/_auth/research/$symbol'
 import { Route as AuthNewsEventIdRouteImport } from './routes/_auth/news/$eventId'
@@ -219,6 +220,11 @@ const AuthSettingsAppearanceRoute = AuthSettingsAppearanceRouteImport.update({
   path: '/appearance',
   getParentRoute: () => AuthSettingsRouteRoute,
 } as any)
+const AuthSettingsApiKeysRoute = AuthSettingsApiKeysRouteImport.update({
+  id: '/api-keys',
+  path: '/api-keys',
+  getParentRoute: () => AuthSettingsRouteRoute,
+} as any)
 const AuthSettingsAccountRoute = AuthSettingsAccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -264,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/news/$eventId': typeof AuthNewsEventIdRoute
   '/research/$symbol': typeof AuthResearchSymbolRoute
   '/settings/account': typeof AuthSettingsAccountRoute
+  '/settings/api-keys': typeof AuthSettingsApiKeysRoute
   '/settings/appearance': typeof AuthSettingsAppearanceRoute
   '/settings/billing': typeof AuthSettingsBillingRoute
   '/settings/profile': typeof AuthSettingsProfileRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/news/$eventId': typeof AuthNewsEventIdRoute
   '/research/$symbol': typeof AuthResearchSymbolRoute
   '/settings/account': typeof AuthSettingsAccountRoute
+  '/settings/api-keys': typeof AuthSettingsApiKeysRoute
   '/settings/appearance': typeof AuthSettingsAppearanceRoute
   '/settings/billing': typeof AuthSettingsBillingRoute
   '/settings/profile': typeof AuthSettingsProfileRoute
@@ -335,6 +343,7 @@ export interface FileRoutesById {
   '/_auth/news/$eventId': typeof AuthNewsEventIdRoute
   '/_auth/research/$symbol': typeof AuthResearchSymbolRoute
   '/_auth/settings/account': typeof AuthSettingsAccountRoute
+  '/_auth/settings/api-keys': typeof AuthSettingsApiKeysRoute
   '/_auth/settings/appearance': typeof AuthSettingsAppearanceRoute
   '/_auth/settings/billing': typeof AuthSettingsBillingRoute
   '/_auth/settings/profile': typeof AuthSettingsProfileRoute
@@ -376,6 +385,7 @@ export interface FileRouteTypes {
     | '/news/$eventId'
     | '/research/$symbol'
     | '/settings/account'
+    | '/settings/api-keys'
     | '/settings/appearance'
     | '/settings/billing'
     | '/settings/profile'
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/news/$eventId'
     | '/research/$symbol'
     | '/settings/account'
+    | '/settings/api-keys'
     | '/settings/appearance'
     | '/settings/billing'
     | '/settings/profile'
@@ -446,6 +457,7 @@ export interface FileRouteTypes {
     | '/_auth/news/$eventId'
     | '/_auth/research/$symbol'
     | '/_auth/settings/account'
+    | '/_auth/settings/api-keys'
     | '/_auth/settings/appearance'
     | '/_auth/settings/billing'
     | '/_auth/settings/profile'
@@ -714,6 +726,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSettingsAppearanceRouteImport
       parentRoute: typeof AuthSettingsRouteRoute
     }
+    '/_auth/settings/api-keys': {
+      id: '/_auth/settings/api-keys'
+      path: '/api-keys'
+      fullPath: '/settings/api-keys'
+      preLoaderRoute: typeof AuthSettingsApiKeysRouteImport
+      parentRoute: typeof AuthSettingsRouteRoute
+    }
     '/_auth/settings/account': {
       id: '/_auth/settings/account'
       path: '/account'
@@ -822,6 +841,7 @@ const AuthResearchRouteRouteWithChildren =
 
 interface AuthSettingsRouteRouteChildren {
   AuthSettingsAccountRoute: typeof AuthSettingsAccountRoute
+  AuthSettingsApiKeysRoute: typeof AuthSettingsApiKeysRoute
   AuthSettingsAppearanceRoute: typeof AuthSettingsAppearanceRoute
   AuthSettingsBillingRoute: typeof AuthSettingsBillingRoute
   AuthSettingsProfileRoute: typeof AuthSettingsProfileRoute
@@ -830,6 +850,7 @@ interface AuthSettingsRouteRouteChildren {
 
 const AuthSettingsRouteRouteChildren: AuthSettingsRouteRouteChildren = {
   AuthSettingsAccountRoute: AuthSettingsAccountRoute,
+  AuthSettingsApiKeysRoute: AuthSettingsApiKeysRoute,
   AuthSettingsAppearanceRoute: AuthSettingsAppearanceRoute,
   AuthSettingsBillingRoute: AuthSettingsBillingRoute,
   AuthSettingsProfileRoute: AuthSettingsProfileRoute,
