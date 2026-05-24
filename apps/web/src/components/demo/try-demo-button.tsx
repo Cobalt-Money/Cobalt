@@ -12,13 +12,16 @@ import { useDemo } from "@cobalt-web/ui/hooks/use-demo";
 export function TryDemoButton({
   size = "lg",
   variant = "outline",
+  className,
 }: {
   size?: "default" | "sm" | "lg";
   variant?: "default" | "outline" | "secondary" | "ghost";
+  className?: string;
 }) {
   const { createAnonymous, pending } = useDemo();
   return (
     <Button
+      className={className}
       disabled={pending}
       onClick={() => {
         void createAnonymous();
@@ -33,7 +36,7 @@ export function TryDemoButton({
           Loading demo…
         </>
       ) : (
-        "Try the demo"
+        "Try demo"
       )}
     </Button>
   );

@@ -199,11 +199,13 @@
   }
   body {
     @apply font-sans bg-background text-foreground;
+    overflow-x: hidden;
   }
   html {
     @apply font-sans;
     /* ~16.5px from a 16px default — half step between 100% and 17px bump */
     font-size: 103.125%;
+    overscroll-behavior: none;
   }
   .maplibregl-popup-content {
     @apply bg-transparent! shadow-none! p-0! rounded-none!;

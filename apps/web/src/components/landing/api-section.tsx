@@ -22,7 +22,7 @@ const SHIKI_LANG: Record<Lang | "json", BundledLanguage> = {
 function HighlightedCode({ code, language }: { code: string; language: BundledLanguage }) {
   const [tokens, setTokens] = useState<ThemedToken[][] | null>(null);
   const { resolvedTheme } = useTheme();
-  const shikiTheme = resolvedTheme === "light" ? "github-light-default" : "github-dark-default";
+  const shikiTheme = resolvedTheme === "light" ? "min-light" : "github-dark-default";
 
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +49,7 @@ function HighlightedCode({ code, language }: { code: string; language: BundledLa
     return <code>{code}</code>;
   }
   return (
-    <code>
+    <code style={{ filter: "brightness(0.55) saturate(1.3)" }}>
       {tokens.map((line, lineIdx) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: stable per render
         <span className="block" key={lineIdx}>
@@ -530,7 +530,7 @@ export function ApiSection() {
             Your money, as an API
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
-            No need to manage webhooks or infra just to access your finances.
+            Build your own personal finance apps without having to manage glue code.
           </p>
         </FadeUp>
 

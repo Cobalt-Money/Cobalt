@@ -1,6 +1,6 @@
 import { env } from "@cobalt-web/env/web";
 import { Spinner } from "@cobalt-web/ui/components/spinner";
-import { Navigate, createFileRoute } from "@tanstack/react-router";
+import { Link, Navigate, createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import SocialAuth from "@/components/auth/social-auth";
@@ -42,33 +42,42 @@ function RouteComponent() {
    * inside, so child components (like `SocialAuth`) auto-pick up dark tokens.
    */
   return (
-    <div className="dark relative flex min-h-svh w-full flex-col bg-background text-foreground">
-      <div
+    <div className="dark relative flex min-h-svh w-full flex-col overflow-hidden bg-background text-foreground">
+      <video
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.06] [background:radial-gradient(circle_at_25%_15%,white,transparent_55%)]"
-      />
+        autoPlay
+        className="pointer-events-none absolute inset-0 size-full object-cover"
+        loop
+        muted
+        playsInline
+      >
+        <source src="/auth/videos/nyc-skyline.mp4" type="video/mp4" />
+      </video>
 
-      <header className="relative flex items-center px-6 pt-8 sm:px-12 sm:pt-10">
-        <span className="text-xl font-semibold tracking-tight">Cobalt</span>
-      </header>
-
-      <main className="relative flex flex-1 items-center justify-center px-6 py-12">
-        <div className="flex w-full max-w-md flex-col items-center gap-6">
-          <SocialAuth
-            callbackURL={callbackURL}
-            newUserCallbackURL={`${window.location.origin}/onboarding`}
-          />
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px w-12 bg-border" />
-            <span>or</span>
-            <span className="h-px w-12 bg-border" />
+      <aside className="relative z-10 flex h-svh w-full flex-col border-r border-white/15 bg-white/10 text-white backdrop-blur-sm backdrop-saturate-150 shadow-2xl sm:max-w-md">
+        <main className="flex flex-1 items-center justify-center px-6 py-12 sm:px-10">
+          <div className="flex w-full flex-col items-center gap-6">
+            <Link className="flex items-center gap-2 text-white hover:opacity-90" to="/">
+              <img alt="" aria-hidden className="size-6" src="/favicon.svg" />
+              <span className="text-xl font-medium">Cobalt</span>
+            </Link>
+            <SocialAuth
+              callbackURL={callbackURL}
+              extras={
+                <div className="flex flex-col items-center gap-4">
+                  <div className="flex items-center gap-3 text-xs text-white/70">
+                    <span className="h-px w-12 bg-white/30" />
+                    <span>or</span>
+                    <span className="h-px w-12 bg-white/30" />
+                  </div>
+                  <TryDemoButton className="h-10 w-60 rounded-xl px-4 text-sm" />
+                </div>
+              }
+              newUserCallbackURL={`${window.location.origin}/onboarding`}
+            />
           </div>
-          <TryDemoButton />
-          <p className="max-w-xs text-center text-xs text-muted-foreground">
-            Explore the full app with sample data. No account, no commitment.
-          </p>
-        </div>
-      </main>
+        </main>
+      </aside>
     </div>
   );
 }
