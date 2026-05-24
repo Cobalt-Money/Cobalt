@@ -22,8 +22,15 @@ function ApiKeysRoute() {
 
   const { data: keys = [], isLoading } = useQuery({
     queryFn: async () => {
+      // Better Auth 1.7+ paginated shape: `{ data: { apiKeys, total, ... } }`.
+      // Earlier versions returned a bare array under `data` — handle both
+      // so the dashboard doesn't break if the package gets downgraded.
       const res = await authClient.apiKey.list();
-      return (res.data ?? []) as ApiKeyRow[];
+      const payload = res.data as ApiKeyRow[] | { apiKeys?: ApiKeyRow[] } | null | undefined;
+      if (Array.isArray(payload)) {
+        return payload;
+      }
+      return payload?.apiKeys ?? [];
     },
     queryKey: apiKeysQueryKey,
   });
