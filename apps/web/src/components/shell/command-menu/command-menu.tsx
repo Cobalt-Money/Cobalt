@@ -263,7 +263,7 @@ function CommandMenuDialog({
   );
 
   const goToSettings = useCallback(
-    (section: "profile" | "billing") => {
+    (section: "profile" | "billing" | "api-keys") => {
       void navigate({ to: `/settings/${section}` });
       onOpenChange(false);
     },

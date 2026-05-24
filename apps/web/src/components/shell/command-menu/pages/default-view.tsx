@@ -10,6 +10,7 @@ import {
   File02Icon,
   Folder01Icon,
   Home04Icon,
+  Key01Icon,
   Logout01Icon,
   Moon02Icon,
   Search02Icon,
@@ -28,7 +29,7 @@ import { useOpenImportWizard } from "@/components/imports/import-wizard";
 import { importsApi } from "@/lib/clients/api-client";
 import { logout } from "@/lib/zero-logout";
 
-type SettingsLinkSection = "profile" | "billing";
+type SettingsLinkSection = "profile" | "billing" | "api-keys";
 
 type NavPath =
   | "/accounts"
@@ -336,6 +337,12 @@ export function DefaultViewPage({ open, onClose, nav }: Props) {
       icon: CreditCardIcon,
       keywords: ["billing", "subscription", "plan", "payment"],
       label: "Billing",
+    },
+    {
+      handleSelect: () => nav.settings("api-keys"),
+      icon: Key01Icon,
+      keywords: ["api", "api key", "api keys", "developer", "sdk", "token", "bearer", "ck_live"],
+      label: "API keys",
     },
     {
       handleSelect: () => {
