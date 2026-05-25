@@ -13,6 +13,7 @@ const route = createRoute({
   description: "Fetch a single transaction by identifier.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "transactions_get",
   path: "/transactions/{transactionId}",
   request: { params: transactionIdSchema },
   responses: {

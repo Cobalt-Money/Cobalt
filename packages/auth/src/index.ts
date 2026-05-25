@@ -62,16 +62,31 @@ const secondaryStorage = redis
       },
       get: async (key: string) => {
         try {
-          const v = await redis.get<string>(key);
-          return v ?? null;
+          // @upstash/redis auto-deserializes JSON-looking values, but Better
+          // Auth's adapters (apiKey, session) expect a raw string — their
+          // `deserialize*` helpers do `if (typeof data !== "string") return null`,
+          // which silently empties API key list responses after the ref list
+          // is populated (first-load-after-create works via DB fallback;
+          // subsequent loads hit the Redis path and 0-filter every key).
+          // Re-stringify when Upstash hands us a parsed object.
+          const v = await redis.get(key);
+          if (v === null || v === undefined) {
+            return null;
+          }
+          return typeof v === "string" ? v : JSON.stringify(v);
         } catch (error) {
-          console.warn("[auth] secondary-storage get failed, falling back to db", { error, key });
+          console.warn(
+            "[auth] secondary-storage get failed, falling back to db",
+            { error, key },
+          );
           return null;
         }
       },
       set: async (key: string, value: string, ttl?: number) => {
         try {
-          await (ttl ? redis.set(key, value, { ex: ttl }) : redis.set(key, value));
+          await (ttl
+            ? redis.set(key, value, { ex: ttl })
+            : redis.set(key, value));
         } catch (error) {
           console.error("[auth] secondary-storage set failed", { error, key });
           throw new Error(STORAGE_UNAVAILABLE, { cause: error });
@@ -140,13 +155,18 @@ export const auth = betterAuth({
           try {
             await seedUserCategories(db, user.id);
           } catch (error) {
-            console.error(`[auth] failed to seed categories for user ${user.id}:`, error);
+            console.error(
+              `[auth] failed to seed categories for user ${user.id}:`,
+              error,
+            );
           }
           // Lightweight audit trail for demo accounts so we can spot abnormal
           // creation volume (spam, automation) without joining the user table.
           const u = user as { isAnonymous?: boolean; email?: string | null };
           if (u.isAnonymous) {
-            console.info(`[auth.audit] demo_user_created id=${user.id} email=${u.email ?? ""}`);
+            console.info(
+              `[auth.audit] demo_user_created id=${user.id} email=${u.email ?? ""}`,
+            );
           }
         },
       },
@@ -254,7 +274,10 @@ export const auth = betterAuth({
         }),
         onSubscriptionUpdate: async ({ subscription }) => {
           await Promise.resolve();
-          if (subscription.status === "past_due" || subscription.status === "unpaid") {
+          if (
+            subscription.status === "past_due" ||
+            subscription.status === "unpaid"
+          ) {
             console.warn(
               `[stripe] subscription ${subscription.id} is ${subscription.status} (user ${subscription.referenceId})`,
             );

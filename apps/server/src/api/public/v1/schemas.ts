@@ -29,25 +29,23 @@ const accountInputSchema = z.object({
   type: z.string(),
 });
 
-const accountOutputSchema = z
-  .object({
-    balance: z.number().nullable().openapi({
-      description:
-        "Current balance in the account's currency. Null when the provider has not reported one.",
-    }),
-    creditLimit: z.number().nullable().openapi({
-      description: "Credit limit for credit-card accounts. Null for non-credit accounts.",
-    }),
-    currency: z.string().nullable().openapi({ example: "USD" }),
-    id: z.string().openapi({ description: "Stable account identifier." }),
-    institution: z.string().nullable().openapi({
-      description: "Name of the institution holding the account.",
-    }),
-    mask: z.string().nullable().openapi({ description: "Last 4 digits when available." }),
-    name: z.string().openapi({ description: "Account display name." }),
-    type,
-  })
-  .openapi("Account");
+const accountOutputSchema = z.object({
+  balance: z.number().nullable().openapi({
+    description:
+      "Current balance in the account's currency. Null when the provider has not reported one.",
+  }),
+  creditLimit: z.number().nullable().openapi({
+    description: "Credit limit for credit-card accounts. Null for non-credit accounts.",
+  }),
+  currency: z.string().nullable().openapi({ example: "USD" }),
+  id: z.string().openapi({ description: "Stable account identifier." }),
+  institution: z.string().nullable().openapi({
+    description: "Name of the institution holding the account.",
+  }),
+  mask: z.string().nullable().openapi({ description: "Last 4 digits when available." }),
+  name: z.string().openapi({ description: "Account display name." }),
+  type,
+});
 
 function mapAccountType(internal: string): z.infer<typeof type> {
   switch (internal) {
@@ -81,7 +79,8 @@ export const accountSchema = accountInputSchema
     name: row.name,
     type: mapAccountType(row.type),
   }))
-  .pipe(accountOutputSchema);
+  .pipe(accountOutputSchema)
+  .openapi("Account");
 
 export const transactionSchema = z
   .object({
@@ -276,7 +275,7 @@ export const spendingSchema = z
     buckets: z.array(spendingBucketSchema),
     totalSpending: z.number(),
   })
-  .openapi("Spending");
+  .openapi("SpendingItem");
 
 export const tagSchema = z
   .object({

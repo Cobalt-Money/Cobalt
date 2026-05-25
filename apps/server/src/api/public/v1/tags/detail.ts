@@ -5,7 +5,11 @@ import { patchTagSchema, tagIdSchema } from "@cobalt-web/server-data/transaction
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { createApp } from "../../../../lib/create-app.js";
-import { jsonContent, validationErrorResponse } from "../../../../lib/openapi-helpers.js";
+import {
+  jsonContent,
+  jsonContentRequired,
+  validationErrorResponse,
+} from "../../../../lib/openapi-helpers.js";
 import { requireApiKey } from "../middleware/require-api-key.js";
 import { tagSchema } from "../schemas.js";
 
@@ -15,6 +19,7 @@ const getTagRoute = createRoute({
   description: "Fetch a single tag by identifier.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "tags_get",
   path: "/tags/{tagId}",
   request: { params: tagIdSchema },
   responses: {
@@ -32,9 +37,10 @@ const patchTagRoute = createRoute({
   description: "Update name, color, or archived state of a tag.",
   method: "patch",
   middleware: [requireApiKey] as const,
+  operationId: "tags_update",
   path: "/tags/{tagId}",
   request: {
-    body: jsonContent(patchTagSchema, "Fields to update"),
+    body: jsonContentRequired(patchTagSchema, "Fields to update"),
     params: tagIdSchema,
   },
   responses: {
@@ -52,6 +58,7 @@ const deleteTagRoute = createRoute({
   description: "Permanently delete a tag and detach it from all transactions.",
   method: "delete",
   middleware: [requireApiKey] as const,
+  operationId: "tags_delete",
   path: "/tags/{tagId}",
   request: { params: tagIdSchema },
   responses: {

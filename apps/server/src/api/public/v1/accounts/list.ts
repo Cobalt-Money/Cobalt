@@ -14,6 +14,7 @@ const route = createRoute({
     "Returns every account the API key's owner has connected — checking, savings, credit, brokerage, and manual.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "accounts_list",
   path: "/accounts",
   responses: {
     200: jsonContent(responseSchema, "Accounts owned by the authenticated user"),

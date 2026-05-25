@@ -21,6 +21,7 @@ const route = createRoute({
     "List brokerage positions (stock, ETF, crypto holdings) across the user's investment accounts.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "positions_list",
   path: "/positions",
   request: { query: listQuerySchema },
   responses: {

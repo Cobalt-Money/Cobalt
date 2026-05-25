@@ -449,3 +449,13 @@
   top: 2.25rem;
   height: calc(100svh - 2.25rem);
 }
+
+/**
+ * Settings owns full-screen chrome — hide the app sidebar without
+ * unmounting it. Keeping the provider tree intact avoids the white flash
+ * caused by remounting the shell while the settings route chunk loads.
+ */
+body[data-route="settings"] [data-slot="sidebar"],
+body[data-route="settings"] [data-slot="sidebar-gap"] {
+  display: none;
+}

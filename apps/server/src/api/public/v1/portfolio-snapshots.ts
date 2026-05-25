@@ -26,6 +26,7 @@ const route = createRoute({
     "End-of-day portfolio value snapshots. Defaults to the trailing 6 months when no dates are supplied.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "portfolio_snapshots",
   path: "/portfolio/snapshots",
   request: { query: listQuerySchema },
   responses: {

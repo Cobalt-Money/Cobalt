@@ -51,6 +51,7 @@ const route = createRoute({
     "Brokerage activity history — buys, sells, dividends, fees, transfers across investment accounts.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "activities_list",
   path: "/activities",
   request: { query: listQuerySchema },
   responses: {

@@ -51,6 +51,30 @@ export const cobaltToast = {
     });
   },
 
+  /** API key created. */
+  apiKeyCreated(name: string) {
+    return toast("API key created", {
+      description: name,
+      icon: POSTED_ICON,
+    });
+  },
+
+  /** API key deleted. */
+  apiKeyDeleted(name: string) {
+    return toast("API key deleted", {
+      description: name,
+      icon: POSTED_ICON,
+    });
+  },
+
+  /** API key revoked (disabled but not deleted). */
+  apiKeyRevoked(name: string) {
+    return toast("API key revoked", {
+      description: name,
+      icon: POSTED_ICON,
+    });
+  },
+
   /** Bulk-action success — used by toolbar / palette shared notices. */
   bulkSuccess(message: string, description?: string) {
     return toast(message, {

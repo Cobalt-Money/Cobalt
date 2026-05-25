@@ -21,6 +21,7 @@ const route = createRoute({
     "Returns the spending category taxonomy for the user — both system-seeded categories and user-created ones.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "categories_list",
   path: "/categories",
   responses: {
     200: jsonContent(categoriesResponseSchema, "Categories + groups"),

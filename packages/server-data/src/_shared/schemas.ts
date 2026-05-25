@@ -29,8 +29,8 @@ export const createErrorSchema = <T extends z.ZodType>(_inputSchema: T) =>
       issues: z.array(zodIssueSchema),
       name: z.string(),
     }),
-    success: z.literal(false),
+    success: z.boolean(),
   });
 
-export const validationErrorSchema = createErrorSchema(z.unknown());
+export const validationErrorSchema = createErrorSchema(z.unknown()).openapi("ValidationError");
 export type ValidationError = z.infer<typeof validationErrorSchema>;

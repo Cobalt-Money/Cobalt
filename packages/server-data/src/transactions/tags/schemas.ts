@@ -1,7 +1,13 @@
 import { tag } from "@cobalt-web/db/schema/accounts/banking/tags/tag";
-import { tagColorSchema, tagNameSchema } from "@cobalt-web/db/schema/accounts/banking/tags/tag-zod";
+import {
+  tagColorSchema as baseTagColorSchema,
+  tagNameSchema,
+} from "@cobalt-web/db/schema/accounts/banking/tags/tag-zod";
 import { z } from "@hono/zod-openapi";
 import { createSelectSchema } from "drizzle-orm/zod";
+
+/** Named version of the tag-color enum so OpenAPI emits a single `TagColor` schema. */
+const tagColorSchema = baseTagColorSchema.openapi("TagColor");
 
 /** Drizzle-derived row schema for the `tag` table — Date columns coerced to ISO strings on the wire. */
 const tagRowSchema = createSelectSchema(tag, {

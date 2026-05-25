@@ -16,6 +16,7 @@ const route = createRoute({
     "Detected recurring streams — subscriptions, bills, and recurring deposits. Only active streams are returned.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "recurring_list",
   path: "/recurring",
   responses: {
     200: jsonContent(recurringStreamsResponseSchema, "Recurring streams"),

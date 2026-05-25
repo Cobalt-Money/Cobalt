@@ -6,7 +6,11 @@ import { getTransactions } from "@cobalt-web/server-data/transactions/list";
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { createApp } from "../../../../lib/create-app.js";
-import { jsonContent, validationErrorResponse } from "../../../../lib/openapi-helpers.js";
+import {
+  jsonContent,
+  jsonContentRequired,
+  validationErrorResponse,
+} from "../../../../lib/openapi-helpers.js";
 import { requireApiKey } from "../middleware/require-api-key.js";
 import { transactionSchema } from "../schemas.js";
 import { toTransaction, transactionResponseSchema } from "./_shared.js";
@@ -58,6 +62,7 @@ const listTransactionsRoute = createRoute({
     "Returns transactions across all of the user's accounts, newest first. Use `nextCursor` to page.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "transactions_list",
   path: "/transactions",
   request: { query: getTransactionsSchema },
   responses: {
@@ -75,9 +80,10 @@ const createTransactionRoute = createRoute({
     "Add a manual transaction. The target `accountId` must reference a manual (not bank-synced) account.",
   method: "post",
   middleware: [requireApiKey] as const,
+  operationId: "transactions_create",
   path: "/transactions",
   request: {
-    body: jsonContent(createTransactionSchema, "Transaction to create"),
+    body: jsonContentRequired(createTransactionSchema, "Transaction to create"),
   },
   responses: {
     201: jsonContent(transactionResponseSchema, "Created transaction"),

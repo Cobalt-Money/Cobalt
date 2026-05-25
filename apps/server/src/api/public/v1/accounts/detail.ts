@@ -15,6 +15,7 @@ const route = createRoute({
   description: "Fetch a single account by identifier.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "accounts_get",
   path: "/accounts/{id}",
   request: { params: accountIdSchema },
   responses: {

@@ -45,10 +45,22 @@ export const Route = createFileRoute("/_auth")({
   component: AuthLayout,
   loader: ({ context }) => {
     context.zero?.preload(queries.chats.list(), { ttl: "5m" });
+    // Warm the settings route chunks so navigating to /settings doesn't
+    // suspend the Outlet (~155ms chunk fetch caused a visible blank-main
+    // flash where the sidebar stayed up but content was empty until the
+    // chunk landed). Fire-and-forget — vite caches the modules.
+    void import("./settings/route");
+    void import("./settings/index");
+    void import("./settings/profile");
+    void import("./settings/account");
+    void import("./settings/appearance");
+    void import("./settings/billing");
+    void import("./settings/api-keys");
   },
 });
 
 function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDemo: boolean }) {
+  console.log("[shell] render", performance.now(), { chromeless });
   // Setting `data-demo-banner` on this wrapper (vs `document.body` via an
   // effect) keeps the demo-mode flag in React tree — CSS in globals.css
   // targets `[data-demo-banner="1"] [data-slot="sidebar"]` etc. No effect,
@@ -77,6 +89,11 @@ function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDe
                   </AmbientInsetProvider>
                 </CommandMenuProvider>
               ) : (
+                // Settings reuses this same shell. The settings layout sets
+                // `body[data-route="settings"]` on mount so CSS in
+                // globals.css hides the sidebar — atomically with settings'
+                // first paint, so the sidebar doesn't close *before* the
+                // route swaps.
                 <CommandMenuProvider>
                   <DemoBanner />
                   <SidebarProvider className="min-h-0 flex-1">
@@ -100,10 +117,6 @@ function AuthLayout() {
   const session = useAppSession();
   const location = useLocation();
   const isOnboardingRoute = location.pathname === "/onboarding";
-  // Settings owns its own full-screen chrome (sidebar + back-to-app) per
-  // Linear/Vercel pattern. Same chromeless escape hatch as onboarding so
-  // providers stay mounted but AppSidebar/demo banner don't render.
-  const isSettingsRoute = location.pathname.startsWith("/settings");
 
   if (session.isPending || !session.data) {
     return null;
@@ -111,10 +124,5 @@ function AuthLayout() {
 
   const user = session.data.user as { isAnonymous?: boolean };
 
-  return (
-    <AuthShellWithOutlet
-      chromeless={isOnboardingRoute || isSettingsRoute}
-      isDemo={Boolean(user.isAnonymous)}
-    />
-  );
+  return <AuthShellWithOutlet chromeless={isOnboardingRoute} isDemo={Boolean(user.isAnonymous)} />;
 }

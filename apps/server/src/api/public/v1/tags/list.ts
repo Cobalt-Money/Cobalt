@@ -5,7 +5,11 @@ import { createTagSchema } from "@cobalt-web/server-data/transactions/tags/schem
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { createApp } from "../../../../lib/create-app.js";
-import { jsonContent, validationErrorResponse } from "../../../../lib/openapi-helpers.js";
+import {
+  jsonContent,
+  jsonContentRequired,
+  validationErrorResponse,
+} from "../../../../lib/openapi-helpers.js";
 import { requireApiKey } from "../middleware/require-api-key.js";
 import { tagSchema } from "../schemas.js";
 
@@ -16,6 +20,7 @@ const listTagsRoute = createRoute({
   description: "List every tag owned by the authenticated user.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "tags_list",
   path: "/tags",
   responses: {
     200: jsonContent(tagsResponseSchema, "Tags owned by the authenticated user"),
@@ -30,8 +35,9 @@ const createTagRoute = createRoute({
   description: "Create a new tag. Names must be unique per user (case-insensitive).",
   method: "post",
   middleware: [requireApiKey] as const,
+  operationId: "tags_create",
   path: "/tags",
-  request: { body: jsonContent(createTagSchema, "Tag to create") },
+  request: { body: jsonContentRequired(createTagSchema, "Tag to create") },
   responses: {
     201: jsonContent(tagResponseSchema, "Created tag"),
     401: jsonContent(errorResponseWithCodeSchema, "Missing or invalid API key"),

@@ -1,0 +1,35 @@
+name: Docs gen
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/server/src/api/public/v1/**"
+      - "packages/server-data/src/**/schemas.ts"
+      - "packages/server-data/src/_shared/schemas.ts"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Generate fumadocs API reference
+        env:
+          OPENAPI_URL: https://api.cobaltpf.com/v1/openapi.json
+        run: cd apps/fumadocs && bun run scripts/generate-docs.ts
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "docs: regenerate API reference"
+          branch: docs/api-reference-sync
+          title: "docs: regenerate API reference"
+          body: "Auto-generated from latest `/v1/openapi.json`. Merge after the corresponding SDK PR."
+          add-paths: apps/fumadocs/content/docs/api-reference
+          delete-branch: true

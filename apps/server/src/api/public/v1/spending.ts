@@ -20,6 +20,7 @@ const route = createRoute({
     "Aggregated spending over a time window. Returns a bucket series for charting plus running total + average.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "spending_get",
   path: "/spending",
   request: { query: querySchema },
   responses: {

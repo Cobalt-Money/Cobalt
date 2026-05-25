@@ -22,6 +22,7 @@ const route = createRoute({
     "End-of-day balance history for non-brokerage accounts (checking, savings, credit). Use `/v1/portfolio/snapshots` for brokerage value series.",
   method: "get",
   middleware: [requireApiKey] as const,
+  operationId: "balances_snapshots",
   path: "/balances/snapshots",
   request: { query: listQuerySchema },
   responses: {

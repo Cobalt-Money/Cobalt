@@ -6,7 +6,11 @@ import { setTransactionTags } from "@cobalt-web/server-data/transactions/tags/mu
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { createApp } from "../../../../lib/create-app.js";
-import { jsonContent, validationErrorResponse } from "../../../../lib/openapi-helpers.js";
+import {
+  jsonContent,
+  jsonContentRequired,
+  validationErrorResponse,
+} from "../../../../lib/openapi-helpers.js";
 import { requireApiKey } from "../middleware/require-api-key.js";
 import { toTransaction, transactionResponseSchema } from "./_shared.js";
 
@@ -23,9 +27,10 @@ const route = createRoute({
     "Replace the set of tags on a transaction. Use `GET /v1/tags` to discover available tag ids.",
   method: "put",
   middleware: [requireApiKey] as const,
+  operationId: "transactions_updateTags",
   path: "/transactions/{transactionId}/tags",
   request: {
-    body: jsonContent(setTransactionTagsSchema, "Tag ids to attach"),
+    body: jsonContentRequired(setTransactionTagsSchema, "Tag ids to attach"),
     params: transactionIdSchema,
   },
   responses: {
