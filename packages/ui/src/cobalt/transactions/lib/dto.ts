@@ -8,9 +8,7 @@ import type { queries, Row } from "@cobalt-web/zero";
 /** Zero `useQuery` row for `transactions.activity`. */
 export type ZeroTransactionEditRow = Row<typeof queries.transactions.activity>;
 
-export function mapZeroTransactionEditRow(
-  row: ZeroTransactionEditRow,
-): TransactionActivityItem {
+export function mapZeroTransactionEditRow(row: ZeroTransactionEditRow): TransactionActivityItem {
   return {
     actor: row.actor as TransactionActivityItem["actor"],
     createdAt:
@@ -29,10 +27,7 @@ export type ZeroTransactionListRow = Row<typeof queries.transactions.list>;
 
 type ZeroAccount = NonNullable<ZeroTransactionListRow["account"]>;
 type ZeroCategory = NonNullable<ZeroTransactionListRow["category"]>;
-type ZeroTx = Omit<
-  ZeroTransactionListRow,
-  "account" | "category" | "transactionTags"
->;
+type ZeroTx = Omit<ZeroTransactionListRow, "account" | "category" | "transactionTags">;
 
 function institutionFields(account: ZeroAccount): {
   institutionLogo: string | null;
@@ -49,15 +44,12 @@ function institutionFields(account: ZeroAccount): {
   }
   return {
     institutionLogo: null,
-    institutionName:
-      account.institutionName ?? account.customName ?? account.name,
+    institutionName: account.institutionName ?? account.customName ?? account.name,
     institutionUrl: account.logoDomain ?? null,
   };
 }
 
-function flattenCategory(
-  cat: ZeroCategory | null | undefined,
-): TransactionResponse["category"] {
+function flattenCategory(cat: ZeroCategory | null | undefined): TransactionResponse["category"] {
   if (!cat) {
     return null;
   }
@@ -96,9 +88,7 @@ function flattenLocation(tx: ZeroTx): TransactionResponse["location"] {
   };
 }
 
-function normalizeDate(
-  val: string | number | Date | null | undefined,
-): string | null {
+function normalizeDate(val: string | number | Date | null | undefined): string | null {
   if (val === null || val === undefined) {
     return null;
   }
@@ -112,9 +102,7 @@ function normalizeDate(
  * Adapt Zero's nested row shape to the public DTO. Server query already returns
  * the DTO shape directly; Zero needs a flatten step. Schema parse enforces output drift.
  */
-export function mapZeroTransactionListRow(
-  row: ZeroTransactionListRow,
-): TransactionResponse | null {
+export function mapZeroTransactionListRow(row: ZeroTransactionListRow): TransactionResponse | null {
   const { account, category: cat, transactionTags, ...tx } = row;
   if (!account) {
     return null;

@@ -82,11 +82,7 @@ function ApiKeysRoute() {
       // Earlier versions returned a bare array under `data` — handle both
       // so the dashboard doesn't break if the package gets downgraded.
       const res = await authClient.apiKey.list();
-      const payload = res.data as
-        | ApiKeyRow[]
-        | { apiKeys?: ApiKeyRow[] }
-        | null
-        | undefined;
+      const payload = res.data as ApiKeyRow[] | { apiKeys?: ApiKeyRow[] } | null | undefined;
       if (Array.isArray(payload)) {
         return payload;
       }
@@ -95,14 +91,12 @@ function ApiKeysRoute() {
     queryKey: apiKeysQueryKey,
   });
 
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: apiKeysQueryKey });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: apiKeysQueryKey });
 
   const revokeKey = useMutation({
     mutationFn: ({ id }: { id: string; name: string }) =>
       authClient.apiKey.update({ enabled: false, keyId: id }),
-    onError: () =>
-      cobaltToast.error("Couldn't revoke API key. Please try again."),
+    onError: () => cobaltToast.error("Couldn't revoke API key. Please try again."),
     onSuccess: (_res, { name }) => {
       cobaltToast.apiKeyRevoked(name);
       invalidate();
@@ -110,10 +104,8 @@ function ApiKeysRoute() {
   });
 
   const deleteKey = useMutation({
-    mutationFn: ({ id }: { id: string; name: string }) =>
-      authClient.apiKey.delete({ keyId: id }),
-    onError: () =>
-      cobaltToast.error("Couldn't delete API key. Please try again."),
+    mutationFn: ({ id }: { id: string; name: string }) => authClient.apiKey.delete({ keyId: id }),
+    onError: () => cobaltToast.error("Couldn't delete API key. Please try again."),
     onSuccess: (_res, { name }) => {
       cobaltToast.apiKeyDeleted(name);
       invalidate();
@@ -124,12 +116,7 @@ function ApiKeysRoute() {
     <div className="flex flex-col gap-6">
       <header className="flex items-center justify-between gap-2">
         <h1 className="font-semibold text-2xl">API keys</h1>
-        <Button
-          className="w-fit"
-          onClick={() => setDialogOpen(true)}
-          size="sm"
-          variant="outline"
-        >
+        <Button className="w-fit" onClick={() => setDialogOpen(true)} size="sm" variant="outline">
           <HugeiconsIcon icon={Key01Icon} size={15} strokeWidth={2} />
           Create key
         </Button>
@@ -211,11 +198,7 @@ function ApiKeysRoute() {
         </Table>
       </div>
 
-      <AddApiKeyDialog
-        onOpenChange={setDialogOpen}
-        onSuccess={invalidate}
-        open={dialogOpen}
-      />
+      <AddApiKeyDialog onOpenChange={setDialogOpen} onSuccess={invalidate} open={dialogOpen} />
     </div>
   );
 }
@@ -233,11 +216,7 @@ interface DeleteKeyButtonProps {
  * delete on a single API key is recoverable (issue a new one), unlike a
  * full account wipe.
  */
-function DeleteKeyButton({
-  keyId: _keyId,
-  keyName,
-  onConfirm,
-}: DeleteKeyButtonProps) {
+function DeleteKeyButton({ keyId: _keyId, keyName, onConfirm }: DeleteKeyButtonProps) {
   return (
     <AlertDialog>
       <AlertDialogTrigger
@@ -258,10 +237,8 @@ function DeleteKeyButton({
             Delete API key
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Delete{" "}
-            <span className="font-medium text-foreground">{keyName}</span>?
-            Anything using this key will stop working right away. You can't undo
-            this.
+            Delete <span className="font-medium text-foreground">{keyName}</span>? Anything using
+            this key will stop working right away. You can't undo this.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -290,22 +267,13 @@ interface AddApiKeyDialogProps {
  * Kept inline (not in `packages/ui`) because it's only used here. Promote
  * if a second consumer shows up.
  */
-function AddApiKeyDialog({
-  onOpenChange,
-  onSuccess,
-  open,
-}: AddApiKeyDialogProps) {
+function AddApiKeyDialog({ onOpenChange, onSuccess, open }: AddApiKeyDialogProps) {
   // Inner is conditionally rendered so it remounts on every open — fresh
   // state per session, no reset effect needed. Per React docs: prefer
   // remount over `useEffect` to reset state on prop change.
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      {open && (
-        <AddApiKeyDialogInner
-          onClose={() => onOpenChange(false)}
-          onSuccess={onSuccess}
-        />
-      )}
+      {open && <AddApiKeyDialogInner onClose={() => onOpenChange(false)} onSuccess={onSuccess} />}
     </Dialog>
   );
 }
@@ -315,10 +283,7 @@ interface AddApiKeyDialogInnerProps {
   onSuccess: () => void;
 }
 
-function AddApiKeyDialogInner({
-  onClose,
-  onSuccess,
-}: AddApiKeyDialogInnerProps) {
+function AddApiKeyDialogInner({ onClose, onSuccess }: AddApiKeyDialogInnerProps) {
   const [name, setName] = useState("");
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -326,8 +291,7 @@ function AddApiKeyDialogInner({
 
   const createKey = useMutation({
     mutationFn: (n: string) => authClient.apiKey.create({ name: n }),
-    onError: () =>
-      cobaltToast.error("Couldn't create API key. Please try again."),
+    onError: () => cobaltToast.error("Couldn't create API key. Please try again."),
     onSuccess: (res, n) => {
       if (res.data?.key) {
         setRevealedKey(res.data.key);
@@ -354,9 +318,7 @@ function AddApiKeyDialogInner({
 
   const trimmed = name.trim();
   const canSubmit =
-    !createKey.isPending &&
-    trimmed.length > 0 &&
-    trimmed.length <= MAX_KEY_NAME_LENGTH;
+    !createKey.isPending && trimmed.length > 0 && trimmed.length <= MAX_KEY_NAME_LENGTH;
 
   const handleSubmit = () => {
     if (!canSubmit) {
@@ -378,9 +340,8 @@ function AddApiKeyDialogInner({
           {revealedKey ? (
             <div className="flex flex-1 flex-col gap-4">
               <p className="text-muted-foreground text-sm">
-                Copy and store this key safely. Anyone with access to it can
-                read your financial data. Cobalt can never move money, so
-                transfers are never at risk.
+                Copy and store this key safely. Anyone with access to it can read your financial
+                data. Cobalt can never move money, so transfers are never at risk.
               </p>
               <button
                 aria-label="Copy API key to clipboard"
@@ -402,9 +363,7 @@ function AddApiKeyDialogInner({
                 }}
                 type="button"
               >
-                <code className="block flex-1 break-all font-mono text-xs">
-                  {revealedKey}
-                </code>
+                <code className="block flex-1 break-all font-mono text-xs">{revealedKey}</code>
                 <HugeiconsIcon
                   aria-hidden
                   className="mt-0.5 shrink-0 text-muted-foreground transition group-hover:text-foreground"
@@ -438,11 +397,7 @@ function AddApiKeyDialogInner({
               />
 
               <div className="mt-auto flex justify-end pt-2">
-                <Button
-                  disabled={!canSubmit}
-                  onClick={handleSubmit}
-                  type="button"
-                >
+                <Button disabled={!canSubmit} onClick={handleSubmit} type="button">
                   {createKey.isPending ? "Creating…" : "Create key"}
                 </Button>
               </div>

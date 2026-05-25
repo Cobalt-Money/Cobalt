@@ -93,12 +93,7 @@ function SettingsLayout() {
                 key={item.to}
                 to={item.to}
               >
-                <HugeiconsIcon
-                  className="shrink-0"
-                  icon={item.icon}
-                  size={15}
-                  strokeWidth={2}
-                />
+                <HugeiconsIcon className="shrink-0" icon={item.icon} size={15} strokeWidth={2} />
                 {item.label}
               </Link>
             ))}
