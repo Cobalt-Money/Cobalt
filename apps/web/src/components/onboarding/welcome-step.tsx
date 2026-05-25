@@ -16,7 +16,7 @@ export function WelcomeStep({
         </p>
       </div>
       <input
-        autoComplete="given-name"
+        autoComplete="name"
         autoFocus
         className="w-full max-w-xs rounded-md border border-border bg-background px-3 py-2 text-center text-base outline-none focus:border-foreground"
         onChange={(e) => onChange(e.target.value)}

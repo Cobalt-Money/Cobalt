@@ -257,21 +257,23 @@ function ChevronDown({ open }: { open: boolean }) {
 
 function Checkbox({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button
-      aria-checked={checked}
-      className={`flex size-4 shrink-0 items-center justify-center rounded-[3px] border transition-colors ${
+    <label
+      className={`flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-[3px] border transition-colors ${
         checked
           ? "border-foreground/60 bg-foreground/10 text-foreground"
           : "border-foreground/15 text-transparent hover:border-foreground/30"
       }`}
-      onClick={() => onChange(!checked)}
-      role="checkbox"
-      type="button"
     >
+      <input
+        checked={checked}
+        className="sr-only"
+        onChange={(e) => onChange(e.target.checked)}
+        type="checkbox"
+      />
       <svg className="size-3" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
         <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-    </button>
+    </label>
   );
 }
 
