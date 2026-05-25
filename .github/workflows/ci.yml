@@ -91,9 +91,9 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          file_pattern: |
-            apps/server/openapi.json
-            apps/fumadocs/content/docs/api-reference/**
+          # Space-separated paths on a single line; directory paths add
+          # everything inside recursively via `git add`.
+          file_pattern: "apps/server/openapi.json apps/fumadocs/content/docs/api-reference"
           commit_message: "chore: sync openapi.json + docs [skip ci]"
 
   test:
