@@ -1,3 +1,4 @@
+import { createAPIPage } from "fumadocs-openapi/ui";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 
@@ -16,11 +17,15 @@ import {
   VSCodeIcon,
   ZedIcon,
 } from "@/components/mcp-client-cards";
+import { openapi } from "@/lib/openapi";
+
+const APIPage = createAPIPage(openapi);
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
     AmpIcon,
+    APIPage,
     ChatGPTIcon,
     ClaudeIcon,
     CodexIcon,

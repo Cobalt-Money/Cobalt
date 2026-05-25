@@ -39,21 +39,26 @@ jobs:
       - name: Regenerate openapi.json
         # Spec is the single source of truth for SDK + docs codegen. CI rebuilds
         # it from source on every PR so contributors never have to remember to
-        # run a local script. The next step commits any diff back to the PR
-        # branch — reviewers see the contract change inline.
+        # run a local script.
         env:
           SKIP_ENV_VALIDATION: "1"
         run: bun --cwd apps/server run generate-spec
-      - name: Commit regenerated spec to PR branch
+      - name: Regenerate fumadocs API reference
+        # MDX is derived from the spec we just wrote, so it stays in lockstep.
+        # No live URL fetch — fumadocs reads ../server/openapi.json directly.
+        run: bun --cwd apps/fumadocs run scripts/generate-docs.ts
+      - name: Commit regenerated spec + docs to PR branch
         # Only push on pull_request events (so the bot doesn't loop on main).
-        # `[skip ci]` prevents a recursive CI run for the spec-sync commit
-        # itself; downstream sdk-gen + docs-gen still fire because their
-        # triggers are `push` to main, not `pull_request`.
+        # `[skip ci]` prevents a recursive CI run for the sync commit itself;
+        # downstream sdk-gen still fires on merge because its trigger is `push`
+        # to main, not `pull_request`.
         if: github.event_name == 'pull_request'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          file_pattern: apps/server/openapi.json
-          commit_message: "chore: sync openapi.json [skip ci]"
+          file_pattern: |
+            apps/server/openapi.json
+            apps/fumadocs/content/docs/api-reference/**
+          commit_message: "chore: sync openapi.json + docs [skip ci]"
 
   test:
     name: Tests
@@ -142,3 +147,37 @@ jobs:
         run: |
           echo "::warning::Integration tests failed — see logs above."
           exit 1
+
+  sdk-dispatch:
+    name: Dispatch SDK gen
+    # Two gates AND'd together:
+    #   1. all upstream jobs green (via `needs`)
+    #   2. push to main AND apps/server/openapi.json actually changed
+    # Third implicit gate lives in Cobalt-Typescript-SDK's sync.yml — if the
+    # regenerated SDK files have no diff, peter-evans skips PR creation.
+    needs: [check, test, test-integration]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Need previous commit to diff openapi.json against.
+          fetch-depth: 2
+      - name: Skip if openapi.json did not change
+        id: spec
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -q "^apps/server/openapi.json$"; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Fire repository_dispatch on Cobalt-Typescript-SDK
+        if: steps.spec.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SDK_DISPATCH_TOKEN }}
+        run: |
+          gh api \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            /repos/Cobalt-Money/Cobalt-Typescript-SDK/dispatches \
+            -f event_type=spec-updated
