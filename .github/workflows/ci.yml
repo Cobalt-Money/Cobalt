@@ -40,8 +40,35 @@ jobs:
         # Spec is the single source of truth for SDK + docs codegen. CI rebuilds
         # it from source on every PR so contributors never have to remember to
         # run a local script.
+        #
+        # The script imports the v1 router which transitively module-loads
+        # Stripe / Plaid / SnapTrade / Better Auth clients. They construct
+        # eagerly and throw without env. Mirror the integration-test dummy
+        # block so module load succeeds without touching any real provider.
         env:
           SKIP_ENV_VALIDATION: "1"
+          AI_GATEWAY_API_KEY: test-ai-gateway-key
+          APPLE_APP_BUNDLE_IDENTIFIER: test.bundle.id
+          APPLE_KEY_ID: test-key-id
+          APPLE_PRIVATE_KEY: test-private-key
+          APPLE_SERVICE_ID: test-service-id
+          APPLE_TEAM_ID: test-team-id
+          BETTER_AUTH_SECRET: test-secret-that-is-at-least-32-characters-long
+          BETTER_AUTH_URL: http://localhost:4000
+          BLOB_READ_WRITE_TOKEN: vercel_blob_rw_test_token
+          CORS_ORIGIN: http://localhost:3000
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/cobalt
+          GOOGLE_CLIENT_ID: test-google-client
+          GOOGLE_CLIENT_SECRET: test-google-secret
+          GOOGLE_IOS_CLIENT_ID: test-google-ios-client
+          PLAID_CLIENT_ID: test-plaid-client
+          PLAID_CLIENT_SECRET: test-plaid-secret
+          PLAID_ENV: sandbox
+          SNAPTRADE_CLIENT_ID: test-snaptrade-client
+          SNAPTRADE_CONSUMER_KEY: test-snaptrade-key
+          STOCK_NEWS_API_KEY: test-stock-news
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_test_dummy
         working-directory: apps/server
         run: bun run generate-spec
       - name: Regenerate fumadocs API reference
