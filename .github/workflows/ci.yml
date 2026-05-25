@@ -85,16 +85,21 @@ jobs:
         run: bun run scripts/generate-docs.ts
       - name: Commit regenerated spec + docs to PR branch
         # Only push on pull_request events (so the bot doesn't loop on main).
-        # `[skip ci]` prevents a recursive CI run for the sync commit itself;
-        # downstream sdk-gen still fires on merge because its trigger is `push`
-        # to main, not `pull_request`.
+        #
+        # No `[skip ci]` marker here. Per GitHub docs the marker is matched
+        # anywhere in the commit message — including after a squash-merge,
+        # where the bot's commit message gets concatenated into the squash
+        # and the marker silently suppresses all workflows on main. Recursion
+        # is already prevented because GITHUB_TOKEN-authored commits don't
+        # trigger new workflow runs:
+        #   https://docs.github.com/en/actions/concepts/security/github_token
         if: github.event_name == 'pull_request'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           # Space-separated paths on a single line; directory paths add
           # everything inside recursively via `git add`.
           file_pattern: "apps/server/openapi.json apps/fumadocs/content/docs/api-reference"
-          commit_message: "chore: sync openapi.json + docs [skip ci]"
+          commit_message: "chore: sync openapi.json + docs"
 
   test:
     name: Tests
