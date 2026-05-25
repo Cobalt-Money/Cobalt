@@ -48,7 +48,7 @@ v1.doc31("/openapi.json", {
   },
   openapi: "3.1.0",
   security: [{ bearerAuth: [] }],
-  servers: [{ url: "https://api.cobaltpf.com" }],
+  servers: [{ url: "https://api.cobaltpf.com/v1" }],
 });
 
 export type V1Router = typeof v1;

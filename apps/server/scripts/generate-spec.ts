@@ -11,7 +11,10 @@ const spec = v1.getOpenAPI31Document({
   },
   openapi: "3.1.0",
   security: [{ bearerAuth: [] }],
-  servers: [{ url: "https://api.cobaltpf.com" }],
+  // v1 router is mounted at `/v1` in src/index.ts. Spec route paths are
+  // relative to this server URL, so the suffix is required — otherwise
+  // generated SDK clients hit `/accounts` (404) instead of `/v1/accounts`.
+  servers: [{ url: "https://api.cobaltpf.com/v1" }],
 });
 
 const out = join(import.meta.dirname, "..", "openapi.json");
