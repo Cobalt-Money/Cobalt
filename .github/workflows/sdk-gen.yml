@@ -1,0 +1,26 @@
+name: SDK gen
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/server/src/api/public/v1/**"
+      - "packages/server-data/src/**/schemas.ts"
+      - "packages/server-data/src/_shared/schemas.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fire repository_dispatch on cobalt-ts
+        env:
+          GH_TOKEN: ${{ secrets.COBALT_TS_DISPATCH_TOKEN }}
+        run: |
+          gh api \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            /repos/Cobalt-Money/cobalt-ts/dispatches \
+            -f event_type=spec-updated

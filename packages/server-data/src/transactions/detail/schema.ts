@@ -9,6 +9,7 @@ import { locationJsonSchema, transactionLockedFieldsSchema } from "../_shared/sc
 /** Single transaction. Canonical shape; list endpoint returns an array of these. */
 export const transactionResponseSchema = z
   .object({
+    accountId: z.uuid(),
     accountLogoDomain: z.string().nullable(),
     accountName: z.string(),
     accountSubtype: z.string().nullable(),

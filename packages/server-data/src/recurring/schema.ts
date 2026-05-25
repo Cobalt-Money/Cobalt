@@ -3,6 +3,7 @@ import { z } from "@hono/zod-openapi";
 /** Recurring stream (see `getRecurringStreams`). */
 export const recurringTransactionSchema = z
   .object({
+    accountId: z.string(),
     accountName: z.string(),
     accountSubtype: z.string().nullable(),
     accountType: z.string(),

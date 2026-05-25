@@ -15,6 +15,7 @@ import type { TransactionResponse } from "./schema.js";
 export function selectTransactionRows() {
   return db
     .select({
+      accountId: transaction.accountId,
       accountInstitutionName: financialAccount.institutionName,
       accountLogoDomain: financialAccount.logoDomain,
       accountName: financialAccount.name,
@@ -75,6 +76,7 @@ export function toTransactionDto(
     row.lat !== null ||
     row.lon !== null;
   return {
+    accountId: row.accountId,
     accountLogoDomain: row.accountLogoDomain,
     accountName: row.accountName,
     accountSubtype: row.accountSubtype,
@@ -129,7 +131,10 @@ export async function fetchTagsByTransaction(
     return new Map();
   }
   const tagRows = await db
-    .select({ tagId: transactionTag.tagId, transactionId: transactionTag.transactionId })
+    .select({
+      tagId: transactionTag.tagId,
+      transactionId: transactionTag.transactionId,
+    })
     .from(transactionTag)
     .where(inArray(transactionTag.transactionId, txIds));
   const tagsByTx = new Map<string, string[]>();

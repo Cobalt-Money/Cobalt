@@ -1,10 +1,17 @@
 /**
- * Server-based integration test runner.
+ * Server-based integration + E2E test runner.
+ *
+ * Picks up TWO conventions under `tests/`:
+ *   - `*.integration.test.ts` — DB-level integration. Talks to Drizzle
+ *     directly against docker Postgres; spawn happens but tests don't
+ *     necessarily hit HTTP (see `tests/plaid/`).
+ *   - `tests/e2e/**\/*.e2e.test.ts` — true end-to-end. HTTP against the
+ *     spawned Nitro using `WORKFLOW_LOCAL_BASE_URL`. Auth via real Better
+ *     Auth flow + issued `ck_live_` keys.
  *
  * Uses `workflow/vite` for code transforms (not `@workflow/vitest` — that
  * plugin's in-process runtime breaks on our TS-source workspace packages, see
- * SRI-255). Tests call `start()` against a real Nitro dev server spawned by
- * the setup file.
+ * SRI-255).
  *
  * Prerequisites before running `bun run test:integration`:
  *   1. `bun run db:local:up` — start local Postgres in docker
@@ -34,7 +41,7 @@ export default defineConfig({
     environment: "node",
     globalSetup: ["./tests/integration-spawn.ts"],
     globals: true,
-    include: ["tests/**/*.integration.test.ts"],
+    include: ["tests/**/*.integration.test.ts", "tests/e2e/**/*.e2e.test.ts"],
     testTimeout: 60_000,
   },
 });

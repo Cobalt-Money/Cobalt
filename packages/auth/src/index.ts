@@ -1,3 +1,4 @@
+import { apiKey } from "@better-auth/api-key";
 import { cimd } from "@better-auth/cimd";
 import { oauthProvider } from "@better-auth/oauth-provider";
 import { stripe } from "@better-auth/stripe";
@@ -61,8 +62,18 @@ const secondaryStorage = redis
       },
       get: async (key: string) => {
         try {
-          const v = await redis.get<string>(key);
-          return v ?? null;
+          // @upstash/redis auto-deserializes JSON-looking values, but Better
+          // Auth's adapters (apiKey, session) expect a raw string — their
+          // `deserialize*` helpers do `if (typeof data !== "string") return null`,
+          // which silently empties API key list responses after the ref list
+          // is populated (first-load-after-create works via DB fallback;
+          // subsequent loads hit the Redis path and 0-filter every key).
+          // Re-stringify when Upstash hands us a parsed object.
+          const v = await redis.get(key);
+          if (v === null || v === undefined) {
+            return null;
+          }
+          return typeof v === "string" ? v : JSON.stringify(v);
         } catch (error) {
           console.warn("[auth] secondary-storage get failed, falling back to db", { error, key });
           return null;
@@ -162,6 +173,21 @@ export const auth = betterAuth({
     }),
     openAPI(),
     bearer(),
+    apiKey({
+      defaultPrefix: "ck_live_",
+      enableMetadata: true,
+      // Route key lookups + rate-limit counters through Upstash Redis
+      // (configured as secondaryStorage below). Sub-ms vs ~5-15ms Postgres
+      // roundtrip on every `/v1/*` request. `fallbackToDatabase` keeps
+      // pre-existing keys readable while Redis warms.
+      fallbackToDatabase: true,
+      rateLimit: {
+        enabled: true,
+        maxRequests: 10_000,
+        timeWindow: 1000 * 60 * 60 * 24,
+      },
+      storage: secondaryStorage ? "secondary-storage" : "database",
+    }),
     jwt({
       disableSettingJwtHeader: true,
     }),

@@ -10,7 +10,6 @@ import { ImportWizardHost } from "@/components/imports/import-wizard";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
 import { AppSidebar } from "@/components/shell/sidebar/app-sidebar";
-import { SettingsDialogProvider } from "@/components/shell/sidebar/nav/settings-dialog-provider";
 import { useAppSession } from "@/lib/providers/app-session";
 import { ZeroProvider } from "@/lib/providers/zero-client";
 
@@ -46,10 +45,22 @@ export const Route = createFileRoute("/_auth")({
   component: AuthLayout,
   loader: ({ context }) => {
     context.zero?.preload(queries.chats.list(), { ttl: "5m" });
+    // Warm the settings route chunks so navigating to /settings doesn't
+    // suspend the Outlet (~155ms chunk fetch caused a visible blank-main
+    // flash where the sidebar stayed up but content was empty until the
+    // chunk landed). Fire-and-forget — vite caches the modules.
+    void import("./settings/route");
+    void import("./settings/index");
+    void import("./settings/profile");
+    void import("./settings/account");
+    void import("./settings/appearance");
+    void import("./settings/billing");
+    void import("./settings/api-keys");
   },
 });
 
 function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDemo: boolean }) {
+  console.log("[shell] render", performance.now(), { chromeless });
   // Setting `data-demo-banner` on this wrapper (vs `document.body` via an
   // effect) keeps the demo-mode flag in React tree — CSS in globals.css
   // targets `[data-demo-banner="1"] [data-slot="sidebar"]` etc. No effect,
@@ -63,35 +74,38 @@ function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDe
     <ZeroProvider>
       <OnboardingProgressProvider>
         <PrivacyProvider>
-          <SettingsDialogProvider>
-            <ImportWizardHost>
-              <div
-                className="flex h-svh min-h-0 flex-col overflow-hidden"
-                data-demo-banner={isDemo ? "1" : undefined}
-              >
-                {chromeless ? (
-                  // Onboarding mounts CommandMenuProvider so the Connect step
-                  // can call `openAddAccount()` and launch the real Plaid flow
-                  // without leaving the route. Sidebar + demo banner stay hidden.
-                  <CommandMenuProvider>
+          <ImportWizardHost>
+            <div
+              className="flex h-svh min-h-0 flex-col overflow-hidden"
+              data-demo-banner={isDemo ? "1" : undefined}
+            >
+              {chromeless ? (
+                // Onboarding mounts CommandMenuProvider so the Connect step
+                // can call `openAddAccount()` and launch the real Plaid flow
+                // without leaving the route. Sidebar + demo banner stay hidden.
+                <CommandMenuProvider>
+                  <AmbientInsetProvider>
+                    <Outlet />
+                  </AmbientInsetProvider>
+                </CommandMenuProvider>
+              ) : (
+                // Settings reuses this same shell. The settings layout sets
+                // `body[data-route="settings"]` on mount so CSS in
+                // globals.css hides the sidebar — atomically with settings'
+                // first paint, so the sidebar doesn't close *before* the
+                // route swaps.
+                <CommandMenuProvider>
+                  <DemoBanner />
+                  <SidebarProvider className="min-h-0 flex-1">
+                    <AppSidebar />
                     <AmbientInsetProvider>
                       <Outlet />
                     </AmbientInsetProvider>
-                  </CommandMenuProvider>
-                ) : (
-                  <CommandMenuProvider>
-                    <DemoBanner />
-                    <SidebarProvider className="min-h-0 flex-1">
-                      <AppSidebar />
-                      <AmbientInsetProvider>
-                        <Outlet />
-                      </AmbientInsetProvider>
-                    </SidebarProvider>
-                  </CommandMenuProvider>
-                )}
-              </div>
-            </ImportWizardHost>
-          </SettingsDialogProvider>
+                  </SidebarProvider>
+                </CommandMenuProvider>
+              )}
+            </div>
+          </ImportWizardHost>
         </PrivacyProvider>
         <OnboardingProgress />
       </OnboardingProgressProvider>
@@ -104,9 +118,6 @@ function AuthLayout() {
   const location = useLocation();
   const isOnboardingRoute = location.pathname === "/onboarding";
 
-  // beforeLoad has already guaranteed session.data exists for non-pending case.
-  // We still null-guard for the pending state because beforeLoad short-circuits
-  // (returns undefined) while auth is loading.
   if (session.isPending || !session.data) {
     return null;
   }

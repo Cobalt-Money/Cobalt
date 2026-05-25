@@ -1,4 +1,13 @@
-import { boolean, index, jsonb, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable(
   "user",
@@ -261,3 +270,66 @@ export type OauthConsent = typeof oauthConsent.$inferSelect;
 export type OauthConsentInsert = typeof oauthConsent.$inferInsert;
 export type Jwks = typeof jwks.$inferSelect;
 export type JwksInsert = typeof jwks.$inferInsert;
+
+/**
+ * Better Auth `apiKey` plugin table. Mirrors the shape emitted by
+ * `bunx @better-auth/cli generate` for plugin v1.7.0-beta.3 — keep in sync
+ * if the plugin bumps.
+ *
+ * Backs `POST /api/auth/api-key/*` (web-issued `ck_live_…` bearers used by
+ * /v1/* SDK consumers) and the per-key rate-limit counters when
+ * `storage: "secondary-storage"` misses Redis (`fallbackToDatabase: true`
+ * in packages/auth/src/index.ts).
+ *
+ * Cobalt-specific tweaks over the CLI output:
+ *   - `referenceId` keeps an FK to `user(id)` with cascade — the CLI omits
+ *     it, but we want orphan keys impossible if a user is deleted.
+ *   - Index names use snake_case to match existing auth tables (CLI emits
+ *     camelCase).
+ *
+ * Defaults (enabled, rateLimitEnabled, rateLimitTimeWindow, rateLimitMax,
+ * requestCount) come from the plugin runtime — keep them at the column
+ * level so direct DB writes don't drift from plugin behaviour.
+ */
+export const apikey = pgTable(
+  "apikey",
+  {
+    configId: text("config_id").default("default").notNull(),
+    createdAt: timestamp("created_at").notNull(),
+    enabled: boolean("enabled").default(true),
+    expiresAt: timestamp("expires_at"),
+    id: text("id").primaryKey(),
+    /** Hashed key bytes — plaintext is shown to the user ONCE on creation and never persisted. */
+    key: text("key").notNull(),
+    lastRefillAt: timestamp("last_refill_at"),
+    lastRequest: timestamp("last_request"),
+    /** JSON-serialised string; Better Auth handles parse/stringify. Use `text` not `jsonb` per plugin contract. */
+    metadata: text("metadata"),
+    name: text("name"),
+    permissions: text("permissions"),
+    prefix: text("prefix"),
+    rateLimitEnabled: boolean("rate_limit_enabled").default(true),
+    rateLimitMax: integer("rate_limit_max").default(10_000),
+    rateLimitTimeWindow: integer("rate_limit_time_window").default(86_400_000),
+    referenceId: text("reference_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    refillAmount: integer("refill_amount"),
+    refillInterval: integer("refill_interval"),
+    remaining: integer("remaining"),
+    requestCount: integer("request_count").default(0),
+    /** First 4-8 plaintext chars (the prefix portion) for "starts with" lookups in dashboard list views. */
+    start: text("start"),
+    updatedAt: timestamp("updated_at").notNull(),
+  },
+  (table) => [
+    index("apikey_config_id_idx").on(table.configId),
+    index("apikey_reference_id_idx").on(table.referenceId),
+    // Verification (`require-api-key` middleware) hashes the inbound bearer
+    // and looks it up here — make sure that read is indexed.
+    index("apikey_key_idx").on(table.key),
+  ],
+);
+
+export type Apikey = typeof apikey.$inferSelect;
+export type ApikeyInsert = typeof apikey.$inferInsert;

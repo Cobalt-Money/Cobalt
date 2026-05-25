@@ -108,6 +108,7 @@ export function mapZeroTransactionListRow(row: ZeroTransactionListRow): Transact
     return null;
   }
   return transactionResponseSchema.parse({
+    accountId: account.id,
     accountLogoDomain: account.logoDomain ?? null,
     accountName: account.name,
     accountSubtype: account.subtype ?? null,

@@ -17,8 +17,7 @@ export type CommandPage =
   | "search-chats"
   | "search-tickers"
   | "search-transactions"
-  | "sell-position"
-  | "settings";
+  | "sell-position";
 
 type Action =
   | { type: "push"; page: CommandPage }

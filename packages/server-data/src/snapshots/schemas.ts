@@ -19,6 +19,7 @@ export const errorResponseSchema = z.object({
 
 export const balanceSnapshotSchema = z
   .object({
+    accountId: z.string(),
     accountName: financialAccountRowSchema.shape.name,
     accountSubtype: financialAccountRowSchema.shape.subtype,
     accountType: financialAccountRowSchema.shape.type,

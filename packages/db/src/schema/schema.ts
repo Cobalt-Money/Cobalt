@@ -19,6 +19,7 @@ export * from "./zero-schema"; // oxlint-disable-line no-barrel-file
 // Server-only auth tables — omitted from zero-schema.ts to keep them out of
 // Zero replication, but the DB has them and drizzle-kit needs to know.
 export {
+  apikey,
   jwks,
   oauthAccessToken,
   oauthClient,

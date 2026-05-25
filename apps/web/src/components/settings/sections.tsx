@@ -1,120 +1,23 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@cobalt-web/ui/components/avatar";
 import { Button } from "@cobalt-web/ui/components/button";
-import { DialogTitle } from "@cobalt-web/ui/components/dialog";
 import { Input } from "@cobalt-web/ui/components/input";
 import { Separator } from "@cobalt-web/ui/components/separator";
 import { Switch } from "@cobalt-web/ui/components/switch";
 import { useDemo } from "@cobalt-web/ui/hooks/use-demo";
-import { cn } from "@cobalt-web/ui/lib/utils";
-import {
-  AccountSetting01Icon,
-  CreditCardIcon,
-  EyeIcon,
-  UserCircle02Icon,
-} from "@hugeicons/core-free-icons";
-import type { IconSvgElement } from "@hugeicons/react";
+import { CreditCardIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
-import { navUserInitials } from "@/components/shell/sidebar/nav/lib";
 import { subscriptionsApi } from "@/lib/clients/api-client";
 import { authClient } from "@/lib/clients/auth-client";
-import { useAppSession } from "@/lib/providers/app-session";
-
-export type SettingsSection = "profile" | "account" | "appearance" | "billing";
-
-const NAV_SECTIONS: {
-  id: SettingsSection;
-  label: string;
-  icon: IconSvgElement;
-}[] = [
-  { icon: UserCircle02Icon, id: "profile", label: "Profile" },
-  { icon: AccountSetting01Icon, id: "account", label: "Account" },
-  { icon: EyeIcon, id: "appearance", label: "Appearance" },
-  { icon: CreditCardIcon, id: "billing", label: "Billing" },
-];
-
-export interface SettingsGridProps {
-  activeSection: SettingsSection;
-  onSectionChange: (section: SettingsSection) => void;
-  /** Compact mode shrinks padding for command-palette embedding. */
-  compact?: boolean;
-}
-
-/**
- * Settings nav + section panels. No dialog wrapper. Used by both the
- * standalone Settings dialog and the cmd+k "settings" sub-page.
- */
-export function SettingsGrid({
-  activeSection,
-  onSectionChange,
-  compact = false,
-}: SettingsGridProps) {
-  const { data: session } = useAppSession();
-  const { theme, setTheme } = useTheme();
-
-  const user = session?.user;
-  const initials = navUserInitials(user?.name ?? "", user?.email ?? "");
-
-  return (
-    <div className="flex min-h-0 flex-1">
-      {/* Left nav */}
-      <div
-        className={cn(
-          "flex shrink-0 flex-col gap-0.5 border-border/60 border-r bg-muted/40",
-          compact ? "w-40 p-2 pt-3" : "w-44 p-3 pt-4",
-        )}
-      >
-        <p className="mb-1 px-2 py-1 font-medium text-muted-foreground text-xs uppercase tracking-widest">
-          Settings
-        </p>
-        {NAV_SECTIONS.map((section) => (
-          <button
-            className={cn(
-              "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-left text-sm transition-colors",
-              activeSection === section.id
-                ? "bg-muted font-medium text-foreground"
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
-            )}
-            key={section.id}
-            onClick={() => onSectionChange(section.id)}
-            type="button"
-          >
-            <HugeiconsIcon className="shrink-0" icon={section.icon} size={15} strokeWidth={2} />
-            {section.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Right content */}
-      <div
-        className={cn("flex flex-1 flex-col overflow-y-auto", compact ? "p-5 pr-10" : "p-6 pr-12")}
-      >
-        {activeSection === "profile" && <ProfileSection initials={initials} user={user} />}
-        {activeSection === "account" && (
-          <AccountSection
-            isDemo={Boolean((user as { isAnonymous?: boolean } | undefined)?.isAnonymous)}
-            userEmail={user?.email}
-          />
-        )}
-        {activeSection === "appearance" && <AppearanceSection setTheme={setTheme} theme={theme} />}
-        {activeSection === "billing" && <BillingSection />}
-      </div>
-    </div>
-  );
-}
 
 // ─── Profile ─────────────────────────────────────────────────────────────────
 
-interface SessionUser {
-  name: string;
-  email: string;
-  image?: string | null;
-}
+type SessionUser = NonNullable<ReturnType<typeof authClient.useSession>["data"]>["user"];
 
-function ProfileSection({
+export function ProfileSection({
   user,
   initials,
 }: {
@@ -138,7 +41,7 @@ function ProfileSection({
 
   return (
     <div className="flex flex-col gap-6">
-      <DialogTitle className="font-semibold text-base">Profile</DialogTitle>
+      <h2 className="font-semibold text-base">Profile</h2>
 
       <div className="flex items-center gap-4">
         <Avatar className="size-14 rounded-2xl">
@@ -190,11 +93,17 @@ function ProfileSection({
 
 // ─── Account ─────────────────────────────────────────────────────────────────
 
-function AccountSection({ userEmail, isDemo }: { userEmail: string | undefined; isDemo: boolean }) {
+export function AccountSection({
+  userEmail,
+  isDemo,
+}: {
+  userEmail: string | undefined;
+  isDemo: boolean;
+}) {
   const { enter, exit, pending } = useDemo();
   return (
     <div className="flex flex-col gap-6">
-      <DialogTitle className="font-semibold text-base">Account</DialogTitle>
+      <h2 className="font-semibold text-base">Account</h2>
 
       {/* Demo mode toggle — visible to everyone. Real users `Enter demo` to preview
           with sample data; demo users exit back to their real session via the
@@ -233,7 +142,7 @@ function AccountSection({ userEmail, isDemo }: { userEmail: string | undefined; 
 
 // ─── Appearance ───────────────────────────────────────────────────────────────
 
-function AppearanceSection({
+export function AppearanceSection({
   theme,
   setTheme,
 }: {
@@ -242,7 +151,7 @@ function AppearanceSection({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      <DialogTitle className="font-semibold text-base">Appearance</DialogTitle>
+      <h2 className="font-semibold text-base">Appearance</h2>
 
       <div className="flex flex-col gap-3">
         <SettingsRow description="Use dark color scheme across the app" label="Dark mode">
@@ -260,37 +169,21 @@ function AppearanceSection({
 
 type SubscriptionSource = "stripe" | "appstore" | null;
 
-function BillingSection() {
+export function BillingSection() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
-  const [source, setSource] = useState<SubscriptionSource | "loading">("loading");
 
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      try {
-        const res = await subscriptionsApi.index.$get();
-        if (!res.ok) {
-          if (!cancelled) {
-            setSource(null);
-          }
-          return;
-        }
-        const data = await res.json();
-        if (!cancelled && "subscriptionSource" in data) {
-          setSource(data.subscriptionSource);
-        }
-      } catch {
-        if (!cancelled) {
-          setSource(null);
-        }
+  const { data: source = "loading" } = useQuery<SubscriptionSource | "loading">({
+    queryFn: async () => {
+      const res = await subscriptionsApi.index.$get();
+      if (!res.ok) {
+        return null;
       }
-    };
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      const data = await res.json();
+      return "subscriptionSource" in data ? data.subscriptionSource : null;
+    },
+    queryKey: ["subscription-source"],
+  });
 
   const openBillingPortal = async () => {
     setPortalLoading(true);
@@ -343,7 +236,7 @@ function BillingSection() {
 
   return (
     <div className="flex flex-col gap-6">
-      <DialogTitle className="font-semibold text-base">Billing</DialogTitle>
+      <h2 className="font-semibold text-base">Billing</h2>
       {content}
     </div>
   );

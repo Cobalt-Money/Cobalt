@@ -9,7 +9,7 @@ export async function getRecurringTransactions(userId: string) {
     },
     with: {
       account: {
-        columns: { name: true, subtype: true, type: true },
+        columns: { id: true, name: true, subtype: true, type: true },
         with: {
           plaidConnection: {
             columns: {},
@@ -36,6 +36,7 @@ export async function getRecurringTransactions(userId: string) {
     const inst = row.account.plaidConnection?.institution ?? null;
     const cat = row.category ?? null;
     return {
+      accountId: row.account.id,
       accountName: row.account.name,
       accountSubtype: row.account.subtype,
       accountType: row.account.type,
