@@ -222,6 +222,11 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          # Vercel projects pinned to Node 22.x in dashboard; runner default
+          # is 24, which makes `vercel build` fail with "invalid Node.js version".
+          node-version: 22
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.5
@@ -232,14 +237,14 @@ jobs:
         # mid-week before (see reference_bun_catalog_npm_incompat memory).
         run: bun add -g vercel@39
       - name: Pull Vercel env (preview)
-        working-directory: ${{ matrix.dir }}
+        # Run from repo root. Each project has Root Directory configured in
+        # the Vercel dashboard (apps/web, apps/server, apps/fumadocs); running
+        # from subdir double-applies that prefix → "Build src is package.json".
         run: vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
       - name: Build
-        working-directory: ${{ matrix.dir }}
         run: vercel build --token=$VERCEL_TOKEN
       - name: Deploy prebuilt -> preview
         id: deploy
-        working-directory: ${{ matrix.dir }}
         run: |
           url=$(vercel deploy --prebuilt --token=$VERCEL_TOKEN)
           echo "url=$url" >> "$GITHUB_OUTPUT"
@@ -334,6 +339,9 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.5
@@ -342,13 +350,10 @@ jobs:
       - name: Install Vercel CLI
         run: bun add -g vercel@39
       - name: Pull Vercel env (production)
-        working-directory: ${{ matrix.dir }}
         run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
       - name: Build (production)
-        working-directory: ${{ matrix.dir }}
         run: vercel build --prod --token=$VERCEL_TOKEN
       - name: Deploy prebuilt -> production
-        working-directory: ${{ matrix.dir }}
         run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
 
   sdk-dispatch:
