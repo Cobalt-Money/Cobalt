@@ -16,6 +16,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouterState } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 
 import { Link } from "@/components/links";
 
@@ -60,25 +61,39 @@ const NAV_MAIN_ITEMS = [
   },
 ];
 
-export function NavMain() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+function NavMainItem({
+  icon,
+  title,
+  url,
+}: {
+  readonly icon: ReactNode;
+  readonly title: string;
+  readonly url: (typeof NAV_MAIN_ITEMS)[number]["url"];
+}) {
+  const isActive = useRouterState({ select: (s) => s.location.pathname === url });
 
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        className={navItemClassName}
+        isActive={isActive}
+        render={<Link aria-label={title} preload="viewport" to={url} />}
+        tooltip={title}
+      >
+        {icon}
+        <span>{title}</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
+export function NavMain() {
   return (
     <SidebarGroup className="p-1.5">
       <SidebarGroupContent className="flex flex-col gap-1.5">
         <SidebarMenu className="gap-0">
           {NAV_MAIN_ITEMS.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                className={navItemClassName}
-                isActive={pathname === item.url}
-                render={<Link aria-label={item.title} preload="viewport" to={item.url} />}
-                tooltip={item.title}
-              >
-                {item.icon}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            <NavMainItem icon={item.icon} key={item.title} title={item.title} url={item.url} />
           ))}
         </SidebarMenu>
       </SidebarGroupContent>
