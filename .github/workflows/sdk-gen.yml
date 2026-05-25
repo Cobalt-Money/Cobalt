@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Fire repository_dispatch on cobalt-ts
         env:
-          GH_TOKEN: ${{ secrets.COBALT_TS_DISPATCH_TOKEN }}
+          GH_TOKEN: ${{ secrets.SDK_DISPATCH_TOKEN }}
         run: |
           gh api \
             -X POST \
