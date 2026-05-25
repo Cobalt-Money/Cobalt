@@ -16,12 +16,12 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Fire repository_dispatch on cobalt-ts
+      - name: Fire repository_dispatch on Cobalt-Typescript-SDK
         env:
           GH_TOKEN: ${{ secrets.SDK_DISPATCH_TOKEN }}
         run: |
           gh api \
             -X POST \
             -H "Accept: application/vnd.github+json" \
-            /repos/Cobalt-Money/cobalt-ts/dispatches \
+            /repos/Cobalt-Money/Cobalt-Typescript-SDK/dispatches \
             -f event_type=spec-updated

@@ -7,6 +7,8 @@
     "**/zero-schema.gen.ts",
     "packages/ui/src/components/**",
     "**/drizzle-zero.config.ts",
-    ".claude/worktrees/**"
+    ".claude/worktrees/**",
+    "apps/raycast/**",
+    "docs/**"
   ]
 }
