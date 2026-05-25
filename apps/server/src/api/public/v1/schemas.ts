@@ -99,7 +99,10 @@ export const transactionSchema = z
     id: z.string(),
     merchant: z.string().nullable(),
     name: z.string().openapi({ description: "Raw description from the institution." }),
-    notes: z.string().nullable(),
+    notes: z.string().nullable().openapi({
+      description: "Additional details regarding the transaction. Supports Markdown.",
+      example: "**Reimbursable** — paid for team lunch, expense via Expensify",
+    }),
     pending: z.boolean(),
     tagIds: z.array(z.string()),
   })

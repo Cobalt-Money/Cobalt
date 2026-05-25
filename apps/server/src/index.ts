@@ -117,6 +117,19 @@ base.doc31("/openapi.json", {
 
 const app = new Hono()
   .use(logger())
+  // Public REST surface — Bearer API key, no cookies. Open to any origin so
+  // SDKs, the Fumadocs Try-It panel, and third-party browser clients can call
+  // it. Must be registered BEFORE the credentialed CORS below so the wildcard
+  // wins for /v1/*.
+  .use(
+    "/v1/*",
+    cors({
+      allowHeaders: ["Authorization", "Content-Type"],
+      allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      credentials: false,
+      origin: "*",
+    }),
+  )
   .use(
     "/*",
     cors({
