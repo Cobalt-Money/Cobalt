@@ -46,7 +46,10 @@ jobs:
         # eagerly and throw without env. Mirror the integration-test dummy
         # block so module load succeeds without touching any real provider.
         env:
-          SKIP_ENV_VALIDATION: "1"
+          # Intentionally NOT setting SKIP_ENV_VALIDATION: env transforms (like
+          # commaList for TRUSTED_ORIGINS_EXTRA) only run when validation is on,
+          # and downstream code spreads those arrays. Skipping validation leaves
+          # them undefined → spread throws.
           AI_GATEWAY_API_KEY: test-ai-gateway-key
           APPLE_APP_BUNDLE_IDENTIFIER: test.bundle.id
           APPLE_KEY_ID: test-key-id
