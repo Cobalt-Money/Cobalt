@@ -436,7 +436,7 @@ export function BabyResearch({
   );
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-4">
+    <div className="flex w-full min-w-0 flex-col gap-4 pl-4">
       <Table className="[&_td]:px-0 [&_th]:px-0 text-sm">
         <TableHeader className="[&_tr]:border-0">
           <TableRow className="border-0 align-middle">

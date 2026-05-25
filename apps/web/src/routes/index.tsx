@@ -1,10 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "motion/react";
 
-import { TryDemoButton } from "@/components/demo/try-demo-button";
 import { ApiSection } from "@/components/landing/api-section";
 import { AppPreview } from "@/components/landing/app-preview";
 import { FadeUp, LANDING_EASE as EASE } from "@/components/landing/fade-up";
+import { HeroVideo } from "@/components/landing/hero-video";
+import { LogoMarquee } from "@/components/landing/logo-marquee";
 import { FaqSection } from "@/components/landing/faq-section";
 import {
   FloatingIntegrations,
@@ -61,11 +62,13 @@ function LandingPage() {
   return (
     <>
       <LandingStyles />
-      <main className="flex flex-col">
-        <MarketingNav />
+      <main className="relative flex flex-col">
+        <MarketingNav overlay />
         <Hero />
+        <PreviewSection />
+        <LogoMarquee />
         <IntegrationsSection />
-        <ApiSection />
+        <ApiSectionWithBg />
         <MobileSection />
         <TransparencySection />
         <FaqSection />
@@ -84,29 +87,89 @@ function Hero() {
       : {
           animate: { opacity: 1, y: 0 },
           initial: { opacity: 0, y: 16 },
-          transition: { delay, duration: 0.7, ease: EASE },
+          transition: { delay, duration: 0.9, ease: EASE },
         };
   return (
-    <section className="py-20">
-      <Container className="flex flex-col gap-16">
-        <div className="flex flex-col gap-6">
-          <motion.h1
-            className="text-3xl font-semibold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
-            {...fade(0.05)}
-          >
-            Talk to your money.
-          </motion.h1>
-          <motion.p
-            className="text-lg text-muted-foreground sm:text-xl md:text-2xl"
-            {...fade(0.18)}
-          >
-            Spend seconds on your finances, not Sundays.
-          </motion.p>
-        </div>
-        <motion.div className="sm:hidden" {...fade(0.3)}>
+    <section className="relative h-screen overflow-hidden bg-[#222a1f]">
+      <HeroVideo />
+      <Container className="pointer-events-none relative z-10 flex h-full flex-col gap-6 pt-32 pb-20 [text-shadow:_0_1px_12px_rgba(0,0,0,0.3)]">
+        <motion.h1
+          className="max-w-4xl text-3xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
+          {...fade(0.1)}
+        >
+          Talk to your money
+        </motion.h1>
+        <motion.p
+          className="max-w-2xl text-lg text-white/80 sm:text-xl md:text-2xl"
+          {...fade(0.25)}
+        >
+          Spend seconds on your finances, not Sundays.
+        </motion.p>
+      </Container>
+    </section>
+  );
+}
+
+const PREVIEW_SECTION_BG = "/landing/preview-bg/mountains-bg.jpg";
+const API_SECTION_BG = "/landing/preview-bg/oil-canvas.jpg";
+
+function ApiSectionWithBg() {
+  return (
+    <div className="relative overflow-hidden" data-nav-surface="dark">
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 bg-center bg-cover"
+        style={{ backgroundImage: `url(${API_SECTION_BG})` }}
+      />
+      <div aria-hidden className="-z-10 absolute inset-0 bg-black/35" />
+      <ApiSection />
+    </div>
+  );
+}
+
+function PreviewSection() {
+  const reduce = useReducedMotion();
+  const reveal = reduce
+    ? {}
+    : {
+        initial: { opacity: 0, scale: 0.94, y: 60 },
+        transition: { duration: 1, ease: EASE },
+        viewport: { amount: 0.25, once: true },
+        whileInView: { opacity: 1, scale: 1, y: 0 },
+      };
+  return (
+    <section className="relative overflow-hidden py-20 sm:py-28" data-nav-surface="dark">
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 bg-center bg-cover"
+        style={{ backgroundImage: `url(${PREVIEW_SECTION_BG})` }}
+      />
+      <div aria-hidden className="-z-10 absolute inset-0 bg-black/35" />
+      <Container className="relative flex flex-col gap-16">
+        <motion.div
+          className="mx-auto max-w-3xl text-center [text-shadow:_0_1px_12px_rgba(0,0,0,0.3)]"
+          initial={reduce ? false : { opacity: 0, y: 28 }}
+          transition={{ duration: 0.7, ease: EASE }}
+          viewport={{ amount: 0.8, once: true }}
+          whileInView={{ opacity: 1, y: 0 }}
+        >
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
+            Financial Software designed for the most productive people.
+          </h2>
+        </motion.div>
+        <motion.div className="sm:hidden" {...reveal}>
           <MobileAppPreview />
         </motion.div>
-        <motion.div {...fade(0.4)} className="hidden w-full sm:block">
+        <motion.div {...reveal} className="group relative hidden w-full sm:block">
+          <div className="-translate-x-1/2 pointer-events-none absolute top-1/2 left-1/2 z-20 -translate-y-1/2 opacity-100 transition-opacity duration-200 group-hover:opacity-0">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/60 px-3 py-1.5 text-xs font-medium text-white shadow-lg backdrop-blur-md">
+              <span className="relative flex size-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
+              </span>
+              Click to interact
+            </span>
+          </div>
           <CursorProvider className="w-full sm:h-[80vh]">
             <Cursor className="pointer-events-none hidden lg:block">
               <svg
@@ -192,7 +255,12 @@ function FinalCTA() {
           <br />
           to your money?
         </h2>
-        <TryDemoButton size="lg" variant="default" />
+        <Link
+          className="rounded-full bg-foreground px-6 py-3 text-base font-medium text-background hover:opacity-90"
+          to="/login"
+        >
+          Sign in
+        </Link>
       </FadeUp>
     </section>
   );

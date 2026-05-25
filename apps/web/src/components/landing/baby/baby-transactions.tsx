@@ -29,7 +29,7 @@ const STATUS_POSTED_ICON = "/assets/vectors/posted.svg";
 // stub in the landing preview (select, bank). Status / date / name /
 // category / tags / amount keep the same proportions so rows align like
 // production.
-const GRID_TEMPLATE_COLUMNS = "3rem 7rem minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1fr) 7rem";
+const GRID_TEMPLATE_COLUMNS = "3rem 7rem minmax(0, 1.75fr) minmax(0, 1.25fr) minmax(0, 1.6fr) 7rem";
 
 const ROW_HEIGHT = 52;
 

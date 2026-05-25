@@ -2,7 +2,13 @@ import { Toaster } from "@cobalt-web/ui/components/sonner";
 import { ThemeProvider } from "@cobalt-web/ui/components/theme-provider";
 import { TooltipProvider } from "@cobalt-web/ui/components/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRouteWithContext,
+  useRouterState,
+} from "@tanstack/react-router";
 import { useEffect } from "react";
 // import { Agentation } from "agentation";
 
@@ -75,8 +81,22 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   }),
 });
 
+const FORCED_LIGHT_PATHS = new Set<string>(["/"]);
+const FORCED_DARK_PATHS = new Set<string>(["/login", "/pricing", "/terms", "/privacy"]);
+const FORCED_DARK_PREFIXES = ["/blog"];
+
 function RootDocument() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  let forcedTheme: "light" | "dark" | undefined;
+  if (FORCED_LIGHT_PATHS.has(pathname)) {
+    forcedTheme = "light";
+  } else if (
+    FORCED_DARK_PATHS.has(pathname) ||
+    FORCED_DARK_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  ) {
+    forcedTheme = "dark";
+  }
 
   useEffect(() => {
     if (!import.meta.env.DEV) {
@@ -103,6 +123,7 @@ function RootDocument() {
           defaultTheme="system"
           disableTransitionOnChange
           enableSystem
+          forcedTheme={forcedTheme}
         >
           <QueryClientProvider client={queryClient}>
             <AppSessionProvider>

@@ -15,6 +15,10 @@ const FAQS: { a: ReactNode; q: string }[] = [
     q: "How does Cobalt connect to my accounts?",
   },
   {
+    a: "Yes!",
+    q: "Can I import transactions from another app?",
+  },
+  {
     a: (
       <div className="flex flex-col gap-3">
         <p>
@@ -73,7 +77,7 @@ const FAQS: { a: ReactNode; q: string }[] = [
     q: "Is this secure?",
   },
   {
-    a: "Any client that supports Dynamic Client Registration (RFC 7591) over MCP. Direct token-based API access coming soon.",
+    a: "Any client that supports Dynamic Client Registration (RFC 7591) over MCP. Direct API access via API keys is also supported.",
     q: "Which AI assistants work with Cobalt?",
   },
   {
