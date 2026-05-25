@@ -13,6 +13,10 @@ jobs:
   check:
     name: Typecheck + Lint
     runs-on: ubuntu-latest
+    permissions:
+      # contents:write lets the spec auto-sync step push openapi.json back to
+      # the PR branch. Granted only on this job; other jobs stay read-only.
+      contents: write
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
@@ -32,6 +36,65 @@ jobs:
         run: bun x turbo check-types
         env:
           NODE_OPTIONS: --max-old-space-size=8192
+      - name: Regenerate openapi.json
+        # Spec is the single source of truth for SDK + docs codegen. CI rebuilds
+        # it from source on every PR so contributors never have to remember to
+        # run a local script.
+        #
+        # The script imports the v1 router which transitively module-loads
+        # Stripe / Plaid / SnapTrade / Better Auth clients. They construct
+        # eagerly and throw without env. Mirror the integration-test dummy
+        # block so module load succeeds without touching any real provider.
+        env:
+          # Intentionally NOT setting SKIP_ENV_VALIDATION: env transforms (like
+          # commaList for TRUSTED_ORIGINS_EXTRA) only run when validation is on,
+          # and downstream code spreads those arrays. Skipping validation leaves
+          # them undefined → spread throws.
+          AI_GATEWAY_API_KEY: test-ai-gateway-key
+          APPLE_APP_BUNDLE_IDENTIFIER: test.bundle.id
+          APPLE_KEY_ID: test-key-id
+          # P-256 PKCS8 dummy key generated via `openssl genpkey -algorithm EC
+          # -pkeyopt ec_paramgen_curve:P-256`. Not a real Apple key; only used
+          # because packages/auth eagerly signs an ES256 JWT at module load.
+          # TODO: refactor packages/auth to lazy-init Apple/Stripe clients.
+          APPLE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nMIIBeQIBADCCAQMGByqGSM49AgEwgfcCAQEwLAYHKoZIzj0BAQIhAP////8AAAAB\nAAAAAAAAAAAAAAAA////////////////MFsEIP////8AAAABAAAAAAAAAAAAAAAA\n///////////////8BCBaxjXYqjqT57PrvVV2mIa8ZR0GsMxTsPY7zjw+J9JgSwMV\nAMSdNgiG5wSTamZ44ROdJreBn36QBEEEaxfR8uEsQkf4vOblY6RA8ncDfYEt6zOg\n9KE5RdiYwpZP40Li/hp/m47n60p8D54WK84zV2sxXs7LtkBoN79R9QIhAP////8A\nAAAA//////////+85vqtpxeehPO5ysL8YyVRAgEBBG0wawIBAQQgp+lwAaUJ1jms\na4zIKYhfgVC+T+ZsY+Pbl77mWtSR/NShRANCAASlypaSz72mmvsx2Tsf7li68iZZ\nFdVeysivRbFaofkCJzGWuQ4RJ+Vvqlc6NpogWK9sm5CAPv5x640Wnm2H7PSo\n-----END PRIVATE KEY-----"
+          APPLE_SERVICE_ID: test-service-id
+          APPLE_TEAM_ID: test-team-id
+          BETTER_AUTH_SECRET: test-secret-that-is-at-least-32-characters-long
+          BETTER_AUTH_URL: http://localhost:4000
+          BLOB_READ_WRITE_TOKEN: vercel_blob_rw_test_token
+          CORS_ORIGIN: http://localhost:3000
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/cobalt
+          GOOGLE_CLIENT_ID: test-google-client
+          GOOGLE_CLIENT_SECRET: test-google-secret
+          GOOGLE_IOS_CLIENT_ID: test-google-ios-client
+          PLAID_CLIENT_ID: test-plaid-client
+          PLAID_CLIENT_SECRET: test-plaid-secret
+          PLAID_ENV: sandbox
+          SNAPTRADE_CLIENT_ID: test-snaptrade-client
+          SNAPTRADE_CONSUMER_KEY: test-snaptrade-key
+          STOCK_NEWS_API_KEY: test-stock-news
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_test_dummy
+        working-directory: apps/server
+        run: bun run generate-spec
+      - name: Regenerate fumadocs API reference
+        # MDX is derived from the spec we just wrote, so it stays in lockstep.
+        # No live URL fetch — fumadocs reads ../server/openapi.json directly.
+        working-directory: apps/fumadocs
+        run: bun run scripts/generate-docs.ts
+      - name: Commit regenerated spec + docs to PR branch
+        # Only push on pull_request events (so the bot doesn't loop on main).
+        # `[skip ci]` prevents a recursive CI run for the sync commit itself;
+        # downstream sdk-gen still fires on merge because its trigger is `push`
+        # to main, not `pull_request`.
+        if: github.event_name == 'pull_request'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          # Space-separated paths on a single line; directory paths add
+          # everything inside recursively via `git add`.
+          file_pattern: "apps/server/openapi.json apps/fumadocs/content/docs/api-reference"
+          commit_message: "chore: sync openapi.json + docs [skip ci]"
 
   test:
     name: Tests
@@ -120,3 +183,37 @@ jobs:
         run: |
           echo "::warning::Integration tests failed — see logs above."
           exit 1
+
+  sdk-dispatch:
+    name: Dispatch SDK gen
+    # Two gates AND'd together:
+    #   1. all upstream jobs green (via `needs`)
+    #   2. push to main AND apps/server/openapi.json actually changed
+    # Third implicit gate lives in Cobalt-Typescript-SDK's sync.yml — if the
+    # regenerated SDK files have no diff, peter-evans skips PR creation.
+    needs: [check, test, test-integration]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Need previous commit to diff openapi.json against.
+          fetch-depth: 2
+      - name: Skip if openapi.json did not change
+        id: spec
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -q "^apps/server/openapi.json$"; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Fire repository_dispatch on Cobalt-Typescript-SDK
+        if: steps.spec.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SDK_DISPATCH_TOKEN }}
+        run: |
+          gh api \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            /repos/Cobalt-Money/Cobalt-Typescript-SDK/dispatches \
+            -f event_type=spec-updated

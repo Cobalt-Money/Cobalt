@@ -61,5 +61,4 @@ apps/zero-cache/zero.db*
 .vercel
 .deepsec/
 .superset/attachments/
-openapi.json
 apps/raycast/dist
