@@ -15,6 +15,7 @@ export default defineConfig({
     "**/drizzle-zero.config.ts",
     ".claude/worktrees/**",
     "apps/raycast/**",
+    "docs/**",
   ],
   overrides: [
     {

@@ -62,3 +62,4 @@ apps/zero-cache/zero.db*
 .deepsec/
 .superset/attachments/
 openapi.json
+apps/raycast/dist

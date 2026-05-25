@@ -12,6 +12,13 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  # Disable husky hooks for CI-driven commits — pre-commit runs the full
+  # precommit script (`bun check && test && build`) which OOMs the runner
+  # and is redundant when the same checks already passed in the CI job
+  # that triggered this regen.
+  HUSKY: "0"
+
 jobs:
   regen:
     runs-on: ubuntu-latest
