@@ -233,12 +233,14 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Install Vercel CLI
-        # Install via npm (not bun) so `vercel` executes under real Node 22.
-        # `bun add -g vercel` makes Bun execute the JS — Bun's emulated
-        # process.version reports as Node 24, which Vercel CLI rejects.
-        # Pin version — vercel@latest has shipped breaking CLI changes
-        # mid-week before (see reference_bun_catalog_npm_incompat memory).
         run: npm install -g vercel@39
+      - name: Diagnose node/vercel environment
+        run: |
+          echo "node:    $(which node) $(node --version)"
+          echo "npm:     $(which npm) $(npm --version)"
+          echo "vercel:  $(which vercel)"
+          head -1 "$(which vercel)" || true
+          echo "PATH=$PATH"
       - name: Pull Vercel env (preview)
         # Run from repo root. Each project has Root Directory configured in
         # the Vercel dashboard (apps/web, apps/server, apps/fumadocs); running
