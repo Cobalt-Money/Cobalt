@@ -1,6 +1,6 @@
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
-import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas.public";
-import { transactionIdSchema } from "@cobalt-web/server-data/transactions/_shared/schema.public";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { transactionIdSchema } from "@cobalt-web/server-data/transactions/_shared";
 import { getTransactionDetail } from "@cobalt-web/server-data/transactions/detail";
 import { setTransactionTags } from "@cobalt-web/server-data/transactions/tags/mutations";
 import { createRoute, z } from "@hono/zod-openapi";

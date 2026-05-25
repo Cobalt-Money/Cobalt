@@ -4,7 +4,7 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent } from "../../../lib/openapi-helpers.js";
 import { requireApiKey } from "./middleware/require-api-key.js";
-import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas.public";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { spendingSchema } from "./schemas.js";
 
 const querySchema = z.object({

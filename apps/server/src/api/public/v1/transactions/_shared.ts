@@ -1,4 +1,4 @@
-import type { TransactionResponse } from "@cobalt-web/server-data/transactions/detail/schema.public";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/detail/schema";
 import { z } from "@hono/zod-openapi";
 
 import { transactionSchema } from "../schemas.js";

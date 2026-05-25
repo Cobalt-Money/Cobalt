@@ -1,7 +1,7 @@
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
-import { accountIdSchema } from "@cobalt-web/server-data/accounts/_shared/schema.public";
+import { accountIdSchema } from "@cobalt-web/server-data/accounts/_shared";
 import { getAccountDetail } from "@cobalt-web/server-data/accounts/detail";
-import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas.public";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { createApp } from "../../../../lib/create-app.js";

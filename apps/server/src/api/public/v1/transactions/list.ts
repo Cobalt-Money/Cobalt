@@ -1,5 +1,5 @@
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
-import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas.public";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { createManualTransactions } from "@cobalt-web/server-data/transactions/create";
 import { getTransactionDetail } from "@cobalt-web/server-data/transactions/detail";
 import { getTransactions } from "@cobalt-web/server-data/transactions/list";

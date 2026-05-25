@@ -13,6 +13,10 @@ jobs:
   check:
     name: Typecheck + Lint
     runs-on: ubuntu-latest
+    permissions:
+      # contents:write lets the spec auto-sync step push openapi.json back to
+      # the PR branch. Granted only on this job; other jobs stay read-only.
+      contents: write
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
@@ -32,13 +36,24 @@ jobs:
         run: bun x turbo check-types
         env:
           NODE_OPTIONS: --max-old-space-size=8192
-      - name: Verify openapi.json is up to date
-        # Spec is committed under apps/server/openapi.json as the single source
-        # of truth for SDK and docs codegen. Fail the build if the regenerated
-        # spec differs — author must commit a fresh version.
+      - name: Regenerate openapi.json
+        # Spec is the single source of truth for SDK + docs codegen. CI rebuilds
+        # it from source on every PR so contributors never have to remember to
+        # run a local script. The next step commits any diff back to the PR
+        # branch — reviewers see the contract change inline.
         env:
           SKIP_ENV_VALIDATION: "1"
-        run: bun --cwd apps/server run verify-spec
+        run: bun --cwd apps/server run generate-spec
+      - name: Commit regenerated spec to PR branch
+        # Only push on pull_request events (so the bot doesn't loop on main).
+        # `[skip ci]` prevents a recursive CI run for the spec-sync commit
+        # itself; downstream sdk-gen + docs-gen still fire because their
+        # triggers are `push` to main, not `pull_request`.
+        if: github.event_name == 'pull_request'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          file_pattern: apps/server/openapi.json
+          commit_message: "chore: sync openapi.json [skip ci]"
 
   test:
     name: Tests

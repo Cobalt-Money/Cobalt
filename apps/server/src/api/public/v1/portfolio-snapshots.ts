@@ -1,11 +1,11 @@
-import type { PortfolioSnapshotItem } from "@cobalt-web/server-data/brokerage/portfolio-snapshots/schema.public";
+import type { PortfolioSnapshotItem } from "@cobalt-web/server-data/brokerage/portfolio-snapshots/schema";
 import { getPortfolioSnapshots } from "@cobalt-web/server-data/brokerage/portfolio-snapshots";
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent } from "../../../lib/openapi-helpers.js";
 import { requireApiKey } from "./middleware/require-api-key.js";
-import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas.public";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { portfolioSnapshotSchema } from "./schemas.js";
 
 const listQuerySchema = z.object({

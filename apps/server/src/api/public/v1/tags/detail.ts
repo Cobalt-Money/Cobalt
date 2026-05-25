@@ -1,10 +1,7 @@
-import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas.public";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { deleteTag, updateTag } from "@cobalt-web/server-data/transactions/tags/mutations";
 import { getTag } from "@cobalt-web/server-data/transactions/tags/queries";
-import {
-  patchTagSchema,
-  tagIdSchema,
-} from "@cobalt-web/server-data/transactions/tags/schemas.public";
+import { patchTagSchema, tagIdSchema } from "@cobalt-web/server-data/transactions/tags/schemas";
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { createApp } from "../../../../lib/create-app.js";
