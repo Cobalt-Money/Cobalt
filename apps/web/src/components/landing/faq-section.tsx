@@ -15,6 +15,10 @@ const FAQS: { a: ReactNode; q: string }[] = [
     q: "How does Cobalt connect to my accounts?",
   },
   {
+    a: "Yes!",
+    q: "Can I import transactions from another app?",
+  },
+  {
     a: (
       <div className="flex flex-col gap-3">
         <p>

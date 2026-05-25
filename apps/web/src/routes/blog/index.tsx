@@ -1,5 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 
+import { Container, MarketingFooter, MarketingNav } from "@/components/landing/marketing-shell";
 import { getBlogPosts } from "@/lib/blog";
 import { buildSeoMeta } from "@/lib/seo";
 
@@ -7,7 +8,8 @@ export const Route = createFileRoute("/blog/")({
   component: BlogIndex,
   head: () => {
     const seo = buildSeoMeta({
-      description: "Product updates, design notes, and occasional essays from the Cobalt team.",
+      description:
+        "Field notes from the Cobalt team — product updates, design notes, and the occasional essay on personal finance.",
       path: "/blog",
       title: "Blog",
     });
@@ -18,7 +20,7 @@ export const Route = createFileRoute("/blog/")({
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
-  month: "long",
+  month: "short",
   year: "numeric",
 });
 
@@ -26,37 +28,41 @@ function BlogIndex() {
   const posts = getBlogPosts();
 
   return (
-    <div className="h-svh overflow-y-auto bg-black text-white">
-      <div className="container mx-auto max-w-3xl px-6 py-16">
-        <header className="mb-12">
-          <h1 className="mb-3 font-bold font-manrope text-4xl">Blog</h1>
-          <p className="text-gray-400 text-lg">
-            Product updates, design notes, and occasional essays from the Cobalt team.
-          </p>
-        </header>
-
-        {posts.length === 0 ? (
-          <p className="text-gray-400">No posts yet. Check back soon.</p>
-        ) : (
-          <ul className="space-y-8">
-            {posts.map((post) => (
-              <li className="border-foreground/10 border-b pb-8 last:border-b-0" key={post.slug}>
-                <Link className="group block" params={{ slug: post.slug }} to="/blog/$slug">
-                  <p className="mb-2 text-gray-500 text-sm">
-                    {dateFormatter.format(new Date(post.frontmatter.date))}
-                  </p>
-                  <h2 className="mb-2 font-manrope font-semibold text-2xl group-hover:text-yellow-400">
-                    {post.frontmatter.title}
-                  </h2>
-                  {post.frontmatter.description ? (
-                    <p className="text-gray-400">{post.frontmatter.description}</p>
-                  ) : null}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+    <div className="min-h-svh bg-background text-foreground">
+      <MarketingNav />
+      <main>
+        <Container className="max-w-3xl py-24 sm:py-32">
+          {posts.length === 0 ? (
+            <p className="text-muted-foreground">No posts yet. Check back soon.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {posts.map((post) => (
+                <li key={post.slug}>
+                  <Link
+                    className="group block py-10 transition-opacity hover:opacity-90"
+                    params={{ slug: post.slug }}
+                    to="/blog/$slug"
+                  >
+                    <p className="mb-3 text-muted-foreground text-sm">
+                      {dateFormatter.format(new Date(post.frontmatter.date))}
+                      {post.frontmatter.author ? ` · ${post.frontmatter.author}` : ""}
+                    </p>
+                    <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">
+                      {post.frontmatter.title}
+                    </h2>
+                    {post.frontmatter.description ? (
+                      <p className="mt-3 max-w-xl text-muted-foreground leading-relaxed">
+                        {post.frontmatter.description}
+                      </p>
+                    ) : null}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Container>
+      </main>
+      <MarketingFooter />
     </div>
   );
 }

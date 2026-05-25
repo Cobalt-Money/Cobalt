@@ -100,48 +100,20 @@ const ENDPOINTS: EndpointDef[] = [
     method: "GET",
     name: "List transactions",
     params: [
-      { defaultValue: "", enabled: true, key: "accountType" },
-      { defaultValue: "", enabled: true, key: "cursor" },
-      { defaultValue: "", enabled: true, key: "endDate" },
       { defaultValue: "50", enabled: true, key: "limit" },
-      { defaultValue: "", enabled: true, key: "maxAmount" },
-      { defaultValue: "", enabled: true, key: "minAmount" },
-      { defaultValue: "true", enabled: true, key: "pendingFilter" },
-      { defaultValue: "", enabled: true, key: "primaryCategory" },
-      { defaultValue: "", enabled: true, key: "searchQuery" },
       { defaultValue: "", enabled: true, key: "startDate" },
+      { defaultValue: "", enabled: true, key: "cursor" },
     ],
     path: "/api/transactions",
     response: {
       hasMore: true,
-      nextCursor: "eyJkIjoiMjAyNi0wNC0xMyIsImki0iJiNDI5YTBmOC1iYTFkLTRlMWUtOTI",
+      nextCursor: "eyJkIjoiMjAyNi0wNC0xMyIs",
       transactions: [
         {
-          accountLogoDomain: null,
           accountName: "EVERYDAY CHECKING ...1595",
-          accountSubtype: "checking",
-          accountType: "depository",
           amount: 239,
-          authorizedDate: "2026-05-20",
-          category: {
-            groupName: "Loan Payments",
-            groupSystemKey: "loan_payments",
-            iconKey: "student_loan",
-            id: "eda23a7e-d82b-4f0b-840a-a38b40e0a9cd",
-            name: "Student Loan",
-            systemKey: "student_loan",
-          },
-          counterparties: [
-            {
-              confidence_level: "LOW",
-              entity_id: null,
-              logo_url: null,
-              name: "Dept Education Student Ln",
-              phone_number: null,
-              type: "merchant",
-              website: null,
-            },
-          ],
+          category: "student_loan",
+          currency: "USD",
           date: "2026-05-20",
           id: "tx_0xab39f1",
           merchantName: "Dept Education Student Ln",
@@ -163,30 +135,8 @@ const ENDPOINTS: EndpointDef[] = [
     path: "/api/accounts",
     response: {
       accounts: [
-        {
-          balance: { available: 4118.54, currency: "USD", current: 4218.54 },
-          id: "acc_0x7a",
-          institution: "Wells Fargo",
-          name: "EVERYDAY CHECKING ...1595",
-          subtype: "checking",
-          type: "depository",
-        },
-        {
-          balance: { available: null, currency: "USD", current: 38_240.11 },
-          id: "acc_0x7b",
-          institution: "Fidelity",
-          name: "Roth IRA",
-          subtype: "ira",
-          type: "investment",
-        },
-        {
-          balance: { available: 9387.6, currency: "USD", current: -612.4 },
-          id: "acc_0x7c",
-          institution: "Chase",
-          name: "Sapphire Reserve",
-          subtype: "credit_card",
-          type: "credit",
-        },
+        { balance: 4218.54, id: "acc_0x7a", name: "EVERYDAY CHECKING ...1595", type: "depository" },
+        { balance: 38_240.11, id: "acc_0x7b", name: "Roth IRA", type: "investment" },
       ],
     },
   },
@@ -203,22 +153,8 @@ const ENDPOINTS: EndpointDef[] = [
     path: "/api/holdings",
     response: {
       holdings: [
-        {
-          accountId: "acc_0x7b",
-          costBasis: 18_900.42,
-          marketValue: 32_812.18,
-          quantity: 142.13,
-          symbol: "VTI",
-          unrealizedPnl: 13_911.76,
-        },
-        {
-          accountId: "acc_0x7b",
-          costBasis: 4200,
-          marketValue: 5427.93,
-          quantity: 12,
-          symbol: "NVDA",
-          unrealizedPnl: 1227.93,
-        },
+        { marketValue: 32_812.18, quantity: 142.13, symbol: "VTI", unrealizedPnl: 13_911.76 },
+        { marketValue: 5427.93, quantity: 12, symbol: "NVDA", unrealizedPnl: 1227.93 },
       ],
     },
   },
@@ -232,9 +168,9 @@ const ENDPOINTS: EndpointDef[] = [
     path: "/api/categories",
     response: {
       categories: [
-        { group: "Spending", id: "cat_food", name: "Food & Drink", systemKey: "food_and_drink" },
-        { group: "Housing", id: "cat_rent", name: "Rent", systemKey: "rent_and_utilities" },
-        { group: "Income", id: "cat_income", name: "Payroll", systemKey: "income" },
+        { id: "cat_food", name: "Food & Drink" },
+        { id: "cat_rent", name: "Rent" },
+        { id: "cat_income", name: "Payroll" },
       ],
     },
   },
@@ -525,11 +461,11 @@ export function ApiSection() {
   return (
     <section className="px-6 py-24 lg:py-32">
       <div className="mx-auto max-w-6xl">
-        <FadeUp className="mb-12 text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
+        <FadeUp className="mb-12 text-center [text-shadow:_0_2px_24px_rgba(0,0,0,0.55)]">
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
             Your money, as an API
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
+          <p className="mx-auto mt-4 max-w-xl text-base text-white/85 sm:text-lg">
             Build your own personal finance apps without having to manage glue code.
           </p>
         </FadeUp>
@@ -637,7 +573,7 @@ export function ApiSection() {
                 onSelect={setEndpointId}
               />
             ) : null}
-            <div className="grid min-w-0 flex-1 lg:grid-cols-2">
+            <div className="grid min-h-[520px] min-w-0 flex-1 lg:grid-cols-2">
               {/* Left: request */}
               <div className="border-foreground/5 lg:border-r">
                 <div className="flex items-center justify-between border-foreground/5 border-b px-4 py-3 text-[13px]">

@@ -68,7 +68,7 @@ function LandingPage() {
         <PreviewSection />
         <LogoMarquee />
         <IntegrationsSection />
-        <ApiSection />
+        <ApiSectionWithBg />
         <MobileSection />
         <TransparencySection />
         <FaqSection />
@@ -92,7 +92,7 @@ function Hero() {
   return (
     <section className="relative h-screen overflow-hidden bg-[#222a1f]">
       <HeroVideo />
-      <Container className="pointer-events-none relative z-10 flex h-full flex-col gap-6 pt-32 pb-20">
+      <Container className="pointer-events-none relative z-10 flex h-full flex-col gap-6 pt-32 pb-20 [text-shadow:_0_1px_12px_rgba(0,0,0,0.3)]">
         <motion.h1
           className="max-w-4xl text-3xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
           {...fade(0.1)}
@@ -110,6 +110,23 @@ function Hero() {
   );
 }
 
+const PREVIEW_SECTION_BG = "/landing/preview-bg/mountains-bg.jpg";
+const API_SECTION_BG = "/landing/preview-bg/oil-canvas.jpg";
+
+function ApiSectionWithBg() {
+  return (
+    <div className="relative overflow-hidden" data-nav-surface="dark">
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 bg-center bg-cover"
+        style={{ backgroundImage: `url(${API_SECTION_BG})` }}
+      />
+      <div aria-hidden className="-z-10 absolute inset-0 bg-black/35" />
+      <ApiSection />
+    </div>
+  );
+}
+
 function PreviewSection() {
   const reduce = useReducedMotion();
   const reveal = reduce
@@ -121,23 +138,38 @@ function PreviewSection() {
         whileInView: { opacity: 1, scale: 1, y: 0 },
       };
   return (
-    <section className="py-20 sm:py-28">
-      <Container className="flex flex-col gap-16">
+    <section className="relative overflow-hidden py-20 sm:py-28" data-nav-surface="dark">
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 bg-center bg-cover"
+        style={{ backgroundImage: `url(${PREVIEW_SECTION_BG})` }}
+      />
+      <div aria-hidden className="-z-10 absolute inset-0 bg-black/35" />
+      <Container className="relative flex flex-col gap-16">
         <motion.div
-          className="mx-auto max-w-3xl text-center"
+          className="mx-auto max-w-3xl text-center [text-shadow:_0_1px_12px_rgba(0,0,0,0.3)]"
           initial={reduce ? false : { opacity: 0, y: 28 }}
           transition={{ duration: 0.7, ease: EASE }}
           viewport={{ amount: 0.8, once: true }}
           whileInView={{ opacity: 1, y: 0 }}
         >
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-5xl">
             Financial Software designed for the most productive people.
           </h2>
         </motion.div>
         <motion.div className="sm:hidden" {...reveal}>
           <MobileAppPreview />
         </motion.div>
-        <motion.div {...reveal} className="hidden w-full sm:block">
+        <motion.div {...reveal} className="group relative hidden w-full sm:block">
+          <div className="-translate-x-1/2 pointer-events-none absolute top-1/2 left-1/2 z-20 -translate-y-1/2 opacity-100 transition-opacity duration-200 group-hover:opacity-0">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/60 px-3 py-1.5 text-xs font-medium text-white shadow-lg backdrop-blur-md">
+              <span className="relative flex size-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
+              </span>
+              Click to interact
+            </span>
+          </div>
           <CursorProvider className="w-full sm:h-[80vh]">
             <Cursor className="pointer-events-none hidden lg:block">
               <svg

@@ -285,7 +285,7 @@ export function BabyDashboard() {
 
   return (
     <div className="h-full overflow-hidden">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 py-2 sm:gap-5 sm:py-3 2xl:max-w-7xl">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-2 sm:gap-5 sm:py-3 2xl:max-w-7xl">
         {/* Net worth section */}
         <section aria-label="Net worth overview" className="w-full min-w-0">
           <Card variant="subtle" className="overflow-hidden rounded-3xl py-3">

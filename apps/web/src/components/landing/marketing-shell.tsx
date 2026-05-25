@@ -24,6 +24,7 @@ export function MarketingNav({ overlay = false }: { overlay?: boolean } = {}) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [pastHero, setPastHero] = useState(false);
+  const [overDarkSurface, setOverDarkSurface] = useState(false);
 
   const closeMenu = () => setOpen(false);
 
@@ -32,20 +33,38 @@ export function MarketingNav({ overlay = false }: { overlay?: boolean } = {}) {
       const y = window.scrollY;
       setScrolled(y > 16);
       setPastHero(overlay && y > window.innerHeight * 0.85);
+
+      // Probe a few px below the nav for a section marked dark-surface.
+      const probeY = 72;
+      const probeX = window.innerWidth / 2;
+      const el = document.elementFromPoint(probeX, probeY);
+      const marked = el?.closest("[data-nav-surface]") as HTMLElement | null;
+      setOverDarkSurface(marked?.dataset.navSurface === "dark");
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, [overlay]);
 
-  const darkText = overlay && pastHero;
+  const darkText = overlay && pastHero && !overDarkSurface;
   const textClass = darkText
     ? "text-foreground [&_a]:text-foreground [&_button]:text-foreground"
     : "text-white [&_a]:text-white [&_button]:text-white";
   const glassClass = darkText
     ? "bg-background/70 backdrop-blur-sm border-black/10"
     : "bg-white/5 backdrop-blur-sm border-white/10";
-  const bgClass = scrolled || open ? glassClass : "bg-transparent";
+  let bgClass: string;
+  if (overDarkSurface) {
+    bgClass = "bg-white/5 backdrop-blur-sm border-white/10";
+  } else if (scrolled || open) {
+    bgClass = glassClass;
+  } else {
+    bgClass = "bg-transparent";
+  }
 
   return (
     <header
@@ -57,24 +76,27 @@ export function MarketingNav({ overlay = false }: { overlay?: boolean } = {}) {
         </Link>
         <div className="flex items-center gap-6">
           <nav className="hidden items-center gap-6 text-muted-foreground text-sm sm:flex">
-            <Link className="transition-colors hover:text-foreground" hash="features" to="/">
+            <Link className="" hash="features" to="/">
               Features
             </Link>
             <a
-              className="transition-colors hover:text-foreground"
+              className=""
               href="https://docs.cobaltpf.com"
               rel="noopener noreferrer"
               target="_blank"
             >
               Docs
             </a>
-            <Link className="transition-colors hover:text-foreground" to="/pricing">
+            <Link className="" to="/pricing">
               Pricing
             </Link>
-            <Link className="transition-colors hover:text-foreground" to="/privacy">
+            <Link className="" to="/blog">
+              Blog
+            </Link>
+            <Link className="" to="/privacy">
               Privacy
             </Link>
-            <Link className="transition-colors hover:text-foreground" to="/terms">
+            <Link className="" to="/terms">
               Terms
             </Link>
           </nav>
@@ -102,16 +124,11 @@ export function MarketingNav({ overlay = false }: { overlay?: boolean } = {}) {
       {open ? (
         <Container className="sm:hidden">
           <nav className="mt-4 flex flex-col gap-1 border-t pt-4 text-sm">
-            <Link
-              className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              hash="features"
-              onClick={closeMenu}
-              to="/"
-            >
+            <Link className="rounded-md px-3 py-2" hash="features" onClick={closeMenu} to="/">
               Features
             </Link>
             <a
-              className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="rounded-md px-3 py-2"
               href="https://docs.cobaltpf.com"
               onClick={closeMenu}
               rel="noopener noreferrer"
@@ -119,25 +136,16 @@ export function MarketingNav({ overlay = false }: { overlay?: boolean } = {}) {
             >
               Docs
             </a>
-            <Link
-              className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              onClick={closeMenu}
-              to="/pricing"
-            >
+            <Link className="rounded-md px-3 py-2" onClick={closeMenu} to="/pricing">
               Pricing
             </Link>
-            <Link
-              className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              onClick={closeMenu}
-              to="/privacy"
-            >
+            <Link className="rounded-md px-3 py-2" onClick={closeMenu} to="/blog">
+              Blog
+            </Link>
+            <Link className="rounded-md px-3 py-2" onClick={closeMenu} to="/privacy">
               Privacy
             </Link>
-            <Link
-              className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              onClick={closeMenu}
-              to="/terms"
-            >
+            <Link className="rounded-md px-3 py-2" onClick={closeMenu} to="/terms">
               Terms
             </Link>
           </nav>

@@ -82,7 +82,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 const FORCED_LIGHT_PATHS = new Set<string>(["/"]);
-const FORCED_DARK_PATHS = new Set<string>(["/login"]);
+const FORCED_DARK_PATHS = new Set<string>(["/login", "/pricing", "/terms", "/privacy"]);
+const FORCED_DARK_PREFIXES = ["/blog"];
 
 function RootDocument() {
   const { queryClient } = Route.useRouteContext();
@@ -90,7 +91,10 @@ function RootDocument() {
   let forcedTheme: "light" | "dark" | undefined;
   if (FORCED_LIGHT_PATHS.has(pathname)) {
     forcedTheme = "light";
-  } else if (FORCED_DARK_PATHS.has(pathname)) {
+  } else if (
+    FORCED_DARK_PATHS.has(pathname) ||
+    FORCED_DARK_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  ) {
     forcedTheme = "dark";
   }
 
