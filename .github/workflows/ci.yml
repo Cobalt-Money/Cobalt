@@ -32,6 +32,13 @@ jobs:
         run: bun x turbo check-types
         env:
           NODE_OPTIONS: --max-old-space-size=8192
+      - name: Verify openapi.json is up to date
+        # Spec is committed under apps/server/openapi.json as the single source
+        # of truth for SDK and docs codegen. Fail the build if the regenerated
+        # spec differs — author must commit a fresh version.
+        env:
+          SKIP_ENV_VALIDATION: "1"
+        run: bun --cwd apps/server run verify-spec
 
   test:
     name: Tests

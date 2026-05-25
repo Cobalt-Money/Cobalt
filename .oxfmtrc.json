@@ -9,6 +9,7 @@
     "**/drizzle-zero.config.ts",
     ".claude/worktrees/**",
     "apps/raycast/**",
-    "docs/**"
+    "docs/**",
+    "apps/server/openapi.json"
   ]
 }

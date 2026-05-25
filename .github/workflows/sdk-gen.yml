@@ -4,8 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "apps/server/src/api/public/v1/**"
-      - "packages/server-data/src/**/*.public.ts"
+      - "apps/server/openapi.json"
   workflow_dispatch:
 
 permissions:

@@ -15,7 +15,9 @@
     "test:integration:all": "vitest run --config vitest.integration.config.ts",
     "eval": "evalite watch \"src/ai/agents/**/*.eval.ts\"",
     "eval:run": "evalite \"src/ai/agents/**/*.eval.ts\"",
-    "eval:ci": "RUN_EVALS=1 evalite \"src/ai/agents/**/*.eval.ts\" --threshold=70"
+    "eval:ci": "RUN_EVALS=1 evalite \"src/ai/agents/**/*.eval.ts\" --threshold=70",
+    "generate-spec": "bun scripts/generate-spec.ts",
+    "verify-spec": "bun scripts/generate-spec.ts && git diff --exit-code openapi.json || (echo 'openapi.json drift — run `bun --filter server generate-spec` and commit' && exit 1)"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.84",
