@@ -1,0 +1,2 @@
+// Public-API surface. See _shared/schemas.public.ts for the convention.
+export type { PortfolioSnapshotItem } from "./schema";

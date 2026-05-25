@@ -1,11 +1,11 @@
-import type { ActivityItem } from "@cobalt-web/server-data/brokerage/activities/schema";
+import type { ActivityItem } from "@cobalt-web/server-data/brokerage/activities/schema.public";
 import { getActivities } from "@cobalt-web/server-data/brokerage/activities";
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent } from "../../../lib/openapi-helpers.js";
 import { requireApiKey } from "./middleware/require-api-key.js";
-import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas.public";
 import { activitySchema } from "./schemas.js";
 
 const listQuerySchema = z.object({
