@@ -1,21 +1,19 @@
 import { LOCK_KEY_GUARDED_COLUMNS } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction-edit";
 import {
-  locationJsonSchema as _locationJsonSchema,
-  transactionCounterpartyJsonSchema as _transactionCounterpartyJsonSchema,
+  locationJsonbShape,
+  transactionCounterpartyJsonbShape,
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { z } from "@hono/zod-openapi";
 
 /**
- * Re-construct via `z.object(shape)` in this module body so the bundler keeps
- * the `.openapi()` call adjacent to a z.object literal — same pattern as every
- * other call site in this package. Shape values still come from the db schema.
+ * Assemble jsonb schemas from raw shape objects exported by db. Building the
+ * `z.object(...)` here (not in db) ensures the `.openapi(...)` chain runs under
+ * the patched `z` from `@hono/zod-openapi`. Mirrors the institutions pattern.
  */
-export const locationJsonSchema = z
-  .object(_locationJsonSchema.shape)
-  .openapi("TransactionLocation");
+export const locationJsonSchema = z.object(locationJsonbShape).openapi("TransactionLocation");
 
 export const transactionCounterpartySchema = z
-  .object(_transactionCounterpartyJsonSchema.shape)
+  .object(transactionCounterpartyJsonbShape)
   .openapi("TransactionCounterparty");
 
 /**

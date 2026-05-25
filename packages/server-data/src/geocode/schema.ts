@@ -1,5 +1,6 @@
-import { locationJsonSchema } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { z } from "@hono/zod-openapi";
+
+import { locationJsonSchema } from "../transactions/_shared/schema.js";
 
 /** Single Nominatim search result, normalised to our `LocationJson` plus `display_name`. */
 export const geocodeSearchResultSchema = z.object({
