@@ -3,6 +3,7 @@ import { loader } from "fumadocs-core/source";
 import type { InferPageType } from "fumadocs-core/source";
 import { lucideIconsPlugin } from "fumadocs-core/source/lucide-icons";
 import type { DocData, DocMethods } from "fumadocs-mdx/runtime/types";
+import { openapiPlugin } from "fumadocs-openapi/server";
 
 export type DocsPageData = DocData &
   DocMethods & { title?: string; description?: string; full?: boolean };
@@ -10,7 +11,10 @@ export type DocsPageData = DocData &
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader(docs.toFumadocsSource(), {
   baseUrl: "/docs",
-  plugins: [lucideIconsPlugin()],
+  // openapiPlugin reads `_openapi.method` from MDX frontmatter (set by
+  // fumadocs-openapi's generateFiles step) and renders HTTP method badges
+  // (GET / POST / DELETE) next to operation links in the sidebar.
+  plugins: [lucideIconsPlugin(), openapiPlugin()],
 });
 
 export function getPageImage(page: InferPageType<typeof source>) {
