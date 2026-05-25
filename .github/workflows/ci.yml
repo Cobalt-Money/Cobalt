@@ -50,7 +50,11 @@ jobs:
           AI_GATEWAY_API_KEY: test-ai-gateway-key
           APPLE_APP_BUNDLE_IDENTIFIER: test.bundle.id
           APPLE_KEY_ID: test-key-id
-          APPLE_PRIVATE_KEY: test-private-key
+          # P-256 PKCS8 dummy key generated via `openssl genpkey -algorithm EC
+          # -pkeyopt ec_paramgen_curve:P-256`. Not a real Apple key; only used
+          # because packages/auth eagerly signs an ES256 JWT at module load.
+          # TODO: refactor packages/auth to lazy-init Apple/Stripe clients.
+          APPLE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nMIIBeQIBADCCAQMGByqGSM49AgEwgfcCAQEwLAYHKoZIzj0BAQIhAP////8AAAAB\nAAAAAAAAAAAAAAAA////////////////MFsEIP////8AAAABAAAAAAAAAAAAAAAA\n///////////////8BCBaxjXYqjqT57PrvVV2mIa8ZR0GsMxTsPY7zjw+J9JgSwMV\nAMSdNgiG5wSTamZ44ROdJreBn36QBEEEaxfR8uEsQkf4vOblY6RA8ncDfYEt6zOg\n9KE5RdiYwpZP40Li/hp/m47n60p8D54WK84zV2sxXs7LtkBoN79R9QIhAP////8A\nAAAA//////////+85vqtpxeehPO5ysL8YyVRAgEBBG0wawIBAQQgp+lwAaUJ1jms\na4zIKYhfgVC+T+ZsY+Pbl77mWtSR/NShRANCAASlypaSz72mmvsx2Tsf7li68iZZ\nFdVeysivRbFaofkCJzGWuQ4RJ+Vvqlc6NpogWK9sm5CAPv5x640Wnm2H7PSo\n-----END PRIVATE KEY-----"
           APPLE_SERVICE_ID: test-service-id
           APPLE_TEAM_ID: test-team-id
           BETTER_AUTH_SECRET: test-secret-that-is-at-least-32-characters-long
