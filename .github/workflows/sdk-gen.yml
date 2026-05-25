@@ -7,6 +7,7 @@ on:
       - "apps/server/src/api/public/v1/**"
       - "packages/server-data/src/**/schemas.ts"
       - "packages/server-data/src/_shared/schemas.ts"
+  workflow_dispatch:
 
 permissions:
   contents: read
