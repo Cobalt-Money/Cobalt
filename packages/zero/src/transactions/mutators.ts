@@ -1,6 +1,6 @@
 import type { LocationJson } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import {
-  locationJsonSchema,
+  locationJsonbShape,
   transactionNotesMarkdownSchema,
 } from "@cobalt-web/db/schema/accounts/banking/transactions/zod";
 import { defineMutator } from "@rocicorp/zero";
@@ -10,6 +10,8 @@ import { z } from "zod";
 import type { Context } from "../auth.js";
 import type { Schema } from "../schema.js";
 import { zql } from "../schema.js";
+
+const locationJsonSchema = z.object(locationJsonbShape);
 
 const transactionIdSchema = z.object({
   editId: z.uuid(),

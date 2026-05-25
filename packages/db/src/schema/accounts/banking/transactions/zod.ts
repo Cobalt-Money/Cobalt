@@ -15,8 +15,13 @@ export type UserOverrideCategoryJson = z.infer<typeof userOverrideCategoryJsonSc
 /** User-authored markdown notes (Milkdown). Plain string, capped at 100KB. */
 export const transactionNotesMarkdownSchema = z.string().max(100_000);
 
-/** Plaid `location` on a transaction (physical merchants; often all-null for online). */
-export const locationJsonSchema = z.object({
+/**
+ * Plaid `location` shape on a transaction (physical merchants; often all-null online).
+ * Exported as a raw refinement object — consumers in API/zero packages assemble it
+ * into a `z.object(...)` themselves so `.openapi(...)` chains run under the patched
+ * `z` from `@hono/zod-openapi`. See institutions/_shared/schema.ts for the pattern.
+ */
+export const locationJsonbShape = {
   address: z.string().nullable(),
   city: z.string().nullable(),
   country: z.string().nullable(),
@@ -25,9 +30,11 @@ export const locationJsonSchema = z.object({
   postal_code: z.string().nullable(),
   region: z.string().nullable(),
   store_number: z.string().nullable(),
-});
+} as const;
 
-export type LocationJson = z.infer<typeof locationJsonSchema>;
+export type LocationJson = {
+  [K in keyof typeof locationJsonbShape]: z.infer<(typeof locationJsonbShape)[K]>;
+};
 
 /** Plaid counterparty `type` enum values. */
 export const transactionCounterpartyTypeSchema = z.enum([
@@ -69,8 +76,11 @@ export const counterpartyNumbersJsonSchema = z.object({
 
 export type CounterpartyNumbersJson = z.infer<typeof counterpartyNumbersJsonSchema>;
 
-/** Plaid `counterparties[]` element. */
-export const transactionCounterpartyJsonSchema = z.object({
+/**
+ * Plaid `counterparties[]` element shape. Exported as a raw refinement object — see
+ * `locationJsonbShape` above for rationale.
+ */
+export const transactionCounterpartyJsonbShape = {
   account_numbers: counterpartyNumbersJsonSchema.nullable().optional(),
   confidence_level: z.string().nullable().optional(),
   entity_id: z.string().nullable().optional(),
@@ -78,11 +88,17 @@ export const transactionCounterpartyJsonSchema = z.object({
   name: z.string(),
   type: transactionCounterpartyTypeSchema,
   website: z.string().nullable(),
-});
+} as const;
 
-export type TransactionCounterpartyJson = z.infer<typeof transactionCounterpartyJsonSchema>;
+export type TransactionCounterpartyJson = {
+  [K in keyof typeof transactionCounterpartyJsonbShape]: z.infer<
+    (typeof transactionCounterpartyJsonbShape)[K]
+  >;
+};
 
-export const counterpartiesArrayJsonSchema = z.array(transactionCounterpartyJsonSchema).nullable();
+export const counterpartiesArrayJsonSchema = z
+  .array(z.object(transactionCounterpartyJsonbShape))
+  .nullable();
 
 export type CounterpartiesArrayJson = z.infer<typeof counterpartiesArrayJsonSchema>;
 
