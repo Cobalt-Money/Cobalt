@@ -42,11 +42,13 @@ jobs:
         # run a local script.
         env:
           SKIP_ENV_VALIDATION: "1"
-        run: bun --cwd apps/server run generate-spec
+        working-directory: apps/server
+        run: bun run generate-spec
       - name: Regenerate fumadocs API reference
         # MDX is derived from the spec we just wrote, so it stays in lockstep.
         # No live URL fetch — fumadocs reads ../server/openapi.json directly.
-        run: bun --cwd apps/fumadocs run scripts/generate-docs.ts
+        working-directory: apps/fumadocs
+        run: bun run scripts/generate-docs.ts
       - name: Commit regenerated spec + docs to PR branch
         # Only push on pull_request events (so the bot doesn't loop on main).
         # `[skip ci]` prevents a recursive CI run for the sync commit itself;
