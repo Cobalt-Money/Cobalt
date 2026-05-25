@@ -229,10 +229,12 @@ describe("v1/transactions", () => {
         {
           accountId: "acc_1",
           amount: 9.99,
+          categoryId: null,
           currency: null,
           date: "2026-05-22",
           merchantName: null,
           name: "Coffee",
+          notes: null,
           website: null,
         },
       ]);

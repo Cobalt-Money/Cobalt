@@ -108,7 +108,7 @@
           "error"
         ]
       },
-      "AccountDetail": {
+      "AccountCreateResponse": {
         "type": "object",
         "properties": {
           "data": {
@@ -175,6 +175,17 @@
           "success"
         ]
       },
+      "AccountDetail": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Account"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "TransactionList": {
         "type": "object",
         "properties": {
@@ -239,7 +250,9 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "Additional details regarding the transaction. Supports Markdown.",
+            "example": "**Reimbursable** — paid for team lunch, expense via Expensify"
           },
           "pending": {
             "type": "boolean"
@@ -280,32 +293,65 @@
         "properties": {
           "accountId": {
             "type": "string",
-            "description": "Account to attach this transaction to. Must be a manual account."
+            "description": "Account to attach this transaction to. Must be a manual account.",
+            "example": "01HX8N7K5Q3M2P9R4V6Y8Z1A2B"
           },
           "amount": {
             "type": "number",
-            "description": "Positive = money out (spending), negative = money in (refund/income)."
+            "description": "Positive = money out (spending), negative = money in (refund/income).",
+            "example": 24.5
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Category id from `GET /v1/categories`. Omit to leave uncategorized.",
+            "example": "8f3b2a1e-4c5d-6e7f-8a9b-0c1d2e3f4a5b"
           },
           "date": {
             "type": "string",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
             "example": "2026-05-22"
           },
+          "location": {
+            "$ref": "#/components/schemas/TransactionLocation"
+          },
           "merchantName": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 255
+            "maxLength": 255,
+            "example": "Blue Bottle Coffee"
           },
           "name": {
             "type": "string",
             "minLength": 1,
             "maxLength": 255,
-            "description": "Transaction description."
+            "description": "Transaction description.",
+            "example": "Blue Bottle Coffee — Mission"
           },
           "notes": {
             "type": "string",
             "maxLength": 2000,
-            "description": "Free-form notes."
+            "description": "Additional details regarding the transaction. Supports Markdown.",
+            "example": "**Reimbursable** — paid for team lunch, expense via Expensify"
+          },
+          "tagIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Tag ids to attach (from `GET /v1/tags`).",
+            "example": [
+              "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
+            ]
+          },
+          "website": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 2048,
+            "pattern": "^[^\\s]+\\.[^\\s]+$",
+            "description": "Merchant website. Bare domain or full URL.",
+            "example": "bluebottlecoffee.com"
           }
         },
         "required": [
@@ -314,6 +360,70 @@
           "date",
           "name"
         ]
+      },
+      "TransactionLocation": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lat": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "lon": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "postal_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "region": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "store_number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "address",
+          "city",
+          "country",
+          "lat",
+          "lon",
+          "postal_code",
+          "region",
+          "store_number"
+        ],
+        "description": "Merchant location. When set, `location` is added to lockedFields so future syncs can't overwrite it."
       },
       "TransactionTagsUpdate": {
         "type": "object",
@@ -407,6 +517,21 @@
           "rose",
           "slate",
           "stone"
+        ]
+      },
+      "TagsBulkApplyResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "updatedCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "success",
+          "updatedCount"
         ]
       },
       "PositionList": {
@@ -783,6 +908,17 @@
           "systemKey"
         ]
       },
+      "CategoryDetailResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Category"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "RecurringStreamList": {
         "type": "object",
         "properties": {
@@ -994,6 +1130,121 @@
             }
           }
         }
+      },
+      "post": {
+        "description": "Create a manual (non-bank-linked) account — checking, savings, credit, brokerage, or loan — and seed today's balance snapshot. `subtype` must belong to the chosen `type` vocabulary (see schema). `creditLimit` only valid when `type === \"credit\"`.",
+        "operationId": "accounts_create",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create manual account",
+        "tags": [
+          "Accounts"
+        ],
+        "requestBody": {
+          "description": "Account to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "creditLimit": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "currency": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 3,
+                    "default": "USD"
+                  },
+                  "currentBalance": {
+                    "type": "number"
+                  },
+                  "logoDomain": {
+                    "type": "string",
+                    "maxLength": 253
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  },
+                  "subtype": {
+                    "type": "string",
+                    "enum": [
+                      "credit card",
+                      "line of credit",
+                      "checking",
+                      "savings",
+                      "cash",
+                      "brokerage",
+                      "ira",
+                      "roth ira",
+                      "401k",
+                      "hsa",
+                      "crypto",
+                      "mortgage",
+                      "student",
+                      "auto",
+                      "personal"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "depository",
+                      "credit",
+                      "investment",
+                      "loan"
+                    ]
+                  }
+                },
+                "required": [
+                  "currentBalance",
+                  "name",
+                  "subtype",
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountCreateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/accounts/{id}": {
@@ -1042,6 +1293,74 @@
           },
           "404": {
             "description": "Account not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete an account. Manual accounts are removed outright; Plaid-linked accounts are unlinked and — when no accounts remain under the underlying item — Cobalt also calls Plaid's `/item/remove` to stop billing and webhooks.",
+        "operationId": "accounts_delete",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete account",
+        "tags": [
+          "Accounts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Account deleted"
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Account not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Account cannot be deleted via this endpoint",
             "content": {
               "application/json": {
                 "schema": {
@@ -1303,6 +1622,150 @@
             }
           }
         }
+      },
+      "patch": {
+        "description": "Sparse partial update — only fields present in the body are written. Pass `null` to restore the original (provider-derived) value. Returns the updated transaction.",
+        "operationId": "transactions_update",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update transaction",
+        "tags": [
+          "Transactions"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "transactionId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Fields to update",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "categoryId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid"
+                  },
+                  "date": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "location": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/TransactionLocation"
+                      },
+                      {
+                        "type": [
+                          "object",
+                          "null"
+                        ]
+                      }
+                    ]
+                  },
+                  "merchantName": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "maxLength": 255
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1
+                  },
+                  "notes": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 100000
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "website": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 3,
+                    "maxLength": 2048,
+                    "pattern": "^[^\\s]+\\.[^\\s]+$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated transaction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction, category, or tag not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/transactions/{transactionId}/tags": {
@@ -1480,6 +1943,103 @@
           },
           "409": {
             "description": "A tag with that name already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tags/bulk-apply": {
+      "post": {
+        "description": "Add and/or remove tags across many transactions in one call.",
+        "operationId": "tags_bulkApply",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Bulk apply tags",
+        "tags": [
+          "Tags"
+        ],
+        "requestBody": {
+          "description": "Transactions + tag add/remove sets",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "addTagIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "default": []
+                  },
+                  "removeTagIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "default": []
+                  },
+                  "transactionIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "transactionIds"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bulk apply complete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagsBulkApplyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "One or more tags not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2002,6 +2562,280 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Create a custom category under an existing group.",
+        "operationId": "categories_create",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create category",
+        "tags": [
+          "Categories"
+        ],
+        "requestBody": {
+          "description": "Category to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "excludeFromInsights": {
+                    "type": "boolean"
+                  },
+                  "groupId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "iconKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  }
+                },
+                "required": [
+                  "groupId",
+                  "iconKey",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created category",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/{categoryId}": {
+      "patch": {
+        "description": "Rename, recolor, hide, reorder, or move a category between groups.",
+        "operationId": "categories_update",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Update category",
+        "tags": [
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "categoryId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "Fields to update",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "excludeFromInsights": {
+                    "type": "boolean"
+                  },
+                  "groupId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "hidden": {
+                    "type": "boolean"
+                  },
+                  "iconKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "order": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated category",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category or group not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Operation not permitted on this category",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Soft-delete a custom category. Dependent transactions and recurring rows are reassigned to the user's Uncategorized seed category. System categories cannot be deleted — hide them instead.",
+        "operationId": "categories_delete",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete category",
+        "tags": [
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "categoryId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Category deleted"
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "System category cannot be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
                 }
               }
             }
