@@ -9,38 +9,39 @@
 
 type ExtensionPreferences = {
   /** API URL - Cobalt API base URL */
-  apiUrl: string;
+  "apiUrl": string,
   /** Brandfetch Client ID - Used to render merchant logos via the Brandfetch CDN */
-  brandfetchClientId: string;
+  "brandfetchClientId": string,
   /** Logo.dev Publishable Token - Used for recurring/subscription brand logos via logo.dev (matches web) */
-  logoDevToken?: string;
-};
+  "logoDevToken"?: string
+}
 
 /** Preferences accessible in all the extension's commands */
-declare type Preferences = ExtensionPreferences;
+declare type Preferences = ExtensionPreferences
 
 declare namespace Preferences {
   /** Preferences accessible in the `transactions` command */
-  export type Transactions = ExtensionPreferences & {};
+  export type Transactions = ExtensionPreferences & {}
   /** Preferences accessible in the `recurring` command */
-  export type Recurring = ExtensionPreferences & {};
+  export type Recurring = ExtensionPreferences & {}
   /** Preferences accessible in the `accounts` command */
-  export type Accounts = ExtensionPreferences & {};
+  export type Accounts = ExtensionPreferences & {}
   /** Preferences accessible in the `networth` command */
-  export type Networth = ExtensionPreferences & {};
+  export type Networth = ExtensionPreferences & {}
   /** Preferences accessible in the `menu-bar-networth` command */
-  export type MenuBarNetworth = ExtensionPreferences & {};
+  export type MenuBarNetworth = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
   /** Arguments passed to the `transactions` command */
-  export type Transactions = {};
+  export type Transactions = {}
   /** Arguments passed to the `recurring` command */
-  export type Recurring = {};
+  export type Recurring = {}
   /** Arguments passed to the `accounts` command */
-  export type Accounts = {};
+  export type Accounts = {}
   /** Arguments passed to the `networth` command */
-  export type Networth = {};
+  export type Networth = {}
   /** Arguments passed to the `menu-bar-networth` command */
-  export type MenuBarNetworth = {};
+  export type MenuBarNetworth = {}
 }
+
