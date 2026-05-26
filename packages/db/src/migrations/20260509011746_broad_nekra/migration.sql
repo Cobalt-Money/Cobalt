@@ -1,1 +1,0 @@
-ALTER TABLE "transaction" DROP COLUMN "user_override_location";

@@ -9,12 +9,12 @@ src/
   index.ts        — Exports the Drizzle database client
   schema/
     auth.ts       — Database schema definitions (auth tables)
-  migrations/     — Drizzle-generated migration files
+  migrations/     — Drizzle-generated migration files (post-squash: single commented init + future incremental files)
 planetscale/
-  local-bootstrap.sql — Schema/extensions bootstrap before migrations
-drizzle.config.ts — Drizzle Kit config (PostgreSQL; paths resolved from this file so `out` / `schema` work from any cwd; loads `apps/server/.env` then `@cobalt-web/env/server`). `apps/web/drizzle.config.ts` re-exports this package for convenience.
+  README.md       — Local Postgres setup notes
+drizzle.config.ts — Drizzle Kit config (PostgreSQL; paths resolved from this file so `out` / `schema` work from any cwd; loads `apps/server/.env` then `@cobalt-web/env/server`; `schemaFilter: ["public"]` excludes `archive` + `zero*` external schemas from drift detection). `apps/web/drizzle.config.ts` re-exports this package for convenience.
 
-Local Postgres (Docker): repo root `docker-compose.local-db.yml`, **`docs/local-sync/`**, and **`planetscale/README.md`** (order: `bun db:local:init` → `bun db:migrate`).
+Local Postgres (Docker): repo root `docker-compose.local-db.yml`, **`docs/local-sync/`**, and **`planetscale/README.md`** (order: `bun db:local:up` → `bun db:local:setup`).
 ```
 
 ## Conventions

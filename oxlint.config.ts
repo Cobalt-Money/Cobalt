@@ -13,6 +13,9 @@ export default defineConfig({
     "**/zero-schema.gen.ts",
     "packages/ui/src/components/**",
     "**/drizzle-zero.config.ts",
+    // Drizzle introspect output — auto-generated, not hand-edited.
+    "packages/db/src/migrations/schema.ts",
+    "packages/db/src/migrations/relations.ts",
     ".claude/worktrees/**",
     "apps/raycast/**",
     "docs/**",

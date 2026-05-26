@@ -1,1 +1,0 @@
-DROP INDEX "brokerage_positions_account_symbol_idx";
