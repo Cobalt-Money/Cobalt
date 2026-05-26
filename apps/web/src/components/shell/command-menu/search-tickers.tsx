@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { MouseEvent } from "react";
 
-import { screenerRowToTickerSearchItem, screenerUniverseQuery } from "@/hooks/research-queries";
+import { tickerSearchQuery } from "@/hooks/research-queries";
 import type { TickerSearchItem } from "@/hooks/research-queries";
 
 export type { TickerSearchItem };
@@ -44,29 +44,35 @@ function emptyMessage(
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 /**
- * Same React Query cache as research (`screenerUniverseQuery`). Price comes only
- * from the screener row when FMP includes it — no secondary quote requests.
+ * Full cached NASDAQ + NYSE ticker list from `/api/research/search` (DB-backed,
+ * includes ETFs + all active tickers). No price data — Cmd-K is navigation only.
  */
 export function useTickerSearch(trimmedSearch: string, enabled: boolean) {
-  const { data: universeData, isPending: universePending } = useQuery({
-    ...screenerUniverseQuery,
+  const { data: tickerRows = [], isPending: universePending } = useQuery({
+    ...tickerSearchQuery,
     enabled,
   });
-  const tickerRows = useMemo(
-    () => (universeData?.results ?? []).map((row) => screenerRowToTickerSearchItem(row)),
-    [universeData],
-  );
 
   const visibleTickers = useMemo<TickerSearchItem[]>(() => {
     if (!enabled || tickerRows.length === 0) {
       return [];
     }
     const q = trimmedSearch.toUpperCase();
-    return q
-      ? tickerRows
-          .filter((t) => t.symbol.toUpperCase().includes(q) || t.name.toUpperCase().includes(q))
-          .slice(0, 50)
-      : tickerRows.slice(0, 30);
+    if (!q) {
+      return tickerRows.slice(0, 30);
+    }
+    const startsWith: TickerSearchItem[] = [];
+    const contains: TickerSearchItem[] = [];
+    for (const t of tickerRows) {
+      const sym = t.symbol.toUpperCase();
+      const name = t.name.toUpperCase();
+      if (sym.startsWith(q) || name.startsWith(q)) {
+        startsWith.push(t);
+      } else if (sym.includes(q) || name.includes(q)) {
+        contains.push(t);
+      }
+    }
+    return [...startsWith, ...contains].slice(0, 100);
   }, [enabled, tickerRows, trimmedSearch]);
 
   return {

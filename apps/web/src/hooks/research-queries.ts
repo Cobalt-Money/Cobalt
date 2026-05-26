@@ -3,6 +3,7 @@ import type {
   ScreenerResponse,
   ScreenerRow,
 } from "@cobalt-web/server-data/research/schemas";
+import type { TickerSearchItem as ServerTickerSearchItem } from "@cobalt-web/server-data/tickers/lib";
 import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import type { ChartPeriod } from "@/components/research/ticker/lightweight-price-chart";
@@ -44,14 +45,6 @@ export interface TickerSearchItem {
   price?: number;
 }
 
-export function screenerRowToTickerSearchItem(row: ScreenerRow): TickerSearchItem {
-  const symbol = row.symbol.trim();
-  const name = row.companyName?.trim() || symbol;
-  const type = row.isEtf === true ? "ETF" : "Equity";
-  const price = typeof row.price === "number" && Number.isFinite(row.price) ? row.price : undefined;
-  return { name, price, symbol, type };
-}
-
 // ── Helpers ───────────────────────────────────────────────────────
 
 async function parseResponse<T>(res: Response): Promise<T> {
@@ -77,7 +70,18 @@ function toChartPoints(apiData: ChartApiPoint[]): ChartPoint[] {
 
 // ── Queries ───────────────────────────────────────────────────────
 
-/** Up to ~10k NASDAQ + NYSE names. Shared by Cmd-K + research table. */
+/** Full cached NASDAQ + NYSE ticker list (DB-backed, no FMP screener cap). */
+export const tickerSearchQuery = queryOptions({
+  queryFn: async (): Promise<TickerSearchItem[]> => {
+    const res = await researchApi.search.$get();
+    const data = await parseResponse<{ count: number; tickers: ServerTickerSearchItem[] }>(res);
+    return data.tickers.map((t) => ({ name: t.name, symbol: t.symbol, type: t.type }));
+  },
+  queryKey: ["research", "ticker-search"] as const,
+  staleTime: 1000 * 60 * 5,
+});
+
+/** Up to ~10k NASDAQ + NYSE names. Used by research screener table. */
 export const screenerUniverseQuery = queryOptions({
   queryFn: async () => {
     const res = await researchApi.screener.$get({
