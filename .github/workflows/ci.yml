@@ -160,6 +160,14 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          # Default checkout uses the merge ref; `git-auto-commit` below then
+          # runs `git checkout <head_ref>` to push the regen back. If the
+          # working tree is dirty from the artifact extraction the checkout
+          # aborts with "would be overwritten". Check out the PR head ref
+          # directly so we never switch branches with a dirty tree.
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: generated-spec
