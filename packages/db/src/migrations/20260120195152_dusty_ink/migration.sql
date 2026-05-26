@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX "brokerage_positions_account_symbol_idx" ON "brokerage_positions" USING btree ("account_id","symbol");

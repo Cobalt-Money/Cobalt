@@ -38,6 +38,11 @@ export { transactionSource } from "./accounts/banking/transactions/transaction";
 export { activitySource } from "./accounts/investments/investment-activity";
 export { securitySource } from "./accounts/investments/security";
 
+// Enum used by the feedback table (the table itself is re-exported through
+// zero-schema.ts; the enum is re-exported here so drizzle-kit creates the
+// type before tables reference it).
+export { feedbackTypeEnum } from "./users/feedback";
+
 // SRI-181 — server-only, not replicated to Zero clients.
 export {
   transactionEdit,

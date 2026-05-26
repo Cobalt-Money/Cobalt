@@ -1,1 +1,0 @@
-ALTER TABLE "plaid_transactions" DROP COLUMN "first_seen_at";

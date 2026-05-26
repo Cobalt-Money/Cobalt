@@ -38,21 +38,20 @@ bun db:local:up
 
 Postgres **18**, database **`cobalt`**, superuser `postgres` / `postgres`, host port **5433**.
 
-### 2. Bootstrap (before migrations)
+### 2. Apply schema
 
 ```bash
-bun db:local:init
+bun db:local:setup
 ```
 
-Runs [`packages/db/planetscale/local-bootstrap.sql`](../../packages/db/planetscale/local-bootstrap.sql).
+Runs `drizzle-kit push --force` against `LOCAL_DATABASE_URL`. Applies the declared schema in `packages/db/src/schema/` directly. Post-squash, this replaces the old `db:local:init` + `db:migrate` two-step.
 
-### 3. Apply migrations
+### 3. Future schema changes
 
 ```bash
-bun db:migrate
+bun db:generate    # writes new migration file
+bun db:migrate     # applies pending migrations to LOCAL_DATABASE_URL / MIGRATION_URI
 ```
-
-Uses `LOCAL_DATABASE_URL` / `MIGRATION_URI` from env.
 
 **Schema push** (quick dev only; skips migration files):
 

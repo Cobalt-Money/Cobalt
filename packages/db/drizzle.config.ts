@@ -29,6 +29,11 @@ export default defineConfig({
   // All tables drizzle-kit should manage. This is a superset of the tables
   // exposed to Zero replication (see ./src/schema/zero-schema.ts).
   schema: path.resolve(__dirname, "src/schema/schema.ts"),
+  // Only manage `public`. External schemas (`zero*` owned by Rocicorp Zero
+  // replication, `archive` owned out-of-band) must not be diffed against the
+  // declared TS schema — otherwise drizzle-kit generate proposes DROP SCHEMA
+  // on every run.
+  schemaFilter: ["public"],
   strict: true,
   verbose: true,
 });

@@ -1,1 +1,0 @@
-ALTER TABLE "transaction" ALTER COLUMN "notes" SET DATA TYPE text USING "notes"::text;

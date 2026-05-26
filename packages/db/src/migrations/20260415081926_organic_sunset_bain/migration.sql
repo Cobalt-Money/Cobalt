@@ -1,1 +1,0 @@
-ALTER TABLE "fundamentals" ADD COLUMN "next_earnings_date" date;

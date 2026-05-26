@@ -1,1 +1,0 @@
-ALTER TABLE "financial_account" ADD COLUMN "custom_name" text;

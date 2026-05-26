@@ -257,14 +257,14 @@ jobs:
           bun-version: 1.3.5
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      - name: Bootstrap Postgres roles (PlanetScale + Supabase-style stubs)
+      - name: Apply schema to CI Postgres (drizzle-kit push)
+        # New DBs (CI, local docker, future ephemeral branches) get the
+        # current declared schema applied directly via `push`. The post-squash
+        # init migration is a commented-out baseline that won't apply to a
+        # fresh DB; `push` is the canonical drizzle pattern for fresh setup.
         env:
-          PGPASSWORD: postgres
-        run: |
-          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt \
-            -f packages/db/planetscale/local-bootstrap.sql
-      - name: Apply migrations to CI Postgres
-        run: bun run db:migrate:local
+          SKIP_ENV_VALIDATION: "1"
+        run: bun x drizzle-kit push --force --config packages/db/drizzle.config.ts
       - name: Run integration tests (server)
         # Don't bail at first failure — surface the full picture so we can
         # tell whether the spawn / env / DB or a specific test is broken.
