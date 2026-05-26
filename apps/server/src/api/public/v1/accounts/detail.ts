@@ -7,7 +7,7 @@ import { createRoute } from "@hono/zod-openapi";
 import { createApp } from "../../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../../lib/openapi-helpers.js";
 import { requireApiKey } from "../middleware/require-api-key.js";
-import { accountSchema } from "../schemas.js";
+import { accountSchema, toAccount } from "../schemas.js";
 
 const accountResponseSchema = accountSchema.openapi("AccountDetail");
 
@@ -34,7 +34,7 @@ export const detailRouter = createApp().openapi(route, async (c) => {
   const { id } = c.req.valid("param");
   try {
     const row = await getAccountDetail(user.id, id);
-    return c.json(accountResponseSchema.parse(row), 200);
+    return c.json(accountResponseSchema.parse(toAccount(row)), 200);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return c.json({ code: "account_not_found", error: "Account not found" }, 404);

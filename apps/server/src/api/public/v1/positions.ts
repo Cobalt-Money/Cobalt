@@ -5,7 +5,7 @@ import { createApp } from "../../../lib/create-app.js";
 import { jsonContent } from "../../../lib/openapi-helpers.js";
 import { requireApiKey } from "./middleware/require-api-key.js";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { positionSchema } from "./schemas.js";
+import { positionSchema, toPosition } from "./schemas.js";
 
 const listQuerySchema = z.object({
   accountId: z
@@ -39,5 +39,5 @@ export const positionsRouter = createApp().openapi(route, async (c) => {
   const result = await getPositions(user.id, {
     accountId: q.accountId,
   });
-  return c.json(positionsResponseSchema.parse(result.positions), 200);
+  return c.json(positionsResponseSchema.parse(result.positions.map(toPosition)), 200);
 });

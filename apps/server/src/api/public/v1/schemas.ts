@@ -11,44 +11,48 @@ export const type = z
   .openapi("AccountType");
 
 /**
- * Demo of the `.transform().pipe()` pattern. Input schema accepts the internal
- * `AccountListItem` shape from `@cobalt-web/server-data/accounts/queries`; the
- * transform renames + enum-maps; output schema is what SDK consumers see and
- * what OpenAPI documents.
- *
- * Drops the need for a separate `toAccount` mapper in `accounts.ts`.
+ * Public Account shape. Defined directly (no `.transform().pipe()` chain)
+ * because `@hono/zod-openapi` resolves piped schemas to the input side when
+ * naming components, which leaks the internal `AccountListItem` field names
+ * (`current`, `institutionName`, raw provider `type`) into the OpenAPI spec
+ * and downstream SDK types. Route handlers explicitly call `toAccount()` to
+ * map the internal row → public shape before responding.
  */
-const accountInputSchema = z.object({
-  creditLimit: z.number().nullable(),
-  currency: z.string().nullable(),
-  current: z.number().nullable(),
-  id: z.string(),
-  institutionName: z.string().nullable(),
-  mask: z.string().nullable(),
-  name: z.string(),
-  type: z.string(),
-});
+export const accountSchema = z
+  .object({
+    balance: z.number().nullable().openapi({
+      description:
+        "Signed balance in the account's currency. Positive for assets (bank, investment), negative for liabilities (credit_card, loan). Net worth = sum of balances. Null when the provider has not reported one.",
+    }),
+    creditLimit: z.number().nullable().openapi({
+      description: "Credit limit for credit-card accounts. Null for non-credit accounts.",
+    }),
+    currency: z.string().nullable().openapi({ example: "USD" }),
+    id: z.string().openapi({ description: "Stable account identifier." }),
+    institution: z.string().nullable().openapi({
+      description: "Name of the institution holding the account.",
+    }),
+    mask: z.string().nullable().openapi({
+      description:
+        "Last 4 digits of the account number when reported by the provider. Best-effort — some institutions (e.g. Venmo, Fidelity) return null even when the underlying account has a number. Do not rely on `mask` for account identity; use `id`.",
+    }),
+    name: z.string().openapi({ description: "Account display name." }),
+    type,
+  })
+  .openapi("Account");
 
-const accountOutputSchema = z.object({
-  balance: z.number().nullable().openapi({
-    description:
-      "Signed balance in the account's currency. Positive for assets (bank, investment), negative for liabilities (credit_card, loan). Net worth = sum of balances. Null when the provider has not reported one.",
-  }),
-  creditLimit: z.number().nullable().openapi({
-    description: "Credit limit for credit-card accounts. Null for non-credit accounts.",
-  }),
-  currency: z.string().nullable().openapi({ example: "USD" }),
-  id: z.string().openapi({ description: "Stable account identifier." }),
-  institution: z.string().nullable().openapi({
-    description: "Name of the institution holding the account.",
-  }),
-  mask: z.string().nullable().openapi({
-    description:
-      "Last 4 digits of the account number when reported by the provider. Best-effort — some institutions (e.g. Venmo, Fidelity) return null even when the underlying account has a number. Do not rely on `mask` for account identity; use `id`.",
-  }),
-  name: z.string().openapi({ description: "Account display name." }),
-  type,
-});
+export type Account = z.infer<typeof accountSchema>;
+
+interface AccountRow {
+  creditLimit: number | null;
+  currency: string | null;
+  current: number | null;
+  id: string;
+  institutionName: string | null;
+  mask: string | null;
+  name: string;
+  type: string;
+}
 
 function mapAccountType(internal: string): z.infer<typeof type> {
   switch (internal) {
@@ -79,22 +83,24 @@ function signBalanceForType(raw: number | null, publicType: z.infer<typeof type>
   return isLiability ? -Math.abs(raw) : raw;
 }
 
-export const accountSchema = accountInputSchema
-  .transform((row) => {
-    const publicType = mapAccountType(row.type);
-    return {
-      balance: signBalanceForType(row.current, publicType),
-      creditLimit: row.creditLimit,
-      currency: row.currency,
-      id: row.id,
-      institution: row.institutionName,
-      mask: row.mask,
-      name: row.name,
-      type: publicType,
-    };
-  })
-  .pipe(accountOutputSchema)
-  .openapi("Account");
+/**
+ * Map an internal `AccountListItem` row to the public `Account` shape.
+ * Renames `current → balance` and `institutionName → institution`, normalises
+ * the provider `type` enum to the public vocab, and signs liability balances.
+ */
+export function toAccount(row: AccountRow): Account {
+  const publicType = mapAccountType(row.type);
+  return {
+    balance: signBalanceForType(row.current, publicType),
+    creditLimit: row.creditLimit,
+    currency: row.currency,
+    id: row.id,
+    institution: row.institutionName,
+    mask: row.mask,
+    name: row.name,
+    type: publicType,
+  };
+}
 
 export const transactionSchema = z
   .object({
@@ -184,50 +190,59 @@ function num(v: string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-const positionInputSchema = z.object({
-  accountId: z.string(),
-  averagePurchasePrice: z.string().nullable(),
-  currencyCode: z.string().nullable(),
-  id: z.string(),
-  openPnl: z.string().nullable(),
-  price: z.string().nullable(),
-  symbol: z.string().nullable(),
-  symbolDescription: z.string().nullable(),
-  units: z.string().nullable(),
-});
+interface PositionRow {
+  accountId: string;
+  averagePurchasePrice: string | null;
+  currencyCode: string | null;
+  id: string;
+  openPnl: string | null;
+  price: string | null;
+  symbol: string | null;
+  symbolDescription: string | null;
+  units: string | null;
+}
 
-const positionOutputSchema = z.object({
-  accountId: z.string().openapi({ description: "Account this position belongs to." }),
-  averagePrice: z.number().nullable().openapi({ description: "Cost basis per share." }),
-  currency: z.string().nullable(),
-  description: z.string().nullable().openapi({ description: "Security long name." }),
-  id: z.string(),
-  marketValue: z.number().nullable().openapi({ description: "units × price." }),
-  openPnl: z.number().nullable().openapi({ description: "Unrealized profit/loss." }),
-  price: z.number().nullable().openapi({ description: "Latest reported price per share." }),
-  symbol: z.string().nullable().openapi({ description: "Ticker symbol (e.g. AAPL)." }),
-  units: z.number().nullable().openapi({ description: "Quantity held." }),
-});
-
-export const positionSchema = positionInputSchema
-  .transform((p) => {
-    const units = num(p.units);
-    const price = num(p.price);
-    return {
-      accountId: p.accountId,
-      averagePrice: num(p.averagePurchasePrice),
-      currency: p.currencyCode,
-      description: p.symbolDescription,
-      id: p.id,
-      marketValue: units !== null && price !== null ? units * price : null,
-      openPnl: num(p.openPnl),
-      price,
-      symbol: p.symbol,
-      units,
-    };
+/**
+ * Public Position shape. See `accountSchema` for why we don't use
+ * `.transform().pipe()` here — same zod-openapi limitation.
+ */
+export const positionSchema = z
+  .object({
+    accountId: z.string().openapi({ description: "Account this position belongs to." }),
+    averagePrice: z.number().nullable().openapi({ description: "Cost basis per share." }),
+    currency: z.string().nullable(),
+    description: z.string().nullable().openapi({ description: "Security long name." }),
+    id: z.string(),
+    marketValue: z.number().nullable().openapi({ description: "units × price." }),
+    openPnl: z.number().nullable().openapi({ description: "Unrealized profit/loss." }),
+    price: z.number().nullable().openapi({ description: "Latest reported price per share." }),
+    symbol: z.string().nullable().openapi({ description: "Ticker symbol (e.g. AAPL)." }),
+    units: z.number().nullable().openapi({ description: "Quantity held." }),
   })
-  .pipe(positionOutputSchema)
   .openapi("Position");
+
+export type Position = z.infer<typeof positionSchema>;
+
+/**
+ * Map an internal position row to the public `Position` shape. Coerces the
+ * provider's string numerics to numbers and computes `marketValue`.
+ */
+export function toPosition(p: PositionRow): Position {
+  const units = num(p.units);
+  const price = num(p.price);
+  return {
+    accountId: p.accountId,
+    averagePrice: num(p.averagePurchasePrice),
+    currency: p.currencyCode,
+    description: p.symbolDescription,
+    id: p.id,
+    marketValue: units !== null && price !== null ? units * price : null,
+    openPnl: num(p.openPnl),
+    price,
+    symbol: p.symbol,
+    units,
+  };
+}
 
 export const categorySchema = z
   .object({

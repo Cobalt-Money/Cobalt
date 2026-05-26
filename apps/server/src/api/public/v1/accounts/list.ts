@@ -5,7 +5,7 @@ import { createApp } from "../../../../lib/create-app.js";
 import { jsonContent } from "../../../../lib/openapi-helpers.js";
 import { requireApiKey } from "../middleware/require-api-key.js";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
-import { accountSchema } from "../schemas.js";
+import { accountSchema, toAccount } from "../schemas.js";
 
 const responseSchema = z.array(accountSchema).openapi("AccountList");
 
@@ -28,5 +28,5 @@ const route = createRoute({
 export const listRouter = createApp().openapi(route, async (c) => {
   const { user } = c.var;
   const rows = await getAccounts(user.id);
-  return c.json(responseSchema.parse(rows), 200);
+  return c.json(responseSchema.parse(rows.map(toAccount)), 200);
 });
