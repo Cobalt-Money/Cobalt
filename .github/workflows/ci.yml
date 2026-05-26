@@ -270,8 +270,13 @@ jobs:
     # Gate every PR preview on CI signal. Vercel Git auto-deploy is disabled
     # in the dashboard for cobalt-{docs,server,web} so this is the only path
     # that ships a build.
+    #
+    # Skip on Dependabot PRs: GitHub does not expose `secrets.*` to PRs
+    # authored by Dependabot (security fix post-Codecov 2021), so
+    # VERCEL_TOKEN is empty and `vercel pull` errors with "No existing
+    # credentials found". Dependabot PRs don't need previews anyway.
     needs: [lint, typecheck, test, test-integration]
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
