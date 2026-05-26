@@ -27,3 +27,7 @@ The `Execute Cobalt Code` tool lets `@cobalt` answer free-form questions about y
 ## Privacy
 
 All data is fetched live from the Cobalt API over HTTPS. The OAuth refresh token is stored in the macOS Keychain. No analytics. No third-party tracking.
+
+## License
+
+MIT (see `package.json`). This is a standalone Raycast extension that talks to the Cobalt API over HTTPS — no shared server code, no derivative work from the AGPL parts of the repo.
