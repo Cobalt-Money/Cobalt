@@ -162,7 +162,7 @@ function PreviewSection() {
         </motion.div>
         <motion.div {...reveal} className="group relative hidden w-full sm:block">
           <div className="-translate-x-1/2 pointer-events-none absolute top-1/2 left-1/2 z-20 -translate-y-1/2 opacity-100 transition-opacity duration-200 group-hover:opacity-0">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/60 px-3 py-1.5 text-xs font-medium text-white shadow-lg backdrop-blur-md">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium text-white shadow-lg ring-1 ring-white/5 backdrop-blur-xl backdrop-saturate-150">
               <span className="relative flex size-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
