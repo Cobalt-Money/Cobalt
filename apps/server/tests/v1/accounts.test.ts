@@ -29,6 +29,7 @@ vi.mock(import("../../src/api/public/v1/middleware/require-api-key.js"), () => (
 
 const getAccounts = vi.fn();
 const getAccountDetail = vi.fn();
+const createManualAccount = vi.fn();
 
 vi.mock(import("@cobalt-web/server-data/accounts/list"), () => ({
   getAccounts: (...args: unknown[]) => getAccounts(...args),
@@ -36,6 +37,10 @@ vi.mock(import("@cobalt-web/server-data/accounts/list"), () => ({
 
 vi.mock(import("@cobalt-web/server-data/accounts/detail"), () => ({
   getAccountDetail: (...args: unknown[]) => getAccountDetail(...args),
+}));
+
+vi.mock(import("@cobalt-web/server-data/accounts/manual/create"), () => ({
+  createManualAccount: (...args: unknown[]) => createManualAccount(...args),
 }));
 
 const { accountsRouter } = await import("../../src/api/public/v1/accounts/index.js");
@@ -55,6 +60,77 @@ describe("v1/accounts", () => {
   beforeEach(() => {
     getAccounts.mockReset();
     getAccountDetail.mockReset();
+    createManualAccount.mockReset();
+  });
+
+  describe("liability balance sign", () => {
+    test("flips sign for credit_card and loan; assets stay positive", async () => {
+      // SRI-345: liability balances must be returned negative so net worth = sum(balance).
+      // Internal storage is positive magnitude; transform negates for liability types.
+      getAccounts.mockResolvedValue([
+        { ...validAccountRow, current: 1000, id: "asset_bank", type: "depository" },
+        { ...validAccountRow, current: 500, id: "liab_card", type: "credit" },
+        { ...validAccountRow, current: 20_000, id: "liab_loan", type: "loan" },
+        { ...validAccountRow, current: 8000, id: "asset_inv", type: "investment" },
+      ]);
+
+      const { json } = await request(accountsRouter, "/accounts");
+      const body = await json<{ id: string; balance: number }[]>();
+
+      expect(body.map((a) => [a.id, a.balance])).toStrictEqual([
+        ["asset_bank", 1000],
+        ["liab_card", -500],
+        ["liab_loan", -20_000],
+        ["asset_inv", 8000],
+      ]);
+    });
+  });
+
+  describe("POST /accounts — create", () => {
+    test("public vocab maps to internal vocab; liability currentBalance stored as positive magnitude", async () => {
+      // SRI-345: public API exposes bank|credit_card|investment|loan; internal storage uses
+      // depository|credit|investment|loan. Liabilities accept signed input (negative) but the
+      // server stores positive magnitude internally.
+      createManualAccount.mockResolvedValue({ id: "acc_new" });
+      getAccountDetail.mockResolvedValue({ ...validAccountRow, id: "acc_new", type: "credit" });
+
+      const { status } = await request(accountsRouter, "/accounts", {
+        body: JSON.stringify({
+          currency: "USD",
+          currentBalance: -750,
+          name: "Card",
+          subtype: "credit card",
+          type: "credit_card",
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+
+      expect(status).toBe(201);
+      expect(createManualAccount).toHaveBeenCalledWith(
+        TEST_USER_ID,
+        expect.objectContaining({
+          currentBalance: 750,
+          subtype: "credit card",
+          type: "credit",
+        }),
+      );
+    });
+
+    test("rejects internal vocab (depository) on the public endpoint", async () => {
+      const { status } = await request(accountsRouter, "/accounts", {
+        body: JSON.stringify({
+          currentBalance: 100,
+          name: "X",
+          subtype: "checking",
+          type: "depository",
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+
+      expect(status).toBe(422);
+    });
   });
 
   describe("GET /accounts — list", () => {
@@ -91,10 +167,10 @@ describe("v1/accounts", () => {
       ]);
 
       const { json, status } = await request(accountsRouter, "/accounts");
-      const body = await json<{ data: { id: string; type: string }[] }>();
+      const body = await json<{ id: string; type: string }[]>();
 
       expect(status).toBe(200);
-      expect(body.data.map((a) => [a.id, a.type])).toStrictEqual([
+      expect(body.map((a) => [a.id, a.type])).toStrictEqual([
         ["acc_dep", "bank"],
         ["acc_cred", "credit_card"],
         ["acc_brok", "investment"],
@@ -130,10 +206,10 @@ describe("v1/accounts", () => {
       ]);
 
       const { json, status } = await request(accountsRouter, "/accounts");
-      const body = await json<{ data: { id: string }[] }>();
+      const body = await json<{ id: string }[]>();
 
       expect(status).toBe(200);
-      expect(body.data).toHaveLength(6);
+      expect(body).toHaveLength(6);
     });
   });
 

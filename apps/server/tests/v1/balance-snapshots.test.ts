@@ -53,10 +53,10 @@ describe("v1/balance-snapshots", () => {
         balanceSnapshotsRouter,
         "/balances/snapshots?accountId=acc_chase",
       );
-      const body = await json<{ data: { accountId: string }[] }>();
+      const body = await json<{ accountId: string }[]>();
 
-      expect(body.data).toHaveLength(1);
-      expect(body.data[0]?.accountId).toBe("acc_chase");
+      expect(body).toHaveLength(1);
+      expect(body[0]?.accountId).toBe("acc_chase");
       // Confirm data layer was NOT given the accountId filter.
       expect(getBalanceSnapshotsByUserId).toHaveBeenCalledWith(TEST_USER_ID, {
         endDate: undefined,
@@ -68,9 +68,9 @@ describe("v1/balance-snapshots", () => {
       getBalanceSnapshotsByUserId.mockResolvedValue([validSnapshotRow]);
 
       const { json } = await request(balanceSnapshotsRouter, "/balances/snapshots");
-      const body = await json<{ data: { date: string }[] }>();
+      const body = await json<{ date: string }[]>();
 
-      expect(body.data[0]?.date).toBe("2026-05-22");
+      expect(body[0]?.date).toBe("2026-05-22");
     });
   });
 });

@@ -100,11 +100,11 @@ describe("v1/transactions", () => {
 
       const { json, status } = await request(transactionsRouter, "/transactions");
       const body = await json<{
-        data: Record<string, unknown>[];
+        items: Record<string, unknown>[];
       }>();
 
       expect(status).toBe(200);
-      const [tx] = body.data;
+      const [tx] = body.items;
       if (!tx) {
         throw new Error("expected at least one transaction in response");
       }
@@ -145,10 +145,10 @@ describe("v1/transactions", () => {
       });
 
       const { json } = await request(transactionsRouter, "/transactions?accountId=acc_2");
-      const body = await json<{ data: { id: string }[] }>();
+      const body = await json<{ items: { id: string }[] }>();
 
-      expect(body.data).toHaveLength(1);
-      expect(body.data[0]?.id).toBe("10000000-0000-4000-a000-000000000002");
+      expect(body.items).toHaveLength(1);
+      expect(body.items[0]?.id).toBe("10000000-0000-4000-a000-000000000002");
       expect(getTransactions).toHaveBeenCalledWith(TEST_USER_ID, {
         cursor: undefined,
         endDate: undefined,
@@ -302,7 +302,7 @@ describe("v1/transactions", () => {
           method: "PUT",
         },
       );
-      const body = await json<{ data: { tagIds: string[] } }>();
+      const body = await json<{ tagIds: string[] }>();
 
       expect(status).toBe(200);
       expect(setTransactionTags).toHaveBeenCalledWith(
@@ -310,7 +310,7 @@ describe("v1/transactions", () => {
         "10000000-0000-4000-a000-000000000001",
         ["30000000-0000-4000-a000-00000000000a", "30000000-0000-4000-a000-00000000000b"],
       );
-      expect(body.data.tagIds).toStrictEqual([
+      expect(body.tagIds).toStrictEqual([
         "30000000-0000-4000-a000-00000000000a",
         "30000000-0000-4000-a000-00000000000b",
       ]);

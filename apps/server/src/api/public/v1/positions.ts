@@ -14,7 +14,7 @@ const listQuerySchema = z.object({
     .openapi({ description: "Filter to a single brokerage account." }),
 });
 
-const positionsResponseSchema = z.object({ data: z.array(positionSchema) }).openapi("PositionList");
+const positionsResponseSchema = z.array(positionSchema).openapi("PositionList");
 
 const route = createRoute({
   description:
@@ -39,5 +39,5 @@ export const positionsRouter = createApp().openapi(route, async (c) => {
   const result = await getPositions(user.id, {
     accountId: q.accountId,
   });
-  return c.json(positionsResponseSchema.parse({ data: result.positions }), 200);
+  return c.json(positionsResponseSchema.parse(result.positions), 200);
 });

@@ -71,13 +71,12 @@ describe("v1/activities", () => {
       });
 
       const { json, status } = await request(activitiesRouter, "/activities");
-      const body = await json<{
-        data: { id: string; amount: number; fee: number; symbol: string | null }[];
-      }>();
+      const body =
+        await json<{ id: string; amount: number; fee: number; symbol: string | null }[]>();
 
       expect(status).toBe(200);
-      expect(body.data[0]).toMatchObject({ amount: 100, fee: 0.5, symbol: "AAPL" });
-      expect(body.data.find((a) => a.id === "act_obj_symbol")?.symbol).toBeNull();
+      expect(body[0]).toMatchObject({ amount: 100, fee: 0.5, symbol: "AAPL" });
+      expect(body.find((a) => a.id === "act_obj_symbol")?.symbol).toBeNull();
     });
   });
 });

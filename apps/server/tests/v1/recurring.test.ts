@@ -72,12 +72,10 @@ describe("v1/recurring", () => {
       getRecurringTransactions.mockResolvedValue([validRecurringRow]);
 
       const { json, status } = await request(recurringRouter, "/recurring");
-      const body = await json<{
-        data: { category: Record<string, unknown> | null }[];
-      }>();
+      const body = await json<{ category: Record<string, unknown> | null }[]>();
 
       expect(status).toBe(200);
-      expect(body.data[0]?.category).toStrictEqual({
+      expect(body[0]?.category).toStrictEqual({
         excludeFromInsights: null,
         groupId: null,
         hidden: null,
@@ -94,9 +92,9 @@ describe("v1/recurring", () => {
       ]);
 
       const { json } = await request(recurringRouter, "/recurring");
-      const body = await json<{ data: { id: string; category: unknown }[] }>();
+      const body = await json<{ id: string; category: unknown }[]>();
 
-      expect(body.data.find((r) => r.id === "rec_no_cat")?.category).toBeNull();
+      expect(body.find((r) => r.id === "rec_no_cat")?.category).toBeNull();
     });
   });
 });

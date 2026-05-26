@@ -36,8 +36,8 @@ const getTransactionsSchema = z.object({
 
 const transactionsResponseSchema = z
   .object({
-    data: z.array(transactionSchema),
     hasMore: z.boolean(),
+    items: z.array(transactionSchema),
     nextCursor: z.string().nullable(),
   })
   .openapi("TransactionList");
@@ -96,7 +96,7 @@ const createTransactionSchema = z
 
 const listTransactionsRoute = createRoute({
   description:
-    "Returns transactions across all of the user's accounts, newest first. Use `nextCursor` to page.",
+    "Returns transactions across all of the user's accounts, newest first. Use `nextCursor` to page. **Note:** `amount` is signed — positive = money out (debit/spending), negative = money in (credit/refund). This inverts the Plaid/Mint convention.",
   method: "get",
   middleware: [requireApiKey] as const,
   operationId: "transactions_list",
@@ -114,7 +114,7 @@ const listTransactionsRoute = createRoute({
 
 const createTransactionRoute = createRoute({
   description:
-    "Add a manual transaction. The target `accountId` must reference a manual (not bank-synced) account.",
+    "Add a manual transaction. The target `accountId` must reference a manual (not bank-synced) account. **Note:** `amount` is signed — positive = money out (debit/spending), negative = money in (credit/refund).",
   method: "post",
   middleware: [requireApiKey] as const,
   operationId: "transactions_create",
@@ -148,10 +148,10 @@ export const listRouter = createApp()
     });
     return c.json(
       transactionsResponseSchema.parse({
-        data: result.transactions
+        hasMore: result.hasMore,
+        items: result.transactions
           .filter((t) => !accountIds || accountIds.has(t.accountId))
           .map(toTransaction),
-        hasMore: result.hasMore,
         nextCursor: result.nextCursor,
       }),
       200,
@@ -186,7 +186,7 @@ export const listRouter = createApp()
         await setTransactionTags(user.id, newId, body.tagIds);
       }
       const tx = await getTransactionDetail(user.id, newId);
-      return c.json(transactionResponseSchema.parse({ data: toTransaction(tx) }), 201);
+      return c.json(transactionResponseSchema.parse(toTransaction(tx)), 201);
     } catch (error) {
       if (error instanceof ApiError && error.status === 400) {
         return c.json({ code: error.code, error: error.message }, 400);

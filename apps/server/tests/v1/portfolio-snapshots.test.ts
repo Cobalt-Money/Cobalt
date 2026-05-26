@@ -51,10 +51,10 @@ describe("v1/portfolio-snapshots", () => {
       ]);
 
       const { json, status } = await request(portfolioSnapshotsRouter, "/portfolio/snapshots");
-      const body = await json<{ data: { date: string; value: number }[] }>();
+      const body = await json<{ date: string; value: number }[]>();
 
       expect(status).toBe(200);
-      expect(body.data[0]).toStrictEqual({
+      expect(body[0]).toStrictEqual({
         accountId: "acc_1",
         date: "2026-05-22",
         id: "snap_1",

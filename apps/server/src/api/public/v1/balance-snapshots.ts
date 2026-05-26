@@ -14,7 +14,7 @@ const listQuerySchema = z.object({
 });
 
 const balanceSnapshotsResponseSchema = z
-  .object({ data: z.array(balanceSnapshotSchema) })
+  .array(balanceSnapshotSchema)
   .openapi("BalanceSnapshotList");
 
 const route = createRoute({
@@ -46,8 +46,8 @@ export const balanceSnapshotsRouter = createApp().openapi(route, async (c) => {
   });
   const filtered = q.accountId ? rows.filter((r) => r.accountId === q.accountId) : rows;
   return c.json(
-    balanceSnapshotsResponseSchema.parse({
-      data: filtered.map((r) => ({
+    balanceSnapshotsResponseSchema.parse(
+      filtered.map((r) => ({
         accountId: r.accountId,
         availableBalance: r.availableBalance,
         creditLimit: r.creditLimit,
@@ -55,7 +55,7 @@ export const balanceSnapshotsRouter = createApp().openapi(route, async (c) => {
         date: r.snapshotDate,
         id: r.id,
       })),
-    }),
+    ),
     200,
   );
 });

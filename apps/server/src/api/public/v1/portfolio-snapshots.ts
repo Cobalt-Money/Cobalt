@@ -18,7 +18,7 @@ const listQuerySchema = z.object({
 });
 
 const portfolioSnapshotsResponseSchema = z
-  .object({ data: z.array(portfolioSnapshotSchema) })
+  .array(portfolioSnapshotSchema)
   .openapi("PortfolioSnapshotList");
 
 const route = createRoute({
@@ -47,14 +47,14 @@ export const portfolioSnapshotsRouter = createApp().openapi(route, async (c) => 
     startDate: q.startDate,
   });
   return c.json(
-    portfolioSnapshotsResponseSchema.parse({
-      data: snapshots.map((s: PortfolioSnapshotItem) => ({
+    portfolioSnapshotsResponseSchema.parse(
+      snapshots.map((s: PortfolioSnapshotItem) => ({
         accountId: s.accountId,
         date: s.snapshotDate,
         id: s.id,
         value: s.value,
       })),
-    }),
+    ),
     200,
   );
 });

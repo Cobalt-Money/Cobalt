@@ -1,11 +1,8 @@
 import type { TransactionResponse } from "@cobalt-web/server-data/transactions/detail/schema";
-import { z } from "@hono/zod-openapi";
 
 import { transactionSchema } from "../schemas.js";
 
-export const transactionResponseSchema = z
-  .object({ data: transactionSchema })
-  .openapi("TransactionDetail");
+export const transactionResponseSchema = transactionSchema.openapi("TransactionDetail");
 
 /**
  * Strip the internal `TransactionResponse` down to the public-safe shape.

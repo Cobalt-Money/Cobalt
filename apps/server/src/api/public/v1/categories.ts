@@ -22,16 +22,12 @@ import { categoryGroupSchema, categorySchema } from "./schemas.js";
 
 const categoriesResponseSchema = z
   .object({
-    data: z.object({
-      categories: z.array(categorySchema),
-      groups: z.array(categoryGroupSchema),
-    }),
+    categories: z.array(categorySchema),
+    groups: z.array(categoryGroupSchema),
   })
   .openapi("CategoryList");
 
-const categoryDetailResponseSchema = z
-  .object({ data: categorySchema })
-  .openapi("CategoryDetailResponse");
+const categoryDetailResponseSchema = categorySchema.openapi("CategoryDetailResponse");
 
 const NOT_FOUND_CODES: ReadonlySet<string> = new Set([
   "not_found",
@@ -134,10 +130,8 @@ export const categoriesRouter = createApp()
     const result = await getCategories(user.id);
     return c.json(
       {
-        data: {
-          categories: z.array(categorySchema).parse(result.categories),
-          groups: z.array(categoryGroupSchema).parse(result.groups),
-        },
+        categories: z.array(categorySchema).parse(result.categories),
+        groups: z.array(categoryGroupSchema).parse(result.groups),
       },
       200,
     );
@@ -148,7 +142,7 @@ export const categoriesRouter = createApp()
     try {
       const { id } = await createCategory(user.id, body);
       const created = await getCategoryDetail(user.id, id);
-      return c.json({ data: categorySchema.parse(created) }, 201);
+      return c.json(categorySchema.parse(created), 201);
     } catch (error) {
       const mapped = categoryErrorResponse(error);
       if (mapped?.status === 404) {
@@ -164,7 +158,7 @@ export const categoriesRouter = createApp()
     try {
       await patchCategory(user.id, categoryId, body);
       const updated = await getCategoryDetail(user.id, categoryId);
-      return c.json({ data: categorySchema.parse(updated) }, 200);
+      return c.json(categorySchema.parse(updated), 200);
     } catch (error) {
       const mapped = categoryErrorResponse(error);
       if (mapped?.status === 404) {

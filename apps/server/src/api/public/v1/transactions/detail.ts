@@ -32,7 +32,7 @@ export const detailRouter = createApp().openapi(route, async (c) => {
   const { transactionId } = c.req.valid("param");
   try {
     const tx = await getTransactionDetail(user.id, transactionId);
-    return c.json(transactionResponseSchema.parse({ data: toTransaction(tx) }), 200);
+    return c.json(transactionResponseSchema.parse(toTransaction(tx)), 200);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return c.json({ code: "transaction_not_found", error: "Transaction not found" }, 404);
