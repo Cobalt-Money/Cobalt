@@ -21,7 +21,7 @@
     "@upstash/redis": "^1.38.0",
     "better-auth": "1.7.0-beta.3",
     "dotenv": "catalog:",
-    "drizzle-orm": "1.0.0-beta.18-7eb39f0",
+    "drizzle-orm": "1.0.0-beta.20",
     "jose": "^6.1.0",
     "stripe": "^20.2.0",
     "zod": "catalog:"
