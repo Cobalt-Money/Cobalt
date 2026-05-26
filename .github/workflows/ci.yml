@@ -9,19 +9,16 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Workflow-level least privilege. Jobs that need write (e.g. `check` auto-
-# committing regenerated spec) override per-job.
+# Workflow-level least privilege. Only `commit-generated` overrides this
+# to `contents: write` for pushing the regenerated spec back to PR branches.
 permissions:
   contents: read
 
 jobs:
-  check:
-    name: Typecheck + Lint
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    permissions:
-      # contents:write lets the spec auto-sync step push openapi.json back to
-      # the PR branch. Granted only on this job; other jobs stay read-only.
-      contents: write
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
@@ -37,10 +34,53 @@ jobs:
         run: bun x ultracite check apps packages
         env:
           NODE_OPTIONS: --import tsx
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.5
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
       - name: Typecheck (turbo)
         run: bun x turbo check-types
         env:
           NODE_OPTIONS: --max-old-space-size=8192
+
+  build-spec:
+    name: Build OpenAPI spec + docs
+    # Don't regenerate the spec if types are broken — would just produce a
+    # spec from broken code.
+    needs: [typecheck]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Need previous commit to oasdiff against on PRs (fetch base ref).
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.5
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Stash base ref openapi.json (for oasdiff)
+        # Capture the pre-change spec from the PR's base branch (or HEAD~1
+        # on main pushes) before regen overwrites it. Skip silently if the
+        # file didn't exist in the base ref — first-time spec gen.
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        run: |
+          base_ref="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          if git show "$base_ref:apps/server/openapi.json" > /tmp/base-openapi.json 2>/dev/null; then
+            echo "Captured base openapi.json from $base_ref"
+          else
+            echo "No base openapi.json — skipping oasdiff."
+            rm -f /tmp/base-openapi.json
+          fi
       - name: Regenerate openapi.json
         # Spec is the single source of truth for SDK + docs codegen. CI rebuilds
         # it from source on every PR so contributors never have to remember to
@@ -84,13 +124,47 @@ jobs:
         working-directory: apps/server
         run: bun run generate-spec
       - name: Regenerate fumadocs API reference
-        # MDX is derived from the spec we just wrote, so it stays in lockstep.
+        # MDX derived from the spec we just wrote, so it stays in lockstep.
         # No live URL fetch — fumadocs reads ../server/openapi.json directly.
         working-directory: apps/fumadocs
         run: bun run scripts/generate-docs.ts
+      - name: Diff OpenAPI for breaking changes
+        # Warns on PR with breaking-change details. `--fail-on ERR` flips this
+        # to a hard failure once the noise level is calibrated (see follow-up).
+        if: hashFiles('/tmp/base-openapi.json') != ''
+        run: |
+          docker run --rm \
+            -v "$PWD/apps/server/openapi.json:/specs/new.json:ro" \
+            -v "/tmp/base-openapi.json:/specs/old.json:ro" \
+            tufin/oasdiff breaking /specs/old.json /specs/new.json --format text || \
+          echo "::warning::oasdiff flagged breaking changes (see above). Not failing build yet."
+      - name: Upload regenerated spec + docs as artifact
+        # commit-generated downloads + pushes; sdk-dispatch / consumers can
+        # also download via this name.
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-spec
+          path: |
+            apps/server/openapi.json
+            apps/fumadocs/content/docs/api-reference
+          retention-days: 7
+
+  commit-generated:
+    name: Commit regenerated spec + docs
+    # Only this job needs write — keep blast radius tiny.
+    needs: [build-spec, test, test-integration]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated-spec
+          path: .
       - name: Commit regenerated spec + docs to PR branch
-        # Only push on pull_request events (so the bot doesn't loop on main).
-        #
         # No `[skip ci]` marker here. Per GitHub docs the marker is matched
         # anywhere in the commit message — including after a squash-merge,
         # where the bot's commit message gets concatenated into the squash
@@ -98,11 +172,8 @@ jobs:
         # is already prevented because GITHUB_TOKEN-authored commits don't
         # trigger new workflow runs:
         #   https://docs.github.com/en/actions/concepts/security/github_token
-        if: github.event_name == 'pull_request'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          # Space-separated paths on a single line; directory paths add
-          # everything inside recursively via `git add`.
           file_pattern: "apps/server/openapi.json apps/fumadocs/content/docs/api-reference"
           commit_message: "chore: sync openapi.json + docs"
 
@@ -199,7 +270,7 @@ jobs:
     # Gate every PR preview on CI signal. Vercel Git auto-deploy is disabled
     # in the dashboard for cobalt-{docs,server,web} so this is the only path
     # that ships a build.
-    needs: [check, test, test-integration]
+    needs: [lint, typecheck, test, test-integration]
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -320,7 +391,7 @@ jobs:
     name: Deploy production (${{ matrix.project }})
     # Same gate, only for merges to main. Same matrix so all three sites
     # promote together — keeps server/web/docs in lockstep on schema changes.
-    needs: [check, test, test-integration]
+    needs: [lint, typecheck, test, test-integration]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -364,11 +435,12 @@ jobs:
   sdk-dispatch:
     name: Dispatch SDK gen
     # Two gates AND'd together:
-    #   1. all upstream jobs green (via `needs`)
+    #   1. all upstream jobs green (via `needs`) — incl. build-spec so we
+    #      know the regenerated spec is shippable before SDK fan-out.
     #   2. push to main AND apps/server/openapi.json actually changed
     # Third implicit gate lives in Cobalt-Typescript-SDK's sync.yml — if the
     # regenerated SDK files have no diff, peter-evans skips PR creation.
-    needs: [check, test, test-integration]
+    needs: [build-spec, test, test-integration]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
