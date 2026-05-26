@@ -80,10 +80,10 @@ describe("v1/tags", () => {
         headers: { "content-type": "application/json" },
         method: "POST",
       });
-      const body = await json<{ data: { id: string; name: string } }>();
+      const body = await json<{ id: string; name: string }>();
 
       expect(status).toBe(201);
-      expect(body.data.name).toBe("urgent");
+      expect(body.name).toBe("urgent");
       expect(getTag).toHaveBeenCalledWith(TEST_USER_ID, "00000000-0000-4000-a000-000000000003");
     });
 
@@ -141,13 +141,13 @@ describe("v1/tags", () => {
           method: "PATCH",
         },
       );
-      const body = await json<{ data: { name: string } }>();
+      const body = await json<{ name: string }>();
 
       expect(status).toBe(200);
       expect(updateTag).toHaveBeenCalledWith(TEST_USER_ID, "00000000-0000-4000-a000-000000000001", {
         name: "renamed",
       });
-      expect(body.data.name).toBe("renamed");
+      expect(body.name).toBe("renamed");
     });
 
     test("returns 404 when post-update refetch returns null", async () => {

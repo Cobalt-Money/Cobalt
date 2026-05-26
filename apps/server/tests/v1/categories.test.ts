@@ -46,13 +46,11 @@ describe("v1/categories", () => {
       });
 
       const { json, status } = await request(categoriesRouter, "/categories");
-      const body = await json<{
-        data: { categories: { id: string }[]; groups: { id: string }[] };
-      }>();
+      const body = await json<{ categories: { id: string }[]; groups: { id: string }[] }>();
 
       expect(status).toBe(200);
-      expect(body.data.categories).toHaveLength(1);
-      expect(body.data.groups).toHaveLength(1);
+      expect(body.categories).toHaveLength(1);
+      expect(body.groups).toHaveLength(1);
     });
 
     test("returns 500 when category row is missing required fields", async () => {

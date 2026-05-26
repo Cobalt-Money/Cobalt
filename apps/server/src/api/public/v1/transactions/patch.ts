@@ -52,7 +52,7 @@ export const patchRouter = createApp().openapi(route, async (c) => {
     }
     await patchTransaction(transactionId, user.id, body);
     const tx = await getTransactionDetail(user.id, transactionId);
-    return c.json(transactionResponseSchema.parse({ data: toTransaction(tx) }), 200);
+    return c.json(transactionResponseSchema.parse(toTransaction(tx)), 200);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return c.json({ code: error.code, error: error.message }, 404);

@@ -13,8 +13,8 @@ import {
 import { requireApiKey } from "../middleware/require-api-key.js";
 import { tagSchema } from "../schemas.js";
 
-const tagsResponseSchema = z.object({ data: z.array(tagSchema) }).openapi("TagList");
-const tagResponseSchema = z.object({ data: tagSchema }).openapi("TagDetail");
+const tagsResponseSchema = z.array(tagSchema).openapi("TagList");
+const tagResponseSchema = tagSchema.openapi("TagDetail");
 
 const listTagsRoute = createRoute({
   description: "List every tag owned by the authenticated user.",
@@ -53,7 +53,7 @@ export const listRouter = createApp()
   .openapi(listTagsRoute, async (c) => {
     const { user } = c.var;
     const rows = await listTags(user.id);
-    return c.json({ data: z.array(tagSchema).parse(rows) }, 200);
+    return c.json(z.array(tagSchema).parse(rows), 200);
   })
   .openapi(createTagRoute, async (c) => {
     const { user } = c.var;
@@ -63,5 +63,5 @@ export const listRouter = createApp()
     if (!tag) {
       throw new Error(`Tag ${id} missing immediately after create`);
     }
-    return c.json({ data: tagSchema.parse(tag) }, 201);
+    return c.json(tagSchema.parse(tag), 201);
   });

@@ -62,18 +62,18 @@ describe("v1/positions", () => {
       });
 
       const { json, status } = await request(positionsRouter, "/positions");
-      const body = await json<{
-        data: {
+      const body = await json<
+        {
           averagePrice: number | null;
           marketValue: number | null;
           openPnl: number | null;
           price: number | null;
           units: number | null;
-        }[];
-      }>();
+        }[]
+      >();
 
       expect(status).toBe(200);
-      expect(body.data[0]).toMatchObject({
+      expect(body[0]).toMatchObject({
         averagePrice: 100.5,
         marketValue: 10 * 150.25,
         openPnl: 12.34,
@@ -95,10 +95,10 @@ describe("v1/positions", () => {
       });
 
       const { json } = await request(positionsRouter, "/positions");
-      const body = await json<{ data: { id: string; marketValue: number | null }[] }>();
+      const body = await json<{ id: string; marketValue: number | null }[]>();
 
-      expect(body.data.find((p) => p.id === "pos_no_price")?.marketValue).toBeNull();
-      expect(body.data.find((p) => p.id === "pos_empty_units")?.marketValue).toBeNull();
+      expect(body.find((p) => p.id === "pos_no_price")?.marketValue).toBeNull();
+      expect(body.find((p) => p.id === "pos_empty_units")?.marketValue).toBeNull();
     });
   });
 });

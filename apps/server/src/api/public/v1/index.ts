@@ -40,6 +40,16 @@ v1.route("/", categoriesRouter);
 v1.route("/", recurringRouter);
 v1.route("/", spendingRouter);
 
+/**
+ * Typed JSON 404 for unmatched `/v1/*` paths. Hono's default returns a
+ * `text/plain` body that escapes the public `errorResponseWithCodeSchema`
+ * contract — bare 404s also looked like CORS failures to browser SDK clients
+ * because the route never reached middleware that set headers (SRI-345 #10).
+ */
+v1.notFound((c) =>
+  c.json({ code: "not_found", error: `No such endpoint: ${c.req.method} ${c.req.path}` }, 404),
+);
+
 v1.doc31("/openapi.json", {
   info: {
     description: "Cobalt public REST API. Stable, versioned, SDK-generated.",

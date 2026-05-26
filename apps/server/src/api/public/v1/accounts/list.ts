@@ -7,7 +7,7 @@ import { requireApiKey } from "../middleware/require-api-key.js";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { accountSchema } from "../schemas.js";
 
-const responseSchema = z.object({ data: z.array(accountSchema) }).openapi("AccountList");
+const responseSchema = z.array(accountSchema).openapi("AccountList");
 
 const route = createRoute({
   description:
@@ -28,5 +28,5 @@ const route = createRoute({
 export const listRouter = createApp().openapi(route, async (c) => {
   const { user } = c.var;
   const rows = await getAccounts(user.id);
-  return c.json(responseSchema.parse({ data: rows }), 200);
+  return c.json(responseSchema.parse(rows), 200);
 });

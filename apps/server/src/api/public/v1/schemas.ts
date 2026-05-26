@@ -32,7 +32,7 @@ const accountInputSchema = z.object({
 const accountOutputSchema = z.object({
   balance: z.number().nullable().openapi({
     description:
-      "Current balance in the account's currency. Null when the provider has not reported one.",
+      "Signed balance in the account's currency. Positive for assets (bank, investment), negative for liabilities (credit_card, loan). Net worth = sum of balances. Null when the provider has not reported one.",
   }),
   creditLimit: z.number().nullable().openapi({
     description: "Credit limit for credit-card accounts. Null for non-credit accounts.",
@@ -42,7 +42,10 @@ const accountOutputSchema = z.object({
   institution: z.string().nullable().openapi({
     description: "Name of the institution holding the account.",
   }),
-  mask: z.string().nullable().openapi({ description: "Last 4 digits when available." }),
+  mask: z.string().nullable().openapi({
+    description:
+      "Last 4 digits of the account number when reported by the provider. Best-effort — some institutions (e.g. Venmo, Fidelity) return null even when the underlying account has a number. Do not rely on `mask` for account identity; use `id`.",
+  }),
   name: z.string().openapi({ description: "Account display name." }),
   type,
 });
@@ -68,17 +71,28 @@ function mapAccountType(internal: string): z.infer<typeof type> {
   }
 }
 
+function signBalanceForType(raw: number | null, publicType: z.infer<typeof type>): number | null {
+  if (raw === null) {
+    return null;
+  }
+  const isLiability = publicType === "credit_card" || publicType === "loan";
+  return isLiability ? -Math.abs(raw) : raw;
+}
+
 export const accountSchema = accountInputSchema
-  .transform((row) => ({
-    balance: row.current,
-    creditLimit: row.creditLimit,
-    currency: row.currency,
-    id: row.id,
-    institution: row.institutionName,
-    mask: row.mask,
-    name: row.name,
-    type: mapAccountType(row.type),
-  }))
+  .transform((row) => {
+    const publicType = mapAccountType(row.type);
+    return {
+      balance: signBalanceForType(row.current, publicType),
+      creditLimit: row.creditLimit,
+      currency: row.currency,
+      id: row.id,
+      institution: row.institutionName,
+      mask: row.mask,
+      name: row.name,
+      type: publicType,
+    };
+  })
   .pipe(accountOutputSchema)
   .openapi("Account");
 
@@ -141,7 +155,8 @@ export const activitySchema = z
     symbol: z.string().nullable(),
     tradeDate: z.string().nullable(),
     type: z.string().nullable().openapi({
-      description: "Activity kind (BUY, SELL, DIVIDEND, FEE, etc.). Provider-defined.",
+      description:
+        "Activity kind (e.g. BUY, SELL, DIVIDEND, FEE, INTEREST, CONTRIBUTION, WITHDRAWAL). Provider-defined; open-ended.",
     }),
     units: z.number().nullable(),
   })
@@ -248,9 +263,9 @@ export const recurringStreamSchema = z
     category: categorySchema.nullable(),
     description: z.string().nullable(),
     firstDate: z.string().nullable(),
-    frequency: z.string().openapi({
-      description: "Detected frequency (e.g. WEEKLY, MONTHLY, ANNUALLY).",
-    }),
+    frequency: z
+      .enum(["UNKNOWN", "WEEKLY", "BIWEEKLY", "SEMI_MONTHLY", "MONTHLY", "ANNUALLY"])
+      .openapi("RecurringStreamFrequency", { description: "Detected cadence." }),
     id: z.string(),
     isActive: z.boolean(),
     lastAmount: z.number(),
@@ -259,8 +274,14 @@ export const recurringStreamSchema = z
     predictedNextDate: z.string().nullable().openapi({
       description: "Best-effort guess at the next charge date.",
     }),
-    status: z.string().nullable().openapi({ description: "MATURE, EARLY_DETECTION, etc." }),
-    streamType: z.string().nullable().openapi({ description: "INFLOW or OUTFLOW." }),
+    status: z
+      .enum(["UNKNOWN", "MATURE", "EARLY_DETECTION", "TOMBSTONED"])
+      .nullable()
+      .openapi("RecurringStreamStatus", { description: "Detection state of the stream." }),
+    streamType: z
+      .enum(["inflow", "outflow"])
+      .nullable()
+      .openapi("RecurringStreamType", { description: "Direction of cash flow." }),
   })
   .openapi("RecurringStream");
 
@@ -279,6 +300,87 @@ export const spendingSchema = z
     totalSpending: z.number(),
   })
   .openapi("SpendingItem");
+
+/**
+ * Public account-create vocab. Matches the read-side `type` enum so consumers
+ * use one vocabulary for the resource. Mapped to the internal
+ * `depository|credit|investment|loan` storage form by `toInternalCreate()`.
+ */
+const PUBLIC_CREATE_SUBTYPES_BY_TYPE = {
+  bank: ["checking", "savings", "cash"],
+  credit_card: ["credit card", "line of credit"],
+  investment: ["brokerage", "ira", "roth ira", "401k", "hsa", "crypto"],
+  loan: ["mortgage", "student", "auto", "personal"],
+} as const;
+
+const PUBLIC_CREATE_TYPE_VALUES = ["bank", "credit_card", "investment", "loan"] as const;
+type PublicCreateType = (typeof PUBLIC_CREATE_TYPE_VALUES)[number];
+
+const PUBLIC_TO_INTERNAL_TYPE: Record<
+  PublicCreateType,
+  "depository" | "credit" | "investment" | "loan"
+> = {
+  bank: "depository",
+  credit_card: "credit",
+  investment: "investment",
+  loan: "loan",
+};
+
+const PUBLIC_CREATE_ALL_SUBTYPES = Object.values(
+  PUBLIC_CREATE_SUBTYPES_BY_TYPE,
+).flat() as readonly string[];
+
+export const accountCreateRequestSchema = z
+  .object({
+    creditLimit: z.number().positive().optional().openapi({
+      description: 'Credit limit. Only valid when `type === "credit_card"`.',
+    }),
+    currency: z.string().length(3).default("USD"),
+    currentBalance: z.number().openapi({
+      description:
+        "Signed balance. Positive for assets, negative for liabilities (credit_card, loan). Magnitude stored internally.",
+    }),
+    logoDomain: z.string().max(253).optional(),
+    name: z.string().min(1).max(255),
+    subtype: z.enum(PUBLIC_CREATE_ALL_SUBTYPES as [string, ...string[]]),
+    type: z.enum(PUBLIC_CREATE_TYPE_VALUES),
+  })
+  .refine(
+    (v) =>
+      (PUBLIC_CREATE_SUBTYPES_BY_TYPE[v.type as PublicCreateType] as readonly string[]).includes(
+        v.subtype,
+      ),
+    { message: "subtype not valid for this account type", path: ["subtype"] },
+  )
+  .refine((v) => v.creditLimit === undefined || v.type === "credit_card", {
+    message: "creditLimit only valid for credit_card accounts",
+    path: ["creditLimit"],
+  })
+  .openapi("AccountCreateRequest");
+
+export type AccountCreateRequest = z.infer<typeof accountCreateRequestSchema>;
+
+export function toInternalCreate(body: AccountCreateRequest): {
+  creditLimit?: number;
+  currency: string;
+  currentBalance: number;
+  logoDomain?: string;
+  name: string;
+  subtype: string;
+  type: "depository" | "credit" | "investment" | "loan";
+} {
+  const internalType = PUBLIC_TO_INTERNAL_TYPE[body.type];
+  const isLiability = body.type === "credit_card" || body.type === "loan";
+  return {
+    creditLimit: body.creditLimit,
+    currency: body.currency,
+    currentBalance: isLiability ? Math.abs(body.currentBalance) : body.currentBalance,
+    logoDomain: body.logoDomain,
+    name: body.name,
+    subtype: body.subtype,
+    type: internalType,
+  };
+}
 
 export const tagSchema = z
   .object({

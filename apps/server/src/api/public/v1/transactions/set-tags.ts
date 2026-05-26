@@ -53,7 +53,7 @@ export const setTagsRouter = createApp().openapi(route, async (c) => {
   await setTransactionTags(user.id, transactionId, tagIds);
   try {
     const tx = await getTransactionDetail(user.id, transactionId);
-    return c.json(transactionResponseSchema.parse({ data: toTransaction(tx) }), 200);
+    return c.json(transactionResponseSchema.parse(toTransaction(tx)), 200);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return c.json({ code: "transaction_not_found", error: "Transaction not found" }, 404);

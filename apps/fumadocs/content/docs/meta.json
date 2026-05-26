@@ -1,3 +1,3 @@
 {
-  "pages": ["index", "mcp", "api-reference"]
+  "pages": ["index", "sdk", "mcp", "api-reference"]
 }

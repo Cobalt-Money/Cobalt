@@ -58,19 +58,17 @@ describe("v1/spending", () => {
 
       const { json, status } = await request(spendingRouter, "/spending?period=1m");
       const body = await json<{
-        data: {
-          averageLabel: string;
-          averageSpending: number;
-          buckets: { amount: number; date: string }[];
-          totalSpending: number;
-        };
+        averageLabel: string;
+        averageSpending: number;
+        buckets: { amount: number; date: string }[];
+        totalSpending: number;
       }>();
 
       expect(status).toBe(200);
-      expect(body.data.buckets).toHaveLength(2);
-      expect(body.data.buckets[0]).toStrictEqual({ amount: 50, date: "2026-05-01" });
+      expect(body.buckets).toHaveLength(2);
+      expect(body.buckets[0]).toStrictEqual({ amount: 50, date: "2026-05-01" });
       // Confirm no field leak under the old key name.
-      expect((body.data as unknown as { spending?: unknown }).spending).toBeUndefined();
+      expect((body as unknown as { spending?: unknown }).spending).toBeUndefined();
     });
   });
 });

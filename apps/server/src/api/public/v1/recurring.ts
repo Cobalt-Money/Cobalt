@@ -8,7 +8,7 @@ import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/sch
 import { recurringStreamSchema } from "./schemas.js";
 
 const recurringStreamsResponseSchema = z
-  .object({ data: z.array(recurringStreamSchema) })
+  .array(recurringStreamSchema)
   .openapi("RecurringStreamList");
 
 const route = createRoute({
@@ -31,8 +31,8 @@ export const recurringRouter = createApp().openapi(route, async (c) => {
   const { user } = c.var;
   const rows = await getRecurringTransactions(user.id);
   return c.json(
-    recurringStreamsResponseSchema.parse({
-      data: rows.map((r) => ({
+    recurringStreamsResponseSchema.parse(
+      rows.map((r) => ({
         accountId: r.accountId,
         averageAmount: r.averageAmount,
         category: r.category
@@ -58,7 +58,7 @@ export const recurringRouter = createApp().openapi(route, async (c) => {
         status: r.status ?? null,
         streamType: r.streamType ?? null,
       })),
-    }),
+    ),
     200,
   );
 });

@@ -17,9 +17,7 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-const activitiesResponseSchema = z
-  .object({ data: z.array(activitySchema) })
-  .openapi("ActivityList");
+const activitiesResponseSchema = z.array(activitySchema).openapi("ActivityList");
 
 function num(v: string | null | undefined): number | null {
   if (v === null || v === undefined || v === "") {
@@ -71,5 +69,5 @@ export const activitiesRouter = createApp().openapi(route, async (c) => {
     limit: q.limit,
     offset: q.offset,
   });
-  return c.json(activitiesResponseSchema.parse({ data: result.activities.map(toActivity) }), 200);
+  return c.json(activitiesResponseSchema.parse(result.activities.map(toActivity)), 200);
 });

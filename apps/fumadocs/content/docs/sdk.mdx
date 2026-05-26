@@ -1,0 +1,222 @@
+---
+title: TypeScript SDK
+description: Use the @cobalt-money/sdk to call the Cobalt API from Node, Bun, Deno, or the browser.
+icon: Code
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps, Step } from "fumadocs-ui/components/steps";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+
+## Overview
+
+`@cobalt-money/sdk` is a typed TypeScript client generated from the [Cobalt OpenAPI spec](https://api.cobaltpf.com/v1/openapi.json). It works in Node, Bun, Deno, Cloudflare Workers, and the browser. Every endpoint returns a `{ data, error }` discriminated union — no exceptions on 4xx/5xx.
+
+## Install
+
+<Tabs items={["bun", "npm", "pnpm", "yarn"]}>
+  <Tab value="bun">```bash bun add @cobalt-money/sdk ```</Tab>
+  <Tab value="npm">```bash npm install @cobalt-money/sdk ```</Tab>
+  <Tab value="pnpm">```bash pnpm add @cobalt-money/sdk ```</Tab>
+  <Tab value="yarn">```bash yarn add @cobalt-money/sdk ```</Tab>
+</Tabs>
+
+## Get an API key
+
+Issue a key from the dashboard: **Settings → API keys**. Keys are prefixed `ck_live_`. Treat them as secrets — do not commit to source or ship in client-side bundles.
+
+## Initialize
+
+```ts
+import { Cobalt } from "@cobalt-money/sdk";
+
+const cobalt = new Cobalt({
+  auth: process.env.COBALT_API_KEY!,
+});
+```
+
+<Callout type="warn">
+  The SDK defaults `baseUrl` to `https://api.cobaltpf.com/v1`. Do not pass `baseUrl: "https://api.cobaltpf.com"` — it overrides the `/v1` suffix and every call 404s.
+</Callout>
+
+## Response shape
+
+Every method returns `{ data, error }`. `data` is the typed payload; `error` is set only when the request fails. The SDK does **not** throw on HTTP errors — check `error` explicitly.
+
+```ts
+const { data, error } = await cobalt.accounts.list();
+if (error) {
+  // network failure, 4xx, or 5xx
+  console.error(error);
+  return;
+}
+for (const account of data) {
+  console.log(account.id, account.balance);
+}
+```
+
+Resource shapes (response payloads) are flat — no inner `data` wrapper:
+
+```ts
+// GET /v1/accounts            → Account[]
+// GET /v1/accounts/{id}       → Account
+// GET /v1/transactions        → { items: Transaction[], hasMore, nextCursor }
+// GET /v1/categories          → { categories: Category[], groups: CategoryGroup[] }
+// GET /v1/spending            → SpendingItem
+```
+
+## Sign conventions
+
+Two gotchas worth memorizing:
+
+- **`Account.balance`** is signed. Liability accounts (`type: "credit_card"` or `"loan"`) return **negative** balances. Net worth is `accounts.reduce((sum, a) => sum + (a.balance ?? 0), 0)`.
+- **`Transaction.amount`** is signed but **inverted vs Plaid/Mint**. Positive = money out (spending/debit). Negative = money in (refund/credit/income).
+
+## Reading data
+
+```ts
+// All accounts
+const { data: accounts } = await cobalt.accounts.list();
+
+// One account
+const { data: account } = await cobalt.accounts.get({ path: { id: "acc_..." } });
+
+// Transactions with filters
+const { data } = await cobalt.transactions.list({
+  query: { startDate: "2026-01-01", endDate: "2026-05-22", limit: 100 },
+});
+console.log(data.items.length, "transactions, hasMore:", data.hasMore);
+
+// Brokerage positions
+const { data: positions } = await cobalt.positions.list();
+
+// Spending aggregate
+const { data: spending } = await cobalt.spending.get({
+  query: { period: "1m", accountType: "all" },
+});
+```
+
+## Writing data
+
+Manual accounts, manual transactions, tags, and categories all support writes via API key.
+
+```ts
+// Create a manual credit card with a $750 balance owed
+const { data: card } = await cobalt.accounts.create({
+  body: {
+    type: "credit_card",
+    subtype: "credit card",
+    name: "Apple Card",
+    currentBalance: -750, // signed; liabilities negative
+    currency: "USD",
+  },
+});
+
+// Add a manual transaction (positive = spending)
+const { data: txn } = await cobalt.transactions.create({
+  body: {
+    accountId: card.id,
+    amount: 24.5,
+    date: "2026-05-22",
+    name: "Coffee",
+    merchantName: "Blue Bottle",
+  },
+});
+```
+
+## Pagination
+
+`/v1/transactions` is the only paginated endpoint today. Drive a loop off `nextCursor`:
+
+```ts
+async function* allTransactions() {
+  let cursor: string | undefined;
+  do {
+    const { data, error } = await cobalt.transactions.list({
+      query: { cursor, limit: 200 },
+    });
+    if (error) throw error;
+    yield* data.items;
+    cursor = data.nextCursor ?? undefined;
+  } while (cursor);
+}
+
+for await (const txn of allTransactions()) {
+  // ...
+}
+```
+
+## Browser usage
+
+The SDK runs in the browser, but **the API key is a server-side secret**. Do not embed `ck_live_*` keys in client bundles, mobile apps, or any client you do not control. Instead, proxy through your own backend:
+
+```ts
+// app/api/cobalt/[...path]/route.ts
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const upstream = `https://api.cobaltpf.com/v1${url.pathname.replace(/^\/api\/cobalt/, "")}${url.search}`;
+  return fetch(upstream, {
+    headers: { Authorization: `Bearer ${process.env.COBALT_API_KEY!}` },
+  });
+}
+```
+
+Then point the browser SDK at your proxy:
+
+```ts
+const cobalt = new Cobalt({ baseUrl: "/api/cobalt" });
+```
+
+## Recipes
+
+### Net worth
+
+```ts
+const { data: accounts } = await cobalt.accounts.list();
+const netWorth = accounts.reduce((sum, a) => sum + (a.balance ?? 0), 0);
+```
+
+### Net-worth timeline
+
+```ts
+const { data: balances } = await cobalt.balances.snapshots({
+  query: { startDate: "2026-01-01", endDate: "2026-05-22" },
+});
+const { data: portfolio } = await cobalt.portfolio.snapshots({
+  query: { startDate: "2026-01-01", endDate: "2026-05-22" },
+});
+
+// Group by day, sum across accounts. Liability balances are already negative
+// in the snapshot stream so the sum is correct.
+const byDate = new Map<string, number>();
+for (const r of [...balances, ...portfolio]) {
+  byDate.set(r.date, (byDate.get(r.date) ?? 0) + ("currentBalance" in r ? r.currentBalance : r.value));
+}
+```
+
+### Spending by category over the last 6 months
+
+```ts
+const { data } = await cobalt.spending.get({ query: { period: "6m" } });
+console.log(data.totalSpending, data.averageSpending, data.averageLabel);
+for (const bucket of data.buckets) console.log(bucket.date, bucket.amount);
+```
+
+## Errors
+
+`error` carries `{ code, error: message }` for documented failures (`not_found`, validation, etc.) and the raw fetch failure otherwise. Inspect the discriminator before reading `data`:
+
+```ts
+const { data, error } = await cobalt.accounts.get({ path: { id: "acc_missing" } });
+if (error) {
+  if ("code" in error && error.code === "account_not_found") {
+    // handle 404
+  } else {
+    throw error;
+  }
+}
+```
+
+## Reference
+
+The full endpoint list with request and response shapes is in the [API Reference](/docs/api-reference). Types ship with the SDK — your editor will surface them inline.

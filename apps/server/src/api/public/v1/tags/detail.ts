@@ -2,7 +2,7 @@ import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/sch
 import { deleteTag, updateTag } from "@cobalt-web/server-data/transactions/tags/mutations";
 import { getTag } from "@cobalt-web/server-data/transactions/tags/queries";
 import { patchTagSchema, tagIdSchema } from "@cobalt-web/server-data/transactions/tags/schemas";
-import { createRoute, z } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../../lib/create-app.js";
 import {
@@ -13,7 +13,7 @@ import {
 import { requireApiKey } from "../middleware/require-api-key.js";
 import { tagSchema } from "../schemas.js";
 
-const tagResponseSchema = z.object({ data: tagSchema }).openapi("TagDetail");
+const tagResponseSchema = tagSchema.openapi("TagDetail");
 
 const getTagRoute = createRoute({
   description: "Fetch a single tag by identifier.",
@@ -80,7 +80,7 @@ export const detailRouter = createApp()
     if (!tag) {
       return c.json({ code: "tag_not_found", error: "Tag not found" }, 404);
     }
-    return c.json({ data: tagSchema.parse(tag) }, 200);
+    return c.json(tagSchema.parse(tag), 200);
   })
   .openapi(patchTagRoute, async (c) => {
     const { user } = c.var;
@@ -91,7 +91,7 @@ export const detailRouter = createApp()
     if (!tag) {
       return c.json({ code: "tag_not_found", error: "Tag not found" }, 404);
     }
-    return c.json({ data: tagSchema.parse(tag) }, 200);
+    return c.json(tagSchema.parse(tag), 200);
   })
   .openapi(deleteTagRoute, async (c) => {
     const { user } = c.var;

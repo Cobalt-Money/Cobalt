@@ -13,7 +13,7 @@ const querySchema = z.object({
   period: z.enum(["1w", "1m", "3m", "6m", "1y", "all"]).default("1m"),
 });
 
-const spendingResponseSchema = z.object({ data: spendingSchema }).openapi("SpendingResponse");
+const spendingResponseSchema = spendingSchema.openapi("SpendingResponse");
 
 const route = createRoute({
   description:
@@ -38,12 +38,10 @@ export const spendingRouter = createApp().openapi(route, async (c) => {
   const result = await getSpending(user.id, q.period, q.accountType, q.accountId);
   return c.json(
     spendingResponseSchema.parse({
-      data: {
-        averageLabel: result.averageLabel,
-        averageSpending: result.averageSpending,
-        buckets: result.spending,
-        totalSpending: result.totalSpending,
-      },
+      averageLabel: result.averageLabel,
+      averageSpending: result.averageSpending,
+      buckets: result.spending,
+      totalSpending: result.totalSpending,
     }),
     200,
   );
