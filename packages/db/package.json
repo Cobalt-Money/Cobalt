@@ -30,7 +30,7 @@
   "dependencies": {
     "@cobalt-web/env": "workspace:*",
     "dotenv": "catalog:",
-    "drizzle-orm": "1.0.0-beta.18-7eb39f0",
+    "drizzle-orm": "1.0.0-beta.22",
     "pg": "^8.17.1",
     "zod": "catalog:"
   },
