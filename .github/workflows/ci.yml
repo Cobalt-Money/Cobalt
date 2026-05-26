@@ -233,7 +233,7 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Install Vercel CLI
-        run: npm install -g vercel@39
+        run: npm install -g vercel@44
       - name: Diagnose node/vercel environment
         run: |
           echo "node:    $(which node) $(node --version)"
