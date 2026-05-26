@@ -26,18 +26,10 @@
     },
     "schemas": {
       "AccountList": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Account"
-            }
-          }
-        },
-        "required": [
-          "data"
-        ]
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Account"
+        }
       },
       "Account": {
         "type": "object",
@@ -111,12 +103,55 @@
       "AccountCreateResponse": {
         "type": "object",
         "properties": {
-          "data": {
-            "$ref": "#/components/schemas/Account"
+          "creditLimit": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "current": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "institutionName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mask": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
           }
         },
         "required": [
-          "data"
+          "creditLimit",
+          "currency",
+          "current",
+          "id",
+          "institutionName",
+          "mask",
+          "name",
+          "type"
         ]
       },
       "ValidationError": {
@@ -175,28 +210,135 @@
           "success"
         ]
       },
-      "AccountDetail": {
+      "AccountCreateRequest": {
         "type": "object",
         "properties": {
-          "data": {
-            "$ref": "#/components/schemas/Account"
+          "creditLimit": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Credit limit. Only valid when `type === \"credit_card\"`."
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "USD"
+          },
+          "currentBalance": {
+            "type": "number",
+            "description": "Signed balance. Positive for assets, negative for liabilities (credit_card, loan). Magnitude stored internally."
+          },
+          "logoDomain": {
+            "type": "string",
+            "maxLength": 253
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "subtype": {
+            "type": "string",
+            "enum": [
+              "checking",
+              "savings",
+              "cash",
+              "credit card",
+              "line of credit",
+              "brokerage",
+              "ira",
+              "roth ira",
+              "401k",
+              "hsa",
+              "crypto",
+              "mortgage",
+              "student",
+              "auto",
+              "personal"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "bank",
+              "credit_card",
+              "investment",
+              "loan"
+            ]
           }
         },
         "required": [
-          "data"
+          "currentBalance",
+          "name",
+          "subtype",
+          "type"
+        ]
+      },
+      "AccountDetail": {
+        "type": "object",
+        "properties": {
+          "creditLimit": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "current": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "institutionName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mask": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "creditLimit",
+          "currency",
+          "current",
+          "id",
+          "institutionName",
+          "mask",
+          "name",
+          "type"
         ]
       },
       "TransactionList": {
         "type": "object",
         "properties": {
-          "data": {
+          "hasMore": {
+            "type": "boolean"
+          },
+          "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Transaction"
             }
-          },
-          "hasMore": {
-            "type": "boolean"
           },
           "nextCursor": {
             "type": [
@@ -206,8 +348,8 @@
           }
         },
         "required": [
-          "data",
           "hasMore",
+          "items",
           "nextCursor"
         ]
       },
@@ -280,12 +422,67 @@
       "TransactionDetail": {
         "type": "object",
         "properties": {
-          "data": {
-            "$ref": "#/components/schemas/Transaction"
+          "accountId": {
+            "type": "string",
+            "description": "Identifier of the account this transaction belongs to."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Signed amount. Positive = money out (debit / spending), negative = money in (credit / refund)."
+          },
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Category name; null if uncategorized."
+          },
+          "date": {
+            "type": "string",
+            "description": "Transaction date (YYYY-MM-DD)."
+          },
+          "id": {
+            "type": "string"
+          },
+          "merchant": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Raw description from the institution."
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Additional details regarding the transaction. Supports Markdown.",
+            "example": "**Reimbursable** — paid for team lunch, expense via Expensify"
+          },
+          "pending": {
+            "type": "boolean"
+          },
+          "tagIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
-          "data"
+          "accountId",
+          "amount",
+          "category",
+          "date",
+          "id",
+          "merchant",
+          "name",
+          "notes",
+          "pending",
+          "tagIds"
         ]
       },
       "TransactionCreate": {
@@ -441,18 +638,10 @@
         ]
       },
       "TagList": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Tag"
-            }
-          }
-        },
-        "required": [
-          "data"
-        ]
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Tag"
+        }
       },
       "Tag": {
         "type": "object",
@@ -490,12 +679,34 @@
       "TagDetail": {
         "type": "object",
         "properties": {
-          "data": {
-            "$ref": "#/components/schemas/Tag"
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "color": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
           }
         },
         "required": [
-          "data"
+          "archivedAt",
+          "color",
+          "createdAt",
+          "id",
+          "name"
         ]
       },
       "TagColor": {
@@ -535,93 +746,77 @@
         ]
       },
       "PositionList": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "accountId": {
-                  "type": "string"
-                },
-                "averagePurchasePrice": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "currencyCode": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "id": {
-                  "type": "string"
-                },
-                "openPnl": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "price": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "symbol": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "symbolDescription": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "units": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
-              },
-              "required": [
-                "accountId",
-                "averagePurchasePrice",
-                "currencyCode",
-                "id",
-                "openPnl",
-                "price",
-                "symbol",
-                "symbolDescription",
-                "units"
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "accountId": {
+              "type": "string"
+            },
+            "averagePurchasePrice": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "currencyCode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "openPnl": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "price": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "symbol": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "symbolDescription": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "units": {
+              "type": [
+                "string",
+                "null"
               ]
             }
-          }
-        },
-        "required": [
-          "data"
-        ]
+          },
+          "required": [
+            "accountId",
+            "averagePurchasePrice",
+            "currencyCode",
+            "id",
+            "openPnl",
+            "price",
+            "symbol",
+            "symbolDescription",
+            "units"
+          ]
+        }
       },
       "ActivityList": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Activity"
-            }
-          }
-        },
-        "required": [
-          "data"
-        ]
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Activity"
+        }
       },
       "Activity": {
         "type": "object",
@@ -686,7 +881,7 @@
               "string",
               "null"
             ],
-            "description": "Activity kind (BUY, SELL, DIVIDEND, FEE, etc.). Provider-defined."
+            "description": "Activity kind (e.g. BUY, SELL, DIVIDEND, FEE, INTEREST, CONTRIBUTION, WITHDRAWAL). Provider-defined; open-ended."
           },
           "units": {
             "type": [
@@ -711,18 +906,10 @@
         ]
       },
       "PortfolioSnapshotList": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PortfolioSnapshot"
-            }
-          }
-        },
-        "required": [
-          "data"
-        ]
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/PortfolioSnapshot"
+        }
       },
       "PortfolioSnapshot": {
         "type": "object",
@@ -750,18 +937,10 @@
         ]
       },
       "BalanceSnapshotList": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BalanceSnapshot"
-            }
-          }
-        },
-        "required": [
-          "data"
-        ]
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/BalanceSnapshot"
+        }
       },
       "BalanceSnapshot": {
         "type": "object",
@@ -807,30 +986,22 @@
       "CategoryList": {
         "type": "object",
         "properties": {
-          "data": {
-            "type": "object",
-            "properties": {
-              "categories": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/Category"
-                }
-              },
-              "groups": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/CategoryGroup"
-                }
-              }
-            },
-            "required": [
-              "categories",
-              "groups"
-            ]
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Category"
+            }
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryGroup"
+            }
           }
         },
         "required": [
-          "data"
+          "categories",
+          "groups"
         ]
       },
       "Category": {
@@ -911,27 +1082,61 @@
       "CategoryDetailResponse": {
         "type": "object",
         "properties": {
-          "data": {
-            "$ref": "#/components/schemas/Category"
+          "excludeFromInsights": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "When true, transactions in this category are excluded from spending insights (e.g. transfers)."
+          },
+          "groupId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Parent category group id."
+          },
+          "hidden": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "iconKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "systemKey": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stable identifier for seeded system categories (e.g. `groceries`). Null for user-created categories."
           }
         },
         "required": [
-          "data"
+          "excludeFromInsights",
+          "groupId",
+          "hidden",
+          "iconKey",
+          "id",
+          "name",
+          "systemKey"
         ]
       },
       "RecurringStreamList": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RecurringStream"
-            }
-          }
-        },
-        "required": [
-          "data"
-        ]
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/RecurringStream"
+        }
       },
       "RecurringStream": {
         "type": "object",
@@ -968,8 +1173,7 @@
             ]
           },
           "frequency": {
-            "type": "string",
-            "description": "Detected frequency (e.g. WEEKLY, MONTHLY, ANNUALLY)."
+            "$ref": "#/components/schemas/RecurringStreamFrequency"
           },
           "id": {
             "type": "string"
@@ -1000,18 +1204,10 @@
             "description": "Best-effort guess at the next charge date."
           },
           "status": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "MATURE, EARLY_DETECTION, etc."
+            "$ref": "#/components/schemas/RecurringStreamStatus"
           },
           "streamType": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "INFLOW or OUTFLOW."
+            "$ref": "#/components/schemas/RecurringStreamType"
           }
         },
         "required": [
@@ -1031,18 +1227,45 @@
           "streamType"
         ]
       },
-      "SpendingResponse": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/SpendingItem"
-          }
-        },
-        "required": [
-          "data"
-        ]
+      "RecurringStreamFrequency": {
+        "type": "string",
+        "enum": [
+          "UNKNOWN",
+          "WEEKLY",
+          "BIWEEKLY",
+          "SEMI_MONTHLY",
+          "MONTHLY",
+          "ANNUALLY"
+        ],
+        "description": "Detected cadence."
       },
-      "SpendingItem": {
+      "RecurringStreamStatus": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "UNKNOWN",
+          "MATURE",
+          "EARLY_DETECTION",
+          "TOMBSTONED",
+          null
+        ],
+        "description": "Detection state of the stream."
+      },
+      "RecurringStreamType": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "inflow",
+          "outflow",
+          null
+        ],
+        "description": "Direction of cash flow."
+      },
+      "SpendingResponse": {
         "type": "object",
         "properties": {
           "averageLabel": {
@@ -1132,7 +1355,7 @@
         }
       },
       "post": {
-        "description": "Create a manual (non-bank-linked) account — checking, savings, credit, brokerage, or loan — and seed today's balance snapshot. `subtype` must belong to the chosen `type` vocabulary (see schema). `creditLimit` only valid when `type === \"credit\"`.",
+        "description": "Create a manual (non-bank-linked) account — bank, credit_card, investment, or loan — and seed today's balance snapshot. `subtype` must belong to the chosen `type` vocabulary (see schema). `creditLimit` only valid when `type === \"credit_card\"`. `currentBalance` is signed: positive for assets, negative for liabilities.",
         "operationId": "accounts_create",
         "security": [
           {
@@ -1149,66 +1372,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "creditLimit": {
-                    "type": "number",
-                    "exclusiveMinimum": 0
-                  },
-                  "currency": {
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 3,
-                    "default": "USD"
-                  },
-                  "currentBalance": {
-                    "type": "number"
-                  },
-                  "logoDomain": {
-                    "type": "string",
-                    "maxLength": 253
-                  },
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 255
-                  },
-                  "subtype": {
-                    "type": "string",
-                    "enum": [
-                      "credit card",
-                      "line of credit",
-                      "checking",
-                      "savings",
-                      "cash",
-                      "brokerage",
-                      "ira",
-                      "roth ira",
-                      "401k",
-                      "hsa",
-                      "crypto",
-                      "mortgage",
-                      "student",
-                      "auto",
-                      "personal"
-                    ]
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "depository",
-                      "credit",
-                      "investment",
-                      "loan"
-                    ]
-                  }
-                },
-                "required": [
-                  "currentBalance",
-                  "name",
-                  "subtype",
-                  "type"
-                ]
+                "$ref": "#/components/schemas/AccountCreateRequest"
               }
             }
           }
@@ -1384,7 +1548,7 @@
     },
     "/transactions": {
       "get": {
-        "description": "Returns transactions across all of the user's accounts, newest first. Use `nextCursor` to page.",
+        "description": "Returns transactions across all of the user's accounts, newest first. Use `nextCursor` to page. **Note:** `amount` is signed — positive = money out (debit/spending), negative = money in (credit/refund). This inverts the Plaid/Mint convention.",
         "operationId": "transactions_list",
         "security": [
           {
@@ -1490,7 +1654,7 @@
         }
       },
       "post": {
-        "description": "Add a manual transaction. The target `accountId` must reference a manual (not bank-synced) account.",
+        "description": "Add a manual transaction. The target `accountId` must reference a manual (not bank-synced) account. **Note:** `amount` is signed — positive = money out (debit/spending), negative = money in (credit/refund).",
         "operationId": "transactions_create",
         "security": [
           {
