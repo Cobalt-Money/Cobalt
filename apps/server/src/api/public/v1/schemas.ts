@@ -196,20 +196,18 @@ const positionInputSchema = z.object({
   units: z.string().nullable(),
 });
 
-const positionOutputSchema = z
-  .object({
-    accountId: z.string().openapi({ description: "Account this position belongs to." }),
-    averagePrice: z.number().nullable().openapi({ description: "Cost basis per share." }),
-    currency: z.string().nullable(),
-    description: z.string().nullable().openapi({ description: "Security long name." }),
-    id: z.string(),
-    marketValue: z.number().nullable().openapi({ description: "units × price." }),
-    openPnl: z.number().nullable().openapi({ description: "Unrealized profit/loss." }),
-    price: z.number().nullable().openapi({ description: "Latest reported price per share." }),
-    symbol: z.string().nullable().openapi({ description: "Ticker symbol (e.g. AAPL)." }),
-    units: z.number().nullable().openapi({ description: "Quantity held." }),
-  })
-  .openapi("Position");
+const positionOutputSchema = z.object({
+  accountId: z.string().openapi({ description: "Account this position belongs to." }),
+  averagePrice: z.number().nullable().openapi({ description: "Cost basis per share." }),
+  currency: z.string().nullable(),
+  description: z.string().nullable().openapi({ description: "Security long name." }),
+  id: z.string(),
+  marketValue: z.number().nullable().openapi({ description: "units × price." }),
+  openPnl: z.number().nullable().openapi({ description: "Unrealized profit/loss." }),
+  price: z.number().nullable().openapi({ description: "Latest reported price per share." }),
+  symbol: z.string().nullable().openapi({ description: "Ticker symbol (e.g. AAPL)." }),
+  units: z.number().nullable().openapi({ description: "Quantity held." }),
+});
 
 export const positionSchema = positionInputSchema
   .transform((p) => {
@@ -228,7 +226,8 @@ export const positionSchema = positionInputSchema
       units,
     };
   })
-  .pipe(positionOutputSchema);
+  .pipe(positionOutputSchema)
+  .openapi("Position");
 
 export const categorySchema = z
   .object({
