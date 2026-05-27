@@ -393,7 +393,7 @@
           },
           "amount": {
             "type": "number",
-            "description": "Signed amount. Positive = money out (debit / spending), negative = money in (credit / refund)."
+            "description": "Signed amount. Positive = money in (credit / refund / income), negative = money out (debit / spending)."
           },
           "category": {
             "type": [
@@ -459,7 +459,7 @@
           },
           "amount": {
             "type": "number",
-            "description": "Signed amount. Positive = money out (debit / spending), negative = money in (credit / refund)."
+            "description": "Signed amount. Positive = money in (credit / refund / income), negative = money out (debit / spending)."
           },
           "category": {
             "type": [
@@ -526,8 +526,8 @@
           },
           "amount": {
             "type": "number",
-            "description": "Positive = money out (spending), negative = money in (refund/income).",
-            "example": 24.5
+            "description": "Positive = money in (refund/income), negative = money out (spending).",
+            "example": -24.5
           },
           "categoryId": {
             "type": "string",
@@ -1013,7 +1013,7 @@
           },
           "currentBalance": {
             "type": "number",
-            "description": "Posted balance at end-of-day."
+            "description": "Posted balance at end-of-day. Signed: positive for assets, negative for liabilities."
           },
           "date": {
             "type": "string",
@@ -1597,7 +1597,7 @@
     },
     "/transactions": {
       "get": {
-        "description": "Returns transactions across all of the user's accounts, newest first. Use `nextCursor` to page. **Note:** `amount` is signed — positive = money out (debit/spending), negative = money in (credit/refund). This inverts the Plaid/Mint convention.",
+        "description": "Returns transactions across all of the user's accounts, newest first. Use `nextCursor` to page. **Note:** `amount` is signed — positive = money in (credit/refund/income), negative = money out (debit/spending).",
         "operationId": "transactions_list",
         "security": [
           {
@@ -1703,7 +1703,7 @@
         }
       },
       "post": {
-        "description": "Add a manual transaction. The target `accountId` must reference a manual (not bank-synced) account. **Note:** `amount` is signed — positive = money out (debit/spending), negative = money in (credit/refund).",
+        "description": "Add a manual transaction. The target `accountId` must reference a manual (not bank-synced) account. **Note:** `amount` is signed — positive = money in (credit/refund/income), negative = money out (debit/spending).",
         "operationId": "transactions_create",
         "security": [
           {
