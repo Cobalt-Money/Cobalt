@@ -224,7 +224,7 @@ function TransparencySection() {
         <motion.a
           aria-label="Cobalt on GitHub"
           className="inline-flex size-20 items-center justify-center rounded-full text-foreground"
-          href="https://github.com/cobalt-pf"
+          href="https://github.com/Cobalt-Money/Cobalt"
           rel="noopener noreferrer"
           target="_blank"
           transition={{ duration: 0.25, ease: EASE }}

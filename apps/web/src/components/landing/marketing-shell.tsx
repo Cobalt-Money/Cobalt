@@ -201,7 +201,7 @@ export function MarketingFooter() {
               <li>
                 <a
                   className="hover:text-foreground"
-                  href="https://github.com/cobalt-pf"
+                  href="https://github.com/Cobalt-Money/Cobalt"
                   rel="noopener noreferrer"
                   target="_blank"
                 >

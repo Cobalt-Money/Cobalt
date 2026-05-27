@@ -109,7 +109,7 @@ const FAQS: { a: ReactNode; q: string }[] = [
         SLAs), but the code, schema, and deployment configs are all public on{" "}
         <a
           className="font-medium text-foreground hover:opacity-80"
-          href="https://github.com/Sriketk/cobalt-v2"
+          href="https://github.com/Cobalt-Money/Cobalt"
           rel="noopener noreferrer"
           style={{ textDecoration: "none" }}
           target="_blank"

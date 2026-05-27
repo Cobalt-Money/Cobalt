@@ -2,7 +2,7 @@ import { Github01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "motion/react";
 
-const GITHUB_URL = "https://github.com/cobalt-pf";
+const GITHUB_URL = "https://github.com/Cobalt-Money/Cobalt";
 
 export function OpenSourceStep({ phase = 0 }: { phase?: number }) {
   return (
@@ -36,7 +36,7 @@ export function OpenSourceStep({ phase = 0 }: { phase?: number }) {
             transition={{ delay: 0.15, duration: 0.35, ease: "easeOut" }}
           >
             <HugeiconsIcon aria-hidden icon={Github01Icon} size={18} strokeWidth={2} />
-            github.com/cobalt-pf
+            github.com/Cobalt-Money/Cobalt
           </motion.a>
         )}
       </AnimatePresence>
