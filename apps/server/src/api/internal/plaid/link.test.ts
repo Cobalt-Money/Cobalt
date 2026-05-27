@@ -81,7 +81,10 @@ describe("plaid link route — tier gate", () => {
     expect(res.status).toBe(200);
     expect(createLinkTokenMock).toHaveBeenCalledWith("user1", {
       routingNumber: null,
-      webhookUrl: expect.stringMatching(/\/webhooks\/plaid$/),
+      // In tests the Hono internal request origin doesn't match the canonical
+      // auth host, so the trusted-origin guard falls back to undefined and
+      // actions.ts uses env.PLAID_WEBHOOK_URL.
+      webhookUrl: undefined,
     });
     expect(startMock).toHaveBeenCalledTimes(1);
   });
