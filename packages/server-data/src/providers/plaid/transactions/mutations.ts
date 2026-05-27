@@ -313,11 +313,13 @@ function mapRecurringStreamBase(
       : (s.is_active ?? false);
   return {
     accountId,
-    averageAmount: String(s.average_amount?.amount ?? 0),
+    // Canonical sign: positive = inflow, negative = outflow. Plaid stores
+    // outflows as positive, so negate at ingestion.
+    averageAmount: String(-(s.average_amount?.amount ?? 0)),
     externalId: s.stream_id,
     firstDate: s.first_date,
     isActive,
-    lastAmount: String(s.last_amount?.amount ?? 0),
+    lastAmount: String(-(s.last_amount?.amount ?? 0)),
     lastDate: s.last_date ?? s.first_date,
     source: "plaid" as const,
     streamType: s.type,

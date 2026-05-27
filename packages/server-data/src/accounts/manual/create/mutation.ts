@@ -2,6 +2,7 @@ import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { balance } from "@cobalt-web/db/schema/accounts/balance";
 
+import { isLiabilityType } from "../../../providers/plaid/link/lib.js";
 import { upsertManualBalanceSnapshotsForUser } from "../../../snapshots/mutations.js";
 import type { CreateManualAccount } from "./schema.js";
 
@@ -34,12 +35,19 @@ export async function createManualAccount(
     throw new Error("Failed to create manual account");
   }
   const accountId = created.id;
+  // Canonical sign convention: liabilities stored negative. UI collects
+  // positive magnitudes ("$500 owed"); flip here.
+  const liability = isLiabilityType(body.type);
+  const signedCurrent = liability ? -body.currentBalance : body.currentBalance;
+  const signedCreditLimit =
+    body.type === "credit" && body.creditLimit !== undefined
+      ? (-body.creditLimit).toString()
+      : null;
   await db.insert(balance).values({
     accountId,
-    creditLimit:
-      body.type === "credit" && body.creditLimit !== undefined ? body.creditLimit.toString() : null,
+    creditLimit: signedCreditLimit,
     currency: body.currency,
-    current: body.currentBalance.toString(),
+    current: signedCurrent.toString(),
     userId,
   });
   await upsertManualBalanceSnapshotsForUser(userId, "manual-create");

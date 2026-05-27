@@ -18,9 +18,11 @@ function flattenLocation(loc: Transaction["location"] | undefined) {
 }
 
 function transactionToRecordCore(tx: Transaction) {
+  // Canonical sign convention: positive = inflow (money in), negative = outflow.
+  // Plaid stores outflows as positive, so negate at ingestion.
   return {
     accountOwner: tx.account_owner || null,
-    amount: String(tx.amount),
+    amount: String(-tx.amount),
     authorizedDate: tx.authorized_date || null,
     checkNumber: tx.check_number || null,
     counterparties: tx.counterparties || null,

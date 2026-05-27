@@ -56,18 +56,19 @@ export function transactionsForUser(userId: string, filters: TransactionListFilt
   return zql.transaction
     .where("userId", userId)
     .where(({ and, cmp, exists, or }) => {
-      // Plaid convention: positive amount = outflow (expense), negative = inflow (income).
+      // Canonical sign: positive = inflow (income), negative = outflow (expense).
+      // amountMin/amountMax are positive magnitudes from UI.
       const amountExpr = () => {
         if (amount === "expense") {
           return and(
-            hasMin ? cmp("amount", ">=", amountMin) : cmp("amount", ">", 0),
-            hasMax ? cmp("amount", "<=", amountMax) : undefined,
+            hasMin ? cmp("amount", "<=", -amountMin) : cmp("amount", "<", 0),
+            hasMax ? cmp("amount", ">=", -amountMax) : undefined,
           );
         }
         if (amount === "income") {
           return and(
-            hasMin ? cmp("amount", "<=", -amountMin) : cmp("amount", "<", 0),
-            hasMax ? cmp("amount", ">=", -amountMax) : undefined,
+            hasMin ? cmp("amount", ">=", amountMin) : cmp("amount", ">", 0),
+            hasMax ? cmp("amount", "<=", amountMax) : undefined,
           );
         }
         if (!(hasMin || hasMax)) {
@@ -142,17 +143,20 @@ export function spendingTransactionsForUser(
   accountType: "credit" | "depository" | "all",
 ) {
   const start = periodStartIso(period);
-  return zql.transaction
-    .where("userId", userId)
-    .where("excluded", false)
-    .where("amount", ">", 0)
-    .whereExists("account", (acc) =>
-      accountType === "all"
-        ? acc.where(({ cmp, or }) => or(cmp("type", "credit"), cmp("type", "depository")))
-        : acc.where("type", accountType),
-    )
-    .where(({ and, cmp }) => and(start ? cmp("date", ">=", isoDateToZeroDate(start)) : undefined))
-    .related("category", (c) => c.related("group"))
-    .orderBy("date", "desc")
-    .limit(500);
+  return (
+    zql.transaction
+      .where("userId", userId)
+      .where("excluded", false)
+      // Spending = outflows (negative under canonical sign).
+      .where("amount", "<", 0)
+      .whereExists("account", (acc) =>
+        accountType === "all"
+          ? acc.where(({ cmp, or }) => or(cmp("type", "credit"), cmp("type", "depository")))
+          : acc.where("type", accountType),
+      )
+      .where(({ and, cmp }) => and(start ? cmp("date", ">=", isoDateToZeroDate(start)) : undefined))
+      .related("category", (c) => c.related("group"))
+      .orderBy("date", "desc")
+      .limit(500)
+  );
 }

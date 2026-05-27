@@ -1,6 +1,27 @@
 import type { AccountBase } from "plaid";
 
 /**
+ * Canonical sign convention: assets store positive, liabilities (credit / loan)
+ * store negative. Plaid reports all balances as positive magnitudes; flip
+ * liabilities at ingestion so every reader sees one convention.
+ */
+export function isLiabilityType(type: string | null | undefined): boolean {
+  return type === "credit" || type === "loan";
+}
+
+function flipIfLiability(value: number | null | undefined, type: string): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  return isLiabilityType(type) ? -value : value;
+}
+
+function flipIfLiabilityStr(value: number | null | undefined, type: string): string | null {
+  const v = flipIfLiability(value, type);
+  return v === null ? null : String(v);
+}
+
+/**
  * Curried mapper: Plaid account → `financial_account` insert row.
  * Caller supplies the resolved plaidConnection.id (uuid) + the connection's
  * userId. We tag every Plaid-sourced account with `source='plaid'` and store
@@ -31,16 +52,10 @@ export const balanceRowFromPlaidAccount = (
   userId: string,
 ) => ({
   accountId,
-  available:
-    account.balances.available !== null && account.balances.available !== undefined
-      ? String(account.balances.available)
-      : null,
-  creditLimit:
-    account.balances.limit !== null && account.balances.limit !== undefined
-      ? String(account.balances.limit)
-      : null,
+  available: flipIfLiabilityStr(account.balances.available, account.type),
+  creditLimit: flipIfLiabilityStr(account.balances.limit, account.type),
   currency: account.balances.iso_currency_code ?? null,
-  current: String(account.balances.current ?? 0),
+  current: String(flipIfLiability(account.balances.current ?? 0, account.type) ?? 0),
   userId,
 });
 

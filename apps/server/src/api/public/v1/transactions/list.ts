@@ -49,8 +49,8 @@ const createTransactionSchema = z
       example: "01HX8N7K5Q3M2P9R4V6Y8Z1A2B",
     }),
     amount: z.number().openapi({
-      description: "Positive = money out (spending), negative = money in (refund/income).",
-      example: 24.5,
+      description: "Positive = money in (refund/income), negative = money out (spending).",
+      example: -24.5,
     }),
     categoryId: z.uuid().optional().openapi({
       description: "Category id from `GET /v1/categories`. Omit to leave uncategorized.",
@@ -96,7 +96,7 @@ const createTransactionSchema = z
 
 const listTransactionsRoute = createRoute({
   description:
-    "Returns transactions across all of the user's accounts, newest first. Use `nextCursor` to page. **Note:** `amount` is signed — positive = money out (debit/spending), negative = money in (credit/refund). This inverts the Plaid/Mint convention.",
+    "Returns transactions across all of the user's accounts, newest first. Use `nextCursor` to page. **Note:** `amount` is signed — positive = money in (credit/refund/income), negative = money out (debit/spending).",
   method: "get",
   middleware: [requireApiKey] as const,
   operationId: "transactions_list",
@@ -114,7 +114,7 @@ const listTransactionsRoute = createRoute({
 
 const createTransactionRoute = createRoute({
   description:
-    "Add a manual transaction. The target `accountId` must reference a manual (not bank-synced) account. **Note:** `amount` is signed — positive = money out (debit/spending), negative = money in (credit/refund).",
+    "Add a manual transaction. The target `accountId` must reference a manual (not bank-synced) account. **Note:** `amount` is signed — positive = money in (credit/refund/income), negative = money out (debit/spending).",
   method: "post",
   middleware: [requireApiKey] as const,
   operationId: "transactions_create",

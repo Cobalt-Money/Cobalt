@@ -151,7 +151,7 @@ function TransactionDetail({
   brandfetchClientId: string | undefined;
   tx: TransactionItem;
 }) {
-  const isCredit = tx.amount < 0;
+  const isCredit = tx.amount > 0;
   const amountStr = currency.format(Math.abs(tx.amount));
   const signedAmount = `${isCredit ? "+" : "-"}${amountStr}`;
   const primaryCategory =
@@ -292,8 +292,8 @@ export default function Command() {
       ) : null}
       {data.map((tx) => {
         const title = truncateName(displayName(tx) || tx.merchantName || "—");
-        // Web: amount >= 0 is a debit (red), amount < 0 is a credit (green).
-        const isCredit = tx.amount < 0;
+        // Canonical sign: amount > 0 is a credit/inflow (green), amount <= 0 is a debit (red).
+        const isCredit = tx.amount > 0;
         const amountStr = currency.format(Math.abs(tx.amount));
         const primaryCategory =
           typeof tx.category === "string" ? tx.category : (tx.category?.primary ?? null);

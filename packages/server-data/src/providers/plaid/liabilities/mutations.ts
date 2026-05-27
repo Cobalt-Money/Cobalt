@@ -12,6 +12,7 @@ import type {
   StudentLoan,
 } from "plaid";
 
+import { balanceRowFromPlaidAccount } from "../link/lib.js";
 import { getFinancialAccountsByPlaidIds, lookupPlaidConnection } from "../link/queries.js";
 
 const BATCH_SIZE = 100;
@@ -90,14 +91,7 @@ export async function upsertBankBalancesForPlaidAccounts(accounts: AccountBase[]
       if (!acct) {
         return null;
       }
-      return {
-        accountId: acct.id,
-        available: numToStr(a.balances.available),
-        creditLimit: numToStr(a.balances.limit),
-        currency: a.balances.iso_currency_code ?? null,
-        current: String(a.balances.current ?? 0),
-        userId: acct.userId,
-      };
+      return balanceRowFromPlaidAccount(a, acct.id, acct.userId);
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
 

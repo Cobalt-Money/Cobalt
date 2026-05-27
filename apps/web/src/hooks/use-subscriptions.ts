@@ -33,7 +33,10 @@ export function useSubscriptions() {
           }
 
           return {
-            amount: row.lastAmount,
+            // Subscriptions filter to outflow streams, so `lastAmount` is
+            // negative under canonical sign. Expose as positive magnitude —
+            // calendar consumers treat `amount` as "$ spent" / "$ left to pay".
+            amount: Math.abs(row.lastAmount),
             billingCycle,
             billingDay,
             id: row.id,

@@ -75,23 +75,16 @@ function mapAccountType(internal: string): z.infer<typeof type> {
   }
 }
 
-function signBalanceForType(raw: number | null, publicType: z.infer<typeof type>): number | null {
-  if (raw === null) {
-    return null;
-  }
-  const isLiability = publicType === "credit_card" || publicType === "loan";
-  return isLiability ? -Math.abs(raw) : raw;
-}
-
 /**
  * Map an internal `AccountListItem` row to the public `Account` shape.
  * Renames `current → balance` and `institutionName → institution`, normalises
- * the provider `type` enum to the public vocab, and signs liability balances.
+ * the provider `type` enum to the public vocab. `balance` is stored signed in
+ * the DB (assets positive, liabilities negative) so no transformation needed.
  */
 export function toAccount(row: AccountRow): Account {
   const publicType = mapAccountType(row.type);
   return {
-    balance: signBalanceForType(row.current, publicType),
+    balance: row.current,
     creditLimit: row.creditLimit,
     currency: row.currency,
     id: row.id,
@@ -109,7 +102,7 @@ export const transactionSchema = z
     }),
     amount: z.number().openapi({
       description:
-        "Signed amount. Positive = money out (debit / spending), negative = money in (credit / refund).",
+        "Signed amount. Positive = money in (credit / refund / income), negative = money out (debit / spending).",
     }),
     category: z
       .string()
@@ -138,7 +131,8 @@ export const balanceSnapshotSchema = z
       description: "Credit limit for credit-card accounts. Null for non-credit accounts.",
     }),
     currentBalance: z.number().openapi({
-      description: "Posted balance at end-of-day.",
+      description:
+        "Posted balance at end-of-day. Signed: positive for assets, negative for liabilities.",
     }),
     date: z.string().openapi({ example: "2026-05-22" }),
     id: z.string(),

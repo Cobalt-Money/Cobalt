@@ -65,12 +65,12 @@ describe("v1/accounts", () => {
 
   describe("liability balance sign", () => {
     test("flips sign for credit_card and loan; assets stay positive", async () => {
-      // SRI-345: liability balances must be returned negative so net worth = sum(balance).
-      // Internal storage is positive magnitude; transform negates for liability types.
+      // Liability balances stored signed at ingestion; public API copies straight through.
+      // Net worth = sum(balance).
       getAccounts.mockResolvedValue([
         { ...validAccountRow, current: 1000, id: "asset_bank", type: "depository" },
-        { ...validAccountRow, current: 500, id: "liab_card", type: "credit" },
-        { ...validAccountRow, current: 20_000, id: "liab_loan", type: "loan" },
+        { ...validAccountRow, current: -500, id: "liab_card", type: "credit" },
+        { ...validAccountRow, current: -20_000, id: "liab_loan", type: "loan" },
         { ...validAccountRow, current: 8000, id: "asset_inv", type: "investment" },
       ]);
 

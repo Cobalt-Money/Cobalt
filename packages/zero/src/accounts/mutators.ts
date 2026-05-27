@@ -101,11 +101,16 @@ export const accountsMutators = {
       type: args.type,
       userId: ctx.userId,
     });
+    // Canonical sign: liabilities stored negative. UI submits positive magnitudes.
+    const liability = args.type === "credit" || args.type === "loan";
+    const signedCurrent = liability ? -args.currentBalance : args.currentBalance;
+    const signedCreditLimit =
+      args.type === "credit" && args.creditLimit !== undefined ? -args.creditLimit : undefined;
     await tx.mutate.balance.insert({
       accountId,
-      creditLimit: args.type === "credit" ? args.creditLimit : undefined,
+      creditLimit: signedCreditLimit,
       currency: args.currency,
-      current: args.currentBalance,
+      current: signedCurrent,
       id: crypto.randomUUID(),
       userId: ctx.userId,
     });
