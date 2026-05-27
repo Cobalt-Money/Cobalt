@@ -45,6 +45,34 @@ export function getPublicOriginFromRequest(req: Request): string {
   return `${proto}://${host}`;
 }
 
+const VERCEL_TEAM_SUFFIX = "-cobalt-6bf3882b.vercel.app";
+const isPreviewEnv = process.env.VERCEL_ENV === "preview";
+
+/**
+ * Returns the request's public origin only if it matches our own canonical
+ * host or, on preview deploys, a Cobalt-team Vercel preview URL. Anything
+ * else (spoofed Host / X-Forwarded-Host) returns undefined so callers can
+ * fall back to a static env-configured URL instead of trusting attacker input.
+ */
+export function getTrustedPublicOriginFromRequest(
+  req: Request,
+  canonicalHost: string,
+): string | undefined {
+  const origin = getPublicOriginFromRequest(req);
+  try {
+    const { host } = new URL(origin);
+    if (host === canonicalHost) {
+      return origin;
+    }
+    if (isPreviewEnv && host.endsWith(VERCEL_TEAM_SUFFIX)) {
+      return origin;
+    }
+  } catch {
+    // Malformed URL — fall through to undefined.
+  }
+  return undefined;
+}
+
 function clientIdFromClaims(claims: Pick<McpAccessTokenPayload, "aud" | "azp">): string {
   if (typeof claims.azp === "string") {
     return claims.azp;

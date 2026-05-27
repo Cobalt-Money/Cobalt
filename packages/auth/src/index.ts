@@ -117,6 +117,24 @@ const trustedOrigins = [
   ...env.TRUSTED_ORIGINS_EXTRA,
 ];
 
+// Vercel preview deployments get a unique URL per branch
+// (e.g. cobalt-web-git-<branch>-cobalt-6bf3882b.vercel.app), so a single
+// static baseURL/CORS origin can't match every PR. Better Auth's dynamic
+// baseURL validates the incoming Host header against allowedHosts patterns
+// and auto-adds matches to trustedOrigins.
+//
+// The vercel.app wildcard is only added on preview deploys — prod is left
+// strict so even a bug in the suffix scoping can't reach the prod surface.
+// Suffix is `-cobalt-6bf3882b.vercel.app` (private team slug), NOT bare
+// `*.vercel.app`: attackers can deploy evil.vercel.app but can't match the
+// team slug.
+const oauthIssuerHost = new URL(env.BETTER_AUTH_URL).host;
+const baseUrlAllowedHosts = [
+  oauthIssuerHost,
+  ...env.TRUSTED_ORIGINS_EXTRA.map((origin) => new URL(origin).host),
+  ...(process.env.VERCEL_ENV === "preview" ? ["*-cobalt-6bf3882b.vercel.app"] : []),
+];
+
 export const auth = betterAuth({
   account: {
     accountLinking: {
@@ -138,7 +156,11 @@ export const auth = betterAuth({
       secure: isSecureOrigin,
     },
   },
-  baseURL: env.BETTER_AUTH_URL,
+  baseURL: {
+    allowedHosts: baseUrlAllowedHosts,
+    fallback: env.BETTER_AUTH_URL,
+    protocol: "https",
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,

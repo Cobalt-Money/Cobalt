@@ -1,5 +1,6 @@
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { env } from "@cobalt-web/env/server";
 import { createLinkTokenForUpdate } from "@cobalt-web/server-data/providers/plaid/link/actions";
 import { getAccessTokenForItem } from "@cobalt-web/server-data/providers/plaid/link/queries";
 import {
@@ -12,8 +13,11 @@ import { start } from "workflow/api";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
+import { getTrustedPublicOriginFromRequest } from "../../../mcp/handle-mcp-request.js";
 import { plaidAddAccountWorkflow } from "../../../workflows/plaid/sync/workflow.js";
 import { requireAuth } from "../middleware.js";
+
+const canonicalAuthHost = new URL(env.BETTER_AUTH_URL).host;
 
 /** Opaque workflow-resume bearer. 256-bit random, base64url, prefixed for log grep. */
 function generateHookToken(): string {
@@ -60,7 +64,13 @@ const updateRouter = createApp().openapi(updateLinkTokenRoute, async (c) => {
   // ApiError throws bubble: 404 plaid_item_not_found from getAccessTokenForItem,
   // 502 plaid_upstream_failed / link_token_failed from createLinkTokenForUpdate.
   const accessToken = await getAccessTokenForItem(userId, plaidItemId);
-  const tokenResult = await createLinkTokenForUpdate(accessToken, userId, "reauth");
+  // Same trusted-origin guard as link.ts — never let a spoofed Host header
+  // redirect Plaid webhooks. Falls back to env.PLAID_WEBHOOK_URL on mismatch.
+  const trustedOrigin = getTrustedPublicOriginFromRequest(c.req.raw, canonicalAuthHost);
+  const webhookUrl = trustedOrigin ? `${trustedOrigin}/webhooks/plaid` : undefined;
+  const tokenResult = await createLinkTokenForUpdate(accessToken, userId, "reauth", {
+    webhookUrl,
+  });
   const hookToken = generateHookToken();
   const run = await start(plaidAddAccountWorkflow, [
     {

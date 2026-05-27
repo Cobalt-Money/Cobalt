@@ -79,7 +79,13 @@ describe("plaid link route — tier gate", () => {
     canAddMock.mockResolvedValue(true);
     const res = await postCreate({});
     expect(res.status).toBe(200);
-    expect(createLinkTokenMock).toHaveBeenCalledWith("user1", { routingNumber: null });
+    expect(createLinkTokenMock).toHaveBeenCalledWith("user1", {
+      routingNumber: null,
+      // In tests the Hono internal request origin doesn't match the canonical
+      // auth host, so the trusted-origin guard falls back to undefined and
+      // actions.ts uses env.PLAID_WEBHOOK_URL.
+      webhookUrl: undefined,
+    });
     expect(startMock).toHaveBeenCalledTimes(1);
   });
 

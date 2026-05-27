@@ -1,4 +1,5 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { env } from "@cobalt-web/env/server";
 import {
   createLinkToken,
   createLinkTokenForUpdate,
@@ -20,8 +21,11 @@ import { resumeHook, start } from "workflow/api";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
+import { getTrustedPublicOriginFromRequest } from "../../../mcp/handle-mcp-request.js";
 import { plaidAddAccountWorkflow } from "../../../workflows/plaid/sync/workflow.js";
 import { requireAuth, requireNotDemo } from "../middleware.js";
+
+const canonicalAuthHost = new URL(env.BETTER_AUTH_URL).host;
 
 /** Opaque workflow-resume bearer. 256-bit random, base64url, prefixed for log grep. */
 function generateHookToken(): string {
@@ -104,6 +108,13 @@ const linkRouter = createApp()
 
     const userId = c.var.user.id;
     const insId = body.institutionId?.replace(/^plaid:/, "");
+    // Only trust the request origin if it matches our canonical host or a
+    // Cobalt-team Vercel preview URL. Otherwise (spoofed Host header from
+    // an untrusted proxy) leave undefined so actions.ts falls back to
+    // env.PLAID_WEBHOOK_URL. Without this, an attacker could redirect Plaid
+    // Item webhooks to a server they control by spoofing X-Forwarded-Host.
+    const trustedOrigin = getTrustedPublicOriginFromRequest(c.req.raw, canonicalAuthHost);
+    const webhookUrl = trustedOrigin ? `${trustedOrigin}/webhooks/plaid` : undefined;
 
     // ── Scenario C: existing healthy connection at this institution.
     if (insId?.startsWith("ins_")) {
@@ -113,6 +124,7 @@ const linkRouter = createApp()
           existing.plaidAccessToken,
           userId,
           "add-accounts",
+          { webhookUrl },
         );
         const hookToken = generateHookToken();
         const run = await start(plaidAddAccountWorkflow, [
@@ -160,7 +172,7 @@ const linkRouter = createApp()
     const routingNumber = insId?.startsWith("ins_")
       ? await getInstitutionRoutingNumber(insId)
       : null;
-    const tokenResult = await createLinkToken(userId, { routingNumber });
+    const tokenResult = await createLinkToken(userId, { routingNumber, webhookUrl });
     const hookToken = generateHookToken();
     const run = await start(plaidAddAccountWorkflow, [{ hookToken, userId }]);
     return c.json(
