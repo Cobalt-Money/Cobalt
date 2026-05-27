@@ -7,7 +7,7 @@ import { ApiError } from "../../../_shared/api-error.js";
 /** Create a Plaid link token for initial account connection. */
 export async function createLinkToken(
   userId: string,
-  options?: { routingNumber?: string | null },
+  options?: { routingNumber?: string | null; webhookUrl?: string },
 ): Promise<{ link_token: string }> {
   try {
     const response = await plaidClient.linkTokenCreate({
@@ -17,7 +17,11 @@ export async function createLinkToken(
       optional_products: [Products.Investments, Products.Liabilities],
       products: [Products.Transactions],
       user: { client_user_id: userId },
-      webhook: env.PLAID_WEBHOOK_URL,
+      // Plaid stores the webhook URL per-Item at link-token creation. Deriving
+      // it from the caller's request host means PR previews receive their own
+      // webhooks instead of having all preview-created Items pinned to the
+      // prod URL (the canonical Plaid pattern for multi-env apps).
+      webhook: options?.webhookUrl ?? env.PLAID_WEBHOOK_URL,
       ...(options?.routingNumber
         ? { institution_data: { routing_number: options.routingNumber } }
         : {}),
@@ -83,6 +87,7 @@ export async function createLinkTokenForUpdate(
   accessToken: string,
   userId: string,
   mode: "add-accounts" | "add-products" | "reauth",
+  options?: { webhookUrl?: string },
 ): Promise<{ link_token: string }> {
   let itemGet: Awaited<ReturnType<typeof plaidClient.itemGet>>;
   try {
@@ -100,7 +105,7 @@ export async function createLinkTokenForUpdate(
     country_codes: [CountryCode.Us],
     language: "en",
     user: { client_user_id: userId },
-    webhook: env.PLAID_WEBHOOK_URL,
+    webhook: options?.webhookUrl ?? env.PLAID_WEBHOOK_URL,
   };
 
   if (mode === "add-accounts") {

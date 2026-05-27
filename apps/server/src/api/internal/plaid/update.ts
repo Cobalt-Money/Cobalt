@@ -12,6 +12,7 @@ import { start } from "workflow/api";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
+import { getPublicOriginFromRequest } from "../../../mcp/handle-mcp-request.js";
 import { plaidAddAccountWorkflow } from "../../../workflows/plaid/sync/workflow.js";
 import { requireAuth } from "../middleware.js";
 
@@ -60,7 +61,10 @@ const updateRouter = createApp().openapi(updateLinkTokenRoute, async (c) => {
   // ApiError throws bubble: 404 plaid_item_not_found from getAccessTokenForItem,
   // 502 plaid_upstream_failed / link_token_failed from createLinkTokenForUpdate.
   const accessToken = await getAccessTokenForItem(userId, plaidItemId);
-  const tokenResult = await createLinkTokenForUpdate(accessToken, userId, "reauth");
+  const webhookUrl = `${getPublicOriginFromRequest(c.req.raw)}/webhooks/plaid`;
+  const tokenResult = await createLinkTokenForUpdate(accessToken, userId, "reauth", {
+    webhookUrl,
+  });
   const hookToken = generateHookToken();
   const run = await start(plaidAddAccountWorkflow, [
     {

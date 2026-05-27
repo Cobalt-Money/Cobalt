@@ -79,7 +79,10 @@ describe("plaid link route — tier gate", () => {
     canAddMock.mockResolvedValue(true);
     const res = await postCreate({});
     expect(res.status).toBe(200);
-    expect(createLinkTokenMock).toHaveBeenCalledWith("user1", { routingNumber: null });
+    expect(createLinkTokenMock).toHaveBeenCalledWith("user1", {
+      routingNumber: null,
+      webhookUrl: expect.stringMatching(/\/webhooks\/plaid$/),
+    });
     expect(startMock).toHaveBeenCalledTimes(1);
   });
 

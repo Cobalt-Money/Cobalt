@@ -1,4 +1,5 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { getPublicOriginFromRequest } from "../../../mcp/handle-mcp-request.js";
 import {
   createLinkToken,
   createLinkTokenForUpdate,
@@ -104,6 +105,7 @@ const linkRouter = createApp()
 
     const userId = c.var.user.id;
     const insId = body.institutionId?.replace(/^plaid:/, "");
+    const webhookUrl = `${getPublicOriginFromRequest(c.req.raw)}/webhooks/plaid`;
 
     // ── Scenario C: existing healthy connection at this institution.
     if (insId?.startsWith("ins_")) {
@@ -113,6 +115,7 @@ const linkRouter = createApp()
           existing.plaidAccessToken,
           userId,
           "add-accounts",
+          { webhookUrl },
         );
         const hookToken = generateHookToken();
         const run = await start(plaidAddAccountWorkflow, [
@@ -160,7 +163,7 @@ const linkRouter = createApp()
     const routingNumber = insId?.startsWith("ins_")
       ? await getInstitutionRoutingNumber(insId)
       : null;
-    const tokenResult = await createLinkToken(userId, { routingNumber });
+    const tokenResult = await createLinkToken(userId, { routingNumber, webhookUrl });
     const hookToken = generateHookToken();
     const run = await start(plaidAddAccountWorkflow, [{ hookToken, userId }]);
     return c.json(
