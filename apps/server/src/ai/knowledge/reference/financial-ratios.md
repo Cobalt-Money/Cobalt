@@ -51,7 +51,7 @@ Each block: formula, inputs (`cobalt.*` data feed), interpretation, gotchas.
 
 ### Savings rate
 
-```
+```text
 savingsRate = (contributions + employer_match) / gross_income
 ```
 
@@ -61,7 +61,7 @@ savingsRate = (contributions + employer_match) / gross_income
 
 ### Emergency fund coverage (months of expenses)
 
-```
+```text
 coverageMonths = liquid_assets / avg_monthly_essential_expenses
 ```
 
@@ -71,7 +71,7 @@ coverageMonths = liquid_assets / avg_monthly_essential_expenses
 
 ### Liquidity ratio
 
-```
+```text
 liquidityRatio = liquid_assets / monthly_expenses
 ```
 
@@ -79,7 +79,7 @@ liquidityRatio = liquid_assets / monthly_expenses
 
 ### Debt-to-Income (DTI)
 
-```
+```text
 front-end DTI = housing_PITI / gross_monthly_income
 back-end DTI  = (housing_PITI + all_other_debt_min_payments) / gross_monthly_income
 ```
@@ -90,7 +90,7 @@ back-end DTI  = (housing_PITI + all_other_debt_min_payments) / gross_monthly_inc
 
 ### Net worth growth rate
 
-```
+```text
 nwGrowthRate_yoy = (NW_now - NW_year_ago) / NW_year_ago
 ```
 
@@ -99,7 +99,7 @@ nwGrowthRate_yoy = (NW_now - NW_year_ago) / NW_year_ago
 
 ### Expense ratio (fund)
 
-```
+```text
 expenseRatio = annual_fund_expenses / fund_assets
 ```
 
@@ -108,7 +108,7 @@ expenseRatio = annual_fund_expenses / fund_assets
 
 ### Sharpe ratio (intro)
 
-```
+```text
 sharpe = (portfolio_return - risk_free_rate) / portfolio_stdev
 ```
 
@@ -117,7 +117,7 @@ sharpe = (portfolio_return - risk_free_rate) / portfolio_stdev
 
 ### P/E ratio
 
-```
+```text
 P/E = price_per_share / earnings_per_share
 ```
 
@@ -126,13 +126,13 @@ P/E = price_per_share / earnings_per_share
 
 ### Dividend yield
 
-```
+```text
 divYield = annual_dividends_per_share / price_per_share
 ```
 
 ### Expense-to-income ratio
 
-```
+```text
 expRatio = monthly_expenses / monthly_take_home
 ```
 
@@ -141,7 +141,7 @@ expRatio = monthly_expenses / monthly_take_home
 
 ### Retirement readiness — income replacement
 
-```
+```text
 replacementRate = retirement_income / preretirement_income
 ```
 
@@ -150,7 +150,7 @@ replacementRate = retirement_income / preretirement_income
 
 ### 25× rule (FI target)
 
-```
+```text
 fiNumber = annual_expenses_in_retirement * 25
 ```
 
@@ -159,7 +159,7 @@ fiNumber = annual_expenses_in_retirement * 25
 
 ### 4% rule (withdrawal)
 
-```
+```text
 year1_withdrawal = portfolio_value * 0.04   # adjust subsequent years for inflation
 ```
 
@@ -168,7 +168,7 @@ year1_withdrawal = portfolio_value * 0.04   # adjust subsequent years for inflat
 
 ### Housing cost 28/36 rule
 
-```
+```text
 front-end ≤ 28% of gross monthly income
 back-end  ≤ 36% of gross monthly income
 ```
@@ -177,7 +177,7 @@ back-end  ≤ 36% of gross monthly income
 
 ### LTV (Loan-to-Value)
 
-```
+```text
 LTV = loan_balance / property_value
 ```
 
@@ -185,7 +185,7 @@ LTV = loan_balance / property_value
 
 ### Cap rate (rental)
 
-```
+```text
 capRate = NOI / property_value
 NOI = gross_rental_income - operating_expenses   # excludes debt service
 ```
@@ -195,7 +195,7 @@ NOI = gross_rental_income - operating_expenses   # excludes debt service
 
 ### Cash-on-cash return (rental)
 
-```
+```text
 cashOnCash = annual_pre_tax_cash_flow / total_cash_invested
 ```
 

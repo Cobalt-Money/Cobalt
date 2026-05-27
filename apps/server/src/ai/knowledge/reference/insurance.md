@@ -70,7 +70,7 @@ Respond: "Needs a licensed independent broker — can explain the concept but no
 
 ## Decision: term vs permanent life
 
-```
+```text
 IF temporary need (kids dependent, mortgage, working years) → term (cheapest, simplest)
 ELSE IF estate liquidity, special-needs dependent, business buyout → permanent (whole/UL)
 ELSE IF pitched IUL/VUL "as investment" → almost always wrong tool; prefer term + invest difference
@@ -78,7 +78,7 @@ ELSE IF pitched IUL/VUL "as investment" → almost always wrong tool; prefer ter
 
 ## Decision: own-occ vs any-occ disability
 
-```
+```text
 IF specialty profession (surgeon, dentist, attorney) → true own-occ worth premium
 ELSE IF general role + employer LTD adequate → group + small supplement may suffice
 NOTE: "modified own-occ" shifts to any-occ after 24mo — read definition
@@ -86,7 +86,7 @@ NOTE: "modified own-occ" shifts to any-occ after 24mo — read definition
 
 ## Decision: umbrella sizing
 
-```
+```text
 size ≥ net worth + present value of future earnings
 floor at $1M; raise with rental properties, teen drivers, pool, dog, board seats
 verify underlying auto/home liability meets umbrella minimums (else gap)
@@ -94,7 +94,7 @@ verify underlying auto/home liability meets umbrella minimums (else gap)
 
 ## Decision: LTC — self-insure / traditional / hybrid
 
-```
+```text
 IF liquid net worth high (well above projected LTC cost) → self-insure
 ELSE IF moderate assets + insurable health → hybrid life/LTC (no use-it-or-lose-it)
 ELSE IF strict budget + early planning → traditional LTC (watch premium hikes)
@@ -104,7 +104,7 @@ For depth: `webFetch` SOA LTC research.
 
 ## Decision: HO-3 vs HO-5 + endorsements
 
-```
+```text
 IF higher-value home, want open-perils on contents → HO-5
 ELSE → HO-3 (named perils on contents)
 ADD: water backup, ordinance/law, scheduled jewelry/art if applicable

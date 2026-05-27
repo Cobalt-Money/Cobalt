@@ -74,7 +74,7 @@ Respond: "Needs a licensed CFP, CPA, or estate attorney — can explain the conc
 
 ## Decision: Roth conversion
 
-```
+```text
 IF current marginal rate < expected retirement marginal rate → convert (now cheaper)
 IF in a low-income year (sabbatical, early retire, gap before SS/RMD) → convert (bracket fill)
 IF will be in IRMAA / ACA subsidy cliff → model carefully, may avoid
@@ -86,7 +86,7 @@ For depth: `webFetch` Kitces Roth conversion archive.
 
 ## Decision: backdoor Roth (pro-rata trap)
 
-```
+```text
 IF any pre-tax IRA balance (Trad / SEP / SIMPLE) on Dec 31
   → pro-rata applies — most of conversion is taxable
   → either: (a) roll pre-tax IRA into employer 401(k) first, OR (b) skip strategy
@@ -97,7 +97,7 @@ For depth: `webFetch` IRS Pub 590-A + Kitces.
 
 ## Decision: asset location
 
-```
+```text
 tax-inefficient (REITs, bonds, active funds w/ high turnover) → Trad 401(k) / IRA
 tax-efficient (broad index ETFs, muni bonds) → taxable
 high-growth long-horizon (small-cap, intl small-value, crypto) → Roth

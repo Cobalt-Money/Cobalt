@@ -77,7 +77,7 @@ Respond: "Needs a licensed CPA — can explain the concept but not your number."
 
 ## Decision: S-corp election
 
-```
+```text
 IF net SE consistently > ~$80k AND owner-operator
   → analyze S-corp election (save on SE tax via reasonable salary + distributions)
   → adds payroll cost, separate return (1120-S), state nuance → CPA gate
@@ -88,7 +88,7 @@ For depth: `webFetch` Pub 334 + escalate to CPA.
 
 ## Decision: solo 401(k) vs SEP
 
-```
+```text
 IF no employees AND want Roth option / loans → solo 401(k)
 IF want max simplicity, no plan doc, low admin → SEP IRA
 both let employer-side contributions up to ~25% of net SE

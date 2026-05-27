@@ -66,7 +66,7 @@ Respond: "Needs a licensed attorney — can explain the concept but not your num
 
 ## Decision: debt payoff vs invest
 
-```
+```text
 IF debt APR > expected long-run equity return (real, after-tax) → pay debt first
 ELIF debt is high-APR unsecured (CC) → ALWAYS pay first (after match)
 ELIF debt is low-fixed mortgage AND low tax bracket → invest first
@@ -78,7 +78,7 @@ For depth: `webFetch` Bogleheads page.
 
 ## Decision: avalanche vs snowball
 
-```
+```text
 IF user is rate-motivated, disciplined → avalanche (highest APR first)
 ELIF user needs motivation wins → snowball (smallest balance first)
 ELSE → avalanche default
@@ -86,7 +86,7 @@ ELSE → avalanche default
 
 ## Decision: refi
 
-```
+```text
 IF (new_rate < current_rate by meaningful margin) AND (months_to_breakeven < expected_tenure) → refi
 ELIF cash-out for high-APR debt consolidation AND user disciplined → consider
 ELSE → skip

@@ -75,7 +75,7 @@ Respond: "Needs a tax pro or financial aid office — can explain the concept bu
 
 ## Decision: account selection
 
-```
+```text
 IF goal = college (and maybe limited K-12) + want tax-free growth + maybe state deduction
   → 529 plan (parent-owned if FAFSA matters)
 ELSE IF want broad K-12 + investment flexibility + income under ESA limit
@@ -91,7 +91,7 @@ For depth: `webFetch` SavingForCollege and IRS Pub 970.
 
 ## Decision: AOTC vs LLC
 
-```
+```text
 IF first 4 years undergrad + at least half-time + no felony drug conviction + income under phase-out
   → AOTC (partially refundable, per-student)
 ELSE IF grad school OR part-time OR beyond 4 yrs OR job-skills course

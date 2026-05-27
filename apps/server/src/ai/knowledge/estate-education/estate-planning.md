@@ -79,7 +79,7 @@ Respond: "Needs a licensed estate attorney — can explain the concept but not d
 
 ## Decision: will vs revocable living trust
 
-```
+```text
 IF estate small + simple + no real estate in multiple states + privacy not concern
   → will + beneficiary designations + TOD/POD likely sufficient
 ELSE IF real estate in 2+ states OR privacy matters OR incapacity planning priority OR blended family
@@ -91,7 +91,7 @@ For depth: `webFetch` AARP estate planning guide.
 
 ## Decision: beneficiary designation conflict
 
-```
+```text
 IF account has named beneficiary (retirement, life insurance, TOD/POD)
   → beneficiary form CONTROLS, will is ignored for that asset
 ELSE → asset goes through probate per will (or intestacy if no will)

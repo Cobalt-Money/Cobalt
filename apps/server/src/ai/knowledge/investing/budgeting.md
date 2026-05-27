@@ -65,7 +65,7 @@ Respond: "Needs a licensed CFP or attorney — can explain the concept but not y
 
 ## Decision: emergency fund size
 
-```
+```text
 IF dual income + stable W-2 + low fixed costs → lower end
 ELIF single income OR variable income (1099, commission) → higher end
 ELIF self-employed / sole earner / dependents → highest end
@@ -76,7 +76,7 @@ For depth: `webFetch` Bogleheads emergency fund.
 
 ## Decision: budget framework
 
-```
+```text
 IF user wants simple → 50/30/20 (needs/wants/savings+debt)
 ELIF user wants control → zero-based (every dollar assigned)
 ELIF user has irregular income → percentage-based on each paycheck

@@ -82,7 +82,7 @@ Respond: "Needs a licensed CPA or CFP — can explain the concept but not your n
 
 ## Decision: Roth vs Traditional
 
-```
+```text
 IF current marginal bracket < expected retirement bracket → Roth
 ELIF current marginal bracket > expected retirement bracket → Traditional
 ELIF early career / low bracket / long horizon → Roth bias
@@ -94,7 +94,7 @@ For depth: `webFetch` IRS Pub 590-A.
 
 ## Decision: Social Security claiming age
 
-```
+```text
 IF expect short longevity OR need cash flow → claim earlier (reduced benefit)
 ELIF expect normal/long longevity AND can defer → delay toward 70 for delayed credits
 ELIF lower-earning spouse with higher-earning partner → coordinate; lower may claim earlier
@@ -105,7 +105,7 @@ For depth: `webFetch` SSA benefits planner.
 
 ## Decision: withdrawal sequence (default)
 
-```
+```text
 1. RMDs first (mandatory)
 2. Taxable accounts (use basis, harvest gains at low brackets)
 3. Tax-deferred (401k/Trad IRA) — manage bracket fill

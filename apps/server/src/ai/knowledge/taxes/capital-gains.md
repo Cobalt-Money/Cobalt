@@ -73,7 +73,7 @@ Respond: "Needs a licensed CPA — can explain the concept but not your number."
 
 ## Decision: short vs long term
 
-```
+```text
 holding_period = sale_date − acquisition_date − 1 day
 IF holding_period > 365 days → LTCG (preferential rates + NIIT)
 ELSE → STCG (ordinary brackets + NIIT)
@@ -85,7 +85,7 @@ For depth: `webFetch` IRS Topic 409.
 
 ## Decision: home sale §121
 
-```
+```text
 IF owned ≥2 of last 5y AND used as primary ≥2 of last 5y AND no §121 in prior 2y
   → exclude single/MFJ cap of gain
 ELSE → partial exclusion only if move from job/health/unforeseen

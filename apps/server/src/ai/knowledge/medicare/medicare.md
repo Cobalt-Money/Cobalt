@@ -68,7 +68,7 @@ Respond: "Needs a SHIP counselor or licensed broker — can explain the concept 
 
 ## Decision: delay Part B at 65 while working?
 
-```
+```text
 IF employer has ≥20 employees AND coverage creditable → can delay Part B; 8-month SEP after employment ends
 ELSE → enroll at IEP to avoid lifetime 10%/yr Part B penalty
 ```
@@ -77,7 +77,7 @@ For depth: `webFetch` Medicare.gov "Working past 65".
 
 ## Decision: Original + Medigap vs Medicare Advantage
 
-```
+```text
 IF want any provider nationwide, predictable OOP, willing to pay Medigap premium → Original + Medigap + Part D
 ELSE IF OK with network, want extras (dental/vision/gym), lower premium → Advantage
 NOTE: switching FROM Advantage TO Medigap later may require medical underwriting (state-dependent)
@@ -87,7 +87,7 @@ For depth: `webFetch` KFF Medicare comparison.
 
 ## Decision: IRMAA appeal worth filing?
 
-```
+```text
 IF life-changing event (retirement, divorce, spouse death, work stoppage, pension loss) → file SSA-44
 ELSE IF one-off MAGI spike (Roth conversion, home sale) → cannot appeal; plan ahead next time
 ```

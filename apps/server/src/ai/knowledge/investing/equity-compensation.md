@@ -77,7 +77,7 @@ Respond: "Needs a licensed CPA or attorney — can explain the concept but not y
 
 ## Decision: ISO exercise + hold vs exercise + sell
 
-```
+```text
 IF exercise-and-sell same year → no AMT preference; ordinary income on bargain element (disqualifying)
 ELIF exercise-and-hold → AMT preference on bargain element; potential AMT due
   → MUST refer to CPA for multi-year AMT modeling
@@ -88,7 +88,7 @@ For depth: `webFetch` IRS Topic 427.
 
 ## Decision: §83(b) election
 
-```
+```text
 IF early-exercise OR restricted stock grant AND FMV ≈ strike (low spread) → strong case to file
 ELIF FMV >> strike → 83(b) creates immediate ordinary income; usually skip unless strong upside thesis
 ELSE → consult CPA before 30-day deadline
@@ -98,7 +98,7 @@ For depth: `webFetch` IRS §83(b) page.
 
 ## Decision: RSU sell-at-vest vs hold
 
-```
+```text
 IF would-not-buy-equivalent-with-cash (concentration test) → sell at vest
 ELIF strong restricted view AND under concentration limit → hold
 ELSE → default sell at vest, redeploy diversified

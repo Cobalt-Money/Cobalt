@@ -69,7 +69,7 @@ Respond: "Needs a licensed CPA — can explain the concept but not your number."
 
 ## Decision: residency
 
-```
+```text
 domicile = where you intend to make permanent home (one state only)
 statutory resident
   IF >183 days physical presence AND permanent place of abode in state → resident
@@ -82,7 +82,7 @@ For depth: `webFetch` state DOR (sources above) or Tax Foundation.
 
 ## Decision: conformity
 
-```
+```text
 "rolling" conformity (auto-follow IRC) → most state changes track federal
 "static" conformity (snapshot date) → may decouple from recent fed changes
 common decouplings: bonus depreciation, §199A QBI, SALT cap workaround (PTET)
@@ -94,7 +94,7 @@ For depth: `webFetch` Tax Foundation conformity tracker + state DOR.
 
 - `[HARD]` Domicile = exactly one state at a time.
 - `[HARD]` Convenience-of-employer (NY/CT/PA/NJ/DE) taxes remote workers as if in employer's state — STOP gate.
-- `[HARD]` No-income-tax state still hits via property + sales + sometimes franchise (TX margin, WA B&O, NH on int/div).
+- `[HARD]` "No-income-tax" state still hits via property + sales + sometimes franchise / gross receipts (TX margin, WA B&O). NH fully repealed its interest/dividends tax effective tax year 2025 — verify current treatment via `webFetch` of NH DRA before quoting.
 - `[HARD]` State residency rules differ from federal — file the state form, not federal.
 - `[HARD]` Resident credit for tax paid to another state prevents most double taxation (claim on resident-state return).
 - `[RULE]` Moving for tax: clean break (sell house, switch licenses, register to vote, move family) — paper trail matters.

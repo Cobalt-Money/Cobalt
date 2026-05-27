@@ -68,7 +68,7 @@ Respond: "Needs a licensed CFP — can explain the concept but not your number."
 
 ## Decision: ETF vs mutual fund
 
-```
+```text
 IF taxable account + identical strategy → ETF (tax efficiency)
 ELIF 401k menu only offers mutual funds → use mutual fund
 ELIF auto-invest small recurring contributions → mutual fund (fractional, no spread)
@@ -79,7 +79,7 @@ For depth: `webFetch` Morningstar fund glossary.
 
 ## Decision: rebalance trigger
 
-```
+```text
 IF drift > absolute band on major asset class → rebalance
 ELIF calendar (annual/semi) AND any drift → rebalance
 ELSE → leave alone

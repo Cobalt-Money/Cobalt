@@ -73,7 +73,7 @@ Respond: "Needs a licensed CPA — can explain the concept but not your number."
 
 ## Decision: std vs itemize
 
-```
+```text
 IF MFS AND spouse itemizes → must itemize
 ELSE IF (mortgage interest + SALT(capped) + charity + medical>7.5%AGI) > standard
   → itemize
@@ -84,7 +84,7 @@ For depth: `webFetch` IRS Pub 17 §12 (Itemized Deductions).
 
 ## Decision: filing status
 
-```
+```text
 unmarried
   IF supporting qualifying dependent >½ year AND paid >½ household cost → HOH
   ELSE → single

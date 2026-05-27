@@ -76,7 +76,7 @@ Respond: "Needs a CPA or RE attorney — can explain the concept but not your nu
 
 ## Decision: rent vs buy
 
-```
+```text
 IF planned hold <5y → rent likely wins (transaction costs ~8–10% of price)
 ELSE IF P&I+T&I+maint > rent × 1.3 AND no appreciation conviction → rent
 ELSE compute breakeven via NYT-style calc (opportunity cost on down payment matters)
@@ -86,7 +86,7 @@ For depth: `webFetch` CFPB Owning a Home.
 
 ## Decision: 15 vs 30 year mortgage
 
-```
+```text
 IF disciplined saver AND cash flow tight → 30y, invest the diff
 ELSE IF want forced amortization, near retirement, want title clear → 15y
 NOTE: 15y rate typically lower; total interest much less
@@ -94,14 +94,14 @@ NOTE: 15y rate typically lower; total interest much less
 
 ## Decision: pay points?
 
-```
+```text
 IF planned hold > point-breakeven (cost / monthly savings) → buy points
 ELSE → take higher rate, keep cash
 ```
 
 ## Decision: HELOC vs cash-out refi
 
-```
+```text
 IF current mortgage rate << market → HELOC (don't blow up the low rate)
 ELSE IF need lump sum AND market rate ≤ current → cash-out refi
 HELOC = variable, second lien, flexible draw
@@ -110,7 +110,7 @@ Cash-out = fixed (usually), resets clock
 
 ## Decision: §121 exclusion eligible?
 
-```
+```text
 IF owned ≥2 of last 5y AND used as primary ≥2 of last 5y AND no §121 use in prior 2y → YES (up to single/MFJ cap)
 ELSE check partial exclusion (job/health/unforeseen) per Pub 523
 ```
@@ -119,7 +119,7 @@ For depth: `webFetch` IRS Pub 523.
 
 ## Decision: vacation home — personal or rental?
 
-```
+```text
 IF rented <15 days/yr → income tax-free, no expense deduction (14-day rule)
 ELSE IF personal use > 14 days OR 10% of rental days → mixed-use, expenses limited
 ELSE → rental property (Schedule E, full depreciation, recapture on sale)
@@ -131,7 +131,7 @@ For depth: `webFetch` IRS Pub 527.
 
 - `[HARD]` Never quote conforming/FHA limits, §121 exclusion amount, or mortgage interest cap from memory — `webFetch`.
 - `[HARD]` 1031: never touch sale proceeds; QI must hold. 45-day identify / 180-day close. Like-kind = investment/business real property only.
-- `[RULE]` Depreciation recapture on rental sale taxed at ordinary income (capped) — even if you didn't claim depreciation, IRS assumes you did ("allowed or allowable").
+- `[HARD]` Depreciation recapture on residential rental disposition = **unrecaptured §1250 gain**, taxed at max 25% (not ordinary brackets). §1245 ordinary-income recapture applies to other asset classes (personal property, some non-residential). Applies whether or not you actually claimed depreciation ("allowed or allowable"). `webFetch` IRS Pub 544 / Pub 527 for details.
 - `[RULE]` PMI auto-terminates at LTV thresholds set by HPA; borrower can request earlier removal at lower LTV with appraisal.
 - `[RULE]` Property tax appeal: deadlines are local + short; comps + condition photos > opinions.
 

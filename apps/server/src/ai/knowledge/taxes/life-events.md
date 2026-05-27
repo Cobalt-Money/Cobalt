@@ -68,7 +68,7 @@ No event-specific calculator wired. Use as branching map → hand off to `taxes-
 
 ## Decision: filing status after event
 
-```
+```text
 married on Dec 31 → MFJ (default) or MFS
 divorced/separated by Dec 31 (decree final) → single OR HOH if qualifying dep + >½ household
 spouse died THIS year → MFJ for year of death
@@ -80,7 +80,7 @@ For depth: `webFetch` IRS Pub 501.
 
 ## Decision: inheritance basis
 
-```
+```text
 inherited security/property → step-up to FMV at date of death (or alt valuation +6mo)
 inherited Traditional IRA → ordinary income on withdraw; SECURE Act 10-yr drain (most non-spouse beneficiaries)
 inherited Roth IRA → tax-free on qualified withdraw; still 10-yr drain

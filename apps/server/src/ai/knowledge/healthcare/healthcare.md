@@ -70,7 +70,7 @@ Respond: "Needs a licensed navigator/broker — can explain the concept but not 
 
 ## Decision: HSA vs FSA
 
-```
+```text
 IF on HDHP AND no disqualifying coverage → HSA preferred (portable, invests, rolls over)
 ELSE IF employer offers FSA AND predictable med spend → FSA (use-it-or-lose-it; check grace/carryover)
 ELSE IF employer-funded only → HRA (employer rules govern)
@@ -80,7 +80,7 @@ For depth: `webFetch` IRS Pub 969.
 
 ## Decision: COBRA vs marketplace after job loss
 
-```
+```text
 IF employer subsidy covers most premium → COBRA short-term
 ELSE IF expected MAGI qualifies for PTC → marketplace SEP (60-day window)
 ELSE compare total cost (premium + deductible exposure) both routes
@@ -90,7 +90,7 @@ For depth: `webFetch` HealthCare.gov SEP rules.
 
 ## Decision: healthsharing ministry plans
 
-```
+```text
 ALWAYS warn: not insurance, no ACA guarantees, pre-existing exclusions common,
 no state DOI oversight, sharing not legally enforceable.
 ```
