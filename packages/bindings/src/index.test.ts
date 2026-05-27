@@ -1,7 +1,9 @@
+import * as financial from "financial";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { bindRoutes, bindingsToToolMap, buildShim, route, runWithBindings } from "./index.js";
+import { STDLIB_BUNDLE } from "./stdlib-bundle.js";
 
 describe("buildShim", () => {
   it("groups <group>_<method> names under a root namespace", () => {
@@ -123,5 +125,37 @@ describe("runWithBindings", () => {
     expect(receivedBindings.accounts_listAll).toBeDefined();
     expect(result.stdout).toContain("log line");
     expect(result.stdout).toContain('"hello": 1');
+  });
+
+  it("prepends the calc stdlib + splices it onto the cobalt root", async () => {
+    let receivedCode = "";
+    const driver = {
+      createContext: () =>
+        Promise.resolve({
+          dispose: () => Promise.resolve(),
+          execute: (code: string) => {
+            receivedCode = code;
+            return Promise.resolve({ logs: [], success: true, value: null });
+          },
+        }),
+    };
+    await runWithBindings([], "console.log(cobalt.calc.tvm.fv(0.05/12, 120, -100, -100));", {
+      driver,
+    });
+    // Bundle IIFE is injected ahead of the shim and calc is spliced onto the root.
+    expect(receivedCode).toContain("__cobaltStdlib");
+    expect(receivedCode).toContain("cobalt.calc = globalThis.__cobaltStdlib;");
+    // STDLIB_BUNDLE itself is a self-executing IIFE.
+    expect(STDLIB_BUNDLE.startsWith("(()=>")).toBeTruthy();
+    expect(STDLIB_BUNDLE.length).toBeGreaterThan(1000);
+  });
+
+  it("bundles the `financial` lib so fv matches the numpy-financial reference", () => {
+    // The exact lib that gets bundled into STDLIB_BUNDLE; correctness here =
+    // correctness of what ships to the isolate. Reference: numpy-financial
+    // fv(0.05/12, 120, -100, -100) ≈ 15692.93 ($100/mo for 10y at 5% APR).
+    const fv = financial.fv(0.05 / 12, 120, -100, -100);
+    expect(fv).toBeGreaterThan(15_692);
+    expect(fv).toBeLessThan(15_694);
   });
 });
