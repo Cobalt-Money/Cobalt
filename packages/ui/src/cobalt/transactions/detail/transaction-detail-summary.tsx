@@ -86,7 +86,7 @@ export function TransactionDetailSummary({
 
   const { category } = transaction;
   const showLocation = shouldShowLocationSection(transaction.location);
-  const displayName = getTransactionDisplayName(transaction) || transaction.name;
+  const displayName = getTransactionDisplayName(transaction);
 
   return (
     <div className="flex flex-col gap-6">

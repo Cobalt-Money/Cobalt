@@ -39,6 +39,7 @@ interface TransactionItem {
   website: string | null;
   notes: string | null;
   counterparties?: Counterparty[] | null;
+  lockedFields?: string[] | null;
 }
 
 interface TransactionListResponse {
@@ -62,9 +63,15 @@ const dateDisplay = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-/** Mirror `getTransactionDisplayName`: prefer raw `name`, fall back to merchant. */
+/** Mirror `getTransactionDisplayName`: prefer merchant; user-edited `name` wins. */
 function displayName(tx: TransactionItem): string {
-  return tx.name?.trim() || tx.merchantName?.trim() || "";
+  const name = tx.name?.trim();
+  const merchant = tx.merchantName?.trim();
+  const userEditedName = tx.lockedFields?.includes("name");
+  if (userEditedName && name) {
+    return name;
+  }
+  return merchant || name || "";
 }
 
 /** Mirror `truncateName(_, 40)` from `transactions-table.tsx`. */

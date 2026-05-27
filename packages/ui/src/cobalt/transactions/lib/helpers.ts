@@ -12,14 +12,21 @@ export function getTransactionDisplayDateString(row: Pick<TransactionResponse, "
 }
 
 /**
- * Name shown anywhere in the app. Always prefer the row's `name`
- * (Plaid raw description or user-edited value); fall back to `merchantName`
- * only when name is empty.
+ * Name shown anywhere in the app. Prefer `merchantName` (Plaid-normalized,
+ * e.g. "Starbucks") over `name` (raw bank description, e.g. "STARBUCKS #1234")
+ * — unless the user explicitly edited `name`, in which case their value wins.
+ * `lockedFields` is the source of truth for what the user has edited.
  */
 export function getTransactionDisplayName(
-  row: Pick<TransactionResponse, "merchantName" | "name">,
+  row: Pick<TransactionResponse, "lockedFields" | "merchantName" | "name">,
 ): string {
-  return row.name?.trim() || row.merchantName?.trim() || "";
+  const name = row.name?.trim();
+  const merchant = row.merchantName?.trim();
+  const userEditedName = row.lockedFields?.includes("name");
+  if (userEditedName && name) {
+    return name;
+  }
+  return merchant || name || "";
 }
 
 /** Sort key for date column — same hierarchy as horizon (`authorizedDate` || `date`). */
