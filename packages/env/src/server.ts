@@ -18,9 +18,6 @@ export const env = createEnv({
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,
   server: {
-    /** Dedicated connection URI for the agent_readonly Postgres role (SELECT-only + RLS). Falls back to DATABASE_URL in dev. */
-    AGENT_DATABASE_URL: z.string().min(1).optional(),
-    AGENT_DB_POOL_MAX: z.coerce.number().int().min(1).max(20).default(3),
     /** Vercel AI Gateway API key. Optional — chat endpoints return 503 when absent. */
     AI_GATEWAY_API_KEY: z.string().min(1).optional(),
     /** Vercel AI Gateway model slug (e.g. anthropic/claude-haiku-4.5). */
