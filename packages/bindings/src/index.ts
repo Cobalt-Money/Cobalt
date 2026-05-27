@@ -1,6 +1,8 @@
 import type { ToolBinding } from "@tanstack/ai-code-mode";
 import { z } from "zod";
 
+import { STDLIB_BUNDLE } from "./stdlib-bundle.js";
+
 export interface Binding {
   name: string;
   description: string;
@@ -163,7 +165,16 @@ export async function runWithBindings(
   }
 
   const bindingMap = bindingsToToolMap(bindings);
-  const composedCode = `${buildShim(Object.keys(bindingMap), rootName)}\n${userCode}`;
+  // Order matters:
+  //   1. STDLIB_BUNDLE installs `globalThis.__cobaltStdlib` (calc helpers like TVM).
+  //   2. buildShim defines `const cobalt = { accounts: {...}, ... }`.
+  //   3. Splice calc onto the root so user code sees `cobalt.calc.tvm.fv(...)`.
+  const composedCode = [
+    STDLIB_BUNDLE,
+    buildShim(Object.keys(bindingMap), rootName),
+    `${rootName}.calc = globalThis.__cobaltStdlib;`,
+    userCode,
+  ].join("\n");
 
   const ctx = await driver.createContext({
     bindings: bindingMap,
