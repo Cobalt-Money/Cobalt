@@ -1,22 +1,18 @@
 import { CardContent, Card } from "@cobalt-web/ui/components/card";
 import { ACCOUNT_CATEGORY_COLORS } from "@cobalt-web/ui/lib/account-palette";
+import { AccountPicker } from "@cobalt-web/ui/cobalt/accounts/account-picker";
+import type {
+  AccountPickerAccount,
+  AccountScope,
+} from "@cobalt-web/ui/cobalt/accounts/account-picker";
 import { brokerageInstitutionBranding } from "@cobalt-web/ui/cobalt/logos/brokerage-institution-branding";
-import { InstitutionLogo } from "@cobalt-web/ui/cobalt/logos/institution-logo";
 import { Button } from "@cobalt-web/ui/components/button";
 import type { ChartConfig } from "@cobalt-web/ui/components/chart";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@cobalt-web/ui/components/dropdown-menu";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { usePrivacy } from "@cobalt-web/ui/hooks/use-privacy";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { queries } from "@cobalt-web/zero";
 import type { Row, Snapshot } from "@cobalt-web/zero";
-import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo, useState } from "react";
 import { BarChart } from "@cobalt-web/ui/components/charts/bar-chart";
@@ -71,41 +67,6 @@ type PortfolioSnapshotRow = Snapshot & {
 };
 
 // ── Account scope ─────────────────────────────────────────────────
-
-type AccountGroup = "bank" | "checking" | "savings" | "loans" | "investments";
-
-type AccountScope =
-  | { type: "all" }
-  | { type: "group"; group: AccountGroup }
-  | { type: "bank"; plaidAccountId: string }
-  | { type: "portfolio"; accountKey: string };
-
-const GROUP_LABELS: Record<AccountGroup, string> = {
-  bank: "Bank accounts",
-  checking: "Checking",
-  investments: "Investments",
-  loans: "Loans",
-  savings: "Savings",
-};
-
-interface BankAccountEntry {
-  plaidAccountId: string;
-  name: string;
-  type: string;
-  subtype?: string | null;
-  institutionName?: string | null;
-  institutionLogo?: string | null;
-  institutionUrl?: string | null;
-}
-
-interface PortfolioAccountEntry {
-  accountKey: string;
-  name: string;
-  institutionName?: string | null;
-  institutionLogo?: string | null;
-  institutionLogosExtra?: readonly string[] | null;
-  institutionUrl?: string | null;
-}
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
@@ -270,221 +231,7 @@ function buildNetWorthSeries(
     });
 }
 
-// ── Account scope picker ──────────────────────────────────────────
-
-function scopeLabel(
-  scope: AccountScope,
-  bankAccounts: BankAccountEntry[],
-  portfolioAccounts: PortfolioAccountEntry[],
-): string {
-  if (scope.type === "all") {
-    return "All accounts";
-  }
-  if (scope.type === "group") {
-    return GROUP_LABELS[scope.group];
-  }
-  if (scope.type === "bank") {
-    return bankAccounts.find((a) => a.plaidAccountId === scope.plaidAccountId)?.name ?? "Account";
-  }
-  return portfolioAccounts.find((a) => a.accountKey === scope.accountKey)?.name ?? "Account";
-}
-
-type NavSection = "bank" | "investments";
-
-function scopeNavSection(scope: AccountScope): NavSection {
-  if (scope.type === "portfolio") {
-    return "investments";
-  }
-  if (scope.type === "group" && scope.group === "investments") {
-    return "investments";
-  }
-  return "bank";
-}
-
-function NetWorthScopePicker({
-  bankAccounts,
-  portfolioAccounts,
-  scope,
-  onScopeChange,
-}: {
-  bankAccounts: BankAccountEntry[];
-  portfolioAccounts: PortfolioAccountEntry[];
-  scope: AccountScope;
-  onScopeChange: (s: AccountScope) => void;
-}) {
-  const [nav, setNav] = useState<NavSection>(() => scopeNavSection(scope));
-  const label = scopeLabel(scope, bankAccounts, portfolioAccounts);
-  const hasAccounts = bankAccounts.length > 0 || portfolioAccounts.length > 0;
-  if (!hasAccounts) {
-    return null;
-  }
-
-  const navItemClass = (active: boolean) =>
-    cn(
-      "flex w-full cursor-pointer items-center rounded-lg px-3 py-2 text-left text-xs transition-colors",
-      active
-        ? "bg-accent text-foreground font-medium"
-        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-    );
-
-  const rightItemClass = (active: boolean) =>
-    cn("rounded-lg px-3 py-2 text-xs", active && "bg-accent font-medium");
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            className="max-w-[min(15rem,calc(100vw-2.5rem))] justify-between gap-2 font-normal"
-            size="sm"
-            type="button"
-            variant="outline"
-          />
-        }
-      >
-        <span className="truncate">{label}</span>
-        <HugeiconsIcon
-          className="text-muted-foreground shrink-0"
-          icon={ArrowDown01Icon}
-          size={16}
-          strokeWidth={2}
-        />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border-0 bg-popover/98 p-0 shadow-md ring-0 backdrop-blur-sm"
-        side="bottom"
-        sideOffset={8}
-      >
-        <div className="flex min-h-[160px]">
-          {/* Left nav */}
-          <div className="flex w-36 shrink-0 flex-col gap-0.5 p-1.5">
-            <DropdownMenuItem
-              className={rightItemClass(scope.type === "all")}
-              onClick={() => onScopeChange({ type: "all" })}
-            >
-              All accounts
-            </DropdownMenuItem>
-            {bankAccounts.length > 0 && (
-              <button
-                className={navItemClass(nav === "bank")}
-                onClick={() => setNav("bank")}
-                type="button"
-              >
-                Bank accounts
-              </button>
-            )}
-            {portfolioAccounts.length > 0 && (
-              <button
-                className={navItemClass(nav === "investments")}
-                onClick={() => setNav("investments")}
-                type="button"
-              >
-                Investments
-              </button>
-            )}
-          </div>
-
-          {/* Right content */}
-          <div className="bg-muted/40 flex min-w-0 flex-1 flex-col gap-0.5 overflow-y-auto rounded-xl p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {nav === "bank" && (
-              <>
-                {(["bank", "checking", "savings", "loans"] as const).map((g) => (
-                  <DropdownMenuItem
-                    className={rightItemClass(scope.type === "group" && scope.group === g)}
-                    key={g}
-                    onClick={() => onScopeChange({ group: g, type: "group" })}
-                  >
-                    {GROUP_LABELS[g]}
-                  </DropdownMenuItem>
-                ))}
-                {bankAccounts.length > 0 && (
-                  <>
-                    <div className="border-border/40 my-1 border-t" />
-                    {bankAccounts.map((acc) => (
-                      <DropdownMenuItem
-                        className={rightItemClass(
-                          scope.type === "bank" && scope.plaidAccountId === acc.plaidAccountId,
-                        )}
-                        key={acc.plaidAccountId}
-                        onClick={() =>
-                          onScopeChange({
-                            plaidAccountId: acc.plaidAccountId,
-                            type: "bank",
-                          })
-                        }
-                      >
-                        <div className="flex min-w-0 items-center gap-2">
-                          <InstitutionLogo
-                            className="size-5 shrink-0 overflow-hidden rounded-full"
-                            institutionLogo={acc.institutionLogo}
-                            institutionName={acc.institutionName ?? acc.name}
-                            institutionUrl={acc.institutionUrl ?? null}
-                          />
-                          <span className="truncate">{acc.name}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                )}
-              </>
-            )}
-
-            {nav === "investments" && (
-              <>
-                <DropdownMenuItem
-                  className={rightItemClass(
-                    scope.type === "group" && scope.group === "investments",
-                  )}
-                  onClick={() => onScopeChange({ group: "investments", type: "group" })}
-                >
-                  All investments
-                </DropdownMenuItem>
-                {portfolioAccounts.length > 0 && (
-                  <>
-                    <div className="border-border/40 my-1 border-t" />
-                    {portfolioAccounts.map((acc) => (
-                      <DropdownMenuItem
-                        className={rightItemClass(
-                          scope.type === "portfolio" && scope.accountKey === acc.accountKey,
-                        )}
-                        key={acc.accountKey}
-                        onClick={() =>
-                          onScopeChange({
-                            accountKey: acc.accountKey,
-                            type: "portfolio",
-                          })
-                        }
-                      >
-                        <div className="flex min-w-0 items-center gap-2">
-                          <InstitutionLogo
-                            className="size-5 shrink-0 overflow-hidden rounded-full"
-                            institutionLogo={acc.institutionLogo}
-                            institutionLogosExtra={acc.institutionLogosExtra}
-                            institutionName={acc.institutionName ?? acc.name}
-                            institutionUrl={acc.institutionUrl ?? null}
-                          />
-                          <div className="min-w-0">
-                            <p className="truncate">{acc.name}</p>
-                            {acc.institutionName ? (
-                              <p className="text-muted-foreground truncate text-[10px]">
-                                {acc.institutionName}
-                              </p>
-                            ) : null}
-                          </div>
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
+// ── Connection helpers ────────────────────────────────────────────
 
 type ConnectionField = NonNullable<BankAccountRow["plaidConnection"]>;
 
@@ -497,17 +244,17 @@ function institutionFieldsFromConnection(conn: ConnectionField | null | undefine
   };
 }
 
-function bankEntryFromAccount(a: BankAccountRow): BankAccountEntry | null {
-  if (!a.name) {
-    return null;
+function bankSublabel(type: string | null | undefined, subtype: string | null | undefined): string {
+  if (type === "depository") {
+    return subtype === "savings" ? "Savings" : "Checking";
   }
-  return {
-    ...institutionFieldsFromConnection(a.plaidConnection),
-    name: a.name,
-    plaidAccountId: a.id,
-    subtype: a.subtype,
-    type: a.type ?? "depository",
-  };
+  if (type === "credit") {
+    return "Credit";
+  }
+  if (type === "loan") {
+    return "Loan";
+  }
+  return subtype ?? type ?? "";
 }
 
 // ── Component ─────────────────────────────────────────────────────
@@ -598,85 +345,67 @@ export function NetWorthSection() {
 
   const isDataComplete = bankResult.type === "complete" && portfolioResult.type === "complete";
 
-  // ── Unique account lists for the picker ──────────────────────────
+  // ── Unified account list for the picker ──────────────────────────
 
-  const bankAccountEntries = useMemo((): BankAccountEntry[] => {
-    const out: BankAccountEntry[] = [];
+  const pickerAccounts = useMemo((): AccountPickerAccount[] => {
+    const out: AccountPickerAccount[] = [];
     for (const a of allBankAccounts) {
-      const entry = bankEntryFromAccount(a);
-      if (entry) {
-        out.push(entry);
+      if (!a.name) {
+        continue;
       }
+      const inst = institutionFieldsFromConnection(a.plaidConnection);
+      out.push({
+        id: a.id,
+        institutionLogo: inst.institutionLogo,
+        institutionName: inst.institutionName ?? a.name,
+        institutionUrl: inst.institutionUrl,
+        name: a.name,
+        sublabel: bankSublabel(a.type ?? "depository", a.subtype),
+      });
+    }
+    const seen = new Set<string>();
+    for (const s of allPortfolioSnapshots) {
+      const key = s.accountId;
+      if (!key || seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      const branding = brokerageInstitutionBranding({
+        institutionName: s.institutionName ?? null,
+      });
+      out.push({
+        id: key,
+        institutionLogo: branding.institutionLogo,
+        institutionLogosExtra: branding.institutionLogosExtra,
+        institutionName: s.institutionName ?? s.accountName ?? "Investments",
+        institutionUrl: branding.institutionUrl,
+        name: s.accountName ?? key,
+        sublabel: "Investments",
+      });
     }
     return out;
-  }, [allBankAccounts]);
-
-  const portfolioAccountEntries = useMemo((): PortfolioAccountEntry[] => {
-    const seen = new Map<string, PortfolioAccountEntry>();
-    for (const s of allPortfolioSnapshots) {
-      const key = s.accountId ?? null;
-      if (key && !seen.has(key)) {
-        const branding = brokerageInstitutionBranding({
-          institutionName: s.institutionName ?? null,
-        });
-        seen.set(key, {
-          accountKey: key,
-          institutionLogo: branding.institutionLogo,
-          institutionLogosExtra: branding.institutionLogosExtra,
-          institutionName: s.institutionName ?? null,
-          institutionUrl: branding.institutionUrl,
-          name: s.accountName ?? key,
-        });
-      }
-    }
-    return [...seen.values()];
-  }, [allPortfolioSnapshots]);
+  }, [allBankAccounts, allPortfolioSnapshots]);
 
   // ── Scoped snapshots ──────────────────────────────────────────────
 
+  const includedIds = useMemo<Set<string> | null>(
+    () => (scope.type === "all" ? null : new Set(scope.accountIds)),
+    [scope],
+  );
+
   const bankSnapshots = useMemo(() => {
-    if (scope.type === "all") {
+    if (!includedIds) {
       return allBankSnapshots;
     }
-    if (scope.type === "bank") {
-      return allBankSnapshots.filter((s) => s.accountId === scope.plaidAccountId);
-    }
-    if (scope.type === "group") {
-      if (scope.group === "investments") {
-        return [];
-      }
-      if (scope.group === "bank") {
-        return allBankSnapshots.filter((s) => s.account?.type === "depository");
-      }
-      if (scope.group === "checking") {
-        return allBankSnapshots.filter(
-          (s) => s.account?.type === "depository" && s.account.subtype !== "savings",
-        );
-      }
-      if (scope.group === "savings") {
-        return allBankSnapshots.filter(
-          (s) => s.account?.type === "depository" && s.account.subtype === "savings",
-        );
-      }
-      if (scope.group === "loans") {
-        return allBankSnapshots.filter((s) => s.account?.type === "loan");
-      }
-    }
-    return [];
-  }, [allBankSnapshots, scope]);
+    return allBankSnapshots.filter((s) => includedIds.has(s.accountId));
+  }, [allBankSnapshots, includedIds]);
 
   const portfolioSnapshots = useMemo(() => {
-    if (scope.type === "all") {
+    if (!includedIds) {
       return allPortfolioSnapshots;
     }
-    if (scope.type === "portfolio") {
-      return allPortfolioSnapshots.filter((s) => s.accountId === scope.accountKey);
-    }
-    if (scope.type === "group" && scope.group === "investments") {
-      return allPortfolioSnapshots;
-    }
-    return [];
-  }, [allPortfolioSnapshots, scope]);
+    return allPortfolioSnapshots.filter((s) => includedIds.has(s.accountId));
+  }, [allPortfolioSnapshots, includedIds]);
 
   // ── Headline totals (latest snapshot per account) ────────────
 
@@ -862,14 +591,14 @@ export function NetWorthSection() {
                     </PrivateAmount>
                   </p>
                 </div>
-                <NetWorthScopePicker
-                  bankAccounts={bankAccountEntries}
+                <AccountPicker
+                  accounts={pickerAccounts}
                   onScopeChange={(s) => {
                     setScope(s);
                     setHoverIndex(null);
                   }}
-                  portfolioAccounts={portfolioAccountEntries}
                   scope={scope}
+                  size="sm"
                 />
               </div>
 
