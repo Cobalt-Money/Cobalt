@@ -115,26 +115,29 @@ base.doc31("/openapi.json", {
 
 // ── CORS origin resolver ────────────────────────────────────────────
 // Vercel preview URLs are per-branch (cobalt-web-git-<branch>-<scope>.vercel.app),
-// so a static CORS origin can't match every PR. Allow the configured prod
-// origin, anything in TRUSTED_ORIGINS_EXTRA, and any host under our Vercel
-// team's slug suffix.
+// so a static CORS origin can't match every PR. The wildcard is *only*
+// enabled on preview deploys — prod stays strict literal-allowlist (matches
+// Midday's posture). Defense in depth: even if the team-slug-suffix scoping
+// had a bug, it can't reach the prod attack surface.
 //
-// Scope is `-cobalt-6bf3882b.vercel.app` (team-slug suffix), NOT bare
-// `.vercel.app`: any attacker can deploy `evil.vercel.app`, and credentialed
-// CORS to `*.vercel.app` would let attacker-controlled vercel.app sites read
-// signed-in users' responses. The team slug is private to this Vercel team.
+// Suffix is `-cobalt-6bf3882b.vercel.app` (team-slug), NOT bare `.vercel.app`:
+// any attacker can deploy `evil.vercel.app`. The team slug is private to this
+// Vercel team, so attacker-controlled vercel.app subdomains can't match.
 const corsAllowList = new Set<string>([env.CORS_ORIGIN, ...env.TRUSTED_ORIGINS_EXTRA]);
 const VERCEL_TEAM_SUFFIX = "-cobalt-6bf3882b.vercel.app";
+const allowVercelPreviewWildcard = process.env.VERCEL_ENV === "preview";
 function resolveCorsOrigin(origin: string): string | null {
   if (corsAllowList.has(origin)) {
     return origin;
   }
-  try {
-    if (new URL(origin).host.endsWith(VERCEL_TEAM_SUFFIX)) {
-      return origin;
+  if (allowVercelPreviewWildcard) {
+    try {
+      if (new URL(origin).host.endsWith(VERCEL_TEAM_SUFFIX)) {
+        return origin;
+      }
+    } catch {
+      // Malformed Origin header — fall through to null.
     }
-  } catch {
-    // Malformed Origin header — fall through to null.
   }
   return null;
 }

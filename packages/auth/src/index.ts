@@ -123,16 +123,16 @@ const trustedOrigins = [
 // baseURL validates the incoming Host header against allowedHosts patterns
 // and auto-adds matches to trustedOrigins.
 //
-// Pattern is scoped to the team-slug suffix, NOT bare `*.vercel.app`: any
-// attacker can deploy `evil.vercel.app`, but only this Vercel team can
-// create subdomains under `-cobalt-6bf3882b.vercel.app`. Without the suffix
-// scope, an attacker-controlled vercel.app site could fire credentialed
-// requests at the API and read responses (CORS apex-share leak).
+// The vercel.app wildcard is only added on preview deploys — prod is left
+// strict so even a bug in the suffix scoping can't reach the prod surface.
+// Suffix is `-cobalt-6bf3882b.vercel.app` (private team slug), NOT bare
+// `*.vercel.app`: attackers can deploy evil.vercel.app but can't match the
+// team slug.
 const oauthIssuerHost = new URL(env.BETTER_AUTH_URL).host;
 const baseUrlAllowedHosts = [
   oauthIssuerHost,
   ...env.TRUSTED_ORIGINS_EXTRA.map((origin) => new URL(origin).host),
-  "*-cobalt-6bf3882b.vercel.app",
+  ...(process.env.VERCEL_ENV === "preview" ? ["*-cobalt-6bf3882b.vercel.app"] : []),
 ];
 
 export const auth = betterAuth({
