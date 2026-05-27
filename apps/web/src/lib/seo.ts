@@ -1,8 +1,7 @@
 export const SITE_URL = "https://cobaltpf.com";
 export const SITE_NAME = "Cobalt";
 export const DEFAULT_TITLE = "Cobalt — Talk to your money";
-export const DEFAULT_DESCRIPTION =
-  "Other finance apps give you homework. Cobalt gives you answers — ask anything about your money, from anywhere.";
+export const DEFAULT_DESCRIPTION = "Cobalt is the most productive way to manage your finances.";
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
 export const TWITTER_HANDLE = "@trycobalt";
 
