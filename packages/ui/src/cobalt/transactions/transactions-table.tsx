@@ -328,7 +328,7 @@ const columns: ColumnDef<TransactionResponse>[] = [
     cell: ({ row }) => {
       const { amount } = row.original;
       const formattedAmount = currency.format(Math.abs(amount));
-      const amountColor = amount >= 0 ? "text-destructive" : "text-success";
+      const amountColor = amount > 0 ? "text-success" : "text-destructive";
       return (
         <div className={cn(cellRow, "whitespace-nowrap tabular-nums", amountColor)}>
           <PrivateAmount>{formattedAmount}</PrivateAmount>

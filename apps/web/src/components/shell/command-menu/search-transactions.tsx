@@ -144,7 +144,7 @@ export function TransactionSearchResults({
       <CommandGroup heading={trimmedSearch.length > 0 ? "Search results" : "Recent"}>
         {filteredTransactions.map((t) => {
           const name = getTransactionDisplayName(t) || "Untitled";
-          const isInflow = (t.amount ?? 0) < 0;
+          const isInflow = (t.amount ?? 0) > 0;
           return (
             <CommandItem
               key={t.id}

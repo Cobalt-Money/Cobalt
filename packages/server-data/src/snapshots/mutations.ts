@@ -8,22 +8,15 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** Negate a numeric string preserving precision (avoids `-0`). */
-function signFlip(value: string): string {
-  if (value.startsWith("-")) {
-    return value.slice(1);
-  }
-  if (value === "0" || /^0+(?:\.0+)?$/.test(value)) {
-    return value;
-  }
-  return `-${value}`;
-}
-
 /**
  * Upserts a daily snapshot row per financial_account of a given provider for
  * a user. Reads the live `balance` row (kept current by sync) and writes one
  * `snapshot` row per (account, today). Idempotent — re-running for the same
  * day overwrites the row.
+ *
+ * Sign convention is normalized at ingestion: liabilities (credit / loan)
+ * already store negative `current` in the `balance` row, so this writer is a
+ * direct copy — net-worth math is a plain SUM.
  */
 async function upsertDailySnapshotsForSource(
   userId: string,
@@ -32,7 +25,7 @@ async function upsertDailySnapshotsForSource(
   const snapshotDate = todayIso();
 
   const accounts = await db.query.financialAccount.findMany({
-    columns: { id: true, type: true },
+    columns: { id: true },
     where: {
       source: { eq: source },
       userId: { eq: userId },
@@ -54,11 +47,6 @@ async function upsertDailySnapshotsForSource(
     if (!b) {
       return [];
     }
-    // Net-worth convention: assets stored positive, liabilities (credit / loan)
-    // stored negative. Live `balance` stays provider-faithful (positive); the
-    // sign flip lives only on snapshot rows so chart math is a plain SUM.
-    const liability = a.type === "credit" || a.type === "loan";
-    const signedCurrent = liability ? signFlip(b.current) : b.current;
     // For SnapTrade, `current` is the full account market value and
     // `available` is uninvested cash; positions value = current - cash.
     // Plaid bank/credit accounts don't carry a positions component.
@@ -78,7 +66,7 @@ async function upsertDailySnapshotsForSource(
         buyingPower: b.buyingPower,
         creditLimit: b.creditLimit,
         currency: b.currency,
-        current: signedCurrent,
+        current: b.current,
         positionsValue,
       },
     ];

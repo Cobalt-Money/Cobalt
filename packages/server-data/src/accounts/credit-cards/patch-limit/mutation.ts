@@ -4,7 +4,11 @@ import { eq } from "drizzle-orm";
 
 import { getOwnedPlaidAccountInternalId } from "../_shared.js";
 
-/** Set the user-override credit limit on the balance row for a Plaid account. */
+/**
+ * Set the user-override credit limit on the balance row for a Plaid account.
+ * Input is a positive magnitude; stored as negative to match canonical sign
+ * convention (liabilities stored negative).
+ */
 export async function patchCreditLimit(
   plaidAccountId: string,
   userId: string,
@@ -13,6 +17,6 @@ export async function patchCreditLimit(
   const internalId = await getOwnedPlaidAccountInternalId(plaidAccountId, userId);
   await db
     .update(balance)
-    .set({ userOverrideCreditLimit: String(creditLimit) })
+    .set({ userOverrideCreditLimit: String(-Math.abs(creditLimit)) })
     .where(eq(balance.accountId, internalId));
 }

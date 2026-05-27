@@ -2,7 +2,7 @@ import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { category } from "@cobalt-web/db/schema/accounts/banking/categories/category";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import { db } from "@cobalt-web/db";
-import { and, desc, eq, gte, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 
 const toDateString = (val: string | Date | null | undefined): string | null => {
@@ -38,7 +38,8 @@ export async function getSpending(
     eq(transaction.userId, userId),
     eq(transaction.excluded, false),
     or(eq(category.excludeFromInsights, false), sql`${category.id} IS NULL`) as SQL,
-    gte(transaction.amount, "0"),
+    // Canonical sign: outflows are negative. Spending = sum of negative amounts.
+    lte(transaction.amount, "0"),
   ];
   if (accountType === "credit") {
     conditions.push(eq(financialAccount.type, "credit"));
@@ -97,7 +98,8 @@ export async function getSpending(
     } else {
       key = d.slice(0, 7);
     }
-    buckets.set(key, (buckets.get(key) ?? 0) + Number(row.amount));
+    // Negate so spending buckets are positive magnitudes (consumer expects $X spent).
+    buckets.set(key, (buckets.get(key) ?? 0) + -Number(row.amount));
   }
 
   const spending = [...buckets.entries()]

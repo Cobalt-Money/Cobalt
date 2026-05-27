@@ -164,15 +164,15 @@ describe("upsertBankBalanceSnapshotsForUser", () => {
     });
   });
 
-  it("negates current for credit accounts (liability convention)", async () => {
+  it("copies credit balance straight through (already signed at ingestion)", async () => {
     findManyMock.mockResolvedValue([
       {
         balance: {
           available: null,
           buyingPower: null,
-          creditLimit: "10000.0000",
+          creditLimit: "-10000.0000",
           currency: "USD",
-          current: "5154.0000",
+          current: "-5154.0000",
         },
         id: "credit-1",
         type: "credit",
@@ -187,7 +187,7 @@ describe("upsertBankBalanceSnapshotsForUser", () => {
     });
   });
 
-  it("negates current for loan accounts", async () => {
+  it("copies loan balance straight through (already signed at ingestion)", async () => {
     findManyMock.mockResolvedValue([
       {
         balance: {
@@ -195,7 +195,7 @@ describe("upsertBankBalanceSnapshotsForUser", () => {
           buyingPower: null,
           creditLimit: null,
           currency: "USD",
-          current: "13545.9600",
+          current: "-13545.9600",
         },
         id: "loan-1",
         type: "loan",
@@ -207,15 +207,15 @@ describe("upsertBankBalanceSnapshotsForUser", () => {
     expect(lastInsertRows()[0]?.current).toBe("-13545.9600");
   });
 
-  it("flips a naturally-negative credit balance back to positive (overpaid card)", async () => {
+  it("copies an overpaid credit card as positive (asset) straight through", async () => {
     findManyMock.mockResolvedValue([
       {
         balance: {
           available: null,
           buyingPower: null,
-          creditLimit: "10000.0000",
+          creditLimit: "-10000.0000",
           currency: "USD",
-          current: "-50.0000",
+          current: "50.0000",
         },
         id: "credit-2",
         type: "credit",

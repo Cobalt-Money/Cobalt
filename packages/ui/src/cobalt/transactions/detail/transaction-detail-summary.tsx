@@ -81,7 +81,7 @@ export function TransactionDetailSummary({
   edit?: TransactionDetailEditHandlers;
   transaction: TransactionResponse;
 }) {
-  const isDebit = transaction.amount > 0;
+  const isDebit = transaction.amount < 0;
   const amountColor = isDebit ? "text-destructive" : "text-success";
 
   const { category } = transaction;
