@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  poem: false
+  high_level_summary: true
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    # Lockfiles
+    - "!bun.lock"
+    - "!**/package-lock.json"
+    - "!**/yarn.lock"
+    - "!**/pnpm-lock.yaml"
+
+    # Generated code (mirrors oxlint ignorePatterns)
+    - "!**/routeTree.gen.ts"
+    - "!**/zero-schema.gen.ts"
+    - "!**/drizzle-zero.config.ts"
+    - "!packages/db/src/migrations/schema.ts"
+    - "!packages/db/src/migrations/relations.ts"
+    - "!packages/db/src/migrations/**/*.sql"
+    - "!packages/db/src/migrations/meta/**"
+
+    # OpenAPI spec + derived docs (CI regenerates from source)
+    - "!apps/server/openapi.json"
+    - "!apps/fumadocs/content/docs/api-reference/**"
+
+    # Dynamic route files (TanStack Start catch-all naming confuses parsers)
+    - "!apps/web/src/routes/**/$*.tsx"
+
+    # External / low-signal surfaces
+    - "!apps/raycast/**"
+    - "!apps/fumadocs/**"
+    - "!docs/**"
+    - "!.agents/**"
+    - "!.claude/**"
+
+    # Assets
+    - "!**/*.svg"
+    - "!**/*.png"
+    - "!**/*.jpg"
+    - "!**/*.gif"
+    - "!**/*.ico"
+    - "!**/*.woff2"
+    - "!**/og-image.*"
+
+    # Misc
+    - "!**/*.tsbuildinfo"
+    - "!.changeset/**"
+  path_instructions:
+    - path: "packages/db/src/schema/**"
+      instructions: "Drizzle schema changes require a corresponding migration file under packages/db/src/migrations/. Flag schema edits with no new migration."
+    - path: "packages/server-data/**/{queries,mutations}.ts"
+      instructions: "Repo layer owns db access. Confirm functions take userId as first arg; don't suffix names with 'ForUser' or 'ByUserId'."
+    - path: "apps/**/*.{ts,tsx}"
+      instructions: "Do NOT import `db` directly from @cobalt-web/db in apps/. Use repo functions from @cobalt-web/server-data instead. Same rule oxlint enforces."
+    - path: "packages/ui/src/components/**"
+      instructions: "shadcn-derived components — flag changes that diverge from shadcn upstream API without comment explaining why. Verify Tailwind 4 class syntax."
+    - path: "**/*.{test,spec}.ts"
+      instructions: "Integration tests hit a real Postgres (pglite or PS branch), not mocks. Flag db mocking in integration suites."
+chat:
+  auto_reply: true
