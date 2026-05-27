@@ -94,7 +94,7 @@ For depth: `webFetch` Tax Foundation conformity tracker + state DOR.
 
 - `[HARD]` Domicile = exactly one state at a time.
 - `[HARD]` Convenience-of-employer (NY/CT/PA/NJ/DE) taxes remote workers as if in employer's state — STOP gate.
-- `[HARD]` "No-income-tax" state still hits via property + sales + sometimes franchise / gross receipts (TX margin, WA B&O). NH fully repealed its interest/dividends tax effective tax year 2025 — verify current treatment via `webFetch` of NH DRA before quoting.
+- `[HARD]` "No-income-tax" state still hits via property + sales + sometimes franchise / gross receipts (TX margin, WA B&O). NH repealed its Interest & Dividends tax effective January 1, 2025 — NH now has no individual income tax (wages were never taxed); pre-2025 tax years may still require a DP-10. Verify current treatment via `webFetch` of NH DRA before quoting.
 - `[HARD]` State residency rules differ from federal — file the state form, not federal.
 - `[HARD]` Resident credit for tax paid to another state prevents most double taxation (claim on resident-state return).
 - `[RULE]` Moving for tax: clean break (sell house, switch licenses, register to vote, move family) — paper trail matters.

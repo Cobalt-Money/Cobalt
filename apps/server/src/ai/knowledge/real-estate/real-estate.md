@@ -131,7 +131,7 @@ For depth: `webFetch` IRS Pub 527.
 
 - `[HARD]` Never quote conforming/FHA limits, §121 exclusion amount, or mortgage interest cap from memory — `webFetch`.
 - `[HARD]` 1031: never touch sale proceeds; QI must hold. 45-day identify / 180-day close. Like-kind = investment/business real property only.
-- `[HARD]` Depreciation recapture on residential rental disposition = **unrecaptured §1250 gain**, taxed at max 25% (not ordinary brackets). §1245 ordinary-income recapture applies to other asset classes (personal property, some non-residential). Applies whether or not you actually claimed depreciation ("allowed or allowable"). `webFetch` IRS Pub 544 / Pub 527 for details.
+- `[HARD]` Depreciation recapture on residential rental disposition = **unrecaptured §1250 gain**, taxed at max 25% federal (IRC §1(h)(1)(E)) — NOT ordinary brackets. Still stacks into AGI for NIIT + state tax. §1245 ordinary-income recapture applies to other asset classes (depreciable personal property). "Allowed or allowable" (§1250(b)(3)) means basis reduced by allowable depreciation unless taxpayer documents a lesser amount was actually allowed. `webFetch` IRS Pub 544 / Pub 527 / Topic 409 for current treatment.
 - `[RULE]` PMI auto-terminates at LTV thresholds set by HPA; borrower can request earlier removal at lower LTV with appraisal.
 - `[RULE]` Property tax appeal: deadlines are local + short; comps + condition photos > opinions.
 
