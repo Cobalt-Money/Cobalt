@@ -113,6 +113,26 @@ base.doc31("/openapi.json", {
   openapi: "3.1.0",
 });
 
+// ── CORS origin resolver ────────────────────────────────────────────
+// Vercel preview URLs are per-branch (cobalt-web-git-<branch>-<scope>.vercel.app),
+// so a static CORS origin can't match every PR. Allow the configured prod
+// origin, anything in TRUSTED_ORIGINS_EXTRA, and any *.vercel.app host so
+// preview-to-preview calls work without per-deploy env tweaks.
+const corsAllowList = new Set<string>([env.CORS_ORIGIN, ...env.TRUSTED_ORIGINS_EXTRA]);
+function resolveCorsOrigin(origin: string): string | null {
+  if (corsAllowList.has(origin)) {
+    return origin;
+  }
+  try {
+    if (new URL(origin).host.endsWith(".vercel.app")) {
+      return origin;
+    }
+  } catch {
+    // Malformed Origin header — fall through to null.
+  }
+  return null;
+}
+
 // ── Root app ────────────────────────────────────────────────────────
 
 const app = new Hono()
@@ -146,7 +166,7 @@ const app = new Hono()
       allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       credentials: true,
       exposeHeaders: ["Mcp-Session-Id", "mcp-session-id"],
-      origin: env.CORS_ORIGIN,
+      origin: resolveCorsOrigin,
     }),
   )
   .get("/.well-known/oauth-protected-resource/api/mcp", (c) => {

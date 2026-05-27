@@ -117,6 +117,19 @@ const trustedOrigins = [
   ...env.TRUSTED_ORIGINS_EXTRA,
 ];
 
+// Vercel preview deployments get a unique URL per branch
+// (e.g. cobalt-web-git-<branch>-cobalt-6bf3882b.vercel.app), so a single
+// static baseURL/CORS origin can't match every PR. Better Auth's dynamic
+// baseURL validates the incoming Host header against allowedHosts patterns
+// and auto-adds matches to trustedOrigins. Fallback covers non-HTTP contexts
+// where Host isn't available (e.g. server-side jobs constructing URLs).
+const oauthIssuerHost = new URL(env.BETTER_AUTH_URL).host;
+const baseUrlAllowedHosts = [
+  oauthIssuerHost,
+  ...env.TRUSTED_ORIGINS_EXTRA.map((origin) => new URL(origin).host),
+  "*.vercel.app",
+];
+
 export const auth = betterAuth({
   account: {
     accountLinking: {
@@ -138,7 +151,11 @@ export const auth = betterAuth({
       secure: isSecureOrigin,
     },
   },
-  baseURL: env.BETTER_AUTH_URL,
+  baseURL: {
+    allowedHosts: baseUrlAllowedHosts,
+    fallback: env.BETTER_AUTH_URL,
+    protocol: "https",
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
