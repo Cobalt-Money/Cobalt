@@ -63,9 +63,9 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=8192
       - name: Security audit
-        # Fail on high/critical advisories in production deps. Dev deps
-        # excluded — they don't ship.
-        run: bun audit --prod --severity high
+        # Fail on high/critical advisories. `bun audit` exit code is non-zero
+        # whenever any advisory at or above `--audit-level` is found.
+        run: bun audit --audit-level=high
 
   build-spec:
     name: Build OpenAPI spec + docs
