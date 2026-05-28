@@ -48,16 +48,16 @@ export const successResponseSchema = z
 /** Picked column shapes (Drizzle camelCase = API names). Merged with computed fields below. */
 const bankAccountDetailPickedSchema = financialAccountRowSchema
   .pick({
+    id: true,
     mask: true,
     name: true,
+    source: true,
     subtype: true,
     type: true,
   })
   .extend({
-    /** Provider-external id (Plaid account_id). */
-    plaidAccountId: z.string().nullable(),
-    /** Plaid item id resolved from plaid_connection. */
-    plaidItemId: z.string(),
+    /** Plaid item id resolved from plaid_connection. Null for non-Plaid sources. */
+    plaidItemId: z.string().nullable(),
   })
   .extend(
     balanceRowSchema.pick({
@@ -103,14 +103,16 @@ export type BankAccountResponse = z.infer<typeof bankAccountResponseSchema>;
 /** Subset of columns for list views; list-only computed flags in `extend`. */
 const bankAccountListPickedSchema = financialAccountRowSchema
   .pick({
+    id: true,
     mask: true,
     name: true,
+    source: true,
     subtype: true,
     type: true,
   })
   .extend({
-    plaidAccountId: z.string().nullable(),
-    plaidItemId: z.string(),
+    /** Plaid item id resolved from plaid_connection. Null for non-Plaid sources. */
+    plaidItemId: z.string().nullable(),
   })
   .extend(
     balanceRowSchema.pick({
