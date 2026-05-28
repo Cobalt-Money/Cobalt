@@ -7,6 +7,7 @@ import { creditCardsPatchLimitRouter } from "./credit-cards/patch-limit.js";
 import { detailRouter } from "./detail.js";
 import { disconnectRouter } from "./disconnect.js";
 import { listRouter } from "./list.js";
+import { manualCreateRouter } from "./manual/create.js";
 import { manualSeedSnapshotRouter } from "./manual/seed-snapshot.js";
 import { plaidItemsAccountsRouter } from "./plaid-items/accounts.js";
 import { plaidItemsAlertsRouter } from "./plaid-items/alerts.js";
@@ -24,4 +25,5 @@ export const accountsRouter = new OpenAPIHono()
   .route("/", plaidItemsAlertsRouter)
   .route("/", plaidItemsAccountsRouter)
   .route("/", brokerageSnaptradeRouter)
-  .route("/", manualSeedSnapshotRouter);
+  .route("/", manualSeedSnapshotRouter)
+  .route("/", manualCreateRouter);
