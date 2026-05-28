@@ -9,3 +9,25 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: "ci"
+
+  - package-ecosystem: npm
+    # Glob covers every workspace package.json (apps/*, packages/*) plus root.
+    # Without this, dependabot only scans `/` and misses 15 workspace manifests.
+    directories:
+      - "/"
+      - "/apps/*"
+      - "/packages/*"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    # Bundle non-major updates to cut PR noise on a monorepo; majors stay
+    # individual so each breaking change gets its own review.
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "deps"
+    ignore:
+      # Catalog-pinned (bumped via root package.json catalog entry, requires
+      # zero-cache redeploy on Railway).
+      - dependency-name: "@rocicorp/zero"
