@@ -14,67 +14,77 @@ concurrency:
 permissions:
   contents: read
 
+# Turbo remote cache (Vercel-hosted). Empty when TURBO_TOKEN secret unset —
+# turbo silently falls back to local cache, no failure.
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
 jobs:
-  lint:
-    name: Lint
+  changes:
+    name: Detect changes
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
+    outputs:
+      server: ${{ steps.filter.outputs.server }}
+      code: ${{ steps.filter.outputs.code }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6  # v2.2.0
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # v3.0.2
+        id: filter
         with:
-          bun-version: 1.3.5
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-      - name: Lint (ultracite)
-        # ultracite spawns the oxlint Rust binary, which shells out to Node to
-        # evaluate `oxlint.config.ts`. Node has no native TS loader, so we
-        # register `tsx` via NODE_OPTIONS before the lint step runs. Tracked
-        # in SRI-341 as a CI hardening follow-up to PR #260.
-        run: bun x ultracite check apps packages
-        env:
-          NODE_OPTIONS: --import tsx
+          filters: |
+            server:
+              - 'apps/server/**'
+              - 'packages/**'
+              - 'bun.lock'
+            code:
+              - 'apps/**'
+              - 'packages/**'
+              - 'bun.lock'
+              - '.github/**'
 
-  typecheck:
-    name: Typecheck
+  lint-typecheck:
+    name: Lint + Typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6  # v2.2.0
-        with:
-          bun-version: 1.3.5
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - uses: ./.github/actions/setup
+      - name: Lint (ultracite)
+        # ultracite spawns the oxlint Rust binary, which shells out to Node to
+        # evaluate `oxlint.config.ts`. Node has no native TS loader, so register
+        # `tsx` via NODE_OPTIONS. SRI-341.
+        run: bun x ultracite check apps packages
+        env:
+          NODE_OPTIONS: --import tsx
       - name: Typecheck (turbo)
         run: bun x turbo check-types
         env:
           NODE_OPTIONS: --max-old-space-size=8192
+      - name: Security audit
+        # Fail on high/critical advisories in production deps. Dev deps
+        # excluded — they don't ship.
+        run: bun audit --prod --severity high
 
   build-spec:
     name: Build OpenAPI spec + docs
-    # Don't regenerate the spec if types are broken — would just produce a
-    # spec from broken code.
-    needs: [typecheck]
+    needs: [lint-typecheck]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
-          # Need previous commit to oasdiff against on PRs (fetch base ref).
-          fetch-depth: 0
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6  # v2.2.0
-        with:
-          bun-version: 1.3.5
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+          # Need base sha to oasdiff against; depth 2 covers push, base sha is
+          # fetched separately for PRs.
+          fetch-depth: 2
+      - uses: ./.github/actions/setup
       - name: Stash base ref openapi.json (for oasdiff)
-        # Capture the pre-change spec from the PR's base branch (or HEAD~1
-        # on main pushes) before regen overwrites it. Skip silently if the
-        # file didn't exist in the base ref — first-time spec gen.
-        if: github.event_name == 'pull_request' || github.event_name == 'push'
         run: |
           base_ref="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          if [ -n "${{ github.event.pull_request.base.sha }}" ]; then
+            git fetch --depth=1 origin "$base_ref" || true
+          fi
           if git show "$base_ref:apps/server/openapi.json" > /tmp/base-openapi.json 2>/dev/null; then
             echo "Captured base openapi.json from $base_ref"
           else
@@ -82,26 +92,18 @@ jobs:
             rm -f /tmp/base-openapi.json
           fi
       - name: Regenerate openapi.json
-        # Spec is the single source of truth for SDK + docs codegen. CI rebuilds
-        # it from source on every PR so contributors never have to remember to
-        # run a local script.
-        #
-        # The script imports the v1 router which transitively module-loads
-        # Stripe / Plaid / SnapTrade / Better Auth clients. They construct
-        # eagerly and throw without env. Mirror the integration-test dummy
-        # block so module load succeeds without touching any real provider.
+        # Spec is the single source of truth for SDK + docs codegen. Module load
+        # eagerly constructs Stripe/Plaid/SnapTrade/Better Auth clients, so we
+        # mirror the integration-test dummy env block.
         env:
-          # Intentionally NOT setting SKIP_ENV_VALIDATION: env transforms (like
-          # commaList for TRUSTED_ORIGINS_EXTRA) only run when validation is on,
-          # and downstream code spreads those arrays. Skipping validation leaves
-          # them undefined → spread throws.
+          # Not SKIP_ENV_VALIDATION: env transforms (commaList for
+          # TRUSTED_ORIGINS_EXTRA) only run when validation is on; downstream
+          # code spreads those arrays.
           AI_GATEWAY_API_KEY: test-ai-gateway-key
           APPLE_APP_BUNDLE_IDENTIFIER: test.bundle.id
           APPLE_KEY_ID: test-key-id
-          # P-256 PKCS8 dummy key generated via `openssl genpkey -algorithm EC
-          # -pkeyopt ec_paramgen_curve:P-256`. Not a real Apple key; only used
-          # because packages/auth eagerly signs an ES256 JWT at module load.
-          # TODO: refactor packages/auth to lazy-init Apple/Stripe clients.
+          # P-256 PKCS8 dummy key. Not real; packages/auth eagerly signs an
+          # ES256 JWT at module load. TODO: lazy-init Apple/Stripe clients.
           APPLE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nMIIBeQIBADCCAQMGByqGSM49AgEwgfcCAQEwLAYHKoZIzj0BAQIhAP////8AAAAB\nAAAAAAAAAAAAAAAA////////////////MFsEIP////8AAAABAAAAAAAAAAAAAAAA\n///////////////8BCBaxjXYqjqT57PrvVV2mIa8ZR0GsMxTsPY7zjw+J9JgSwMV\nAMSdNgiG5wSTamZ44ROdJreBn36QBEEEaxfR8uEsQkf4vOblY6RA8ncDfYEt6zOg\n9KE5RdiYwpZP40Li/hp/m47n60p8D54WK84zV2sxXs7LtkBoN79R9QIhAP////8A\nAAAA//////////+85vqtpxeehPO5ysL8YyVRAgEBBG0wawIBAQQgp+lwAaUJ1jms\na4zIKYhfgVC+T+ZsY+Pbl77mWtSR/NShRANCAASlypaSz72mmvsx2Tsf7li68iZZ\nFdVeysivRbFaofkCJzGWuQ4RJ+Vvqlc6NpogWK9sm5CAPv5x640Wnm2H7PSo\n-----END PRIVATE KEY-----"
           APPLE_SERVICE_ID: test-service-id
           APPLE_TEAM_ID: test-team-id
@@ -124,24 +126,16 @@ jobs:
         working-directory: apps/server
         run: bun run generate-spec
       - name: Regenerate fumadocs API reference
-        # MDX derived from the spec we just wrote, so it stays in lockstep.
-        # No live URL fetch — fumadocs reads ../server/openapi.json directly.
         working-directory: apps/fumadocs
         run: bun run scripts/generate-docs.ts
       - name: Diff OpenAPI for breaking changes
-        # Warns on PR with breaking-change details. `--fail-on ERR` flips this
-        # to a hard failure once the noise level is calibrated (see follow-up).
         if: hashFiles('/tmp/base-openapi.json') != ''
-        run: |
-          docker run --rm \
-            -v "$PWD/apps/server/openapi.json:/specs/new.json:ro" \
-            -v "/tmp/base-openapi.json:/specs/old.json:ro" \
-            tufin/oasdiff:v1.16.0 breaking /specs/old.json /specs/new.json --format text || \
-          echo "::warning::oasdiff flagged breaking changes (see above). Not failing build yet."
-      - name: Upload regenerated spec + docs as artifact
-        # commit-generated downloads + pushes; sdk-dispatch / consumers can
-        # also download via this name.
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: oasdiff/oasdiff-action/breaking@1c611ffb1253a72924624aa4fb662e302b3565d3  # v0.0.21
+        with:
+          base: /tmp/base-openapi.json
+          revision: apps/server/openapi.json
+          fail-on-diff: false
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: generated-spec
           path: |
@@ -151,9 +145,15 @@ jobs:
 
   commit-generated:
     name: Commit regenerated spec + docs
-    # Only this job needs write — keep blast radius tiny.
     needs: [build-spec, test, test-integration]
-    if: github.event_name == 'pull_request'
+    # always(): test-integration may skip on non-server changes; still commit
+    # the regen if build-spec + test passed.
+    if: |
+      always() &&
+      github.event_name == 'pull_request' &&
+      needs.build-spec.result == 'success' &&
+      needs.test.result == 'success' &&
+      (needs.test-integration.result == 'success' || needs.test-integration.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -161,37 +161,24 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
-          # Default checkout uses the merge ref; `git-auto-commit` below then
-          # runs `git checkout <head_ref>` to push the regen back. If the
-          # working tree is dirty from the artifact extraction the checkout
-          # aborts with "would be overwritten". Check out the PR head ref
-          # directly so we never switch branches with a dirty tree.
+          # Check out PR head directly so git-auto-commit doesn't switch
+          # branches with a dirty tree (artifact extraction).
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: generated-spec
-          # upload-artifact@v7 strips the common ancestor from input paths
-          # (here `apps/`), so the archive contains `server/openapi.json` and
-          # `fumadocs/...`. Extract under `apps/` to restore the real paths;
-          # without this the regenerated files land at the repo root and the
-          # auto-commit below sees a clean tree and no-ops.
+          # upload-artifact@v7 strips common ancestor (`apps/`) — extract back
+          # under apps/ to restore real paths.
           path: apps
       - name: Verify regenerated files landed at expected paths
-        # Tripwire — if upload-artifact's common-ancestor behavior changes or
-        # the upload path list gains/loses entries, this catches it before
-        # the silent no-op.
         run: |
           test -f apps/server/openapi.json
           test -d apps/fumadocs/content/docs/api-reference
       - name: Commit regenerated spec + docs to PR branch
-        # No `[skip ci]` marker here. Per GitHub docs the marker is matched
-        # anywhere in the commit message — including after a squash-merge,
-        # where the bot's commit message gets concatenated into the squash
-        # and the marker silently suppresses all workflows on main. Recursion
-        # is already prevented because GITHUB_TOKEN-authored commits don't
-        # trigger new workflow runs:
-        #   https://docs.github.com/en/actions/concepts/security/github_token
+        # No `[skip ci]` marker — it suppresses workflows post-squash. Recursion
+        # already prevented because GITHUB_TOKEN-authored commits don't trigger
+        # new workflow runs.
         uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9  # v7.1.0
         with:
           file_pattern: "apps/server/openapi.json apps/fumadocs/content/docs/api-reference"
@@ -204,20 +191,14 @@ jobs:
       SKIP_ENV_VALIDATION: "1"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6  # v2.2.0
-        with:
-          bun-version: 1.3.5
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-      - name: Run tests
-        run: bun x turbo test
+      - uses: ./.github/actions/setup
+      - run: bun x turbo test
 
   test-integration:
     name: Integration tests (Postgres)
+    needs: [changes]
+    if: needs.changes.outputs.server == 'true'
     runs-on: ubuntu-latest
-    # Mirrors the local stub in apps/server/test-setup.ts so Nitro boots in
-    # CI without real provider creds. Anything talking to a network must be
-    # mocked at the test level (no real Plaid/SnapTrade/Stripe calls).
     env:
       AI_GATEWAY_API_KEY: test-ai-gateway-key
       APPLE_APP_BUNDLE_IDENTIFIER: test.bundle.id
@@ -251,8 +232,6 @@ jobs:
           POSTGRES_DB: cobalt
         ports:
           - 5433:5432
-        # Wait until Postgres accepts connections before steps run; without
-        # this the migrate step races the container startup.
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 5s
@@ -260,190 +239,34 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6  # v2.2.0
-        with:
-          bun-version: 1.3.5
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - name: Apply schema to CI Postgres (drizzle-kit push)
-        # New DBs (CI, local docker, future ephemeral branches) get the
-        # current declared schema applied directly via `push`. The post-squash
-        # init migration is a commented-out baseline that won't apply to a
-        # fresh DB; `push` is the canonical drizzle pattern for fresh setup.
         env:
           SKIP_ENV_VALIDATION: "1"
         run: bun x drizzle-kit push --force --config packages/db/drizzle.config.ts
       - name: Run integration tests (server)
-        # Don't bail at first failure — surface the full picture so we can
-        # tell whether the spawn / env / DB or a specific test is broken.
         run: bun --cwd apps/server run test:integration
-        continue-on-error: true
-        id: integration
-      - name: Fail job if integration tests failed
-        if: steps.integration.outcome == 'failure'
-        run: |
-          echo "::warning::Integration tests failed — see logs above."
-          exit 1
 
-  deploy-preview:
-    name: Deploy preview (${{ matrix.project }})
-    # Gate every PR preview on CI signal. Vercel Git auto-deploy is disabled
-    # in the dashboard for cobalt-{docs,server,web} so this is the only path
-    # that ships a build.
+  deploy:
+    name: Deploy ${{ github.event_name == 'push' && 'prod' || 'preview' }} (${{ matrix.project }})
+    # One job handles both flavors. Differs only by `vercel pull --environment`
+    # and `--prod` flag.
     #
-    # Skip on Dependabot PRs and fork PRs: GitHub does not expose `secrets.*`
-    # to PRs authored by Dependabot (security fix post-Codecov 2021) or to
-    # any PR from a fork repo, so VERCEL_TOKEN is empty and `vercel pull`
-    # errors with "No existing credentials found". Fork PRs aren't worth
-    # building previews for anyway (would leak Cobalt env if they were).
-    #
-    # Also gate on build-spec so previews ship the freshly regenerated
-    # openapi.json + docs (downloaded below) rather than whatever was
-    # checked in on the PR branch.
-    needs: [lint, typecheck, test, test-integration, build-spec]
-    if: >
-      github.event_name == 'pull_request' &&
-      github.actor != 'dependabot[bot]' &&
-      github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - project: docs
-            dir: apps/fumadocs
-            project_id_secret: VERCEL_DOCS_PROJECT_ID
-          - project: server
-            dir: apps/server
-            project_id_secret: VERCEL_SERVER_PROJECT_ID
-          - project: web
-            dir: apps/web
-            project_id_secret: VERCEL_WEB_PROJECT_ID
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets[matrix.project_id_secret] }}
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      # Vercel cloud sets NITRO_PRESET=vercel automatically; GH Actions does
-      # not. Without this, apps/server builds with preset node-server and
-      # emits .output/ instead of .vercel/output/ (Build Output API v3),
-      # which `vercel build` rejects with "No Output Directory named public".
-      # Harmless for docs/web (non-Nitro).
-      NITRO_PRESET: vercel
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
-        with:
-          # Match Vercel project Node setting (24.x in dashboard for all 3
-          # cobalt projects). Mismatch makes `vercel build` reject the build.
-          node-version: 24
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6  # v2.2.0
-        with:
-          bun-version: 1.3.5
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-      - name: Download regenerated spec + docs
-        # build-spec uploads `apps/server/openapi.json` and
-        # `apps/fumadocs/content/docs/api-reference`; upload-artifact@v7
-        # strips the common ancestor (`apps/`) so we extract back under
-        # `apps/` to restore the original paths. Without this, previews
-        # ship with whatever spec was checked in on the PR branch — stale
-        # whenever server routes change.
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
-        with:
-          name: generated-spec
-          path: apps
-      - name: Install Vercel CLI
-        run: npm install -g vercel@54
-      - name: Pull Vercel env (preview)
-        # Run from repo root. Each project has Root Directory configured in
-        # the Vercel dashboard (apps/web, apps/server, apps/fumadocs); running
-        # from subdir double-applies that prefix → "Build src is package.json".
-        run: vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
-      - name: Build
-        run: vercel build --token=$VERCEL_TOKEN
-      - name: Deploy prebuilt -> preview
-        id: deploy
-        run: |
-          url=$(vercel deploy --prebuilt --token=$VERCEL_TOKEN)
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-          echo "Preview (${{ matrix.project }}): $url"
-      - name: Stash URL for aggregator
-        # Matrix legs can't share outputs directly; persist each URL as a
-        # named artifact, then comment-previews aggregates all three.
-        run: |
-          mkdir -p preview-urls
-          echo "${{ steps.deploy.outputs.url }}" > preview-urls/${{ matrix.project }}.txt
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
-        with:
-          name: preview-url-${{ matrix.project }}
-          path: preview-urls/${{ matrix.project }}.txt
-          retention-days: 1
-
-  comment-previews:
-    name: Post preview URLs to PR
-    needs: [deploy-preview]
-    # Run even when deploy-preview fails so the PR comment surfaces
-    # `_failed_` next to the broken project rather than the whole job
-    # silently skipping. Still skip on non-PR events and when deploy-preview
-    # was itself skipped (fork PRs, Dependabot) — nothing to comment.
-    if: >
+    # Skip on Dependabot/fork PRs — secrets.* unavailable, vercel pull errors,
+    # and fork previews would leak env anyway.
+    needs: [lint-typecheck, test, test-integration, build-spec]
+    if: |
       always() &&
-      github.event_name == 'pull_request' &&
-      needs.deploy-preview.result != 'skipped'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      pull-requests: write
-    steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
-        with:
-          pattern: preview-url-*
-          path: preview-urls
-          merge-multiple: true
-      - name: Upsert PR comment
-        # HTML marker makes the comment idempotent: subsequent runs find it
-        # via list-comments and PATCH in place instead of spamming the PR.
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
-        with:
-          script: |
-            const fs = require('fs');
-            const projects = ['docs', 'server', 'web'];
-            const urls = Object.fromEntries(projects.map(p => {
-              const path = `preview-urls/${p}.txt`;
-              return [p, fs.existsSync(path) ? fs.readFileSync(path, 'utf8').trim() : null];
-            }));
-            const marker = '<!-- vercel-preview-urls -->';
-            const body = [
-              marker,
-              '### Vercel previews',
-              '',
-              '| Project | URL |',
-              '| --- | --- |',
-              ...projects.map(p => `| \`cobalt-${p}\` | ${urls[p] ? urls[p] : '_failed_'} |`),
-            ].join('\n');
-            const { owner, repo } = context.repo;
-            const issue_number = context.payload.pull_request.number;
-            const { data: comments } = await github.rest.issues.listComments({
-              owner, repo, issue_number, per_page: 100,
-            });
-            const existing = comments.find(c => c.body && c.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner, repo, comment_id: existing.id, body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner, repo, issue_number, body,
-              });
-            }
-
-  deploy-prod:
-    name: Deploy production (${{ matrix.project }})
-    # Same gate, only for merges to main. Same matrix so all three sites
-    # promote together — keeps server/web/docs in lockstep on schema changes.
-    needs: [lint, typecheck, test, test-integration]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      needs.lint-typecheck.result == 'success' &&
+      needs.test.result == 'success' &&
+      needs.build-spec.result == 'success' &&
+      (needs.test-integration.result == 'success' || needs.test-integration.result == 'skipped') &&
+      (
+        (github.event_name == 'pull_request' &&
+          github.actor != 'dependabot[bot]' &&
+          github.event.pull_request.head.repo.full_name == github.repository) ||
+        (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -451,53 +274,59 @@ jobs:
       matrix:
         include:
           - project: docs
-            dir: apps/fumadocs
             project_id_secret: VERCEL_DOCS_PROJECT_ID
           - project: server
-            dir: apps/server
             project_id_secret: VERCEL_SERVER_PROJECT_ID
           - project: web
-            dir: apps/web
             project_id_secret: VERCEL_WEB_PROJECT_ID
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets[matrix.project_id_secret] }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      # Vercel cloud sets NITRO_PRESET=vercel automatically; GH Actions does
+      # not. apps/server otherwise builds preset node-server → .output/ instead
+      # of .vercel/output/, which `vercel build` rejects.
       NITRO_PRESET: vercel
+      VERCEL_ENV: ${{ github.event_name == 'push' && 'production' || 'preview' }}
+      PROD_FLAG: ${{ github.event_name == 'push' && '--prod' || '' }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+      - uses: ./.github/actions/setup
+      - name: Download regenerated spec + docs
+        # Preview only. Prod builds from main which already has committed spec.
+        if: github.event_name == 'pull_request'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          node-version: 24
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6  # v2.2.0
-        with:
-          bun-version: 1.3.5
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-      - name: Install Vercel CLI
-        run: npm install -g vercel@54
-      - name: Pull Vercel env (production)
-        run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
-      - name: Build (production)
-        run: vercel build --prod --token=$VERCEL_TOKEN
-      - name: Deploy prebuilt -> production
-        run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+          name: generated-spec
+          path: apps
+      - name: Pull Vercel env
+        # Run from repo root; each project has Root Directory configured in
+        # the dashboard, running from subdir double-applies it.
+        run: bun x vercel@54 pull --yes --environment=$VERCEL_ENV --token=$VERCEL_TOKEN
+      - name: Build
+        run: bun x vercel@54 build $PROD_FLAG --token=$VERCEL_TOKEN
+      - name: Deploy prebuilt
+        run: |
+          url=$(bun x vercel@54 deploy --prebuilt $PROD_FLAG --token=$VERCEL_TOKEN)
+          echo "$VERCEL_ENV (${{ matrix.project }}): $url"
 
   sdk-dispatch:
     name: Dispatch SDK gen
-    # Two gates AND'd together:
-    #   1. all upstream jobs green (via `needs`) — incl. build-spec so we
-    #      know the regenerated spec is shippable before SDK fan-out.
-    #   2. push to main AND apps/server/openapi.json actually changed
-    # Third implicit gate lives in Cobalt-Typescript-SDK's sync.yml — if the
-    # regenerated SDK files have no diff, peter-evans skips PR creation.
+    # All upstream green + spec actually changed on this main push. Third gate
+    # in Cobalt-Typescript-SDK's sync.yml: peter-evans skips PR creation if no
+    # SDK diff.
     needs: [build-spec, test, test-integration]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.build-spec.result == 'success' &&
+      needs.test.result == 'success' &&
+      (needs.test-integration.result == 'success' || needs.test-integration.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
-          # Need previous commit to diff openapi.json against.
           fetch-depth: 2
       - name: Skip if openapi.json did not change
         id: spec
