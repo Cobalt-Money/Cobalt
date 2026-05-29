@@ -4,8 +4,6 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    cooldown:
-      default-days: 7
     groups:
       actions:
         patterns: ["*"]
@@ -13,71 +11,17 @@ updates:
       prefix: "ci"
 
   - package-ecosystem: npm
-    # Glob covers every workspace package.json (apps/*, packages/*) plus root.
-    # Without this, dependabot only scans `/` and misses 15 workspace manifests.
     directories:
       - "/"
       - "/apps/*"
       - "/packages/*"
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
-    # Wait 7 days after a release before opening a PR. Lets broken patch
-    # releases (yanked, missing exports, peer-dep regressions) shake out
-    # before they reach us.
     cooldown:
       default-days: 7
-    # Vendor-family groups land together (e.g. fumadocs-core + ui + mdx must
-    # move in lockstep). Everything else: safe-batch for stable minor/patch,
-    # individual PRs for risky categories (0.x, framework cores, types).
-    groups:
-      drizzle:
-        patterns: ["drizzle*", "@drizzle*"]
-      fumadocs:
-        patterns: ["fumadocs*"]
-      eslint:
-        patterns: ["eslint*", "@eslint/*", "@typescript-eslint/*"]
-      tanstack:
-        patterns: ["@tanstack/*"]
-      radix:
-        patterns: ["@radix-ui/*"]
-      ai-sdk:
-        patterns: ["@ai-sdk/*", "ai"]
-      types:
-        patterns: ["@types/*"]
-        update-types: ["patch"]
-      safe-minor-patch:
-        update-types: ["minor", "patch"]
-        exclude-patterns:
-          # Types: peer-dep duplication hazard (e.g. @types/react across workspaces).
-          - "@types/*"
-          # Vendor families above — keep their own groups.
-          - "drizzle*"
-          - "@drizzle*"
-          - "fumadocs*"
-          - "eslint*"
-          - "@eslint/*"
-          - "@typescript-eslint/*"
-          - "@tanstack/*"
-          - "@radix-ui/*"
-          - "@ai-sdk/*"
-          - "ai"
-          # Framework cores: even minor bumps can shift internal types.
-          - "react"
-          - "react-dom"
-          - "next"
-          - "vite"
-          - "nitro"
-          - "@vitejs/*"
-          # 0.x packages: semver-minor IS breaking in pre-1.0.
-          - "@json-render/*"
-          - "agentation"
     commit-message:
       prefix: "deps"
     ignore:
-      # Catalog-pinned (bumped via root package.json catalog entry, requires
-      # zero-cache redeploy on Railway).
-      - dependency-name: "@rocicorp/zero"
-      # Majors handled manually — bundling breaking changes blocks bisect.
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "@rocicorp/zero"
