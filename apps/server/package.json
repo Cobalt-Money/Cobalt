@@ -35,7 +35,7 @@
     "@parallel-web/ai-sdk-tools": "^0.2.1",
     "@rocicorp/zero": "catalog:",
     "@scalar/hono-api-reference": "^0.10.4",
-    "@tanstack/ai": "^0.15.0",
+    "@tanstack/ai": "^0.21.1",
     "@tanstack/ai-code-mode": "^0.1.9",
     "@tanstack/ai-isolate-cloudflare": "^0.2.0",
     "@upstash/redis": "^1.38.0",
