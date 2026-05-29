@@ -1,7 +1,7 @@
 import { categoryGroup } from "@cobalt-web/db/schema/accounts/banking/categories/category-group";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
-import { and, desc, eq, gte, ilike, lt, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, lt, lte, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { z } from "zod";
 
@@ -50,7 +50,7 @@ export async function getTransactions(userId: string, params: GetTransactionsPar
     searchQuery,
     minAmount,
     maxAmount,
-    primaryCategory,
+    categoryGroup: categoryGroupKeys,
   } = params;
   const cursorPayload = decodeCursor(cursor);
 
@@ -76,8 +76,8 @@ export async function getTransactions(userId: string, params: GetTransactionsPar
   if (maxAmount !== undefined) {
     conditions.push(lte(transaction.amount, String(maxAmount)));
   }
-  if (primaryCategory) {
-    conditions.push(eq(categoryGroup.systemKey, primaryCategory));
+  if (categoryGroupKeys && categoryGroupKeys.length > 0) {
+    conditions.push(inArray(categoryGroup.systemKey, categoryGroupKeys));
   }
   if (searchPattern) {
     const orClause = or(

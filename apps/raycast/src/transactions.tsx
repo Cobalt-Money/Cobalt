@@ -89,13 +89,13 @@ function formatDate(iso: string): string {
 function TransactionMetadata({
   institutionIcon,
   merchantUrl,
-  primaryCategory,
+  categoryGroup,
   signedAmount,
   tx,
 }: {
   institutionIcon: string | null;
   merchantUrl: string | null;
-  primaryCategory: string | null;
+  categoryGroup: string | null;
   signedAmount: string;
   tx: TransactionItem;
 }) {
@@ -113,11 +113,11 @@ function TransactionMetadata({
         <Detail.Metadata.Label title="Authorized" text={formatDate(tx.authorizedDate)} />
       ) : null}
       <Detail.Metadata.Separator />
-      {primaryCategory ? (
+      {categoryGroup ? (
         <Detail.Metadata.Label
           title="Category"
-          icon={categoryIcon(primaryCategory)}
-          text={primaryCategory}
+          icon={categoryIcon(categoryGroup)}
+          text={categoryGroup}
         />
       ) : null}
       {tx.categoryDetail ? (
@@ -154,7 +154,7 @@ function TransactionDetail({
   const isCredit = tx.amount > 0;
   const amountStr = currency.format(Math.abs(tx.amount));
   const signedAmount = `${isCredit ? "+" : "-"}${amountStr}`;
-  const primaryCategory =
+  const categoryGroup =
     typeof tx.category === "string" ? tx.category : (tx.category?.primary ?? null);
   const merchantIcon = pickMerchantIcon({
     brandfetchClientId,
@@ -196,7 +196,7 @@ function TransactionDetail({
         <TransactionMetadata
           institutionIcon={institutionIcon}
           merchantUrl={merchantUrl}
-          primaryCategory={primaryCategory}
+          categoryGroup={categoryGroup}
           signedAmount={signedAmount}
           tx={tx}
         />
@@ -295,7 +295,7 @@ export default function Command() {
         // Canonical sign: amount > 0 is a credit/inflow (green), amount <= 0 is a debit (red).
         const isCredit = tx.amount > 0;
         const amountStr = currency.format(Math.abs(tx.amount));
-        const primaryCategory =
+        const categoryGroup =
           typeof tx.category === "string" ? tx.category : (tx.category?.primary ?? null);
 
         const institutionIcon = pickInstitutionIcon({
@@ -324,8 +324,8 @@ export default function Command() {
             tooltip: tx.pending ? "Pending" : "Posted",
           },
           {
-            icon: categoryIcon(primaryCategory),
-            tooltip: primaryCategory ?? undefined,
+            icon: categoryIcon(categoryGroup),
+            tooltip: categoryGroup ?? undefined,
           },
           institutionAccessory,
           { text: formatDate(tx.date) },
