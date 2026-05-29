@@ -20,14 +20,18 @@ import { accountsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
 
 import type { ReauthSession } from "./reauth-session";
 
-async function disconnectBank(plaidAccountId: string | null | undefined) {
-  if (!plaidAccountId) {
+async function disconnectAccountRest(accountId: string | null | undefined) {
+  if (!accountId) {
     throw new Error("Missing account id");
   }
-  const res = await accountsApi.bank[":id"].$delete({
-    param: { id: plaidAccountId },
+  const res = await accountsApi[":id"].$delete({
+    param: { id: accountId },
   });
   const data = await res.json();
+  if (res.status === 403) {
+    const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
+    throw new Error(errMsg ?? "Subscription required");
+  }
   if (!res.ok || !("success" in data) || !data.success) {
     const msg = "message" in data ? data.message : undefined;
     throw new Error(msg ?? "Disconnect failed");
@@ -43,7 +47,6 @@ interface AccountConnectionActionsProps {
     | "institutionLogosExtra"
     | "institutionUrl"
     | "kind"
-    | "plaidAccountId"
     | "plaidItemId"
     | "snaptradeAuthorizationId"
     | "source"
@@ -183,31 +186,8 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
   const performDisconnect = async () => {
     setBusy("disconnect");
     try {
-      if (account.source === "manual") {
-        const deleteFn = onboardingHost?.deleteManualAccount;
-        if (!deleteFn) {
-          throw new Error("Manual delete handler not wired");
-        }
-        await deleteFn(account.id);
-        cobaltToast.accountDisconnected(account);
-      } else if (account.kind === "bank") {
-        await disconnectBank(account.plaidAccountId);
-        cobaltToast.accountDisconnected(account);
-      } else {
-        const res = await accountsApi.brokerage[":accountId"].$delete({
-          param: { accountId: account.id },
-        });
-        const data = await res.json();
-        if (res.status === 403) {
-          const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
-          throw new Error(errMsg ?? "Subscription required");
-        }
-        if (!res.ok || ("success" in data && data.success === false)) {
-          const msg = "message" in data ? data.message : undefined;
-          throw new Error(msg ?? "Disconnect failed");
-        }
-        cobaltToast.accountDisconnected(account);
-      }
+      await disconnectAccountRest(account.id);
+      cobaltToast.accountDisconnected(account);
       setDisconnectOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Disconnect failed");

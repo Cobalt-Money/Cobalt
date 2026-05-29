@@ -4,6 +4,52 @@ import { plaidConnection } from "@cobalt-web/db/schema/providers/plaid/connectio
 import { eq } from "drizzle-orm";
 
 import { ApiError } from "../_shared/errors.js";
+import { disconnectBrokerageAccountByUserId } from "../../providers/snaptrade/disconnect.js";
+
+/**
+ * Source-agnostic disconnect. Loads the row by `financial_account.id`,
+ * dispatches on `source`. Single entry point for `DELETE /api/accounts/:id`.
+ *
+ * Returns Plaid access token when the parent item drained so the route can
+ * call `/item/remove` upstream; null for non-Plaid or non-draining cases.
+ */
+export async function disconnectAccount(
+  userId: string,
+  accountId: string,
+): Promise<{ accessToken: string | null; message: string; success: boolean }> {
+  const row = await db.query.financialAccount.findFirst({
+    columns: { source: true },
+    where: { id: { eq: accountId }, userId: { eq: userId } },
+  });
+
+  if (!row) {
+    throw new ApiError(404, "account_not_found", "Account not found");
+  }
+
+  switch (row.source) {
+    case "plaid": {
+      return disconnectBankAccount(userId, accountId);
+    }
+    case "snaptrade": {
+      const r = await disconnectBrokerageAccountByUserId(userId, accountId);
+      return { accessToken: null, message: r.message, success: r.success };
+    }
+    case "manual": {
+      const deleted = await db
+        .delete(financialAccount)
+        .where(eq(financialAccount.id, accountId))
+        .returning({ name: financialAccount.name });
+      return {
+        accessToken: null,
+        message: `Successfully disconnected ${deleted[0]?.name ?? "account"}`,
+        success: true,
+      };
+    }
+    default: {
+      throw new ApiError(409, "account_source_unsupported", "Unsupported account source");
+    }
+  }
+}
 
 /**
  * Disconnect a single Plaid-linked account.
@@ -20,7 +66,7 @@ export async function disconnectBankAccount(userId: string, accountId: string) {
   const row = await db.query.financialAccount.findFirst({
     columns: { id: true },
     where: {
-      externalId: { eq: accountId },
+      id: { eq: accountId },
       source: { eq: "plaid" },
       userId: { eq: userId },
     },
