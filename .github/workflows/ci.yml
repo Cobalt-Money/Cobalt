@@ -30,7 +30,7 @@ jobs:
       code: ${{ steps.filter.outputs.code }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # v3.0.2
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
         id: filter
         with:
           filters: |
@@ -132,7 +132,7 @@ jobs:
         run: bun run scripts/generate-docs.ts
       - name: Diff OpenAPI for breaking changes
         if: hashFiles('/tmp/base-openapi.json') != ''
-        uses: oasdiff/oasdiff-action/breaking@1c611ffb1253a72924624aa4fb662e302b3565d3  # v0.0.21
+        uses: oasdiff/oasdiff-action/breaking@143743fa1c823e5242c56ca81e656837faefe5a0  # v0.0.49
         with:
           base: /tmp/base-openapi.json
           revision: apps/server/openapi.json
