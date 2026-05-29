@@ -20,11 +20,16 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
-    # Bundle non-major updates to cut PR noise on a monorepo; majors stay
-    # individual so each breaking change gets its own review.
+    # Bundle non-major updates to cut PR noise on a monorepo. Majors stay
+    # individual per dependency, but same-dep bumps across workspaces and
+    # related dep families collapse into one PR.
     groups:
       minor-and-patch:
         update-types: ["minor", "patch"]
+      drizzle:
+        patterns: ["drizzle*", "@drizzle*"]
+      eslint:
+        patterns: ["eslint*", "@eslint/*", "@typescript-eslint/*"]
     commit-message:
       prefix: "deps"
     ignore:
