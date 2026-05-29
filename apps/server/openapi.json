@@ -1631,6 +1631,26 @@
           },
           {
             "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "Restrict to one or more category group systemKeys. Repeat the param (`?categoryGroup=food_and_drink&categoryGroup=travel`) for multiple."
+            },
+            "required": false,
+            "description": "Restrict to one or more category group systemKeys. Repeat the param (`?categoryGroup=food_and_drink&categoryGroup=travel`) for multiple.",
+            "name": "categoryGroup",
+            "in": "query"
+          },
+          {
+            "schema": {
               "type": "string",
               "description": "Opaque cursor returned by the previous page. Omit for first page."
             },
