@@ -1,15 +1,15 @@
 import { defineConfig } from "oxlint";
 import core from "ultracite/oxlint/core";
 import react from "ultracite/oxlint/react";
+import tanstack from "ultracite/oxlint/tanstack";
 import vitest from "ultracite/oxlint/vitest";
 
 export default defineConfig({
-  extends: [core, react, vitest],
+  extends: [core, react, tanstack, vitest],
   ignorePatterns: [
     ".agents/**",
     "apps/fumadocs/**",
     "apps/web/src/routes/**/$*.tsx",
-    "**/routeTree.gen.ts",
     "**/zero-schema.gen.ts",
     "packages/ui/src/components/**",
     "**/drizzle-zero.config.ts",
@@ -60,6 +60,8 @@ export default defineConfig({
         // flags as a type annotation. False positive in test contexts.
         "@typescript-eslint/consistent-type-imports": "off",
         "no-restricted-imports": "off",
+        "jest/max-expects": "off",
+        "vitest/max-expects": "off",
         "vitest/no-importing-vitest-globals": "off",
         "vitest/prefer-called-once": "off",
         "vitest/prefer-describe-function-title": "off",
