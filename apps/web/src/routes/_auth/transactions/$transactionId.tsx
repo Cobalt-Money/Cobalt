@@ -13,6 +13,8 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
+import { mapZeroTransactionDetailRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
+
 import { CategoryFormDialog } from "@/components/categories/category-form-dialog";
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
@@ -24,24 +26,22 @@ import {
   useTagOptions,
   useTransactionTagIds,
 } from "@/hooks/use-tags";
-import { useHistory, useTransactions } from "@/hooks/use-transactions";
 
 const transactionDetailRouteApi = getRouteApi(
-  "/_auth/transactions/$transactionId"
+  "/_auth/transactions/$transactionId",
 );
 
 export const Route = createFileRoute("/_auth/transactions/$transactionId")({
   component: TransactionDetailRoute,
   loader: ({ context, params }) => {
-    context.zero.preload(queries.transactions.list(), { ttl: "5m" });
     context.zero.preload(
-      queries.transactions.activity({ transactionId: params.transactionId }),
-      { ttl: "5m" }
+      queries.transactions.detail({ transactionId: params.transactionId }),
+      { ttl: "5m" },
     );
     context.zero.preload(queries.tags.list(), { ttl: "5m" });
     context.zero.preload(
       queries.tags.forTransaction({ transactionId: params.transactionId }),
-      { ttl: "5m" }
+      { ttl: "5m" },
     );
     context.zero.preload(queries.categories.list(), { ttl: "5m" });
   },
@@ -52,18 +52,22 @@ function TransactionDetailRoute() {
   const { transactionId } = transactionDetailRouteApi.useParams();
   const navigate = useNavigate();
   const run = useMutator();
-  const { isComplete, items } = useTransactions();
-
-  const transaction = useMemo(
-    () => items.find((t) => t.id === transactionId),
-    [items, transactionId]
+  const [detailRow, detailResult] = useQuery(
+    queries.transactions.detail({ transactionId }),
   );
 
+  const mapped = useMemo(
+    () => (detailRow ? mapZeroTransactionDetailRow(detailRow) : null),
+    [detailRow],
+  );
+  const transaction = mapped?.transaction;
+  const editEvents = mapped?.events ?? [];
+
   useEffect(() => {
-    if (isComplete && !transaction) {
+    if (detailResult.type === "complete" && !transaction) {
       navigate({ replace: true, to: "/transactions" });
     }
-  }, [isComplete, navigate, transaction]);
+  }, [detailResult.type, navigate, transaction]);
 
   const [locationQuery, setLocationQuery] = useState("");
   const { data: locationResults = [], isFetching: locationLoading } =
@@ -71,8 +75,6 @@ function TransactionDetailRoute() {
   const [merchantQuery, setMerchantQuery] = useState("");
   const { data: merchantResults = [], isFetching: merchantLoading } =
     useMerchantSearch(merchantQuery);
-
-  const editEvents = useHistory(transactionId);
 
   const { options: availableTags } = useTagOptions();
   const [allTags] = useQuery(queries.tags.list());
@@ -90,7 +92,7 @@ function TransactionDetailRoute() {
           sectionKey: deriveCategorySection(groupSystemKey),
         };
       }),
-    [categoryRows]
+    [categoryRows],
   );
   const { openAddTag } = useCommandMenu();
   const [categoryGroups] = useQuery(queries.categories.listGroups());
@@ -133,29 +135,57 @@ function TransactionDetailRoute() {
         results: locationResults,
       },
       onResetCategory: () => {
-        run((m) => m.transaction.resetCategory({ editId: crypto.randomUUID(), id }), fb("category"));
+        run(
+          (m) =>
+            m.transaction.resetCategory({ editId: crypto.randomUUID(), id }),
+          fb("category"),
+        );
       },
       onResetDate: () => {
-        run((m) => m.transaction.resetDate({ editId: crypto.randomUUID(), id }), fb("date"));
+        run(
+          (m) => m.transaction.resetDate({ editId: crypto.randomUUID(), id }),
+          fb("date"),
+        );
       },
       onResetLocation: () => {
-        run((m) => m.transaction.resetLocation({ editId: crypto.randomUUID(), id }), fb("location"));
+        run(
+          (m) =>
+            m.transaction.resetLocation({ editId: crypto.randomUUID(), id }),
+          fb("location"),
+        );
       },
       onResetNotes: () => {
-        run((m) => m.transaction.resetNotes({ editId: crypto.randomUUID(), id }), fb("notes"));
+        run(
+          (m) => m.transaction.resetNotes({ editId: crypto.randomUUID(), id }),
+          fb("notes"),
+        );
       },
       onUpdateCategory: ({ categoryId }) => {
         run(
-          (m) => m.transaction.updateCategory({ categoryId, editId: crypto.randomUUID(), id }),
+          (m) =>
+            m.transaction.updateCategory({
+              categoryId,
+              editId: crypto.randomUUID(),
+              id,
+            }),
           fb("category"),
         );
       },
       onUpdateDate: (date) => {
-        run((m) => m.transaction.updateDate({ editId: crypto.randomUUID(), id, date }), fb("date"));
+        run(
+          (m) =>
+            m.transaction.updateDate({ editId: crypto.randomUUID(), id, date }),
+          fb("date"),
+        );
       },
       onUpdateLocation: (location) => {
         run(
-          (m) => m.transaction.updateLocation({ editId: crypto.randomUUID(), id, location }),
+          (m) =>
+            m.transaction.updateLocation({
+              editId: crypto.randomUUID(),
+              id,
+              location,
+            }),
           fb("location"),
         );
       },
@@ -182,15 +212,30 @@ function TransactionDetailRoute() {
         );
       },
       onUpdateName: (name) => {
-        run((m) => m.transaction.updateName({ editId: crypto.randomUUID(), id, name }), fb("name"));
+        run(
+          (m) =>
+            m.transaction.updateName({ editId: crypto.randomUUID(), id, name }),
+          fb("name"),
+        );
       },
       onUpdateNotes: (notes) => {
-        run((m) => m.transaction.updateNotes({ editId: crypto.randomUUID(), id, notes }), fb("notes"));
+        run(
+          (m) =>
+            m.transaction.updateNotes({
+              editId: crypto.randomUUID(),
+              id,
+              notes,
+            }),
+          fb("notes"),
+        );
       },
       onDelete:
         transaction?.source === "manual"
           ? () => {
-              run((m) => m.transaction.deleteTransaction({ id }), fb("deletion"));
+              run(
+                (m) => m.transaction.deleteTransaction({ id }),
+                fb("deletion"),
+              );
               cobaltToast.transactionDeleted();
               navigate({ replace: true, to: "/transactions" });
             }

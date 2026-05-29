@@ -3,18 +3,25 @@ import type {
   TransactionActivityItem,
   TransactionResponse,
 } from "@cobalt-web/server-data/transactions/schemas";
-import type { queries, Row } from "@cobalt-web/zero";
+import type { queries, Row, TransactionEdit } from "@cobalt-web/zero";
 
 /** Zero `useQuery` row for `transactions.activity`. */
 export type ZeroTransactionEditRow = Row<typeof queries.transactions.activity>;
 
-export function mapZeroTransactionEditRow(row: ZeroTransactionEditRow): TransactionActivityItem {
+function normalizeEditCreatedAt(value: TransactionEdit["createdAt"]): string {
+  if (value === null || value === undefined) {
+    return new Date(0).toISOString();
+  }
+  if (typeof value === "number") {
+    return new Date(value).toISOString();
+  }
+  return String(value);
+}
+
+export function mapZeroTransactionEditRow(row: TransactionEdit): TransactionActivityItem {
   return {
     actor: row.actor as TransactionActivityItem["actor"],
-    createdAt:
-      typeof row.createdAt === "number"
-        ? new Date(row.createdAt).toISOString()
-        : String(row.createdAt),
+    createdAt: normalizeEditCreatedAt(row.createdAt),
     field: row.field as TransactionActivityItem["field"],
     id: row.id,
     newValue: row.newValue ?? null,
@@ -132,4 +139,23 @@ export function mapZeroTransactionListRow(row: ZeroTransactionListRow): Transact
     tagIds: transactionTags ? transactionTags.map((t) => t.tagId) : [],
     website: tx.website ?? null,
   });
+}
+
+/** Zero `useQuery` row for `transactions.detail` — same as list + `edits`. */
+export type ZeroTransactionDetailRow = NonNullable<Row<typeof queries.transactions.detail>>;
+
+/** Detail-row variant: same flatten as the list row, plus mapped edits. */
+export function mapZeroTransactionDetailRow(row: ZeroTransactionDetailRow): {
+  transaction: TransactionResponse;
+  events: TransactionActivityItem[];
+} | null {
+  const mapped = mapZeroTransactionListRow(row as unknown as ZeroTransactionListRow);
+  if (!mapped) {
+    return null;
+  }
+  const edits = (row as unknown as { edits?: readonly TransactionEdit[] }).edits ?? [];
+  return {
+    events: edits.map(mapZeroTransactionEditRow),
+    transaction: mapped,
+  };
 }

@@ -31,6 +31,24 @@ export const transactionsQueries = {
       .orderBy("createdAt", "asc"),
   ),
 
+  /**
+   * Single transaction with the same relations as `list` + its edit history.
+   * Detail view should preload this instead of `list` + `activity` separately —
+   * one sync subscription, one FK-chained fetch.
+   */
+  detail: defineQuery(z.object({ transactionId: z.string() }), ({ ctx, args }) =>
+    zql.transaction
+      .where("id", args.transactionId)
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
+      .related("account", (q2) =>
+        q2.related("plaidConnection", (conn) => conn.related("institution")),
+      )
+      .related("category", (c) => c.related("group"))
+      .related("transactionTags")
+      .related("edits", (e) => e.orderBy("createdAt", "asc"))
+      .one(),
+  ),
+
   list: defineQuery(listArgsSchema, ({ ctx, args }) =>
     transactionsForUser(ctx?.userId ?? NO_MATCH_ID, args ?? {}),
   ),
