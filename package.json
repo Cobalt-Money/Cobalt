@@ -59,7 +59,7 @@
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.104",
     "@cobalt-web/env": "workspace:*",
-    "@tanstack/react-virtual": "^3.13.23",
+    "@tanstack/react-virtual": "^3.13.25",
     "ai": "^6.0.168",
     "dotenv": "catalog:",
     "nitro": "^3.0.260522-beta",
