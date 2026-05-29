@@ -22,7 +22,7 @@ import {
   listPlaidAccounts,
   lookupPlaidConnection,
 } from "@cobalt-web/server-data/providers/plaid/link/queries";
-import { upsertBankBalanceSnapshotsForUser } from "@cobalt-web/server-data/snapshots/mutations";
+import { upsertAllBalanceSnapshots } from "@cobalt-web/server-data/snapshots/mutations";
 import { syncTransactionsPage } from "@cobalt-web/server-data/providers/plaid/transactions/actions";
 import {
   applyPendingOverrides,
@@ -387,7 +387,7 @@ export async function syncRecurringStep(accessToken: string, itemId: string) {
  */
 export async function seedTodayPlaidSnapshotsStep(userId: string): Promise<void> {
   "use step";
-  await upsertBankBalanceSnapshotsForUser(userId, "link");
+  await upsertAllBalanceSnapshots(userId, "link");
 }
 
 export async function dispatchSnapshotWorkflowStep(_userId: string): Promise<void> {

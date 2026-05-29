@@ -142,3 +142,17 @@ export function upsertPlaidInvestmentSnapshotsForUser(
 ): Promise<{ upserted: number }> {
   return Promise.resolve({ upserted: 0 });
 }
+
+/**
+ * Upsert today's snapshot for every source (plaid bank + snaptrade + manual)
+ * belonging to a user. Used by account-create / link paths so today's bucket
+ * sums all accounts — not just the one just added — and by the nightly cron.
+ * Each per-source upsert is idempotent on (accountId, snapshotDate).
+ */
+export async function upsertAllBalanceSnapshots(userId: string, source: string): Promise<void> {
+  await Promise.all([
+    upsertBankBalanceSnapshotsForUser(userId, source),
+    upsertSnapTradePortfolioSnapshotsForUser(userId, source),
+    upsertManualBalanceSnapshotsForUser(userId, source),
+  ]);
+}

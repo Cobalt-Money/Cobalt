@@ -22,7 +22,7 @@ import { getUserHoldings } from "@cobalt-web/server-data/providers/snaptrade/hol
 import { upsertAccountPositions } from "@cobalt-web/server-data/providers/snaptrade/holdings/mutations";
 import { getUserAccountOrders } from "@cobalt-web/server-data/providers/snaptrade/orders/actions";
 import { upsertAccountOrders } from "@cobalt-web/server-data/providers/snaptrade/orders/mutations";
-import { upsertSnapTradePortfolioSnapshotsForUser } from "@cobalt-web/server-data/snapshots/mutations";
+import { upsertAllBalanceSnapshots } from "@cobalt-web/server-data/snapshots/mutations";
 import type { Account, Balance, UniversalActivity } from "snaptrade-typescript-sdk";
 import { FatalError, RetryableError } from "workflow";
 
@@ -499,5 +499,5 @@ export async function refreshAccountDataStep(
  */
 export async function seedTodaySnaptradeSnapshotsStep(userId: string): Promise<void> {
   "use step";
-  await upsertSnapTradePortfolioSnapshotsForUser(userId, "link");
+  await upsertAllBalanceSnapshots(userId, "link");
 }

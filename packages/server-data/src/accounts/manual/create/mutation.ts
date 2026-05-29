@@ -3,7 +3,7 @@ import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { balance } from "@cobalt-web/db/schema/accounts/balance";
 
 import { isLiabilityType } from "../../../providers/plaid/link/lib.js";
-import { upsertManualBalanceSnapshotsForUser } from "../../../snapshots/mutations.js";
+import { upsertAllBalanceSnapshots } from "../../../snapshots/mutations.js";
 import type { CreateManualAccount } from "./schema.js";
 
 /**
@@ -50,6 +50,6 @@ export async function createManualAccount(
     current: signedCurrent.toString(),
     userId,
   });
-  await upsertManualBalanceSnapshotsForUser(userId, "manual-create");
+  await upsertAllBalanceSnapshots(userId, "manual-create");
   return { id: accountId };
 }
