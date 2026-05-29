@@ -2,7 +2,7 @@ import { Icon } from "@raycast/api";
 
 const BRANDFETCH_CDN = "https://cdn.brandfetch.io";
 
-/** Plaid primary category → bundled SVG asset under `assets/categories/`. */
+/** Category group systemKey → bundled SVG asset under `assets/categories/`. */
 const CATEGORY_ICON: Record<string, string> = {
   BANK_FEES: "categories/card.svg",
   ENTERTAINMENT: "categories/popcorn.svg",
@@ -22,7 +22,7 @@ const CATEGORY_ICON: Record<string, string> = {
   TRAVEL: "categories/travel.svg",
 };
 
-/** Bundled SVG for a Plaid primary category, or `Icon.BankNote` if unknown. */
+/** Bundled SVG for a category group systemKey, or `Icon.BankNote` if unknown. */
 export function categoryIcon(category: string | null | undefined): string | Icon {
   if (!category) {
     return Icon.BankNote;

@@ -4,13 +4,16 @@ import { transactionResponseSchema } from "../detail/schema.js";
 
 export const getTransactionsSchema = z.object({
   accountType: z.string().optional(),
+  categoryGroup: z
+    .union([z.string(), z.array(z.string())])
+    .transform((v) => (Array.isArray(v) ? v : [v]))
+    .optional(),
   cursor: z.string().optional(),
   endDate: z.string().optional(),
   limit: z.coerce.number().min(1).max(200).default(50),
   maxAmount: z.coerce.number().optional(),
   minAmount: z.coerce.number().optional(),
   pendingFilter: z.enum(["true", "false"]).optional(),
-  primaryCategory: z.string().optional(),
   searchQuery: z.string().optional(),
   startDate: z.string().optional(),
 });

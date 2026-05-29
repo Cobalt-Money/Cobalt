@@ -26,6 +26,13 @@ const getTransactionsSchema = z.object({
       description:
         "Restrict to one or more account ids. Repeat the param (`?accountId=a&accountId=b`) for multiple.",
     }),
+  categoryGroup: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .openapi({
+      description:
+        "Restrict to one or more category group systemKeys. Repeat the param (`?categoryGroup=food_and_drink&categoryGroup=travel`) for multiple.",
+    }),
   cursor: z.string().optional().openapi({
     description: "Opaque cursor returned by the previous page. Omit for first page.",
   }),
@@ -140,10 +147,15 @@ export const listRouter = createApp()
     const accountIds = q.accountId
       ? new Set(Array.isArray(q.accountId) ? q.accountId : [q.accountId])
       : null;
+    let categoryGroup: string[] | undefined;
+    if (q.categoryGroup) {
+      categoryGroup = Array.isArray(q.categoryGroup) ? q.categoryGroup : [q.categoryGroup];
+    }
     const result = await getTransactions(user.id, {
       cursor: q.cursor,
       endDate: q.endDate,
       limit: q.limit,
+      ...(categoryGroup ? { categoryGroup } : {}),
       startDate: q.startDate,
     });
     return c.json(

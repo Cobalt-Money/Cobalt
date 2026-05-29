@@ -139,7 +139,7 @@ function StreamDetail({
   const monthly = currency.format(
     Math.abs(monthlyEquivalent(stream.averageAmount, stream.frequency)),
   );
-  const primaryCategory = pickCategory(stream.category);
+  const categoryGroup = pickCategory(stream.category);
   const title = streamTitle(stream);
   const merchantIcon = pickRecurringIcon({
     brandfetchClientId,
@@ -197,11 +197,11 @@ function StreamDetail({
           <Detail.Metadata.Label title="Last seen" text={formatDate(stream.lastDate)} />
           <Detail.Metadata.Label title="First seen" text={formatDate(stream.firstDate)} />
           <Detail.Metadata.Separator />
-          {primaryCategory ? (
+          {categoryGroup ? (
             <Detail.Metadata.Label
               title="Category"
-              icon={categoryIcon(primaryCategory)}
-              text={primaryCategory}
+              icon={categoryIcon(categoryGroup)}
+              text={categoryGroup}
             />
           ) : null}
           {stream.categoryDetail ? (
@@ -332,7 +332,7 @@ export default function Command() {
       ) : null}
       {sorted.map((s) => {
         const avg = currency.format(Math.abs(s.averageAmount));
-        const primaryCategory = pickCategory(s.category);
+        const categoryGroup = pickCategory(s.category);
         const fullTitle = streamTitle(s);
         const title = truncateName(fullTitle);
 
@@ -356,8 +356,8 @@ export default function Command() {
         });
 
         accessories.push({
-          icon: categoryIcon(primaryCategory),
-          tooltip: primaryCategory ?? undefined,
+          icon: categoryIcon(categoryGroup),
+          tooltip: categoryGroup ?? undefined,
         });
 
         const institutionIcon = pickInstitutionIcon({

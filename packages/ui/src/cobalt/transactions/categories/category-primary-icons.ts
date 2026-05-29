@@ -33,7 +33,7 @@ export type CategoryPrimaryGlyph =
   | { kind: "image"; src: string; srcDark?: string }
   | { kind: "emoji"; char: string };
 
-/** Plaid primary category → Hugeicons glyph (category column). */
+/** Category group systemKey → Hugeicons glyph (category column). */
 export const PRIMARY_CATEGORY_ICON = {
   BANK_FEES: { kind: "image", src: BANK_FEES_ICON_SRC },
   ENTERTAINMENT: { kind: "image", src: ENTERTAINMENT_ICON_SRC },
