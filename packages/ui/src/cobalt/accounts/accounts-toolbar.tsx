@@ -8,12 +8,14 @@ export type AccountsFilter = "all" | AccountCategory;
 const CATEGORY_LABELS = {
   banking: "Banking",
   brokerage: "Investments",
+  cash: "Cash",
   credit: "Credit",
   loan: "Loans",
   savings: "Savings",
 } satisfies Record<AccountCategory, string>;
 
 const CATEGORY_ORDER: readonly AccountCategory[] = [
+  "cash",
   "banking",
   "savings",
   "brokerage",

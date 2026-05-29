@@ -92,6 +92,7 @@ export function AddManualAccountPage({
         institutionSearch={institutionSearch}
         initialName={selectedInstitution?.name}
         initialType={cashEntry ? "depository" : undefined}
+        initialSubtype={cashEntry ? "cash" : undefined}
         onBackspaceWhenEmpty={onBackspaceWhenEmpty}
         onSubmit={handleSubmit}
         submitting={false}
