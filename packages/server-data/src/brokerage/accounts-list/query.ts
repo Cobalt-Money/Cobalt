@@ -43,6 +43,9 @@ export async function getBrokerageAccounts(userId: string): Promise<EnhancedBrok
       plaidConnection: {
         columns: { institutionName: true },
       },
+      snaptradeAuthorization: {
+        columns: { authorizationId: true, isDisabled: true },
+      },
     },
   });
 
@@ -74,6 +77,8 @@ export async function getBrokerageAccounts(userId: string): Promise<EnhancedBrok
       id: account.externalId ?? account.id,
       institutionName: account.institutionName ?? account.plaidConnection?.institutionName ?? "",
       name: account.name ?? "",
+      needsReauth: account.snaptradeAuthorization?.isDisabled ?? false,
+      snaptradeAuthorizationId: account.snaptradeAuthorization?.authorizationId ?? null,
       userId,
     };
   });
@@ -94,6 +99,8 @@ export function toBrokerageAccountListItem(
     id: account.id,
     institutionName: account.institutionName,
     name: account.name,
+    needsReauth: account.needsReauth,
+    snaptradeAuthorizationId: account.snaptradeAuthorizationId,
     source: "snaptrade",
   };
 }

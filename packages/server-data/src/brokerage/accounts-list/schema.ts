@@ -11,6 +11,8 @@ export const brokerageAccountListItemSchema = enhancedBrokerageAccountSchema
     id: true,
     institutionName: true,
     name: true,
+    needsReauth: true,
+    snaptradeAuthorizationId: true,
   })
   .extend({
     plaidAccountId: z.string().optional(),

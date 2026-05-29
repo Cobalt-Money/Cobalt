@@ -48,6 +48,14 @@ export const enhancedBrokerageAccountSchema = z
     id: z.string(),
     institutionName: z.string().nullable(),
     name: z.string().nullable(),
+    needsReauth: z.boolean().openapi({
+      description:
+        "True when the SnapTrade authorization backing this account is disabled and requires user reconnect via `generateConnectionPortal` with `reconnectAuthorizationId`. Always false for non-SnapTrade accounts.",
+    }),
+    snaptradeAuthorizationId: z.string().nullable().openapi({
+      description:
+        "SnapTrade authorization id for reconnect flows. Null for Plaid / manual accounts. Pass as `reconnectAuthorizationId` to `generateConnectionPortal` when `needsReauth` is true.",
+    }),
     userId: z.string(),
   })
   .openapi("BrokerageAccount");
@@ -74,5 +82,7 @@ export interface EnhancedBrokerageAccount {
   id: string;
   institutionName: string | null;
   name: string | null;
+  needsReauth: boolean;
+  snaptradeAuthorizationId: string | null;
   userId: string;
 }

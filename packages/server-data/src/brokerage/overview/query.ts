@@ -128,6 +128,9 @@ function fetchAccountsWithBalances(userId: string) {
       plaidConnection: {
         columns: { institutionName: true },
       },
+      snaptradeAuthorization: {
+        columns: { authorizationId: true, isDisabled: true },
+      },
     },
   });
 }
@@ -156,6 +159,8 @@ function toEnhancedAccount(row: AccountRow, userId: string): EnhancedBrokerageAc
     id: row.externalId ?? row.id,
     institutionName: row.institutionName ?? row.plaidConnection?.institutionName ?? "",
     name: row.name ?? "",
+    needsReauth: row.snaptradeAuthorization?.isDisabled ?? false,
+    snaptradeAuthorizationId: row.snaptradeAuthorization?.authorizationId ?? null,
     userId,
   };
 }
