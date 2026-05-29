@@ -46,7 +46,6 @@
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "3.13.24",
     "@tanstack/router-plugin": "^1.141.1",
-    "agentation": "^2.3.3",
     "ai": "^6.0.142",
     "better-auth": "catalog:",
     "canvas-confetti": "^1.9.4",
