@@ -124,7 +124,6 @@
     "@vercel/blob": "^2.3.3",
     "ai": "^6",
     "drizzle-orm": "1.0.0-beta.22",
-    "fastest-levenshtein": "^1.0.16",
     "linkedom": "^0.18.12",
     "papaparse": "^5.5.3",
     "plaid": "^41.4.0",
