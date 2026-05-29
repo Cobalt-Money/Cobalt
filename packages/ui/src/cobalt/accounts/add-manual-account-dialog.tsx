@@ -65,7 +65,7 @@ const TYPE_META: readonly TypeMeta[] = [
   {
     balanceLabel: "Balance",
     icon: Wallet01Icon,
-    subtitle: "Checking, savings, cash",
+    subtitle: "Checking, savings",
     subtypes: ["checking", "savings", "cash"],
     title: "Cash & Banking",
     type: "depository",
@@ -249,6 +249,8 @@ export interface AddManualAccountFormProps {
   initialLogoDomain?: string | null;
   /** Lock the account type and skip the type picker. Used by the Cash entry path. */
   initialType?: ManualAccountType;
+  /** Override the default subtype (first of the type's subtypes). Cash entry passes "cash". */
+  initialSubtype?: string;
   /** Wires the in-form institution picker (click the logo square). Omit to disable. */
   institutionSearch?: InstitutionSearchState;
 }
@@ -262,6 +264,7 @@ export interface AddManualAccountDialogProps {
   initialName?: string;
   initialLogoDomain?: string | null;
   initialType?: ManualAccountType;
+  initialSubtype?: string;
   institutionSearch?: InstitutionSearchState;
 }
 
@@ -315,6 +318,7 @@ function ManualAccountForm({
   autoFocus,
   initialName,
   initialLogoDomain,
+  initialSubtype,
   institutionSearch,
 }: {
   type: ManualAccountType;
@@ -325,6 +329,7 @@ function ManualAccountForm({
   autoFocus: boolean;
   initialName?: string;
   initialLogoDomain?: string | null;
+  initialSubtype?: string;
   institutionSearch?: InstitutionSearchState;
 }) {
   const meta = useMemo(() => metaFor(type), [type]);
@@ -334,8 +339,13 @@ function ManualAccountForm({
   const [institutionName, setInstitutionName] = useState<string | null>(initialName ?? null);
   // Subtype is not user-editable in this flow — defaults to the first subtype
   // for the picked type (e.g. "Brokerage" for investment). Server requires a
-  // non-empty value; UI doesn't expose granular control.
-  const [subtype] = useState<string>(meta.subtypes[0] ?? "");
+  // non-empty value; UI doesn't expose granular control. Callers can override
+  // via `initialSubtype` (e.g. Cash entry path passes "cash").
+  const [subtype] = useState<string>(
+    initialSubtype && meta.subtypes.includes(initialSubtype)
+      ? initialSubtype
+      : (meta.subtypes[0] ?? ""),
+  );
   const [balance, setBalance] = useState("");
   const [creditLimit, setCreditLimit] = useState("");
   const [currency, setCurrency] = useState("USD");
@@ -508,6 +518,7 @@ export function AddManualAccountForm({
   initialName,
   initialLogoDomain,
   initialType,
+  initialSubtype,
   institutionSearch,
 }: AddManualAccountFormProps) {
   const [type, setType] = useState<ManualAccountType | null>(initialType ?? null);
@@ -525,6 +536,7 @@ export function AddManualAccountForm({
       autoFocus={autoFocus}
       initialLogoDomain={initialLogoDomain}
       initialName={initialName}
+      initialSubtype={initialSubtype}
       institutionSearch={institutionSearch}
       onBackspaceWhenEmpty={
         initialType
@@ -550,6 +562,7 @@ export function AddManualAccountDialog({
   initialName,
   initialLogoDomain,
   initialType,
+  initialSubtype,
   institutionSearch,
 }: AddManualAccountDialogProps) {
   return (
@@ -563,6 +576,7 @@ export function AddManualAccountDialog({
             initialLogoDomain={initialLogoDomain}
             initialName={initialName}
             initialType={initialType}
+            initialSubtype={initialSubtype}
             institutionSearch={institutionSearch}
             key={open ? "open" : "closed"}
             onBackspaceWhenEmpty={onBackspaceWhenEmpty}

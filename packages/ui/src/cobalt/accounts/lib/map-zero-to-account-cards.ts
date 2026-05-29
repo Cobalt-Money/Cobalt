@@ -2,9 +2,10 @@ import type { queries, Row } from "@cobalt-web/zero";
 
 import { brokerageInstitutionBranding } from "../../logos/brokerage-institution-branding";
 
-export type AccountCategory = "banking" | "savings" | "brokerage" | "credit" | "loan";
+export type AccountCategory = "cash" | "banking" | "savings" | "brokerage" | "credit" | "loan";
 
 const SAVINGS_SUBTYPES = new Set(["savings", "cd", "money market", "money_market", "hsa"]);
+const CASH_SUBTYPES = new Set(["cash"]);
 
 export interface AccountCardViewModel {
   id: string;
@@ -55,7 +56,11 @@ function categoryFromPlaidType(type: string, subtype: string | null): AccountCat
   if (type === "loan") {
     return "loan";
   }
-  if (subtype && SAVINGS_SUBTYPES.has(subtype.toLowerCase())) {
+  const sub = subtype?.toLowerCase();
+  if (sub && CASH_SUBTYPES.has(sub)) {
+    return "cash";
+  }
+  if (sub && SAVINGS_SUBTYPES.has(sub)) {
     return "savings";
   }
   return "banking";
