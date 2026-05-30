@@ -387,7 +387,7 @@ export async function syncRecurringStep(accessToken: string, itemId: string) {
  */
 export async function seedTodayPlaidSnapshotsStep(userId: string): Promise<void> {
   "use step";
-  await upsertAllBalanceSnapshots(userId, "link");
+  await upsertAllBalanceSnapshots(userId);
 }
 
 export async function dispatchSnapshotWorkflowStep(_userId: string): Promise<void> {

@@ -15,6 +15,7 @@
     "./accounts/plaid-items/alerts": "./src/accounts/plaid-items/alerts/index.ts",
     "./accounts/plaid-items/accounts": "./src/accounts/plaid-items/accounts/index.ts",
     "./accounts/manual/create": "./src/accounts/manual/create/index.ts",
+    "./accounts/manual/patch-balance": "./src/accounts/manual/patch-balance/index.ts",
     "./accounts/manual/seed-snapshot": "./src/accounts/manual/seed-snapshot/index.ts",
     "./alerts/*": "./src/alerts/*.ts",
     "./brokerage": "./src/brokerage/index.ts",

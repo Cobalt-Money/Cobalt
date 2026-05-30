@@ -3,8 +3,23 @@ import type { Transaction } from "@rocicorp/zero";
 import { z } from "zod";
 
 import type { Context } from "../auth.js";
+import { requireOwned } from "../auth.js";
 import type { Schema } from "../schema.js";
 import { zql } from "../schema.js";
+
+async function requireManualInvestmentAccount(
+  tx: Transaction<Schema>,
+  ctx: Context,
+  accountId: string,
+) {
+  const { row } = await requireOwned(ctx, () =>
+    tx.run(zql.financialAccount.where("id", accountId).one()),
+  );
+  if (row.source !== "manual" || row.type !== "investment") {
+    throw new Error("Only manual investment accounts can hold positions");
+  }
+  return row;
+}
 
 const CASH_TICKER = "CASH";
 
@@ -42,24 +57,6 @@ const sellManualHoldingSchema = z.object({
 const deleteManualHoldingSchema = z.object({
   holdingId: z.string().uuid(),
 });
-
-async function assertOwnsManualInvestmentAccount(
-  tx: Transaction<Schema>,
-  ctx: Context,
-  accountId: string,
-): Promise<void> {
-  const userId = ctx?.userId;
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
-  const row = await tx.run(zql.financialAccount.where("id", accountId).one());
-  if (!row || row.userId !== userId) {
-    throw new Error("Account not found");
-  }
-  if (row.source !== "manual" || row.type !== "investment") {
-    throw new Error("Only manual investment accounts can hold positions");
-  }
-}
 
 /**
  * Find or create a manual security row keyed on `(source=manual, externalId=ticker)`.
@@ -129,7 +126,7 @@ export const brokerageMutators = {
     if (!ctx?.userId) {
       throw new Error("Unauthorized");
     }
-    await assertOwnsManualInvestmentAccount(tx, ctx, args.accountId);
+    await requireManualInvestmentAccount(tx, ctx, args.accountId);
 
     const accountBalance = await tx.run(zql.balance.where("accountId", args.accountId).one());
     const currency = accountBalance?.currency ?? undefined;
@@ -213,7 +210,7 @@ export const brokerageMutators = {
     if (!ctx?.userId) {
       throw new Error("Unauthorized");
     }
-    await assertOwnsManualInvestmentAccount(tx, ctx, args.accountId);
+    await requireManualInvestmentAccount(tx, ctx, args.accountId);
     const accountBalance = await tx.run(zql.balance.where("accountId", args.accountId).one());
     const currency = accountBalance?.currency ?? undefined;
 

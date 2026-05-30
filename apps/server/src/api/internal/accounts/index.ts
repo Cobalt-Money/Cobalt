@@ -5,6 +5,7 @@ import { detailRouter } from "./detail.js";
 import { disconnectRouter } from "./disconnect.js";
 import { listRouter } from "./list.js";
 import { manualCreateRouter } from "./manual/create.js";
+import { manualPatchBalanceRouter } from "./manual/patch-balance.js";
 import { manualSeedSnapshotRouter } from "./manual/seed-snapshot.js";
 import { patchRouter } from "./patch.js";
 import { plaidItemsAccountsRouter } from "./plaid-items/accounts.js";
@@ -21,5 +22,6 @@ export const accountsRouter = new OpenAPIHono()
   .route("/", brokerageSnaptradeRouter)
   .route("/", manualSeedSnapshotRouter)
   .route("/", manualCreateRouter)
+  .route("/", manualPatchBalanceRouter)
   .route("/", detailRouter)
   .route("/", patchRouter);

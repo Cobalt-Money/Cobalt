@@ -2,5 +2,5 @@ import { upsertManualBalanceSnapshotsForUser } from "../../../snapshots/mutation
 
 /** Force a today-snapshot upsert for the user's manual accounts. */
 export async function seedManualSnapshot(userId: string): Promise<void> {
-  await upsertManualBalanceSnapshotsForUser(userId, "manual-create");
+  await upsertManualBalanceSnapshotsForUser(userId);
 }

@@ -7,7 +7,7 @@ import { defineMutator } from "@rocicorp/zero";
 import type { ReadonlyJSONValue, Transaction } from "@rocicorp/zero";
 import { z } from "zod";
 
-import type { Context } from "../auth.js";
+import { requireOwned } from "../auth.js";
 import type { Schema } from "../schema.js";
 import { zql } from "../schema.js";
 
@@ -74,47 +74,6 @@ const createTransactionSchema = z.object({
   website: z.string().min(1).max(2048).optional(),
 });
 
-async function getOwned(tx: Transaction<Schema>, ctx: Context, id: string) {
-  const userId = ctx?.userId;
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
-  const row = await tx.run(zql.transaction.where("id", id).one());
-  if (!row || row.userId !== userId) {
-    throw new Error("Transaction not found");
-  }
-  return { row, userId };
-}
-
-async function assertOwnsManualTransaction(
-  tx: Transaction<Schema>,
-  ctx: Context,
-  transactionId: string,
-): Promise<void> {
-  const { row } = await getOwned(tx, ctx, transactionId);
-  if (row.source !== "manual") {
-    throw new Error("Only manual transactions can be deleted");
-  }
-}
-
-async function assertOwnsManualAccountForInsert(
-  tx: Transaction<Schema>,
-  ctx: Context,
-  accountId: string,
-): Promise<void> {
-  const userId = ctx?.userId;
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
-  const account = await tx.run(zql.financialAccount.where("id", accountId).one());
-  if (!account || account.userId !== userId) {
-    throw new Error("Account not found");
-  }
-  if (account.source !== "manual") {
-    throw new Error("Transactions can only be added to manual accounts");
-  }
-}
-
 function addLocked(current: unknown, field: string): string[] {
   const arr = (current as string[] | null | undefined) ?? [];
   return arr.includes(field) ? arr : [...arr, field];
@@ -175,6 +134,22 @@ function locationToFlat(loc: LocationJson) {
     region: loc.region,
     storeNumber: loc.store_number,
   };
+}
+
+async function adjustManualBalance(
+  tx: Transaction<Schema>,
+  accountId: string,
+  delta: number,
+): Promise<void> {
+  if (delta === 0) {
+    return;
+  }
+  const bal = await tx.run(zql.balance.where("accountId", accountId).one());
+  if (!bal) {
+    return;
+  }
+  const current = typeof bal.current === "number" ? bal.current : Number(bal.current);
+  await tx.mutate.balance.update({ current: current + delta, id: bal.id });
 }
 
 function flatToLocation(row: Record<string, unknown>): LocationJson {
@@ -261,7 +236,12 @@ export const transactionMutators = {
   }),
 
   createTransaction: defineMutator(createTransactionSchema, async ({ args, ctx, tx }) => {
-    await assertOwnsManualAccountForInsert(tx, ctx, args.accountId);
+    const { row: account } = await requireOwned(ctx, () =>
+      tx.run(zql.financialAccount.where("id", args.accountId).one()),
+    );
+    if (account.source !== "manual") {
+      throw new Error("Transactions can only be added to manual accounts");
+    }
     if (!ctx?.userId) {
       throw new Error("Unauthorized");
     }
@@ -284,15 +264,24 @@ export const transactionMutators = {
       website: args.website?.trim() ?? null,
       ...flatLocation,
     });
+    await adjustManualBalance(tx, args.accountId, args.amount);
   }),
 
   deleteTransaction: defineMutator(transactionIdOnlySchema, async ({ args, ctx, tx }) => {
-    await assertOwnsManualTransaction(tx, ctx, args.id);
+    const { row } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
+    if (row.source !== "manual") {
+      throw new Error("Only manual transactions can be deleted");
+    }
     await tx.mutate.transaction.delete({ id: args.id });
+    await adjustManualBalance(tx, row.accountId, -row.amount);
   }),
 
   resetCategory: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
-    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
     await Promise.all([
       tx.mutate.transaction.update({
         id: args.id,
@@ -310,7 +299,9 @@ export const transactionMutators = {
   }),
 
   resetDate: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
-    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
     await Promise.all([
       tx.mutate.transaction.update({
         id: args.id,
@@ -328,7 +319,9 @@ export const transactionMutators = {
   }),
 
   resetLocation: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
-    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
     const earliestEdit = await tx.run(
       zql.transactionEdit
         .where("transactionId", args.id)
@@ -356,7 +349,9 @@ export const transactionMutators = {
   }),
 
   resetName: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
-    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
     await Promise.all([
       tx.mutate.transaction.update({
         id: args.id,
@@ -374,7 +369,9 @@ export const transactionMutators = {
   }),
 
   resetNotes: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
-    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
     await Promise.all([
       tx.mutate.transaction.update({
         id: args.id,
@@ -393,7 +390,9 @@ export const transactionMutators = {
   }),
 
   updateCategory: defineMutator(updateCategorySchema, async ({ args, ctx, tx }) => {
-    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
     await Promise.all([
       tx.mutate.transaction.update({
         categoryId: args.categoryId,
@@ -412,7 +411,9 @@ export const transactionMutators = {
   }),
 
   updateDate: defineMutator(updateDateSchema, async ({ args, ctx, tx }) => {
-    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
     const dateMs = new Date(`${args.date}T00:00:00.000Z`).getTime();
     await Promise.all([
       tx.mutate.transaction.update({
@@ -432,7 +433,9 @@ export const transactionMutators = {
   }),
 
   updateLocation: defineMutator(updateLocationSchema, async ({ args, ctx, tx }) => {
-    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
     await Promise.all([
       tx.mutate.transaction.update({
         id: args.id,
@@ -451,7 +454,9 @@ export const transactionMutators = {
   }),
 
   updateMerchant: defineMutator(updateMerchantSchema, async ({ args, ctx, tx }) => {
-    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
     const trimmedName = args.merchantName?.trim() ?? null;
     const nextName = trimmedName && trimmedName.length > 0 ? trimmedName : null;
     const trimmedSite = args.website?.trim() ?? null;
@@ -475,7 +480,9 @@ export const transactionMutators = {
   }),
 
   updateName: defineMutator(updateNameSchema, async ({ args, ctx, tx }) => {
-    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
     await Promise.all([
       tx.mutate.transaction.update({
         id: args.id,
@@ -494,7 +501,9 @@ export const transactionMutators = {
   }),
 
   updateNotes: defineMutator(updateNotesSchema, async ({ args, ctx, tx }) => {
-    const { row, userId } = await getOwned(tx, ctx, args.id);
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
     await Promise.all([
       tx.mutate.transaction.update({
         id: args.id,

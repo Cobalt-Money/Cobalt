@@ -1,6 +1,9 @@
 import { db } from "@cobalt-web/db";
+import { balance } from "@cobalt-web/db/schema/accounts/balance";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
+import { eq, sql } from "drizzle-orm";
 
+import { upsertManualBalanceSnapshotsForUser } from "../../snapshots/mutations.js";
 import { ApiError } from "../_shared/errors.js";
 import { normalizeWebsite } from "../_shared/lib.js";
 import { LOCATION_FLAT_COLS, locationToFlat } from "../_shared/location.js";
@@ -70,5 +73,26 @@ export async function createManualTransactions(
   });
 
   const inserted = await db.insert(transaction).values(rows).returning({ id: transaction.id });
+
+  // Apply per-account amount deltas to the manual balance row, then re-snapshot
+  // so net-worth / cash views stay in sync with user-entered transactions.
+  // Canonical sign: transaction.amount positive = inflow, so `balance.current
+  // += sum(amount)` works for both assets and liabilities (liabilities are
+  // already stored negative).
+  const deltasByAccount = new Map<string, number>();
+  for (const b of bodies) {
+    deltasByAccount.set(b.accountId, (deltasByAccount.get(b.accountId) ?? 0) + b.amount);
+  }
+  for (const [accountId, delta] of deltasByAccount) {
+    if (delta === 0) {
+      continue;
+    }
+    await db
+      .update(balance)
+      .set({ current: sql`${balance.current} + ${delta.toString()}` })
+      .where(eq(balance.accountId, accountId));
+  }
+  await upsertManualBalanceSnapshotsForUser(userId);
+
   return { ids: inserted.map((r) => r.id) };
 }
