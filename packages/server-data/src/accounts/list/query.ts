@@ -3,13 +3,27 @@ import { db } from "@cobalt-web/db";
 import { getBankAccountsJoined, toBankAccountListItem } from "../_shared/bank-account-query.js";
 import { numOrNull } from "../_shared/lib.js";
 import type { BankAccountListItem } from "../_shared/schema.js";
-import type { AccountListItem, GetAccounts } from "./schema.js";
+import type { AccountListItem, BankAccountsQuery, GetAccounts } from "./schema.js";
 
-/** Plaid-connected bank accounts excluding credit + investment. */
-export async function getBankAccounts(userId: string): Promise<BankAccountListItem[]> {
+/**
+ * Bank-shape accounts (Plaid + manual). Default scope: depository + credit +
+ * loan (excludes brokerage/investment). Pass `params.type` to narrow.
+ */
+export async function getBankAccounts(
+  userId: string,
+  params: BankAccountsQuery = {},
+): Promise<BankAccountListItem[]> {
   const all = await getBankAccountsJoined(userId);
   return all
-    .filter((a) => a.type !== "credit" && a.type !== "investment")
+    .filter((a) => {
+      if (a.type === "investment" || a.type === "brokerage") {
+        return false;
+      }
+      if (params.type && a.type !== params.type) {
+        return false;
+      }
+      return true;
+    })
     .map(toBankAccountListItem);
 }
 

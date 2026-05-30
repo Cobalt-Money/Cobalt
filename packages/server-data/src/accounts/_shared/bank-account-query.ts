@@ -4,14 +4,17 @@ import { numOrNull } from "./lib.js";
 import type { BankAccountListItem, BankAccountResponse } from "./schema.js";
 
 interface BankAccountWhere {
-  externalId?: string;
+  /** Internal `financial_account.id` PK — source-agnostic single-account lookup. */
+  id?: string;
 }
 
 /**
- * Fetch Plaid-connected accounts joined with balance / connection / institution
- * for a user, plus a sibling-types lookup to compute `hasInvestmentAccounts`.
- * If `where.externalId` is provided, narrows to that single account so callers
- * don't fetch-all-then-find.
+ * Fetch financial accounts joined with balance / Plaid connection / institution
+ * for a user, plus a sibling-types lookup to compute `hasInvestmentAccounts`
+ * (Plaid-only). Non-Plaid rows return with Plaid-derived fields nulled out and
+ * `institutionName` falling back to `financial_account.institution_name`.
+ *
+ * `where.id` narrows to a single account by internal PK (any source).
  */
 export async function getBankAccountsJoined(
   userId: string,
@@ -19,7 +22,9 @@ export async function getBankAccountsJoined(
 ): Promise<BankAccountResponse[]> {
   const rows = await db.query.financialAccount.findMany({
     columns: {
+      customName: true,
       id: true,
+      institutionName: true,
       mask: true,
       name: true,
       plaidConnectionId: true,
@@ -28,9 +33,7 @@ export async function getBankAccountsJoined(
       type: true,
     },
     where: {
-      ...(where.externalId ? { externalId: { eq: where.externalId } } : {}),
-      plaidConnectionId: { isNotNull: true },
-      source: { eq: "plaid" },
+      ...(where.id ? { id: { eq: where.id } } : {}),
       userId: { eq: userId },
     },
     with: {
@@ -87,44 +90,38 @@ export async function getBankAccountsJoined(
   }
 
   // oxlint-disable-next-line eslint/complexity -- flat field projection from joined row, not branching logic
-  return rows.flatMap((r): BankAccountResponse[] => {
+  return rows.map((r): BankAccountResponse => {
     const conn = r.plaidConnection;
-    if (!conn) {
-      return [];
-    }
-    const inst = conn.institution;
+    const inst = conn?.institution;
     const b = r.balance;
     const siblingAccountTypes = r.plaidConnectionId
       ? (siblingsByConn.get(r.plaidConnectionId) ?? [])
       : [];
     const hasInvestmentAccounts = siblingAccountTypes.some((t) => t === "investment");
-    const currency = b?.currency ?? null;
-    return [
-      {
-        available: numOrNull(b?.available ?? null),
-        billedProducts: conn.billedProducts ?? null,
-        creditLimit: numOrNull(b?.creditLimit ?? null),
-        currency,
-        current: numOrNull(b?.current ?? null),
-        error: conn.error ?? null,
-        hasInvestmentAccounts,
-        id: r.id,
-        institutionId: conn.institutionId ?? null,
-        institutionName: conn.institutionName,
-        logo: inst?.logo ?? null,
-        mask: r.mask,
-        name: r.name,
-        newAccountsAvailable: conn.newAccountsAvailable,
-        pendingDisconnectAt: conn.pendingDisconnectAt?.toISOString() ?? null,
-        plaidItemId: conn.plaidItemId,
-        source: r.source,
-        subtype: r.subtype,
-        type: r.type,
-        updatedAt: b?.updatedAt?.toISOString() ?? null,
-        url: inst?.url ?? null,
-        userOverrideCreditLimit: numOrNull(b?.userOverrideCreditLimit ?? null),
-      },
-    ];
+    return {
+      available: numOrNull(b?.available ?? null),
+      billedProducts: conn?.billedProducts ?? null,
+      creditLimit: numOrNull(b?.creditLimit ?? null),
+      currency: b?.currency ?? null,
+      current: numOrNull(b?.current ?? null),
+      error: conn?.error ?? null,
+      hasInvestmentAccounts,
+      id: r.id,
+      institutionId: conn?.institutionId ?? null,
+      institutionName: conn?.institutionName ?? r.institutionName ?? null,
+      logo: inst?.logo ?? null,
+      mask: r.mask,
+      name: r.customName ?? r.name,
+      newAccountsAvailable: conn?.newAccountsAvailable ?? false,
+      pendingDisconnectAt: conn?.pendingDisconnectAt?.toISOString() ?? null,
+      plaidItemId: conn?.plaidItemId ?? null,
+      source: r.source,
+      subtype: r.subtype,
+      type: r.type,
+      updatedAt: b?.updatedAt?.toISOString() ?? null,
+      url: inst?.url ?? null,
+      userOverrideCreditLimit: numOrNull(b?.userOverrideCreditLimit ?? null),
+    };
   });
 }
 

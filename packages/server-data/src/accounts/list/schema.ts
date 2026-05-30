@@ -34,3 +34,9 @@ export const bankAccountsResponseSchema = z
   .openapi("BankAccountsResponse");
 
 export type BankAccountsResponse = z.infer<typeof bankAccountsResponseSchema>;
+
+/** Filter for `GET /api/accounts`. Omit to return all bank-shape types. */
+export const bankAccountsQuerySchema = z.object({
+  type: z.enum(["depository", "credit", "loan"]).optional(),
+});
+export type BankAccountsQuery = z.infer<typeof bankAccountsQuerySchema>;

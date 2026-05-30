@@ -4,6 +4,7 @@ import {
   bankAccountResponseSchema,
   getAccountDetail,
 } from "@cobalt-web/server-data/accounts/detail";
+import { patchAccount, patchAccountSchema } from "@cobalt-web/server-data/accounts/patch";
 import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
@@ -12,25 +13,29 @@ import { requirePaidUser } from "../middleware.js";
 
 const route = createRoute({
   description:
-    "Single bank-shape account by internal id. Works for any source (Plaid, manual, snaptrade); Plaid-only fields are null for non-Plaid rows.",
-  method: "get",
+    "Partial update to an account by internal id. Currently supports user-override `creditLimit` (positive magnitude; null clears the override). Source-agnostic.",
+  method: "patch",
   middleware: [requirePaidUser] as const,
   path: "/{id}",
-  request: { params: accountIdSchema },
+  request: {
+    body: { content: { "application/json": { schema: patchAccountSchema } } },
+    params: accountIdSchema,
+  },
   responses: {
-    200: jsonContent(bankAccountResponseSchema, "Account details"),
+    200: jsonContent(bankAccountResponseSchema, "Updated account"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
     404: jsonContent(errorResponseWithCodeSchema, "Account not found"),
-    422: validationErrorResponse(accountIdSchema),
+    422: validationErrorResponse(patchAccountSchema),
   },
-  summary: "Get account details",
+  summary: "Update account",
   tags: ["Accounts"],
 });
 
-export const detailRouter = createApp().openapi(route, async (c) => {
+export const patchRouter = createApp().openapi(route, async (c) => {
   const { id } = c.req.valid("param");
-  const account = await getAccountDetail(c.var.user.id, id);
-  c.header("Cache-Control", "private, max-age=60");
-  return c.json(bankAccountResponseSchema.parse(account), 200);
+  const patch = c.req.valid("json");
+  await patchAccount(id, c.var.user.id, patch);
+  const updated = await getAccountDetail(c.var.user.id, id);
+  return c.json(bankAccountResponseSchema.parse(updated), 200);
 });
