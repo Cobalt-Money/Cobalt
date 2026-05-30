@@ -12,14 +12,12 @@ import { upsertAllBalanceSnapshots } from "@cobalt-web/server-data/snapshots/mut
 import { handleCallback } from "@vercel/queue";
 import { Hono } from "hono";
 
-const SNAPSHOT_SOURCE = "cron";
-
 interface SnapshotMessage {
   userId: string;
 }
 
 const queueHandler = handleCallback<SnapshotMessage>(async (message) => {
-  await upsertAllBalanceSnapshots(message.userId, SNAPSHOT_SOURCE);
+  await upsertAllBalanceSnapshots(message.userId);
 });
 
 export const snapshotUserQueueRouter = new Hono().post(

@@ -499,5 +499,5 @@ export async function refreshAccountDataStep(
  */
 export async function seedTodaySnaptradeSnapshotsStep(userId: string): Promise<void> {
   "use step";
-  await upsertAllBalanceSnapshots(userId, "link");
+  await upsertAllBalanceSnapshots(userId);
 }

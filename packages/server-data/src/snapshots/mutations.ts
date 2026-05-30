@@ -112,21 +112,18 @@ async function upsertDailySnapshotsForSource(
 
 export async function upsertBankBalanceSnapshotsForUser(
   userId: string,
-  _source: string,
 ): Promise<{ upserted: number }> {
   return await upsertDailySnapshotsForSource(userId, "plaid");
 }
 
 export async function upsertSnapTradePortfolioSnapshotsForUser(
   userId: string,
-  _source: string,
 ): Promise<{ upserted: number }> {
   return await upsertDailySnapshotsForSource(userId, "snaptrade");
 }
 
 export async function upsertManualBalanceSnapshotsForUser(
   userId: string,
-  _source: string,
 ): Promise<{ upserted: number }> {
   return await upsertDailySnapshotsForSource(userId, "manual");
 }
@@ -138,7 +135,6 @@ export async function upsertManualBalanceSnapshotsForUser(
  */
 export function upsertPlaidInvestmentSnapshotsForUser(
   _userId: string,
-  _source: string,
 ): Promise<{ upserted: number }> {
   return Promise.resolve({ upserted: 0 });
 }
@@ -149,10 +145,10 @@ export function upsertPlaidInvestmentSnapshotsForUser(
  * sums all accounts — not just the one just added — and by the nightly cron.
  * Each per-source upsert is idempotent on (accountId, snapshotDate).
  */
-export async function upsertAllBalanceSnapshots(userId: string, source: string): Promise<void> {
+export async function upsertAllBalanceSnapshots(userId: string): Promise<void> {
   await Promise.all([
-    upsertBankBalanceSnapshotsForUser(userId, source),
-    upsertSnapTradePortfolioSnapshotsForUser(userId, source),
-    upsertManualBalanceSnapshotsForUser(userId, source),
+    upsertBankBalanceSnapshotsForUser(userId),
+    upsertSnapTradePortfolioSnapshotsForUser(userId),
+    upsertManualBalanceSnapshotsForUser(userId),
   ]);
 }

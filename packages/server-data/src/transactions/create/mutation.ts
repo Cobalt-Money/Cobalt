@@ -1,6 +1,9 @@
 import { db } from "@cobalt-web/db";
+import { balance } from "@cobalt-web/db/schema/accounts/balance";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
+import { eq, sql } from "drizzle-orm";
 
+import { upsertManualBalanceSnapshotsForUser } from "../../snapshots/mutations.js";
 import { ApiError } from "../_shared/errors.js";
 import { normalizeWebsite } from "../_shared/lib.js";
 import { LOCATION_FLAT_COLS, locationToFlat } from "../_shared/location.js";
@@ -69,6 +72,32 @@ export async function createManualTransactions(
     };
   });
 
-  const inserted = await db.insert(transaction).values(rows).returning({ id: transaction.id });
+  // Wrap insert + per-account balance deltas in a single transaction so a
+  // mid-call failure can't leave tx rows persisted with a stale balance.
+  // Canonical sign: transaction.amount positive = inflow, so `balance.current
+  // += sum(amount)` works for both assets and liabilities (liabilities are
+  // already stored negative).
+  const deltasByAccount = new Map<string, number>();
+  for (const b of bodies) {
+    deltasByAccount.set(b.accountId, (deltasByAccount.get(b.accountId) ?? 0) + b.amount);
+  }
+  const inserted = await db.transaction(async (tx) => {
+    const ins = await tx.insert(transaction).values(rows).returning({ id: transaction.id });
+    for (const [accountId, delta] of deltasByAccount) {
+      if (delta === 0) {
+        continue;
+      }
+      await tx
+        .update(balance)
+        .set({ current: sql`${balance.current} + ${delta.toString()}` })
+        .where(eq(balance.accountId, accountId));
+    }
+    return ins;
+  });
+
+  // Snapshot reads the now-committed balance; runs outside the tx so a slow
+  // snapshot write doesn't hold tx-table locks. Derived view — safe to retry.
+  await upsertManualBalanceSnapshotsForUser(userId);
+
   return { ids: inserted.map((r) => r.id) };
 }

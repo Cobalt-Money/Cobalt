@@ -50,6 +50,6 @@ export async function createManualAccount(
     current: signedCurrent.toString(),
     userId,
   });
-  await upsertAllBalanceSnapshots(userId, "manual-create");
+  await upsertAllBalanceSnapshots(userId);
   return { id: accountId };
 }
