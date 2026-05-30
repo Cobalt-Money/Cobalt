@@ -1,4 +1,5 @@
 import { createApp } from "../../../../lib/create-app.js";
+import { deleteRouter } from "./delete.js";
 import { detailRouter } from "./detail.js";
 import { listRouter } from "./list.js";
 import { patchRouter } from "./patch.js";
@@ -8,4 +9,5 @@ export const transactionsRouter = createApp()
   .route("/", listRouter)
   .route("/", detailRouter)
   .route("/", patchRouter)
+  .route("/", deleteRouter)
   .route("/", setTagsRouter);
