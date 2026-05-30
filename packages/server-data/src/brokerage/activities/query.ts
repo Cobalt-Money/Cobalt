@@ -109,7 +109,12 @@ function fetchActivityRows(
       ...(accountId ? { account: { externalId: { eq: accountId } } } : {}),
     },
     with: {
-      account: { columns: { externalId: true } },
+      account: {
+        columns: { externalId: true, institutionName: true },
+        with: {
+          plaidConnection: { columns: { institutionName: true } },
+        },
+      },
       security: {
         columns: {
           exchangeCode: true,
@@ -164,7 +169,7 @@ function mapActivityRow(r: ActivityRow, userId: string) {
     figiCode: sec.figiCode,
     fxRate: null,
     id: r.id,
-    institution: null,
+    institution: r.account.institutionName ?? r.account.plaidConnection?.institutionName ?? null,
     lastSync: toISOString(r.updatedAt),
     optionSymbol: r.optionSymbol,
     optionType: r.optionType,

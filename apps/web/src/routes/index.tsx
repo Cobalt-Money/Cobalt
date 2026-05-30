@@ -94,13 +94,13 @@ function Hero() {
       <HeroVideo />
       <Container className="pointer-events-none relative z-10 flex h-full flex-col gap-6 pt-32 pb-20 [text-shadow:_0_1px_12px_rgba(0,0,0,0.3)]">
         <motion.h1
-          className="max-w-4xl text-3xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
+          className="max-w-4xl text-5xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
           {...fade(0.1)}
         >
           Talk to your money
         </motion.h1>
         <motion.p
-          className="max-w-2xl text-lg text-white/80 sm:text-xl md:text-2xl"
+          className="max-w-2xl text-xl text-white/80 sm:text-xl md:text-2xl"
           {...fade(0.25)}
         >
           Spend seconds on your finances, not Sundays.

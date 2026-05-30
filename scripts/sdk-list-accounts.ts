@@ -14,8 +14,8 @@ if (!apiKey) {
 }
 
 cobalt.setConfig({
-  baseUrl: "https://api.cobaltpf.com/v1",
   auth: () => apiKey,
+  baseUrl: "https://api.cobaltpf.com/v1",
 });
 
 const { data, error, response } = await cobalt.accounts.list();
