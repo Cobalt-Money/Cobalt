@@ -24,7 +24,7 @@ import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { getAccountDetail } from "@cobalt-web/server-data/accounts/detail";
 import { getBankAccounts } from "@cobalt-web/server-data/accounts/list";
 import { patchAccount } from "@cobalt-web/server-data/accounts/patch";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const TEST_USER_ID = "00000000-0000-4000-8000-000000000352";
@@ -44,11 +44,11 @@ interface SeededIds {
 }
 
 async function ensureUser(id: string, email: string): Promise<void> {
-  await db.execute(
-    `INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at)
-     VALUES ('${id}', '${email}', 'Integration-352', false, NOW(), NOW())
-     ON CONFLICT (id) DO NOTHING`,
-  );
+  await db.execute(sql`
+    INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at)
+    VALUES (${id}, ${email}, 'Integration-352', false, NOW(), NOW())
+    ON CONFLICT (id) DO NOTHING
+  `);
 }
 
 async function seed(): Promise<SeededIds> {
@@ -194,7 +194,7 @@ async function cleanup(): Promise<void> {
   await db.delete(financialAccount).where(eq(financialAccount.userId, TEST_USER_ID));
   await db.delete(financialAccount).where(eq(financialAccount.userId, FOREIGN_USER_ID));
   await db.delete(plaidConnection).where(eq(plaidConnection.userId, TEST_USER_ID));
-  await db.execute(`DELETE FROM "user" WHERE id IN ('${TEST_USER_ID}', '${FOREIGN_USER_ID}')`);
+  await db.execute(sql`DELETE FROM "user" WHERE id IN (${TEST_USER_ID}, ${FOREIGN_USER_ID})`);
 }
 
 let ids: SeededIds;
@@ -291,21 +291,24 @@ describe("/api/accounts — unified multi-source surface (#352)", () => {
     });
 
     it("throws ApiError(404) for an id belonging to a different user", async () => {
-      await expect(getAccountDetail(TEST_USER_ID, ids.foreignManual)).rejects.toBeInstanceOf(
-        ApiError,
-      );
+      const err = await getAccountDetail(TEST_USER_ID, ids.foreignManual).catch((error) => error);
+      expect(err).toBeInstanceOf(ApiError);
+      expect((err as ApiError).status).toBe(404);
     });
 
     it("throws ApiError(404) for a non-existent id", async () => {
-      await expect(
-        getAccountDetail(TEST_USER_ID, "00000000-0000-4000-8000-000000000999"),
-      ).rejects.toBeInstanceOf(ApiError);
+      const err = await getAccountDetail(
+        TEST_USER_ID,
+        "00000000-0000-4000-8000-000000000999",
+      ).catch((error) => error);
+      expect(err).toBeInstanceOf(ApiError);
+      expect((err as ApiError).status).toBe(404);
     });
   });
 
   describe("patchAccount — credit-limit", () => {
     it("sets userOverrideCreditLimit (stored as negative magnitude)", async () => {
-      await patchAccount(ids.plaidCredit, TEST_USER_ID, { creditLimit: 7500 });
+      await patchAccount(TEST_USER_ID, ids.plaidCredit, { creditLimit: 7500 });
       const row = await db.query.balance.findFirst({
         columns: { userOverrideCreditLimit: true },
         where: { accountId: { eq: ids.plaidCredit } },
@@ -314,7 +317,7 @@ describe("/api/accounts — unified multi-source surface (#352)", () => {
     });
 
     it("works on manual credit rows too (source-agnostic)", async () => {
-      await patchAccount(ids.manualCredit, TEST_USER_ID, { creditLimit: 2000 });
+      await patchAccount(TEST_USER_ID, ids.manualCredit, { creditLimit: 2000 });
       const row = await db.query.balance.findFirst({
         columns: { userOverrideCreditLimit: true },
         where: { accountId: { eq: ids.manualCredit } },
@@ -323,7 +326,7 @@ describe("/api/accounts — unified multi-source surface (#352)", () => {
     });
 
     it("creditLimit: null clears the override", async () => {
-      await patchAccount(ids.plaidCredit, TEST_USER_ID, { creditLimit: null });
+      await patchAccount(TEST_USER_ID, ids.plaidCredit, { creditLimit: null });
       const row = await db.query.balance.findFirst({
         columns: { userOverrideCreditLimit: true },
         where: { accountId: { eq: ids.plaidCredit } },
@@ -331,16 +334,22 @@ describe("/api/accounts — unified multi-source surface (#352)", () => {
       expect(row?.userOverrideCreditLimit).toBeNull();
     });
 
-    it("rejects writes to a foreign user's account", async () => {
-      await expect(
-        patchAccount(ids.foreignManual, TEST_USER_ID, { creditLimit: 100 }),
-      ).rejects.toBeInstanceOf(ApiError);
+    it("rejects writes to a foreign user's account with 404", async () => {
+      const err = await patchAccount(TEST_USER_ID, ids.foreignManual, {
+        creditLimit: 100,
+      }).catch((error) => error);
+      expect(err).toBeInstanceOf(ApiError);
+      expect((err as ApiError).status).toBe(404);
     });
 
     it("empty patch still 404s a non-existent id", async () => {
-      await expect(
-        patchAccount("00000000-0000-4000-8000-000000000999", TEST_USER_ID, {}),
-      ).rejects.toBeInstanceOf(ApiError);
+      const err = await patchAccount(
+        TEST_USER_ID,
+        "00000000-0000-4000-8000-000000000999",
+        {},
+      ).catch((error) => error);
+      expect(err).toBeInstanceOf(ApiError);
+      expect((err as ApiError).status).toBe(404);
     });
   });
 });

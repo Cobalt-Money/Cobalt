@@ -35,7 +35,7 @@ const route = createRoute({
 export const patchRouter = createApp().openapi(route, async (c) => {
   const { id } = c.req.valid("param");
   const patch = c.req.valid("json");
-  await patchAccount(id, c.var.user.id, patch);
+  await patchAccount(c.var.user.id, id, patch);
   const updated = await getAccountDetail(c.var.user.id, id);
   return c.json(bankAccountResponseSchema.parse(updated), 200);
 });

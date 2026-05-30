@@ -13,7 +13,7 @@ import type { PatchAccount } from "./schema.js";
  * `creditLimit` is stored as negative magnitude (liabilities canonical sign).
  * Null clears the user override.
  */
-export async function patchAccount(id: string, userId: string, patch: PatchAccount): Promise<void> {
+export async function patchAccount(userId: string, id: string, patch: PatchAccount): Promise<void> {
   if (patch.creditLimit === undefined) {
     // Nothing to update. Verify ownership so callers still get a 404 on
     // missing/unowned ids before they refetch.

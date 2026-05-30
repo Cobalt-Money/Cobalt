@@ -75,7 +75,7 @@ export async function getBankAccountsJoined(
     const sibs = await db.query.financialAccount.findMany({
       columns: { plaidConnectionId: true, type: true },
       where: {
-        plaidConnectionId: { isNotNull: true },
+        plaidConnectionId: { in: connectionIds },
         source: { eq: "plaid" },
       },
     });
