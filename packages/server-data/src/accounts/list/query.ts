@@ -6,8 +6,9 @@ import type { BankAccountListItem } from "../_shared/schema.js";
 import type { AccountListItem, BankAccountsQuery, GetAccounts } from "./schema.js";
 
 /**
- * Bank-shape accounts (Plaid + manual). Default scope: depository + credit +
- * loan (excludes brokerage/investment). Pass `params.type` to narrow.
+ * Bank-shape accounts. Whitelist: depository + credit + loan only (any source).
+ * Excludes brokerage/investment + non-Plaid native broker types. Pass
+ * `params.type` to narrow.
  */
 export async function getBankAccounts(
   userId: string,
@@ -16,7 +17,7 @@ export async function getBankAccounts(
   const all = await getBankAccountsJoined(userId);
   return all
     .filter((a) => {
-      if (a.type === "investment" || a.type === "brokerage") {
+      if (a.type !== "depository" && a.type !== "credit" && a.type !== "loan") {
         return false;
       }
       if (params.type && a.type !== params.type) {
