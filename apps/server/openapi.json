@@ -1460,6 +1460,211 @@
         }
       }
     },
+    "/accounts/brokerage": {
+      "get": {
+        "description": "All brokerage-shaped accounts (SnapTrade, Plaid investment, manual investment). Inspect `source` on each item to distinguish. SnapTrade-only fields (`snaptradeAuthorizationId`, `needsReauth`) are null/false for non-SnapTrade rows.",
+        "operationId": "accounts_brokerage_list",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List brokerage accounts",
+        "tags": [
+          "Accounts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "snaptrade",
+                "plaid",
+                "manual",
+                "all"
+              ],
+              "description": "Filter by account origin. Default `all`."
+            },
+            "required": false,
+            "description": "Filter by account origin. Default `all`.",
+            "name": "source",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Brokerage accounts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "accountDetails": {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "balance": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "lastSync": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "balance",
+                              "id",
+                              "lastSync"
+                            ]
+                          },
+                          "accountStatus": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "accountType": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "balances": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "buyingPower": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "cash": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "currencyCode": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "currencyName": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "id": {
+                                  "type": "string"
+                                },
+                                "lastSync": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "buyingPower",
+                                "cash",
+                                "currencyCode",
+                                "currencyName",
+                                "id",
+                                "lastSync"
+                              ]
+                            }
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "institutionName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "name": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "needsReauth": {
+                            "type": "boolean",
+                            "description": "True when the SnapTrade authorization backing this account is disabled and requires user reconnect via `generateConnectionPortal` with `reconnectAuthorizationId`. Always false for non-SnapTrade accounts."
+                          },
+                          "snaptradeAuthorizationId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "SnapTrade authorization id for reconnect flows. Null for Plaid / manual accounts. Pass as `reconnectAuthorizationId` to `generateConnectionPortal` when `needsReauth` is true."
+                          },
+                          "plaidAccountId": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "plaid",
+                              "snaptrade",
+                              "manual"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "accountDetails",
+                          "accountStatus",
+                          "accountType",
+                          "balances",
+                          "id",
+                          "institutionName",
+                          "name",
+                          "needsReauth",
+                          "snaptradeAuthorizationId"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "accounts"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/accounts/{id}": {
       "get": {
         "description": "Fetch a single account by identifier.",

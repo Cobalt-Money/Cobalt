@@ -16,7 +16,7 @@ export const brokerageAccountListItemSchema = enhancedBrokerageAccountSchema
   })
   .extend({
     plaidAccountId: z.string().optional(),
-    source: z.enum(["plaid", "snaptrade"]).optional(),
+    source: z.enum(["plaid", "snaptrade", "manual"]).optional(),
   });
 
 export const brokerageAccountsListResponseSchema = z.object({

@@ -161,6 +161,7 @@ function toEnhancedAccount(row: AccountRow, userId: string): EnhancedBrokerageAc
     name: row.name ?? "",
     needsReauth: row.snaptradeAuthorization?.isDisabled ?? false,
     snaptradeAuthorizationId: row.snaptradeAuthorization?.authorizationId ?? null,
+    source: row.source,
     userId,
   };
 }

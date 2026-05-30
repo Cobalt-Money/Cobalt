@@ -56,6 +56,9 @@ export const enhancedBrokerageAccountSchema = z
       description:
         "SnapTrade authorization id for reconnect flows. Null for Plaid / manual accounts. Pass as `reconnectAuthorizationId` to `generateConnectionPortal` when `needsReauth` is true.",
     }),
+    source: z.enum(["plaid", "snaptrade", "manual"]).openapi({
+      description: "Origin of the account: SnapTrade, Plaid, or manual.",
+    }),
     userId: z.string(),
   })
   .openapi("BrokerageAccount");
@@ -84,5 +87,6 @@ export interface EnhancedBrokerageAccount {
   name: string | null;
   needsReauth: boolean;
   snaptradeAuthorizationId: string | null;
+  source: "plaid" | "snaptrade" | "manual";
   userId: string;
 }
