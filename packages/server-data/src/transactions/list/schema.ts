@@ -8,6 +8,10 @@ export const getTransactionsSchema = z.object({
     .union([z.string(), z.array(z.string())])
     .transform((v) => (Array.isArray(v) ? v : [v]))
     .optional(),
+  categoryId: z
+    .union([z.string().uuid(), z.array(z.string().uuid())])
+    .transform((v) => (Array.isArray(v) ? v : [v]))
+    .optional(),
   cursor: z.string().optional(),
   endDate: z.string().optional(),
   limit: z.coerce.number().min(1).max(200).default(50),
