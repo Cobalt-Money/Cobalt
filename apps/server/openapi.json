@@ -1527,7 +1527,7 @@
         }
       },
       "delete": {
-        "description": "Delete an account. Manual accounts are removed outright; Plaid-linked accounts are unlinked and — when no accounts remain under the underlying item — Cobalt also calls Plaid's `/item/remove` to stop billing and webhooks.",
+        "description": "Delete an account by id. Source-agnostic: manual accounts are removed outright, Plaid-linked accounts are unlinked (and Plaid's `/item/remove` is called once the item drains), and SnapTrade brokerage accounts are disconnected upstream.",
         "operationId": "accounts_delete",
         "security": [
           {
@@ -1994,6 +1994,60 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete a manual transaction. Idempotent — returns success even if the transaction is already gone or is provider-managed (Plaid/SnapTrade).",
+        "operationId": "transactions_delete",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete transaction",
+        "tags": [
+          "Transactions"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "transactionId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithCode"
                 }
               }
             }

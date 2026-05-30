@@ -59,8 +59,8 @@ export default defineConfig({
         // rewrites string args to the `import(...)` form, which this rule then
         // flags as a type annotation. False positive in test contexts.
         "@typescript-eslint/consistent-type-imports": "off",
-        "no-restricted-imports": "off",
         "jest/max-expects": "off",
+        "no-restricted-imports": "off",
         "vitest/max-expects": "off",
         "vitest/no-importing-vitest-globals": "off",
         "vitest/prefer-called-once": "off",
