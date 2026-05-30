@@ -112,7 +112,10 @@ const trustedOrigins = [
   env.CORS_ORIGIN,
   "http://localhost:3000",
   "http://localhost:3001",
-  "Cobalt-mobile://",
+  // iOS Stripe Checkout return URLs (Better Auth runs originCheck on
+  // successUrl / cancelUrl in /subscription/upgrade). The scheme `cobalt://`
+  // is registered in Cobalt/Info.plist CFBundleURLTypes.
+  "cobalt://",
   "https://appleid.apple.com",
   ...env.TRUSTED_ORIGINS_EXTRA,
 ];
