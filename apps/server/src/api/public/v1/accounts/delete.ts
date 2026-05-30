@@ -1,7 +1,7 @@
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import { accountIdSchema } from "@cobalt-web/server-data/accounts/_shared";
-import { deleteAccountById } from "@cobalt-web/server-data/accounts/delete";
+import { disconnectAccount } from "@cobalt-web/server-data/accounts/disconnect";
 import { removeItem } from "@cobalt-web/server-data/providers/plaid/link/actions";
 import { createRoute } from "@hono/zod-openapi";
 
@@ -11,7 +11,7 @@ import { requireApiKey } from "../middleware/require-api-key.js";
 
 const route = createRoute({
   description:
-    "Delete an account. Manual accounts are removed outright; Plaid-linked accounts are unlinked and — when no accounts remain under the underlying item — Cobalt also calls Plaid's `/item/remove` to stop billing and webhooks.",
+    "Delete an account by id. Source-agnostic: manual accounts are removed outright, Plaid-linked accounts are unlinked (and Plaid's `/item/remove` is called once the item drains), and SnapTrade brokerage accounts are disconnected upstream.",
   method: "delete",
   middleware: [requireApiKey] as const,
   operationId: "accounts_delete",
@@ -33,7 +33,7 @@ export const deleteRouter = createApp().openapi(route, async (c) => {
   const { user } = c.var;
   const { id } = c.req.valid("param");
   try {
-    const result = await deleteAccountById(user.id, id);
+    const result = await disconnectAccount(user.id, id);
     if (result.accessToken) {
       try {
         await removeItem(result.accessToken);
