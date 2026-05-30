@@ -34,13 +34,13 @@ describe("snapshot-user queue consumer", () => {
     expect(capturedHandler).toBeTypeOf("function");
   });
 
-  it("invokes upsertAllBalanceSnapshots with userId + 'cron' source", async () => {
+  it("invokes upsertAllBalanceSnapshots with userId", async () => {
     if (!capturedHandler) {
       throw new Error("handler not captured");
     }
     await capturedHandler({ userId: "user-42" });
 
-    expect(mockUpsertAll).toHaveBeenCalledWith("user-42", "cron");
+    expect(mockUpsertAll).toHaveBeenCalledWith("user-42");
   });
 
   it("propagates errors (queue retry contract)", async () => {

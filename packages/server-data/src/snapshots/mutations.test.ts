@@ -85,7 +85,7 @@ describe("upsertSnapTradePortfolioSnapshotsForUser", () => {
       },
     ]);
 
-    const result = await upsertSnapTradePortfolioSnapshotsForUser("user-1", "cron");
+    const result = await upsertSnapTradePortfolioSnapshotsForUser("user-1");
 
     expect(result.upserted).toBe(2);
     const rows = lastInsertRows();
@@ -117,7 +117,7 @@ describe("upsertSnapTradePortfolioSnapshotsForUser", () => {
       },
     ]);
 
-    await upsertSnapTradePortfolioSnapshotsForUser("user-1", "cron");
+    await upsertSnapTradePortfolioSnapshotsForUser("user-1");
 
     expect(lastInsertRows()[0]).toMatchObject({
       available: null,
@@ -129,7 +129,7 @@ describe("upsertSnapTradePortfolioSnapshotsForUser", () => {
   it("skips accounts that have no balance row", async () => {
     findManyMock.mockResolvedValue([{ balance: null, id: "acct-x" }]);
 
-    const result = await upsertSnapTradePortfolioSnapshotsForUser("user-1", "cron");
+    const result = await upsertSnapTradePortfolioSnapshotsForUser("user-1");
 
     expect(result.upserted).toBe(0);
     expect(insertMock).not.toHaveBeenCalled();
@@ -154,7 +154,7 @@ describe("upsertBankBalanceSnapshotsForUser", () => {
       },
     ]);
 
-    await upsertBankBalanceSnapshotsForUser("user-1", "cron");
+    await upsertBankBalanceSnapshotsForUser("user-1");
 
     expect(lastInsertRows()[0]).toMatchObject({
       accountId: "plaid-1",
@@ -179,7 +179,7 @@ describe("upsertBankBalanceSnapshotsForUser", () => {
       },
     ]);
 
-    await upsertBankBalanceSnapshotsForUser("user-1", "cron");
+    await upsertBankBalanceSnapshotsForUser("user-1");
 
     expect(lastInsertRows()[0]).toMatchObject({
       accountId: "credit-1",
@@ -202,7 +202,7 @@ describe("upsertBankBalanceSnapshotsForUser", () => {
       },
     ]);
 
-    await upsertBankBalanceSnapshotsForUser("user-1", "cron");
+    await upsertBankBalanceSnapshotsForUser("user-1");
 
     expect(lastInsertRows()[0]?.current).toBe("-13545.9600");
   });
@@ -222,7 +222,7 @@ describe("upsertBankBalanceSnapshotsForUser", () => {
       },
     ]);
 
-    await upsertBankBalanceSnapshotsForUser("user-1", "cron");
+    await upsertBankBalanceSnapshotsForUser("user-1");
 
     expect(lastInsertRows()[0]?.current).toBe("50.0000");
   });
@@ -242,7 +242,7 @@ describe("upsertBankBalanceSnapshotsForUser", () => {
       },
     ]);
 
-    await upsertBankBalanceSnapshotsForUser("user-1", "cron");
+    await upsertBankBalanceSnapshotsForUser("user-1");
 
     expect(lastInsertRows()[0]?.current).toBe("-100.0000");
   });
