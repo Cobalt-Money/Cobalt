@@ -1,6 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { brokerageSnaptradeRouter } from "./brokerage-snaptrade.js";
+import { brokerageRouter } from "./brokerage.js";
 import { detailRouter } from "./detail.js";
 import { disconnectRouter } from "./disconnect.js";
 import { listRouter } from "./list.js";
@@ -18,7 +18,7 @@ export const accountsRouter = new OpenAPIHono()
   .route("/", plaidItemsListRouter)
   .route("/", plaidItemsAlertsRouter)
   .route("/", plaidItemsAccountsRouter)
-  .route("/", brokerageSnaptradeRouter)
+  .route("/", brokerageRouter)
   .route("/", manualSeedSnapshotRouter)
   .route("/", manualCreateRouter)
   .route("/", detailRouter)

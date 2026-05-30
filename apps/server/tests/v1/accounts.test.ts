@@ -12,6 +12,10 @@
  */
 
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
+import type {
+  BrokerageAccountListItem,
+  EnhancedBrokerageAccount,
+} from "@cobalt-web/server-data/brokerage/schemas";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { request, TEST_USER_ID } from "./_helpers/test-app";
@@ -30,6 +34,7 @@ vi.mock(import("../../src/api/public/v1/middleware/require-api-key.js"), () => (
 const getAccounts = vi.fn();
 const getAccountDetail = vi.fn();
 const createManualAccount = vi.fn();
+const getBrokerageAccounts = vi.fn();
 
 vi.mock(import("@cobalt-web/server-data/accounts/list"), () => ({
   getAccounts: (...args: unknown[]) => getAccounts(...args),
@@ -41,6 +46,23 @@ vi.mock(import("@cobalt-web/server-data/accounts/detail"), () => ({
 
 vi.mock(import("@cobalt-web/server-data/accounts/manual/create"), () => ({
   createManualAccount: (...args: unknown[]) => createManualAccount(...args),
+}));
+
+vi.mock(import("@cobalt-web/server-data/brokerage/queries"), () => ({
+  getBrokerageAccounts: (...args: unknown[]) =>
+    getBrokerageAccounts(...args) as unknown as Promise<EnhancedBrokerageAccount[]>,
+  toBrokerageAccountListItem: (a: EnhancedBrokerageAccount): BrokerageAccountListItem => ({
+    accountDetails: a.accountDetails,
+    accountStatus: a.accountStatus,
+    accountType: a.accountType,
+    balances: a.balances,
+    id: a.id,
+    institutionName: a.institutionName,
+    name: a.name,
+    needsReauth: a.needsReauth,
+    snaptradeAuthorizationId: a.snaptradeAuthorizationId,
+    source: a.source,
+  }),
 }));
 
 const { accountsRouter } = await import("../../src/api/public/v1/accounts/index.js");
@@ -61,6 +83,7 @@ describe("v1/accounts", () => {
     getAccounts.mockReset();
     getAccountDetail.mockReset();
     createManualAccount.mockReset();
+    getBrokerageAccounts.mockReset();
   });
 
   describe("liability balance sign", () => {
@@ -68,10 +91,20 @@ describe("v1/accounts", () => {
       // Liability balances stored signed at ingestion; public API copies straight through.
       // Net worth = sum(balance).
       getAccounts.mockResolvedValue([
-        { ...validAccountRow, current: 1000, id: "asset_bank", type: "depository" },
+        {
+          ...validAccountRow,
+          current: 1000,
+          id: "asset_bank",
+          type: "depository",
+        },
         { ...validAccountRow, current: -500, id: "liab_card", type: "credit" },
         { ...validAccountRow, current: -20_000, id: "liab_loan", type: "loan" },
-        { ...validAccountRow, current: 8000, id: "asset_inv", type: "investment" },
+        {
+          ...validAccountRow,
+          current: 8000,
+          id: "asset_inv",
+          type: "investment",
+        },
       ]);
 
       const { json } = await request(accountsRouter, "/accounts");
@@ -92,7 +125,11 @@ describe("v1/accounts", () => {
       // depository|credit|investment|loan. Liabilities accept signed input (negative) but the
       // server stores positive magnitude internally.
       createManualAccount.mockResolvedValue({ id: "acc_new" });
-      getAccountDetail.mockResolvedValue({ ...validAccountRow, id: "acc_new", type: "credit" });
+      getAccountDetail.mockResolvedValue({
+        ...validAccountRow,
+        id: "acc_new",
+        type: "credit",
+      });
 
       const { status } = await request(accountsRouter, "/accounts", {
         body: JSON.stringify({
@@ -193,16 +230,36 @@ describe("v1/accounts", () => {
           institutionName: "Chase",
           type: "depository",
         },
-        { ...validAccountRow, id: "plaid_chase_card", institutionName: "Chase", type: "credit" },
-        { ...validAccountRow, id: "plaid_amex_card", institutionName: "Amex", type: "credit" },
-        { ...validAccountRow, id: "manual_cash", institutionName: null, type: "depository" },
+        {
+          ...validAccountRow,
+          id: "plaid_chase_card",
+          institutionName: "Chase",
+          type: "credit",
+        },
+        {
+          ...validAccountRow,
+          id: "plaid_amex_card",
+          institutionName: "Amex",
+          type: "credit",
+        },
+        {
+          ...validAccountRow,
+          id: "manual_cash",
+          institutionName: null,
+          type: "depository",
+        },
         {
           ...validAccountRow,
           id: "snaptrade_robinhood",
           institutionName: "Robinhood",
           type: "brokerage",
         },
-        { ...validAccountRow, id: "manual_holdings", institutionName: null, type: "brokerage" },
+        {
+          ...validAccountRow,
+          id: "manual_holdings",
+          institutionName: null,
+          type: "brokerage",
+        },
       ]);
 
       const { json, status } = await request(accountsRouter, "/accounts");
@@ -223,7 +280,10 @@ describe("v1/accounts", () => {
       const body = await json<{ code: string; error: string }>();
 
       expect(status).toBe(404);
-      expect(body).toStrictEqual({ code: "account_not_found", error: "Account not found" });
+      expect(body).toStrictEqual({
+        code: "account_not_found",
+        error: "Account not found",
+      });
     });
 
     test("non-ApiError throws propagate to global handler → 500", async () => {
@@ -242,6 +302,77 @@ describe("v1/accounts", () => {
       await request(accountsRouter, "/accounts/acc_xyz");
 
       expect(getAccountDetail).toHaveBeenCalledWith(TEST_USER_ID, "acc_xyz");
+    });
+  });
+
+  describe("GET /accounts/brokerage — list", () => {
+    const snaptradeRow = {
+      accountDetails: null,
+      accountStatus: "open",
+      accountType: "brokerage",
+      balanceData: null,
+      balances: [],
+      cashRestrictions: null,
+      createdDate: "2024-01-01T00:00:00.000Z",
+      id: "snaptrade_rh",
+      institutionName: "Robinhood",
+      name: "Robinhood Individual",
+      needsReauth: false,
+      snaptradeAuthorizationId: "auth_1",
+      source: "snaptrade" as const,
+      userId: TEST_USER_ID,
+    };
+    const manualRow = {
+      ...snaptradeRow,
+      id: "manual_inv",
+      institutionName: "",
+      name: "Manual Brokerage",
+      needsReauth: false,
+      snaptradeAuthorizationId: null,
+      source: "manual" as const,
+    };
+    const plaidRow = {
+      ...snaptradeRow,
+      id: "plaid_fidelity",
+      institutionName: "Fidelity",
+      name: "401k",
+      snaptradeAuthorizationId: null,
+      source: "plaid" as const,
+    };
+
+    test("returns manual investment accounts alongside SnapTrade + Plaid, with source set", async () => {
+      // SRI-367: manual investment accounts must surface in the brokerage list
+      // so iOS can pick them for the add-position flow. Catches regression of
+      // hardcoded `source: "snaptrade"` in toBrokerageAccountListItem.
+      getBrokerageAccounts.mockResolvedValue([snaptradeRow, plaidRow, manualRow]);
+
+      const { json, status } = await request(accountsRouter, "/accounts/brokerage");
+      const body = await json<{ accounts: { id: string; source: string }[] }>();
+
+      expect(status).toBe(200);
+      expect(body.accounts.map((a) => [a.id, a.source])).toStrictEqual([
+        ["snaptrade_rh", "snaptrade"],
+        ["plaid_fidelity", "plaid"],
+        ["manual_inv", "manual"],
+      ]);
+    });
+
+    test("?source=manual filters to manual rows only", async () => {
+      getBrokerageAccounts.mockResolvedValue([snaptradeRow, plaidRow, manualRow]);
+
+      const { json, status } = await request(accountsRouter, "/accounts/brokerage?source=manual");
+      const body = await json<{ accounts: { id: string }[] }>();
+
+      expect(status).toBe(200);
+      expect(body.accounts.map((a) => a.id)).toStrictEqual(["manual_inv"]);
+    });
+
+    test("passes authed userId to data layer", async () => {
+      getBrokerageAccounts.mockResolvedValue([]);
+
+      await request(accountsRouter, "/accounts/brokerage");
+
+      expect(getBrokerageAccounts).toHaveBeenCalledWith(TEST_USER_ID);
     });
   });
 });
