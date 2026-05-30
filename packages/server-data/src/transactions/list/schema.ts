@@ -3,6 +3,14 @@ import { z } from "@hono/zod-openapi";
 import { transactionResponseSchema } from "../detail/schema.js";
 
 export const getTransactionsSchema = z.object({
+  accountId: z
+    .union([z.uuid(), z.array(z.uuid())])
+    .transform((v) => (Array.isArray(v) ? v : [v]))
+    .optional(),
+  accountSubtype: z
+    .union([z.string(), z.array(z.string())])
+    .transform((v) => (Array.isArray(v) ? v : [v]))
+    .optional(),
   accountType: z.string().optional(),
   categoryGroup: z
     .union([z.string(), z.array(z.string())])
@@ -20,6 +28,10 @@ export const getTransactionsSchema = z.object({
   pendingFilter: z.enum(["true", "false"]).optional(),
   searchQuery: z.string().optional(),
   startDate: z.string().optional(),
+  tagId: z
+    .union([z.uuid(), z.array(z.uuid())])
+    .transform((v) => (Array.isArray(v) ? v : [v]))
+    .optional(),
 });
 
 export const transactionsResponseSchema = z

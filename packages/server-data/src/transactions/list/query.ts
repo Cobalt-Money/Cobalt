@@ -1,7 +1,9 @@
+import { db } from "@cobalt-web/db";
+import { transactionTag } from "@cobalt-web/db/schema/accounts/banking/tags/transaction-tag";
 import { categoryGroup } from "@cobalt-web/db/schema/accounts/banking/categories/category-group";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
 import { transaction } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
-import { and, desc, eq, gte, ilike, inArray, lt, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, exists, gte, ilike, inArray, lt, lte, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { z } from "zod";
 
@@ -52,6 +54,9 @@ export async function getTransactions(userId: string, params: GetTransactionsPar
     maxAmount,
     categoryGroup: categoryGroupKeys,
     categoryId: categoryIds,
+    accountId: accountIds,
+    accountSubtype: accountSubtypes,
+    tagId: tagIds,
   } = params;
   const cursorPayload = decodeCursor(cursor);
 
@@ -82,6 +87,27 @@ export async function getTransactions(userId: string, params: GetTransactionsPar
   }
   if (categoryIds && categoryIds.length > 0) {
     conditions.push(inArray(transaction.categoryId, categoryIds));
+  }
+  if (accountIds && accountIds.length > 0) {
+    conditions.push(inArray(transaction.accountId, accountIds));
+  }
+  if (accountSubtypes && accountSubtypes.length > 0) {
+    conditions.push(inArray(financialAccount.subtype, accountSubtypes));
+  }
+  if (tagIds && tagIds.length > 0) {
+    conditions.push(
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(transactionTag)
+          .where(
+            and(
+              eq(transactionTag.transactionId, transaction.id),
+              inArray(transactionTag.tagId, tagIds),
+            ),
+          ),
+      ),
+    );
   }
   if (searchPattern) {
     const orClause = or(
