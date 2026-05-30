@@ -9,7 +9,7 @@ export const getTransactionsSchema = z.object({
     .transform((v) => (Array.isArray(v) ? v : [v]))
     .optional(),
   categoryId: z
-    .union([z.string().uuid(), z.array(z.string().uuid())])
+    .union([z.uuid(), z.array(z.uuid())])
     .transform((v) => (Array.isArray(v) ? v : [v]))
     .optional(),
   cursor: z.string().optional(),
