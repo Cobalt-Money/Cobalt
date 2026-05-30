@@ -7,10 +7,16 @@ import { z } from "@hono/zod-openapi";
  */
 export const patchManualBalanceSchema = z
   .object({
-    current: z.number().openapi({
-      description:
-        "New signed balance to write to balance.current. Stored verbatim; caller decides sign.",
-    }),
+    current: z
+      .number()
+      .refine((v) => Number.isFinite(v), { message: "must be finite" })
+      .refine((v) => Math.round(v * 10_000) === v * 10_000, {
+        message: "max 4 decimal places (numeric(19,4))",
+      })
+      .openapi({
+        description:
+          "New signed balance to write to balance.current. Stored verbatim; caller decides sign. Up to 4 decimal places.",
+      }),
   })
   .openapi("PatchManualBalance");
 

@@ -72,10 +72,8 @@ export async function createManualTransactions(
     };
   });
 
-  const inserted = await db.insert(transaction).values(rows).returning({ id: transaction.id });
-
-  // Apply per-account amount deltas to the manual balance row, then re-snapshot
-  // so net-worth / cash views stay in sync with user-entered transactions.
+  // Wrap insert + per-account balance deltas in a single transaction so a
+  // mid-call failure can't leave tx rows persisted with a stale balance.
   // Canonical sign: transaction.amount positive = inflow, so `balance.current
   // += sum(amount)` works for both assets and liabilities (liabilities are
   // already stored negative).
@@ -83,15 +81,22 @@ export async function createManualTransactions(
   for (const b of bodies) {
     deltasByAccount.set(b.accountId, (deltasByAccount.get(b.accountId) ?? 0) + b.amount);
   }
-  for (const [accountId, delta] of deltasByAccount) {
-    if (delta === 0) {
-      continue;
+  const inserted = await db.transaction(async (tx) => {
+    const ins = await tx.insert(transaction).values(rows).returning({ id: transaction.id });
+    for (const [accountId, delta] of deltasByAccount) {
+      if (delta === 0) {
+        continue;
+      }
+      await tx
+        .update(balance)
+        .set({ current: sql`${balance.current} + ${delta.toString()}` })
+        .where(eq(balance.accountId, accountId));
     }
-    await db
-      .update(balance)
-      .set({ current: sql`${balance.current} + ${delta.toString()}` })
-      .where(eq(balance.accountId, accountId));
-  }
+    return ins;
+  });
+
+  // Snapshot reads the now-committed balance; runs outside the tx so a slow
+  // snapshot write doesn't hold tx-table locks. Derived view — safe to retry.
   await upsertManualBalanceSnapshotsForUser(userId);
 
   return { ids: inserted.map((r) => r.id) };
