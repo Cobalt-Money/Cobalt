@@ -9,6 +9,17 @@ export const brokerageAccountIdParamSchema = z.object({
 });
 
 /**
+ * Registered shared component so every endpoint emits a `$ref` to
+ * `#/components/schemas/BrokerageAccountSource` instead of inlining the enum.
+ * Generated clients then produce a single shared type for `source`.
+ */
+export const brokerageAccountSourceSchema = z
+  .enum(["plaid", "snaptrade", "manual"])
+  .openapi("BrokerageAccountSource", {
+    description: "Origin of the account: SnapTrade, Plaid, or manual.",
+  });
+
+/**
  * Nested balance line on merged / list account payloads.
  * Sourced from `balance`; wire uses string ISO dates + string|number decimals.
  */
@@ -56,9 +67,7 @@ export const enhancedBrokerageAccountSchema = z
       description:
         "SnapTrade authorization id for reconnect flows. Null for Plaid / manual accounts. Pass as `reconnectAuthorizationId` to `generateConnectionPortal` when `needsReauth` is true.",
     }),
-    source: z.enum(["plaid", "snaptrade", "manual"]).openapi({
-      description: "Origin of the account: SnapTrade, Plaid, or manual.",
-    }),
+    source: brokerageAccountSourceSchema,
     userId: z.string(),
   })
   .openapi("BrokerageAccount");

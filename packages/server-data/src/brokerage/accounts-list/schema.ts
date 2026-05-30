@@ -1,6 +1,10 @@
 import { z } from "@hono/zod-openapi";
 
-import { enhancedBrokerageAccountSchema, successResponseSchema } from "../_shared/schema.js";
+import {
+  brokerageAccountSourceSchema,
+  enhancedBrokerageAccountSchema,
+  successResponseSchema,
+} from "../_shared/schema.js";
 
 export const brokerageAccountListItemSchema = enhancedBrokerageAccountSchema
   .pick({
@@ -16,8 +20,9 @@ export const brokerageAccountListItemSchema = enhancedBrokerageAccountSchema
   })
   .extend({
     plaidAccountId: z.string().optional(),
-    source: z.enum(["plaid", "snaptrade", "manual"]).optional(),
-  });
+    source: brokerageAccountSourceSchema,
+  })
+  .openapi("BrokerageAccountListItem");
 
 export const brokerageAccountsListResponseSchema = z.object({
   accounts: z.array(brokerageAccountListItemSchema),
