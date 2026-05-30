@@ -51,6 +51,7 @@ export async function getTransactions(userId: string, params: GetTransactionsPar
     minAmount,
     maxAmount,
     categoryGroup: categoryGroupKeys,
+    categoryId: categoryIds,
   } = params;
   const cursorPayload = decodeCursor(cursor);
 
@@ -78,6 +79,9 @@ export async function getTransactions(userId: string, params: GetTransactionsPar
   }
   if (categoryGroupKeys && categoryGroupKeys.length > 0) {
     conditions.push(inArray(categoryGroup.systemKey, categoryGroupKeys));
+  }
+  if (categoryIds && categoryIds.length > 0) {
+    conditions.push(inArray(transaction.categoryId, categoryIds));
   }
   if (searchPattern) {
     const orClause = or(
