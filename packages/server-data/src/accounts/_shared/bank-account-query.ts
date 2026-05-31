@@ -25,6 +25,7 @@ export async function getBankAccountsJoined(
       customName: true,
       id: true,
       institutionName: true,
+      logoDomain: true,
       mask: true,
       name: true,
       plaidConnectionId: true,
@@ -119,7 +120,7 @@ export async function getBankAccountsJoined(
       subtype: r.subtype,
       type: r.type,
       updatedAt: b?.updatedAt?.toISOString() ?? null,
-      url: inst?.url ?? null,
+      url: inst?.url ?? r.logoDomain ?? null,
       userOverrideCreditLimit: numOrNull(b?.userOverrideCreditLimit ?? null),
     };
   });
@@ -156,6 +157,7 @@ export function toBankAccountListItem(account: BankAccountResponse): BankAccount
     subtype: account.subtype,
     type: account.type,
     updatedAt: account.updatedAt,
+    url: account.url,
     userOverrideCreditLimit: account.userOverrideCreditLimit,
   };
 }

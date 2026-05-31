@@ -130,7 +130,7 @@ const bankAccountListPickedSchema = financialAccountRowSchema
       newAccountsAvailable: true,
     }).shape,
   )
-  .extend(institutionRowSchema.pick({ logo: true }).shape);
+  .extend(institutionRowSchema.pick({ logo: true, url: true }).shape);
 
 /** Lightweight list item for the accounts page. */
 export const bankAccountListItemSchema = bankAccountListPickedSchema
