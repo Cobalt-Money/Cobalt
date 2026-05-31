@@ -26,6 +26,7 @@ export const createManualAccountSchema = z
     creditLimit: z.number().positive().optional(),
     currency: z.string().length(3).default("USD"),
     currentBalance: z.number(),
+    institutionName: z.string().max(255).optional(),
     logoDomain: z.string().max(253).optional(),
     name: z.string().min(1).max(255),
     subtype: z.enum(ALL_SUBTYPES as [string, ...string[]]),

@@ -20,9 +20,12 @@ export async function createManualAccount(
   body: CreateManualAccount,
 ): Promise<{ id: string }> {
   const trimmedLogo = body.logoDomain?.trim();
+  const trimmedInstitutionName = body.institutionName?.trim();
   const [created] = await db
     .insert(financialAccount)
     .values({
+      institutionName:
+        trimmedInstitutionName && trimmedInstitutionName.length > 0 ? trimmedInstitutionName : null,
       logoDomain: trimmedLogo && trimmedLogo.length > 0 ? trimmedLogo : null,
       name: body.name.trim(),
       source: "manual",

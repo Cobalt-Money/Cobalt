@@ -15,6 +15,7 @@ export function useAddManualAccountSubmit() {
             creditLimit: values.creditLimit ?? undefined,
             currency: values.currency,
             currentBalance: values.currentBalance,
+            institutionName: values.institutionName ?? undefined,
             logoDomain: values.logoDomain ?? undefined,
             name: values.name,
             subtype: values.subtype,

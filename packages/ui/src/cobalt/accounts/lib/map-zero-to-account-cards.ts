@@ -111,12 +111,14 @@ function pickSubtypeLabel(subtype: string | null, type: string): string {
   return titleCaseWords(type);
 }
 
+// eslint-disable-next-line complexity
 export function bankAccountRowToCard(row: BankAccountRowWithRelations): AccountCardViewModel {
-  const isManual = row.source === "manual";
-  const fromConn = institutionFieldsFromBankConnection(row.plaidConnection);
-  const institution = isManual ? (row.institutionName?.trim() ?? row.name) : fromConn.institution;
-  const institutionLogo = isManual ? null : fromConn.institutionLogo;
-  const institutionUrl = isManual ? (row.logoDomain?.trim() ?? null) : fromConn.institutionUrl;
+  const fromConn = row.plaidConnection
+    ? institutionFieldsFromBankConnection(row.plaidConnection)
+    : null;
+  const institution = fromConn?.institution ?? row.institutionName?.trim() ?? row.name;
+  const institutionLogo = fromConn?.institutionLogo ?? null;
+  const institutionUrl = fromConn?.institutionUrl ?? row.logoDomain?.trim() ?? null;
   const lastSyncedAt = syncMsFromBalance(row.balance) ?? row.updatedAt ?? null;
   const { type } = row;
   const category = categoryFromPlaidType(type, row.subtype);

@@ -24,6 +24,7 @@ const createAccountSchema = z
     creditLimit: z.number().positive().optional(),
     currency: z.string().length(3).default("USD"),
     currentBalance: z.number(),
+    institutionName: z.string().max(255).optional(),
     logoDomain: z.string().max(253).optional(),
     name: z.string().min(1).max(255),
     subtype: z.enum(ALL_MANUAL_SUBTYPE),
@@ -64,6 +65,7 @@ export const accountsMutators = {
     const accountId = crypto.randomUUID();
     await tx.mutate.financialAccount.insert({
       id: accountId,
+      institutionName: args.institutionName?.trim() || undefined,
       logoDomain: args.logoDomain?.trim() || undefined,
       name: args.name.trim(),
       source: "manual",

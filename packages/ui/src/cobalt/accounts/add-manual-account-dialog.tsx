@@ -50,6 +50,9 @@ export interface ManualAccountFormValues {
   currency: string;
   /** Brandfetch domain when picked from typeahead, else null. */
   logoDomain: string | null;
+  /** Canonical institution name when picked from typeahead, else null. Lets
+   * manual rows merge with Plaid rows under the same institution group. */
+  institutionName: string | null;
 }
 
 interface TypeMeta {
@@ -391,6 +394,7 @@ function ManualAccountForm({
       creditLimit: type === "credit" && parsedLimit !== null ? parsedLimit : null,
       currency: currency.trim().toUpperCase() || "USD",
       currentBalance: parsedBalance,
+      institutionName,
       logoDomain,
       name: trimmedName,
       subtype: subtype.trim(),
