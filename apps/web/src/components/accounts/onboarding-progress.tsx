@@ -1,6 +1,5 @@
 import { env } from "@cobalt-web/env/web";
 import { Card } from "@cobalt-web/ui/components/card";
-import { Shimmer } from "@cobalt-web/ui/components/ai-elements/shimmer";
 import { useEffect, useRef, useState } from "react";
 
 import { fireSideCannons } from "@/lib/confetti";
@@ -316,16 +315,8 @@ function OnboardingProgressCard({
 
   return (
     <Card variant="subtle" className={`${FLOATING_CARD_CHROME} w-80 gap-2 p-4`}>
-      <div className="mb-2 h-5 text-center text-sm">
-        {isDone ? (
-          <span className="font-medium">
-            <TextSwap value={currentLabel} />
-          </span>
-        ) : (
-          <Shimmer as="span" className="font-medium">
-            <TextSwap value={currentLabel} />
-          </Shimmer>
-        )}
+      <div className="mb-2 h-5 text-center font-medium text-sm">
+        <TextSwap value={currentLabel} />
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
