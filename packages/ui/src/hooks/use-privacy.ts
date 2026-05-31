@@ -18,15 +18,14 @@ export const PRIVACY_STORAGE_KEY = "cobalt:privacy-hidden";
 export const DEFAULT_MASK_CHAR: MaskChar = "•";
 export const DEFAULT_MASK_LENGTH = 6;
 
+const noop = () => {
+  // no provider mounted
+};
 const NOOP_PRIVACY: PrivacyContextValue = {
   hidden: false,
   mask: (value) => value,
-  setHidden: () => {
-    // no-op when no provider is mounted
-  },
-  toggle: () => {
-    // no-op when no provider is mounted
-  },
+  setHidden: noop,
+  toggle: noop,
 };
 
 export const PrivacyContext = createContext<PrivacyContextValue>(NOOP_PRIVACY);

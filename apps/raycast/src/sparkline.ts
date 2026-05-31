@@ -13,14 +13,7 @@ interface SparklineOptions {
   padding?: number;
 }
 
-/**
- * Render a smooth area-sparkline SVG for a series and write it to Raycast's
- * support path (deduped by content hash). Returns the absolute file path
- * suitable for embedding in markdown via `![alt](file:///path)`.
- *
- * Pure SVG — no third-party calls. Caller controls color so the same series
- * can render green for assets, red for liabilities.
- */
+// Absolute path for Raycast markdown embed
 export function sparklineFile(values: number[], opts: SparklineOptions = {}): string | null {
   if (values.length < 2) {
     return null;

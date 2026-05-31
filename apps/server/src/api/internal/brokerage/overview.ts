@@ -8,13 +8,13 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
   description:
     "Brokerage overview (SnapTrade + Plaid investment, unified): accounts, balances, positions, activities, snapshots, holdings-linked news.",
   method: "get",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/",
   request: { query: brokerageOverviewQuerySchema },
   responses: {

@@ -4,12 +4,12 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
   description: "List the authenticated user's chats (most recently updated first).",
   method: "get",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/list",
   responses: {
     200: jsonContent(chatsResponseSchema, "Chat list"),

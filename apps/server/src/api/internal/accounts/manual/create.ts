@@ -12,15 +12,17 @@ import {
   jsonContentRequired,
   validationErrorResponse,
 } from "../../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../../middleware.js";
+import { requireAuth } from "../../middleware.js";
 
 const route = createRoute({
   description:
     'Create a manual (non-bank-linked) account and seed today\'s balance snapshot. Mirrors the Zero `m.accounts.createAccount` mutator. `subtype` must belong to the chosen `type` vocabulary. `creditLimit` only valid when `type === "credit"`. `currentBalance` is signed: positive for assets, negative for liabilities.',
   method: "post",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/manual",
-  request: { body: jsonContentRequired(createManualAccountSchema, "Account to create") },
+  request: {
+    body: jsonContentRequired(createManualAccountSchema, "Account to create"),
+  },
   responses: {
     201: jsonContent(createManualAccountResponseSchema, "Created account id"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),

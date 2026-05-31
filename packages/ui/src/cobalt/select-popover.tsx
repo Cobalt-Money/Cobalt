@@ -78,7 +78,7 @@ export function CobaltSelectPopover<TItem>({
   };
 
   const filtered = useMemo(() => {
-    // Parent-driven search: `items` are already filtered, don't re-filter here.
+    // Use parent items unchanged when onQueryChange set
     if (onQueryChange) {
       return items;
     }
@@ -89,7 +89,6 @@ export function CobaltSelectPopover<TItem>({
     return items.filter((item) => itemMatch(item, q));
   }, [items, itemMatch, onQueryChange, query]);
 
-  // Bucket into [groupLabel, items][] when `groupBy` is set; groups alphabetized.
   const grouped = useMemo(() => {
     if (!groupBy) {
       return null;

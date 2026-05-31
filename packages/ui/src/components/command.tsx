@@ -26,17 +26,11 @@ function Command({
       data-slot="command"
       className={cn(
         "flex size-full flex-col gap-0 overflow-hidden rounded-4xl bg-popover p-1 text-popover-foreground",
-        // Group spacing: zero base padding, no extra gap between adjacent groups
         "[&_[cmdk-group]]:p-0 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0",
-        // Group heading typography
         "[&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
-        // List sizing inside dialogs + scrollbar hide
         "[&_[data-slot=command-list]]:max-h-[min(45vh,28rem)] [&_[data-slot=command-list]]:pb-2 [&_[data-slot=command-list]]:[scrollbar-width:none] [&_[data-slot=command-list]::-webkit-scrollbar]:hidden",
-        // Item radius/padding/svg sizing
         "[&_[cmdk-item]]:rounded-lg [&_[cmdk-item]]:px-4 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5",
-        // Selected item bg: light has visible tint, dark uses accent
         "[&_[cmdk-item][aria-selected='true']]:bg-black/[0.09] dark:[&_[cmdk-item][aria-selected='true']]:bg-accent",
-        // Empty state padding
         "[&_[cmdk-empty]]:px-4",
         className
       )}

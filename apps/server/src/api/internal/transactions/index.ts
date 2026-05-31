@@ -11,7 +11,7 @@ import { recurringRouter } from "./recurring.js";
 import { spendingRouter } from "./spending.js";
 import { tagsRouter } from "./tags.js";
 
-// requirePaidUser applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
+// requireAuth applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
 export const transactionsRouter = new OpenAPIHono()
   .route("/", listRouter)
   .route("/", createRouter)

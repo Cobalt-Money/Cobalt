@@ -83,7 +83,6 @@ export function RulerPicker({
     if (Math.abs(el.scrollLeft - target) > 1) {
       settingFromValue.current = true;
       el.scrollLeft = target;
-      // Release the lock after the resulting scroll event has fired.
       window.requestAnimationFrame(() => {
         settingFromValue.current = false;
       });
@@ -103,7 +102,7 @@ export function RulerPicker({
     }
   };
 
-  // Mouse + touch drag-to-scrub so users don't need the (hidden) scrollbar.
+  // Drag gesture substitutes for hidden scrollbar
   const dragRef = useRef<{ startX: number; startScroll: number } | null>(null);
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const el = scrollerRef.current;
@@ -185,7 +184,6 @@ export function RulerPicker({
             {ints.map((n) => {
               const offset = (n - min) * pxPerUnit;
               const distFromValue = Math.abs(n - value);
-              // Fade with distance from center value.
               const isCenter = distFromValue < 0.5;
               const opacity = isCenter ? 1 : Math.max(0.25, 1 - distFromValue / 4);
               return (

@@ -54,7 +54,7 @@ function safeHttpsUrl(raw: string | null | undefined): string | null {
   }
 }
 
-/** Better Auth returns `{ redirect, url }`; OpenAPI documents `redirect_uri`. */
+// Reconciles Better Auth & OpenAPI field naming
 function pickRedirectUrlFromConsentResponse(data: unknown): string | null {
   if (!data || typeof data !== "object") {
     return null;

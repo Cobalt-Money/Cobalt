@@ -11,13 +11,13 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
   description:
     'Create a single manual transaction on a user-owned manual account. Server stamps `source: "manual"`, `pending: false`, and `userId`. Use `id` to pre-bind the row for optimistic UI flows.',
   method: "post",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/",
   request: {
     body: {

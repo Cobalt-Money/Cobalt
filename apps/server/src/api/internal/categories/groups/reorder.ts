@@ -8,12 +8,12 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../../middleware.js";
+import { requireAuth } from "../../middleware.js";
 
 const route = createRoute({
   description: "Replaces the order of all groups for the user.",
   method: "post",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/groups/reorder",
   request: {
     body: { content: { "application/json": { schema: reorderCategoryGroupsSchema } } },

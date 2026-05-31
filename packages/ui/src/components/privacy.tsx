@@ -28,9 +28,7 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       window.localStorage.setItem(PRIVACY_STORAGE_KEY, hidden ? "1" : "0");
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [hidden]);
 
   const setHidden = useCallback((value: boolean) => {

@@ -13,8 +13,6 @@ import type { PriceHistoryPoint } from "./positions-card";
 import { RulerPicker } from "./ruler-picker";
 import { CobaltSelectPopover } from "../select-popover";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export interface SellableHolding {
   holdingId: string;
   ticker: string;
@@ -43,8 +41,6 @@ export interface SellPositionFormProps {
     date: string,
   ) => Promise<{ history: PriceHistoryPoint[]; latestPrice: number | null }>;
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const priceFmt = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -77,8 +73,6 @@ function formatDateLabel(iso: string): string {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 
-// ── Form ──────────────────────────────────────────────────────────────────────
-
 // eslint-disable-next-line complexity
 export function SellPositionForm({
   holdings,
@@ -108,7 +102,7 @@ export function SellPositionForm({
     }
   }, [holdingId, holdings]);
 
-  // Fetch OHLC around the sale date for the price scrubber bounds.
+  // Load OHLC band for price scrubber range
   const ticker = holdings.find((h) => h.holdingId === holdingId)?.ticker ?? "";
   const fetchKey = `${ticker}::${soldAt}`;
   useEffect(() => {
@@ -149,7 +143,6 @@ export function SellPositionForm({
   const parsedPrice = priceText.trim() === "" ? 0 : Number(priceText);
   const validPrice = Number.isFinite(parsedPrice) && parsedPrice >= 0;
 
-  // Derive shares + total proceeds from whichever mode the user typed in.
   const parsedAmount = sharesText.trim() === "" ? 0 : Number(sharesText);
   const finiteAmount = Number.isFinite(parsedAmount) && parsedAmount > 0;
   let derivedShares: number;

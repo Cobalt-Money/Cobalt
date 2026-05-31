@@ -8,12 +8,12 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
   description: "Delete a manual transaction. Idempotent — no error if already gone or not manual.",
   method: "delete",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/{transactionId}",
   request: {
     params: transactionIdSchema,

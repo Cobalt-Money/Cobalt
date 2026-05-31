@@ -11,7 +11,7 @@ import { listRouter } from "./list.js";
 import { patchRouter } from "./patch.js";
 import { reorderRouter } from "./reorder.js";
 
-// requirePaidUser applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
+// requireAuth applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
 export const categoriesRouter = new OpenAPIHono()
   .route("/", listRouter)
   .route("/", createRouter)

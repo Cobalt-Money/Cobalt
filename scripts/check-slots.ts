@@ -29,8 +29,7 @@ const url = rawUrl.replace("sslmode=verify-full", "sslmode=require");
 
 const drop = process.argv.includes("--drop");
 
-// Use psql so we don't need to install a pg client package.
-// Runs as the role embedded in ZERO_UPSTREAM_DB (should be postgres admin).
+// psql avoids pg client install
 function psql(sql: string): Promise<string> {
   const proc = Bun.spawn(["psql", url, "--no-psqlrc", "-tA", "-c", sql], {
     stderr: "inherit",
@@ -108,7 +107,7 @@ if (!drop) {
       `  psql "$ZERO_UPSTREAM_DB" -c "SELECT pg_drop_replication_slot('${r.slot_name}');"`,
     );
   }
-  process.exit(1); // non-zero so CI can catch this
+  process.exit(1);
 }
 
 // --drop mode

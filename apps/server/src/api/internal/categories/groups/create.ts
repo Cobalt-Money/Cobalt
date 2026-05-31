@@ -11,12 +11,12 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../../middleware.js";
+import { requireAuth } from "../../middleware.js";
 
 const route = createRoute({
   description: "Creates a custom category group.",
   method: "post",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/groups",
   request: {
     body: { content: { "application/json": { schema: createCategoryGroupSchema } } },

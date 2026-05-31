@@ -58,7 +58,7 @@ function mcpAudienceCandidates(primary: string): string[] {
       out.add(alternate);
     }
   } catch {
-    // ignore invalid URLs
+    // invalid URL
   }
   return [...out];
 }
@@ -85,7 +85,7 @@ export async function verifyOAuthAccessTokenForMcp(
         });
         return payload;
       } catch {
-        // try next issuer/audience pair
+        // try next issuer/audience
       }
     }
   }

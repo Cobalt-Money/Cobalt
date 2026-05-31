@@ -12,13 +12,13 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
   description:
     "Sparse partial update — only fields present in the body are written. Pass `null` to restore the original value (RFC 7396 semantics). Writes to transaction_edit for auditing.",
   method: "patch",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/{transactionId}",
   request: {
     body: {

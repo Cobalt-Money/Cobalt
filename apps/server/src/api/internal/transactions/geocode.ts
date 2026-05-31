@@ -8,12 +8,12 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const search = createRoute({
   description: "Free-text geocoding via OpenStreetMap Nominatim. Returns up to 5 candidates.",
   method: "get",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/geocode",
   request: { query: geocodeSearchQuerySchema },
   responses: {

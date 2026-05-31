@@ -4,8 +4,6 @@ import { Add01Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export interface TickerSuggestionItem {
   symbol: string;
   name: string;
@@ -65,8 +63,6 @@ export function emptyPosition(): PositionDraft {
     ticker: "",
   };
 }
-
-// ── Sub-components ────────────────────────────────────────────────────────────
 
 const priceFmt = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -265,7 +261,7 @@ function PositionRow({
               onChange({
                 ...position,
                 dateAcquired: e.target.value,
-                // Reset picker when date changes — history must refetch.
+                // Date change invalidates price history cache
                 history: [],
                 pickedPrice: null,
               })
@@ -307,8 +303,6 @@ function PositionRow({
   );
 }
 
-// ── Card ──────────────────────────────────────────────────────────────────────
-
 export interface PositionsCardProps {
   positions: PositionDraft[];
   cashAmount: string;
@@ -333,7 +327,6 @@ export function PositionsCard({
     onChange(positions.map((p) => (p.id === id ? next : p)));
   };
 
-  // Fire history fetch when ticker+date set but history not yet loaded.
   useEffect(() => {
     for (const p of positions) {
       if (p.ticker.trim() && p.dateAcquired && !p.historyLoading && p.history.length === 0) {

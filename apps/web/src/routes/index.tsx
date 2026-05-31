@@ -5,7 +5,6 @@ import { ApiSection } from "@/components/landing/api-section";
 import { AppPreview } from "@/components/landing/app-preview";
 import { FadeUp, LANDING_EASE as EASE } from "@/components/landing/fade-up";
 import { HeroVideo } from "@/components/landing/hero-video";
-// import { LogoMarquee } from "@/components/landing/logo-marquee";
 import { FaqSection } from "@/components/landing/faq-section";
 import {
   FloatingIntegrations,

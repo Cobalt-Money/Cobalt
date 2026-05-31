@@ -6,13 +6,13 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
   description:
     "Load messages and vote map for one chat. Returns 404 with empty messages when the chat is missing or inaccessible (matches legacy client behavior).",
   method: "get",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/{chatId}",
   request: { params: chatIdSchema },
   responses: {

@@ -57,17 +57,13 @@ import { snaptradeWebhookRouter } from "./webhooks/snaptrade.js";
  * variable via a statement call.
  */
 
-// ── OAuth discovery helpers ─────────────────────────────────────────
-
-const oauthAuthServerMetadata = oauthProviderAuthServerMetadata(auth as never);
-const oauthOpenIdConfigMetadata = oauthProviderOpenIdConfigMetadata(auth as never);
+const oauthAuthServerMetadata = oauthProviderAuthServerMetadata(auth);
+const oauthOpenIdConfigMetadata = oauthProviderOpenIdConfigMetadata(auth);
 
 // Stable Hono-compatible wrapper so both well-known mount paths below can
 // reuse the same handler.
 const oauthAuthServerMetadataHandler = (c: { req: { raw: Request } }) =>
   oauthAuthServerMetadata(c.req.raw);
-
-// ── Internal API ────────────────────────────────────────────────────
 
 // `/api/*` routes consumed by our own web + mobile clients. Hosted on an
 // `OpenAPIHono` so every router can expose Zod-derived schemas that feed
@@ -113,7 +109,6 @@ base.doc31("/openapi.json", {
   openapi: "3.1.0",
 });
 
-// ── CORS origin resolver ────────────────────────────────────────────
 // Vercel preview URLs are per-branch (cobalt-web-git-<branch>-<scope>.vercel.app),
 // so a static CORS origin can't match every PR. The wildcard is *only*
 // enabled on preview deploys — prod stays strict literal-allowlist (matches
@@ -136,13 +131,11 @@ function resolveCorsOrigin(origin: string): string | null {
         return origin;
       }
     } catch {
-      // Malformed Origin header — fall through to null.
+      // malformed Origin
     }
   }
   return null;
 }
-
-// ── Root app ────────────────────────────────────────────────────────
 
 const app = new Hono()
   .use(logger())

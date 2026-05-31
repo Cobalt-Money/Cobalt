@@ -26,13 +26,10 @@ export async function refreshFundamentalsWorkflow(
 }> {
   "use workflow";
 
-  // 1. Fetch earnings reporters from Nasdaq calendar
   const earningsSymbols = await fetchEarningsReporters(todayStr, yesterdayStr);
 
-  // 2. Intersect with our DB (skip symbols we don't track)
   const earningsInDb = await filterTrackedSymbols(earningsSymbols);
 
-  // 3. Refresh financials in batches (respect FMP 300 req/min)
   const financialsResults: (FundamentalsInsert | null)[] = [];
   for (let i = 0; i < earningsInDb.length; i += CONCURRENCY) {
     const batch = earningsInDb.slice(i, i + CONCURRENCY);
@@ -46,7 +43,6 @@ export async function refreshFundamentalsWorkflow(
   const financialsToInsert = financialsResults.filter((r): r is FundamentalsInsert => r !== null);
   await upsertFinancials(financialsToInsert);
 
-  // 4. Refresh stale analyst data
   const staleSymbols = await fetchStaleAnalysts(earningsInDb);
 
   const analystResults: (Partial<FundamentalsInsert> | null)[] = [];

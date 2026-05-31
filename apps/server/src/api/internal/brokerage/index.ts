@@ -10,7 +10,7 @@ import { positionsRouter } from "./positions.js";
 import { userBrokeragesRouter } from "./user-brokerages.js";
 import { userTickersRouter } from "./user-tickers.js";
 
-// requirePaidUser applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
+// requireAuth applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
 export const brokerageRouter = new OpenAPIHono()
   .route("/", overviewRouter)
   .route("/", holdingsNewsRouter)

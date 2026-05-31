@@ -7,12 +7,12 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../../lib/create-app.js";
 import { jsonContent } from "../../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../../middleware.js";
+import { requireAuth } from "../../middleware.js";
 
 const route = createRoute({
   description: "List the user's Plaid items (bank connections).",
   method: "get",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/plaid-items",
   responses: {
     200: jsonContent(plaidItemsResponseSchema, "List of Plaid items"),

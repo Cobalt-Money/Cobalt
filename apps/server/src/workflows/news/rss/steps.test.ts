@@ -234,7 +234,6 @@ describe("processFeedStep", () => {
     vi.mocked(rssActions.parseDate).mockReturnValue(new Date());
     vi.mocked(rssActions.buildItemMetadata).mockReturnValue(null);
 
-    // First upsert succeeds, second fails
     vi.mocked(rssMutations.upsertRssArticleForFeed)
       .mockResolvedValueOnce({
         alreadyLinked: false,
@@ -272,7 +271,6 @@ describe("processFeedStep", () => {
     vi.mocked(rssActions.parseDate).mockReturnValue(new Date());
     vi.mocked(rssActions.buildItemMetadata).mockReturnValue(null);
 
-    // Simulate various outcomes: 3 new, 4 reused, 3 skipped
     const outcomes = [
       { alreadyLinked: false, inserted: true }, // new
       { alreadyLinked: false, inserted: true }, // new

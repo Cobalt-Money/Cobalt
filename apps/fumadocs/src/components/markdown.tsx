@@ -28,7 +28,6 @@ export function rehypeWrapWords() {
 
       const words = node.value.split(/(?=\s)/);
 
-      // Create new span nodes for each word and whitespace
       const newNodes: ElementContent[] = words.flatMap((word) => {
         if (word.length === 0) {
           return [];
@@ -71,7 +70,7 @@ function createProcessor(): Processor {
         components: {
           ...defaultMdxComponents,
           img: undefined,
-          pre: Pre, // use JSX
+          pre: Pre,
         },
         development: false,
         jsx,

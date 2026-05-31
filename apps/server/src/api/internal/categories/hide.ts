@@ -9,14 +9,14 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 import { rethrowAsApiError } from "./_lib.js";
 
 const route = createRoute({
   description:
     "Hides a category. Optionally reassigns dependent transactions and recurring rows to a target cat first; otherwise leaves them assigned to the now-hidden cat.",
   method: "post",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/{categoryId}/hide",
   request: {
     body: { content: { "application/json": { schema: hideCategorySchema } } },

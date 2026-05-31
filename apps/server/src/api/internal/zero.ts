@@ -7,7 +7,7 @@ import { zeroNodePg } from "@rocicorp/zero/server/adapters/pg";
 import { Pool } from "pg";
 
 import { createApp } from "../../lib/create-app.js";
-import { requirePaidUser } from "./middleware.js";
+import { requireAuth } from "./middleware.js";
 
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
@@ -17,7 +17,7 @@ const pool = new Pool({
 const dbProvider = pool ? zeroNodePg(schema, pool) : undefined;
 
 const zeroRouter = createApp()
-  .post("/query", requirePaidUser, async (c) => {
+  .post("/query", requireAuth, async (c) => {
     const zeroContext = c.get("zeroContext");
     const result = await handleQueryRequest(
       (name, args) =>
@@ -35,7 +35,7 @@ const zeroRouter = createApp()
     );
     return c.json(result);
   })
-  .post("/mutate", requirePaidUser, async (c) => {
+  .post("/mutate", requireAuth, async (c) => {
     if (!dbProvider) {
       return c.json({ code: "zero_not_configured", error: "Zero not configured" }, 503);
     }

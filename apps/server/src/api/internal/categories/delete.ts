@@ -8,14 +8,14 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 import { rethrowAsApiError } from "./_lib.js";
 
 const route = createRoute({
   description:
     "Soft-deletes a custom category. Reassigns all dependent transactions and recurring rows to the user's Uncategorized seed cat. System cats cannot be deleted (only hidden).",
   method: "delete",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/{categoryId}",
   request: { params: categoryIdSchema },
   responses: {

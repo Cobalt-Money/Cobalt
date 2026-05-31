@@ -12,7 +12,7 @@ import { plaidItemsAccountsRouter } from "./plaid-items/accounts.js";
 import { plaidItemsAlertsRouter } from "./plaid-items/alerts.js";
 import { plaidItemsListRouter } from "./plaid-items/list.js";
 
-// requirePaidUser applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
+// requireAuth applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
 export const accountsRouter = new OpenAPIHono()
   .route("/", listRouter)
   .route("/", disconnectRouter)

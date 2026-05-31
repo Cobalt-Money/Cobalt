@@ -8,14 +8,14 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../../middleware.js";
+import { requireAuth } from "../../middleware.js";
 import { rethrowAsApiError } from "../_lib.js";
 
 const route = createRoute({
   description:
     "Soft-deletes a custom group. The group must be empty (no active categories). System groups cannot be deleted.",
   method: "delete",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/groups/{groupId}",
   request: { params: categoryGroupIdSchema },
   responses: {

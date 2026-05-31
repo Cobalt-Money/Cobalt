@@ -48,7 +48,10 @@ interface JsonRpcResponse {
  * — we have to read chunks ourselves, parse `data:` events, and stop on
  * the first JSON-RPC response that matches our request `id`.
  */
-async function readMcpResponse(r: Response, expectedId: number | string): Promise<JsonRpcResponse> {
+async function readMcpResponse(
+  r: Response,
+  expectedId: number | string,
+): Promise<JsonRpcResponse> {
   const ct = r.headers.get("content-type") ?? "";
   if (ct.includes("application/json")) {
     return (await r.json()) as JsonRpcResponse;
@@ -100,9 +103,7 @@ async function readMcpResponse(r: Response, expectedId: number | string): Promis
   } finally {
     try {
       await reader.cancel();
-    } catch {
-      // Ignore: connection may already be torn down.
-    }
+    } catch {}
   }
 
   throw new Error("MCP stream ended without a matching response");

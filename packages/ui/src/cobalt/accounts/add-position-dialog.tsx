@@ -13,8 +13,6 @@ import { emptyPosition } from "./positions-card";
 import { RulerPicker } from "./ruler-picker";
 import type { PositionDraft, PriceHistoryPoint, TickerSearchState } from "./positions-card";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export interface AddPositionAccountOption {
   id: string;
   name: string;
@@ -48,8 +46,6 @@ export interface AddPositionFormProps {
   onBackspaceWhenEmpty?: () => void;
   initialAccountId?: string;
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const priceFmt = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -85,8 +81,6 @@ function formatDateLabel(iso: string): string {
     year: "numeric",
   });
 }
-
-// ── Position row pieces ───────────────────────────────────────────────────────
 
 function TickerCombobox({
   search,
@@ -317,8 +311,6 @@ function PositionRow({
     </div>
   );
 }
-
-// ── Form ──────────────────────────────────────────────────────────────────────
 
 function buildReadyPosition(p: PositionDraft) {
   if (!p.ticker.trim()) {

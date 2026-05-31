@@ -1,5 +1,3 @@
-// Entry point for drizzle-kit migration generation.
-//
 // This file re-exports every Drizzle table in the repo so drizzle-kit sees the
 // FULL database schema and never generates spurious DROP statements for tables
 // it doesn't know about.

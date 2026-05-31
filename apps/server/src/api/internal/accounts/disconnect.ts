@@ -9,13 +9,13 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
   description:
     "Disconnect an account by `financial_account.id`. Source-agnostic — server dispatches on row.source (plaid/snaptrade/manual). For Plaid, if no accounts remain under the item, also calls Plaid's `/item/remove`.",
   method: "delete",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/{id}",
   request: { params: accountIdSchema },
   responses: {

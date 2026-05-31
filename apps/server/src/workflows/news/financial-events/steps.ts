@@ -21,8 +21,6 @@ import {
   TransientSummaryError,
 } from "../../../ai/agents/financial-events-summary/financial-events-summary-agent.js";
 
-// ── Per-event pipeline ────────────────────────────────────────────
-
 export async function upsertEventHeaderStep(event: StockNewsEvent): Promise<string> {
   "use step";
 

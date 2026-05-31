@@ -57,7 +57,7 @@ describe("gate — extension + magic bytes", () => {
   });
 
   it("rejects .xlsx (PK signature) even with .csv extension", () => {
-    // PK\x03\x04 signature — written as decimal because hex literals deadlock biome (wants lower) vs oxlint (wants upper).
+    // Decimal avoids hex case lint conflicts
     const xlsx = Buffer.from([80, 75, 3, 4, 0, 0]);
     expect(() => runGates(xlsx, "evil.csv")).toThrow(/xlsx/);
   });

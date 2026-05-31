@@ -14,8 +14,6 @@ const syncRoute = createRoute({
   description:
     "Persist App Store subscription data after StoreKit reports a purchase. Does not require an existing subscription (users who just bought must be able to sync).",
   method: "post",
-  // requireAuth (not requirePaidUser): users who just completed a StoreKit
-  // purchase have no active subscription yet — this endpoint is what creates it.
   middleware: [requireAuth] as const,
   path: "/sync",
   request: {

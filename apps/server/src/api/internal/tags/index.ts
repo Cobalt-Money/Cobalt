@@ -19,12 +19,12 @@ import { createRoute, z } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const listTagsRoute = createRoute({
   description: "Lists every tag the user owns (active + archived) with usage counts.",
   method: "get",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/",
   responses: {
     200: jsonContent(tagsListResponseSchema, "User's tags"),
@@ -38,7 +38,7 @@ const listTagsRoute = createRoute({
 const createTagRoute = createRoute({
   description: "Creates a new tag scoped to the calling user.",
   method: "post",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/",
   request: {
     body: {
@@ -58,7 +58,7 @@ const createTagRoute = createRoute({
 const updateTagRoute = createRoute({
   description: "Renames, recolors, or archives/unarchives a tag.",
   method: "patch",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/{tagId}",
   request: {
     body: { content: { "application/json": { schema: patchTagSchema } } },
@@ -78,7 +78,7 @@ const updateTagRoute = createRoute({
 const deleteTagRoute = createRoute({
   description: "Permanently deletes a tag and all its transaction memberships (cascade).",
   method: "delete",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/{tagId}",
   request: { params: tagIdSchema },
   responses: {
@@ -95,7 +95,7 @@ const deleteTagRoute = createRoute({
 const bulkApplyRoute = createRoute({
   description: "Adds and/or removes tags across many transactions in a single operation.",
   method: "post",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/bulk-apply",
   request: {
     body: {

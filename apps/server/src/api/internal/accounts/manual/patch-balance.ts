@@ -12,13 +12,13 @@ import {
   jsonContentRequired,
   validationErrorResponse,
 } from "../../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../../middleware.js";
+import { requireAuth } from "../../middleware.js";
 
 const route = createRoute({
   description:
     "Set `balance.current` for a manual account directly. Caller-controlled sign — value is written verbatim. Re-snapshots so net-worth views update immediately.",
   method: "patch",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/{id}/balance",
   request: {
     body: jsonContentRequired(patchManualBalanceSchema, "New balance"),

@@ -9,13 +9,13 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 import { rethrowAsApiError } from "./_lib.js";
 
 const route = createRoute({
   description: "Renames, recolors/icons, hides, reorders, or moves a category between groups.",
   method: "patch",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/{categoryId}",
   request: {
     body: { content: { "application/json": { schema: patchCategorySchema } } },

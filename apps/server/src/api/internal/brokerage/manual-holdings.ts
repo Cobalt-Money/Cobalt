@@ -18,11 +18,11 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const createRouteDef = createRoute({
   method: "post",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/manual-holdings",
   request: {
     body: {
@@ -44,7 +44,7 @@ const createRouteDef = createRoute({
 
 const updateRouteDef = createRoute({
   method: "patch",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/manual-holdings/{holdingId}",
   request: {
     body: {
@@ -67,7 +67,7 @@ const updateRouteDef = createRoute({
 
 const deleteRouteDef = createRoute({
   method: "delete",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/manual-holdings/{holdingId}",
   request: { params: manualHoldingIdParamSchema },
   responses: {
@@ -83,7 +83,7 @@ const deleteRouteDef = createRoute({
 
 const sellRouteDef = createRoute({
   method: "post",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/manual-holdings/sell",
   request: {
     body: {
@@ -105,7 +105,7 @@ const sellRouteDef = createRoute({
 
 const cashSleeveRouteDef = createRoute({
   method: "put",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/manual-cash-sleeve",
   request: {
     body: {

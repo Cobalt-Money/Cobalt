@@ -89,7 +89,7 @@ export async function applyPendingAccountCreates(
     return { accountId: created.accountId, kind: "single" };
   }
 
-  // perLabel — validate existing entries, collect pending creates, bulk-insert.
+  // Validate existing, collect pending, bulk-insert per source label
   const next: Record<string, string | "skip"> = {};
   const pending: { label: string; create: PendingAccountCreate }[] = [];
   for (const [label, entry] of Object.entries(resolution.map)) {
@@ -182,7 +182,7 @@ export async function applyPendingCreates(
   resolutionMap: Record<string, string>,
   uncategorizedId: string,
 ): Promise<Record<string, string>> {
-  // Resolve user's owned groups + categories once for both staleness checks below.
+  // Single fetch for staleness + fallback resolution
   const groups = await db.query.categoryGroup.findMany({
     columns: { id: true },
     where: { userId: { eq: userId } },
@@ -408,7 +408,7 @@ function normalizeTagName(raw: string): string | null {
 
 /** Deterministic palette color for a tag name — same name → same color across users. */
 function colorForTagName(name: string): string {
-  // Modulo guarantees in-bounds; `?? TAG_COLORS[0]` is unreachable but satisfies `noUncheckedIndexedAccess`.
+  // Modulo ensures index bounds; fallback silences TS
   return TAG_COLORS[hashName(name) % TAG_COLORS.length] ?? TAG_COLORS[0];
 }
 
@@ -588,7 +588,7 @@ function resolveAccountId(sourceAccountName: string, resolution: AccountResoluti
     if ("accountId" in resolution) {
       return resolution.accountId;
     }
-    // Pending create should have been materialised by applyAccountCreatesStep.
+    // Catch unmaterialised state (prior hook failure)
     throw new ApiError(
       500,
       "account_resolution_unmaterialised",

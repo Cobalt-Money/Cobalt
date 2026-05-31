@@ -26,10 +26,6 @@ import { upsertAllBalanceSnapshots } from "@cobalt-web/server-data/snapshots/mut
 import type { Account, Balance, UniversalActivity } from "snaptrade-typescript-sdk";
 import { FatalError, RetryableError } from "workflow";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
 export type UserCredentials = NonNullable<Awaited<ReturnType<typeof getSnapTradeUserCredentials>>>;
 
 export interface HoldingsDetails {
@@ -88,10 +84,6 @@ function toDateOnlyString(date: Date): string {
   return date.toISOString().split("T").at(0) ?? "";
 }
 
-// ============================================================================
-// COMMON STEPS
-// ============================================================================
-
 export async function getSnapTradeUserCredentialsStep(
   providerUserId: string,
 ): Promise<UserCredentials> {
@@ -119,10 +111,6 @@ export async function fetchAccountsStep(userCredentials: UserCredentials): Promi
     throw error;
   }
 }
-
-// ============================================================================
-// CONNECTION EVENT STEPS
-// ============================================================================
 
 export async function upsertSnaptradeAuthorizationStep(
   brokerageAuthorizationId: string,
@@ -204,10 +192,6 @@ export async function upsertAccountsStep(
 
   return { failedCount, upsertedCount };
 }
-
-// ============================================================================
-// HOLDINGS UPDATE STEPS
-// ============================================================================
 
 export async function syncAccountDetailsStep(
   accountId: string,
@@ -357,10 +341,6 @@ export async function syncRecentActivitiesStep(
     return { success: false };
   }
 }
-
-// ============================================================================
-// TRANSACTION STEPS
-// ============================================================================
 
 export async function fetchAllActivitiesStep(
   accountId: string,

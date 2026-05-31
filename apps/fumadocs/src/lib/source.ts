@@ -11,9 +11,7 @@ export type DocsPageData = DocData &
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader(docs.toFumadocsSource(), {
   baseUrl: "/docs",
-  // openapiPlugin reads `_openapi.method` from MDX frontmatter (set by
-  // fumadocs-openapi's generateFiles step) and renders HTTP method badges
-  // (GET / POST / DELETE) next to operation links in the sidebar.
+  // openapi badge plugin renders HTTP methods in sidebar
   plugins: [lucideIconsPlugin(), openapiPlugin()],
 });
 

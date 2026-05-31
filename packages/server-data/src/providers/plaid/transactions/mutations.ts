@@ -41,12 +41,7 @@ const COLUMN_TO_LOCK_KEY: Partial<Record<keyof typeof transactionTable.$inferSel
  * gating without further edits here.
  */
 function buildPlaidUpsertSet(): Record<string, SQL> {
-  /**
-   * Plaid-overwritable columns on `transaction`. Excludes: target keys
-   * (source, externalId, id), user-controlled columns (notes, excluded,
-   * lockedFields), audit columns (createdAt, userId), updatedAt (set to
-   * now()).
-   */
+  // Plaid-overwritable cols. Excludes: user-controlled (notes, excluded), lock-guarded, audit cols.
   const plaidWritableColumns: (keyof typeof transactionTable.$inferSelect)[] = [
     "accountId",
     "accountOwner",

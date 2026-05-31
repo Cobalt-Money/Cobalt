@@ -1,6 +1,3 @@
-// Barrel file for drizzle-zero — named exports of all tables and relations.
-// drizzle-zero requires a single TS file (not a folder) for type resolution.
-
 // Tables (omit oauth* + jwks from auth/auth — server-only; not in Postgres replication publication)
 export { account, session, user, verification } from "./users/auth/auth";
 export { chats, messages, parts } from "./ai/chat";

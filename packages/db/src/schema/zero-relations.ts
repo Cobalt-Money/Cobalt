@@ -33,7 +33,6 @@ import { feedback } from "./users/feedback";
 import { mobileSubscription } from "./users/subscriptions/mobile";
 import { subscription } from "./users/subscriptions/stripe";
 
-// Better Auth relations
 export const userRelations = relations(user, ({ one, many }) => ({
   accounts: many(account),
   balances: many(balance),
@@ -82,7 +81,6 @@ export const subscriptionRelations = relations(subscription, ({ one }) => ({
   }),
 }));
 
-// Chat relations
 export const chatsRelations = relations(chats, ({ one, many }) => ({
   messages: many(messages),
   user: one(user, {
@@ -106,8 +104,6 @@ export const partsRelations = relations(parts, ({ one }) => ({
     references: [messages.messageId],
   }),
 }));
-
-// Unified-schema (SRI-264) relations
 
 export const financialAccountRelations = relations(financialAccount, ({ one, many }) => ({
   balance: one(balance),
@@ -353,7 +349,6 @@ export const institutionRelations = relations(institution, ({ many }) => ({
   plaidConnections: many(plaidConnection),
 }));
 
-// Financial events relations
 export const financialEventsRelations = relations(financialEvents, ({ many }) => ({
   articles: many(eventArticles),
 }));
@@ -365,7 +360,6 @@ export const eventArticlesRelations = relations(eventArticles, ({ one }) => ({
   }),
 }));
 
-// User alerts relations
 export const userAlertsRelations = relations(userAlerts, ({ one }) => ({
   user: one(user, {
     fields: [userAlerts.userId],
@@ -373,7 +367,6 @@ export const userAlertsRelations = relations(userAlerts, ({ one }) => ({
   }),
 }));
 
-// Financial goals relations
 export const financialGoalsRelations = relations(financialGoals, ({ one }) => ({
   user: one(user, {
     fields: [financialGoals.userId],
@@ -381,7 +374,6 @@ export const financialGoalsRelations = relations(financialGoals, ({ one }) => ({
   }),
 }));
 
-// Mobile subscription relations
 export const mobileSubscriptionRelations = relations(mobileSubscription, ({ one }) => ({
   user: one(user, {
     fields: [mobileSubscription.userId],
@@ -389,7 +381,6 @@ export const mobileSubscriptionRelations = relations(mobileSubscription, ({ one 
   }),
 }));
 
-// Kalshi relations
 export const kalshiUserRelations = relations(kalshiUsers, ({ one }) => ({
   user: one(user, {
     fields: [kalshiUsers.userId],
@@ -397,7 +388,6 @@ export const kalshiUserRelations = relations(kalshiUsers, ({ one }) => ({
   }),
 }));
 
-// Feedback relations
 export const feedbackRelations = relations(feedback, ({ one }) => ({
   user: one(user, {
     fields: [feedback.userId],
@@ -405,7 +395,6 @@ export const feedbackRelations = relations(feedback, ({ one }) => ({
   }),
 }));
 
-// Message vote relations
 export const messageVotesRelations = relations(messageVotes, ({ one }) => ({
   message: one(messages, {
     fields: [messageVotes.messageId],

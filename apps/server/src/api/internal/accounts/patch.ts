@@ -9,13 +9,13 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { createApp } from "../../../lib/create-app.js";
 import { jsonContent, validationErrorResponse } from "../../../lib/openapi-helpers.js";
-import { requirePaidUser } from "../middleware.js";
+import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
   description:
     "Partial update to an account by internal id. Currently supports user-override `creditLimit` (positive magnitude; null clears the override). Source-agnostic.",
   method: "patch",
-  middleware: [requirePaidUser] as const,
+  middleware: [requireAuth] as const,
   path: "/{id}",
   request: {
     body: { content: { "application/json": { schema: patchAccountSchema } } },

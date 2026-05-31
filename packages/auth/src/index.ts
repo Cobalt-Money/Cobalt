@@ -98,14 +98,13 @@ export const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
 
 const appleClientSecret = await getAppleClientSecret();
 
-/** Where `/login` and `/oauth/consent` routes live (Vite app). Relative paths would resolve on the API host and 404. */
+/** Relative paths would resolve on the API host and 404. */
 const spaOrigin = env.CORS_ORIGIN.replace(/\/$/, "");
 
 /** MCP OAuth token exchange sends `resource` = this URL; must be listed in `validAudiences` or exchange fails with "requested resource invalid". */
 const oauthIssuerOrigin = new URL(env.BETTER_AUTH_URL).origin;
 const mcpResourceAudience = `${oauthIssuerOrigin}/api/mcp`;
 
-/** Only send Secure cookies when the auth server is actually on HTTPS. */
 const isSecureOrigin = env.BETTER_AUTH_URL.startsWith("https://");
 
 const trustedOrigins = [
