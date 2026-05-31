@@ -166,7 +166,6 @@ describe("plaid onboarding streaming (server-based integration)", () => {
       expect(phases[0]).toBe("exchange");
       expect(phases).toContain("validate");
       expect(phases).toContain("persist");
-      expect(phases).toContain("waiting_for_plaid");
       expect(phases).toContain("accounts");
       expect(phases).toContain("transactions");
       expect(phases.at(-1)).toBe("done");

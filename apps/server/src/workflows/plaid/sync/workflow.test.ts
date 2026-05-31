@@ -17,7 +17,6 @@ import {
   syncBalancesStep,
   syncRecurringStep,
   syncTransactionsStep,
-  triggerPlaidSyncStep,
 } from "./steps.js";
 import { plaidAddAccountWorkflow, plaidOnboardingHookToken } from "./workflow.js";
 
@@ -99,7 +98,6 @@ const mockFetchItem = vi.mocked(fetchItemForOnboardingStep);
 const mockDupCheck = vi.mocked(duplicateCheckStep);
 const mockRemoveItem = vi.mocked(removeItemStep);
 const mockPersist = vi.mocked(persistOnboardingItemStep);
-const mockTriggerSync = vi.mocked(triggerPlaidSyncStep);
 const mockGetItem = vi.mocked(getPlaidItemStep);
 const mockEmit = vi.mocked(emitOnboardingProgressStep);
 const mockClose = vi.mocked(closeOnboardingProgressStep);
@@ -215,13 +213,12 @@ describe("plaidAddAccountWorkflow", () => {
     expect(mockExchange).toHaveBeenCalledWith(PUBLIC_TOKEN);
     expect(mockFetchItem).toHaveBeenCalledWith(ACCESS_TOKEN);
     expect(mockPersist).toHaveBeenCalledOnce();
-    expect(mockTriggerSync).toHaveBeenCalledWith(ACCESS_TOKEN);
     expect(mockAccounts).toHaveBeenCalledWith(ACCESS_TOKEN, ITEM_ID);
     expect(mockTx).toHaveBeenCalledWith(ACCESS_TOKEN, ITEM_ID, null);
     expect(mockBalances).toHaveBeenCalledWith(ACCESS_TOKEN, ITEM_ID);
   });
 
-  it("emits exchange → validate → persist → waiting_for_plaid → accounts → transactions → historical → done", async () => {
+  it("emits exchange → validate → persist → accounts → transactions → historical → done", async () => {
     await plaidAddAccountWorkflow({
       hookToken: HOOK_TOKEN,
       userId: USER_ID,
@@ -231,15 +228,15 @@ describe("plaidAddAccountWorkflow", () => {
     expect(phases).toContain("exchange");
     expect(phases).toContain("validate");
     expect(phases).toContain("persist");
-    expect(phases).toContain("waiting_for_plaid");
     expect(phases).toContain("accounts");
     expect(phases).toContain("transactions");
     expect(phases).toContain("historical");
     expect(phases).toContain("done");
-    // Exchange must happen before validate, validate before persist.
     expect(phases.indexOf("exchange")).toBeLessThan(phases.indexOf("validate"));
     expect(phases.indexOf("validate")).toBeLessThan(phases.indexOf("persist"));
-    expect(phases.indexOf("persist")).toBeLessThan(phases.indexOf("waiting_for_plaid"));
+    expect(phases.indexOf("persist")).toBeLessThan(phases.indexOf("accounts"));
+    expect(phases.indexOf("accounts")).toBeLessThan(phases.indexOf("transactions"));
+    expect(phases.indexOf("transactions")).toBeLessThan(phases.indexOf("historical"));
   });
 
   it("terminates with DUPLICATE_ACCOUNT when dup check matches, removes item, does not persist", async () => {
@@ -259,7 +256,6 @@ describe("plaidAddAccountWorkflow", () => {
     });
     expect(mockRemoveItem).toHaveBeenCalledWith(ACCESS_TOKEN);
     expect(mockPersist).not.toHaveBeenCalled();
-    expect(mockTriggerSync).not.toHaveBeenCalled();
 
     const phases = mockEmit.mock.calls.map(([event]) => event.phase);
     expect(phases).toContain("duplicate");
@@ -321,20 +317,6 @@ describe("plaidAddAccountWorkflow", () => {
     expect(mockHoldings).not.toHaveBeenCalled();
     const phases = mockEmit.mock.calls.map(([event]) => event.phase);
     expect(phases).toContain("liabilities");
-  });
-
-  it("skips snapshot seed + recurring when only initial_update_complete arrives", async () => {
-    mockHookPayloads.current = [
-      { historical_update_complete: false, initial_update_complete: true },
-    ];
-
-    await plaidAddAccountWorkflow({
-      hookToken: HOOK_TOKEN,
-      userId: USER_ID,
-    });
-
-    expect(mockSeedSnapshots).not.toHaveBeenCalled();
-    expect(mockRecurring).not.toHaveBeenCalled();
   });
 
   it("closes progress stream on success", async () => {

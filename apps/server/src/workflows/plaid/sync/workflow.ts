@@ -23,7 +23,6 @@ import {
   syncBalancesStep,
   syncRecurringStep,
   syncTransactionsStep,
-  triggerPlaidSyncStep,
 } from "./steps";
 import type { PlaidOnboardingPhase } from "./steps";
 
@@ -161,7 +160,8 @@ async function startUpdateModeChildSyncsStep(plaidItemId: string): Promise<void>
  *   - cancelled  → emit `cancelled`, close stream, return.
  *   - updateMode → sync new accounts onto existing Item, kick child syncs.
  *   - fresh link → existing full onboarding path (exchange → validate → persist
- *                  → park on iterable sync hook + parallel direct-API branches).
+ *                  → inline /transactions/sync paginated pull + parallel
+ *                  holdings/investments/liabilities branches).
  */
 export async function plaidAddAccountWorkflow(
   input: PlaidAddAccountInput,
@@ -325,18 +325,15 @@ export async function plaidAddAccountWorkflow(
         a.subtype === "mortgage",
     );
 
-    // Phase 4: nudge Plaid, then park on iterable sync hook.
-    const syncHook = createHook<PlaidOnboardingHookPayload>({
-      token: plaidOnboardingHookToken(itemId),
-    });
-    await triggerPlaidSyncStep(accessToken);
-    await emit("waiting_for_plaid", "start");
-
-    // allSettled: one branch failing (e.g. unsupported product slipping past
-    // subtype gate) must not abort sibling branches — most importantly the
-    // sync branch that seeds today's snapshot.
+    // Phase 4: inline sync. Per Plaid's official pattern
+    // (github.com/plaid/pattern/blob/master/server/update_transactions.js),
+    // pull accounts + transactions directly via /transactions/sync paginated
+    // loop instead of waiting on SYNC_UPDATES_AVAILABLE. Avoids a race where
+    // Plaid fires the webhook before this workflow registers its hook —
+    // observed in prod for fast-pulling institutions (Ally sandbox).
+    // Webhook still drives ongoing syncs after onboarding via plaidSyncWorkflow.
     const branchResults = await Promise.allSettled([
-      handleSyncBranch(syncHook, accessToken, itemId, input.userId, emit),
+      runOnboardingSyncBranch(accessToken, itemId, input.userId, emit),
       hasInvestments ? handleHoldingsBranch(accessToken, emit) : Promise.resolve(),
       hasInvestments ? handleInvestmentsTxBranch(accessToken, emit) : Promise.resolve(),
       hasLiabilities ? handleLiabilitiesBranch(accessToken, itemId, emit) : Promise.resolve(),
@@ -357,9 +354,9 @@ export async function plaidAddAccountWorkflow(
   }
 }
 
-// Sync branch: iterable hook — SYNC_UPDATES_AVAILABLE fires twice (initial, historical).
-async function handleSyncBranch(
-  hook: AsyncIterable<PlaidOnboardingHookPayload>,
+// Inline sync branch: paginate /transactions/sync directly instead of waiting
+// for SYNC_UPDATES_AVAILABLE. Mirrors plaid/pattern updateTransactions().
+async function runOnboardingSyncBranch(
   accessToken: string,
   itemId: string,
   userId: string,
@@ -369,47 +366,24 @@ async function handleSyncBranch(
     detail?: Record<string, unknown>,
   ) => Promise<void>,
 ) {
-  let initialDone = false;
-  let historicalDone = false;
+  await emit("accounts", "start");
+  await syncAccountsAndBalancesStep(accessToken, itemId);
+  await reconcileOrphanAccountsStep(accessToken, itemId);
+  await emit("accounts", "done");
 
-  for await (const payload of hook) {
-    if (payload.initial_update_complete && !initialDone) {
-      await emit("waiting_for_plaid", "done");
+  await emit("transactions", "start");
+  const [txResult] = await Promise.all([
+    syncTransactionsStep(accessToken, itemId, null),
+    syncBalancesStep(accessToken, itemId),
+  ]);
+  await emit("transactions", "done", {
+    added: txResult.added,
+    modified: txResult.modified,
+  });
 
-      await emit("accounts", "start");
-      await syncAccountsAndBalancesStep(accessToken, itemId);
-      await reconcileOrphanAccountsStep(accessToken, itemId);
-      await emit("accounts", "done");
-
-      await emit("transactions", "start");
-      const [txResult] = await Promise.all([
-        syncTransactionsStep(accessToken, itemId, null),
-        syncBalancesStep(accessToken, itemId),
-      ]);
-      await emit("transactions", "done", {
-        added: txResult.added,
-        modified: txResult.modified,
-      });
-
-      initialDone = true;
-    }
-
-    if (payload.historical_update_complete) {
-      // Snapshots are seeded once at link time; cron handles nightly updates.
-      await emit("historical", "start");
-      await Promise.all([
-        syncRecurringStep(accessToken, itemId),
-        seedTodayPlaidSnapshotsStep(userId),
-      ]);
-      await emit("historical", "done");
-      historicalDone = true;
-      break;
-    }
-  }
-
-  if (!historicalDone) {
-    await emit("historical", "done", { reason: "not_complete", skipped: true });
-  }
+  await emit("historical", "start");
+  await Promise.all([syncRecurringStep(accessToken, itemId), seedTodayPlaidSnapshotsStep(userId)]);
+  await emit("historical", "done");
 }
 
 async function handleHoldingsBranch(
