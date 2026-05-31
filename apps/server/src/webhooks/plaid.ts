@@ -72,6 +72,41 @@ async function handleTransactionsWebhook(webhook: PlaidWebhook) {
       break;
     }
 
+    // Legacy transaction webhooks. Plaid still fires these for the *initial*
+    // pull on freshly-linked items even when the integration uses
+    // /transactions/sync — they precede the first SYNC_UPDATES_AVAILABLE.
+    // Treat them as completion signals so the onboarding hook resumes
+    // (otherwise accounts never persist for new items).
+    case "INITIAL_UPDATE":
+    case "HISTORICAL_UPDATE":
+    case "DEFAULT_UPDATE": {
+      const w = webhook as unknown as { item_id: string; webhook_code: string };
+      const payload = {
+        historical_update_complete:
+          w.webhook_code === "HISTORICAL_UPDATE" || w.webhook_code === "DEFAULT_UPDATE",
+        initial_update_complete: true,
+      };
+      const token = plaidOnboardingHookToken(w.item_id);
+      const hook = await getHookByToken(token).catch(() => null);
+      if (hook) {
+        await resumeHook(token, payload);
+        console.log(
+          `[plaid] Resumed onboarding run ${hook.runId} via legacy ${w.webhook_code} for item: ${w.item_id}`,
+        );
+      } else {
+        await start(plaidSyncWorkflow, [{ ...payload, item_id: w.item_id }]);
+        console.log(
+          `[plaid] Triggered sync workflow via legacy ${w.webhook_code} for item: ${w.item_id}`,
+        );
+      }
+      break;
+    }
+
+    case "TRANSACTIONS_REMOVED": {
+      // Handled by next /transactions/sync call — no action needed here.
+      break;
+    }
+
     default: {
       console.log(`[plaid] Unknown TRANSACTIONS webhook code: ${webhook.webhook_code}`);
     }

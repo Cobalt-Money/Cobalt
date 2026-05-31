@@ -105,6 +105,110 @@ describe("plaid webhook router — SYNC_UPDATES_AVAILABLE", () => {
   });
 });
 
+function legacyBody(
+  itemId: string,
+  code: "INITIAL_UPDATE" | "HISTORICAL_UPDATE" | "DEFAULT_UPDATE",
+) {
+  return {
+    environment: "sandbox",
+    item_id: itemId,
+    new_transactions: 5,
+    webhook_code: code,
+    webhook_type: "TRANSACTIONS",
+  };
+}
+
+describe("plaid webhook router — legacy TRANSACTIONS webhooks (INITIAL/HISTORICAL/DEFAULT_UPDATE)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockStart.mockResolvedValue({ runId: "run-legacy" } as unknown as Awaited<
+      ReturnType<typeof start>
+    >);
+  });
+
+  it("resumes onboarding hook on INITIAL_UPDATE (initial complete, historical incomplete)", async () => {
+    mockGetHook.mockResolvedValue({ runId: "run-onb" } as unknown as Awaited<
+      ReturnType<typeof getHookByToken>
+    >);
+    const res = await postWebhook(legacyBody("item-init", "INITIAL_UPDATE"));
+    expect(res.status).toBe(200);
+    expect(mockGetHook).toHaveBeenCalledWith("plaid:sync:item-init");
+    expect(mockResume).toHaveBeenCalledWith("plaid:sync:item-init", {
+      historical_update_complete: false,
+      initial_update_complete: true,
+    });
+    expect(mockStart).not.toHaveBeenCalled();
+  });
+
+  it("resumes onboarding hook on HISTORICAL_UPDATE (both complete)", async () => {
+    mockGetHook.mockResolvedValue({ runId: "run-onb" } as unknown as Awaited<
+      ReturnType<typeof getHookByToken>
+    >);
+    const res = await postWebhook(legacyBody("item-hist", "HISTORICAL_UPDATE"));
+    expect(res.status).toBe(200);
+    expect(mockResume).toHaveBeenCalledWith("plaid:sync:item-hist", {
+      historical_update_complete: true,
+      initial_update_complete: true,
+    });
+    expect(mockStart).not.toHaveBeenCalled();
+  });
+
+  it("resumes onboarding hook on DEFAULT_UPDATE (both complete)", async () => {
+    mockGetHook.mockResolvedValue({ runId: "run-onb" } as unknown as Awaited<
+      ReturnType<typeof getHookByToken>
+    >);
+    const res = await postWebhook(legacyBody("item-def", "DEFAULT_UPDATE"));
+    expect(res.status).toBe(200);
+    expect(mockResume).toHaveBeenCalledWith("plaid:sync:item-def", {
+      historical_update_complete: true,
+      initial_update_complete: true,
+    });
+    expect(mockStart).not.toHaveBeenCalled();
+  });
+
+  it("falls back to starting plaidSyncWorkflow on INITIAL_UPDATE when no hook is waiting", async () => {
+    mockGetHook.mockRejectedValue(new Error("Hook not found"));
+    const res = await postWebhook(legacyBody("item-init-nohook", "INITIAL_UPDATE"));
+    expect(res.status).toBe(200);
+    expect(mockResume).not.toHaveBeenCalled();
+    expect(mockStart).toHaveBeenCalledWith(plaidSyncWorkflow, [
+      {
+        historical_update_complete: false,
+        initial_update_complete: true,
+        item_id: "item-init-nohook",
+      },
+    ]);
+  });
+
+  it("falls back to starting plaidSyncWorkflow on HISTORICAL_UPDATE when no hook is waiting", async () => {
+    mockGetHook.mockRejectedValue(new Error("Hook not found"));
+    const res = await postWebhook(legacyBody("item-hist-nohook", "HISTORICAL_UPDATE"));
+    expect(res.status).toBe(200);
+    expect(mockResume).not.toHaveBeenCalled();
+    expect(mockStart).toHaveBeenCalledWith(plaidSyncWorkflow, [
+      {
+        historical_update_complete: true,
+        initial_update_complete: true,
+        item_id: "item-hist-nohook",
+      },
+    ]);
+  });
+
+  it("no-ops on TRANSACTIONS_REMOVED (no hook lookup, no workflow start)", async () => {
+    const res = await postWebhook({
+      environment: "sandbox",
+      item_id: "item-rm",
+      removed_transactions: ["t1", "t2"],
+      webhook_code: "TRANSACTIONS_REMOVED",
+      webhook_type: "TRANSACTIONS",
+    });
+    expect(res.status).toBe(200);
+    expect(mockGetHook).not.toHaveBeenCalled();
+    expect(mockResume).not.toHaveBeenCalled();
+    expect(mockStart).not.toHaveBeenCalled();
+  });
+});
+
 describe("plaid webhook router — other product webhooks go direct (no hook lookup)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
