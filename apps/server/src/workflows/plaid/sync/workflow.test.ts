@@ -18,7 +18,11 @@ import {
   syncRecurringStep,
   syncTransactionsStep,
 } from "./steps.js";
-import { plaidAddAccountWorkflow, plaidOnboardingHookToken } from "./workflow.js";
+import {
+  plaidAddAccountWorkflow,
+  plaidOnboardingHookToken,
+  plaidSyncWorkflow,
+} from "./workflow.js";
 
 const HOOK_TOKEN = "plaid:link:user-1:test-hook";
 
@@ -337,5 +341,97 @@ describe("plaidAddAccountWorkflow", () => {
 
     expect(result).toMatchObject({ success: false });
     expect(mockClose).toHaveBeenCalledOnce();
+  });
+
+  it("calls syncTransactionsStep with cursor=null on fresh link (initial pull)", async () => {
+    await plaidAddAccountWorkflow({
+      hookToken: HOOK_TOKEN,
+      userId: USER_ID,
+    });
+    expect(mockTx).toHaveBeenCalledWith(ACCESS_TOKEN, ITEM_ID, null);
+  });
+
+  it("enforces strict step ordering: persist → accounts → transactions → historical", async () => {
+    let order = 0;
+    const stepOrder: Record<string, number> = {};
+    mockPersist.mockImplementation(() => {
+      order += 1;
+      stepOrder.persist = order;
+      return Promise.resolve();
+    });
+    mockAccounts.mockImplementation(() => {
+      order += 1;
+      stepOrder.accounts = order;
+      return Promise.resolve({ accounts: [], accountsCount: 0 });
+    });
+    mockTx.mockImplementation(() => {
+      order += 1;
+      stepOrder.transactions = order;
+      return Promise.resolve(fakeTxResult());
+    });
+    mockRecurring.mockImplementation(() => {
+      order += 1;
+      stepOrder.recurring = order;
+      return Promise.resolve({ added: 0, modified: 0, removed: 0, success: true as const });
+    });
+
+    await plaidAddAccountWorkflow({
+      hookToken: HOOK_TOKEN,
+      userId: USER_ID,
+    });
+
+    const persist = stepOrder.persist ?? 0;
+    const accounts = stepOrder.accounts ?? 0;
+    const transactions = stepOrder.transactions ?? 0;
+    const recurring = stepOrder.recurring ?? 0;
+    expect(persist).toBeGreaterThan(0);
+    expect(persist).toBeLessThan(accounts);
+    expect(accounts).toBeLessThan(transactions);
+    expect(transactions).toBeLessThan(recurring);
+  });
+});
+
+describe("plaidSyncWorkflow (recurring / webhook-triggered)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetItem.mockResolvedValue(fakeDbItem());
+    mockBalances.mockResolvedValue(fakeBalances());
+    mockTx.mockResolvedValue(fakeTxResult());
+    mockAccounts.mockResolvedValue({
+      accounts: [],
+      accountsCount: 0,
+    } as unknown as Awaited<ReturnType<typeof syncAccountsAndBalancesStep>>);
+    mockReconcile.mockResolvedValue({ migrated: 0, reconciled: 0 });
+    mockRecurring.mockResolvedValue({ added: 0, modified: 0, removed: 0, success: true });
+  });
+
+  it("is idempotent under duplicate webhook delivery (Plaid at-least-once)", async () => {
+    const webhook = {
+      historical_update_complete: true,
+      initial_update_complete: true,
+      item_id: ITEM_ID,
+    };
+
+    const [r1, r2] = await Promise.all([plaidSyncWorkflow(webhook), plaidSyncWorkflow(webhook)]);
+
+    expect(r1).toStrictEqual({ itemId: ITEM_ID, success: true });
+    expect(r2).toStrictEqual({ itemId: ITEM_ID, success: true });
+    expect(mockAccounts).toHaveBeenCalledTimes(2);
+    expect(mockTx).toHaveBeenCalledTimes(2);
+    expect(mockRecurring).toHaveBeenCalledTimes(2);
+  });
+
+  it("propagates failure when plaid_connection lookup fails (orphan-item case)", async () => {
+    mockGetItem.mockRejectedValueOnce(new Error("plaid_connection not found"));
+
+    const result = await plaidSyncWorkflow({
+      historical_update_complete: true,
+      initial_update_complete: true,
+      item_id: "missing-item",
+    });
+
+    expect(result.success).toBeFalsy();
+    expect(result.error).toMatch(/not found/);
+    expect(mockAccounts).not.toHaveBeenCalled();
   });
 });
