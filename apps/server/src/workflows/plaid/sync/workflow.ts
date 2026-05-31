@@ -310,14 +310,20 @@ export async function plaidAddAccountWorkflow(
     });
     await emit("persist", "done");
 
-    // Decide which direct-API branches to run based on the item's products.
-    const products = [
-      ...((item.available_products ?? []) as string[]),
-      ...((item.billed_products ?? []) as string[]),
-    ];
-    const productSet = new Set(products);
-    const hasInvestments = productSet.has("investments");
-    const hasLiabilities = productSet.has("liabilities");
+    // Decide which direct-API branches to run based on actual linked account
+    // subtypes. `available_products` / `billed_products` are institution-level
+    // signals and don't guarantee the endpoint will accept this item — e.g.
+    // Ally advertises `liabilities` but rejects with PRODUCTS_NOT_SUPPORTED
+    // when the item has no loan/credit accounts. Plaid's official guidance
+    // (docs/link/initializing-products): gate on linked account subtypes.
+    const hasInvestments = accounts.some((a) => a.type === "investment" || a.type === "brokerage");
+    const hasLiabilities = accounts.some(
+      (a) =>
+        a.subtype === "credit card" ||
+        a.subtype === "paypal" ||
+        a.subtype === "student" ||
+        a.subtype === "mortgage",
+    );
 
     // Phase 4: nudge Plaid, then park on iterable sync hook.
     const syncHook = createHook<PlaidOnboardingHookPayload>({
@@ -326,12 +332,19 @@ export async function plaidAddAccountWorkflow(
     await triggerPlaidSyncStep(accessToken);
     await emit("waiting_for_plaid", "start");
 
-    await Promise.all([
+    // allSettled: one branch failing (e.g. unsupported product slipping past
+    // subtype gate) must not abort sibling branches — most importantly the
+    // sync branch that seeds today's snapshot.
+    const branchResults = await Promise.allSettled([
       handleSyncBranch(syncHook, accessToken, itemId, input.userId, emit),
       hasInvestments ? handleHoldingsBranch(accessToken, emit) : Promise.resolve(),
       hasInvestments ? handleInvestmentsTxBranch(accessToken, emit) : Promise.resolve(),
       hasLiabilities ? handleLiabilitiesBranch(accessToken, itemId, emit) : Promise.resolve(),
     ]);
+    const [syncResult] = branchResults;
+    if (syncResult.status === "rejected") {
+      throw syncResult.reason;
+    }
 
     await emit("done", "done");
     await closeOnboardingProgressStep();

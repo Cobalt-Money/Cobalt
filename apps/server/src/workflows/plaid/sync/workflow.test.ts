@@ -267,7 +267,15 @@ describe("plaidAddAccountWorkflow", () => {
 
   it("runs holdings + investment-tx branches when item has investments product", async () => {
     mockFetchItem.mockResolvedValue({
-      accounts: [],
+      accounts: [
+        {
+          account_id: "acc-1",
+          mask: "1234",
+          name: "Brokerage",
+          subtype: "brokerage",
+          type: "investment",
+        },
+      ],
       item: fakeItem({
         available_products: ["transactions", "investments"],
         billed_products: ["transactions", "investments"],
@@ -289,7 +297,15 @@ describe("plaidAddAccountWorkflow", () => {
 
   it("runs liabilities branch when item has liabilities product", async () => {
     mockFetchItem.mockResolvedValue({
-      accounts: [],
+      accounts: [
+        {
+          account_id: "acc-1",
+          mask: "1234",
+          name: "Credit",
+          subtype: "credit card",
+          type: "credit",
+        },
+      ],
       item: fakeItem({
         available_products: ["transactions", "liabilities"],
         billed_products: ["transactions", "liabilities"],

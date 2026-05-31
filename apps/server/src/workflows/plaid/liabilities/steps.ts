@@ -68,6 +68,7 @@ function isLiabilitiesSkipError(errorCode: string | undefined): boolean {
     "NO_LIABILITY_ACCOUNTS",
     "PRODUCT_NOT_ENABLED",
     "PRODUCT_NOT_READY",
+    "PRODUCTS_NOT_SUPPORTED",
   ].includes(errorCode ?? "");
 }
 
