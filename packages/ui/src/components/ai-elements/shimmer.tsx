@@ -42,8 +42,12 @@ const ShimmerComponent = ({
     Component as keyof JSX.IntrinsicElements
   );
 
+  // When children is a React element (e.g. an animated text component),
+  // we can't read its length — fall back to a sensible default so the
+  // gradient still renders. Without this, dynamicSpread=0 makes the
+  // text-clipping gradient zero-width and the text appears invisible.
   const dynamicSpread = useMemo(
-    () => (typeof children === "string" ? children.length : 0) * spread,
+    () => (typeof children === "string" ? children.length : 24) * spread,
     [children, spread]
   );
 
