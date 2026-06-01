@@ -1,0 +1,28 @@
+---
+title: The growing list of things we do to provide Cobalt the greatest user experience of any personal finance software
+description: The fastest personal finance app ever
+date: 2026-06-01
+author: Sriket Komali
+tags: [Engineering]
+draft: true
+---
+
+## 1. Sync engine
+
+Cobalt runs on a sync engine. Same class of technology that powers the speed of Linear, Notion, and Superhuman. Your data lives in the client, in local storage. Every read and every mutation happens locally first, then syncs to the server in the background. No spinners. No loading states. The UI reflects the change the instant you make it.
+
+## 2. Command K does everything
+
+Every button has a keyboard shortcut. Search, navigate, run an action, open an account, ask the agent. Our users are power users. They move through Cobalt without ever touching the mouse.
+
+## 3. PlanetScale Postgres
+
+The greatest dishes are comprised of the highest quality ingredients. We believe the same thing for software. We run on PlanetScale, one of the fastest managed Postgres providers out there. Low-latency queries, no connection pool drama, and we get to focus on product instead of database ops.
+
+## 4. Navigate on mousedown, not mouseup
+
+Most web apps wait for you to release the mouse before they navigate. We navigate the moment you press down.
+
+## 5. Client-side everything
+
+We route with TanStack Router. It's a pure client-side router. Next.js, by contrast, is server-driven — every navigation round-trips to the server to render the route and its data before the page swaps. With a client router, the route components are already in the bundle and data fetching is decoupled from navigation, so a click swaps the view immediately and data streams in behind it. Cobalt pulls a lot of different data per page, and this is the reason every click still feels instant.
