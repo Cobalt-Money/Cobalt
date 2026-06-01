@@ -11,10 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as PricingDotmdRouteImport } from './routes/pricing[.]md'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as LandingDotmdRouteImport } from './routes/landing[.]md'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
@@ -61,11 +59,6 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PricingDotmdRoute = PricingDotmdRouteImport.update({
-  id: '/pricing.md',
-  path: '/pricing.md',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -74,11 +67,6 @@ const PricingRoute = PricingRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LandingDotmdRoute = LandingDotmdRouteImport.update({
-  id: '/landing.md',
-  path: '/landing.md',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
@@ -260,10 +248,8 @@ const AuthAiChatChatIdRoute = AuthAiChatChatIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/landing.md': typeof LandingDotmdRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
-  '/pricing.md': typeof PricingDotmdRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/accounts': typeof AuthAccountsRouteRouteWithChildren
@@ -302,10 +288,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/landing.md': typeof LandingDotmdRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
-  '/pricing.md': typeof PricingDotmdRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/alerts-preview': typeof AuthAlertsPreviewRoute
@@ -337,10 +321,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
-  '/landing.md': typeof LandingDotmdRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
-  '/pricing.md': typeof PricingDotmdRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/_auth/accounts': typeof AuthAccountsRouteRouteWithChildren
@@ -381,10 +363,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/landing.md'
     | '/login'
     | '/pricing'
-    | '/pricing.md'
     | '/privacy'
     | '/terms'
     | '/accounts'
@@ -423,10 +403,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/landing.md'
     | '/login'
     | '/pricing'
-    | '/pricing.md'
     | '/privacy'
     | '/terms'
     | '/alerts-preview'
@@ -457,10 +435,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_auth'
-    | '/landing.md'
     | '/login'
     | '/pricing'
-    | '/pricing.md'
     | '/privacy'
     | '/terms'
     | '/_auth/accounts'
@@ -501,10 +477,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
-  LandingDotmdRoute: typeof LandingDotmdRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
-  PricingDotmdRoute: typeof PricingDotmdRoute
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
   BlogSlugRoute: typeof BlogSlugRoute
@@ -528,13 +502,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pricing.md': {
-      id: '/pricing.md'
-      path: '/pricing.md'
-      fullPath: '/pricing.md'
-      preLoaderRoute: typeof PricingDotmdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -547,13 +514,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/landing.md': {
-      id: '/landing.md'
-      path: '/landing.md'
-      fullPath: '/landing.md'
-      preLoaderRoute: typeof LandingDotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
@@ -966,10 +926,8 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
-  LandingDotmdRoute: LandingDotmdRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
-  PricingDotmdRoute: PricingDotmdRoute,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
   BlogSlugRoute: BlogSlugRoute,
@@ -979,3 +937,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

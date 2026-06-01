@@ -1,6 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-const MARKDOWN = `# Cobalt
+# Cobalt
 
 Personal finance app for web and mobile. Manage your money the traditional way — and unlock a new way by talking to your finances through AI.
 
@@ -53,18 +51,22 @@ See [/pricing.md](https://cobaltpf.com/pricing.md).
 - Docs: https://docs.cobaltpf.com
 - MCP: https://docs.cobaltpf.com/mcp
 - SDK: https://docs.cobaltpf.com/sdk
-`;
+  <<<<<<<< HEAD:apps/web/src/routes/landing[.]md.ts
+  `;
 
 export const Route = createFileRoute("/landing.md")({
-  server: {
-    handlers: {
-      GET: () =>
-        new Response(MARKDOWN, {
-          headers: {
-            "Cache-Control": "public, max-age=300, s-maxage=3600",
-            "Content-Type": "text/markdown; charset=utf-8",
-          },
-        }),
-    },
-  },
+server: {
+handlers: {
+GET: () =>
+new Response(MARKDOWN, {
+headers: {
+"Cache-Control": "public, max-age=300, s-maxage=3600",
+"Content-Type": "text/markdown; charset=utf-8",
+},
+}),
+},
+},
 });
+========
+
+> > > > > > > > 8b6632350e395848a85bf3666bc34cd416b0fdd0:apps/web/public/index.md
