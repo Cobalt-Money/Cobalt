@@ -169,83 +169,83 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
   return (
     <>
       {opening ? <PlaidOpeningCard label="Reconnecting…" /> : null}
-    <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className="flex w-full flex-col gap-0 sm:max-w-md">
-        <SheetHeader className="border-b">
-          <div className="flex items-center gap-2">
-            <SheetTitle>Notifications</SheetTitle>
-            {alerts.length > 0 ? <Badge variant="destructive">{alerts.length}</Badge> : null}
-          </div>
-          <SheetDescription>Connections that need your attention.</SheetDescription>
-        </SheetHeader>
+      <Sheet onOpenChange={onOpenChange} open={open}>
+        <SheetContent className="flex w-full flex-col gap-0 sm:max-w-md">
+          <SheetHeader className="border-b">
+            <div className="flex items-center gap-2">
+              <SheetTitle>Notifications</SheetTitle>
+              {alerts.length > 0 ? <Badge variant="destructive">{alerts.length}</Badge> : null}
+            </div>
+            <SheetDescription>Connections that need your attention.</SheetDescription>
+          </SheetHeader>
 
-        {alerts.length === 0 ? (
-          <Empty className="flex-1">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <HugeiconsIcon icon={BellDotIcon} strokeWidth={2} />
-              </EmptyMedia>
-              <EmptyTitle>You're all caught up</EmptyTitle>
-              <EmptyDescription>No connections need attention right now.</EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <ScrollArea className="flex-1">
-            <ul className="flex flex-col gap-3 p-4">
-              {alerts.map((alert) => {
-                const meta = getAlertMetadata(alert);
-                const isBusy = busyId === alert.id;
-                return (
-                  <li
-                    className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/10"
-                    key={alert.id}
-                  >
-                    <div className="flex items-start gap-3">
-                      {meta.institutionLogo || meta.institutionName ? (
-                        <InstitutionLogo
-                          className="size-10 shrink-0 overflow-hidden rounded-lg"
-                          institutionLogo={meta.institutionLogo}
-                          institutionName={meta.institutionName ?? null}
-                          institutionUrl={null}
-                        />
-                      ) : (
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-                          <HugeiconsIcon
-                            className="size-5"
-                            icon={AlertCircleIcon}
-                            strokeWidth={2}
-                          />
-                        </span>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-foreground text-sm">{alert.title}</div>
-                        {alert.message ? (
-                          <div className="mt-0.5 text-muted-foreground text-xs">
-                            {alert.message}
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <Button
-                      className="w-full"
-                      disabled={isBusy || !alert.sourceId}
-                      onClick={() => handleReconnect(alert)}
-                      size="sm"
-                      type="button"
-                      variant="default"
+          {alerts.length === 0 ? (
+            <Empty className="flex-1">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <HugeiconsIcon icon={BellDotIcon} strokeWidth={2} />
+                </EmptyMedia>
+                <EmptyTitle>You're all caught up</EmptyTitle>
+                <EmptyDescription>No connections need attention right now.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <ScrollArea className="flex-1">
+              <ul className="flex flex-col gap-3 p-4">
+                {alerts.map((alert) => {
+                  const meta = getAlertMetadata(alert);
+                  const isBusy = busyId === alert.id;
+                  return (
+                    <li
+                      className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/10"
+                      key={alert.id}
                     >
-                      <HugeiconsIcon className="size-4" icon={RefreshIcon} strokeWidth={2} />
-                      {isBusy ? "…" : getAlertCtaLabel(alert.type)}
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          </ScrollArea>
-        )}
-      </SheetContent>
-    </Sheet>
+                      <div className="flex items-start gap-3">
+                        {meta.institutionLogo || meta.institutionName ? (
+                          <InstitutionLogo
+                            className="size-10 shrink-0 overflow-hidden rounded-lg"
+                            institutionLogo={meta.institutionLogo}
+                            institutionName={meta.institutionName ?? null}
+                            institutionUrl={null}
+                          />
+                        ) : (
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+                            <HugeiconsIcon
+                              className="size-5"
+                              icon={AlertCircleIcon}
+                              strokeWidth={2}
+                            />
+                          </span>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-foreground text-sm">{alert.title}</div>
+                          {alert.message ? (
+                            <div className="mt-0.5 text-muted-foreground text-xs">
+                              {alert.message}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <Button
+                        className="w-full"
+                        disabled={isBusy || !alert.sourceId}
+                        onClick={() => handleReconnect(alert)}
+                        size="sm"
+                        type="button"
+                        variant="default"
+                      >
+                        <HugeiconsIcon className="size-4" icon={RefreshIcon} strokeWidth={2} />
+                        {isBusy ? "…" : getAlertCtaLabel(alert.type)}
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </ScrollArea>
+          )}
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
