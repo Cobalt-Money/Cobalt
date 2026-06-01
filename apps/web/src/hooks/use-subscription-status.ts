@@ -1,35 +1,31 @@
 import { useQuery } from "@tanstack/react-query";
+import type { InferResponseType } from "hono/client";
 
 import { subscriptionsApi } from "@/lib/clients/api-client";
 
-export type SubscriptionSource = "stripe" | "appstore" | null;
+type ApiBody = InferResponseType<typeof subscriptionsApi.index.$get, 200>;
 
-interface SubscriptionStatus {
-  hasActiveSubscription: boolean;
-  isLoading: boolean;
-  subscriptionSource: SubscriptionSource;
-}
+export type ConnectionState = ApiBody["connectionStates"][number];
 
-export function useSubscriptionStatus(): SubscriptionStatus {
+const DEFAULT: ApiBody = {
+  cancelAtPeriodEnd: false,
+  connectionStates: [],
+  hasActiveSubscription: false,
+  periodEnd: null,
+  status: null,
+  subscriptionSource: null,
+  tier: "free",
+};
+
+export function useSubscriptionStatus() {
   const { data, isLoading } = useQuery({
     queryFn: async () => {
       const res = await subscriptionsApi.index.$get();
-      if (!res.ok) {
-        return { hasActiveSubscription: false, subscriptionSource: null as SubscriptionSource };
-      }
-      const body = (await res.json()) as {
-        hasActiveSubscription: boolean;
-        subscriptionSource: SubscriptionSource;
-      };
-      return body;
+      return res.ok ? ((await res.json()) as ApiBody) : DEFAULT;
     },
     queryKey: ["subscription-status"],
     staleTime: 60_000,
   });
 
-  return {
-    hasActiveSubscription: data?.hasActiveSubscription ?? false,
-    isLoading,
-    subscriptionSource: data?.subscriptionSource ?? null,
-  };
+  return { ...(data ?? DEFAULT), isLoading };
 }

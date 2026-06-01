@@ -43,6 +43,15 @@ vi.mock(import("../workflows/snaptrade/transactions/workflow.js"), () => ({
   snaptradeTransactionsUpdatedWorkflow: vi.fn(),
 }));
 
+// Freeze check pulls from DB in prod; stub to "not frozen" so existing dispatch tests pass.
+vi.mock(import("@cobalt-web/server-data/subscriptions/limits"), async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    isSnaptradeAuthorizationFrozen: vi.fn().mockResolvedValue(false),
+  };
+});
+
 const mockStart = vi.mocked(start);
 
 function sign(body: unknown): string {

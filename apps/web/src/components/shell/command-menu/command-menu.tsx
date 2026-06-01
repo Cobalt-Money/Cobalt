@@ -18,7 +18,9 @@ import {
 } from "@/components/accounts/use-add-account-flow";
 import { useQuery as useZeroQuery } from "@rocicorp/zero/react";
 import { queries } from "@cobalt-web/zero";
+import { useSubscriptionStatus } from "@/hooks/use-subscription-status";
 import { useTagOptions } from "@/hooks/use-tags";
+import { showUpgradePrompt } from "@/lib/upgrade-prompt";
 
 import { useAccountChoice } from "./use-account-choice";
 import { useBulkActions } from "./use-bulk-actions";
@@ -303,6 +305,8 @@ function CommandMenuDialog({
     pageStack,
     resetSearch: useCallback(() => setSearch(""), [setSearch]),
   });
+  const { tier, connectionStates } = useSubscriptionStatus();
+  const linkAtCap = tier === "free" && connectionStates.length >= 2;
   const {
     cashEntry,
     chooseInstitution,
@@ -390,8 +394,12 @@ function CommandMenuDialog({
           {inLinkOrManual && selectedInstitution !== null && (
             <LinkOrManualPage
               institution={selectedInstitution}
+              linkDisabled={linkAtCap}
               onChooseConnect={handleChooseConnect}
               onChooseManual={switchToManualAccountForSelected}
+              onUpgrade={() => {
+                showUpgradePrompt("connection_limit_reached");
+              }}
             />
           )}
           {inAddManualAccount && (

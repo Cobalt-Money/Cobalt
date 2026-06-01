@@ -161,7 +161,9 @@ export const auth = betterAuth({
   baseURL: {
     allowedHosts: baseUrlAllowedHosts,
     fallback: env.BETTER_AUTH_URL,
-    protocol: "https",
+    // Derive scheme from BETTER_AUTH_URL so local dev (http://localhost:3000)
+    // doesn't get force-rewritten to https — that breaks OAuth callback URIs.
+    protocol: isSecureOrigin ? "https" : "http",
   },
   database: drizzleAdapter(db, {
     provider: "pg",

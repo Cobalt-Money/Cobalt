@@ -16,6 +16,7 @@
     "./cobalt/tags/*": "./src/cobalt/tags/*",
     "./cobalt/brokerage/*": "./src/cobalt/brokerage/*",
     "./cobalt/imports/*": "./src/cobalt/imports/*",
+    "./cobalt/subscription/*": "./src/cobalt/subscription/*",
     "./cobalt/*": "./src/cobalt/*.tsx",
     "./hooks/*": "./src/hooks/*.ts",
     "./postcss.config": "./postcss.config.mjs"

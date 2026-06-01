@@ -5,6 +5,7 @@ import { createFileRoute, Outlet, redirect, useLocation } from "@tanstack/react-
 
 import { OnboardingProgressProvider } from "@/components/accounts/onboarding-context";
 import { OnboardingProgress } from "@/components/accounts/onboarding-progress";
+import { BillingBanner, useBillingBannerActive } from "@/components/billing/billing-banner";
 import { DemoBanner } from "@/components/demo/demo-banner";
 import { ImportWizardHost } from "@/components/imports/import-wizard";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
@@ -60,6 +61,7 @@ export const Route = createFileRoute("/_auth")({
 });
 
 function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDemo: boolean }) {
+  const billingBannerActive = useBillingBannerActive();
   console.log("[shell] render", performance.now(), { chromeless });
   // Setting `data-demo-banner` on this wrapper (vs `document.body` via an
   // effect) keeps the demo-mode flag in React tree — CSS in globals.css
@@ -77,6 +79,7 @@ function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDe
           <ImportWizardHost>
             <div
               className="flex h-svh min-h-0 flex-col overflow-hidden"
+              data-billing-banner={!isDemo && billingBannerActive ? "1" : undefined}
               data-demo-banner={isDemo ? "1" : undefined}
             >
               {chromeless ? (
@@ -95,7 +98,7 @@ function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDe
                 // first paint, so the sidebar doesn't close *before* the
                 // route swaps.
                 <CommandMenuProvider>
-                  <DemoBanner />
+                  {isDemo ? <DemoBanner /> : <BillingBanner />}
                   <SidebarProvider className="min-h-0 flex-1">
                     <AppSidebar />
                     <AmbientInsetProvider>

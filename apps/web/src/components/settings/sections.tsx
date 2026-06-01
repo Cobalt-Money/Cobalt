@@ -68,14 +68,6 @@ export function ProfileSection({
             value={name}
           />
         </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="font-medium text-sm" htmlFor="settings-email">
-            Email
-          </label>
-          <Input disabled id="settings-email" type="email" value={user?.email ?? ""} />
-          <p className="text-muted-foreground text-xs">Email cannot be changed here.</p>
-        </div>
       </div>
 
       <div className="flex justify-end">

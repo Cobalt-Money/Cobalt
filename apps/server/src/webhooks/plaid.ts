@@ -1,3 +1,6 @@
+import { lookupPlaidConnection } from "@cobalt-web/server-data/providers/plaid/link/queries";
+// Deep import to skip subscriptions/index barrel which pulls in Stripe/Apple client init at module load (breaks webhook unit tests with no API keys).
+import { isConnectionActiveForUser } from "@cobalt-web/server-data/subscriptions/limits";
 import { Hono } from "hono";
 import type {
   HoldingsDefaultUpdateWebhook,
@@ -84,6 +87,24 @@ export const plaidWebhookRouter = new Hono().post("/", async (c) => {
     console.log(
       `[plaid] Received webhook: ${webhook.webhook_type}/${webhook.webhook_code} for item ${webhook.item_id}`,
     );
+
+    // Freeze gate: skip data-sync workflows for connections past the user's
+    // free-tier cap. ITEM webhooks (error/repair/disconnect) always run so the
+    // user can act on broken connections regardless of tier state.
+    if (webhook.webhook_type !== "ITEM" && webhook.item_id) {
+      const conn = await lookupPlaidConnection(webhook.item_id);
+      if (!conn) {
+        console.log(`[plaid] No connection row for item ${webhook.item_id}; acking.`);
+        return c.json({ status: "ignored" });
+      }
+      const active = await isConnectionActiveForUser(conn.userId, conn.id, "plaid");
+      if (!active) {
+        console.log(
+          `[plaid] Skipping ${webhook.webhook_type}/${webhook.webhook_code}; connection ${conn.id} frozen (free-tier cap).`,
+        );
+        return c.json({ status: "frozen" });
+      }
+    }
 
     switch (webhook.webhook_type) {
       case "TRANSACTIONS": {

@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const plaidFindMany = vi.fn<(args: unknown) => Promise<{ id: string }[]>>();
-const snapFindMany = vi.fn<(args: unknown) => Promise<{ id: string }[]>>();
+const plaidFindMany =
+  vi.fn<(args: unknown) => Promise<{ id: string; createdAt?: Date; plaidItemId?: string }[]>>();
+const snapFindMany =
+  vi.fn<(args: unknown) => Promise<{ id: string; createdAt?: Date; authorizationId?: string }[]>>();
 const stripeFindMany = vi.fn<(args: unknown) => Promise<unknown[]>>();
 const mobileFindMany = vi.fn<(args: unknown) => Promise<unknown[]>>();
 
@@ -20,8 +22,16 @@ vi.mock(
     }) as never,
 );
 
-const { FREE_LIMITS, getUserLimits, PRO_LIMITS, userCanAddConnection, userConnectionCount } =
-  await import("./limits.js");
+const {
+  FREE_LIMITS,
+  getUserLimits,
+  getUserSubscriptionState,
+  isConnectionActiveForUser,
+  PRO_LIMITS,
+  rankConnectionsByCreatedAt,
+  userCanAddConnection,
+  userConnectionCount,
+} = await import("./limits.js");
 
 describe("subscription tier limits", () => {
   beforeEach(() => {
@@ -133,6 +143,104 @@ describe("subscription tier limits", () => {
       plaidFindMany.mockResolvedValueOnce([{ id: "p1" }, { id: "p2" }, { id: "p3" }]);
       snapFindMany.mockResolvedValueOnce([{ id: "s1" }, { id: "s2" }]);
       await expect(userCanAddConnection("u1")).resolves.toBeTruthy();
+    });
+  });
+
+  describe("rankConnectionsByCreatedAt", () => {
+    it("merges plaid + snaptrade, oldest first", async () => {
+      plaidFindMany.mockResolvedValueOnce([
+        { createdAt: new Date("2024-03-01"), id: "p1" },
+        { createdAt: new Date("2024-01-01"), id: "p2" },
+      ]);
+      snapFindMany.mockResolvedValueOnce([{ createdAt: new Date("2024-02-01"), id: "s1" }]);
+      const ranked = await rankConnectionsByCreatedAt("u1");
+      expect(ranked.map((r) => r.id)).toStrictEqual(["p2", "s1", "p1"]);
+      expect(ranked.map((r) => r.kind)).toStrictEqual(["plaid", "snaptrade", "plaid"]);
+    });
+
+    it("breaks createdAt ties deterministically by id", async () => {
+      const t = new Date("2024-01-01");
+      plaidFindMany.mockResolvedValueOnce([
+        { createdAt: t, id: "b" },
+        { createdAt: t, id: "a" },
+      ]);
+      const ranked = await rankConnectionsByCreatedAt("u1");
+      expect(ranked.map((r) => r.id)).toStrictEqual(["a", "b"]);
+    });
+  });
+
+  describe("isConnectionActiveForUser", () => {
+    it("paid user: always active", async () => {
+      stripeFindMany.mockResolvedValueOnce([{ status: "active" }]);
+      await expect(isConnectionActiveForUser("u1", "p1", "plaid")).resolves.toBeTruthy();
+    });
+
+    it("free user: oldest within cap active", async () => {
+      plaidFindMany.mockResolvedValueOnce([
+        { createdAt: new Date("2024-01-01"), id: "p1" },
+        { createdAt: new Date("2024-02-01"), id: "p2" },
+        { createdAt: new Date("2024-03-01"), id: "p3" },
+      ]);
+      await expect(isConnectionActiveForUser("u1", "p1", "plaid")).resolves.toBeTruthy();
+    });
+
+    it("free user: connection past cap frozen", async () => {
+      plaidFindMany.mockResolvedValueOnce([
+        { createdAt: new Date("2024-01-01"), id: "p1" },
+        { createdAt: new Date("2024-02-01"), id: "p2" },
+        { createdAt: new Date("2024-03-01"), id: "p3" },
+      ]);
+      await expect(isConnectionActiveForUser("u1", "p3", "plaid")).resolves.toBeFalsy();
+    });
+
+    it("returns false for unknown connection id", async () => {
+      await expect(isConnectionActiveForUser("u1", "missing", "plaid")).resolves.toBeFalsy();
+    });
+  });
+
+  describe("getUserSubscriptionState", () => {
+    it("returns free tier with nulls when no subscription", async () => {
+      await expect(getUserSubscriptionState("u1")).resolves.toStrictEqual({
+        cancelAtPeriodEnd: false,
+        periodEnd: null,
+        source: null,
+        status: null,
+        tier: "free",
+      });
+    });
+
+    it("returns pro tier from active Stripe row", async () => {
+      const periodEnd = new Date(Date.now() + 86_400_000);
+      stripeFindMany.mockResolvedValueOnce([
+        { cancelAtPeriodEnd: true, periodEnd, status: "active" },
+      ]);
+      await expect(getUserSubscriptionState("u1")).resolves.toStrictEqual({
+        cancelAtPeriodEnd: true,
+        periodEnd,
+        source: "stripe",
+        status: "active",
+        tier: "pro",
+      });
+    });
+
+    it("returns pro tier from active App Store row when Stripe absent", async () => {
+      const expiresAt = new Date(Date.now() + 86_400_000);
+      mobileFindMany.mockResolvedValueOnce([{ expiresAt, status: "active" }]);
+      await expect(getUserSubscriptionState("u1")).resolves.toMatchObject({
+        periodEnd: expiresAt,
+        source: "appstore",
+        tier: "pro",
+      });
+    });
+
+    it("returns pro with past_due status (grace)", async () => {
+      stripeFindMany.mockResolvedValueOnce([
+        { cancelAtPeriodEnd: false, periodEnd: null, status: "past_due" },
+      ]);
+      await expect(getUserSubscriptionState("u1")).resolves.toMatchObject({
+        status: "past_due",
+        tier: "pro",
+      });
     });
   });
 });
