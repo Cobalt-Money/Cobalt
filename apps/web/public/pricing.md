@@ -1,10 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-const MONTHLY_PRICE = 6.99;
-const ANNUAL_PRICE = 70;
-const ANNUAL_EFFECTIVE_MONTHLY = +(ANNUAL_PRICE / 12).toFixed(2);
-
-const MARKDOWN = `# Cobalt Pricing
+# Cobalt Pricing
 
 Two plans. Monthly or annual billing.
 
@@ -21,8 +15,8 @@ Free for everyone.
 
 ## Pro
 
-- $${MONTHLY_PRICE} per month, billed monthly
-- $${ANNUAL_EFFECTIVE_MONTHLY} per month, billed yearly ($${ANNUAL_PRICE}/yr)
+- $6.99 per month, billed monthly
+- $5.83 per month, billed yearly ($70/yr)
 
 Everything in Free, plus:
 
@@ -39,18 +33,3 @@ Bank-level security. Data encrypted at rest with AES-256 and in transit with TLS
 
 - Sign up: https://cobaltpf.com/login
 - Compare: https://cobaltpf.com/pricing
-`;
-
-export const Route = createFileRoute("/pricing.md")({
-  server: {
-    handlers: {
-      GET: () =>
-        new Response(MARKDOWN, {
-          headers: {
-            "Cache-Control": "public, max-age=300, s-maxage=3600",
-            "Content-Type": "text/markdown; charset=utf-8",
-          },
-        }),
-    },
-  },
-});
