@@ -11,6 +11,7 @@ import { isDemoBlockedResponse } from "@/lib/clients/api-fetch";
 import { handleTierGateResponse } from "@/lib/upgrade-prompt";
 
 import { useOnboarding } from "./onboarding-context";
+import { PlaidOpeningCard } from "./plaid-opening-card";
 
 export interface PlaidInstitution {
   id: string;
@@ -93,6 +94,7 @@ export function useAccountLauncher(onDismiss: () => void) {
   // must resolve the hook with `cancelled: true` so the run terminates.
   const [pendingConfirm, setPendingConfirm] = useState<PendingSession | null>(null);
   const pendingPlaidRef = useRef(false);
+  const [opening, setOpening] = useState(false);
   const { resolveLink, startOnboarding } = useOnboarding();
 
   const onPlaidSuccess = useCallback(
@@ -100,6 +102,7 @@ export function useAccountLauncher(onDismiss: () => void) {
       const session = sessionRef.current;
       sessionRef.current = null;
       setLinkToken(null);
+      setOpening(false);
       if (!session) {
         return;
       }
@@ -122,6 +125,7 @@ export function useAccountLauncher(onDismiss: () => void) {
       const session = sessionRef.current;
       sessionRef.current = null;
       setLinkToken(null);
+      setOpening(false);
       if (!session) {
         return;
       }
@@ -154,6 +158,7 @@ export function useAccountLauncher(onDismiss: () => void) {
       onDismiss();
       setTimeout(() => {
         openPlaid();
+        setOpening(false);
       }, 250);
     }
   }, [plaidReady, linkToken, openPlaid, onDismiss]);
@@ -163,16 +168,19 @@ export function useAccountLauncher(onDismiss: () => void) {
       if (linkToken || sessionRef.current) {
         return;
       }
+      setOpening(true);
       try {
         const res = await plaidApi.createLinkToken.$post({
           json: { institutionId },
         });
         if (!res.ok) {
           if (await handleTierGateResponse(res)) {
+            setOpening(false);
             return;
           }
           // Demo-blocked responses already surface a toast via apiFetch.
           if (await isDemoBlockedResponse(res)) {
+            setOpening(false);
             return;
           }
           throw new Error("Failed to start Plaid");
@@ -193,14 +201,17 @@ export function useAccountLauncher(onDismiss: () => void) {
           // picker can silently deauthorize existing accounts in update mode
           // and our reconcile step cascade-deletes their history. Workflow
           // is already parked on the hook; cancel resolves it.
+          setOpening(false);
           setPendingConfirm(session);
           return;
         }
 
         sessionRef.current = session;
         pendingPlaidRef.current = true;
+        setOpening(true);
         setLinkToken(session.linkToken);
       } catch (error) {
+        setOpening(false);
         toast.error(error instanceof Error ? error.message : "Failed to start Plaid Link");
       }
     },
@@ -254,6 +265,7 @@ export function useAccountLauncher(onDismiss: () => void) {
     }
     sessionRef.current = pendingConfirm;
     pendingPlaidRef.current = true;
+    setOpening(true);
     setLinkToken(pendingConfirm.linkToken);
     setPendingConfirm(null);
   }, [pendingConfirm]);
@@ -276,13 +288,16 @@ export function useAccountLauncher(onDismiss: () => void) {
     })();
   }, [pendingConfirm, resolveLink]);
 
-  const updateModeDialog = (
-    <KeepAccountsCheckedDialog
-      onCancel={cancelUpdate}
-      onConfirm={confirmUpdate}
-      open={pendingConfirm !== null}
-    />
+  const overlay = (
+    <>
+      <KeepAccountsCheckedDialog
+        onCancel={cancelUpdate}
+        onConfirm={confirmUpdate}
+        open={pendingConfirm !== null}
+      />
+      {opening ? <PlaidOpeningCard /> : null}
+    </>
   );
 
-  return { handleChoose, updateModeDialog };
+  return { handleChoose, overlay };
 }

@@ -27,7 +27,7 @@ const getBalanceSnapshots = createRoute({
 const balanceSnapshotsRouter = createApp().openapi(getBalanceSnapshots, async (c) => {
   const query = c.req.valid("query");
   const snapshots = await getBalanceSnapshotsByUserId(c.var.user.id, query);
-  c.header("Cache-Control", "private, max-age=86400");
+  c.header("Cache-Control", "private, no-store");
   return c.json(balanceSnapshotListResponseSchema.parse({ snapshots }), 200);
 });
 

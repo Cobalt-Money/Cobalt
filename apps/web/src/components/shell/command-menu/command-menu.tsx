@@ -213,7 +213,7 @@ function CommandMenuDialog({
 
   const { data: plaidInstitutions = [] } = useInstitutionSearch(search, inAddAccount);
   const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
-  const { handleChoose: handleChooseConnect, updateModeDialog } = useAccountLauncher(dismiss);
+  const { handleChoose: handleChooseConnect, overlay } = useAccountLauncher(dismiss);
 
   // ── Bulk-actions data ───────────────────────────────────────────────────────
 
@@ -350,7 +350,7 @@ function CommandMenuDialog({
 
   return (
     <>
-      {updateModeDialog}
+      {overlay}
       <CommandDialog
         className={cn(
           inAddAccount && "h-[600px] max-h-[calc(100vh-8rem)] sm:max-w-[860px]",

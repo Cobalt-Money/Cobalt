@@ -18,6 +18,7 @@ import { toast } from "sonner";
 
 import { accountsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
 
+import { PlaidOpeningCard } from "./plaid-opening-card";
 import type { ReauthSession } from "./reauth-session";
 
 async function disconnectAccountRest(accountId: string | null | undefined) {
@@ -55,6 +56,7 @@ interface AccountConnectionActionsProps {
 
 export function AccountConnectionActions({ account }: AccountConnectionActionsProps) {
   const [plaidToken, setPlaidToken] = useState<string | null>(null);
+  const [opening, setOpening] = useState(false);
   const [busy, setBusy] = useState<"disconnect" | "reconnect" | null>(null);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
   // Active reauth session — holds the hookToken/runId from /linkToken/update.
@@ -64,6 +66,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
 
   const onPlaidSuccess = useCallback(async () => {
     setPlaidToken(null);
+    setOpening(false);
     const session = sessionRef.current;
     sessionRef.current = null;
     if (!session) {
@@ -98,6 +101,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
 
   const onPlaidExit = useCallback(() => {
     setPlaidToken(null);
+    setOpening(false);
     const session = sessionRef.current;
     sessionRef.current = null;
     if (!(session && onboardingHost)) {
@@ -124,6 +128,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
   useEffect(() => {
     if (plaidToken && plaidReady) {
       openPlaid();
+      setOpening(false);
     }
   }, [openPlaid, plaidReady, plaidToken]);
 
@@ -132,6 +137,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
       return;
     }
     setBusy("reconnect");
+    setOpening(true);
     try {
       const res = await plaidApi.linkToken.update.$post({
         json: { mode: "reauth", plaidItemId: account.plaidItemId },
@@ -148,6 +154,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
       };
       setPlaidToken(data.link_token);
     } catch (error) {
+      setOpening(false);
       toast.error(error instanceof Error ? error.message : "Reconnect failed");
     } finally {
       setBusy(null);
@@ -201,6 +208,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
 
   return (
     <>
+      {opening ? <PlaidOpeningCard label="Reconnecting…" /> : null}
       <Button
         className="h-auto justify-start px-0 py-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
         disabled={busy !== null || reconnectDisabled}

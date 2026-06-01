@@ -27,6 +27,7 @@ import { useUserAlerts } from "@/hooks/use-user-alerts";
 import { plaidApi, snaptradeApi } from "@/lib/clients/api-client";
 
 import { useOnboarding } from "../accounts/onboarding-context";
+import { PlaidOpeningCard } from "../accounts/plaid-opening-card";
 import type { ReauthSession } from "../accounts/reauth-session";
 
 interface NotificationsSheetProps {
@@ -65,11 +66,13 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
   const alerts = previewAlerts ?? live.alerts;
   const [busyId, setBusyId] = useState<string | null>(null);
   const [plaidToken, setPlaidToken] = useState<string | null>(null);
+  const [opening, setOpening] = useState(false);
   const sessionRef = useRef<ReauthSession | null>(null);
   const { resolveLink, startOnboarding } = useOnboarding();
 
   const handlePlaidSuccess = useCallback(async () => {
     setPlaidToken(null);
+    setOpening(false);
     const session = sessionRef.current;
     sessionRef.current = null;
     if (!session) {
@@ -89,6 +92,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
 
   const handlePlaidExit = useCallback(() => {
     setPlaidToken(null);
+    setOpening(false);
     const session = sessionRef.current;
     sessionRef.current = null;
     if (!session) {
@@ -115,6 +119,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
   useEffect(() => {
     if (plaidToken && plaidReady) {
       openPlaid();
+      setOpening(false);
     }
   }, [openPlaid, plaidReady, plaidToken]);
 
@@ -123,6 +128,9 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
       return;
     }
     setBusyId(alert.id);
+    if (alert.source === "plaid") {
+      setOpening(true);
+    }
     try {
       if (alert.source === "plaid") {
         const res = await plaidApi.linkToken.update.$post({
@@ -151,6 +159,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
         window.open(data.redirectURI, "_blank", "noopener,noreferrer");
       }
     } catch (error) {
+      setOpening(false);
       toast.error(error instanceof Error ? error.message : "Reconnect failed");
     } finally {
       setBusyId(null);
@@ -158,6 +167,8 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
   };
 
   return (
+    <>
+      {opening ? <PlaidOpeningCard label="Reconnecting…" /> : null}
     <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent className="flex w-full flex-col gap-0 sm:max-w-md">
         <SheetHeader className="border-b">
@@ -235,5 +246,6 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
         )}
       </SheetContent>
     </Sheet>
+    </>
   );
 }
