@@ -1,4 +1,16 @@
 {
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [{ "type": "header", "key": "accept", "value": ".*text/markdown.*" }],
+      "destination": "/landing.md"
+    },
+    {
+      "source": "/pricing",
+      "has": [{ "type": "header", "key": "accept", "value": ".*text/markdown.*" }],
+      "destination": "/pricing.md"
+    }
+  ],
   "headers": [
     {
       "source": "/(landing|pricing).md",

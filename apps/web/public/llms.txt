@@ -4,7 +4,7 @@
 
 ## Try Cobalt
 
-- [Demo](https://cobaltpf.com): No sign-in required to try the demo on the landing page.
+- [Demo](https://cobaltpf.com/login): No sign-in required to try the demo.
 - [Sign in or sign up](https://cobaltpf.com/login): Full app access.
 - [iOS app](https://apps.apple.com/app/id6757945133): Native mobile app.
 

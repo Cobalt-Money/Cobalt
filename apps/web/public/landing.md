@@ -4,7 +4,7 @@ Personal finance app for web and mobile. Manage your money the traditional way â
 
 ## Try without signing up
 
-Cobalt has a live demo on the landing page at https://cobaltpf.com. No account required. When ready, sign in or sign up at https://cobaltpf.com/login.
+Cobalt has a live demo at https://cobaltpf.com/login. No account required. When ready, sign in or sign up at the same URL.
 
 ## Manage your finances the traditional way
 
@@ -51,22 +51,3 @@ See [/pricing.md](https://cobaltpf.com/pricing.md).
 - Docs: https://docs.cobaltpf.com
 - MCP: https://docs.cobaltpf.com/mcp
 - SDK: https://docs.cobaltpf.com/sdk
-  <<<<<<<< HEAD:apps/web/src/routes/landing[.]md.ts
-  `;
-
-export const Route = createFileRoute("/landing.md")({
-server: {
-handlers: {
-GET: () =>
-new Response(MARKDOWN, {
-headers: {
-"Cache-Control": "public, max-age=300, s-maxage=3600",
-"Content-Type": "text/markdown; charset=utf-8",
-},
-}),
-},
-},
-});
-========
-
-> > > > > > > > 8b6632350e395848a85bf3666bc34cd416b0fdd0:apps/web/public/index.md
