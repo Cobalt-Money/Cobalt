@@ -55,7 +55,7 @@ See [/pricing.md](https://cobaltpf.com/pricing.md).
 - SDK: https://docs.cobaltpf.com/sdk
 `;
 
-export const Route = createFileRoute("/index.md")({
+export const Route = createFileRoute("/landing.md")({
   server: {
     handlers: {
       GET: () =>

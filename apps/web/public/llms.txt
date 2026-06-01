@@ -10,7 +10,7 @@
 
 ## Product
 
-- [Landing](https://cobaltpf.com/index.md): Overview — what Cobalt does, integrations, AI features.
+- [Landing](https://cobaltpf.com/landing.md): Overview — what Cobalt does, integrations, AI features.
 - [Pricing](https://cobaltpf.com/pricing.md): Free and Pro tiers.
 - [Privacy](https://cobaltpf.com/privacy): Privacy policy.
 - [Terms](https://cobaltpf.com/terms): Terms of service.

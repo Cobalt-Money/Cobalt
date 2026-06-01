@@ -14,7 +14,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingDotmdRouteImport } from './routes/pricing[.]md'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as IndexDotmdRouteImport } from './routes/index[.]md'
+import { Route as LandingDotmdRouteImport } from './routes/landing[.]md'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog/index'
@@ -76,9 +76,9 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexDotmdRoute = IndexDotmdRouteImport.update({
-  id: '/index.md',
-  path: '/index.md',
+const LandingDotmdRoute = LandingDotmdRouteImport.update({
+  id: '/landing.md',
+  path: '/landing.md',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
@@ -260,7 +260,7 @@ const AuthAiChatChatIdRoute = AuthAiChatChatIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/index.md': typeof IndexDotmdRoute
+  '/landing.md': typeof LandingDotmdRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/pricing.md': typeof PricingDotmdRoute
@@ -302,7 +302,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/index.md': typeof IndexDotmdRoute
+  '/landing.md': typeof LandingDotmdRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/pricing.md': typeof PricingDotmdRoute
@@ -337,7 +337,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
-  '/index.md': typeof IndexDotmdRoute
+  '/landing.md': typeof LandingDotmdRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/pricing.md': typeof PricingDotmdRoute
@@ -381,7 +381,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/index.md'
+    | '/landing.md'
     | '/login'
     | '/pricing'
     | '/pricing.md'
@@ -423,7 +423,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/index.md'
+    | '/landing.md'
     | '/login'
     | '/pricing'
     | '/pricing.md'
@@ -457,7 +457,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_auth'
-    | '/index.md'
+    | '/landing.md'
     | '/login'
     | '/pricing'
     | '/pricing.md'
@@ -501,7 +501,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
-  IndexDotmdRoute: typeof IndexDotmdRoute
+  LandingDotmdRoute: typeof LandingDotmdRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   PricingDotmdRoute: typeof PricingDotmdRoute
@@ -549,11 +549,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/index.md': {
-      id: '/index.md'
-      path: '/index.md'
-      fullPath: '/index.md'
-      preLoaderRoute: typeof IndexDotmdRouteImport
+    '/landing.md': {
+      id: '/landing.md'
+      path: '/landing.md'
+      fullPath: '/landing.md'
+      preLoaderRoute: typeof LandingDotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
@@ -966,7 +966,7 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
-  IndexDotmdRoute: IndexDotmdRoute,
+  LandingDotmdRoute: LandingDotmdRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   PricingDotmdRoute: PricingDotmdRoute,
@@ -979,12 +979,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
