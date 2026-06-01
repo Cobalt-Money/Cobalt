@@ -1,0 +1,18 @@
+---
+title: Connect your chatbot
+description: Connect Claude, Cursor, ChatGPT, and other MCP clients to Cobalt.
+---
+
+Cobalt exposes an [MCP server](/docs/mcp) so AI assistants can query your financial data directly. Any MCP-compatible client works — Claude Desktop, Cursor, VS Code, Zed, Codex, Gemini, Amp, OpenCode.
+
+The agent calls a single `cobalt_execute_code` tool that runs JavaScript against the `cobalt.*` SDK in a sandboxed V8 isolate. Data is auto-scoped to your authenticated user — agents never see other users' data.
+
+## Setup
+
+See [MCP Server](/docs/mcp) for client-specific install instructions.
+
+Once connected, ask things like:
+
+- "What did I spend on food this month?"
+- "Show my brokerage positions by allocation."
+- "How has my net worth changed over the past year?"
