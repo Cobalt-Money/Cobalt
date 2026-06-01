@@ -3,6 +3,7 @@ import { Button } from "@cobalt-web/ui/components/button";
 import { Spinner } from "@cobalt-web/ui/components/spinner";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { useSubscriptionStatus } from "@/hooks/use-subscription-status";
 import { subscriptionsApi } from "@/lib/clients/api-client";
@@ -29,13 +30,21 @@ function BillingPortalAction({ label }: { label: string }) {
       disabled={loading}
       onClick={async () => {
         setLoading(true);
-        const res = await subscriptionsApi.billingPortal.$post();
-        if (res.ok) {
-          const { url } = await res.json();
-          window.location.href = url;
-          return;
+        try {
+          const res = await subscriptionsApi.billingPortal.$post();
+          if (res.ok) {
+            const { url } = await res.json();
+            if (url) {
+              window.location.href = url;
+              return;
+            }
+          }
+          toast.error("Couldn't open billing portal. Please try again.");
+        } catch {
+          toast.error("Couldn't open billing portal. Please try again.");
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }}
       size="xs"
       variant="outline"

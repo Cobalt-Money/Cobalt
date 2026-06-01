@@ -38,7 +38,7 @@ export function SubscriptionStateBanner({ variant, periodEnd, frozenCount, actio
       }
       case "cancel-scheduled": {
         return {
-          accent: "text-chart-4",
+          accent: "text-warning",
           body: `Subscription ends ${formatDate(periodEnd)} — connections past the free cap will pause then.`,
           icon: Clock01Icon,
           lead: "Cancellation scheduled",
@@ -46,7 +46,7 @@ export function SubscriptionStateBanner({ variant, periodEnd, frozenCount, actio
       }
       default: {
         return {
-          accent: "text-chart-4",
+          accent: "text-warning",
           body: `${frozenCount ?? 0} connection${frozenCount === 1 ? "" : "s"} paused — upgrade or disconnect to free a slot.`,
           icon: AlertCircleIcon,
           lead: "Free-tier cap reached",

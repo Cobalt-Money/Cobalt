@@ -110,7 +110,7 @@ export function AccountCard({
           <span>{account.accountTypeLabel}</span>
           {frozen ? (
             <span
-              className="inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300"
+              className="inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning"
               title="Sync paused — upgrade to reactivate"
             >
               Frozen
