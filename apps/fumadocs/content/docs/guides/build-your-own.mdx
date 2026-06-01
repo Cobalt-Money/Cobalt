@@ -1,0 +1,63 @@
+---
+title: Build your own personal finance app
+description: Build custom apps, dashboards, and agents on top of Cobalt.
+---
+
+Build whatever you want on top of your financial data.
+
+## Account linking happens in Cobalt
+
+You **cannot** link banks or brokerages from your own app. Institution connections (Plaid, OAuth providers) live in the Cobalt web and mobile apps for security and compliance reasons.
+
+What you **can** do from your app:
+
+- Read all accounts, transactions, positions, balances, tags.
+- Create and update **manual** accounts and transactions.
+- Tag, categorize, analyze, visualize.
+
+Tell users to connect their banks once at [cobaltpf.com](https://cobaltpf.com) or in the mobile app. Your app reads from that.
+
+## Prompt for your favorite LLM
+
+Paste this into Claude, ChatGPT, Cursor, or whichever LLM you use. Fill in `{{IDEA}}` with the app you want.
+
+````
+Build me a personal finance app: {{IDEA}}
+
+Use the Cobalt TypeScript SDK (@cobalt-money/sdk) on top of my Cobalt account data.
+
+Stack:
+- Next.js (App Router) + TypeScript
+- Tailwind CSS
+- @cobalt-money/sdk for all data access
+
+Setup:
+- API key from Cobalt app: profile icon → Account → Developer → API Keys → Create Key (prefix ck_live_)
+- Store in COBALT_API_KEY env var, server-side only
+- Initialize the SDK on the server, never ship the key to the browser
+
+Constraints:
+- Do NOT attempt to link banks or brokerages — that happens in the Cobalt app, not here
+- Manual accounts and transactions ARE allowed via the SDK
+- All endpoints return { data, error } — handle both branches
+- Server components / route handlers for reads; client components only for UI
+
+Reference docs:
+- SDK: https://docs.cobaltpf.com/docs/sdk
+- API: https://docs.cobaltpf.com/docs/api-reference
+- OpenAPI: https://api.cobaltpf.com/v1/openapi.json
+
+Start by listing the user's accounts and transactions, then build {{IDEA}} on top.
+````
+
+## Surfaces
+
+`@cobalt-money/sdk` — typed client. → [SDK docs](/docs/sdk)
+
+REST API — direct HTTP. → [API reference](/docs/api-reference)
+
+MCP — connect AI agents instead of writing app code. → [MCP docs](/docs/mcp)
+
+## Auth
+
+All surfaces use the same `ck_live_*` API keys. Issue from the Cobalt app: **profile icon → Account → Developer → API Keys → Create Key**. Server-side only — never ship in client bundles.
