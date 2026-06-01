@@ -14,6 +14,7 @@ import type { AccountCardViewModel } from "./lib/map-zero-to-account-cards";
 export function AccountsList({
   activeFilter,
   isComplete,
+  isFrozen,
   items,
   onConnectAccount,
   onRenameAccount,
@@ -21,6 +22,8 @@ export function AccountsList({
 }: {
   activeFilter: AccountsFilter;
   isComplete: boolean;
+  /** Returns true when account's underlying connection is past the free-tier cap. */
+  isFrozen?: (account: AccountCardViewModel) => boolean;
   items: AccountCardViewModel[];
   onConnectAccount?: () => void;
   onRenameAccount?: (id: string, customName: string) => void;
@@ -80,6 +83,7 @@ export function AccountsList({
                       key={account.id}
                       account={account}
                       actions={renderActions ? renderActions(account) : null}
+                      frozen={isFrozen ? isFrozen(account) : false}
                       onRename={onRenameAccount}
                       institutionLogo={
                         <AccountLogo

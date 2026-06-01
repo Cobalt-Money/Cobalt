@@ -1,6 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { env } from "@cobalt-web/env/server";
+// Deep import to skip subscriptions/index barrel which pulls in Stripe/Apple client init at module load (breaks webhook unit tests with no API keys).
+import { isSnaptradeAuthorizationFrozen } from "@cobalt-web/server-data/subscriptions/limits";
 import { Hono } from "hono";
 import { start } from "workflow/api";
 
@@ -79,6 +81,24 @@ interface SnaptradeEventPayload {
   brokerageId?: string;
   accountId?: string;
   body: Record<string, unknown>;
+}
+
+/**
+ * Events tied to data sync. CONNECTION_ADDED/UPDATED/BROKEN/FIXED/DELETED are
+ * lifecycle signals that must always run regardless of free-tier freeze so the
+ * user can act on broken/repaired connections.
+ */
+const DATA_SYNC_EVENTS = new Set([
+  "ACCOUNT_HOLDINGS_UPDATED",
+  "ACCOUNT_TRANSACTIONS_INITIAL_UPDATE",
+  "ACCOUNT_TRANSACTIONS_UPDATED",
+]);
+
+function isFrozen(brokerageAuthorizationId: string | undefined): Promise<boolean> {
+  if (!brokerageAuthorizationId) {
+    return Promise.resolve(false);
+  }
+  return isSnaptradeAuthorizationFrozen(brokerageAuthorizationId);
 }
 
 async function dispatchSnaptradeEvent(payload: SnaptradeEventPayload): Promise<void> {
@@ -218,6 +238,13 @@ export const snaptradeWebhookRouter = new Hono().post("/", async (c) => {
       brokerageAuthorizationId,
       userId,
     });
+
+    if (DATA_SYNC_EVENTS.has(eventType) && (await isFrozen(brokerageAuthorizationId))) {
+      console.log(
+        `[snaptrade] Skipping ${eventType}; authorization ${brokerageAuthorizationId} frozen (free-tier cap).`,
+      );
+      return c.json({ status: "frozen" });
+    }
 
     await dispatchSnaptradeEvent({
       accountId,

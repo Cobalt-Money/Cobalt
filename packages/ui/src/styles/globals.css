@@ -441,13 +441,16 @@
  *   • Sidebar uses `position: fixed`, so we still need to shift its `top`
  *     and `height` explicitly.
  */
-[data-demo-banner="1"] [data-slot="sidebar-wrapper"] {
+[data-demo-banner="1"] [data-slot="sidebar-wrapper"],
+[data-billing-banner="1"] [data-slot="sidebar-wrapper"] {
   margin-top: 2.25rem;
   height: calc(100svh - 2.25rem) !important;
   min-height: 0 !important;
 }
 [data-demo-banner="1"] [data-slot="sidebar-container"],
-[data-demo-banner="1"] [data-slot="sidebar"] {
+[data-demo-banner="1"] [data-slot="sidebar"],
+[data-billing-banner="1"] [data-slot="sidebar-container"],
+[data-billing-banner="1"] [data-slot="sidebar"] {
   top: 2.25rem;
   height: calc(100svh - 2.25rem);
 }

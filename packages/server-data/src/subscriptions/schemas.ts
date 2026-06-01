@@ -2,11 +2,26 @@ import { mobileSubscription } from "@cobalt-web/db/schema/users/subscriptions/mo
 import { z } from "@hono/zod-openapi";
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 
+export const connectionStateSchema = z
+  .object({
+    /** External identifier: plaidItemId for plaid, authorizationId for snaptrade. */
+    externalId: z.string(),
+    frozen: z.boolean(),
+    id: z.string(),
+    kind: z.enum(["plaid", "snaptrade"]),
+  })
+  .openapi("ConnectionState");
+
 export const subscriptionStatusResponseSchema = z
   .object({
+    cancelAtPeriodEnd: z.boolean(),
+    connectionStates: z.array(connectionStateSchema),
     hasActiveSubscription: z.boolean(),
+    periodEnd: z.string().nullable(),
+    status: z.string().nullable(),
     /** "stripe" | "appstore" | null — null means no active subscription. */
     subscriptionSource: z.enum(["stripe", "appstore"]).nullable(),
+    tier: z.enum(["free", "pro"]),
   })
   .openapi("SubscriptionStatus");
 

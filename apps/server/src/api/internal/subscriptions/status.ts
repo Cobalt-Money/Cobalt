@@ -1,7 +1,9 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
+  FREE_LIMITS,
+  getUserSubscriptionState,
+  rankConnectionsByCreatedAt,
   subscriptionStatusResponseSchema,
-  userSubscriptionSource,
 } from "@cobalt-web/server-data/subscriptions";
 import { createRoute } from "@hono/zod-openapi";
 
@@ -23,12 +25,27 @@ const route = createRoute({
 });
 
 export const statusRouter = createApp().openapi(route, async (c) => {
-  const source = await userSubscriptionSource(c.var.user.id);
+  const [state, ranked] = await Promise.all([
+    getUserSubscriptionState(c.var.user.id),
+    rankConnectionsByCreatedAt(c.var.user.id),
+  ]);
+  const cap = state.tier === "pro" ? Number.POSITIVE_INFINITY : FREE_LIMITS.connections;
+  const connectionStates = ranked.map((r, idx) => ({
+    externalId: r.externalId,
+    frozen: idx >= cap,
+    id: r.id,
+    kind: r.kind,
+  }));
   c.header("Cache-Control", "private, no-store");
   return c.json(
     subscriptionStatusResponseSchema.parse({
-      hasActiveSubscription: source !== null,
-      subscriptionSource: source,
+      cancelAtPeriodEnd: state.cancelAtPeriodEnd,
+      connectionStates,
+      hasActiveSubscription: state.source !== null,
+      periodEnd: state.periodEnd ? state.periodEnd.toISOString() : null,
+      status: state.status,
+      subscriptionSource: state.source,
+      tier: state.tier,
     }),
     200,
   );
