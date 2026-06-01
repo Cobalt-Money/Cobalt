@@ -1,6 +1,6 @@
 ---
 title: MCP Server
-description: Connect AI agents to your Cobalt financial data using the Model Context Protocol.
+description: Connect AI agents to your financial data using the Model Context Protocol.
 icon: Bot
 ---
 
@@ -26,7 +26,7 @@ import {
 
 ## What is the Cobalt MCP server?
 
-A hosted [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that gives AI agents programmatic access to your Cobalt financial data — accounts, transactions, investments, brokerage positions, tags, and market research.
+A hosted [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that gives AI agents programmatic access to your financial data — accounts, transactions, investments, brokerage positions, tags, and market research.
 
 Instead of one-tool-per-endpoint, the server exposes a single `cobalt_execute_code` tool. The agent writes a short JavaScript program that calls the `cobalt.*` SDK (accounts, transactions, brokerage, tags, research) and the program runs in a sandboxed V8 isolate. One turn replaces what used to take many round-trip tool calls.
 

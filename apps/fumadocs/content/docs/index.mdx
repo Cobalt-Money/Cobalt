@@ -1,13 +1,26 @@
 ---
-title: Getting Started
-description: Welcome to the Cobalt documentation.
+title: Quickstart
+description: Get started with Cobalt in two steps.
 icon: Rocket
 ---
 
-## Introduction
+Cobalt connects your accounts, transactions, brokerage data, and market research in one place. Same data syncs across web and mobile.
 
-Cobalt is a financial platform that connects your accounts, transactions, brokerage data, and market research in one place.
+## 1. Sign up
 
-## MCP Server
+Create a free account at [cobaltpf.com](https://cobaltpf.com). No card required.
 
-Connect AI agents (Claude, Cursor, VS Code, Zed, Codex, Gemini, Amp, OpenCode) to your financial data via the [Model Context Protocol](/docs/mcp). Agents call a single `cobalt_execute_code` tool to run JavaScript against the `cobalt.*` SDK in a sandboxed V8 isolate — accounts, transactions, brokerage positions, tags, and market research, all auto-scoped to the authenticated user.
+## 2. Add accounts
+
+Two ways to add accounts. Mix and match.
+
+- **Third-party provider** — connect via Plaid (banks, brokerages, credit cards). Balances and transactions sync automatically.
+- **Manual** — add an account by hand. Enter balances and transactions yourself. Good for accounts Plaid doesn't cover (e.g. private investments, foreign banks).
+
+Accounts added on web show up on mobile and vice versa.
+
+## Next
+
+- [TypeScript SDK](/docs/sdk) — build on top of your financial data.
+- [MCP Server](/docs/mcp) — connect Claude, Cursor, and other AI agents to your financial data.
+- [API Reference](/docs/api-reference) — REST endpoints.
