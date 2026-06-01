@@ -1,0 +1,38 @@
+---
+title: Why another personal finance app
+description: How Cobalt went from a chat interface, to a connector, to an SDK, to an open source app.
+date: 2026-06-01
+author: Sriket Komali
+tags: [Company]
+draft: true
+---
+
+I started thinking about Cobalt when I wanted to quit my job and move to New York City.
+
+There wasn't a good tool for that kind of question. The best I could do was upload screenshots and PDFs of my accounts to ChatGPT and ask it to do the math. It was slow. It hallucinated numbers. And every existing personal finance app showed me the same thing: graphs and dashboards full of stuff I didn't care about, and none of it actually helped me decide anything.
+
+## We started with chat
+
+So the first version of Cobalt focused on one idea: give people the easiest possible way to talk to their finances. Chat. The interface everyone already knows.
+
+## Then users told us they had chat fatigue
+
+After talking to early users, we kept hearing the same thing. They were tired of opening another chat app. They already had a favorite, usually ChatGPT or Claude, and they wanted to use their finances _there_, not in yet another window.
+
+So we built a connector. Plug your accounts into Cobalt once, then use them from whatever assistant you already live in.
+
+## Then non-technical users started building their own apps
+
+The next thing surprised us. Users who didn't write code were building their own small apps on top of Cobalt. The models had gotten good enough that someone with a question about their net worth, or their spending, or their runway, could just generate the tool they wanted.
+
+That was the whole reason I started Cobalt in the first place. Let people answer the questions they actually care about, in the form they care about. So we released an SDK. Connect a bank, ship an app, skip the Plaid account, skip the webhook plumbing, skip the servers.
+
+## And we open sourced it
+
+When you build a product that touches someone's financial data, you owe them a clear answer about what happens to it. We want to be the steward people trust with that data, and the simplest way to earn that is to let anyone read the code.
+
+So we open sourced Cobalt.
+
+---
+
+That's how we got here. A chat app, then a connector, then an SDK, then an open source project. Every step came from a user telling us the same thing: stop showing me dashboards, just help me answer the question.

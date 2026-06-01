@@ -1,0 +1,38 @@
+---
+title: How we built the most performant, token-efficient MCP server
+description: Code as the interface, Cloudflare Workers as the runtime, and a filesystem of tools the agent loads on demand.
+date: 2026-06-01
+author: Sriket Komali
+tags: [Engineering]
+draft: true
+---
+
+The greatest strength of LLMs is the ability to write code.
+
+Most agents are built the opposite way. They try to think like a human. They take a question, break it into steps, call one API, look at the result, call another API, look at that, do some math with a math tool, then assemble a final answer. Five passes for one question.
+
+We went the other direction. Lean into what the model is already great at. Let it write code.
+
+## Code mode instead of stuffing tools into context
+
+Instead of giving the agent a bag of small tools, we give it one thing: a code execution environment with access to the Cobalt API. One request can chain multiple API calls, transform arrays, do the math, and return the answer. No separate math tool. No separate "pull the right data" step. The model writes the program, the program runs, the user gets the answer.
+
+This made the agent dramatically smarter. The model is better at writing code than it is at orchestrating tool calls, and code is denser than JSON tool-call chatter, so we save tokens on the way in and on the way out.
+
+## Cloudflare Workers as the sandbox
+
+Running arbitrary model-written code safely is the hard part. We use Cloudflare Workers.
+
+Workers run in V8 isolates, not VMs. That means no boot time, no provisioning step, no per-second VM pricing, and no sandbox infra for us to maintain. An isolate spins up in milliseconds, runs the agent's code, and tears down. The security model is the same one that runs the rest of the web.
+
+## A filesystem of tools, loaded on demand
+
+The other trick is how we expose tools. A naive MCP server stuffs every tool schema into the model's context on every turn. With dozens of tools, that's thousands of tokens of overhead before the user has even asked anything.
+
+We treat the toolset like a filesystem. The agent sees a directory of what's available. When it needs a tool, it loads it. When it doesn't, the schema never enters context. The model pulls what it needs per request instead of paying for the whole inventory up front.
+
+## Same tech, server or client
+
+Whether you run Cobalt MCP on your own server or hit it from a client, you get the same runtime. Code mode, Workers, on-demand tool loading. Cheaper for you, cheaper for us.
+
+---
