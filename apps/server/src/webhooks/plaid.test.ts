@@ -24,6 +24,18 @@ vi.mock(import("../workflows/plaid/liabilities/workflow.js"), () => ({
   plaidLiabilitiesSyncWorkflow: vi.fn(),
 }));
 
+// Stub freeze gate + connection lookup; real impls hit Postgres which test env doesn't have.
+vi.mock(import("@cobalt-web/server-data/subscriptions/limits"), async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    isConnectionActiveForUser: vi.fn().mockResolvedValue(true),
+  };
+});
+vi.mock(import("@cobalt-web/server-data/providers/plaid/link/queries"), () => ({
+  lookupPlaidConnection: vi.fn().mockResolvedValue({ id: "conn1", userId: "u1" }),
+}));
+
 const mockGetHook = vi.mocked(getHookByToken);
 const mockResume = vi.mocked(resumeHook);
 const mockStart = vi.mocked(start);

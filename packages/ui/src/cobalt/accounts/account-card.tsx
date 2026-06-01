@@ -12,12 +12,15 @@ import type { AccountCardViewModel } from "./lib/map-zero-to-account-cards";
 export function AccountCard({
   account,
   actions,
+  frozen = false,
   institutionLogo,
   onRename,
 }: {
   account: AccountCardViewModel;
   /** App-provided reconnect/disconnect controls (uses RPC client, lives in apps/web). */
   actions?: ReactNode;
+  /** True when underlying connection is frozen by free-tier cap — sync paused, card dimmed. */
+  frozen?: boolean;
   /** App-provided institution mark (logo component or image). */
   institutionLogo: ReactNode;
   /** Empty string clears the override and falls back to provider name. */
@@ -39,10 +42,12 @@ export function AccountCard({
   }
   return (
     <Card
+      aria-disabled={frozen || undefined}
       className={cn(
         "flex min-h-[200px] flex-col gap-0 border-0 bg-popover py-0 shadow-none ring-0",
         "rounded-2xl sm:min-h-[220px] sm:rounded-3xl",
         "dark:bg-white/[0.06]",
+        frozen && "opacity-60 grayscale",
       )}
     >
       <CardContent className="flex flex-1 flex-col px-5 pt-4 pb-0 sm:px-6 sm:pt-5">
@@ -101,8 +106,16 @@ export function AccountCard({
           )}
           {institutionLogo}
         </div>
-        <p className="mt-1 text-sm font-medium leading-snug text-muted-foreground">
-          {account.accountTypeLabel}
+        <p className="mt-1 flex items-center gap-2 text-sm font-medium leading-snug text-muted-foreground">
+          <span>{account.accountTypeLabel}</span>
+          {frozen ? (
+            <span
+              className="inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning"
+              title="Sync paused — upgrade to reactivate"
+            >
+              Frozen
+            </span>
+          ) : null}
         </p>
         <p
           aria-label={`Account ending in ${account.mask}`}
