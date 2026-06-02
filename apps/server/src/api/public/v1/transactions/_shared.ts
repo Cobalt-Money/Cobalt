@@ -6,9 +6,8 @@ export const transactionResponseSchema = transactionSchema.openapi("TransactionD
 
 /**
  * Strip the internal `TransactionResponse` down to the public-safe shape.
- * Notably drops `source: "plaid" | "manual"`, location data, locked-field
- * metadata, logos, and the merchant URL — all internal-leaning fields that
- * SDK consumers don't need and we don't want to commit to as contract.
+ * Drops `source: "plaid" | "manual"`, locked-field metadata, logos, and the
+ * merchant URL — internal-leaning fields SDK consumers don't need.
  */
 export function toTransaction(tx: TransactionResponse) {
   return {
@@ -17,6 +16,7 @@ export function toTransaction(tx: TransactionResponse) {
     category: tx.category?.name ?? null,
     date: tx.date,
     id: tx.id,
+    location: tx.location,
     merchant: tx.merchantName ?? null,
     name: tx.name,
     notes: typeof tx.notes === "string" ? tx.notes : null,

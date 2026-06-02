@@ -1,3 +1,4 @@
+import { locationJsonSchema } from "@cobalt-web/server-data/transactions/_shared/schema";
 import { z } from "@hono/zod-openapi";
 
 /**
@@ -110,6 +111,10 @@ export const transactionSchema = z
       .openapi({ description: "Category name; null if uncategorized." }),
     date: z.string().openapi({ description: "Transaction date (YYYY-MM-DD)." }),
     id: z.string(),
+    location: locationJsonSchema.nullable().openapi({
+      description:
+        "Merchant location when reported by the institution. Null when no location fields are available.",
+    }),
     merchant: z.string().nullable(),
     name: z.string().openapi({ description: "Raw description from the institution." }),
     notes: z.string().nullable().openapi({

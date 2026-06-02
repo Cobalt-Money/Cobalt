@@ -89,9 +89,8 @@ describe("v1/transactions", () => {
   describe("GET /transactions — list", () => {
     test("toTransaction strips internal fields and aliases category to name", async () => {
       // Public schema commits to a tight surface. If server-data adds a
-      // field (e.g. `location`, `lockedFields`), the mapper must not leak
-      // it. Catches: refactor that spreads `...tx` and accidentally exposes
-      // PII / locked-field internals.
+      // field (e.g. `lockedFields`), the mapper must not leak it. Catches:
+      // refactor that spreads `...tx` and accidentally exposes internals.
       getTransactions.mockResolvedValue({
         hasMore: false,
         nextCursor: null,
@@ -114,6 +113,7 @@ describe("v1/transactions", () => {
         category: "Spotify",
         date: "2026-05-22",
         id: "10000000-0000-4000-a000-000000000001",
+        location: null,
         merchant: "Spotify",
         name: "SPOTIFY",
         notes: null,
@@ -123,7 +123,6 @@ describe("v1/transactions", () => {
       // Sanity: explicit leak checks for the fields most likely to slip out.
       for (const banned of [
         "source",
-        "location",
         "lockedFields",
         "plaidAccountId",
         "accountName",
