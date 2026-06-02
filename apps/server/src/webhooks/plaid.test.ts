@@ -1,7 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getHookByToken, resumeHook, start } from "workflow/api";
 
-import { plaidSyncWorkflow } from "../workflows/plaid/sync/workflow.js";
+import {
+  plaidHoldingsWorkflow,
+  plaidInvestmentTransactionsWorkflow,
+} from "../workflows/plaid/investments/workflow.js";
+import { plaidItemWebhookWorkflow } from "../workflows/plaid/item/workflow.js";
+import { plaidLiabilitiesSyncWorkflow } from "../workflows/plaid/liabilities/workflow.js";
+import {
+  plaidRecurringTransactionsWorkflow,
+  plaidSyncWorkflow,
+} from "../workflows/plaid/sync/workflow.js";
 import { plaidWebhookRouter } from "./plaid.js";
 
 vi.mock(import("workflow/api"), () => ({
@@ -164,6 +173,102 @@ describe("plaid webhook router — other product webhooks go direct (no hook loo
     expect(res.status).toBe(200);
     expect(mockGetHook).not.toHaveBeenCalled();
     expect(mockResume).not.toHaveBeenCalled();
-    expect(mockStart).toHaveBeenCalledOnce();
+    expect(mockStart).toHaveBeenCalledWith(plaidInvestmentTransactionsWorkflow, expect.anything());
+  });
+
+  it("routes HOLDINGS.DEFAULT_UPDATE to holdings workflow specifically", async () => {
+    const res = await postWebhook({
+      environment: "sandbox",
+      item_id: "item-h2",
+      webhook_code: "DEFAULT_UPDATE",
+      webhook_type: "HOLDINGS",
+    });
+    expect(res.status).toBe(200);
+    expect(mockStart).toHaveBeenCalledWith(plaidHoldingsWorkflow, expect.anything());
+  });
+
+  it("routes LIABILITIES.DEFAULT_UPDATE to liabilities workflow with item_id", async () => {
+    const res = await postWebhook({
+      environment: "sandbox",
+      item_id: "item-l2",
+      webhook_code: "DEFAULT_UPDATE",
+      webhook_type: "LIABILITIES",
+    });
+    expect(res.status).toBe(200);
+    expect(mockStart).toHaveBeenCalledWith(plaidLiabilitiesSyncWorkflow, ["item-l2"]);
+  });
+
+  it("routes TRANSACTIONS.RECURRING_TRANSACTIONS_UPDATE to recurring workflow", async () => {
+    const body = {
+      account_ids: [],
+      environment: "sandbox",
+      item_id: "item-r",
+      webhook_code: "RECURRING_TRANSACTIONS_UPDATE",
+      webhook_type: "TRANSACTIONS",
+    };
+    const res = await postWebhook(body);
+    expect(res.status).toBe(200);
+    expect(mockGetHook).not.toHaveBeenCalled();
+    expect(mockStart).toHaveBeenCalledWith(plaidRecurringTransactionsWorkflow, [body]);
+    expect(mockStart).not.toHaveBeenCalledWith(plaidSyncWorkflow, expect.anything());
+  });
+});
+
+describe("plaid webhook router — ITEM webhooks always route to item workflow (bypass freeze gate)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockStart.mockResolvedValue({ runId: "run-item" } as unknown as Awaited<
+      ReturnType<typeof start>
+    >);
+  });
+
+  it.each([
+    ["ERROR", { error: { error_code: "ITEM_LOGIN_REQUIRED" } }],
+    ["ITEM_LOGIN_REPAIRED", {}],
+    ["NEW_ACCOUNTS_AVAILABLE", {}],
+    ["PENDING_DISCONNECT", {}],
+  ])("routes ITEM.%s to item webhook workflow", async (code, extra) => {
+    const body = {
+      environment: "sandbox",
+      item_id: `item-${code}`,
+      webhook_code: code,
+      webhook_type: "ITEM",
+      ...extra,
+    };
+    const res = await postWebhook(body);
+    expect(res.status).toBe(200);
+    expect(mockStart).toHaveBeenCalledWith(plaidItemWebhookWorkflow, [
+      expect.objectContaining({ webhook_code: code, webhook_type: "ITEM" }),
+    ]);
+  });
+});
+
+describe("plaid webhook router — unhandled variants ack without throw", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockStart.mockResolvedValue({ runId: "run-x" } as unknown as Awaited<ReturnType<typeof start>>);
+  });
+
+  it("acks unknown webhook_type without dispatching any workflow", async () => {
+    const res = await postWebhook({
+      environment: "sandbox",
+      item_id: "item-x",
+      webhook_code: "SOMETHING_NEW",
+      webhook_type: "AUTH",
+    });
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toStrictEqual({ status: "ignored" });
+    expect(mockStart).not.toHaveBeenCalled();
+  });
+
+  it("acks unknown TRANSACTIONS code without dispatching any workflow", async () => {
+    const res = await postWebhook({
+      environment: "sandbox",
+      item_id: "item-y",
+      webhook_code: "FUTURE_CODE",
+      webhook_type: "TRANSACTIONS",
+    });
+    expect(res.status).toBe(200);
+    expect(mockStart).not.toHaveBeenCalled();
   });
 });
