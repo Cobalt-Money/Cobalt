@@ -11,14 +11,17 @@ import { jsonContent, validationErrorResponse } from "../../lib/openapi-helpers.
 import { requireAuth } from "./middleware.js";
 
 const syncRoute = createRoute({
+  deprecated: true,
   description:
-    "Persist App Store subscription data after StoreKit reports a purchase. Does not require an existing subscription (users who just bought must be able to sync).",
+    "DEPRECATED: iOS migrated to Stripe-only paywall (SRI-102). Legacy StoreKit clients may still call this; receives no traffic from current builds. Slated for removal after two releases of zero hits — see issue #364. Persists App Store subscription data after StoreKit reports a purchase.",
   method: "post",
   middleware: [requireAuth] as const,
   path: "/sync",
   request: {
     body: {
-      content: { "application/json": { schema: syncAppStoreSubscriptionSchema } },
+      content: {
+        "application/json": { schema: syncAppStoreSubscriptionSchema },
+      },
     },
   },
   responses: {
@@ -33,6 +36,10 @@ const syncRoute = createRoute({
 });
 
 export const appstoreRouter = createApp().openapi(syncRoute, async (c) => {
+  // Deprecation telemetry: log every hit so we can confirm zero traffic before hard-deletion (#364).
+  console.warn("[deprecated] /api/appstore/sync called", {
+    userId: c.var.user.id,
+  });
   const body = c.req.valid("json");
   const result = await syncAppStoreSubscription(c.var.user.id, {
     environment: body.environment,
