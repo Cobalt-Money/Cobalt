@@ -28,55 +28,73 @@ import {
   plaidSyncWorkflow,
 } from "../workflows/plaid/sync/workflow.js";
 
+// Plaid SDK declares webhook_type/webhook_code as `string`, so the raw types
+// don't form a discriminated union. Narrow them locally with literal
+// discriminators so `switch` + `satisfies never` give compile-time
+// exhaustiveness (SRI-#370 — silent-drop bug class).
+type Discriminate<T, WT extends string, WC extends string> = Omit<
+  T,
+  "webhook_type" | "webhook_code"
+> & {
+  webhook_type: WT;
+  webhook_code: WC;
+};
+
 type PlaidWebhook =
-  | SyncUpdatesAvailableWebhook
-  | RecurringTransactionsUpdateWebhook
-  | HoldingsDefaultUpdateWebhook
-  | InvestmentsDefaultUpdateWebhook
-  | InvestmentsHistoricalUpdateWebhook
-  | LiabilitiesDefaultUpdateWebhook
-  | ItemErrorWebhook
-  | ItemLoginRepairedWebhook
-  | NewAccountsAvailableWebhook
-  | PendingDisconnectWebhook;
+  | Discriminate<SyncUpdatesAvailableWebhook, "TRANSACTIONS", "SYNC_UPDATES_AVAILABLE">
+  | Discriminate<
+      RecurringTransactionsUpdateWebhook,
+      "TRANSACTIONS",
+      "RECURRING_TRANSACTIONS_UPDATE"
+    >
+  | Discriminate<HoldingsDefaultUpdateWebhook, "HOLDINGS", "DEFAULT_UPDATE">
+  | Discriminate<InvestmentsDefaultUpdateWebhook, "INVESTMENTS_TRANSACTIONS", "DEFAULT_UPDATE">
+  | Discriminate<
+      InvestmentsHistoricalUpdateWebhook,
+      "INVESTMENTS_TRANSACTIONS",
+      "HISTORICAL_UPDATE"
+    >
+  | Discriminate<LiabilitiesDefaultUpdateWebhook, "LIABILITIES", "DEFAULT_UPDATE">
+  | Discriminate<ItemErrorWebhook, "ITEM", "ERROR">
+  | Discriminate<ItemLoginRepairedWebhook, "ITEM", "ITEM_LOGIN_REPAIRED">
+  | Discriminate<NewAccountsAvailableWebhook, "ITEM", "NEW_ACCOUNTS_AVAILABLE">
+  | Discriminate<PendingDisconnectWebhook, "ITEM", "PENDING_DISCONNECT">;
 
-type ItemWebhook = Extract<
-  PlaidWebhook,
-  | ItemErrorWebhook
-  | ItemLoginRepairedWebhook
-  | NewAccountsAvailableWebhook
-  | PendingDisconnectWebhook
->;
+type ItemWebhook = Extract<PlaidWebhook, { webhook_type: "ITEM" }>;
+type TransactionsWebhook = Extract<PlaidWebhook, { webhook_type: "TRANSACTIONS" }>;
 
-async function handleTransactionsWebhook(webhook: PlaidWebhook) {
+async function handleTransactionsWebhook(webhook: TransactionsWebhook) {
   switch (webhook.webhook_code) {
     case "SYNC_UPDATES_AVAILABLE": {
-      const w = webhook as SyncUpdatesAvailableWebhook;
-      const token = plaidOnboardingHookToken(w.item_id);
+      const token = plaidOnboardingHookToken(webhook.item_id);
       const payload = {
-        historical_update_complete: w.historical_update_complete,
-        initial_update_complete: w.initial_update_complete,
+        historical_update_complete: webhook.historical_update_complete,
+        initial_update_complete: webhook.initial_update_complete,
       };
       const hook = await getHookByToken(token).catch(() => null);
       if (hook) {
         await resumeHook(token, payload);
-        console.log(`[plaid] Resumed onboarding run ${hook.runId} for item: ${w.item_id}`);
+        console.log(`[plaid] Resumed onboarding run ${hook.runId} for item: ${webhook.item_id}`);
       } else {
-        await start(plaidSyncWorkflow, [{ ...payload, item_id: w.item_id }]);
-        console.log(`[plaid] Triggered sync workflow for item: ${w.item_id}`);
+        await start(plaidSyncWorkflow, [{ ...payload, item_id: webhook.item_id }]);
+        console.log(`[plaid] Triggered sync workflow for item: ${webhook.item_id}`);
       }
       break;
     }
 
     case "RECURRING_TRANSACTIONS_UPDATE": {
-      const w = webhook as RecurringTransactionsUpdateWebhook;
-      await start(plaidRecurringTransactionsWorkflow, [w]);
-      console.log(`[plaid] Triggered recurring transactions workflow for item: ${w.item_id}`);
+      await start(plaidRecurringTransactionsWorkflow, [
+        webhook as unknown as RecurringTransactionsUpdateWebhook,
+      ]);
+      console.log(`[plaid] Triggered recurring transactions workflow for item: ${webhook.item_id}`);
       break;
     }
 
     default: {
-      console.log(`[plaid] Unknown TRANSACTIONS webhook code: ${webhook.webhook_code}`);
+      webhook satisfies never;
+      console.log(
+        `[plaid] Unhandled TRANSACTIONS webhook code: ${(webhook as { webhook_code: string }).webhook_code}`,
+      );
     }
   }
 }
@@ -113,35 +131,40 @@ export const plaidWebhookRouter = new Hono().post("/", async (c) => {
       }
 
       case "HOLDINGS": {
-        const w = webhook as HoldingsDefaultUpdateWebhook;
-        await start(plaidHoldingsWorkflow, [w]);
-        console.log(`[plaid] Triggered holdings workflow for item: ${w.item_id}`);
+        await start(plaidHoldingsWorkflow, [webhook as HoldingsDefaultUpdateWebhook]);
+        console.log(`[plaid] Triggered holdings workflow for item: ${webhook.item_id}`);
         break;
       }
 
       case "INVESTMENTS_TRANSACTIONS": {
-        const w = webhook as InvestmentsDefaultUpdateWebhook | InvestmentsHistoricalUpdateWebhook;
-        await start(plaidInvestmentTransactionsWorkflow, [w]);
-        console.log(`[plaid] Triggered investment transactions workflow for item: ${w.item_id}`);
+        await start(plaidInvestmentTransactionsWorkflow, [
+          webhook as InvestmentsDefaultUpdateWebhook | InvestmentsHistoricalUpdateWebhook,
+        ]);
+        console.log(
+          `[plaid] Triggered investment transactions workflow for item: ${webhook.item_id}`,
+        );
         break;
       }
 
       case "LIABILITIES": {
-        const w = webhook as LiabilitiesDefaultUpdateWebhook;
-        await start(plaidLiabilitiesSyncWorkflow, [w.item_id]);
-        console.log(`[plaid] Triggered liabilities workflow for item: ${w.item_id}`);
+        await start(plaidLiabilitiesSyncWorkflow, [webhook.item_id]);
+        console.log(`[plaid] Triggered liabilities workflow for item: ${webhook.item_id}`);
         break;
       }
 
       case "ITEM": {
-        const w = webhook as ItemWebhook;
-        await start(plaidItemWebhookWorkflow, [w]);
-        console.log(`[plaid] Triggered item webhook workflow: ${w.webhook_code}`);
+        await start(plaidItemWebhookWorkflow, [webhook as ItemWebhook]);
+        console.log(`[plaid] Triggered item webhook workflow: ${webhook.webhook_code}`);
         break;
       }
 
       default: {
-        console.log(`[plaid] Ignoring unhandled webhook type: ${webhook.webhook_type}`);
+        // Compile-time guard: adding a variant to PlaidWebhook without a case fails typecheck here.
+        // Runtime: still ack so Plaid stops retrying; log for investigation.
+        webhook satisfies never;
+        console.log(
+          `[plaid] Ignoring unhandled webhook type: ${(webhook as { webhook_type: string }).webhook_type}`,
+        );
         return c.json({ status: "ignored" });
       }
     }
