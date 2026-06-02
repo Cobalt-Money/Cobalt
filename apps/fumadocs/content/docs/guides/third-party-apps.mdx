@@ -1,0 +1,18 @@
+---
+title: Connect a third-party app
+description: Connect Cobalt to external apps via OAuth or API key.
+---
+
+Most third-party integrations use one of two paths.
+
+## OAuth
+
+For apps that support Cobalt as a provider, authorize from the app's settings. You sign in to Cobalt, approve scopes, and the app receives an access token. No keys to manage.
+
+## API key
+
+For apps that accept arbitrary API keys, issue one from the Cobalt app: **profile icon → Account → Developer → API Keys → Create Key**. Keys are prefixed `ck_live_`. Paste into the third-party app.
+
+Treat keys as secrets. Rotate from the same screen.
+
+See the [TypeScript SDK](/docs/sdk) and [API reference](/docs/api-reference) for what endpoints the app can call.

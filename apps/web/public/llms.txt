@@ -1,0 +1,35 @@
+# Cobalt
+
+> Personal finance app for web and mobile. Sync bank and brokerage accounts via Plaid, manage transactions, budgets, and subscriptions. Talk to your finances through Cobalt's built-in AI or your favorite chatbot (Claude, ChatGPT, etc.) via MCP or the public API. Build your own custom finance apps on top of the Cobalt SDK.
+
+## Try Cobalt
+
+- [Demo](https://cobaltpf.com/login): No sign-in required to try the demo.
+- [Sign in or sign up](https://cobaltpf.com/login): Full app access.
+- [iOS app](https://apps.apple.com/app/id6757945133): Native mobile app.
+
+## Product
+
+- [Landing](https://cobaltpf.com/landing.md): Overview — what Cobalt does, integrations, AI features.
+- [Pricing](https://cobaltpf.com/pricing.md): Free and Pro tiers.
+- [Privacy](https://cobaltpf.com/privacy): Privacy policy.
+- [Terms](https://cobaltpf.com/terms): Terms of service.
+
+## Use Cobalt from any AI tool
+
+Cobalt exposes its full functionality through a public REST API and MCP server. Any AI assistant that supports MCP (Claude, Claude Code, Cursor, etc.) or can write code (ChatGPT, etc.) can read and update your Cobalt data — transactions, notes, budgets, accounts — and answer complex financial questions grounded in your real data.
+
+- [API base](https://api.cobaltpf.com): Production REST API.
+- [API docs](https://docs.cobaltpf.com): Reference, auth, examples.
+- [API llms.txt](https://docs.cobaltpf.com/llms.txt): Doc index for LLM consumption.
+- [API llms-full.txt](https://docs.cobaltpf.com/llms-full.txt): Full docs as single markdown file.
+- [MCP server](https://docs.cobaltpf.com/mcp): Connect Cobalt to any MCP-capable client.
+- [SDK](https://docs.cobaltpf.com/sdk): TypeScript SDK for building on top of Cobalt.
+
+## Build your own finance app
+
+Everyone's finances are different, and no single dashboard fits every user. Cobalt provides the data layer and primitives so you can design the views, charts, and workflows that fit you. Ask any AI tool to use the Cobalt SDK and ship a custom finance app in minutes.
+
+## Source
+
+- [GitHub](https://github.com/Cobalt-Money/Cobalt): Web client source, AGPL-3.0.

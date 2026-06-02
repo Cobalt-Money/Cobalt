@@ -1,7 +1,7 @@
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
 import {
   getTransactions,
-  getTransactionsSchema,
+  getTransactionsQuerySchema,
   transactionsResponseSchema,
 } from "@cobalt-web/server-data/transactions/list";
 import { createRoute } from "@hono/zod-openapi";
@@ -16,14 +16,14 @@ const route = createRoute({
   middleware: [requireAuth] as const,
   path: "/",
   request: {
-    query: getTransactionsSchema,
+    query: getTransactionsQuerySchema,
   },
   responses: {
     200: jsonContent(transactionsResponseSchema, "List of transactions"),
     400: jsonContent(errorResponseWithCodeSchema, "Invalid date range"),
     401: jsonContent(errorResponseWithCodeSchema, "Unauthorized"),
     403: jsonContent(errorResponseWithCodeSchema, "Subscription required"),
-    422: validationErrorResponse(getTransactionsSchema),
+    422: validationErrorResponse(getTransactionsQuerySchema),
   },
   summary: "List transactions",
   tags: ["Transactions"],

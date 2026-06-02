@@ -1,3 +1,6 @@
+# Local scripts
+sync-env.sh
+
 # Dependencies
 node_modules
 .pnp

@@ -92,7 +92,7 @@ function BlogPostPage() {
       <BlogArticleStyles />
       <MarketingNav />
       <main>
-        <Container className="max-w-2xl py-20 sm:py-28">
+        <Container className="max-w-2xl px-12 py-20 sm:px-20 sm:py-28 lg:px-28">
           <Link
             className="mb-12 inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
             to="/blog"
