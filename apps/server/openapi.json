@@ -556,188 +556,56 @@
           "id": {
             "type": "string"
           },
-          "merchant": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "name": {
-            "type": "string",
-            "description": "Raw description from the institution."
-          },
-          "notes": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Additional details regarding the transaction. Supports Markdown.",
-            "example": "**Reimbursable** — paid for team lunch, expense via Expensify"
-          },
-          "pending": {
-            "type": "boolean"
-          },
-          "tagIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "accountId",
-          "amount",
-          "category",
-          "date",
-          "id",
-          "merchant",
-          "name",
-          "notes",
-          "pending",
-          "tagIds"
-        ]
-      },
-      "TransactionDetail": {
-        "type": "object",
-        "properties": {
-          "accountId": {
-            "type": "string",
-            "description": "Identifier of the account this transaction belongs to."
-          },
-          "amount": {
-            "type": "number",
-            "description": "Signed amount. Positive = money in (credit / refund / income), negative = money out (debit / spending)."
-          },
-          "category": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Category name; null if uncategorized."
-          },
-          "date": {
-            "type": "string",
-            "description": "Transaction date (YYYY-MM-DD)."
-          },
-          "id": {
-            "type": "string"
-          },
-          "merchant": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "name": {
-            "type": "string",
-            "description": "Raw description from the institution."
-          },
-          "notes": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Additional details regarding the transaction. Supports Markdown.",
-            "example": "**Reimbursable** — paid for team lunch, expense via Expensify"
-          },
-          "pending": {
-            "type": "boolean"
-          },
-          "tagIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "accountId",
-          "amount",
-          "category",
-          "date",
-          "id",
-          "merchant",
-          "name",
-          "notes",
-          "pending",
-          "tagIds"
-        ]
-      },
-      "TransactionCreate": {
-        "type": "object",
-        "properties": {
-          "accountId": {
-            "type": "string",
-            "description": "Account to attach this transaction to. Must be a manual account.",
-            "example": "01HX8N7K5Q3M2P9R4V6Y8Z1A2B"
-          },
-          "amount": {
-            "type": "number",
-            "description": "Positive = money in (refund/income), negative = money out (spending).",
-            "example": -24.5
-          },
-          "categoryId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Category id from `GET /v1/categories`. Omit to leave uncategorized.",
-            "example": "8f3b2a1e-4c5d-6e7f-8a9b-0c1d2e3f4a5b"
-          },
-          "date": {
-            "type": "string",
-            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-            "example": "2026-05-22"
-          },
           "location": {
             "$ref": "#/components/schemas/TransactionLocation"
           },
-          "merchantName": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 255,
-            "example": "Blue Bottle Coffee"
+          "merchant": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "name": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 255,
-            "description": "Transaction description.",
-            "example": "Blue Bottle Coffee — Mission"
+            "description": "Raw description from the institution."
           },
           "notes": {
-            "type": "string",
-            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Additional details regarding the transaction. Supports Markdown.",
             "example": "**Reimbursable** — paid for team lunch, expense via Expensify"
+          },
+          "pending": {
+            "type": "boolean"
           },
           "tagIds": {
             "type": "array",
             "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Tag ids to attach (from `GET /v1/tags`).",
-            "example": [
-              "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
-            ]
-          },
-          "website": {
-            "type": "string",
-            "minLength": 3,
-            "maxLength": 2048,
-            "pattern": "^[^\\s]+\\.[^\\s]+$",
-            "description": "Merchant website. Bare domain or full URL.",
-            "example": "bluebottlecoffee.com"
+              "type": "string"
+            }
           }
         },
         "required": [
           "accountId",
           "amount",
+          "category",
           "date",
-          "name"
+          "id",
+          "location",
+          "merchant",
+          "name",
+          "notes",
+          "pending",
+          "tagIds"
         ]
       },
       "TransactionLocation": {
-        "type": "object",
+        "type": [
+          "object",
+          "null"
+        ],
         "properties": {
           "address": {
             "type": [
@@ -798,7 +666,157 @@
           "region",
           "store_number"
         ],
-        "description": "Merchant location. When set, `location` is added to lockedFields so future syncs can't overwrite it."
+        "description": "Merchant location when reported by the institution. Null when no location fields are available."
+      },
+      "TransactionDetail": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "description": "Identifier of the account this transaction belongs to."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Signed amount. Positive = money in (credit / refund / income), negative = money out (debit / spending)."
+          },
+          "category": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Category name; null if uncategorized."
+          },
+          "date": {
+            "type": "string",
+            "description": "Transaction date (YYYY-MM-DD)."
+          },
+          "id": {
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/TransactionLocation"
+          },
+          "merchant": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Raw description from the institution."
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Additional details regarding the transaction. Supports Markdown.",
+            "example": "**Reimbursable** — paid for team lunch, expense via Expensify"
+          },
+          "pending": {
+            "type": "boolean"
+          },
+          "tagIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "accountId",
+          "amount",
+          "category",
+          "date",
+          "id",
+          "location",
+          "merchant",
+          "name",
+          "notes",
+          "pending",
+          "tagIds"
+        ]
+      },
+      "TransactionCreate": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "description": "Account to attach this transaction to. Must be a manual account.",
+            "example": "01HX8N7K5Q3M2P9R4V6Y8Z1A2B"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Positive = money in (refund/income), negative = money out (spending).",
+            "example": -24.5
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Category id from `GET /v1/categories`. Omit to leave uncategorized.",
+            "example": "8f3b2a1e-4c5d-6e7f-8a9b-0c1d2e3f4a5b"
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "example": "2026-05-22"
+          },
+          "location": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TransactionLocation"
+              },
+              {
+                "description": "Merchant location. When set, `location` is added to lockedFields so future syncs can't overwrite it."
+              }
+            ]
+          },
+          "merchantName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "example": "Blue Bottle Coffee"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Transaction description.",
+            "example": "Blue Bottle Coffee — Mission"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Additional details regarding the transaction. Supports Markdown.",
+            "example": "**Reimbursable** — paid for team lunch, expense via Expensify"
+          },
+          "tagIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Tag ids to attach (from `GET /v1/tags`).",
+            "example": [
+              "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
+            ]
+          },
+          "website": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 2048,
+            "pattern": "^[^\\s]+\\.[^\\s]+$",
+            "description": "Merchant website. Bare domain or full URL.",
+            "example": "bluebottlecoffee.com"
+          }
+        },
+        "required": [
+          "accountId",
+          "amount",
+          "date",
+          "name"
+        ]
       },
       "TransactionTagsUpdate": {
         "type": "object",
@@ -2115,17 +2133,7 @@
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                   },
                   "location": {
-                    "allOf": [
-                      {
-                        "$ref": "#/components/schemas/TransactionLocation"
-                      },
-                      {
-                        "type": [
-                          "object",
-                          "null"
-                        ]
-                      }
-                    ]
+                    "$ref": "#/components/schemas/TransactionLocation"
                   },
                   "merchantName": {
                     "type": [
