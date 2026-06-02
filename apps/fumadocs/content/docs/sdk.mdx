@@ -15,15 +15,31 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 ## Install
 
 <Tabs items={["bun", "npm", "pnpm", "yarn"]}>
-  <Tab value="bun">```bash bun add @cobalt-money/sdk ```</Tab>
-  <Tab value="npm">```bash npm install @cobalt-money/sdk ```</Tab>
-  <Tab value="pnpm">```bash pnpm add @cobalt-money/sdk ```</Tab>
-  <Tab value="yarn">```bash yarn add @cobalt-money/sdk ```</Tab>
+  <Tab value="bun">
+    ```
+    bun add @cobalt-money/sdk
+    ```
+  </Tab>
+  <Tab value="npm">
+    ```
+    npm install @cobalt-money/sdk
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```
+    pnpm add @cobalt-money/sdk
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```
+    yarn add @cobalt-money/sdk
+    ```
+  </Tab>
 </Tabs>
 
 ## Get an API key
 
-Issue a key from the dashboard: **Settings → API keys**. Keys are prefixed `ck_live_`. Treat them as secrets — do not commit to source or ship in client-side bundles.
+Issue a key from the Cobalt app: **profile icon → Account → Developer → API Keys → Create Key**. Keys are prefixed `ck_live_`. Treat as secrets — do not commit to source or ship in client-side bundles.
 
 ## Initialize
 
