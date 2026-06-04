@@ -13,6 +13,7 @@ import { CommandMenuProvider } from "@/components/shell/command-menu";
 import { AppSidebar } from "@/components/shell/sidebar/app-sidebar";
 import { useAppSession } from "@/lib/providers/app-session";
 import { ZeroProvider } from "@/lib/providers/zero-client";
+import { TransactionUndoProvider } from "@/lib/transaction-undo";
 
 /**
  * Auth + onboarding gating happens in `beforeLoad` reading router context that
@@ -74,44 +75,46 @@ function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDe
   // progress overlay so the onboarding flow renders edge-to-edge.
   return (
     <ZeroProvider>
-      <OnboardingProgressProvider>
-        <PrivacyProvider>
-          <ImportWizardHost>
-            <div
-              className="flex h-svh min-h-0 flex-col overflow-hidden"
-              data-billing-banner={!isDemo && billingBannerActive ? "1" : undefined}
-              data-demo-banner={isDemo ? "1" : undefined}
-            >
-              {chromeless ? (
-                // Onboarding mounts CommandMenuProvider so the Connect step
-                // can call `openAddAccount()` and launch the real Plaid flow
-                // without leaving the route. Sidebar + demo banner stay hidden.
-                <CommandMenuProvider>
-                  <AmbientInsetProvider>
-                    <Outlet />
-                  </AmbientInsetProvider>
-                </CommandMenuProvider>
-              ) : (
-                // Settings reuses this same shell. The settings layout sets
-                // `body[data-route="settings"]` on mount so CSS in
-                // globals.css hides the sidebar — atomically with settings'
-                // first paint, so the sidebar doesn't close *before* the
-                // route swaps.
-                <CommandMenuProvider>
-                  {isDemo ? <DemoBanner /> : <BillingBanner />}
-                  <SidebarProvider className="min-h-0 flex-1">
-                    <AppSidebar />
+      <TransactionUndoProvider>
+        <OnboardingProgressProvider>
+          <PrivacyProvider>
+            <ImportWizardHost>
+              <div
+                className="flex h-svh min-h-0 flex-col overflow-hidden"
+                data-billing-banner={!isDemo && billingBannerActive ? "1" : undefined}
+                data-demo-banner={isDemo ? "1" : undefined}
+              >
+                {chromeless ? (
+                  // Onboarding mounts CommandMenuProvider so the Connect step
+                  // can call `openAddAccount()` and launch the real Plaid flow
+                  // without leaving the route. Sidebar + demo banner stay hidden.
+                  <CommandMenuProvider>
                     <AmbientInsetProvider>
                       <Outlet />
                     </AmbientInsetProvider>
-                  </SidebarProvider>
-                </CommandMenuProvider>
-              )}
-            </div>
-          </ImportWizardHost>
-        </PrivacyProvider>
-        <OnboardingProgress />
-      </OnboardingProgressProvider>
+                  </CommandMenuProvider>
+                ) : (
+                  // Settings reuses this same shell. The settings layout sets
+                  // `body[data-route="settings"]` on mount so CSS in
+                  // globals.css hides the sidebar — atomically with settings'
+                  // first paint, so the sidebar doesn't close *before* the
+                  // route swaps.
+                  <CommandMenuProvider>
+                    {isDemo ? <DemoBanner /> : <BillingBanner />}
+                    <SidebarProvider className="min-h-0 flex-1">
+                      <AppSidebar />
+                      <AmbientInsetProvider>
+                        <Outlet />
+                      </AmbientInsetProvider>
+                    </SidebarProvider>
+                  </CommandMenuProvider>
+                )}
+              </div>
+            </ImportWizardHost>
+          </PrivacyProvider>
+          <OnboardingProgress />
+        </OnboardingProgressProvider>
+      </TransactionUndoProvider>
     </ZeroProvider>
   );
 }

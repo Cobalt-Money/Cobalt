@@ -8,8 +8,9 @@ import {
 } from "@cobalt-web/ui/components/command";
 import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { useHotkey } from "@tanstack/react-hotkeys";
 import { useNavigate } from "@tanstack/react-router";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 
 import {
@@ -582,25 +583,16 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
     [openAt],
   );
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpenState((wasOpen) => {
-          const next = !wasOpen;
-          if (!next) {
-            window.setTimeout(() => {
-              pageStack.clear();
-              setSearch("");
-            }, 200);
-          }
-          return next;
-        });
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [pageStack]);
+  useHotkey(
+    "Mod+K",
+    () => {
+      setOpen(!open);
+    },
+    {
+      ignoreInputs: false,
+      meta: { description: "Open command menu", name: "Command menu" },
+    },
+  );
 
   const value = useMemo(
     () => ({

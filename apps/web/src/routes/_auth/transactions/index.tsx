@@ -1,5 +1,10 @@
 import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
+import {
+  CategoryIcon,
+  resolveCategoryIcon,
+  UNKNOWN_CATEGORY_ICON,
+} from "@cobalt-web/ui/cobalt/transactions/categories";
 import { deriveCategorySection } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
 import type { CategoryPickerOption } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
 import type { ExportFormat } from "@cobalt-web/ui/cobalt/transactions/lib/export";
@@ -18,6 +23,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
+import { useTransactionUndo } from "@/lib/transaction-undo";
 import { useAddTransactionData } from "@/hooks/use-add-transaction-data";
 import { useBankOptions } from "@/hooks/use-bank-options";
 import { useBulkSetCategory } from "@/hooks/use-bulk-transactions";
@@ -169,74 +175,222 @@ function TransactionsListPage() {
   const { locationSearch, merchantSearch } = useAddTransactionData();
   const { mutateAsync: bulkSetCategory } = useBulkSetCategory();
   const { mutate: setTransactionTags } = useSetTransactionTags();
+  const { push: pushUndo } = useTransactionUndo();
+
+  const txnById = useMemo(() => {
+    const map = new Map<string, TransactionResponse>();
+    for (const t of items) {
+      map.set(t.id, t);
+    }
+    return map;
+  }, [items]);
+
+  const fieldLabel = useCallback(
+    (field: string, tx: TransactionResponse | undefined) => (
+      <span className="flex flex-wrap items-center gap-1.5">
+        <span className="text-foreground/60">Updated</span>
+        <strong>{field}</strong>
+        <span className="text-foreground/60">on {tx?.name ?? "transaction"}</span>
+      </span>
+    ),
+    [],
+  );
+
   const handleSetCategory = useCallback(
     (transactionId: string, categoryId: string) => {
-      void bulkSetCategory({ categoryId, transactionIds: [transactionId] });
+      const tx = txnById.get(transactionId);
+      const prior = tx?.category?.id ?? null;
+      const nextCat = categoryOptions.find((c) => c.id === categoryId);
+      const icon = nextCat?.iconKey
+        ? (resolveCategoryIcon(nextCat.iconKey) ?? UNKNOWN_CATEGORY_ICON)
+        : UNKNOWN_CATEGORY_ICON;
+      const label = (
+        <span className="flex flex-wrap items-center gap-1.5">
+          <span className="text-foreground/60">Set category to</span>
+          <span className="inline-flex items-center gap-1">
+            <CategoryIcon icon={icon} sizeClassName="size-4" />
+            <strong>{nextCat?.name ?? "category"}</strong>
+          </span>
+          <span className="text-foreground/60">on {tx?.name ?? "transaction"}</span>
+        </span>
+      );
+      pushUndo({
+        forward: () => void bulkSetCategory({ categoryId, transactionIds: [transactionId] }),
+        inverse: () => {
+          if (prior) {
+            void bulkSetCategory({ categoryId: prior, transactionIds: [transactionId] });
+          } else {
+            run(
+              (m) =>
+                m.transaction.resetCategory({ editId: crypto.randomUUID(), id: transactionId }),
+              { silent: true },
+            );
+          }
+        },
+        label,
+        skip: categoryId === prior,
+      });
     },
-    [bulkSetCategory],
+    [bulkSetCategory, categoryOptions, pushUndo, run, txnById],
   );
   const handleSetTags = useCallback(
     (transactionId: string, tagIds: string[]) => {
-      setTransactionTags({ tagIds, transactionId });
+      const tx = txnById.get(transactionId);
+      const priorIds = [...(tx?.tagIds ?? [])].toSorted();
+      const nextIds = [...new Set(tagIds)].toSorted();
+      const same = priorIds.length === nextIds.length && priorIds.every((v, i) => v === nextIds[i]);
+      pushUndo({
+        forward: () => setTransactionTags({ tagIds: nextIds, transactionId }),
+        inverse: () => setTransactionTags({ tagIds: priorIds, transactionId }),
+        label: fieldLabel("tags", tx),
+        skip: same,
+      });
     },
-    [setTransactionTags],
+    [fieldLabel, pushUndo, setTransactionTags, txnById],
   );
   const handleSetDate = useCallback(
     (transactionId: string, dateIso: string) => {
-      run(
-        (m) =>
-          m.transaction.updateDate({
-            date: dateIso,
-            editId: crypto.randomUUID(),
-            id: transactionId,
-          }),
-        { silent: true },
-      );
+      const tx = txnById.get(transactionId);
+      const prior = tx?.date ?? null;
+      pushUndo({
+        forward: () =>
+          run(
+            (m) =>
+              m.transaction.updateDate({
+                date: dateIso,
+                editId: crypto.randomUUID(),
+                id: transactionId,
+              }),
+            { silent: true },
+          ),
+        inverse: () => {
+          if (prior) {
+            run(
+              (m) =>
+                m.transaction.updateDate({
+                  date: prior,
+                  editId: crypto.randomUUID(),
+                  id: transactionId,
+                }),
+              { silent: true },
+            );
+          } else {
+            run(
+              (m) => m.transaction.resetDate({ editId: crypto.randomUUID(), id: transactionId }),
+              { silent: true },
+            );
+          }
+        },
+        label: fieldLabel("date", tx),
+        skip: dateIso === prior,
+      });
     },
-    [run],
+    [fieldLabel, pushUndo, run, txnById],
   );
   const handleSetName = useCallback(
     (transactionId: string, name: string) => {
-      run(
-        (m) =>
-          m.transaction.updateName({
-            editId: crypto.randomUUID(),
-            id: transactionId,
-            name,
-          }),
-        { silent: true },
-      );
+      const tx = txnById.get(transactionId);
+      const prior = tx?.name ?? "";
+      pushUndo({
+        forward: () =>
+          run(
+            (m) =>
+              m.transaction.updateName({
+                editId: crypto.randomUUID(),
+                id: transactionId,
+                name,
+              }),
+            { silent: true },
+          ),
+        inverse: () =>
+          run(
+            (m) =>
+              m.transaction.updateName({
+                editId: crypto.randomUUID(),
+                id: transactionId,
+                name: prior,
+              }),
+            { silent: true },
+          ),
+        label: fieldLabel("name", tx),
+        skip: name === prior,
+      });
     },
-    [run],
+    [fieldLabel, pushUndo, run, txnById],
   );
   const handleSetMerchant = useCallback(
     (transactionId: string, merchant: { merchantName: string | null; website: string | null }) => {
-      run(
-        (m) =>
-          m.transaction.updateMerchant({
-            editId: crypto.randomUUID(),
-            id: transactionId,
-            merchantName: merchant.merchantName,
-            website: merchant.website,
-          }),
-        { silent: true },
-      );
+      const tx = txnById.get(transactionId);
+      const priorMerchant = tx?.merchantName ?? null;
+      const priorWebsite = tx?.website ?? null;
+      pushUndo({
+        forward: () =>
+          run(
+            (m) =>
+              m.transaction.updateMerchant({
+                editId: crypto.randomUUID(),
+                id: transactionId,
+                merchantName: merchant.merchantName,
+                website: merchant.website,
+              }),
+            { silent: true },
+          ),
+        inverse: () =>
+          run(
+            (m) =>
+              m.transaction.updateMerchant({
+                editId: crypto.randomUUID(),
+                id: transactionId,
+                merchantName: priorMerchant,
+                website: priorWebsite,
+              }),
+            { silent: true },
+          ),
+        label: fieldLabel("merchant", tx),
+        skip: merchant.merchantName === priorMerchant && merchant.website === priorWebsite,
+      });
     },
-    [run],
+    [fieldLabel, pushUndo, run, txnById],
   );
   const handleSetLocation = useCallback(
     (transactionId: string, location: NonNullable<TransactionResponse["location"]>) => {
-      run(
-        (m) =>
-          m.transaction.updateLocation({
-            editId: crypto.randomUUID(),
-            id: transactionId,
-            location,
-          }),
-        { silent: true },
-      );
+      const tx = txnById.get(transactionId);
+      const prior = tx?.location ?? null;
+      pushUndo({
+        forward: () =>
+          run(
+            (m) =>
+              m.transaction.updateLocation({
+                editId: crypto.randomUUID(),
+                id: transactionId,
+                location,
+              }),
+            { silent: true },
+          ),
+        inverse: () => {
+          if (prior) {
+            run(
+              (m) =>
+                m.transaction.updateLocation({
+                  editId: crypto.randomUUID(),
+                  id: transactionId,
+                  location: prior,
+                }),
+              { silent: true },
+            );
+          } else {
+            run(
+              (m) =>
+                m.transaction.resetLocation({ editId: crypto.randomUUID(), id: transactionId }),
+              { silent: true },
+            );
+          }
+        },
+        label: fieldLabel("location", tx),
+        skip: prior !== null && JSON.stringify(location) === JSON.stringify(prior),
+      });
     },
-    [run],
+    [fieldLabel, pushUndo, run, txnById],
   );
   const handleDeleteTransaction = useCallback(
     (transactionId: string) => {

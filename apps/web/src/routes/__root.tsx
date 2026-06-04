@@ -1,6 +1,7 @@
 import { Toaster } from "@cobalt-web/ui/components/sonner";
 import { ThemeProvider } from "@cobalt-web/ui/components/theme-provider";
 import { TooltipProvider } from "@cobalt-web/ui/components/tooltip";
+import { HotkeysProvider } from "@tanstack/react-hotkeys";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   HeadContent,
@@ -127,8 +128,10 @@ function RootDocument() {
             <AppSessionProvider>
               <DemoProvider>
                 <TooltipProvider>
-                  <Outlet />
-                  <UpgradePromptHost />
+                  <HotkeysProvider>
+                    <Outlet />
+                    <UpgradePromptHost />
+                  </HotkeysProvider>
                 </TooltipProvider>
               </DemoProvider>
             </AppSessionProvider>
