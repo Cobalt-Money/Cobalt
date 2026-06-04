@@ -586,16 +586,7 @@ export function CommandMenuProvider({ children }: { children: ReactNode }) {
   useHotkey(
     "Mod+K",
     () => {
-      setOpenState((wasOpen) => {
-        const next = !wasOpen;
-        if (!next) {
-          window.setTimeout(() => {
-            pageStack.clear();
-            setSearch("");
-          }, 200);
-        }
-        return next;
-      });
+      setOpen(!open);
     },
     {
       ignoreInputs: false,

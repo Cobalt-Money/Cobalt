@@ -355,6 +355,7 @@ function TransactionDetailRoute() {
               run((m) => m.transaction.resetLocation({ editId: uid(), id }), fb("location"));
             }
           },
+          prior !== null && JSON.stringify(location) === JSON.stringify(prior),
         );
       },
       merchantSearch: {

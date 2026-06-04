@@ -35,6 +35,12 @@ const noop = () => {
   /* placeholder until first render assigns the real fn into the ref */
 };
 
+const isMac =
+  typeof navigator !== "undefined" &&
+  /mac|iphone|ipad|ipod/i.test(navigator.platform || navigator.userAgent || "");
+const MOD_KEY = isMac ? "⌘" : "Ctrl";
+const SHIFT_KEY = isMac ? "⇧" : "Shift";
+
 function kbdLabel(text: string, keys: readonly string[]) {
   return (
     <span className="inline-flex items-center gap-1.5">
@@ -64,7 +70,7 @@ export function TransactionUndoProvider({ children }: { children: ReactNode }) {
     toast("Reverted", {
       action: mgr.canRedo
         ? {
-            label: kbdLabel("Redo", ["⌘", "⇧", "Z"]),
+            label: kbdLabel("Redo", [MOD_KEY, SHIFT_KEY, "Z"]),
             onClick: () => redoRef.current(),
           }
         : undefined,
@@ -77,7 +83,7 @@ export function TransactionUndoProvider({ children }: { children: ReactNode }) {
     toast("Reapplied", {
       action: mgr.canUndo
         ? {
-            label: kbdLabel("Undo", ["⌘", "Z"]),
+            label: kbdLabel("Undo", [MOD_KEY, "Z"]),
             onClick: () => undoRef.current(),
           }
         : undefined,
@@ -117,7 +123,7 @@ export function TransactionUndoProvider({ children }: { children: ReactNode }) {
       });
       toast(action.label, {
         action: {
-          label: kbdLabel("Undo", ["⌘", "Z"]),
+          label: kbdLabel("Undo", [MOD_KEY, "Z"]),
           onClick: () => undoRef.current(),
         },
         actionButtonStyle: ACTION_BUTTON_STYLE,

@@ -387,6 +387,7 @@ function TransactionsListPage() {
           }
         },
         label: fieldLabel("location", tx),
+        skip: prior !== null && JSON.stringify(location) === JSON.stringify(prior),
       });
     },
     [fieldLabel, pushUndo, run, txnById],
