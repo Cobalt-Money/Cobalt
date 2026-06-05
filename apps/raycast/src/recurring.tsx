@@ -11,39 +11,11 @@ import {
 import { showFailureToast, useFetch } from "@raycast/utils";
 import { useEffect, useState } from "react";
 
-import { categoryIcon, pickInstitutionIcon, pickRecurringIcon } from "./icons";
+import type { components } from "./api-types";
+import { categoryIcon, pickRecurringIcon } from "./icons";
 import { authorize, logout } from "./oauth";
 
-interface RecurringStream {
-  id: string;
-  streamId: string | null;
-  description: string | null;
-  merchantName: string | null;
-  category: { primary?: string | null } | string | null;
-  categoryDetail: string | null;
-  categoryConfidence: string | null;
-  frequency: string | null;
-  status: string | null;
-  streamType: string | null;
-  isActive: boolean | null;
-  firstDate: string | null;
-  lastDate: string | null;
-  predictedNextDate: string | null;
-  averageAmount: number;
-  lastAmount: number;
-  transactionIds: string[] | null;
-  accountName: string | null;
-  accountType: string | null;
-  accountSubtype: string | null;
-  institutionLogo: string | null;
-  institutionName: string | null;
-  institutionUrl: string | null;
-  updatedAt: string | null;
-}
-
-interface RecurringResponse {
-  streams: RecurringStream[];
-}
+type RecurringStream = components["schemas"]["RecurringStream"];
 
 const currency = new Intl.NumberFormat("en-US", {
   currency: "USD",
@@ -67,8 +39,8 @@ function formatDate(iso: string | null): string {
   return Number.isNaN(t) ? iso : dateDisplay.format(new Date(t));
 }
 
-function pickCategory(c: { primary?: string | null } | string | null): string | null {
-  return typeof c === "string" ? c : (c?.primary ?? null);
+function categoryName(c: RecurringStream["category"]): string | null {
+  return c && "name" in c ? c.name : null;
 }
 
 function streamTitle(s: RecurringStream): string {
@@ -89,24 +61,24 @@ function frequencyLabel(f: string | null): string {
     .replaceAll(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function isInflow(s: RecurringStream): boolean {
+  if (s.streamType) {
+    return s.streamType === "inflow";
+  }
+  return s.averageAmount > 0;
+}
+
 function streamTypeColor(t: string | null): Color {
-  const v = t?.toLowerCase() ?? "";
-  if (v.includes("income")) {
-    return Color.Green;
-  }
-  if (v.includes("inflow")) {
-    return Color.Green;
-  }
-  return Color.Orange;
+  return t === "inflow" ? Color.Green : Color.Orange;
 }
 
 function monthlyEquivalent(amount: number, frequency: string | null): number {
   const f = frequency?.toLowerCase() ?? "";
-  if (f.includes("week")) {
-    return amount * (52 / 12);
-  }
   if (f.includes("biweek") || f.includes("bi_week") || f.includes("bi-week")) {
     return amount * (26 / 12);
+  }
+  if (f.includes("week")) {
+    return amount * (52 / 12);
   }
   if (f.includes("semi") && f.includes("month")) {
     return amount * 2;
@@ -132,27 +104,20 @@ function StreamDetail({
   logoDevToken: string | undefined;
   stream: RecurringStream;
 }) {
-  const isInflow = stream.averageAmount < 0;
+  const inflow = isInflow(stream);
   const avg = currency.format(Math.abs(stream.averageAmount));
   const last = currency.format(Math.abs(stream.lastAmount));
-  const signedAvg = `${isInflow ? "+" : "-"}${avg}`;
+  const signedAvg = `${inflow ? "+" : "-"}${avg}`;
   const monthly = currency.format(
     Math.abs(monthlyEquivalent(stream.averageAmount, stream.frequency)),
   );
-  const categoryGroup = pickCategory(stream.category);
+  const category = categoryName(stream.category);
   const title = streamTitle(stream);
   const merchantIcon = pickRecurringIcon({
     brandfetchClientId,
     description: stream.description,
     logoDevToken,
     merchantName: stream.merchantName,
-  });
-  const institutionIcon = pickInstitutionIcon({
-    accountName: stream.accountName,
-    brandfetchClientId,
-    institutionLogo: stream.institutionLogo,
-    institutionName: stream.institutionName,
-    institutionUrl: stream.institutionUrl,
   });
 
   const logoMd =
@@ -197,36 +162,16 @@ function StreamDetail({
           <Detail.Metadata.Label title="Last seen" text={formatDate(stream.lastDate)} />
           <Detail.Metadata.Label title="First seen" text={formatDate(stream.firstDate)} />
           <Detail.Metadata.Separator />
-          {categoryGroup ? (
+          {category ? (
             <Detail.Metadata.Label
               title="Category"
-              icon={categoryIcon(categoryGroup)}
-              text={categoryGroup}
+              icon={categoryIcon(category)}
+              text={category}
             />
-          ) : null}
-          {stream.categoryDetail ? (
-            <Detail.Metadata.Label title="Subcategory" text={stream.categoryDetail} />
           ) : null}
           {stream.merchantName ? (
             <Detail.Metadata.Label title="Merchant" text={stream.merchantName} />
           ) : null}
-          <Detail.Metadata.Separator />
-          {stream.accountName ? (
-            <Detail.Metadata.Label title="Account" text={stream.accountName} />
-          ) : null}
-          {stream.institutionName ? (
-            <Detail.Metadata.Label
-              title="Institution"
-              icon={
-                institutionIcon ? { mask: Image.Mask.Circle, source: institutionIcon } : undefined
-              }
-              text={stream.institutionName}
-            />
-          ) : null}
-          <Detail.Metadata.Label
-            title="Transactions"
-            text={String(stream.transactionIds?.length ?? 0)}
-          />
         </Detail.Metadata>
       }
       actions={
@@ -257,15 +202,15 @@ export default function Command() {
     void run();
   }, [base]);
 
-  const { isLoading, data, revalidate, error } = useFetch(`${base}/v1/transactions/recurring`, {
-    execute: !!accessToken,
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-    initialData: [] as RecurringStream[],
-    keepPreviousData: true,
-    mapResult(result: RecurringResponse) {
-      return { data: result.streams };
+  const { isLoading, data, revalidate, error } = useFetch<RecurringStream[]>(
+    `${base}/v1/recurring`,
+    {
+      execute: !!accessToken,
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      initialData: [],
+      keepPreviousData: true,
     },
-  });
+  );
 
   const signOutAction = (
     <Action
@@ -288,10 +233,10 @@ export default function Command() {
       return s.isActive === false;
     }
     if (filter === "outflow") {
-      return s.averageAmount >= 0;
+      return !isInflow(s);
     }
     if (filter === "inflow") {
-      return s.averageAmount < 0;
+      return isInflow(s);
     }
     return true;
   });
@@ -331,18 +276,17 @@ export default function Command() {
         />
       ) : null}
       {sorted.map((s) => {
-        const avg = currency.format(Math.abs(s.averageAmount));
-        const categoryGroup = pickCategory(s.category);
+        const category = categoryName(s.category);
         const fullTitle = streamTitle(s);
         const title = truncateName(fullTitle);
 
         const accessories: List.Item.Accessory[] = [];
 
-        const lastIsInflow = s.lastAmount < 0;
-        const lastSigned = `${lastIsInflow ? "+" : "-"}${currency.format(Math.abs(s.lastAmount))}`;
+        const lastInflow = s.lastAmount > 0;
+        const lastSigned = `${lastInflow ? "+" : "-"}${currency.format(Math.abs(s.lastAmount))}`;
         accessories.push({
           text: {
-            color: lastIsInflow ? Color.Green : Color.Red,
+            color: lastInflow ? Color.Green : Color.Red,
             value: lastSigned,
           },
           tooltip: "Last charge",
@@ -356,25 +300,9 @@ export default function Command() {
         });
 
         accessories.push({
-          icon: categoryIcon(categoryGroup),
-          tooltip: categoryGroup ?? undefined,
+          icon: categoryIcon(category),
+          tooltip: category ?? undefined,
         });
-
-        const institutionIcon = pickInstitutionIcon({
-          accountName: s.accountName,
-          brandfetchClientId,
-          institutionLogo: s.institutionLogo,
-          institutionName: s.institutionName,
-          institutionUrl: s.institutionUrl,
-        });
-        accessories.push(
-          institutionIcon
-            ? {
-                icon: { mask: Image.Mask.Circle, source: institutionIcon },
-                tooltip: s.institutionName ?? undefined,
-              }
-            : { icon: "transparent.svg" },
-        );
 
         accessories.push({
           text: s.predictedNextDate
@@ -408,7 +336,10 @@ export default function Command() {
                     />
                   }
                 />
-                <Action.CopyToClipboard title="Copy Average" content={avg} />
+                <Action.CopyToClipboard
+                  title="Copy Average"
+                  content={currency.format(Math.abs(s.averageAmount))}
+                />
                 <Action.CopyToClipboard
                   title="Copy Merchant"
                   content={s.merchantName ?? fullTitle}
@@ -427,9 +358,9 @@ export default function Command() {
       })}
       {!isLoading && !error && accessToken && sorted.length === 0 ? (
         <List.EmptyView
-          icon={Icon.Repeat}
+          icon={Icon.MagnifyingGlass}
           title="No recurring streams"
-          description="Plaid hasn't detected any recurring transactions yet"
+          description="Nothing detected yet"
           actions={<ActionPanel>{signOutAction}</ActionPanel>}
         />
       ) : null}
