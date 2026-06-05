@@ -1,14 +1,12 @@
 # Cobalt for Raycast
 
-Access your [Cobalt](https://cobaltpf.com) finances from Raycast — recent transactions, recurring streams, account balances, and net worth, plus an AI command that runs JavaScript against your data inside the Cobalt sandbox.
+Access your [Cobalt](https://cobaltpf.com) finances from Raycast — recent transactions, recurring streams, and account balances, plus an AI command that runs JavaScript against your data inside the Cobalt sandbox.
 
 ## Commands
 
 - **Recent Transactions** — browse and search recent transactions across all connected accounts.
 - **Recurring Transactions** — active subscriptions, bills, and recurring income.
 - **Accounts** — connected bank, credit, and brokerage accounts with current balances.
-- **Net Worth** — totals and history sourced from daily snapshots.
-- **Net Worth in Menu Bar** — always-on glance in the macOS menu bar (refreshes every 30 minutes).
 
 ## AI
 
