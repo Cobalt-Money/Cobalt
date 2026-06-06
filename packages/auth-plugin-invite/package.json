@@ -1,0 +1,28 @@
+{
+  "name": "@cobalt-web/auth-plugin-invite",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "default": "./src/client.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@better-auth/core": "1.7.0-beta.3",
+    "@cobalt-web/db": "workspace:*",
+    "better-auth": "1.7.0-beta.3",
+    "drizzle-orm": "1.0.0-beta.22",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cobalt-web/config": "workspace:*",
+    "typescript": "^5",
+    "vitest": "^3.2.0"
+  }
+}

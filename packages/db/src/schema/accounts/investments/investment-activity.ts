@@ -62,7 +62,7 @@ export const investmentActivity = pgTable(
     index("investment_activity_type_idx").on(t.type),
     uniqueIndex("investment_activity_source_external_id_idx")
       .on(t.source, t.externalId)
-      .where(sql`external_id IS NOT NULL`),
+      .where(sql`(external_id IS NOT NULL)`),
   ],
 );
 

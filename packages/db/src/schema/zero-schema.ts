@@ -44,5 +44,21 @@ export { csvMappingCache } from "./imports/csv-mapping-cache";
 export { importJob } from "./imports/import-job";
 export { importStagedTransaction } from "./imports/import-staged-transaction";
 
+// SRI-349 — social layer tables synced to Zero (read by friends app).
+//
+// Invite tables (`socialInvite`, `socialInviteRedemption`) are READ via Zero
+// (realtime inbox + sent-list) but MUTATED via Hono routes in the invite
+// plugin — atomic uses_count increment + redemption ledger writes belong on
+// the server. Token entry into Zero state is safe because permissions
+// scope rows by inviter / target.
+//
+// merchantGeocodeCache stays server-only — cross-user cache, no per-user
+// rows to scope.
+export { socialFriendship } from "./social/friendship";
+export { socialInvite, socialInviteRedemption } from "./social/invite";
+export { socialPost } from "./social/post";
+export { socialPrivacyZone } from "./social/privacy-zone";
+export { socialVisibilityRule } from "./social/visibility-rule";
+
 // v2 `defineRelations` for drizzle-zero@1.0-beta. Same source as DB runtime.
 export { relations } from "./relations";

@@ -85,7 +85,7 @@ export const financialAccount = pgTable(
     index("financial_account_persistent_id_idx").on(t.persistentAccountId),
     uniqueIndex("financial_account_source_external_id_idx")
       .on(t.source, t.externalId)
-      .where(sql`external_id IS NOT NULL`),
+      .where(sql`(external_id IS NOT NULL)`),
     check(
       "financial_account_connection_arc",
       sql`num_nonnulls(plaid_connection_id, snaptrade_authorization_id) <= 1`,

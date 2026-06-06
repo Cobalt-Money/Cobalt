@@ -39,7 +39,7 @@ export const userAlerts = pgTable(
     index("user_alerts_source_idx").on(table.source, table.sourceId),
     uniqueIndex("user_alerts_dedup_idx")
       .on(table.source, table.sourceId, table.type)
-      .where(sql`resolved_at IS NULL`),
+      .where(sql`(resolved_at IS NULL)`),
   ],
 );
 
