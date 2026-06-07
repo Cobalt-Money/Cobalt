@@ -10,10 +10,20 @@
 
 import type { CategoryPrimaryGlyph } from "./category-primary-icons";
 
-const V = "?v=1";
+const CATEGORY_ICON_URLS = import.meta.glob("../../../assets/vectors/categories/**/*.svg", {
+  eager: true,
+  import: "default",
+  query: "?url",
+}) as Record<string, string>;
 
-const buildSrc = (groupKey: string, systemKey: string): string =>
-  `/assets/vectors/categories/${groupKey}/${systemKey}.svg${V}`;
+const buildSrc = (groupKey: string, systemKey: string): string => {
+  const key = `../../../assets/vectors/categories/${groupKey}/${systemKey}.svg`;
+  const url = CATEGORY_ICON_URLS[key];
+  if (!url) {
+    throw new Error(`Missing category icon: ${key}`);
+  }
+  return url;
+};
 
 export type CategorySystemKey =
   // food_and_drink

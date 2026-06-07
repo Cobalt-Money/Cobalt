@@ -9,6 +9,13 @@ import { buttonVariants } from "@/components/ui/button";
 
 export type DayPickerProps = React.ComponentProps<typeof ReactDayPicker>;
 
+function DayPickerChevron({ orientation }: { orientation?: "left" | "right" | "up" | "down" }) {
+  if (orientation === "left") {
+    return <HugeiconsIcon icon={ArrowLeft01Icon} size={16} strokeWidth={2} />;
+  }
+  return <HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={2} />;
+}
+
 function DayPicker({ className, classNames, showOutsideDays = true, ...props }: DayPickerProps) {
   const defaultClassNames = getDefaultClassNames();
 
@@ -77,14 +84,7 @@ function DayPicker({ className, classNames, showOutsideDays = true, ...props }: 
 
         ...classNames,
       }}
-      components={{
-        Chevron: ({ orientation }) => {
-          if (orientation === "left") {
-            return <HugeiconsIcon icon={ArrowLeft01Icon} size={16} strokeWidth={2} />;
-          }
-          return <HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={2} />;
-        },
-      }}
+      components={{ Chevron: DayPickerChevron }}
       {...props}
     />
   );

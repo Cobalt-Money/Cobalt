@@ -32,6 +32,7 @@ vi.mock(import("./steps.js"), () => ({
   dispatchSnapshotWorkflowStep: vi.fn(),
   duplicateCheckStep: vi.fn(),
   emitOnboardingProgressStep: vi.fn(),
+  enrichTransactionsStep: vi.fn(),
   exchangePublicTokenStep: vi.fn(),
   fetchItemForOnboardingStep: vi.fn(),
   getPlaidItemStep: vi.fn(),

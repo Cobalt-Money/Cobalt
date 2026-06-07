@@ -78,14 +78,16 @@ function LocationCaption({
 /** Map card + caption without a section header — used by the summary view. */
 export function TransactionDetailLocationCard({
   location,
+  hideMap = false,
 }: {
   location: TransactionResponse["location"];
+  hideMap?: boolean;
 }) {
   const coords = getLocationCoordinates(location);
 
   return (
     <div className="flex flex-col gap-2">
-      {coords ? (
+      {coords && !hideMap ? (
         <Card className="overflow-hidden p-0">
           <div className="relative h-48 w-full sm:h-56">
             <Map center={[coords.lng, coords.lat]} zoom={14}>

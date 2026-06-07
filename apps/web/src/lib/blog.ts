@@ -26,7 +26,7 @@ const modules = import.meta.glob<MdxModule>("/content/blog/*.mdx", {
 });
 
 const slugFromPath = (path: string): string =>
-  path.replace(/^.*\/content\/blog\//, "").replace(/\.mdx$/, "");
+  path.replace(/^.*\/content\/blog\//u, "").replace(/\.mdx$/u, "");
 
 const allPosts: BlogPost[] = Object.entries(modules)
   .map(([path, mod]) => ({

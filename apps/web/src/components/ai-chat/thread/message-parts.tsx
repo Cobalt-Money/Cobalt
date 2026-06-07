@@ -25,7 +25,7 @@ interface TextPartProps {
 /** Text bubble with smoothed typewriter reveal layered under streamdown's
  * per-word animation. Hook only smooths while streaming; once the source text
  * stops growing, the RAF loop catches up and terminates. */
-const TextPart = memo(function TextPart({ text, isStreaming, hasWebSearchOutput }: TextPartProps) {
+const TextPart = memo(({ text, isStreaming, hasWebSearchOutput }: TextPartProps) => {
   const { settings } = useAgentSettings();
   const smoothed = useSmoothText(text, {
     charsPerSec: charsPerSecForModel(settings.model),
@@ -93,10 +93,7 @@ interface MessagePartsRendererProps {
   isStreaming: boolean;
 }
 
-export const MessagePartsRenderer = memo(function MessagePartsRenderer({
-  message,
-  isStreaming,
-}: MessagePartsRendererProps) {
+export const MessagePartsRenderer = memo(({ message, isStreaming }: MessagePartsRendererProps) => {
   const hasWebSearchOutput = message.parts.some(
     (p) => p.type === "tool-webSearch" && (p as { state?: string }).state === "output-available",
   );

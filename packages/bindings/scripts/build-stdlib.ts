@@ -8,10 +8,9 @@
 // of its dependencies (e.g. `financial`) changes. CI should run this as part
 // of the build step before type-check / test.
 import { writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-const here = dirname(fileURLToPath(import.meta.url));
+const here = import.meta.dirname;
 const entry = join(here, "../src/stdlib-entry.ts");
 const outFile = join(here, "../src/stdlib-bundle.ts");
 

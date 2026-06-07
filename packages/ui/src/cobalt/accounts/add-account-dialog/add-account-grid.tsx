@@ -11,6 +11,8 @@ import {
 } from "./institution-registry";
 import type { AddAccountCategory, AddAccountInstitution } from "./types";
 
+const CASH_ICON_URL = new URL("../../../assets/vectors/cash.svg", import.meta.url).href;
+
 type Filter = "all" | "bank" | "brokerage" | "cash";
 
 const FILTERS: readonly { id: Filter; label: string }[] = [
@@ -199,7 +201,7 @@ export function AddAccountGrid({
                       compact ? "size-14" : "size-16",
                     )}
                   >
-                    <img alt="" aria-hidden className="size-10" src="/assets/vectors/cash.svg" />
+                    <img alt="" aria-hidden className="size-10" src={CASH_ICON_URL} />
                   </div>
                 ) : (
                   <InstitutionLogo

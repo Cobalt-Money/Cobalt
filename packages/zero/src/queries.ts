@@ -6,6 +6,7 @@ import { brokerageQueries } from "./brokerage/queries.js";
 import { categoriesQueries } from "./categories/queries.js";
 import { chatsQueries } from "./chats/queries.js";
 import { newsQueries } from "./news/queries.js";
+import { socialQueries } from "./social/queries.js";
 import { tagsQueries } from "./tags/queries.js";
 import { transactionsQueries } from "./transactions/queries.js";
 
@@ -17,6 +18,7 @@ export const queries = defineQueries({
   categories: categoriesQueries,
   chats: chatsQueries,
   news: newsQueries,
+  social: socialQueries,
   tags: tagsQueries,
   transactions: transactionsQueries,
 });

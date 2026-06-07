@@ -3,6 +3,7 @@ import { z } from "zod";
 
 const amountSchema = z.enum(["all", "income", "expense"]).optional();
 const statusSchema = z.enum(["all", "pending", "posted"]).optional();
+const channelSchema = z.enum(["all", "in_store", "online", "other"]).optional();
 const bankSchema = z.array(z.string()).optional();
 const amountBoundSchema = z.number().nonnegative().optional();
 const tagIdsSchema = z.array(z.uuid()).optional();
@@ -19,6 +20,7 @@ const transactionsSearchSchema = z.object({
   amountMin: amountBoundSchema,
   bank: bankSchema,
   categoryIds: categoryIdsSchema,
+  channel: channelSchema,
   dateFrom: dateSchema,
   dateTo: dateSchema,
   query: querySchema,

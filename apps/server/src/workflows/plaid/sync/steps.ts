@@ -33,6 +33,7 @@ import {
 } from "@cobalt-web/server-data/providers/plaid/transactions/mutations";
 import { getUserOverrides } from "@cobalt-web/server-data/providers/plaid/transactions/queries";
 import type { UserOverrides } from "@cobalt-web/server-data/providers/plaid/transactions/queries";
+import { enrichTransactionsForPlaidItem } from "@cobalt-web/server-data/merchants/enrich";
 import type { AccountBase } from "plaid";
 import { FatalError, RetryableError, getWritable } from "workflow";
 
@@ -336,6 +337,20 @@ export async function syncTransactionsStep(
     }
     throw error;
   }
+}
+
+/**
+ * SRI-352 — enrich the user's recently-modified in-store Plaid txns against
+ * the canonical merchant directory. Runs after `syncTransactionsStep`. Same
+ * code path for initial sync, continuous sync, and webhook-triggered sync.
+ * Per-field write policy: only fill gaps where Plaid sent NULL; respects
+ * `transaction.lockedFields`; only writes when confidence is `exact` or `high`.
+ *
+ * Idempotent — re-runs are safe (already-filled fields are skipped).
+ */
+export async function enrichTransactionsStep(itemId: string) {
+  "use step";
+  return await enrichTransactionsForPlaidItem(itemId);
 }
 
 export async function syncBalancesStep(accessToken: string, _itemId: string) {

@@ -46,6 +46,7 @@ export const Route = createFileRoute("/_auth/transactions/")({
     amountMin: search.amountMin,
     bank: search.bank,
     categoryIds: search.categoryIds,
+    channel: search.channel,
     dateFrom: search.dateFrom,
     dateTo: search.dateTo,
     query: search.query,
@@ -107,6 +108,7 @@ function TransactionsListPage() {
     amountMin: search.amountMin,
     bank: search.bank,
     categoryIds: search.categoryIds,
+    channel: search.channel,
     dateFrom: search.dateFrom,
     dateTo: search.dateTo,
     query: search.query,
@@ -121,6 +123,7 @@ function TransactionsListPage() {
     (search.categoryIds && search.categoryIds.length > 0) ||
     (search.tagIds && search.tagIds.length > 0) ||
     (search.status && search.status !== "all") ||
+    (search.channel && search.channel !== "all") ||
     (search.query && search.query.length > 0) ||
     search.dateFrom ||
     search.dateTo,
@@ -432,6 +435,7 @@ function TransactionsListPage() {
                   next.categoryIds && next.categoryIds.length > 0
                     ? [...next.categoryIds]
                     : undefined,
+                channel: next.channel && next.channel !== "all" ? next.channel : undefined,
                 dateFrom: next.dateFrom || undefined,
                 dateTo: next.dateTo || undefined,
                 query: next.query && next.query.length > 0 ? next.query : undefined,

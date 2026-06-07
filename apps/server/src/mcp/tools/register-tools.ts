@@ -33,6 +33,6 @@ export function registerMcpTools(server: McpServer, userId: string): void {
       }),
       title: "Execute code",
     },
-    ({ code }) => executeCode(userId, code),
+    ({ code }: { code: string }) => executeCode(userId, code),
   );
 }

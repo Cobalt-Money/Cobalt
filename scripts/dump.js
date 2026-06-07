@@ -22,6 +22,7 @@ import { resolve } from "node:path";
  *      DUMP_EXCLUDE_SCHEMAS (extra comma-separated schema names)
  */
 import { config } from "dotenv";
+
 config({ path: resolve(import.meta.dir, "../apps/server/.env"), quiet: true });
 const src = process.env.MIGRATION_URI ?? process.env.DATABASE_URL;
 const dst =

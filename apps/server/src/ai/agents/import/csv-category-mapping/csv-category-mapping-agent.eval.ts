@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
 import { evalite } from "evalite";
 
@@ -13,7 +12,7 @@ import {
 } from "../../_shared/eval-scorers.js";
 import { runCsvCategoryMappingAgent } from "./csv-category-mapping-agent.js";
 
-const here = dirname(fileURLToPath(import.meta.url));
+const here = import.meta.dirname;
 const fixturesPath = join(here, "csv-category-mapping-agent.fixtures.json");
 
 interface Fixture {

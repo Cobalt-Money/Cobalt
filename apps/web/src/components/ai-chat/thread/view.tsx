@@ -226,7 +226,7 @@ function rowsEqual(a: ChatMessageRow, b: ChatMessageRow): boolean {
 }
 
 const UserBubble = memo(
-  function UserBubble({ row }: { row: ChatMessageRow }) {
+  ({ row }: { row: ChatMessageRow }) => {
     const text = useMemo(() => getTextContent(row), [row]);
     const files = useMemo(() => getFileParts(row), [row]);
     return (
@@ -255,7 +255,7 @@ const UserBubble = memo(
 );
 
 const AssistantBubble = memo(
-  function AssistantBubble({ row }: { row: ChatMessageRow }) {
+  ({ row }: { row: ChatMessageRow }) => {
     const message = useMemo(() => rowToUIMessage(row), [row]);
     return (
       <Message className="max-w-full" from="assistant">

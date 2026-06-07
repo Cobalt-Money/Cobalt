@@ -1,5 +1,7 @@
 import { cn } from "@cobalt-web/ui/lib/utils";
 
+const CASH_ICON_URL = new URL("../../assets/vectors/cash.svg", import.meta.url).href;
+
 /** Cream tile with `cash.svg` glyph. Used for manual cash accounts. */
 export function CashAccountLogo({ className }: { className?: string }) {
   return (
@@ -9,12 +11,7 @@ export function CashAccountLogo({ className }: { className?: string }) {
         className,
       )}
     >
-      <img
-        alt=""
-        aria-hidden
-        className="size-[70%] object-contain"
-        src="/assets/vectors/cash.svg"
-      />
+      <img alt="" aria-hidden className="size-[70%] object-contain" src={CASH_ICON_URL} />
     </div>
   );
 }

@@ -57,3 +57,21 @@ export { csvMappingCache } from "./imports/csv-mapping-cache";
 export { csvColumnRoleCache } from "./imports/csv-column-role-cache";
 export { accountMappingCache } from "./imports/account-mapping-cache";
 export { categoryMappingCache } from "./imports/category-mapping-cache";
+
+// SRI-349 — social layer (friends.cobaltpf.com). Mix of Zero-synced + server-only.
+//   - socialFriendship, socialPost, socialVisibilityRule, socialPrivacyZone → Zero
+//   - socialInvite, socialInviteRedemption, merchantGeocodeCache → server-only
+export {
+  socialFriendship,
+  socialInvite,
+  socialInviteRedemption,
+  socialPost,
+  socialVisibilityRule,
+  socialPrivacyZone,
+  merchantGeocodeCache,
+} from "./social";
+
+// SRI-352 — canonical merchant directory. Server-only: read by enrichment
+// pipeline (SRI-350) at txn write time; never synced to Zero clients.
+export { merchant } from "./merchants/merchant";
+export { merchantLocation } from "./merchants/merchant-location";

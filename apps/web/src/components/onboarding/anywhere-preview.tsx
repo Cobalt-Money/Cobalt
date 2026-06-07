@@ -1,6 +1,8 @@
 import { LogoCDN } from "@cobalt-web/ui/cobalt/logos/logo-cdn";
 import { CategoryIcon, resolveCategoryIcon } from "@cobalt-web/ui/cobalt/transactions/categories";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import pendingSvgUrl from "@cobalt-web/ui/assets/vectors/pending.svg";
+import postedSvgUrl from "@cobalt-web/ui/assets/vectors/posted.svg";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 
@@ -318,7 +320,7 @@ function CobaltMock({
                   <img
                     alt="Pending"
                     className="size-4 shrink-0 object-contain"
-                    src="/assets/vectors/pending.svg"
+                    src={pendingSvgUrl}
                   />
                   <span className="text-muted-foreground">Pending</span>
                 </div>
@@ -518,7 +520,7 @@ function TxnRow({
         <img
           alt={pending ? "Pending" : "Posted"}
           className="size-3.5 shrink-0 object-contain"
-          src={pending ? "/assets/vectors/pending.svg" : "/assets/vectors/posted.svg"}
+          src={pending ? pendingSvgUrl : postedSvgUrl}
         />
         <span className="whitespace-nowrap text-[10px] text-muted-foreground">{date}</span>
         <div className="flex min-w-0 items-center gap-2">

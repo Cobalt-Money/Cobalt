@@ -22,6 +22,41 @@ export default defineConfig({
   ],
   overrides: [
     {
+      // One-off data-import / ETL scripts. Style rules that hurt readability
+      // in throwaway scripts (counters, callback main(), template concat) are
+      // relaxed; correctness rules stay on.
+      files: [
+        "packages/db/scripts/**/*.{ts,tsx,js,jsx}",
+        // SRI-352 merchant match engine — heavy decision tree with many tier
+        // branches; same rule relaxations as ETL scripts.
+        "packages/server-data/src/merchants/**/*.{ts,tsx,js,jsx}",
+      ],
+      rules: {
+        "@typescript-eslint/no-non-null-assertion": "off",
+        complexity: "off",
+        eqeqeq: "off",
+        "no-empty-function": "off",
+        "no-eq-null": "off",
+        "no-negated-condition": "off",
+        "no-plusplus": "off",
+        "no-promise-executor-return": "off",
+        "no-shadow": "off",
+        "no-unused-vars": "off",
+        "prefer-destructuring": "off",
+        "prefer-template": "off",
+        "promise/avoid-new": "off",
+        "promise/param-names": "off",
+        "promise/prefer-await-to-callbacks": "off",
+        "promise/prefer-await-to-then": "off",
+        "require-await": "off",
+        "sort-keys": "off",
+        "unicorn/consistent-function-scoping": "off",
+        "unicorn/no-array-reduce": "off",
+        "unicorn/no-lonely-if": "off",
+        "unicorn/no-negated-condition": "off",
+      },
+    },
+    {
       // SQL lives in `packages/server-data/<domain>/{queries,mutations}.ts`.
       // Routes, workflows, cron, mcp, agents — anything under `apps/` — go
       // through the repo layer. Package internals (server-data, db, auth's
@@ -59,6 +94,7 @@ export default defineConfig({
         // rewrites string args to the `import(...)` form, which this rule then
         // flags as a type annotation. False positive in test contexts.
         "@typescript-eslint/consistent-type-imports": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
         "jest/max-expects": "off",
         "no-restricted-imports": "off",
         "vitest/max-expects": "off",
@@ -76,14 +112,24 @@ export default defineConfig({
   rules: {
     "@typescript-eslint/no-empty-object-type": "off",
     "func-style": "off",
+    "jsdoc/require-throws-type": "off",
+    "jsx-a11y/control-has-associated-label": "off",
+    "jsx-a11y/no-noninteractive-element-interactions": "off",
     "no-barrel-file": "warn",
     "no-empty-interface": "off",
     "no-inline-comments": "off",
     "no-use-before-define": "off",
+    "prefer-arrow-callback": "off",
     "react-perf/jsx-no-new-function-as-prop": "off",
+    "react/no-object-type-as-default-prop": "off",
+    "react/no-unstable-nested-components": "off",
     "require-await": "error",
+    "require-unicode-regexp": "off",
+    "unicorn/consistent-function-scoping": "off",
     "unicorn/explicit-length-check": "error",
+    "unicorn/prefer-import-meta-properties": "off",
     "vitest/no-importing-vitest-globals": "off",
+    "vitest/prefer-called-exactly-once-with": "off",
     "vitest/prefer-called-once": "off",
     "vitest/prefer-describe-function-title": "off",
     "vitest/prefer-lowercase-title": "off",

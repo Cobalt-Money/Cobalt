@@ -23,6 +23,7 @@ import {
   syncBalancesStep,
   syncRecurringStep,
   syncTransactionsStep,
+  enrichTransactionsStep,
 } from "./steps";
 import type { PlaidOnboardingPhase } from "./steps";
 
@@ -70,6 +71,7 @@ export async function plaidSyncWorkflow(webhook: SyncUpdatesWebhook): Promise<Pl
       syncTransactionsStep(item.plaidAccessToken, item.plaidItemId, item.transactionsCursor),
       syncBalancesStep(item.plaidAccessToken, item.plaidItemId),
     ]);
+    await enrichTransactionsStep(item.plaidItemId);
 
     // Snapshots are written by cron + at account creation only — recurring
     // webhooks update live balances and let the next cron tick capture state.
@@ -225,6 +227,7 @@ export async function plaidAddAccountWorkflow(
         syncTransactionsStep(accessToken, plaidItemId, item.transactionsCursor),
         syncBalancesStep(accessToken, plaidItemId),
       ]);
+      await enrichTransactionsStep(plaidItemId);
       await emit("transactions", "done", {
         added: txResult.added,
         modified: txResult.modified,
@@ -259,6 +262,7 @@ export async function plaidAddAccountWorkflow(
         syncTransactionsStep(accessToken, plaidItemId, item.transactionsCursor),
         syncBalancesStep(accessToken, plaidItemId),
       ]);
+      await enrichTransactionsStep(plaidItemId);
       await emit("transactions", "done", {
         added: txResult.added,
         modified: txResult.modified,
@@ -376,6 +380,7 @@ async function runOnboardingSyncBranch(
     syncTransactionsStep(accessToken, itemId, null),
     syncBalancesStep(accessToken, itemId),
   ]);
+  await enrichTransactionsStep(itemId);
   await emit("transactions", "done", {
     added: txResult.added,
     modified: txResult.modified,

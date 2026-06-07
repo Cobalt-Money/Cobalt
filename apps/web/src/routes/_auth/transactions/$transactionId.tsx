@@ -24,6 +24,7 @@ import { useEffect, useMemo, useState } from "react";
 import { mapZeroTransactionDetailRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 
 import { CategoryFormDialog } from "@/components/categories/category-form-dialog";
+import { ShareToFriendsButton } from "@/components/social/share-to-friends-button";
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 import { useGeocodeSearch } from "@/hooks/use-geocode-search";
@@ -64,6 +65,8 @@ function TransactionDetailRoute() {
   const [detailRow, detailResult] = useQuery(
     queries.transactions.detail({ transactionId }),
   );
+  const [myPosts] = useQuery(queries.social.postsMine());
+  const existingPost = myPosts.find((p) => p.transactionId === transactionId);
 
   const mapped = useMemo(
     () => (detailRow ? mapZeroTransactionDetailRow(detailRow) : null),
@@ -471,12 +474,20 @@ function TransactionDetailRoute() {
     <SidebarShellLayout flushBottom>
       <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">
         {transaction ? (
-          <TransactionDetailView
-            edit={edit}
-            editEvents={editEvents}
-            tagsById={tagsById}
-            transaction={transaction}
-          />
+          <>
+            <TransactionDetailView
+              edit={edit}
+              editEvents={editEvents}
+              tagsById={tagsById}
+              transaction={transaction}
+            />
+            <div className="mx-auto w-full max-w-2xl px-6 pb-6">
+              <ShareToFriendsButton
+                existingPostId={existingPost?.id ?? null}
+                transactionId={transactionId}
+              />
+            </div>
+          </>
         ) : (
           <div className="mx-auto flex min-h-48 w-full max-w-2xl items-center justify-center text-muted-foreground text-sm">
             Loading…

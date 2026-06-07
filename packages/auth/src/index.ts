@@ -2,14 +2,16 @@ import { apiKey } from "@better-auth/api-key";
 import { cimd } from "@better-auth/cimd";
 import { oauthProvider } from "@better-auth/oauth-provider";
 import { stripe } from "@better-auth/stripe";
+import { invite } from "@cobalt-web/auth-plugin-invite";
 import { db } from "@cobalt-web/db";
 import * as authSchema from "@cobalt-web/db/schema/users/auth/auth";
 import * as stripeSchema from "@cobalt-web/db/schema/users/subscriptions/stripe";
+import { createFriendship } from "@cobalt-web/db/social/friendship";
 import { env } from "@cobalt-web/env/server";
 import { Redis } from "@upstash/redis";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { anonymous, jwt, lastLoginMethod, openAPI } from "better-auth/plugins";
+import { anonymous, jwt, lastLoginMethod, openAPI, username } from "better-auth/plugins";
 import { bearer } from "better-auth/plugins/bearer";
 import { Stripe } from "stripe";
 
@@ -228,6 +230,43 @@ export const auth = betterAuth({
       emailDomainName: "demo.cobalt.internal",
       // No link-account hook: demo users never upgrade in-place; if a visitor
       // wants to keep their data they sign up fresh.
+    }),
+    /**
+     * SRI-349 — handles for `@mention`-style friend invites in friends.cobaltpf.com.
+     * Adds `username` (unique) + `displayUsername` columns to `user`. Users set
+     * one post-signup; null until then. Invite lookup resolves `@bob` → user.id.
+     */
+    username({
+      maxUsernameLength: 30,
+      minUsernameLength: 3,
+    }),
+    /**
+     * SRI-349 — generic invite primitive for friends.cobaltpf.com. Plugin owns
+     * token + cookie + post-signup hook + ledger; `onAccept` is Cobalt's bridge
+     * to the friend graph (today) and family/team orgs (later).
+     */
+    invite({
+      allowedKinds: ["friendship"] as const,
+      inviteUrlBase: `${spaOrigin.replace("://web.", "://friends.")}/invite`,
+      onAccept: async ({ invite: inv, redeemerUserId }) => {
+        switch (inv.kind) {
+          case "friendship": {
+            await createFriendship(inv.inviterUserId, redeemerUserId);
+            return;
+          }
+          // case "family":
+          //   await joinFamily(inv.organizationId!, redeemerUserId);
+          //   return;
+          // case "team":
+          //   await joinTeam(inv.organizationId!, inv.role, redeemerUserId);
+          //   return;
+          default: {
+            throw new Error(`invite: unknown kind ${inv.kind}`);
+          }
+        }
+      },
+      // sendInvite wired when Resend lands (SRI-3xx). Until then, inviter
+      // copies the URL from the create response and shares manually.
     }),
     /**
      * Client ID Metadata Documents (CIMD) — MCP 2025-11-25 spec default.

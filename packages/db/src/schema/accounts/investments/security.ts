@@ -73,7 +73,7 @@ export const security = pgTable(
     index("security_sector_idx").on(t.sector),
     uniqueIndex("security_source_external_id_idx")
       .on(t.source, t.externalId)
-      .where(sql`external_id IS NOT NULL`),
+      .where(sql`(external_id IS NOT NULL)`),
   ],
 );
 

@@ -13,6 +13,11 @@ export const user = pgTable(
   "user",
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    /**
+     * Display variant preserving original casing while `username` is canonical
+     * lowercase for uniqueness. Plugin convention.
+     */
+    displayUsername: text("display_username"),
     email: text("email").unique(),
     emailVerified: boolean("email_verified")
       .$defaultFn(() => false)
@@ -29,10 +34,27 @@ export const user = pgTable(
     name: text("name").notNull(),
     onboardedAt: timestamp("onboarded_at"),
     onboardingStep: text("onboarding_step"),
+    /**
+     * SRI-349 — E.164 phone number for friend-invite matching. Optional profile
+     * field. Not currently used for auth/SMS-OTP — if Better Auth Phone Number
+     * plugin lands later, swap to that and migrate column ownership.
+     *
+     * Normalize to E.164 (+15551234567) at insert.
+     */
+    phoneNumber: text("phone_number").unique(),
     stripeCustomerId: text("stripe_customer_id").unique(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    /**
+     * SRI-349 — Better Auth Username plugin. Unique handle for `@mention`-style
+     * friend invites. Null until user picks one (set via plugin endpoint).
+     */
+    username: text("username").unique(),
   },
-  (table) => [index("user_email_idx").on(table.email)],
+  (table) => [
+    index("user_email_idx").on(table.email),
+    index("user_username_idx").on(table.username),
+    index("user_phone_number_idx").on(table.phoneNumber),
+  ],
 );
 
 export const session = pgTable(

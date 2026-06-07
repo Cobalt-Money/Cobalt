@@ -23,7 +23,7 @@ export function ZeroProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const session = useAppSession();
   const authenticatedUserId = session.data?.user.id;
-  const userID = authenticatedUserId ?? "anon";
+  const userID = authenticatedUserId;
   const context = useMemo<Context | undefined>(
     () => (authenticatedUserId ? { userId: authenticatedUserId } : undefined),
     [authenticatedUserId],

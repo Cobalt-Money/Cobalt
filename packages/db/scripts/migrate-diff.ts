@@ -15,7 +15,7 @@ if (!url) {
   throw new Error("MIGRATION_URI or LOCAL_DATABASE_URL must be set");
 }
 
-const redacted = url.replace(/\/\/[^@]+@/, "//***@");
+const redacted = url.replace(/\/\/[^@]+@/u, "//***@");
 console.log(`[migrate-diff] target: ${redacted}\n`);
 
 const migrationsDir = path.resolve(__dirname, "../src/migrations");

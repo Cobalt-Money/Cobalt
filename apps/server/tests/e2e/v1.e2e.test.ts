@@ -25,7 +25,7 @@
  *     not worth the dependency for v1.
  */
 
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, expectTypeOf, test } from "vitest";
 
 import { BASE_URL, issueTestApiKey, v1 } from "./_helpers/api-key";
 
@@ -52,7 +52,7 @@ describe("v1 e2e", () => {
       expect(res.status).toBe(401);
       const body = (await res.json()) as { code: string };
       // Better Auth returns the apikey plugin error codes in UPPER_SNAKE_CASE.
-      expect(body.code).toMatch(/INVALID_API_KEY|KEY_NOT_FOUND/);
+      expect(body.code).toMatch(/INVALID_API_KEY|KEY_NOT_FOUND/u);
     });
   });
 
