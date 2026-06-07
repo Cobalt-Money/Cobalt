@@ -242,6 +242,11 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: ./.github/actions/setup
+      - name: Enable Postgres extensions
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
       - name: Apply schema to CI Postgres (drizzle-kit push)
         env:
           SKIP_ENV_VALIDATION: "1"
