@@ -6,7 +6,7 @@
  *
  * Env: GOOGLE_PLACES_KEY (required), CONCURRENCY (default 5)
  */
-import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { db, merchant, pool } from "./_lib/db";
 

@@ -95,14 +95,20 @@ async function main() {
 
   console.log(`[merge] applying ${ultimate.size} merges...`);
   let dropCount = 0;
-  for (const [dropId, keepId] of ultimate.entries()) {
-    await db.execute(sql`
-      UPDATE merchant_location SET merchant_id = ${keepId}, updated_at = now()
-       WHERE merchant_id = ${dropId};
-    `);
-    await db.execute(sql`DELETE FROM merchant WHERE id = ${dropId};`);
-    dropCount++;
-  }
+  // Wrap all (UPDATE location, DELETE merchant) pairs in one tx so a crash
+  // mid-loop never leaves merchant_location rows pointing at a deleted brand
+  // (FK CASCADE would otherwise wipe them) or strands a kept brand without
+  // its inherited locations.
+  await db.transaction(async (tx) => {
+    for (const [dropId, keepId] of ultimate.entries()) {
+      await tx.execute(sql`
+        UPDATE merchant_location SET merchant_id = ${keepId}, updated_at = now()
+         WHERE merchant_id = ${dropId};
+      `);
+      await tx.execute(sql`DELETE FROM merchant WHERE id = ${dropId};`);
+      dropCount++;
+    }
+  });
   console.log(`[merge] deleted_merchants=${dropCount}`);
 
   console.log("[merge] recomputing location_count + is_chain...");

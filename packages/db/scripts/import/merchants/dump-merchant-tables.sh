@@ -7,14 +7,14 @@ set -euo pipefail
 # refuses to dump a newer server, so we exec pg_dump *inside* the container.
 CONTAINER="${PG_CONTAINER:-cobalt-local-db-postgres-1}"
 # --data-only: skip CREATE TABLE (already exists in prod via migration).
-# --column-inserts: portable INSERTs (slower but survives FK ordering).
+# Default format uses COPY ... FROM stdin — single bulk stream, ~100x faster
+# over the network than --column-inserts (which fires one INSERT per row).
 # --disable-triggers: skip enforcing FK during restore (we order tables ourselves).
 exec docker exec -i "$CONTAINER" pg_dump \
   -U postgres -d cobalt \
   --data-only \
   --no-owner \
   --no-acl \
-  --column-inserts \
   --disable-triggers \
   --table=public.merchant \
   --table=public.merchant_location

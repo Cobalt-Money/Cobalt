@@ -210,10 +210,8 @@ async function main() {
   async function worker(_id: number) {
     while (cursor < rows.rows.length && !stopped) {
       if (callCount >= MAX_CALLS) {
-        if (!stopped) {
-          console.log(`[places-all] hit MAX_CALLS=${MAX_CALLS} cap, stopping`);
-          stopped = true;
-        }
+        console.log(`[places-all] hit MAX_CALLS=${MAX_CALLS} cap, stopping`);
+        stopped = true;
         return;
       }
       const idx = cursor++;

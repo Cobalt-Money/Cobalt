@@ -246,7 +246,7 @@ export const auth = betterAuth({
      * to the friend graph (today) and family/team orgs (later).
      */
     invite({
-      allowedKinds: ["friendship", "family", "team"] as const,
+      allowedKinds: ["friendship"] as const,
       inviteUrlBase: `${spaOrigin.replace("://web.", "://friends.")}/invite`,
       onAccept: async ({ invite: inv, redeemerUserId }) => {
         switch (inv.kind) {

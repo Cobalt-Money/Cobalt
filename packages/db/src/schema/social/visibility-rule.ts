@@ -19,7 +19,10 @@ export const socialVisibilityRule = pgTable(
       .references(() => category.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     id: uuid("id").defaultRandom().primaryKey(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),

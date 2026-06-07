@@ -8,7 +8,7 @@
  * Cache attempts in merchant.domain_guess_attempts so reruns skip dead candidates.
  * Throttle: 20 parallel, ~50 RPS.
  */
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { db, merchant, pool } from "./_lib/db";
 

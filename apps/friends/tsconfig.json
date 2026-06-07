@@ -1,23 +1,11 @@
 {
+  "extends": "../../packages/config/tsconfig.base.json",
   "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "target": "ES2022",
-    "jsx": "react-jsx",
-    "module": "ESNext",
-    "lib": ["ES2022", "ES2023", "ES2024", "DOM", "DOM.Iterable"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": ["vite/client", "vitest/globals"],
-
-    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "resolveJsonModule": true,
     "noEmit": true,
-
-    "skipLibCheck": true,
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {

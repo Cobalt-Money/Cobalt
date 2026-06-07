@@ -33,11 +33,7 @@ import {
 } from "@cobalt-web/server-data/providers/plaid/transactions/mutations";
 import { getUserOverrides } from "@cobalt-web/server-data/providers/plaid/transactions/queries";
 import type { UserOverrides } from "@cobalt-web/server-data/providers/plaid/transactions/queries";
-import { findMerchantForTransaction } from "@cobalt-web/server-data/merchants/find";
-// eslint-disable-next-line no-restricted-imports
-import { db } from "@cobalt-web/db";
-import { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
-import { and, eq, gte, sql } from "drizzle-orm";
+import { enrichTransactionsForPlaidItem } from "@cobalt-web/server-data/merchants/enrich";
 import type { AccountBase } from "plaid";
 import { FatalError, RetryableError, getWritable } from "workflow";
 
@@ -352,152 +348,9 @@ export async function syncTransactionsStep(
  *
  * Idempotent — re-runs are safe (already-filled fields are skipped).
  */
-// eslint-disable-next-line complexity
 export async function enrichTransactionsStep(itemId: string) {
   "use step";
-
-  const item = await db.query.plaidConnection.findFirst({
-    columns: { userId: true },
-    where: { plaidItemId: itemId },
-  });
-  if (!item) {
-    return { enriched: 0, scanned: 0 };
-  }
-
-  // Pull this user's recent in-store Plaid txns with at least one gappable field.
-  const candidates = await db
-    .select({
-      address: transactionTable.address,
-      city: transactionTable.city,
-      date: transactionTable.date,
-      id: transactionTable.id,
-      lat: transactionTable.lat,
-      lockedFields: transactionTable.lockedFields,
-      lon: transactionTable.lon,
-      merchantName: transactionTable.merchantName,
-      name: transactionTable.name,
-      paymentChannel: transactionTable.paymentChannel,
-      postalCode: transactionTable.postalCode,
-      region: transactionTable.region,
-      storeNumber: transactionTable.storeNumber,
-      website: transactionTable.website,
-    })
-    .from(transactionTable)
-    .where(
-      and(
-        eq(transactionTable.userId, item.userId),
-        eq(transactionTable.source, "plaid"),
-        eq(transactionTable.paymentChannel, "in store"),
-        gte(transactionTable.date, sql`current_date - interval '180 days'`),
-        // gappable: missing any of website / address / lat / lon
-        sql`(${transactionTable.website} IS NULL OR ${transactionTable.address} IS NULL OR ${transactionTable.lat} IS NULL OR ${transactionTable.lon} IS NULL)`,
-      ),
-    );
-
-  let enriched = 0;
-  for (const t of candidates) {
-    // Preflight skip: full location already present.
-    if (
-      t.address &&
-      t.city &&
-      t.region &&
-      t.lat !== null &&
-      t.lat !== undefined &&
-      t.lon !== null &&
-      t.lon !== undefined
-    ) {
-      continue;
-    }
-
-    const sourceName = t.merchantName ?? t.name;
-    if (!sourceName) {
-      continue;
-    }
-
-    const res = await findMerchantForTransaction(
-      {
-        address: t.address,
-        city: t.city,
-        date: t.date,
-        lat: t.lat,
-        lon: t.lon,
-        name: sourceName,
-        paymentChannel: "in store",
-        postalCode: t.postalCode,
-        region: t.region,
-        storeNumber: t.storeNumber,
-      },
-      { userId: item.userId },
-    );
-    if (!res || (res.confidence !== "exact" && res.confidence !== "high")) {
-      continue;
-    }
-
-    const locked = (t.lockedFields ?? []) as string[];
-    const lockedSet = new Set(locked);
-    const set: Record<string, unknown> = {};
-
-    // Brand name: promote when Plaid's is fully uppercase OR is a strict substring of canonical.
-    if (!lockedSet.has("merchantName") && !lockedSet.has("merchant_name")) {
-      if (!t.merchantName) {
-        set.merchantName = res.merchant.canonicalName;
-      } else if (
-        (t.merchantName === t.merchantName.toUpperCase() ||
-          res.merchant.canonicalName.toLowerCase().includes(t.merchantName.toLowerCase())) &&
-        t.merchantName !== res.merchant.canonicalName
-      ) {
-        set.merchantName = res.merchant.canonicalName;
-      }
-    }
-    if (!t.website && res.merchant.domain && !lockedSet.has("website")) {
-      set.website = res.merchant.domain;
-    }
-    if (res.location) {
-      if (!t.address && res.location.address && !lockedSet.has("address")) {
-        set.address = res.location.address;
-      }
-      if (!t.city && res.location.city && !lockedSet.has("city")) {
-        set.city = res.location.city;
-      }
-      if (!t.region && res.location.region && !lockedSet.has("region")) {
-        set.region = res.location.region;
-      }
-      if (!t.postalCode && res.location.postalCode && !lockedSet.has("postalCode")) {
-        set.postalCode = res.location.postalCode;
-      }
-      if (
-        (t.lat === null || t.lat === undefined) &&
-        res.location.lat !== null &&
-        res.location.lat !== undefined &&
-        !lockedSet.has("lat")
-      ) {
-        set.lat = res.location.lat;
-      }
-      if (
-        (t.lon === null || t.lon === undefined) &&
-        res.location.lon !== null &&
-        res.location.lon !== undefined &&
-        !lockedSet.has("lon")
-      ) {
-        set.lon = res.location.lon;
-      }
-      if (!t.storeNumber && res.location.storeNumber && !lockedSet.has("storeNumber")) {
-        set.storeNumber = res.location.storeNumber;
-      }
-    }
-
-    if (Object.keys(set).length === 0) {
-      continue;
-    }
-
-    await db
-      .update(transactionTable)
-      .set({ ...set, updatedAt: new Date() })
-      .where(eq(transactionTable.id, t.id));
-    enriched += 1;
-  }
-
-  return { enriched, scanned: candidates.length };
+  return await enrichTransactionsForPlaidItem(itemId);
 }
 
 export async function syncBalancesStep(accessToken: string, _itemId: string) {
