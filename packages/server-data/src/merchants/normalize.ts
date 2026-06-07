@@ -8,7 +8,7 @@ const SUFFIXES = /\b(inc|llc|corp|co|ltd|the)\b\.?/g;
 export function normalizeMerchantName(s: string): string {
   return s
     .toLowerCase()
-    .replaceAll(/#?\s*\d+[a-z]{0,2}\s*$/gi, "") // trailing store number / chain id (e.g. "#4823", "47b")
+    .replaceAll(/#?[ \t]{0,4}\d{1,10}[a-z]{0,2}[ \t]{0,4}$/gi, "") // trailing store number / chain id (e.g. "#4823", "47b") — bounded to avoid ReDoS
     .replace(SUFFIXES, "")
     .replaceAll(/[^a-z0-9 ]+/g, " ")
     .replaceAll(/\s+/g, " ")
