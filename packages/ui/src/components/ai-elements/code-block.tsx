@@ -152,7 +152,7 @@ const getHighlighter = (language: string): Promise<HighlighterCore> => {
 
   const highlighterPromise = createHighlighterCore({
     engine: createJavaScriptRegexEngine({ forgiving: true }),
-    langs: [import(`shiki/langs/${language}.mjs`)],
+    langs: [import(/* @vite-ignore */ `shiki/langs/${language}.mjs`)],
     themes: [githubLight, githubDark],
   });
 

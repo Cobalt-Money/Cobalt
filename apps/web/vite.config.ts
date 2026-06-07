@@ -7,6 +7,7 @@ import remarkFrontmatter from "remark-frontmatter";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 const SSR_STUB_PREFIX = "\0ssr-stub:";
 
@@ -87,21 +88,10 @@ function patchServerRequirePlugin(): Plugin {
 
 export default defineConfig({
   optimizeDeps: {
-    include: [
-      "@visx/responsive",
-      "@visx/pattern",
-      "@visx/gradient",
-      "@visx/shape",
-      "@visx/curve",
-      "@visx/scale",
-      "@visx/event",
-      "@number-flow/react",
-      "d3-shape",
-      "d3-array",
-      "lodash/debounce",
-    ],
+    include: ["@number-flow/react"],
   },
   plugins: [
+    tsconfigPaths({ ignoreConfigErrors: true }),
     tailwindcss(),
     ssrStubPlugin(),
     {
@@ -119,10 +109,21 @@ export default defineConfig({
   preview: {
     port: 3001,
   },
-  resolve: {
-    tsconfigPaths: true,
-  },
   server: {
     port: 3001,
+  },
+  // @visx/* packages ship malformed ESM (imports without .js extension).
+  // Vite 7 + Node ESM is strict; force Vite to bundle these instead of
+  // leaving them external for Node's resolver.
+  ssr: {
+    noExternal: [
+      "@visx/responsive",
+      "@visx/pattern",
+      "@visx/gradient",
+      "@visx/shape",
+      "@visx/curve",
+      "@visx/scale",
+      "@visx/event",
+    ],
   },
 });

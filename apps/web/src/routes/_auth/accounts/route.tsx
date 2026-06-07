@@ -4,7 +4,7 @@ import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router"
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 
-import { AccountsLayoutProvider, useAccountsLayout } from "./accounts-layout-context";
+import { AccountsLayoutProvider, useAccountsLayout } from "./-accounts-layout-context";
 
 export const Route = createFileRoute("/_auth/accounts")({
   component: AccountsLayout,
