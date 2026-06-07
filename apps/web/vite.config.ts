@@ -86,15 +86,6 @@ function patchServerRequirePlugin(): Plugin {
 }
 
 export default defineConfig({
-  build: {
-    // Rolldown's default oxc-minify shadows imported single-letter names with
-    // local `var` hoisting inside __commonJS wrappers (recharts imports
-    // es-toolkit/compat/* which is CJS-only), producing `var t = t()` where
-    // the local `t` shadows the imported `t`. Surfaces as "t is not a
-    // function" inside chart-*.js on prod. Switch to esbuild minify until
-    // upstream fix lands.
-    minify: "esbuild",
-  },
   optimizeDeps: {
     include: [
       "@visx/responsive",
