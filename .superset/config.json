@@ -1,5 +1,12 @@
 {
-  "setup": ["git fetch\ngit pull origin main\nbun run sync-env\nbun run sync-sandbox\nbun install"],
+  "setup": [
+    "git fetch",
+    "git pull origin main",
+    "cp /Users/sriketkomali/repos/projects/cobalt/Cobalt-Web/sync-env.sh \"$PWD/sync-env.sh\"",
+    "bun run sync-env",
+    "bun run sync-sandbox",
+    "bun install"
+  ],
   "teardown": ["rm -rf .node_modules"],
   "run": ["bun dev"]
 }

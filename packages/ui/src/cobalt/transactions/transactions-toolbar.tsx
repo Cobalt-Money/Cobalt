@@ -249,7 +249,7 @@ function FilterChip({
       )}
       <button
         aria-label={label ? `Remove filter: ${label}` : "Remove filter"}
-        className="flex h-full items-center border-l px-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="flex h-full items-center px-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
         onClick={onRemove}
         type="button"
       >
