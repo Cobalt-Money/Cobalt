@@ -19,8 +19,8 @@ const dbProvider = pool ? zeroNodePg(schema, pool) : undefined;
 const zeroRouter = createApp()
   .post("/query", requireAuth, async (c) => {
     const zeroContext = c.get("zeroContext");
-    const result = await handleQueryRequest(
-      (name, args) =>
+    const result = await handleQueryRequest({
+      handler: (name, args) =>
         (
           mustGetQuery(
             queries as unknown as Parameters<typeof mustGetQuery>[0],
@@ -30,9 +30,10 @@ const zeroRouter = createApp()
           args,
           ctx: zeroContext,
         }),
+      request: c.req.raw,
       schema,
-      c.req.raw,
-    );
+      userID: zeroContext?.userId,
+    });
     return c.json(result);
   })
   .post("/mutate", requireAuth, async (c) => {
@@ -42,9 +43,9 @@ const zeroRouter = createApp()
     const zeroContext = c.get("zeroContext");
 
     try {
-      const result = await handleMutateRequest(
+      const result = await handleMutateRequest({
         dbProvider,
-        (transact) =>
+        handler: (transact) =>
           transact((tx, name, args) =>
             (
               mustGetMutator(mutators as unknown as Parameters<typeof mustGetMutator>[0], name) as {
@@ -60,8 +61,9 @@ const zeroRouter = createApp()
               tx,
             }),
           ),
-        c.req.raw,
-      );
+        request: c.req.raw,
+        userID: zeroContext?.userId,
+      });
       return c.json(result);
     } catch (error) {
       console.error("[zero mutate] handleMutateRequest threw", {
