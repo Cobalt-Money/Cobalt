@@ -26,10 +26,6 @@ declare namespace Preferences {
   export type Recurring = ExtensionPreferences & {}
   /** Preferences accessible in the `accounts` command */
   export type Accounts = ExtensionPreferences & {}
-  /** Preferences accessible in the `networth` command */
-  export type Networth = ExtensionPreferences & {}
-  /** Preferences accessible in the `menu-bar-networth` command */
-  export type MenuBarNetworth = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
@@ -39,9 +35,5 @@ declare namespace Arguments {
   export type Recurring = {}
   /** Arguments passed to the `accounts` command */
   export type Accounts = {}
-  /** Arguments passed to the `networth` command */
-  export type Networth = {}
-  /** Arguments passed to the `menu-bar-networth` command */
-  export type MenuBarNetworth = {}
 }
 
