@@ -7,7 +7,6 @@
 .output
 .tanstack/
 .nitro/
-routeTree.gen.ts
 
 # Deployment
 .vercel

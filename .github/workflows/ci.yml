@@ -247,6 +247,8 @@ jobs:
           PGPASSWORD: postgres
         run: |
           psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE EXTENSION IF NOT EXISTS cube;"
+          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE EXTENSION IF NOT EXISTS earthdistance;"
       - name: Apply schema to CI Postgres (drizzle-kit push)
         env:
           SKIP_ENV_VALIDATION: "1"
