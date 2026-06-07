@@ -8,7 +8,7 @@ import { useCommandMenu } from "@/components/shell/command-menu";
 import { useAccounts } from "@/hooks/use-accounts";
 import { useMutator } from "@/hooks/use-mutator";
 
-import { useAccountsLayout } from "./accounts-layout-context";
+import { useAccountsLayout } from "./-accounts-layout-context";
 
 export const Route = createFileRoute("/_auth/accounts/")({
   component: AccountsListPage,

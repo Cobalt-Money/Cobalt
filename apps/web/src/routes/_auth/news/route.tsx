@@ -3,7 +3,7 @@ import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router"
 
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 
-import { NewsLayoutProvider, useNewsLayout } from "./news-layout-context";
+import { NewsLayoutProvider, useNewsLayout } from "./-news-layout-context";
 
 export const Route = createFileRoute("/_auth/news")({
   component: NewsLayout,
