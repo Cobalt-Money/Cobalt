@@ -430,27 +430,33 @@ async function trgmTopBrands(
   regionHint: string | null = null,
 ): Promise<{ row: Merchant; sim: number }[]> {
   const normNoSpace = norm.replaceAll(/\s+/g, "");
-  // Raw SQL needed for `%` operator + similarity(); map snake_case → camelCase.
-  const res = await db.execute<{
-    id: string;
-    canonical_name: string;
-    name_normalized: string;
-    aliases: string[];
-    domain: string | null;
-    logo_url: string | null;
-    category_system_key: string;
-    subtype: string | null;
-    tags: string[];
-    is_chain: boolean;
-    location_count: number;
-    domain_guess_attempts: unknown;
-    domain_source: string | null;
-    places_id: string | null;
-    created_at: Date;
-    updated_at: Date;
-    deleted_at: Date | null;
-    sim: number;
-  }>(sql`
+  // SET LOCAL inside a tx is the pgbouncer-safe way to lower
+  // pg_trgm.word_similarity_threshold for just this query. Default 0.6 is too
+  // strict to surface candidates like "Key Food" inside Plaid "Key Food Stores"
+  // (word_similarity = 0.5625). LOCAL reverts on commit — no app-wide GUC.
+  // Raw SQL needed for the %> operator + similarity(); map snake_case → camelCase.
+  const res = await db.transaction(async (tx) => {
+    await tx.execute(sql`SET LOCAL pg_trgm.word_similarity_threshold = 0.4`);
+    return tx.execute<{
+      id: string;
+      canonical_name: string;
+      name_normalized: string;
+      aliases: string[];
+      domain: string | null;
+      logo_url: string | null;
+      category_system_key: string;
+      subtype: string | null;
+      tags: string[];
+      is_chain: boolean;
+      location_count: number;
+      domain_guess_attempts: unknown;
+      domain_source: string | null;
+      places_id: string | null;
+      created_at: Date;
+      updated_at: Date;
+      deleted_at: Date | null;
+      sim: number;
+    }>(sql`
     SELECT m.*,
            GREATEST(
              similarity(m.name_normalized, ${norm}),
@@ -481,6 +487,7 @@ async function trgmTopBrands(
       m.location_count DESC
     LIMIT ${limit}
   `);
+  });
   return res.rows.map((r) => ({
     row: {
       id: r.id,

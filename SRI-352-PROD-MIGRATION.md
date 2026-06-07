@@ -71,19 +71,12 @@ COMMIT;
 
 ---
 
-## 2b. Set pg_trgm GUC
-
-The match engine's index-friendly trgm query uses the `%>` operator, which
-honours `pg_trgm.word_similarity_threshold` (default 0.6 — too strict to
-surface "Key Food" inside "Key Food Stores"). Lower it once per DB:
-
-```sql
-ALTER DATABASE <db-name> SET pg_trgm.word_similarity_threshold = 0.4;
-```
-
-Takes effect on new connections.
-
 ## 3. Apply the new migration
+
+> Note: the match engine sets `pg_trgm.word_similarity_threshold = 0.4` via
+> `SET LOCAL` inside its own transaction (pgbouncer-safe). No DB-level GUC
+> change needed.
+
 
 ```bash
 MIGRATION_URI="$PROD_URL" bun run packages/db/scripts/migrate-debug.ts --prod
