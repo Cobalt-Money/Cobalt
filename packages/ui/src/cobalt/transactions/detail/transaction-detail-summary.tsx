@@ -23,6 +23,9 @@ import {
   TransactionDetailLocationCard,
 } from "./transaction-detail-location";
 
+const PENDING_ICON_URL = new URL("../../../assets/vectors/pending.svg", import.meta.url).href;
+const POSTED_ICON_URL = new URL("../../../assets/vectors/posted.svg", import.meta.url).href;
+
 type LocationJson = NonNullable<TransactionResponse["location"]>;
 
 const currency = new Intl.NumberFormat("en-US", {
@@ -136,7 +139,7 @@ export function TransactionDetailSummary({
             className="size-5 shrink-0 object-contain"
             decoding="async"
             height={20}
-            src={transaction.pending ? "/assets/vectors/pending.svg" : "/assets/vectors/posted.svg"}
+            src={transaction.pending ? PENDING_ICON_URL : POSTED_ICON_URL}
             width={20}
           />
           <span className="text-muted-foreground">

@@ -75,10 +75,12 @@ const CHANNEL_LABELS: Record<ChannelFilterValue, string> = {
   online: "Online",
   other: "Other",
 };
+const PENDING_ICON_URL = new URL("../../assets/vectors/pending.svg", import.meta.url).href;
+const POSTED_ICON_URL = new URL("../../assets/vectors/posted.svg", import.meta.url).href;
 const STATUS_ICON_SRC: Record<StatusFilterValue, string | null> = {
   all: null,
-  pending: "/assets/vectors/pending.svg",
-  posted: "/assets/vectors/posted.svg",
+  pending: PENDING_ICON_URL,
+  posted: POSTED_ICON_URL,
 };
 const AMOUNT_TYPE_LABELS: Record<AmountFilterType, string> = {
   all: "All",

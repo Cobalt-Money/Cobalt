@@ -51,10 +51,12 @@ const STATUS_LABELS: Record<StatusFilterValue, string> = {
   pending: "Pending",
   posted: "Posted",
 };
+const PENDING_ICON_URL = new URL("../../../assets/vectors/pending.svg", import.meta.url).href;
+const POSTED_ICON_URL = new URL("../../../assets/vectors/posted.svg", import.meta.url).href;
 const STATUS_ICON_SRC: Record<StatusFilterValue, string | null> = {
   all: null,
-  pending: "/assets/vectors/pending.svg",
-  posted: "/assets/vectors/posted.svg",
+  pending: PENDING_ICON_URL,
+  posted: POSTED_ICON_URL,
 };
 const STATUS_OPTIONS: readonly StatusFilterValue[] = ["all", "pending", "posted"];
 

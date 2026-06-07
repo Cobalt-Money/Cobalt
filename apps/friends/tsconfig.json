@@ -8,6 +8,7 @@
     "noEmit": true,
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
+    "ignoreDeprecations": "5.0",
     "paths": {
       "@/*": ["./src/*"],
       "@cobalt-web/ui/*": ["../../packages/ui/src/*"],
