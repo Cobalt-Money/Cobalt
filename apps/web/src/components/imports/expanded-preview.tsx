@@ -256,6 +256,7 @@ export function ExpandedPreview({ jobId }: { jobId: string }) {
           startResize(key, e.clientX, columnWidths[key]);
         }}
         role="separator"
+        tabIndex={-1}
       />
     </th>
   );

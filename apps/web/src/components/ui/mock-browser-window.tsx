@@ -25,15 +25,14 @@ interface BrowserWindowProps {
   sidebarItems?: SidebarItem[];
 }
 
-function SidebarContent({
-  items = [
-    { active: true, label: "Dashboard" },
-    { badge: "3", label: "Analytics" },
-    { label: "Settings" },
-    { label: "Profile" },
-  ],
-  className = "",
-}: SidebarContentProps) {
+const DEFAULT_SIDEBAR_ITEMS: SidebarItem[] = [
+  { active: true, label: "Dashboard" },
+  { badge: "3", label: "Analytics" },
+  { label: "Settings" },
+  { label: "Profile" },
+];
+
+function SidebarContent({ items = DEFAULT_SIDEBAR_ITEMS, className = "" }: SidebarContentProps) {
   return (
     <div className={`p-3 space-y-1 ${className}`}>
       {items.map((item) => {

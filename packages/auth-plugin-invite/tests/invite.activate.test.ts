@@ -37,8 +37,7 @@ describe("invite/activate", () => {
 
     expect(res.error).toBeNull();
     expect(res.data?.accepted).toBeTruthy();
-    expect(mocks.onAccept).toHaveBeenCalledOnce();
-    expect(mocks.onAccept).toHaveBeenCalledWith(
+    expect(mocks.onAccept).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({
         invite: expect.objectContaining({ token }),
       }),

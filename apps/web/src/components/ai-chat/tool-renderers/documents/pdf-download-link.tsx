@@ -7,10 +7,7 @@ interface PDFDownloadLinkProps {
   title?: string;
 }
 
-export const PDFDownloadLink = memo(function PDFDownloadLink({
-  children,
-  title = "Document",
-}: PDFDownloadLinkProps) {
+export const PDFDownloadLink = memo(({ children, title = "Document" }: PDFDownloadLinkProps) => {
   const doc = useMemo(() => <Document title={title}>{children}</Document>, [children, title]);
 
   return (

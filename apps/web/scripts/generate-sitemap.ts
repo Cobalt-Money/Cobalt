@@ -11,7 +11,7 @@ function blogSlugs(): string[] {
   try {
     return readdirSync(BLOG_DIR)
       .filter((f) => f.endsWith(".mdx"))
-      .map((f) => f.replace(/\.mdx$/, ""));
+      .map((f) => f.replace(/\.mdx$/u, ""));
   } catch {
     return [];
   }

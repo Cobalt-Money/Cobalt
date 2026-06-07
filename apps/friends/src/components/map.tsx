@@ -179,26 +179,26 @@ const CATEGORY_META: Record<
 };
 
 const CATEGORY_KEYWORDS: [Category, RegExp][] = [
-  ["coffee", /\b(coffee|starbucks|dunkin|peet|blue bottle|cafe|espresso|caribou)\b/i],
+  ["coffee", /\b(coffee|starbucks|dunkin|peet|blue bottle|cafe|espresso|caribou)\b/iu],
   [
     "groceries",
-    /\b(whole foods|trader joe|safeway|kroger|aldi|costco|wegmans|grocery|market|publix)\b/i,
+    /\b(whole foods|trader joe|safeway|kroger|aldi|costco|wegmans|grocery|market|publix)\b/iu,
   ],
   [
     "food",
-    /\b(restaurant|pizza|burger|sushi|taco|chipotle|mcdonald|wendy|kfc|subway|doordash|uber eats|grubhub|panera|chick.?fil|sweetgreen|domino|deli|kitchen|grill|bbq|ramen|thai|chinese|mexican)\b/i,
+    /\b(restaurant|pizza|burger|sushi|taco|chipotle|mcdonald|wendy|kfc|subway|doordash|uber eats|grubhub|panera|chick.?fil|sweetgreen|domino|deli|kitchen|grill|bbq|ramen|thai|chinese|mexican)\b/iu,
   ],
   [
     "travel",
-    /\b(uber|lyft|airline|airways|hotel|airbnb|delta|united|jetblue|marriott|hilton|amtrak|airport|flight|gas|shell|chevron|exxon|bp\b)\b/i,
+    /\b(uber|lyft|airline|airways|hotel|airbnb|delta|united|jetblue|marriott|hilton|amtrak|airport|flight|gas|shell|chevron|exxon|bp\b)\b/iu,
   ],
   [
     "entertainment",
-    /\b(spotify|netflix|hulu|disney|cinema|theater|theatre|amc|regal|concert|ticketmaster|stubhub|bar|brewery|brewing|pub|club)\b/i,
+    /\b(spotify|netflix|hulu|disney|cinema|theater|theatre|amc|regal|concert|ticketmaster|stubhub|bar|brewery|brewing|pub|club)\b/iu,
   ],
   [
     "shopping",
-    /\b(amazon|target|walmart|best buy|nike|adidas|apple store|sephora|ulta|store|shop|mall|nordstrom|macy|h&m|zara|uniqlo|etsy)\b/i,
+    /\b(amazon|target|walmart|best buy|nike|adidas|apple store|sephora|ulta|store|shop|mall|nordstrom|macy|h&m|zara|uniqlo|etsy)\b/iu,
   ],
 ];
 
@@ -840,6 +840,7 @@ function MerchantPanel({
           <>
             <div className={`border-b px-3 py-2 ${dividerClass}`}>
               <input
+                aria-label="Search in-store merchants"
                 type="text"
                 value={inStoreQuery}
                 onChange={(e) => setInStoreQuery(e.target.value)}
@@ -917,6 +918,7 @@ function MerchantPanel({
           <>
             <div className={`border-b px-3 py-2 ${dividerClass}`}>
               <input
+                aria-label="Search top merchants"
                 type="text"
                 value={topQuery}
                 onChange={(e) => setTopQuery(e.target.value)}
@@ -968,6 +970,7 @@ function MerchantPanel({
           <>
             <div className={`border-b px-3 py-2 ${dividerClass}`}>
               <input
+                aria-label="Search unmapped merchants"
                 type="text"
                 value={unmappedQuery}
                 onChange={(e) => setUnmappedQuery(e.target.value)}

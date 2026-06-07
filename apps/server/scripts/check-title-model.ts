@@ -12,7 +12,7 @@ const gateway = createGateway({ apiKey });
 const { models } = await gateway.getAvailableModels();
 
 const googleFlash = models
-  .filter((m) => m.id.startsWith("google/gemini") && /flash/i.test(m.id))
+  .filter((m) => m.id.startsWith("google/gemini") && /flash/iu.test(m.id))
   .map((m) => ({
     id: m.id,
     input: m.pricing?.input,

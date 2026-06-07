@@ -51,7 +51,7 @@ function arePartsEqual(
   return a.input === b.input && a.output === b.output;
 }
 
-export const ToolPartRenderer = memo(function ToolPartRenderer({
+function ToolPartRendererInner({
   part,
   context,
 }: {
@@ -98,7 +98,9 @@ export const ToolPartRenderer = memo(function ToolPartRenderer({
   }
 
   return null;
-}, arePartsEqual);
+}
+
+export const ToolPartRenderer = memo(ToolPartRendererInner, arePartsEqual);
 
 export { ToolErrorCard, ToolLoadingSkeleton } from "./shared";
 export type { ToolRendererContext } from "./types";

@@ -81,6 +81,7 @@ export function AccountCard({
               spellCheck={false}
             />
           ) : (
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
             <h3
               className={cn(
                 "min-w-0 max-w-[min(100%,calc(100%-3.5rem))] text-base font-semibold tracking-tight text-foreground sm:text-lg",

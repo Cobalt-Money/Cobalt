@@ -45,11 +45,7 @@ export function getHostDisplay(url: string): string {
   }
 }
 
-export const CitationComponent = memo(function CitationComponent({
-  url,
-  title,
-  excerpt,
-}: CiteProps) {
+export const CitationComponent = memo(({ url, title, excerpt }: CiteProps) => {
   if (!url) {
     return null;
   }

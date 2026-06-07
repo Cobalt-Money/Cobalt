@@ -12,6 +12,7 @@
     "build": "ray build --skip-types -e dist -o dist",
     "dev": "ray develop",
     "fix-lint": "ray lint --fix",
+    "gen:api": "openapi-typescript ../server/openapi.json -o src/api-types.ts",
     "lint": "ray lint"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "@types/node": "22.19.17",
     "@types/react": "19.0.10",
     "eslint": "^9.36.0",
+    "openapi-typescript": "^7.4.4",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4"
   },
@@ -164,33 +166,6 @@
         "balances",
         "bank",
         "credit"
-      ]
-    },
-    {
-      "name": "networth",
-      "title": "Net Worth",
-      "description": "Net worth totals and history sourced from snapshots",
-      "mode": "view",
-      "keywords": [
-        "cobalt",
-        "net worth",
-        "networth",
-        "balance",
-        "wealth"
-      ]
-    },
-    {
-      "name": "menu-bar-networth",
-      "title": "Net Worth in Menu Bar",
-      "description": "Always-on net worth glance in the macOS menu bar with category breakdown",
-      "mode": "menu-bar",
-      "interval": "30m",
-      "keywords": [
-        "cobalt",
-        "net worth",
-        "menu bar",
-        "balance",
-        "wealth"
       ]
     }
   ],

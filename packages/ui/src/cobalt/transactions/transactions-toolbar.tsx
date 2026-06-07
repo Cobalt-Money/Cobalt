@@ -164,7 +164,7 @@ interface ToolbarSearchHandle {
 const ToolbarSearch = forwardRef<
   ToolbarSearchHandle,
   { value: string; onChange: (v: string) => void }
->(function ToolbarSearch({ value, onChange }, ref) {
+>(({ value, onChange }, ref) => {
   const [expanded, setExpanded] = useState(Boolean(value));
   const inputRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => ({

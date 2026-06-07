@@ -81,13 +81,13 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
+async function onSignOut() {
+  await authClient.signOut();
+}
+
 function GeneralSection() {
   const session = authClient.useSession();
   const user = session.data?.user;
-
-  const onSignOut = async () => {
-    await authClient.signOut();
-  };
 
   return (
     <div>
@@ -193,6 +193,7 @@ function InvitesSection() {
         <h3 className="text-sm font-medium">Send a new invite</h3>
         <form className="space-y-3" onSubmit={onCreate}>
           <input
+            aria-label="Invite recipient email"
             className="border-white/15 bg-white/5 focus:border-white/30 w-full rounded-md border px-3 py-2 text-sm outline-none"
             onChange={(e) => setTargetEmail(e.target.value)}
             placeholder="recipient@example.com (optional)"
@@ -204,6 +205,7 @@ function InvitesSection() {
               Max uses
             </label>
             <input
+              aria-label="Max invite uses"
               className="border-white/15 bg-white/5 w-20 rounded-md border px-2 py-1 text-sm outline-none"
               id="invite-max-uses-settings"
               max={50}

@@ -6,19 +6,19 @@ export const Route = createFileRoute("/signin")({
   component: SignInPage,
 });
 
+async function onGoogleSignIn() {
+  await authClient.signIn.social({
+    callbackURL: "/",
+    provider: "google",
+  });
+}
+
 function SignInPage() {
   const session = authClient.useSession();
 
   if (session.data?.user) {
     return <Navigate to="/" replace />;
   }
-
-  const onGoogleSignIn = async () => {
-    await authClient.signIn.social({
-      callbackURL: "/",
-      provider: "google",
-    });
-  };
 
   return (
     <div className="flex h-screen w-screen items-center justify-center">
