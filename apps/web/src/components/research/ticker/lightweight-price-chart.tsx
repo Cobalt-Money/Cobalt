@@ -1,3 +1,4 @@
+// Cache-bust chart chunk hash (CDN cached 404 on prior build's chart-* asset).
 import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { AreaSeries, ColorType, CrosshairMode, createChart } from "lightweight-charts";
