@@ -1,5 +1,5 @@
 # zero-cache production-style run (Rocicorp image).
-# Pin matches @rocicorp/zero in repo root package.json catalog (^1.0.0 → 1.0.0).
+# Pin matches @rocicorp/zero in repo root package.json catalog (1.6.1).
 # See https://zero.rocicorp.dev/docs/deployment
 #
 # Usage:
@@ -12,7 +12,7 @@
 
 services:
   zero-cache:
-    image: rocicorp/zero:1.0.0
+    image: rocicorp/zero:1.6.1
     ports:
       - "4848:4848"
     env_file:
