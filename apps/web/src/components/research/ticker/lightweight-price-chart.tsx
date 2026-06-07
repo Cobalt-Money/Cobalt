@@ -1,4 +1,3 @@
-// Cache-bust chart chunk hash (CDN cached 404 on prior build's chart-* asset).
 import { Button } from "@cobalt-web/ui/components/button";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { AreaSeries, ColorType, CrosshairMode, createChart } from "lightweight-charts";
@@ -7,6 +6,11 @@ import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef } from "react";
 
 const CHART_PERIODS = ["1D", "1W", "1M", "3M", "6M", "YTD", "1Y", "All"] as const;
+
+const CHART_BUNDLE_TAG = "v2";
+if (typeof window !== "undefined") {
+  (window as unknown as { __chartBundleTag?: string }).__chartBundleTag = CHART_BUNDLE_TAG;
+}
 
 export type ChartPeriod = (typeof CHART_PERIODS)[number];
 
