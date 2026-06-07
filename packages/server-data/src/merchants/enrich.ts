@@ -139,19 +139,25 @@ export async function enrichTransactionsForUser(
       continue;
     }
 
-    await db
-      .update(transactionTable)
-      .set({ ...writes.set, updatedAt: new Date() })
-      .where(eq(transactionTable.id, t.id));
-
-    await logEnrichmentEvent({
-      brandId: res.merchant.id,
-      fieldsWritten: writes.diff,
-      locationId: res.location?.id ?? null,
-      matchReason: res.reason,
-      runId,
-      sim: res.sim,
-      transactionId: t.id,
+    // Atomic: a row that gets updated WITHOUT an audit log entry can't be
+    // rolled back by runId, which is the core safety contract here.
+    await db.transaction(async (tx) => {
+      await tx
+        .update(transactionTable)
+        .set({ ...writes.set, updatedAt: new Date() })
+        .where(eq(transactionTable.id, t.id));
+      await logEnrichmentEvent(
+        {
+          brandId: res.merchant.id,
+          fieldsWritten: writes.diff,
+          locationId: res.location?.id ?? null,
+          matchReason: res.reason,
+          runId,
+          sim: res.sim,
+          transactionId: t.id,
+        },
+        tx,
+      );
     });
 
     enriched += 1;
@@ -218,11 +224,16 @@ function buildWrites(
     tryWrite("website", t.website, res.merchant.domain, ["website", "merchantName"]);
   }
 
-  // Location fields — only when res.location is set. brand_only matches
-  // never get here, so the singleton-style location fabrication can't happen.
+  // Location fields — only when res.location is set, and only fill gaps.
+  // Plaid-provided values are ground truth: we never overwrite a non-null
+  // Plaid field even if the matcher disagrees. brand_only matches never get
+  // here, so the singleton-style location fabrication can't happen.
   if (res.location) {
     for (const field of LOCATION_FIELDS) {
       const current = (t as unknown as Record<string, unknown>)[field];
+      if (current !== null && current !== undefined) {
+        continue;
+      }
       const next = (res.location as unknown as Record<string, unknown>)[field];
       tryWrite(field, current, next, LOCATION_LOCK_ALIASES[field] ?? [field]);
     }

@@ -1,6 +1,8 @@
 import { db } from "@cobalt-web/db";
 import { enrichmentEvent } from "@cobalt-web/db/schema/merchants/enrichment-event";
 
+type DbOrTx = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 export type EnrichmentMatchReason =
   | "store_number"
   | "geo"
@@ -24,11 +26,12 @@ export interface EnrichmentLogInput {
  * `enrich.ts` after every successful write so a future regression can be
  * rolled back by `runId` and individual txns can be forensically traced.
  *
- * Best-effort: a logging failure must not abort the enrichment write that
- * just landed, so callers can decide whether to swallow errors.
+ * Pass `tx` to run inside an existing transaction (recommended — pairs the
+ * audit insert atomically with the `transaction` UPDATE).
  */
-export async function logEnrichmentEvent(input: EnrichmentLogInput): Promise<void> {
-  await db.insert(enrichmentEvent).values({
+export async function logEnrichmentEvent(input: EnrichmentLogInput, tx?: DbOrTx): Promise<void> {
+  const conn = tx ?? db;
+  await conn.insert(enrichmentEvent).values({
     brandId: input.brandId,
     fieldsWritten: input.fieldsWritten,
     locationId: input.locationId,

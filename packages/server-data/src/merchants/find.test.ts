@@ -59,13 +59,12 @@ describe.runIf(RUN)("findMerchantForTransaction (integration)", () => {
       { lat: 40.7227, lon: -73.9886, name: "RUSSANDDAUGHT", paymentChannel: "in store" },
       ctx,
     );
-    expect(res?.reason ?? "skipped").toMatch(/geo|skipped/);
-    // If geo branch fired, it must include a location (geo never returns brand-only).
-    const geoHitLackedLocation = res?.reason === "geo" && res.location === null;
-    expect(geoHitLackedLocation).toBeFalsy();
+    expect(res).not.toBeNull();
+    expect(res!.reason).toBe("geo");
+    expect(res!.location).not.toBeNull();
   });
 
-  it("uses the address or brand_only branch when address is present", async () => {
+  it("uses the address branch when address is present", async () => {
     const res = await findMerchantForTransaction(
       {
         address: "179 E Houston St",
@@ -76,7 +75,8 @@ describe.runIf(RUN)("findMerchantForTransaction (integration)", () => {
       },
       ctx,
     );
-    expect(res?.reason ?? "address").toMatch(/address|brand_only/);
+    expect(res).not.toBeNull();
+    expect(res!.reason).toMatch(/^(address|brand_only)$/);
   });
 
   it("uses the city_region or brand_only branch when only city+region", async () => {
@@ -84,8 +84,9 @@ describe.runIf(RUN)("findMerchantForTransaction (integration)", () => {
       { city: "New York", name: "Russ & Daughters", paymentChannel: "in store", region: "NY" },
       ctx,
     );
-    expect(res?.reason ?? "city_region").toMatch(/city_region|brand_only/);
-    expect(res?.merchant.canonicalName ?? "").toMatch(/Russ/);
+    expect(res).not.toBeNull();
+    expect(res!.reason).toMatch(/^(city_region|brand_only)$/);
+    expect(res!.merchant.canonicalName).toMatch(/Russ/);
   });
 
   // ── Chain handling ─────────────────────────────────────────────────────────
