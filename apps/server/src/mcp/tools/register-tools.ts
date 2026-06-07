@@ -10,7 +10,6 @@ export function registerMcpTools(server: McpServer, userId: string): void {
     {
       annotations: { destructiveHint: false, readOnlyHint: true },
       description: "Returns the Cobalt user id (`sub`) for the current OAuth access token.",
-      // @ts-expect-error mcp-sdk types lag the zod major in this repo
       inputSchema: z.object({}),
       title: "Session subject",
     },
@@ -24,7 +23,6 @@ export function registerMcpTools(server: McpServer, userId: string): void {
     {
       annotations: { destructiveHint: false, readOnlyHint: false },
       description: COBALT_SDK_DESCRIPTION,
-      // @ts-expect-error mcp-sdk types lag the zod major in this repo
       inputSchema: z.object({
         code: z
           .string()
