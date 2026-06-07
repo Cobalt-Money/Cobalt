@@ -103,11 +103,29 @@ async function main() {
     website: 0,
   };
 
-  for (const t of txns.rows) {
+  // Process txns in concurrent batches. Each txn does ~4 round-trips to the DB
+  // (trgm, signal-hits, optional tier query, write). PlanetScale us-east-4 from
+  // a laptop = ~80 ms RTT, so sequential = ~35 min for 6.5k txns. Batching to
+  // 50 concurrent in-flight queries pegs throughput at PG's actual capacity.
+  const BATCH = Number(process.env.BACKFILL_CONCURRENCY ?? 50);
+  for (let i = 0; i < txns.rows.length; i += BATCH) {
+    const slice = txns.rows.slice(i, i + BATCH);
+    if (i > 0 && i % 500 === 0) {
+      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+      console.log(`[backfill] ${i}/${txns.rows.length} elapsed=${elapsed}s`);
+    }
+    await Promise.all(
+      slice.map(async (t) => {
+        await processOne(t);
+      }),
+    );
+  }
+
+  async function processOne(t: PlaidTxn) {
     const sourceName = t.merchant_name ?? t.name;
     if (!sourceName) {
       noMatch++;
-      continue;
+      return;
     }
 
     // Pre-flight: skip if Plaid already gave us a full location pin. Website /
@@ -121,7 +139,7 @@ async function main() {
       t.lon !== null;
     if (locationFull) {
       preflightSkipped++;
-      continue;
+      return;
     }
 
     const gaps: WritableField[] = WRITABLE_FIELDS.filter((f) => {
@@ -134,7 +152,7 @@ async function main() {
 
     if (gaps.length === 0) {
       preflightSkipped++;
-      continue;
+      return;
     }
 
     const res = await findMerchantForTransaction(
@@ -155,11 +173,11 @@ async function main() {
 
     if (!res) {
       noMatch++;
-      continue;
+      return;
     }
     if (res.confidence !== "exact" && res.confidence !== "high") {
       lowConfidence++;
-      continue;
+      return;
     }
 
     // Build the SET clause — only for gap fields where match has a value.
@@ -211,7 +229,7 @@ async function main() {
 
     if (setSql.length === 0) {
       nothingToWrite++;
-      continue;
+      return;
     }
     wouldUpdate++;
 

@@ -8,6 +8,9 @@ const url =
   process.env.MERCHANT_IMPORT_DATABASE_URL ??
   "postgresql://postgres:postgres@127.0.0.1:5433/cobalt";
 
-export const pool = new Pool({ connectionString: url, max: 5 });
+export const pool = new Pool({
+  connectionString: url,
+  max: Number(process.env.MERCHANT_IMPORT_POOL_MAX ?? 5),
+});
 export const db = drizzle({ client: pool });
 export { merchant, merchantLocation };
