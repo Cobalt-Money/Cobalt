@@ -75,7 +75,7 @@ function patchServerRequirePlugin(): Plugin {
           continue;
         }
         // Find the bundled React function name (require_react, require_react$1, etc.)
-        const match = chunk.code.match(/\brequire_react(?:\$\d+)?\b/u);
+        const match = chunk.code.match(/\brequire_react(?:\$\d+)?\b/);
         if (match) {
           chunk.code = chunk.code.replaceAll('__require("react")', `${match[0]}()`);
         }
@@ -86,15 +86,6 @@ function patchServerRequirePlugin(): Plugin {
 }
 
 export default defineConfig({
-  build: {
-    // Rolldown's oxc-minify shadows imported single-letter names with local
-    // `var` hoisting inside __commonJS wrappers — e.g. recharts deep-imports
-    // es-toolkit/compat/* (CJS-only) and the wrapper emits `var t = t()`
-    // where the hoisted local `t` shadows the imported `t`. Surfaces as
-    // "t is not a function" inside chart-*.js / CategoricalChart-*.js on
-    // prod. Affects every rolldown version we tried (rc.12, 1.0.2, 1.0.3).
-    minify: "esbuild",
-  },
   optimizeDeps: {
     include: [
       "@visx/responsive",
@@ -107,6 +98,7 @@ export default defineConfig({
       "@number-flow/react",
       "d3-shape",
       "d3-array",
+      "lodash/debounce",
     ],
   },
   plugins: [
@@ -122,10 +114,13 @@ export default defineConfig({
     tanstackStart(),
     nitro({}),
     patchServerRequirePlugin(),
-    viteReact({ include: /\.(mdx|js|jsx|ts|tsx)$/u }),
+    viteReact({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
   ],
   preview: {
     port: 3001,
+  },
+  resolve: {
+    tsconfigPaths: true,
   },
   server: {
     port: 3001,
