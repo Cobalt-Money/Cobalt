@@ -463,13 +463,13 @@ async function trgmTopBrands(
            ) AS sim
     FROM merchant m
     WHERE m.deleted_at IS NULL
-      AND (
-        m.name_normalized % ${norm}
-        OR m.name_compact % ${norm}
-        OR m.name_compact % ${normNoSpace}
-        OR m.name_normalized <% ${norm}
-        OR ${norm} <% m.name_normalized
-      )
+      -- Index-friendly filter: gin_trgm_ops supports the %> operator
+      -- (word-similarity commutator) but NOT the <% form. Both semantically
+      -- cover the "DB name is a continuous extent inside the Plaid name" case
+      -- (e.g. "Key Food" inside "Key Food Stores"); only %> hits the GIN index.
+      -- A 5-way OR with % and <% forces a Seq Scan (~553 ms vs ~4 ms indexed).
+      -- Requires pg_trgm.word_similarity_threshold set to ~0.4 on the DB.
+      AND (m.name_normalized %> ${norm} OR m.name_compact %> ${normNoSpace})
     ORDER BY
       ${
         regionHint
