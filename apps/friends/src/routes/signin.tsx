@@ -8,7 +8,7 @@ export const Route = createFileRoute("/signin")({
 
 async function onGoogleSignIn() {
   await authClient.signIn.social({
-    callbackURL: "/",
+    callbackURL: typeof window === "undefined" ? "/" : `${window.location.origin}/`,
     provider: "google",
   });
 }

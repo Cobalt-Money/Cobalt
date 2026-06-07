@@ -34,7 +34,10 @@ function RedeemInvitePage() {
   // through OAuth and TanStack Router re-runs the loader on return.
   if (!accepted && !session.isPending && !session.data?.user) {
     void authClient.signIn.social({
-      callbackURL: `/invite/${token}`,
+      callbackURL:
+        typeof window === "undefined"
+          ? `/invite/${token}`
+          : `${window.location.origin}/invite/${token}`,
       provider: "google",
     });
     return <Shell>Sign in to accept this invite…</Shell>;
