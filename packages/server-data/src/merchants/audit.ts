@@ -1,7 +1,14 @@
 import { db } from "@cobalt-web/db";
 import { enrichmentEvent } from "@cobalt-web/db/schema/merchants/enrichment-event";
 
-type DbOrTx = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+/**
+ * The `tx` handle yielded by `db.transaction(async (tx) => …)`. Derived from
+ * `db.transaction`'s callback signature so the schema generics stay in sync
+ * with our actual drizzle instance (importing `PgAsyncTransaction` directly
+ * collapses the schema to `Record<string, never>` and won't accept our `tx`).
+ */
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type DbOrTx = typeof db | Tx;
 
 export type EnrichmentMatchReason =
   | "store_number"
