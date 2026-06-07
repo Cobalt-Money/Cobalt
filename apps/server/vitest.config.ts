@@ -12,7 +12,7 @@ export default defineConfig({
       // its resolver patches the missing extensions. Production build uses
       // nitro w/ `noExternals: true` which already does this via rollup.
       deps: {
-        inline: [/@tanstack\/ai-isolate-cloudflare/],
+        inline: [/@tanstack\/ai-isolate-cloudflare/u],
       },
     },
     setupFiles: ["./test-setup.ts"],

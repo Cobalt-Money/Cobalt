@@ -6,6 +6,7 @@ import {
 import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
 import { TagChip } from "@cobalt-web/ui/cobalt/transactions/tags/tag-chip";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import postedSvgUrl from "@cobalt-web/ui/assets/vectors/posted.svg";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Fragment } from "react";
@@ -23,7 +24,7 @@ const monthGroupHeading = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-const STATUS_POSTED_ICON = "/assets/vectors/posted.svg";
+const STATUS_POSTED_ICON = postedSvgUrl;
 
 // Mirrors the real TransactionsTable grid template — minus columns we don't
 // stub in the landing preview (select, bank). Status / date / name /

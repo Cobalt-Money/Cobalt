@@ -62,7 +62,7 @@ describe("bindRoutes", () => {
       }),
     ];
     const [b] = bindRoutes("u", routes);
-    await expect(b?.handler({})).rejects.toThrow(/id/);
+    await expect(b?.handler({})).rejects.toThrow(/id/u);
   });
 });
 

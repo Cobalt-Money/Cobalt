@@ -273,7 +273,7 @@ function RouteComponent() {
   const [completedIntent, setCompletedIntent] = useState<"allow" | "deny" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const oauthQuery = useMemo(() => window.location.search.replace(/^\?/, ""), []);
+  const oauthQuery = useMemo(() => window.location.search.replace(/^\?/u, ""), []);
 
   const clientId = useMemo(() => {
     const params = new URLSearchParams(window.location.search);

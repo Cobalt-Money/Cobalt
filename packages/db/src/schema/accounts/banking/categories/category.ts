@@ -47,10 +47,10 @@ export const category = pgTable(
     index("category_group_id_idx").on(t.groupId),
     index("category_user_active_idx")
       .on(t.userId)
-      .where(sql`deleted_at IS NULL`),
+      .where(sql`(deleted_at IS NULL)`),
     uniqueIndex("category_user_system_key_idx")
       .on(t.userId, t.systemKey)
-      .where(sql`system_key IS NOT NULL`),
+      .where(sql`(system_key IS NOT NULL)`),
   ],
 );
 

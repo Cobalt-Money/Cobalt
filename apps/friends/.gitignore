@@ -1,0 +1,23 @@
+# Dependencies
+/node_modules
+
+# Build outputs
+/dist/
+.vinxi
+.output
+.tanstack/
+.nitro/
+
+# Deployment
+.vercel
+
+# Environment
+.env*
+!.env.example
+.DS_Store
+
+# Logs
+*.log*
+
+# TypeScript
+*.tsbuildinfo

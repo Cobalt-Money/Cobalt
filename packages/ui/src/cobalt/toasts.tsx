@@ -10,9 +10,12 @@ interface AccountToastInstitution {
   institutionUrl: string | null;
 }
 
-const POSTED_ICON = <img alt="" className="size-4" src="/assets/vectors/posted.svg" />;
+const POSTED_ICON_URL = new URL("../assets/vectors/posted.svg", import.meta.url).href;
+const PENDING_ICON_URL = new URL("../assets/vectors/pending.svg", import.meta.url).href;
 
-const PENDING_ICON = <img alt="" className="size-4" src="/assets/vectors/pending.svg" />;
+const POSTED_ICON = <img alt="" className="size-4" src={POSTED_ICON_URL} />;
+
+const PENDING_ICON = <img alt="" className="size-4" src={PENDING_ICON_URL} />;
 
 export const cobaltToast = {
   accountDisconnected(account: AccountToastInstitution) {

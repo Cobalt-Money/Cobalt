@@ -25,11 +25,11 @@ export const tag = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
   },
   (t) => [
-    uniqueIndex("tag_user_id_lower_name_idx").on(t.userId, sql`lower(${t.name})`),
+    uniqueIndex("tag_user_id_lower_name_idx").on(t.userId, sql`lower(name)`),
     index("tag_user_id_active_idx")
       .on(t.userId)
-      .where(sql`archived_at IS NULL`),
-    check("tag_name_length_check", sql`length(${t.name}) <= 50`),
+      .where(sql`(archived_at IS NULL)`),
+    check("tag_name_length_check", sql`length(name) <= 50`),
     check("tag_color_check", sql`${t.color} IN (${TAG_COLOR_LIST_SQL})`),
   ],
 );

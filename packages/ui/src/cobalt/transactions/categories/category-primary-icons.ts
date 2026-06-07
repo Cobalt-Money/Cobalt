@@ -9,23 +9,32 @@ export {
   getPrimaryCategoryLabel,
 } from "@cobalt-web/server-data/categories/labels";
 
-const V = "?v=2";
-const BANK_FEES_ICON_SRC = `/assets/vectors/card.svg${V}`;
-const FOOD_AND_DRINK_ICON_SRC = `/assets/vectors/cheese.svg${V}`;
-const INCOME_ICON_SRC = `/assets/vectors/moneybag.svg${V}`;
-const TRAVEL_ICON_SRC = `/assets/vectors/travel.svg${V}`;
-const GENERAL_MERCHANDISE_ICON_SRC = `/assets/vectors/shopping.svg${V}`;
-const TRANSPORTATION_ICON_SRC = `/assets/vectors/car.svg${V}`;
-const ENTERTAINMENT_ICON_SRC = `/assets/vectors/popcorn.svg${V}`;
-const TRANSFER_IN_ICON_SRC = `/assets/vectors/transfer-in.svg${V}`;
-const TRANSFER_OUT_ICON_SRC = `/assets/vectors/transfer-out.svg${V}`;
-const RENT_AND_UTILITIES_ICON_SRC = `/assets/vectors/building.svg${V}`;
-const GENERAL_SERVICES_ICON_SRC = `/assets/vectors/settings.svg${V}`;
-const MEDICAL_ICON_SRC = `/assets/vectors/hospital.svg${V}`;
-const HOME_IMPROVEMENT_ICON_SRC = `/assets/vectors/home.svg${V}`;
-const LOAN_PAYMENTS_ICON_SRC = `/assets/vectors/payment.svg${V}`;
-const GOVERNMENT_AND_NON_PROFIT_ICON_SRC = `/assets/vectors/government.svg${V}`;
-const PERSONAL_CARE_ICON_SRC = `/assets/vectors/health.svg${V}`;
+const BANK_FEES_ICON_SRC = new URL("../../../assets/vectors/card.svg", import.meta.url).href;
+const FOOD_AND_DRINK_ICON_SRC = new URL("../../../assets/vectors/cheese.svg", import.meta.url).href;
+const INCOME_ICON_SRC = new URL("../../../assets/vectors/moneybag.svg", import.meta.url).href;
+const TRAVEL_ICON_SRC = new URL("../../../assets/vectors/travel.svg", import.meta.url).href;
+const GENERAL_MERCHANDISE_ICON_SRC = new URL(
+  "../../../assets/vectors/shopping.svg",
+  import.meta.url,
+).href;
+const TRANSPORTATION_ICON_SRC = new URL("../../../assets/vectors/car.svg", import.meta.url).href;
+const ENTERTAINMENT_ICON_SRC = new URL("../../../assets/vectors/popcorn.svg", import.meta.url).href;
+const TRANSFER_IN_ICON_SRC = new URL("../../../assets/vectors/transfer-in.svg", import.meta.url)
+  .href;
+const TRANSFER_OUT_ICON_SRC = new URL("../../../assets/vectors/transfer-out.svg", import.meta.url)
+  .href;
+const RENT_AND_UTILITIES_ICON_SRC = new URL("../../../assets/vectors/building.svg", import.meta.url)
+  .href;
+const GENERAL_SERVICES_ICON_SRC = new URL("../../../assets/vectors/settings.svg", import.meta.url)
+  .href;
+const MEDICAL_ICON_SRC = new URL("../../../assets/vectors/hospital.svg", import.meta.url).href;
+const HOME_IMPROVEMENT_ICON_SRC = new URL("../../../assets/vectors/home.svg", import.meta.url).href;
+const LOAN_PAYMENTS_ICON_SRC = new URL("../../../assets/vectors/payment.svg", import.meta.url).href;
+const GOVERNMENT_AND_NON_PROFIT_ICON_SRC = new URL(
+  "../../../assets/vectors/government.svg",
+  import.meta.url,
+).href;
+const PERSONAL_CARE_ICON_SRC = new URL("../../../assets/vectors/health.svg", import.meta.url).href;
 
 /** Hugeicons glyph, static vector, or user-chosen emoji char. */
 export type CategoryPrimaryGlyph =

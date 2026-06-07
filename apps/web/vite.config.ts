@@ -75,7 +75,7 @@ function patchServerRequirePlugin(): Plugin {
           continue;
         }
         // Find the bundled React function name (require_react, require_react$1, etc.)
-        const match = chunk.code.match(/\brequire_react(?:\$\d+)?\b/);
+        const match = chunk.code.match(/\brequire_react(?:\$\d+)?\b/u);
         if (match) {
           chunk.code = chunk.code.replaceAll('__require("react")', `${match[0]}()`);
         }
@@ -114,7 +114,7 @@ export default defineConfig({
     tanstackStart(),
     nitro({}),
     patchServerRequirePlugin(),
-    viteReact({ include: /\.(mdx|js|jsx|ts|tsx)$/ }),
+    viteReact({ include: /\.(mdx|js|jsx|ts|tsx)$/u }),
   ],
   preview: {
     port: 3001,

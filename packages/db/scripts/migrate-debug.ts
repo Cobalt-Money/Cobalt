@@ -26,7 +26,7 @@ if (!url) {
   throw new Error("MIGRATION_URI must be set for --prod");
 }
 
-const redacted = url.replace(/\/\/[^@]+@/, "//***@");
+const redacted = url.replace(/\/\/[^@]+@/u, "//***@");
 console.log(`[migrate] target (${isLocal ? "local" : "prod"}): ${redacted}`);
 
 const db = drizzle(url);

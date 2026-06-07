@@ -1,6 +1,6 @@
 import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { cn } from "@cobalt-web/ui/lib/utils";
-import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, Calendar03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { PrivateAmount } from "../../../components/privacy";
@@ -22,6 +22,9 @@ import {
   shouldShowLocationSection,
   TransactionDetailLocationCard,
 } from "./transaction-detail-location";
+
+const PENDING_ICON_URL = new URL("../../../assets/vectors/pending.svg", import.meta.url).href;
+const POSTED_ICON_URL = new URL("../../../assets/vectors/posted.svg", import.meta.url).href;
 
 type LocationJson = NonNullable<TransactionResponse["location"]>;
 
@@ -77,32 +80,24 @@ export interface TransactionDetailEditHandlers {
 export function TransactionDetailSummary({
   edit,
   transaction,
+  hideLocation = false,
+  hideLocationMap = false,
 }: {
   edit?: TransactionDetailEditHandlers;
   transaction: TransactionResponse;
+  hideLocation?: boolean;
+  hideLocationMap?: boolean;
 }) {
   const isDebit = transaction.amount < 0;
   const amountColor = isDebit ? "text-destructive" : "text-success";
 
   const { category } = transaction;
-  const showLocation = shouldShowLocationSection(transaction.location);
+  const showLocation = !hideLocation && shouldShowLocationSection(transaction.location);
   const displayName = getTransactionDisplayName(transaction);
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-4">
-        {edit ? (
-          <EditableName displayName={displayName} onSubmit={edit.onUpdateName} />
-        ) : (
-          <div className="min-w-0 flex-1">
-            <h1 className="text-balance text-left font-medium text-2xl text-foreground leading-tight tracking-tight sm:text-3xl">
-              {displayName}
-            </h1>
-            {transaction.merchantName && transaction.name !== transaction.merchantName && (
-              <p className="mt-0.5 truncate text-muted-foreground text-xs">{transaction.name}</p>
-            )}
-          </div>
-        )}
+      <div className="flex items-start gap-4">
         {edit ? (
           <EditableMerchantLogo
             merchantSearch={edit.merchantSearch}
@@ -119,6 +114,18 @@ export function TransactionDetailSummary({
             website={transaction.website}
           />
         )}
+        {edit ? (
+          <EditableName displayName={displayName} onSubmit={edit.onUpdateName} />
+        ) : (
+          <div className="min-w-0 flex-1">
+            <h1 className="text-balance text-left font-medium text-2xl text-foreground leading-tight tracking-tight sm:text-3xl">
+              {displayName}
+            </h1>
+            {transaction.merchantName && transaction.name !== transaction.merchantName && (
+              <p className="mt-0.5 truncate text-muted-foreground text-xs">{transaction.name}</p>
+            )}
+          </div>
+        )}
       </div>
       <p className={cn("text-left font-semibold text-xl tabular-nums tracking-tight", amountColor)}>
         <PrivateAmount>{currency.format(Math.abs(transaction.amount))}</PrivateAmount>
@@ -132,7 +139,7 @@ export function TransactionDetailSummary({
             className="size-5 shrink-0 object-contain"
             decoding="async"
             height={20}
-            src={transaction.pending ? "/assets/vectors/pending.svg" : "/assets/vectors/posted.svg"}
+            src={transaction.pending ? PENDING_ICON_URL : POSTED_ICON_URL}
             width={20}
           />
           <span className="text-muted-foreground">
@@ -168,7 +175,9 @@ export function TransactionDetailSummary({
             onReset={edit.onResetDate}
             onSubmit={edit.onUpdateDate}
           />
-        ) : null}
+        ) : (
+          <ReadOnlyDateRow dateIso={transaction.date} />
+        )}
 
         {edit ? (
           <EditableCategory
@@ -205,7 +214,9 @@ export function TransactionDetailSummary({
         ) : null}
       </div>
 
-      {showLocation ? <TransactionDetailLocationCard location={transaction.location} /> : null}
+      {showLocation ? (
+        <TransactionDetailLocationCard location={transaction.location} hideMap={hideLocationMap} />
+      ) : null}
     </div>
   );
 }
@@ -240,6 +251,35 @@ function TagsRow({
         options={[...availableTags]}
         selectedIds={[...selectedIds]}
       />
+    </div>
+  );
+}
+
+function ReadOnlyDateRow({ dateIso }: { dateIso: string | null }) {
+  if (!dateIso) {
+    return null;
+  }
+  const d = new Date(dateIso);
+  if (!Number.isFinite(d.getTime())) {
+    return null;
+  }
+  const formatted = d.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "long",
+    weekday: "short",
+    year: "numeric",
+  });
+  return (
+    <div className="flex items-center gap-2.5 text-base">
+      <span className="flex size-5 shrink-0 items-center justify-center">
+        <HugeiconsIcon
+          aria-hidden
+          className="size-5 text-muted-foreground"
+          icon={Calendar03Icon}
+          strokeWidth={2}
+        />
+      </span>
+      <span className="text-foreground">{formatted}</span>
     </div>
   );
 }

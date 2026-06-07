@@ -26,9 +26,6 @@ import { defineConfig } from "vitest/config";
 import { workflow } from "workflow/vite";
 
 export default defineConfig({
-  // workflow/vite is typed against Vite 7; vitest/config here resolves Vite 8.
-  // Shapes are compatible at runtime — biome-ignore / eslint-disable-next-line
-  // @ts-expect-error -- dual Vite type mismatch at workspace resolution
   plugins: [workflow()],
   test: {
     env: {

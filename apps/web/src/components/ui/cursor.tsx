@@ -163,6 +163,8 @@ type CursorFollowProps = HTMLMotionProps<"div"> & {
   children: React.ReactNode;
 };
 
+const DEFAULT_CURSOR_FOLLOW_TRANSITION = { bounce: 0, damping: 50, stiffness: 500 };
+
 function CursorFollow(
   {
     ref,
@@ -171,7 +173,7 @@ function CursorFollow(
     children,
     className,
     style,
-    transition = { bounce: 0, damping: 50, stiffness: 500 },
+    transition = DEFAULT_CURSOR_FOLLOW_TRANSITION,
     ...props
   }: CursorFollowProps,
   forwardedRef?: React.Ref<HTMLDivElement>,

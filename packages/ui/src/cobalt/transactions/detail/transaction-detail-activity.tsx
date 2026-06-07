@@ -245,8 +245,8 @@ const eventMarkerTone: Record<ActivityEventType, string> = {
   posted: "text-muted-foreground",
 };
 
-const STATUS_PENDING_ICON = "/assets/vectors/pending.svg";
-const STATUS_POSTED_ICON = "/assets/vectors/posted.svg";
+const STATUS_PENDING_ICON = new URL("../../../assets/vectors/pending.svg", import.meta.url).href;
+const STATUS_POSTED_ICON = new URL("../../../assets/vectors/posted.svg", import.meta.url).href;
 
 function EventMarker({
   event,

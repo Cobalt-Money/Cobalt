@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
 import { evalite } from "evalite";
 
@@ -9,7 +8,7 @@ import type { ColumnExpected } from "../../_shared/eval-scorers.js";
 import { columnShapeScorer, columnStructuralValidity } from "../../_shared/eval-scorers.js";
 import { runCsvColumnMappingAgent } from "./csv-column-mapping-agent.js";
 
-const here = dirname(fileURLToPath(import.meta.url));
+const here = import.meta.dirname;
 const fixturesPath = join(here, "csv-column-mapping-agent.fixtures.json");
 
 interface Fixture {

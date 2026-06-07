@@ -35,7 +35,15 @@ export interface TransactionListFilters {
   tagIds?: readonly string[];
   /** Category IDs to include (OR semantics). Empty / undefined = all. */
   categoryIds?: readonly string[];
+  /** Payment channel (Plaid: "in store" | "online" | "other"). */
+  channel?: "all" | "in_store" | "online" | "other";
 }
+
+const CHANNEL_DB_VALUE: Record<"in_store" | "online" | "other", string> = {
+  in_store: "in store",
+  online: "online",
+  other: "other",
+};
 
 export function transactionsForUser(userId: string, filters: TransactionListFilters = {}) {
   const {
@@ -46,6 +54,7 @@ export function transactionsForUser(userId: string, filters: TransactionListFilt
     bank,
     tagIds,
     categoryIds,
+    channel = "all",
   } = filters;
   const bankIds = bank && bank.length > 0 ? bank : null;
   const tagIdList = tagIds && tagIds.length > 0 ? tagIds : null;
@@ -88,6 +97,8 @@ export function transactionsForUser(userId: string, filters: TransactionListFilt
           return cmp("pending", false);
         }
       };
+      const channelExpr = () =>
+        channel === "all" ? undefined : cmp("paymentChannel", CHANNEL_DB_VALUE[channel]);
       // Bank options are deduped by lower-cased institution name (see
       // `useBankOptions`). Filter ids look like `bank:<name>` — we match the
       // name against both `plaid_connection.institutionName` (Plaid accounts)
@@ -119,6 +130,7 @@ export function transactionsForUser(userId: string, filters: TransactionListFilt
         categoryIdList ? cmp("categoryId", "IN", categoryIdList) : undefined,
         amountExpr(),
         statusExpr(),
+        channelExpr(),
       );
     })
     .related("account", (q2) =>

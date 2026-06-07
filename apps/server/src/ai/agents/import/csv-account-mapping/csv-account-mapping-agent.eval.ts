@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
 import { evalite } from "evalite";
 
@@ -9,7 +8,7 @@ import type { AccountExpected } from "../../_shared/eval-scorers.js";
 import { accountDecisionScorer } from "../../_shared/eval-scorers.js";
 import { runCsvAccountMappingAgent } from "./csv-account-mapping-agent.js";
 
-const here = dirname(fileURLToPath(import.meta.url));
+const here = import.meta.dirname;
 const fixturesPath = join(here, "csv-account-mapping-agent.fixtures.json");
 
 interface Fixture {

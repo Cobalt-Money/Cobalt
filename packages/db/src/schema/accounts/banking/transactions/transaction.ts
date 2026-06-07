@@ -129,10 +129,10 @@ export const transaction = pgTable(
     index("transaction_import_job_id_idx").on(t.importJobId),
     uniqueIndex("transaction_source_external_id_idx")
       .on(t.source, t.externalId)
-      .where(sql`external_id IS NOT NULL`),
+      .where(sql`(external_id IS NOT NULL)`),
     uniqueIndex("transaction_user_import_hash_idx")
       .on(t.userId, t.importHash)
-      .where(sql`import_hash IS NOT NULL`),
+      .where(sql`(import_hash IS NOT NULL)`),
   ],
 );
 

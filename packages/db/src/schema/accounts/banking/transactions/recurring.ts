@@ -62,7 +62,7 @@ export const recurring = pgTable(
     index("recurring_account_date_type_idx").on(t.accountId, t.lastDate, t.streamType),
     uniqueIndex("recurring_source_external_id_idx")
       .on(t.source, t.externalId)
-      .where(sql`external_id IS NOT NULL`),
+      .where(sql`(external_id IS NOT NULL)`),
   ],
 );
 

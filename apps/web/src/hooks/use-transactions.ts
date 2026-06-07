@@ -15,6 +15,7 @@ interface Filters {
   bank?: readonly string[];
   tagIds?: readonly string[];
   categoryIds?: readonly string[];
+  channel?: "all" | "in_store" | "online" | "other";
   query?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -26,6 +27,7 @@ interface Filters {
  * and the hook both produce the same query hash — otherwise we end up with
  * multiple parallel subscriptions for the same 582-row dataset.
  */
+// eslint-disable-next-line complexity
 export function transactionsListQuery(filters: Filters) {
   const hasFilters =
     (filters.amount && filters.amount !== "all") ||
@@ -34,7 +36,8 @@ export function transactionsListQuery(filters: Filters) {
     (filters.status && filters.status !== "all") ||
     (filters.bank && filters.bank.length > 0) ||
     (filters.tagIds && filters.tagIds.length > 0) ||
-    (filters.categoryIds && filters.categoryIds.length > 0);
+    (filters.categoryIds && filters.categoryIds.length > 0) ||
+    (filters.channel && filters.channel !== "all");
 
   if (!hasFilters) {
     return queries.transactions.list();
@@ -45,6 +48,7 @@ export function transactionsListQuery(filters: Filters) {
     amountMin: filters.amountMin,
     bank: filters.bank ? [...filters.bank] : [],
     categoryIds: filters.categoryIds ? [...filters.categoryIds] : [],
+    channel: filters.channel ?? "all",
     status: filters.status ?? "all",
     tagIds: filters.tagIds ? [...filters.tagIds] : [],
   });

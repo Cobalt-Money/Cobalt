@@ -18,6 +18,7 @@
     "./cobalt/imports/*": "./src/cobalt/imports/*",
     "./cobalt/subscription/*": "./src/cobalt/subscription/*",
     "./cobalt/*": "./src/cobalt/*.tsx",
+    "./assets/*": "./src/assets/*",
     "./hooks/*": "./src/hooks/*.ts",
     "./postcss.config": "./postcss.config.mjs"
   },
