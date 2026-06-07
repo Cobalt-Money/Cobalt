@@ -26,24 +26,22 @@ const { USER_ID, ITEM_ID } = process.env;
 
 const { db } = await import("@cobalt-web/db");
 const { plaidConnection } = await import("@cobalt-web/db/schema/providers/plaid/connection");
-const { transaction } = await import(
-  "@cobalt-web/db/schema/accounts/banking/transactions/transaction"
-);
+const { transaction } =
+  await import("@cobalt-web/db/schema/accounts/banking/transactions/transaction");
 const { financialAccount } = await import("@cobalt-web/db/schema/accounts/account");
-const { syncTransactionsPage } = await import(
-  "@cobalt-web/server-data/providers/plaid/transactions/actions"
-);
+const { syncTransactionsPage } =
+  await import("@cobalt-web/server-data/providers/plaid/transactions/actions");
 const {
   persistTransactions,
   removeTransactionsByIds,
   setTransactionsCursor,
   applyPendingOverrides,
 } = await import("@cobalt-web/server-data/providers/plaid/transactions/mutations");
-const { getUserOverrides } = await import(
-  "@cobalt-web/server-data/providers/plaid/transactions/queries"
-);
+const { getUserOverrides } =
+  await import("@cobalt-web/server-data/providers/plaid/transactions/queries");
 const { and, eq, isNotNull, ne, sql } = await import("drizzle-orm");
-const pLimit = (await import("p-limit")).default;
+const pLimitModule = await import("p-limit");
+const pLimit = pLimitModule.default;
 
 const filters = [
   isNotNull(plaidConnection.plaidAccessToken),
@@ -77,7 +75,10 @@ const counts = await db
   .innerJoin(financialAccount, eq(financialAccount.plaidConnectionId, plaidConnection.id))
   .innerJoin(transaction, eq(transaction.accountId, financialAccount.id))
   .where(
-    and(eq(transaction.source, "plaid"), ITEM_ID ? eq(plaidConnection.plaidItemId, ITEM_ID) : sql`true`),
+    and(
+      eq(transaction.source, "plaid"),
+      ITEM_ID ? eq(plaidConnection.plaidItemId, ITEM_ID) : sql`true`,
+    ),
   )
   .groupBy(plaidConnection.plaidItemId);
 
@@ -112,7 +113,10 @@ async function backfillOne(item: (typeof items)[number]) {
   let pages = 0;
   let upserted = 0;
   let removed = 0;
-  const pendingOverrides = new Map<string, Awaited<ReturnType<typeof getUserOverrides>> extends Map<infer _K, infer V> ? V : never>();
+  const pendingOverrides = new Map<
+    string,
+    Awaited<ReturnType<typeof getUserOverrides>> extends Map<infer _K, infer V> ? V : never
+  >();
 
   while (hasMore) {
     const page = await syncTransactionsPage(item.accessToken, cursor, 500);
@@ -131,8 +135,7 @@ async function backfillOne(item: (typeof items)[number]) {
       removed += removedIds.length;
     }
 
-    cursor = page.nextCursor;
-    hasMore = page.hasMore;
+    ({ hasMore, nextCursor: cursor } = page);
     await setTransactionsCursor(item.itemId, cursor);
   }
 
@@ -179,8 +182,11 @@ const verify = await db
   })
   .from(transaction)
   .where(eq(transaction.source, "plaid"));
-console.log(
-  `Coverage: pfc_primary set on ${verify[0]!.totalCount - verify[0]!.nullCount} / ${verify[0]!.totalCount} plaid txns`,
-);
+const [v] = verify;
+if (v) {
+  console.log(
+    `Coverage: pfc_primary set on ${v.totalCount - v.nullCount} / ${v.totalCount} plaid txns`,
+  );
+}
 
 process.exit(failed === 0 ? 0 : 1);

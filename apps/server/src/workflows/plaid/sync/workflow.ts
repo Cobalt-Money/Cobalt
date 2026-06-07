@@ -23,8 +23,7 @@ import {
   syncBalancesStep,
   syncRecurringStep,
   syncTransactionsStep,
-  // SRI-353: disabled — matcher rewrite in progress.
-  // enrichTransactionsStep,
+  enrichTransactionsStep,
 } from "./steps";
 import type { PlaidOnboardingPhase } from "./steps";
 
@@ -72,9 +71,7 @@ export async function plaidSyncWorkflow(webhook: SyncUpdatesWebhook): Promise<Pl
       syncTransactionsStep(item.plaidAccessToken, item.plaidItemId, item.transactionsCursor),
       syncBalancesStep(item.plaidAccessToken, item.plaidItemId),
     ]);
-    // SRI-353: disabled — matcher rewrite in progress (singleton tier hijacked
-    // MTA swipes into Mt Ararat Bakery). Re-enable when new branch logic ships.
-    // await enrichTransactionsStep(item.plaidItemId);
+    await enrichTransactionsStep(item.plaidItemId);
 
     // Snapshots are written by cron + at account creation only — recurring
     // webhooks update live balances and let the next cron tick capture state.
@@ -230,8 +227,7 @@ export async function plaidAddAccountWorkflow(
         syncTransactionsStep(accessToken, plaidItemId, item.transactionsCursor),
         syncBalancesStep(accessToken, plaidItemId),
       ]);
-      // SRI-353: disabled — matcher rewrite in progress.
-      // await enrichTransactionsStep(plaidItemId);
+      await enrichTransactionsStep(plaidItemId);
       await emit("transactions", "done", {
         added: txResult.added,
         modified: txResult.modified,
@@ -266,8 +262,7 @@ export async function plaidAddAccountWorkflow(
         syncTransactionsStep(accessToken, plaidItemId, item.transactionsCursor),
         syncBalancesStep(accessToken, plaidItemId),
       ]);
-      // SRI-353: disabled — matcher rewrite in progress.
-      // await enrichTransactionsStep(plaidItemId);
+      await enrichTransactionsStep(plaidItemId);
       await emit("transactions", "done", {
         added: txResult.added,
         modified: txResult.modified,
@@ -385,8 +380,7 @@ async function runOnboardingSyncBranch(
     syncTransactionsStep(accessToken, itemId, null),
     syncBalancesStep(accessToken, itemId),
   ]);
-  // SRI-353: disabled — matcher rewrite in progress.
-  // await enrichTransactionsStep(itemId);
+  await enrichTransactionsStep(itemId);
   await emit("transactions", "done", {
     added: txResult.added,
     modified: txResult.modified,

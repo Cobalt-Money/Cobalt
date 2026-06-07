@@ -95,6 +95,8 @@ export const transaction = pgTable(
     paymentChannel: text("payment_channel"),
     /** True if not yet settled. */
     pending: boolean("pending").default(false).notNull(),
+    /** ExternalId of the linked pending row once posted (Plaid only). */
+    pendingTransactionId: text("pending_transaction_id"),
     /**
      * Plaid `personal_finance_category.detailed` (e.g. `FOOD_AND_DRINK_RESTAURANT`).
      * Server-internal. Used by the merchant-enrichment pipeline (SRI-353) to
@@ -109,8 +111,6 @@ export const transaction = pgTable(
      * NOT user-editable — `categoryId` is the user-facing category column.
      */
     pfcPrimary: text("pfc_primary"),
-    /** ExternalId of the linked pending row once posted (Plaid only). */
-    pendingTransactionId: text("pending_transaction_id"),
     /** Merchant postal/ZIP code. */
     postalCode: text("postal_code"),
     /** Merchant region/state. */

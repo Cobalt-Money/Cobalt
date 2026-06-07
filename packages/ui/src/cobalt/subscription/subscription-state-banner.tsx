@@ -56,10 +56,7 @@ export function SubscriptionStateBanner({ variant, periodEnd, frozenCount, actio
   })();
 
   return (
-    <div
-      className="fixed inset-x-0 top-0 z-50 flex h-9 shrink-0 items-center justify-center gap-3 border-b border-border bg-background px-4 text-sm text-foreground"
-      role="status"
-    >
+    <output className="fixed inset-x-0 top-0 z-50 flex h-9 shrink-0 items-center justify-center gap-3 border-b border-border bg-background px-4 text-sm text-foreground">
       <HugeiconsIcon className={cn(accent)} icon={icon} size={16} strokeWidth={2} />
       <span>
         <span className="font-semibold">{lead}</span>
@@ -67,6 +64,6 @@ export function SubscriptionStateBanner({ variant, periodEnd, frozenCount, actio
         {body}
       </span>
       {action}
-    </div>
+    </output>
   );
 }

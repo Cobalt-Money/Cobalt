@@ -18,10 +18,7 @@ export function DemoBanner() {
     return null;
   }
   return (
-    <div
-      className="fixed inset-x-0 top-0 z-50 flex h-9 shrink-0 items-center justify-center gap-3 border-b border-border bg-background px-4 text-sm text-foreground"
-      role="status"
-    >
+    <output className="fixed inset-x-0 top-0 z-50 flex h-9 shrink-0 items-center justify-center gap-3 border-b border-border bg-background px-4 text-sm text-foreground">
       <HugeiconsIcon className="text-chart-4" icon={MagicWand01Icon} size={16} strokeWidth={2} />
       <span>
         <span className="font-semibold">Demo mode</span>
@@ -39,6 +36,6 @@ export function DemoBanner() {
         {pending ? <Spinner className="size-3" /> : null}
         {pending ? "Exiting…" : "Exit demo"}
       </Button>
-    </div>
+    </output>
   );
 }

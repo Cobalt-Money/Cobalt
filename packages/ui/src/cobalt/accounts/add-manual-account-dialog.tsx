@@ -287,6 +287,7 @@ function TypePicker({
           onBackspaceWhenEmpty();
         }
       }}
+      // biome-ignore lint/a11y/useSemanticElements: <fieldset> would impose default border styling that breaks the picker grid
       role="group"
     >
       {TYPE_META.map((m) => (
