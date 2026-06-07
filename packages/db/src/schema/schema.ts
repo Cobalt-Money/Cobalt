@@ -70,3 +70,8 @@ export {
   socialPrivacyZone,
   merchantGeocodeCache,
 } from "./social";
+
+// SRI-352 — canonical merchant directory. Server-only: read by enrichment
+// pipeline (SRI-350) at txn write time; never synced to Zero clients.
+export { merchant } from "./merchants/merchant";
+export { merchantLocation } from "./merchants/merchant-location";

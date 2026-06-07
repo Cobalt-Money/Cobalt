@@ -14,6 +14,7 @@ import {
   DollarCircleIcon,
   Download01Icon,
   SearchIcon,
+  StoreLocation01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
@@ -26,6 +27,7 @@ import type { FilterKey } from "./filters/add-filter-menu";
 import type { AmountFilterType } from "./filters/amount-filter";
 import type { BankOption } from "./filters/bank-filter";
 import type { CategoryFilterOption } from "./filters/category-filter";
+import type { ChannelFilterValue } from "./filters/channel-filter";
 import type { StatusFilterValue } from "./filters/status-filter";
 import type { ExportFormat } from "./lib/export";
 import type { TagOption } from "./tags/tag-picker";
@@ -37,6 +39,7 @@ export interface TransactionsToolbarFilters {
   amountMin?: number;
   amountMax?: number;
   status?: StatusFilterValue;
+  channel?: ChannelFilterValue;
   bank?: readonly string[];
   tagIds?: readonly string[];
   categoryIds?: readonly string[];
@@ -65,6 +68,12 @@ const STATUS_LABELS: Record<StatusFilterValue, string> = {
   all: "All",
   pending: "Pending",
   posted: "Posted",
+};
+const CHANNEL_LABELS: Record<ChannelFilterValue, string> = {
+  all: "All",
+  in_store: "In store",
+  online: "Online",
+  other: "Other",
 };
 const STATUS_ICON_SRC: Record<StatusFilterValue, string | null> = {
   all: null,
@@ -288,6 +297,7 @@ export function TransactionsToolbar({
 
   const amountActive = isAmountActive(filters);
   const statusActive = Boolean(filters.status && filters.status !== "all");
+  const channelActive = Boolean(filters.channel && filters.channel !== "all");
   const bankActive = Boolean(filters.bank && filters.bank.length > 0);
   const tagActive = Boolean(filters.tagIds && filters.tagIds.length > 0);
   const categoryActive = Boolean(filters.categoryIds && filters.categoryIds.length > 0);
@@ -298,7 +308,7 @@ export function TransactionsToolbar({
     onManageCategories || (categoryOptions && categoryOptions.length > 0),
   );
 
-  const available: FilterKey[] = ["amount", "status", "bank"];
+  const available: FilterKey[] = ["amount", "status", "channel", "bank"];
   if (showTags) {
     available.push("tag");
   }
@@ -311,7 +321,13 @@ export function TransactionsToolbar({
   const datesLabel = buildDatesLabel(filters);
 
   const anyFilterActive =
-    amountActive || statusActive || bankActive || tagActive || categoryActive || datesActive;
+    amountActive ||
+    statusActive ||
+    channelActive ||
+    bankActive ||
+    tagActive ||
+    categoryActive ||
+    datesActive;
   const clearAll = () => {
     onFiltersChange({
       ...filters,
@@ -320,6 +336,7 @@ export function TransactionsToolbar({
       amountMin: undefined,
       bank: undefined,
       categoryIds: undefined,
+      channel: undefined,
       dateFrom: undefined,
       dateTo: undefined,
       status: undefined,
@@ -379,6 +396,10 @@ export function TransactionsToolbar({
             onChangeStatus={(status) => {
               onFiltersChange({ ...filters, status });
             }}
+            channel={filters.channel ?? "all"}
+            onChangeChannel={(channel) => {
+              onFiltersChange({ ...filters, channel });
+            }}
             onChangeTags={(tagIds) => {
               onFiltersChange({ ...filters, tagIds });
             }}
@@ -403,6 +424,7 @@ export function TransactionsToolbar({
           categoryActive={categoryActive}
           categoryOptions={categoryOptions}
           clearAll={clearAll}
+          channelActive={channelActive}
           datesActive={datesActive}
           datesLabel={datesLabel}
           filters={filters}
@@ -423,6 +445,7 @@ interface ActiveFilterChipsProps {
   bankOptions: readonly BankOption[];
   categoryActive: boolean;
   categoryOptions?: readonly CategoryFilterOption[];
+  channelActive: boolean;
   clearAll: () => void;
   datesActive: boolean;
   datesLabel: string;
@@ -440,6 +463,7 @@ function ActiveFilterChips({
   bankOptions,
   categoryActive,
   categoryOptions,
+  channelActive,
   clearAll,
   datesActive,
   datesLabel,
@@ -496,6 +520,21 @@ function ActiveFilterChips({
                 </>
               );
             })()}
+          />
+        ) : null}
+        {channelActive ? (
+          <FilterChip
+            onRemove={() => onFiltersChange({ ...filters, channel: undefined })}
+            value={
+              <>
+                <HugeiconsIcon
+                  className="size-3.5 text-muted-foreground"
+                  icon={StoreLocation01Icon}
+                  strokeWidth={2}
+                />
+                <span>{CHANNEL_LABELS[filters.channel as ChannelFilterValue]}</span>
+              </>
+            }
           />
         ) : null}
         {bankActive

@@ -17,6 +17,7 @@ const listArgsSchema = z
     amountMin: z.number().nonnegative().optional(),
     bank: z.array(z.string()).optional(),
     categoryIds: z.array(z.string()).optional(),
+    channel: z.enum(["all", "in_store", "online", "other"]).optional(),
     status: z.enum(["all", "pending", "posted"]).optional(),
     tagIds: z.array(z.string()).optional(),
   })

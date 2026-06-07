@@ -22,6 +22,7 @@ import {
   DollarCircleIcon,
   FilterIcon,
   Folder01Icon,
+  StoreLocation01Icon,
   Tag01Icon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
@@ -36,9 +37,11 @@ import type { TagOption } from "../tags/tag-picker";
 import type { AmountFilterType, AmountFilterValue } from "./amount-filter";
 import type { BankOption } from "./bank-filter";
 import type { CategoryFilterOption } from "./category-filter";
+import type { ChannelFilterValue } from "./channel-filter";
+import { CHANNEL_LABELS, CHANNEL_OPTIONS } from "./channel-filter";
 import type { StatusFilterValue } from "./status-filter";
 
-export type FilterKey = "amount" | "status" | "bank" | "tag" | "category" | "dates";
+export type FilterKey = "amount" | "status" | "bank" | "tag" | "category" | "channel" | "dates";
 
 const SLIDER_MAX = 10_000;
 const SLIDER_STEP = 10;
@@ -105,6 +108,7 @@ interface AddFilterMenuProps {
   available: readonly FilterKey[];
   amount: AmountFilterValue;
   status: StatusFilterValue;
+  channel: ChannelFilterValue;
   bankIds: readonly string[];
   tagIds: readonly string[];
   categoryIds: readonly string[];
@@ -116,6 +120,7 @@ interface AddFilterMenuProps {
   items?: readonly TransactionResponse[];
   onChangeAmount: (next: AmountFilterValue) => void;
   onChangeStatus: (next: StatusFilterValue) => void;
+  onChangeChannel: (next: ChannelFilterValue) => void;
   onChangeBanks: (next: readonly string[]) => void;
   onChangeTags: (next: readonly string[]) => void;
   onChangeCategories: (next: readonly string[]) => void;
@@ -130,6 +135,7 @@ export function AddFilterMenu({
   available,
   amount,
   status,
+  channel,
   bankIds,
   tagIds,
   categoryIds,
@@ -141,6 +147,7 @@ export function AddFilterMenu({
   items,
   onChangeAmount,
   onChangeStatus,
+  onChangeChannel,
   onChangeBanks,
   onChangeTags,
   onChangeCategories,
@@ -277,6 +284,43 @@ export function AddFilterMenu({
                         </DropdownMenuRadioItem>
                       );
                     })}
+                  </DropdownMenuRadioGroup>
+                )}
+              </SearchableSubContent>
+            </DropdownMenuSub>
+          ) : null}
+          {has("channel") && matches("Channel") ? (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger className="rounded-lg">
+                <HugeiconsIcon
+                  className="size-4 text-muted-foreground"
+                  icon={StoreLocation01Icon}
+                />
+                Channel
+              </DropdownMenuSubTrigger>
+              <SearchableSubContent
+                empty="No channel."
+                placeholder="Search channel..."
+                width="w-auto"
+              >
+                {(subQ) => (
+                  <DropdownMenuRadioGroup
+                    onValueChange={(v) => onChangeChannel(v as ChannelFilterValue)}
+                    value={channel}
+                  >
+                    {CHANNEL_OPTIONS.filter(
+                      (option) => !subQ || CHANNEL_LABELS[option].toLowerCase().includes(subQ),
+                    ).map((option) => (
+                      <DropdownMenuRadioItem
+                        className={HIDE_RIGHT_INDICATOR}
+                        closeOnClick={false}
+                        key={option}
+                        value={option}
+                      >
+                        <RadioDot checked={option === channel} />
+                        {CHANNEL_LABELS[option]}
+                      </DropdownMenuRadioItem>
+                    ))}
                   </DropdownMenuRadioGroup>
                 )}
               </SearchableSubContent>
