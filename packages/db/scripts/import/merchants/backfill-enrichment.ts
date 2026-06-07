@@ -73,12 +73,26 @@ function isLocked(field: WritableField, locked: string[] | null): boolean {
 
 async function main() {
   const userFilter = USER_PREFIX ? sql`AND user_id LIKE ${USER_PREFIX + "%"}` : sql``;
+  // SRI-353: scope to the same pre-filter `enrich.ts` uses. NY/CA only because
+  // that's the region coverage of the canonical directory (DOHMH + scraped CA).
+  // `pfc_primary = 'FOOD_AND_DRINK'` keeps transit / ATM / bank-transfer rows
+  // out of the matcher entirely. Anchor-required: at least one of
+  // lat/address/store#/(city+region) — without an anchor the matcher returns
+  // null anyway, so save the round-trip.
   const txns = await db.execute<PlaidTxn>(sql`
     SELECT id, user_id, name, merchant_name, address, city, region, postal_code,
            lat, lon, store_number, payment_channel, website, date::text AS date, locked_fields
     FROM transaction
     WHERE source = 'plaid'
       AND payment_channel = 'in store'
+      AND region IN ('NY','CA')
+      AND pfc_primary = 'FOOD_AND_DRINK'
+      AND (
+        lat IS NOT NULL
+        OR address IS NOT NULL
+        OR store_number IS NOT NULL
+        OR (city IS NOT NULL AND region IS NOT NULL)
+      )
       ${userFilter}
   `);
 

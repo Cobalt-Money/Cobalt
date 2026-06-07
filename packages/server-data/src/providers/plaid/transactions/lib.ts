@@ -41,6 +41,8 @@ function transactionToRecordMeta(tx: Transaction) {
     paymentChannel: tx.payment_channel || null,
     pending: tx.pending,
     pendingTransactionId: tx.pending_transaction_id || null,
+    pfcDetailed: tx.personal_finance_category?.detailed || null,
+    pfcPrimary: tx.personal_finance_category?.primary || null,
     transactionCode: tx.transaction_code || null,
     website: tx.website || null,
   };

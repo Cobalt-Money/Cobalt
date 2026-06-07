@@ -415,6 +415,7 @@ export function AddPositionForm({
           onBackspaceWhenEmpty();
         }
       }}
+      // biome-ignore lint/a11y/useSemanticElements: <fieldset> would impose default border styling that breaks the layout
       role="group"
     >
       <PositionRow onChange={setPosition} position={position} tickerSearch={tickerSearch} />

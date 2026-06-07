@@ -1,7 +1,7 @@
 import { db } from "@cobalt-web/db";
 import type { merchant } from "@cobalt-web/db/schema/merchants/merchant";
 import { merchantLocation } from "@cobalt-web/db/schema/merchants/merchant-location";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import { normalizeMerchantName, stripLocationTokens } from "./normalize.js";
 
@@ -18,37 +18,30 @@ export interface FindInput {
   lon?: number | null;
   storeNumber?: string | null;
   paymentChannel?: "in store" | "online" | "other" | null;
-  /** Plaid txn date. Used to anchor the user-history region check so old txns
-   *  (e.g. user lived in Charlotte before moving to NYC) don't get matched
-   *  to today's modal region. */
   date?: string | Date | null;
 }
 
 export interface UserContext {
   userId: string;
-  /** Optional override; if omitted, computed at runtime from recent txns. */
-  commonRegion?: string | null;
 }
 
 export type TraceFn = (step: string, data?: Record<string, unknown>) => void;
 
 export type Confidence = "exact" | "high" | "med" | "low";
 
-export type MatchReason =
-  | "store_number"
-  | "geo"
-  | "address"
-  | "city_region"
-  | "singleton"
-  | "chain_brand_only"
-  | "brand_only"
-  | "llm";
+/**
+ * SRI-353 — collapsed reasons. `singleton` and `chain_brand_only` removed;
+ * the singleton auto-pin was the MTA → Mt Ararat Bakery hijack vector.
+ */
+export type MatchReason = "store_number" | "geo" | "address" | "city_region" | "brand_only";
 
 export interface MatchResult {
   merchant: Merchant;
   location: MerchantLocation | null;
   confidence: Confidence;
   reason: MatchReason;
+  /** Trigram similarity of the brand name match (0..1). Surfaced for audit log. */
+  sim: number;
 }
 
 const TRGM_LIMIT = 5;
@@ -57,9 +50,8 @@ const GEO_RADIUS_M = 1000;
 
 const CONFIDENCE_RANK: Record<Confidence, number> = { exact: 4, high: 3, low: 1, med: 2 };
 
-/** Cap the location-tier confidence by the brand-name similarity. A great
- *  city+region pin doesn't mean much if the brand match was a partial-word
- *  hijack. */
+/** Cap location-tier confidence by brand name similarity. A perfect zip / geo
+ *  hit doesn't mean much if the brand match was a partial-word hijack. */
 function capBySim(conf: Confidence, sim: number): Confidence {
   let cap: Confidence;
   if (sim >= 0.85) {
@@ -75,15 +67,13 @@ function capBySim(conf: Confidence, sim: number): Confidence {
 }
 
 /**
- * Plaid uses USPS-style city conventions. In NYC, `city = "New York"` empirically
- * resolves to Manhattan ~96% of the time (verified against Cobalt's own Plaid
- * data + geocoded lat/lon). Our DOHMH-derived directory stores `city` as the
- * borough literal (Manhattan / Brooklyn / Queens / Bronx / Staten Island), so
- * the literal "New York" never matches without translation. This map widens
- * the search to the most likely borough first, then falls back.
+ * Plaid uses USPS-style city literals; in NYC, `city = "New York"` resolves to
+ * Manhattan ~96% of the time. DOHMH stores city as the borough literal
+ * (Manhattan / Brooklyn / Queens / Bronx / Staten Island), so the literal
+ * "New York" never matches without translation. Applied only in the
+ * city_region branch — never as a singleton-tier substitute.
  */
 const CITY_EXPANSION: Record<string, string[]> = {
-  // region:city → ordered list of candidate cities (most likely first)
   "NY:new york": ["Manhattan", "New York", "Brooklyn", "Queens", "Bronx", "Staten Island"],
   "NY:nyc": ["Manhattan", "New York", "Brooklyn", "Queens", "Bronx", "Staten Island"],
 };
@@ -94,10 +84,13 @@ function expandCityCandidates(city: string, region: string | null): string[] {
 }
 
 /**
- * Public entrypoint. Given Plaid txn fields + user context, find the best
- * merchant (and optionally a specific location) from the canonical directory.
- * Returns null if no brand match crosses the trigram threshold.
+ * Public entrypoint. Routes to one of four anchor-required branches based on
+ * the strongest Plaid-provided location signal; returns null when no anchor
+ * exists. Killed in SRI-353: singleton tier, chain_brand_only fallback,
+ * generic brand_only fallback — anything that wrote location without a
+ * physical signal.
  */
+// eslint-disable-next-line complexity
 export async function findMerchantForTransaction(
   input: FindInput,
   _ctx: UserContext,
@@ -112,316 +105,331 @@ export async function findMerchantForTransaction(
     return null;
   }
 
-  const candidates = await trgmTopBrands(norm, TRGM_LIMIT, input.region ?? null);
-  t("trgm_candidates", {
-    count: candidates.length,
-    top: candidates.map((c) => ({
-      domain: c.row.domain,
-      isChain: c.row.isChain,
-      locationCount: c.row.locationCount,
-      name: c.row.canonicalName,
-      sim: c.sim,
-    })),
-  });
-  if (candidates.length === 0) {
-    t("reject", { reason: "no_trgm_match" });
-    return null;
-  }
-
-  // Signal-aware brand scoring. Length-ratio is a *soft* penalty so a low-sim
-  // chain like "Key Food" (vs Plaid "Key Food Stores") survives long enough to
-  // be lifted by store#/zip/city hits in its own locations.
-  const cityCandidates = input.city
-    ? expandCityCandidates(input.city, input.region ?? null).map((c) => c.toLowerCase())
-    : [];
-  const signalHits = await brandLocationSignalHits(
-    candidates.map((c) => c.row.id),
-    {
-      cityLower: cityCandidates,
-      postalCode: input.postalCode ?? null,
-      region: input.region ?? null,
-      storeNumber: input.storeNumber ?? null,
-    },
-  );
-  const scored = candidates.map((c) => {
-    const hits = signalHits.get(c.row.id) ?? {
-      cityLoc: null,
-      storeLoc: null,
-      zipLoc: null,
-    };
-    let score = c.sim ?? 0;
-    if (hits.storeLoc) {
-      score += 0.5;
-    }
-    if (hits.zipLoc) {
-      score += 0.3;
-    }
-    if (hits.cityLoc) {
-      score += 0.2;
-    }
-    if (c.row.isChain) {
-      score += 0.05;
-    }
-    return { c, hits, score };
-  });
-  scored.sort((a, b) => b.score - a.score);
-  t("brand_scoring", {
-    top: scored.slice(0, 5).map((s) => ({
-      cityHit: !!s.hits.cityLoc,
-      name: s.c.row.canonicalName,
-      score: Number(s.score.toFixed(3)),
-      sim: s.c.sim,
-      storeHit: !!s.hits.storeLoc,
-      zipHit: !!s.hits.zipLoc,
-    })),
-  });
-  const best = scored[0]!.c;
-  // Stash any location we proved during scoring so Phase B can short-circuit.
-  const prefetchedLocation: { hit: MerchantLocation; reason: MatchReason } | null = (() => {
-    const h = scored[0]!.hits;
-    if (h.storeLoc) {
-      return { hit: h.storeLoc, reason: "store_number" };
-    }
-    if (h.zipLoc) {
-      return { hit: h.zipLoc, reason: "address" };
-    }
-    if (h.cityLoc) {
-      return { hit: h.cityLoc, reason: "city_region" };
-    }
-    return null;
-  })();
-  if ((best.sim ?? 0) < TRGM_THRESHOLD) {
-    t("reject", { reason: "top_sim_below_threshold", sim: best.sim, threshold: TRGM_THRESHOLD });
-    return null;
-  }
-  const brand: Merchant = best.row;
-  const topSim = best.sim ?? 0;
-  t("brand_selected", {
-    domain: brand.domain,
-    id: brand.id,
-    isChain: brand.isChain,
-    name: brand.canonicalName,
-    sim: topSim,
-  });
-  // Build a result wrapper that auto-caps confidence by the brand similarity.
-  const make = (
-    location: MerchantLocation | null,
-    rawConfidence: Confidence,
-    reason: MatchReason,
-  ): MatchResult => {
-    const capped = capBySim(rawConfidence, topSim);
-    if (capped !== rawConfidence) {
-      t("confidence_capped_by_sim", { from: rawConfidence, sim: topSim, to: capped });
-    }
-    return { confidence: capped, location, merchant: brand, reason };
-  };
-
-  // Region whitelist: if Plaid said the txn was in region X — or if Plaid was
-  // silent but the user's historical modal region is X — and this brand has
-  // ZERO locations there, this is almost certainly a wrong match (same-name
-  // brand in a different region). Bail for non-chains. Chains can match
-  // brand-only across regions (Starbucks Charlotte NC → starbucks.com is fine).
-  // Region whitelist — Plaid-provided only. We trust Plaid's region tag; we
-  // don't infer regions from user history (too fragile across moves / travel).
-  if (input.region && !brand.isChain) {
-    const inRegion = await brandHasLocationInRegion(brand.id, input.region);
-    t("region_check", { brandHasLocationInRegion: inRegion, region: input.region });
-    if (!inRegion) {
-      t("reject", { reason: "non_chain_brand_not_present_in_plaid_region" });
-      return null;
-    }
-  }
-
-  if (input.paymentChannel && input.paymentChannel !== "in store") {
-    t("decision", { action: "brand_only", paymentChannel: input.paymentChannel, tier: "channel" });
-    return make(null, "high", "brand_only");
-  }
-
-  // Short-circuit Phase B if scoring already proved a location hit.
-  if (prefetchedLocation) {
-    t("decision", {
-      locationId: prefetchedLocation.hit.id,
-      reason: prefetchedLocation.reason,
-      tier: "phase_a_prefetch",
-    });
-    const conf: Confidence = prefetchedLocation.reason === "store_number" ? "exact" : "high";
-    return make(prefetchedLocation.hit, conf, prefetchedLocation.reason);
-  }
-
   if (input.storeNumber) {
-    const hit = await byStoreNumber(brand.id, input.storeNumber);
-    t("tier_1_store_number", { hit: hit ? hit.id : null, plaidStoreNumber: input.storeNumber });
-    if (hit) {
-      return make(hit, "exact", "store_number");
+    const res = await tryStoreNumberBranch(norm, input, t);
+    if (res) {
+      return res;
     }
-  } else {
-    t("tier_1_store_number", { skipped: "no_store_number_in_plaid" });
+    t("store_number_branch_miss", { fallthrough: true });
   }
 
   if (input.lat != null && input.lon != null) {
-    const near = await nearestByGeo(brand.id, input.lat, input.lon, GEO_RADIUS_M);
-    t("tier_2_geo", {
-      hit: near ? near.id : null,
-      lat: input.lat,
-      lon: input.lon,
-      radiusM: GEO_RADIUS_M,
-    });
-    if (near) {
-      return make(near, "high", "geo");
-    }
-  } else {
-    t("tier_2_geo", { skipped: "no_lat_lon_in_plaid" });
+    return tryGeoBranch(norm, input, t);
   }
 
   if (input.address) {
-    const cityCandidates = input.city
-      ? expandCityCandidates(input.city, input.region ?? null)
-      : [null];
-    let hit: MerchantLocation | null = null;
-    let triedCity: string | null = null;
-    for (const candidateCity of cityCandidates) {
-      triedCity = candidateCity;
-      hit = await byAddress(brand.id, input.address, candidateCity, input.region ?? null);
-      if (hit) {
-        break;
-      }
-    }
-    t("tier_3_address", {
-      hit: hit ? hit.id : null,
-      plaidAddress: input.address,
-      plaidCity: input.city,
-      triedCity,
-    });
-    if (hit) {
-      return make(hit, "high", "address");
-    }
-  } else {
-    t("tier_3_address", { skipped: "no_address_in_plaid" });
+    return tryAddressBranch(norm, input, t);
   }
 
   if (input.city && input.region) {
-    const cityCandidates = expandCityCandidates(input.city, input.region);
-    for (const candidateCity of cityCandidates) {
-      const cityHits = await byCityRegion(brand.id, candidateCity, input.region);
-      t("tier_4_city_region", {
-        expanded: cityCandidates.length > 1,
-        hits: cityHits.length,
-        plaidCity: input.city,
+    return tryCityRegionBranch(norm, input, t);
+  }
+
+  t("reject", { reason: "no_location_anchor" });
+  return null;
+}
+
+/* -------------------- branches -------------------- */
+
+async function tryStoreNumberBranch(
+  norm: string,
+  input: FindInput,
+  t: TraceFn,
+): Promise<MatchResult | null> {
+  const candidates = await trgmTopBrands(norm, TRGM_LIMIT, input.region ?? null);
+  if (candidates.length === 0) {
+    return null;
+  }
+  for (const c of candidates) {
+    if ((c.sim ?? 0) < TRGM_THRESHOLD) {
+      continue;
+    }
+    const hit = await byStoreNumber(c.row.id, input.storeNumber!);
+    if (hit) {
+      t("store_number_hit", { brand: c.row.canonicalName, sim: c.sim });
+      return {
+        confidence: capBySim("exact", c.sim ?? 0),
+        location: hit,
+        merchant: c.row,
+        reason: "store_number",
+        sim: c.sim ?? 0,
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * Geo-anchored — single round-trip across `merchant_location` filtered by
+ * radius + name trgm. Brand identity proven by proximity + name overlap
+ * together; either alone is too weak. Replaces brand-first → geo ordering,
+ * which couldn't match when Plaid `name` was POS garbage but coords were good.
+ */
+async function tryGeoBranch(
+  norm: string,
+  input: FindInput,
+  t: TraceFn,
+): Promise<MatchResult | null> {
+  const normNoSpace = norm.replaceAll(/\s+/g, "");
+  const lat = input.lat!;
+  const lon = input.lon!;
+  const rows = await db.transaction(async (tx) => {
+    await tx.execute(sql`SET LOCAL pg_trgm.word_similarity_threshold = ${TRGM_THRESHOLD}`);
+    return tx.execute<GeoRow>(sql`
+      SELECT
+        ml.id AS ml_id, ml.address AS ml_address, ml.city AS ml_city, ml.region AS ml_region,
+        ml.postal_code AS ml_postal_code, ml.country AS ml_country, ml.phone AS ml_phone,
+        ml.lat AS ml_lat, ml.lon AS ml_lon, ml.store_number AS ml_store_number,
+        ml.raw_name AS ml_raw_name, ml.source AS ml_source, ml.source_id AS ml_source_id,
+        ml.also_seen_in AS ml_also_seen_in, ml.last_seen_at AS ml_last_seen_at,
+        ml.created_at AS ml_created_at, ml.updated_at AS ml_updated_at,
+        ml.merchant_id AS ml_merchant_id,
+        m.id AS m_id, m.canonical_name AS m_canonical_name, m.name_normalized AS m_name_normalized,
+        m.aliases AS m_aliases, m.domain AS m_domain, m.logo_url AS m_logo_url,
+        m.category_system_key AS m_category_system_key, m.subtype AS m_subtype,
+        m.tags AS m_tags, m.is_chain AS m_is_chain, m.location_count AS m_location_count,
+        m.domain_guess_attempts AS m_domain_guess_attempts, m.domain_source AS m_domain_source,
+        m.places_id AS m_places_id, m.created_at AS m_created_at, m.updated_at AS m_updated_at,
+        m.deleted_at AS m_deleted_at,
+        GREATEST(
+          similarity(m.name_normalized, ${norm}),
+          similarity(m.name_compact, ${normNoSpace}),
+          word_similarity(m.name_normalized, ${norm}),
+          word_similarity(${norm}, m.name_normalized),
+          word_similarity(m.name_compact, ${normNoSpace})
+        ) AS sim,
+        earth_distance(ll_to_earth(ml.lat, ml.lon), ll_to_earth(${lat}, ${lon})) AS dist_m
+      FROM merchant_location ml
+      JOIN merchant m ON m.id = ml.merchant_id
+      WHERE ml.lat IS NOT NULL AND ml.lon IS NOT NULL
+        AND m.deleted_at IS NULL
+        AND earth_distance(ll_to_earth(ml.lat, ml.lon), ll_to_earth(${lat}, ${lon})) < ${GEO_RADIUS_M}
+        AND (m.name_normalized %> ${norm} OR m.name_compact %> ${normNoSpace})
+      ORDER BY dist_m ASC, sim DESC
+      LIMIT ${TRGM_LIMIT}
+    `);
+  });
+  if (rows.rows.length === 0) {
+    t("geo_branch_miss", { lat, lon, radiusM: GEO_RADIUS_M });
+    return null;
+  }
+  const r = rows.rows[0]!;
+  const sim = Number(r.sim);
+  if (sim < TRGM_THRESHOLD) {
+    t("geo_branch_reject", { reason: "sim_below_threshold", sim });
+    return null;
+  }
+  t("geo_hit", { brand: r.m_canonical_name, distM: r.dist_m, sim });
+  return {
+    confidence: capBySim("high", sim),
+    location: hydrateLocation(r),
+    merchant: hydrateMerchant(r),
+    reason: "geo",
+    sim,
+  };
+}
+
+/**
+ * Address-anchored. Trgm brand candidates first (region-filtered), then
+ * byAddress per candidate. If no specific merchant_location matches, returns
+ * brand-only — street-level signal is enough to claim brand identity even
+ * when our directory lacks that specific store.
+ */
+async function tryAddressBranch(
+  norm: string,
+  input: FindInput,
+  t: TraceFn,
+): Promise<MatchResult | null> {
+  const candidates = await trgmTopBrands(norm, TRGM_LIMIT, input.region ?? null);
+  if (candidates.length === 0) {
+    t("address_branch_reject", { reason: "no_trgm_match" });
+    return null;
+  }
+  const best = candidates[0]!;
+  const sim = best.sim ?? 0;
+  if (sim < TRGM_THRESHOLD) {
+    t("address_branch_reject", { reason: "sim_below_threshold", sim });
+    return null;
+  }
+  if (input.region && !best.row.isChain) {
+    const inRegion = await brandHasLocationInRegion(best.row.id, input.region);
+    if (!inRegion) {
+      t("address_branch_reject", { reason: "non_chain_brand_not_in_region", region: input.region });
+      return null;
+    }
+  }
+  const cityCandidates = input.city
+    ? expandCityCandidates(input.city, input.region ?? null)
+    : [null];
+  for (const cityCandidate of cityCandidates) {
+    const hit = await byAddress(best.row.id, input.address!, cityCandidate, input.region ?? null);
+    if (hit) {
+      t("address_hit", { brand: best.row.canonicalName, sim });
+      return {
+        confidence: capBySim("high", sim),
+        location: hit,
+        merchant: best.row,
+        reason: "address",
+        sim,
+      };
+    }
+  }
+  t("address_branch_brand_only", { brand: best.row.canonicalName, sim });
+  return {
+    confidence: capBySim("high", sim),
+    location: null,
+    merchant: best.row,
+    reason: "brand_only",
+    sim,
+  };
+}
+
+/**
+ * City+region-anchored. Trgm brand candidates with region whitelist; for the
+ * best candidate, try byCityRegion (with NYC borough expansion). Single hit →
+ * write location too; 0 or multi hits → brand identity only. The old singleton
+ * tier auto-pinned a non-chain's only location given any region match — that
+ * was the MTA → Mt Ararat Bakery hijack vector. Gone.
+ */
+async function tryCityRegionBranch(
+  norm: string,
+  input: FindInput,
+  t: TraceFn,
+): Promise<MatchResult | null> {
+  const candidates = await trgmTopBrands(norm, TRGM_LIMIT, input.region ?? null);
+  if (candidates.length === 0) {
+    t("city_region_branch_reject", { reason: "no_trgm_match" });
+    return null;
+  }
+  const best = candidates[0]!;
+  const sim = best.sim ?? 0;
+  if (sim < TRGM_THRESHOLD) {
+    t("city_region_branch_reject", { reason: "sim_below_threshold", sim });
+    return null;
+  }
+  if (input.region && !best.row.isChain) {
+    const inRegion = await brandHasLocationInRegion(best.row.id, input.region);
+    if (!inRegion) {
+      t("city_region_branch_reject", {
+        reason: "non_chain_brand_not_in_region",
         region: input.region,
-        triedCity: candidateCity,
       });
-      if (cityHits.length === 1) {
-        return make(cityHits[0]!, "high", "city_region");
-      }
-      if (cityHits.length > 1) {
-        // multi-hit in this borough — fall through to user history tier
-        break;
-      }
-      // 0 hits → try next candidate borough
-    }
-  } else {
-    t("tier_4_city_region", { skipped: "missing_city_or_region" });
-  }
-
-  // Singleton bonus — only safe when Plaid gave a REGION signal (already
-  // region-checked above against the brand). Without region, a Plaid-supplied
-  // city alone (e.g. "Atlanta" for a brand whose only location is in LA)
-  // would auto-pin wrong. Geo/store_number/address already returned earlier.
-  if (!brand.isChain && brand.locationCount === 1 && input.region) {
-    const loc = await onlyLocation(brand.id);
-    t("tier_singleton", { brandLocationCount: 1, hit: loc ? loc.id : null });
-    if (loc) {
-      return make(loc, "high", "singleton");
+      return null;
     }
   }
-
-  if (brand.isChain) {
-    t("decision", { action: "chain_brand_only", tier: "chain_fallback" });
-    return make(null, "high", "chain_brand_only");
+  const cityCandidates = expandCityCandidates(input.city!, input.region!);
+  for (const cityCandidate of cityCandidates) {
+    const hits = await byCityRegion(best.row.id, cityCandidate, input.region!);
+    if (hits.length === 1) {
+      t("city_region_hit", { brand: best.row.canonicalName, city: cityCandidate, sim });
+      return {
+        confidence: capBySim("high", sim),
+        location: hits[0]!,
+        merchant: best.row,
+        reason: "city_region",
+        sim,
+      };
+    }
+    if (hits.length > 1) {
+      break;
+    }
   }
-
-  // No inferred-history tier and no Plaid-region-only fallback. If we don't
-  // have a sharp signal, return brand-only (no location guess).
-  t("decision", { action: "brand_only", tier: "final_fallback" });
-  return make(null, "high", "brand_only");
+  t("city_region_brand_only", { brand: best.row.canonicalName, sim });
+  return {
+    confidence: capBySim("high", sim),
+    location: null,
+    merchant: best.row,
+    reason: "brand_only",
+    sim,
+  };
 }
 
 /* -------------------- helpers -------------------- */
 
-/**
- * Phase A signal cross-check. For each candidate brand, find at most one
- * matching location per signal (store_number / postal_code / city+region).
- * Single batched query: one round-trip regardless of candidate count.
- */
-interface BrandSignalHits {
-  storeLoc: MerchantLocation | null;
-  zipLoc: MerchantLocation | null;
-  cityLoc: MerchantLocation | null;
+interface GeoRow extends Record<string, unknown> {
+  ml_id: string;
+  ml_address: string;
+  ml_also_seen_in: { source: string; source_id: string }[];
+  ml_city: string;
+  ml_country: string;
+  ml_created_at: Date;
+  ml_last_seen_at: Date;
+  ml_lat: number | null;
+  ml_lon: number | null;
+  ml_merchant_id: string;
+  ml_phone: string | null;
+  ml_postal_code: string | null;
+  ml_raw_name: string;
+  ml_region: string;
+  ml_source: string;
+  ml_source_id: string;
+  ml_store_number: string | null;
+  ml_updated_at: Date;
+  m_aliases: string[];
+  m_canonical_name: string;
+  m_category_system_key: string;
+  m_created_at: Date;
+  m_deleted_at: Date | null;
+  m_domain: string | null;
+  m_domain_guess_attempts: unknown;
+  m_domain_source: string | null;
+  m_id: string;
+  m_is_chain: boolean;
+  m_location_count: number;
+  m_logo_url: string | null;
+  m_name_normalized: string;
+  m_places_id: string | null;
+  m_subtype: string | null;
+  m_tags: string[];
+  m_updated_at: Date;
+  sim: number;
+  dist_m: number;
 }
-async function brandLocationSignalHits(
-  brandIds: string[],
-  signals: {
-    storeNumber: string | null;
-    postalCode: string | null;
-    cityLower: string[];
-    region: string | null;
-  },
-): Promise<Map<string, BrandSignalHits>> {
-  const out = new Map<string, BrandSignalHits>();
-  if (brandIds.length === 0) {
-    return out;
-  }
-  const wantStore = !!signals.storeNumber;
-  const wantZip = !!signals.postalCode;
-  const wantCity = signals.cityLower.length > 0 && !!signals.region;
-  if (!wantStore && !wantZip && !wantCity) {
-    return out;
-  }
 
-  const conds: ReturnType<typeof sql>[] = [];
-  if (wantStore) {
-    conds.push(sql`store_number = ${signals.storeNumber}`);
-  }
-  if (wantZip) {
-    conds.push(sql`postal_code = ${signals.postalCode}`);
-  }
-  if (wantCity) {
-    const cityLiteral = `{${signals.cityLower.map((c) => `"${c.replaceAll('"', '\\"')}"`).join(",")}}`;
-    conds.push(
-      sql`(lower(${merchantLocation.city}) = ANY(${cityLiteral}::text[]) AND ${merchantLocation.region} = ${signals.region})`,
-    );
-  }
-  const orExpr = conds.reduce<ReturnType<typeof sql> | null>(
-    (acc, c) => (acc ? sql`${acc} OR ${c}` : c),
-    null,
-  )!;
-  const rows = await db
-    .select()
-    .from(merchantLocation)
-    .where(and(inArray(merchantLocation.merchantId, brandIds), sql`(${orExpr})`));
-  for (const r of rows) {
-    const slot = out.get(r.merchantId!) ?? {
-      cityLoc: null,
-      storeLoc: null,
-      zipLoc: null,
-    };
-    if (wantStore && !slot.storeLoc && r.storeNumber === signals.storeNumber) {
-      slot.storeLoc = r;
-    }
-    if (wantZip && !slot.zipLoc && r.postalCode === signals.postalCode) {
-      slot.zipLoc = r;
-    }
-    if (
-      wantCity &&
-      !slot.cityLoc &&
-      r.region === signals.region &&
-      signals.cityLower.includes(r.city.toLowerCase())
-    ) {
-      slot.cityLoc = r;
-    }
-    out.set(r.merchantId!, slot);
-  }
-  return out;
+function hydrateLocation(r: GeoRow): MerchantLocation {
+  return {
+    address: r.ml_address,
+    alsoSeenIn: r.ml_also_seen_in,
+    city: r.ml_city,
+    country: r.ml_country,
+    createdAt: r.ml_created_at,
+    id: r.ml_id,
+    lastSeenAt: r.ml_last_seen_at,
+    lat: r.ml_lat,
+    lon: r.ml_lon,
+    merchantId: r.ml_merchant_id,
+    phone: r.ml_phone,
+    postalCode: r.ml_postal_code,
+    rawName: r.ml_raw_name,
+    region: r.ml_region,
+    source: r.ml_source,
+    sourceId: r.ml_source_id,
+    storeNumber: r.ml_store_number,
+    updatedAt: r.ml_updated_at,
+  } satisfies MerchantLocation;
+}
+
+function hydrateMerchant(r: GeoRow): Merchant {
+  return {
+    aliases: r.m_aliases,
+    canonicalName: r.m_canonical_name,
+    categorySystemKey: r.m_category_system_key,
+    createdAt: r.m_created_at,
+    deletedAt: r.m_deleted_at,
+    domain: r.m_domain,
+    // biome-ignore lint: jsonb shape varies, typed at consumer
+    domainGuessAttempts: r.m_domain_guess_attempts as never,
+    domainSource: r.m_domain_source,
+    id: r.m_id,
+    isChain: r.m_is_chain,
+    locationCount: r.m_location_count,
+    logoUrl: r.m_logo_url,
+    nameNormalized: r.m_name_normalized,
+    placesId: r.m_places_id,
+    subtype: r.m_subtype,
+    tags: r.m_tags,
+    updatedAt: r.m_updated_at,
+  } satisfies Merchant;
 }
 
 async function trgmTopBrands(
@@ -430,13 +438,8 @@ async function trgmTopBrands(
   regionHint: string | null = null,
 ): Promise<{ row: Merchant; sim: number }[]> {
   const normNoSpace = norm.replaceAll(/\s+/g, "");
-  // SET LOCAL inside a tx is the pgbouncer-safe way to lower
-  // pg_trgm.word_similarity_threshold for just this query. Default 0.6 is too
-  // strict to surface candidates like "Key Food" inside Plaid "Key Food Stores"
-  // (word_similarity = 0.5625). LOCAL reverts on commit — no app-wide GUC.
-  // Raw SQL needed for the %> operator + similarity(); map snake_case → camelCase.
   const res = await db.transaction(async (tx) => {
-    await tx.execute(sql`SET LOCAL pg_trgm.word_similarity_threshold = 0.4`);
+    await tx.execute(sql`SET LOCAL pg_trgm.word_similarity_threshold = ${TRGM_THRESHOLD}`);
     return tx.execute<{
       id: string;
       canonical_name: string;
@@ -460,7 +463,6 @@ async function trgmTopBrands(
     SELECT m.*,
            GREATEST(
              similarity(m.name_normalized, ${norm}),
-             similarity(m.name_compact, ${norm}),
              similarity(m.name_compact, ${normNoSpace}),
              word_similarity(m.name_normalized, ${norm}),
              word_similarity(${norm}, m.name_normalized),
@@ -469,12 +471,6 @@ async function trgmTopBrands(
            ) AS sim
     FROM merchant m
     WHERE m.deleted_at IS NULL
-      -- Index-friendly filter: gin_trgm_ops supports the %> operator
-      -- (word-similarity commutator) but NOT the <% form. Both semantically
-      -- cover the "DB name is a continuous extent inside the Plaid name" case
-      -- (e.g. "Key Food" inside "Key Food Stores"); only %> hits the GIN index.
-      -- A 5-way OR with % and <% forces a Seq Scan (~553 ms vs ~4 ms indexed).
-      -- Requires pg_trgm.word_similarity_threshold set to ~0.4 on the DB.
       AND (m.name_normalized %> ${norm} OR m.name_compact %> ${normNoSpace})
     ORDER BY
       ${
@@ -490,24 +486,24 @@ async function trgmTopBrands(
   });
   return res.rows.map((r) => ({
     row: {
-      id: r.id,
-      canonicalName: r.canonical_name,
-      nameNormalized: r.name_normalized,
       aliases: r.aliases,
-      domain: r.domain,
-      logoUrl: r.logo_url,
+      canonicalName: r.canonical_name,
       categorySystemKey: r.category_system_key,
-      subtype: r.subtype,
-      tags: r.tags,
-      isChain: r.is_chain,
-      locationCount: r.location_count,
-      // biome-ignore lint: jsonb shape varies, typed elsewhere
+      createdAt: r.created_at,
+      deletedAt: r.deleted_at,
+      domain: r.domain,
+      // biome-ignore lint: jsonb shape varies, typed at consumer
       domainGuessAttempts: r.domain_guess_attempts as never,
       domainSource: r.domain_source,
+      id: r.id,
+      isChain: r.is_chain,
+      locationCount: r.location_count,
+      logoUrl: r.logo_url,
+      nameNormalized: r.name_normalized,
       placesId: r.places_id,
-      createdAt: r.created_at,
+      subtype: r.subtype,
+      tags: r.tags,
       updatedAt: r.updated_at,
-      deletedAt: r.deleted_at,
     } satisfies Merchant,
     sim: r.sim,
   }));
@@ -530,34 +526,9 @@ async function byStoreNumber(
   return rows[0] ?? null;
 }
 
-async function nearestByGeo(
-  merchantId: string,
-  lat: number,
-  lon: number,
-  radiusM: number,
-): Promise<MerchantLocation | null> {
-  const distExpr = sql<number>`earth_distance(ll_to_earth(${merchantLocation.lat}, ${merchantLocation.lon}), ll_to_earth(${lat}, ${lon}))`;
-  const rows = await db
-    .select()
-    .from(merchantLocation)
-    .where(
-      and(
-        eq(merchantLocation.merchantId, merchantId),
-        sql`${merchantLocation.lat} IS NOT NULL AND ${merchantLocation.lon} IS NOT NULL`,
-        sql`${distExpr} < ${radiusM}`,
-      ),
-    )
-    .orderBy(asc(distExpr))
-    .limit(1);
-  return rows[0] ?? null;
-}
-
-/** Address canonicalization: strip ordinal suffixes ("2nd" → "2"), expand
- *  common street abbreviations ("Ave" → "Avenue"), lowercase, drop everything
- *  non-alphanumeric. Makes Plaid's "1724 2nd Ave" match DOHMH's "1724 2 Avenue". */
 function canonicalizeAddress(addr: string): string {
   const expansions: [RegExp, string][] = [
-    [/\b(\d+)(st|nd|rd|th)\b/gi, "$1"], // 2nd → 2
+    [/\b(\d+)(st|nd|rd|th)\b/gi, "$1"],
     [/\bave\b\.?/gi, "avenue"],
     [/\bst\b\.?/gi, "street"],
     [/\bblvd\b\.?/gi, "boulevard"],
@@ -585,8 +556,6 @@ async function byAddress(
   region: string | null,
 ): Promise<MerchantLocation | null> {
   const normAddr = canonicalizeAddress(address);
-  // Apply the same canonicalization to stored addresses via SQL — must mirror
-  // canonicalizeAddress() above. Driven by PG regexp_replace chained inline.
   const canonExpr = sql`regexp_replace(
     regexp_replace(
       regexp_replace(
@@ -652,13 +621,4 @@ async function brandHasLocationInRegion(merchantId: string, region: string): Pro
     .where(and(eq(merchantLocation.merchantId, merchantId), eq(merchantLocation.region, region)))
     .limit(1);
   return rows.length > 0;
-}
-
-async function onlyLocation(merchantId: string): Promise<MerchantLocation | null> {
-  const rows = await db
-    .select()
-    .from(merchantLocation)
-    .where(eq(merchantLocation.merchantId, merchantId))
-    .limit(1);
-  return rows[0] ?? null;
 }

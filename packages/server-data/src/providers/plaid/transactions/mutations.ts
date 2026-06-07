@@ -64,6 +64,8 @@ function buildPlaidUpsertSet(): Record<string, SQL> {
     "paymentChannel",
     "pending",
     "pendingTransactionId",
+    "pfcDetailed",
+    "pfcPrimary",
     "postalCode",
     "region",
     "storeNumber",

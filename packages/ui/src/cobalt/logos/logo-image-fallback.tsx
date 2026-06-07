@@ -141,6 +141,7 @@ export function LogoImageWithFallback({
             fallbackImageBgClassName,
             className,
           )}
+          // biome-ignore lint/a11y/useSemanticElements: wrapper around <img> for fallback background, not an <img> itself
           role="img"
         >
           <img alt="" aria-hidden className="size-[70%] object-contain" src={fallbackImageSrc} />
@@ -156,6 +157,7 @@ export function LogoImageWithFallback({
             "flex size-5 shrink-0 items-center justify-center overflow-hidden",
             className,
           )}
+          // biome-ignore lint/a11y/useSemanticElements: letter-glyph fallback substitutes for an <img>
           role="img"
         >
           <span className={letterFallbackClassName()}>{letter}</span>
