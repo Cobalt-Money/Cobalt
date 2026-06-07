@@ -95,6 +95,20 @@ export const transaction = pgTable(
     paymentChannel: text("payment_channel"),
     /** True if not yet settled. */
     pending: boolean("pending").default(false).notNull(),
+    /**
+     * Plaid `personal_finance_category.detailed` (e.g. `FOOD_AND_DRINK_RESTAURANT`).
+     * Server-internal. Used by the merchant-enrichment pipeline (SRI-353) to
+     * gate which txns even enter the matcher. NOT exposed via any DTO/API and
+     * NOT user-editable — `categoryId` is the user-facing category column.
+     */
+    pfcDetailed: text("pfc_detailed"),
+    /**
+     * Plaid `personal_finance_category.primary` (e.g. `FOOD_AND_DRINK`).
+     * Server-internal. Used by the merchant-enrichment pipeline (SRI-353) to
+     * gate which txns even enter the matcher. NOT exposed via any DTO/API and
+     * NOT user-editable — `categoryId` is the user-facing category column.
+     */
+    pfcPrimary: text("pfc_primary"),
     /** ExternalId of the linked pending row once posted (Plaid only). */
     pendingTransactionId: text("pending_transaction_id"),
     /** Merchant postal/ZIP code. */
@@ -127,6 +141,7 @@ export const transaction = pgTable(
     index("transaction_pending_idx").on(t.pending),
     index("transaction_date_pending_idx").on(t.date, t.pending),
     index("transaction_import_job_id_idx").on(t.importJobId),
+    index("transaction_pfc_primary_idx").on(t.pfcPrimary),
     uniqueIndex("transaction_source_external_id_idx")
       .on(t.source, t.externalId)
       .where(sql`(external_id IS NOT NULL)`),

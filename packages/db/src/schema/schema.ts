@@ -75,3 +75,7 @@ export {
 // pipeline (SRI-350) at txn write time; never synced to Zero clients.
 export { merchant } from "./merchants/merchant";
 export { merchantLocation } from "./merchants/merchant-location";
+
+// SRI-353 — enrichment audit log. Server-only: written by enrichment pipeline,
+// used for bulk rollback + per-txn forensics; never exposed to clients.
+export { enrichmentEvent } from "./merchants/enrichment-event";
