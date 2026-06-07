@@ -7,11 +7,6 @@ import { useCallback, useEffect, useRef } from "react";
 
 const CHART_PERIODS = ["1D", "1W", "1M", "3M", "6M", "YTD", "1Y", "All"] as const;
 
-const CHART_BUNDLE_TAG = "v2";
-if (typeof window !== "undefined") {
-  (window as unknown as { __chartBundleTag?: string }).__chartBundleTag = CHART_BUNDLE_TAG;
-}
-
 export type ChartPeriod = (typeof CHART_PERIODS)[number];
 
 /** Fraction of the fitted logical span to trim from the left (recent-focused zoom). */
