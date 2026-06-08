@@ -14,7 +14,11 @@ export function getInviteAdapter(ctx: GenericEndpointContext) {
   return {
     async createInvite(values: Omit<InviteRecord, "id">): Promise<InviteRecord> {
       const row = await db.create<InviteRecord>({
-        data: values as InviteRecord,
+        // social_invite.id is a `uuid` column. Better Auth's default
+        // generateId returns a 32-char alphanumeric string which Postgres
+        // rejects with "invalid input syntax for type uuid". Pre-assign a
+        // real UUID so the adapter skips its own id generation.
+        data: { ...values, id: crypto.randomUUID() } as InviteRecord,
         model: "socialInvite",
       });
       return row;
@@ -26,7 +30,7 @@ export function getInviteAdapter(ctx: GenericEndpointContext) {
       redeemedAt: Date;
     }): Promise<void> {
       await db.create({
-        data: values,
+        data: { ...values, id: crypto.randomUUID() },
         model: "socialInviteRedemption",
       });
     },
