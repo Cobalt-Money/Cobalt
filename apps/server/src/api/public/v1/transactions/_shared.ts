@@ -8,8 +8,11 @@ export const transactionResponseSchema = transactionSchema.openapi("TransactionD
  * Strip the internal `TransactionResponse` down to the public-safe shape.
  * Drops `source: "plaid" | "manual"`, locked-field metadata, logos, and the
  * merchant URL — internal-leaning fields SDK consumers don't need.
+ *
+ * `sharedWithFriends` is computed at the route layer (single lookup for
+ * detail, bulk for list) — defaults to false when not provided.
  */
-export function toTransaction(tx: TransactionResponse) {
+export function toTransaction(tx: TransactionResponse, sharedWithFriends = false) {
   return {
     accountId: tx.accountId,
     amount: tx.amount,
@@ -22,6 +25,7 @@ export function toTransaction(tx: TransactionResponse) {
     notes: typeof tx.notes === "string" ? tx.notes : null,
     paymentChannel: tx.paymentChannel,
     pending: tx.pending,
+    sharedWithFriends,
     tagIds: tx.tagIds,
   };
 }

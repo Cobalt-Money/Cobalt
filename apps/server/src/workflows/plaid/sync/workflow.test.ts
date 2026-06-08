@@ -27,6 +27,7 @@ import {
 const HOOK_TOKEN = "plaid:link:user-1:test-hook";
 
 vi.mock(import("./steps.js"), () => ({
+  autoShareInStoreTxnsStep: vi.fn(),
   clearItemErrorStep: vi.fn(),
   closeOnboardingProgressStep: vi.fn(),
   dispatchSnapshotWorkflowStep: vi.fn(),

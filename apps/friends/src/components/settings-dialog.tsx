@@ -5,15 +5,44 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@cobalt-web/ui/components/dialog";
+import { usePlaidLinkFlow } from "@cobalt-web/ui/cobalt/accounts/use-plaid-link-flow";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { Mail01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
+import {
+  BankIcon,
+  EarthIcon,
+  Mail01Icon,
+  Settings02Icon,
+  UserGroupIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { authClient } from "../lib/auth-client";
+import { accountsApi, plaidApi, userApi } from "../lib/api-client";
 
-type Section = "general" | "invites" | "friends";
+type Section = "general" | "invites" | "friends" | "sharing" | "accounts";
+
+interface ShareSettings {
+  shareAmount: boolean;
+  shareCard: boolean;
+  shareDate: boolean;
+  shareMaxAmountCents: number | null;
+  shareMerchant: boolean;
+  shareMinAmountCents: number | null;
+  shareNote: boolean;
+}
+
+const DEFAULT_SHARE: ShareSettings = {
+  shareAmount: true,
+  shareCard: true,
+  shareDate: true,
+  shareMaxAmountCents: null,
+  shareMerchant: true,
+  shareMinAmountCents: null,
+  shareNote: false,
+};
 
 interface SettingsDialogProps {
   /** Optional trigger element. Omit when controlled via `open`/`onOpenChange`. */
@@ -27,8 +56,10 @@ interface SettingsDialogProps {
 
 const NAV_ITEMS: { id: Section; label: string; icon: IconSvgElement }[] = [
   { icon: Settings02Icon, id: "general", label: "General" },
+  { icon: BankIcon, id: "accounts", label: "Accounts" },
   { icon: Mail01Icon, id: "invites", label: "Invites" },
   { icon: UserGroupIcon, id: "friends", label: "Friends" },
+  { icon: EarthIcon, id: "sharing", label: "Sharing" },
 ];
 
 export function SettingsDialog({
@@ -62,8 +93,10 @@ export function SettingsDialog({
           <Sidebar active={section} onSelect={setSection} />
           <main className="flex-1 overflow-y-auto p-6">
             {section === "general" && <GeneralSection />}
+            {section === "accounts" && <AccountsSection />}
             {section === "invites" && <InvitesSection />}
             {section === "friends" && <FriendsSection />}
+            {section === "sharing" && <SharingSection />}
           </main>
         </div>
       </DialogContent>
@@ -95,7 +128,7 @@ function Sidebar({ active, onSelect }: { active: Section; onSelect: (s: Section)
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <header className="border-white/10 mb-4 border-b pb-3">
+    <header className="mb-4">
       <h2 className="text-xl font-semibold">{title}</h2>
     </header>
   );
@@ -112,15 +145,12 @@ function GeneralSection() {
   return (
     <div>
       <SectionHeader title="General" />
-      <div className="divide-white/10 divide-y">
+      <div>
         <Row label="Signed in as">
           <span className="text-sm">{user?.email ?? "—"}</span>
         </Row>
         <Row label="Name">
           <span className="text-sm">{user?.name ?? "—"}</span>
-        </Row>
-        <Row label="User ID">
-          <code className="text-white/55 text-xs">{user?.id ?? "—"}</code>
         </Row>
         <Row label="Session">
           <button
@@ -159,7 +189,10 @@ function InvitesSection() {
   const [pending, setPending] = useState<PendingInvite[]>([]);
   // Track both which row is busy + which action (accept|decline) so the
   // opposite button doesn't show the wrong loading label.
-  const [busy, setBusy] = useState<{ id: string; action: "accept" | "decline" } | null>(null);
+  const [busy, setBusy] = useState<{
+    id: string;
+    action: "accept" | "decline";
+  } | null>(null);
 
   const reload = async () => {
     const res = await authClient.invite.pending();
@@ -335,7 +368,9 @@ function FriendsSection() {
     .map((f) => (f.userAId === me ? f.userBId : f.userAId))
     .filter(Boolean) as string[];
   const [friendProfiles] = useQuery(
-    queries.social.friendProfiles({ ids: otherIds.length > 0 ? otherIds : ["__none__"] }),
+    queries.social.friendProfiles({
+      ids: otherIds.length > 0 ? otherIds : ["__none__"],
+    }),
   );
   const nameById = new Map<string, string>();
   for (const p of friendProfiles) {
@@ -385,6 +420,416 @@ function FriendsSection() {
         </div>
       )}
     </div>
+  );
+}
+
+function AccountsSection() {
+  const [accounts] = useQuery(queries.accounts.bankAccounts());
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const { open: openPlaid, opening } = usePlaidLinkFlow({
+    createLinkToken: async () => {
+      const res = await plaidApi.createLinkToken.$post({ json: {} });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Failed to start Plaid Link");
+      }
+      const data = await res.json();
+      return { hookToken: data.hookToken, link_token: data.link_token };
+    },
+    onError: (msg) => toast.error(msg),
+    onSuccess: () => toast.success("Account connected. Transactions syncing…"),
+    resolveLink: async (args) => {
+      const res = await plaidApi.resolveLink.$post({ json: args });
+      if (!res.ok) {
+        throw new Error("Failed to resolve Plaid Link");
+      }
+    },
+  });
+
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  const disconnect = async (id: string, label: string) => {
+    setBusy(id);
+    setConfirmId(null);
+    try {
+      const res = await accountsApi[":id"].$delete({ param: { id } });
+      if (res.ok) {
+        toast.success(`${label} disconnected`);
+      } else {
+        toast.error("Could not disconnect");
+      }
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div>
+      <SectionHeader title="Accounts" />
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-white/55 text-xs">
+          Connected banks contribute in-store transactions to your map.
+        </p>
+        <button
+          className="border-white/20 bg-white/10 hover:bg-white/15 rounded-md border px-3 py-1 text-xs text-white transition disabled:opacity-50"
+          disabled={opening}
+          onClick={openPlaid}
+          type="button"
+        >
+          {opening ? "Opening…" : "Connect bank"}
+        </button>
+      </div>
+      {accounts.length === 0 ? (
+        <p className="text-white/40 text-sm">No accounts connected yet.</p>
+      ) : (
+        <ul className="space-y-2">
+          {accounts.map((a) => {
+            const label = a.customName ?? a.name;
+            const institution = a.plaidConnection?.institution?.name ?? a.institutionName ?? null;
+            return (
+              <li
+                className="border-white/10 bg-white/5 flex items-center justify-between rounded-md border px-3 py-2"
+                key={a.id}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm">{label}</p>
+                  {institution ? (
+                    <p className="text-white/50 truncate text-xs">{institution}</p>
+                  ) : null}
+                </div>
+                {confirmId === a.id ? (
+                  <div className="flex gap-1">
+                    <button
+                      className="text-xs text-white/60 hover:text-white"
+                      onClick={() => setConfirmId(null)}
+                      type="button"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="rounded-md bg-red-500/20 px-2 py-0.5 text-xs text-red-400 hover:bg-red-500/30 disabled:opacity-50"
+                      disabled={busy === a.id}
+                      onClick={() => disconnect(a.id, label)}
+                      type="button"
+                    >
+                      {busy === a.id ? "Disconnecting…" : "Confirm"}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50"
+                    disabled={busy === a.id}
+                    onClick={() => setConfirmId(a.id)}
+                    type="button"
+                  >
+                    Disconnect
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function SharingSection() {
+  const [row] = useQuery(queries.social.shareSettings());
+  const settings: ShareSettings = row
+    ? {
+        shareAmount: row.shareAmount ?? DEFAULT_SHARE.shareAmount,
+        shareCard: row.shareCard ?? DEFAULT_SHARE.shareCard,
+        shareDate: row.shareDate ?? DEFAULT_SHARE.shareDate,
+        shareMaxAmountCents: row.shareMaxAmountCents,
+        shareMerchant: row.shareMerchant ?? DEFAULT_SHARE.shareMerchant,
+        shareMinAmountCents: row.shareMinAmountCents,
+        shareNote: row.shareNote ?? DEFAULT_SHARE.shareNote,
+      }
+    : DEFAULT_SHARE;
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const save = async (patch: Partial<ShareSettings>) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await userApi.sharingSettings.$post({ json: patch });
+      if (!res.ok) {
+        setError("Could not save");
+      }
+    } catch {
+      setError("Could not save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div>
+      <SectionHeader title="Sharing" />
+      <p className="text-white/55 mb-4 text-xs">
+        In-store transactions are auto-shared with friends. Choose what each row reveals.
+      </p>
+
+      <div>
+        <Row label="Show amount">
+          <Toggle
+            checked={settings.shareAmount}
+            disabled={saving}
+            onChange={(v) => save({ shareAmount: v })}
+          />
+        </Row>
+        <Row label="Show card + bank">
+          <Toggle
+            checked={settings.shareCard}
+            disabled={saving}
+            onChange={(v) => save({ shareCard: v })}
+          />
+        </Row>
+        <Row label="Show merchant">
+          <Toggle
+            checked={settings.shareMerchant}
+            disabled={saving}
+            onChange={(v) => save({ shareMerchant: v })}
+          />
+        </Row>
+        <Row label="Show date">
+          <Toggle
+            checked={settings.shareDate}
+            disabled={saving}
+            onChange={(v) => save({ shareDate: v })}
+          />
+        </Row>
+        <Row label="Show note">
+          <Toggle
+            checked={settings.shareNote}
+            disabled={saving}
+            onChange={(v) => save({ shareNote: v })}
+          />
+        </Row>
+        <Row label="Min amount ($)">
+          <CentsInput
+            cents={settings.shareMinAmountCents}
+            disabled={saving}
+            onCommit={(v) => save({ shareMinAmountCents: v })}
+          />
+        </Row>
+        <Row label="Max amount ($)">
+          <CentsInput
+            cents={settings.shareMaxAmountCents}
+            disabled={saving}
+            onCommit={(v) => save({ shareMaxAmountCents: v })}
+          />
+        </Row>
+      </div>
+
+      <BlocklistSection
+        addUrl="merchantBlocklist"
+        kind="merchant"
+        placeholder="Block a merchant (e.g. Starbucks)"
+        title="Blocked merchants"
+      />
+      <BlocklistSection
+        addUrl="categoryBlocklist"
+        kind="category"
+        placeholder="Block a category (e.g. FOOD_AND_DRINK)"
+        title="Blocked categories"
+      />
+
+      {error ? <p className="mt-3 text-xs text-red-500">{error}</p> : null}
+    </div>
+  );
+}
+
+function BlocklistSection({
+  addUrl,
+  kind,
+  placeholder,
+  title,
+}: {
+  addUrl: "merchantBlocklist" | "categoryBlocklist";
+  kind: "merchant" | "category";
+  placeholder: string;
+  title: string;
+}) {
+  const [merchantRows] = useQuery(queries.social.merchantBlocklist());
+  const [categoryRows] = useQuery(queries.social.categoryBlocklist());
+  const names =
+    kind === "merchant"
+      ? merchantRows.map((r) => r.merchantName)
+      : categoryRows.map((r) => r.category);
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const add = async () => {
+    const name = draft.trim();
+    if (name === "") {
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      const res =
+        addUrl === "merchantBlocklist"
+          ? await userApi.sharingSettings.merchantBlocklist.$post({
+              json: { name },
+            })
+          : await userApi.sharingSettings.categoryBlocklist.$post({
+              json: { name },
+            });
+      if (!res.ok) {
+        setErr("Could not block");
+        return;
+      }
+      setDraft("");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async (name: string) => {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res =
+        addUrl === "merchantBlocklist"
+          ? await userApi.sharingSettings.merchantBlocklist.$delete({
+              json: { name },
+            })
+          : await userApi.sharingSettings.categoryBlocklist.$delete({
+              json: { name },
+            });
+      if (!res.ok) {
+        setErr("Could not unblock");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-6">
+      <h4 className="text-white/70 mb-2 text-xs font-medium uppercase tracking-wide">{title}</h4>
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        {names.length === 0 ? (
+          <span className="text-white/40 text-xs">None blocked.</span>
+        ) : (
+          names.map((name) => (
+            <button
+              aria-label={`Unblock ${name}`}
+              className="border-white/15 bg-white/10 hover:bg-white/15 flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs text-white transition disabled:opacity-50"
+              disabled={busy}
+              key={name}
+              onClick={() => remove(name)}
+              type="button"
+            >
+              <span>{name}</span>
+              <span className="text-white/60">×</span>
+            </button>
+          ))
+        )}
+      </div>
+      <div className="flex gap-2">
+        <input
+          className="border-white/10 bg-white/5 focus:border-white/30 flex-1 rounded-md border px-2 py-1 text-xs text-white outline-none"
+          disabled={busy}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              void add();
+            }
+          }}
+          placeholder={placeholder}
+          type="text"
+          value={draft}
+        />
+        <button
+          className="border-white/20 bg-white/10 hover:bg-white/15 rounded-md border px-3 py-1 text-xs text-white transition disabled:opacity-50"
+          disabled={busy || draft.trim() === ""}
+          onClick={add}
+          type="button"
+        >
+          Block
+        </button>
+      </div>
+      {err ? <p className="mt-1 text-xs text-red-500">{err}</p> : null}
+    </div>
+  );
+}
+
+function CentsInput({
+  cents,
+  disabled,
+  onCommit,
+}: {
+  cents: number | null;
+  disabled?: boolean;
+  onCommit: (cents: number | null) => void;
+}) {
+  const [draft, setDraft] = useState<string>(cents === null ? "" : (cents / 100).toFixed(2));
+  useEffect(() => {
+    setDraft(cents === null ? "" : (cents / 100).toFixed(2));
+  }, [cents]);
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (trimmed === "") {
+      onCommit(null);
+      return;
+    }
+    const dollars = Number.parseFloat(trimmed);
+    if (Number.isNaN(dollars) || dollars < 0) {
+      setDraft(cents === null ? "" : (cents / 100).toFixed(2));
+      return;
+    }
+    onCommit(Math.round(dollars * 100));
+  };
+  return (
+    <input
+      className="w-24 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-right text-xs text-white outline-none focus:border-white/30 disabled:opacity-50"
+      disabled={disabled}
+      inputMode="decimal"
+      onBlur={commit}
+      onChange={(e) => setDraft(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.currentTarget.blur();
+        }
+      }}
+      placeholder="—"
+      type="text"
+      value={draft}
+    />
+  );
+}
+
+function Toggle({
+  checked,
+  disabled,
+  onChange,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      aria-pressed={checked}
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition disabled:opacity-50 ${
+        checked ? "bg-emerald-500/70" : "bg-white/15"
+      }`}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      type="button"
+    >
+      <span
+        className={`bg-white inline-block h-4 w-4 rounded-full shadow transition ${
+          checked ? "translate-x-4" : "translate-x-0.5"
+        }`}
+      />
+    </button>
   );
 }
 

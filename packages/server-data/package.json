@@ -107,7 +107,9 @@
     "./chat/list": "./src/chat/list/index.ts",
     "./chat/detail": "./src/chat/detail/index.ts",
     "./chat/create": "./src/chat/create/index.ts",
-    "./chat/delete": "./src/chat/delete/index.ts"
+    "./chat/delete": "./src/chat/delete/index.ts",
+    "./social": "./src/social/index.ts",
+    "./social/*": "./src/social/*.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

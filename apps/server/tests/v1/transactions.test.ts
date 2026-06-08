@@ -37,6 +37,10 @@ vi.mock(import("@cobalt-web/server-data/transactions/create"), () => ({
 vi.mock(import("@cobalt-web/server-data/transactions/tags/mutations"), () => ({
   setTransactionTags: (...args: unknown[]) => setTransactionTags(...args),
 }));
+vi.mock(import("@cobalt-web/server-data/social"), () => ({
+  getSharedTransactionIds: vi.fn(() => Promise.resolve(new Set<string>())),
+  isTransactionShared: vi.fn(() => Promise.resolve(false)),
+}));
 
 const { transactionsRouter } = await import("../../src/api/public/v1/transactions/index.js");
 
@@ -120,6 +124,7 @@ describe("v1/transactions", () => {
         notes: null,
         paymentChannel: null,
         pending: false,
+        sharedWithFriends: false,
         tagIds: [],
       });
       // Sanity: explicit leak checks for the fields most likely to slip out.
