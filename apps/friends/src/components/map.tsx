@@ -1,7 +1,8 @@
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import type { MapboxOverlayProps } from "@deck.gl/mapbox";
-import { ScatterplotLayer, TextLayer } from "@deck.gl/layers";
-import { HeatmapLayer } from "@deck.gl/aggregation-layers";
+import { ColumnLayer, IconLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
+import { OBJLoader } from "@loaders.gl/obj";
 import { Tile3DLayer } from "@deck.gl/geo-layers";
 import { Tiles3DLoader } from "@loaders.gl/3d-tiles";
 import { queries } from "@cobalt-web/zero";
@@ -14,12 +15,30 @@ import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { useQuery } from "@rocicorp/zero/react";
 import { Map as MapGL, Source, Layer, useControl } from "react-map-gl/maplibre";
 import type { MapRef } from "react-map-gl/maplibre";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { authClient } from "../lib/auth-client";
+import { getAvatarIcon } from "./avatar-icon";
+import { buildEmojiAtlas } from "./emoji-atlas";
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
+
+// Low-poly humanoid OBJ from deck.gl's official sample data set. Public CDN,
+// cached after first fetch. Used by SimpleMeshLayer for People + 3D so each
+// txn renders as a person-shaped figurine tinted by user identity.
+const HUMANOID_MESH_URL =
+  "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/humanoid_quad.obj";
+
+// Stable per-pin Y-axis rotation so figures don't all face the same direction.
+// Just a deterministic hash → 0-360 degrees, no PRNG state.
+function hashAngle(id: string): number {
+  let h = 0;
+  for (const ch of id) {
+    h = Math.trunc(h * 31 + (ch.codePointAt(0) ?? 0));
+  }
+  return Math.abs(h) % 360;
+}
 const GOOGLE_3D_TILES_KEY = import.meta.env.VITE_GOOGLE_3D_TILES_KEY as string | undefined;
 
 const MAP_STYLES = {
@@ -144,7 +163,8 @@ const INITIAL_VIEW_STATE = {
 
 type Category = "food" | "coffee" | "shopping" | "travel" | "entertainment" | "groceries" | "other";
 
-type ViewMode = "pins" | "heat" | "people";
+type ViewMode = "pins" | "people";
+type MarkerStyle = "dots" | "icons" | "3d";
 
 type TimeWindow = 7 | 30 | 90 | 0;
 
@@ -302,11 +322,6 @@ function NycSubwayLines() {
   );
 }
 
-function bucketKey(lat: number, lon: number): string {
-  // ~11m bucket — collapse colocated points
-  return `${lat.toFixed(4)}|${lon.toFixed(4)}`;
-}
-
 function DeckGLOverlay(props: MapboxOverlayProps) {
   const overlay = useControl(() => new MapboxOverlay(props));
   overlay.setProps(props);
@@ -336,7 +351,9 @@ interface GlassStyle {
 }
 
 function computeGlassStyle(g: GlassConfig, isLight: boolean): GlassStyle {
-  const bgRgb = isLight ? "255, 255, 255" : "0, 0, 0";
+  // Dark glass tint = zinc-700 (63,63,70) rather than pure black so panels
+  // read as warm gray against satellite/dark map styles. Light unchanged.
+  const bgRgb = isLight ? "255, 255, 255" : "63, 63, 70";
   const edgeRgb = isLight ? "0, 0, 0" : "255, 255, 255";
   return {
     dividerClass: isLight ? "border-black/10" : "border-white/10",
@@ -409,10 +426,17 @@ export function FriendsMap() {
     mapRef.current?.flyTo({ center: [lon, lat], duration: 1200, essential: true, zoom: 16 });
   };
   const [viewMode, setViewMode] = useState<ViewMode>("pins");
+  const [markerStyle, setMarkerStyle] = useState<MarkerStyle>("icons");
+  // Bumped whenever an async avatar canvas finishes loading so IconLayer's
+  // `updateTriggers` knows to re-read getIcon and pick up the new data URL.
+  const [avatarVersion, setAvatarVersion] = useState(0);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>(30);
   const [activeCategories, setActiveCategories] = useState<Set<Category>>(
     () => new Set(Object.keys(CATEGORY_META) as Category[]),
   );
+  // Friends hidden from the map. Default = all visible. Toggled via the
+  // Friends section in InspectorPanel.
+  const [hiddenFriendIds, setHiddenFriendIds] = useState<Set<string>>(() => new Set());
 
   const isLight = LIGHT_STYLES.has(styleKey);
 
@@ -430,13 +454,40 @@ export function FriendsMap() {
   const session = authClient.useSession();
   const userId = session.data?.user.id;
   const userName = session.data?.user.name ?? session.data?.user.email?.split("@")[0] ?? "You";
+  const userImage = session.data?.user.image ?? null;
+
+  // Built once on mount (canvas rasterizes emoji glyphs via system font).
+  // null on SSR/unsupported envs — IconLayer skipped, dots remain.
+  const emojiAtlas = useMemo(
+    () =>
+      buildEmojiAtlas(
+        (Object.keys(CATEGORY_META) as Category[]).map((c) => ({
+          emoji: CATEGORY_META[c].emoji,
+          key: c,
+        })),
+      ),
+    [],
+  );
 
   const [txns] = useQuery(queries.transactions.list());
   const [friendships] = useQuery(queries.social.friendships());
   const [allPosts] = useQuery(queries.social.postsAll());
 
   const friendIds = new Set(friendships.map((f) => (f.userAId === userId ? f.userBId : f.userAId)));
-  const friendPosts = allPosts.filter((p) => p.userId !== userId && friendIds.has(p.userId));
+  // Stable list for the Friends toggle UI — self first (gold), then every
+  // accepted friendship (orange), even ones with zero shared posts so users
+  // can pre-mute a new friend.
+  const friendList = [
+    { id: userId ?? "self", isSelf: true as const, label: userName },
+    ...[...friendIds].map((id) => ({
+      id,
+      isSelf: false as const,
+      label: `user ${id.slice(0, 6)}`,
+    })),
+  ];
+  const friendPosts = allPosts.filter(
+    (p) => p.userId !== userId && friendIds.has(p.userId) && !hiddenFriendIds.has(p.userId),
+  );
 
   const geoTxns = txns.filter(
     (t): t is typeof t & { lat: number; lon: number } =>
@@ -499,7 +550,8 @@ export function FriendsMap() {
   const passesFilter = (p: PinDatum) =>
     activeCategories.has(p.category) && withinWindow(p.date, timeWindow);
 
-  const pins = selfPinsRaw.filter(passesFilter);
+  const selfHidden = userId ? hiddenFriendIds.has(userId) : false;
+  const pins = selfHidden ? [] : selfPinsRaw.filter(passesFilter);
   const friendPins = friendPinsRaw.filter(passesFilter);
   const allPins = [...pins, ...friendPins];
 
@@ -533,24 +585,6 @@ export function FriendsMap() {
 
   const people = aggregatePeople(allPins);
 
-  // Co-location buckets for People view (stack people at same place).
-  const peopleByBucket = new Map<string, typeof people>();
-  for (const person of people) {
-    const k = bucketKey(person.lat, person.lon);
-    const arr = peopleByBucket.get(k);
-    if (arr) {
-      arr.push(person);
-    } else {
-      peopleByBucket.set(k, [person]);
-    }
-  }
-  const peopleMarkers = [...peopleByBucket.entries()].map(([k, members]) => {
-    const lat = members.reduce((s, m) => s + m.lat, 0) / members.length;
-    const lon = members.reduce((s, m) => s + m.lon, 0) / members.length;
-    const total = members.reduce((s, m) => s + m.total, 0);
-    return { count: members.length, key: k, lat, lon, members, total };
-  });
-
   const layers: unknown[] = [];
   if (show3D && GOOGLE_3D_TILES_KEY) {
     layers.push(
@@ -562,110 +596,188 @@ export function FriendsMap() {
     );
   }
 
-  if (viewMode === "heat") {
-    layers.push(
-      new HeatmapLayer<PinDatum>({
-        aggregation: "SUM",
-        data: allPins,
-        debounceTimeout: 500,
-        getPosition: (d) => [d.position[0], d.position[1]],
-        getWeight: (d) => Math.max(1, Math.abs(d.amount)),
-        id: "spend-heat",
-        intensity: 1,
-        radiusPixels: 40,
-        threshold: 0.05,
-        weightsTextureSize: 512,
-      }),
-    );
+  // Identity color (gold = you, orange = friend) used by People + 3D style.
+  const colorForUser = (uid: string): [number, number, number, number] =>
+    uid === userId ? [255, 215, 0, 230] : [251, 146, 60, 230];
+  const catColor = (c: Category): [number, number, number, number] =>
+    [...CATEGORY_META[c].color, 230] as [number, number, number, number];
+  const pinClickHandler = (object: unknown) => {
+    if (!object) {
+      return;
+    }
+    const p = object as PinDatum;
+    flyTo(p.position[0], p.position[1]);
+    if (p.userId === userId) {
+      setSelectedTxnId(p.id);
+    }
+  };
+  const pinHoverHandler = (info: { object?: unknown; x: number; y: number }) => {
+    setHover(info.object ? { pin: info.object as PinDatum, x: info.x, y: info.y } : null);
+  };
+
+  if (markerStyle === "dots") {
+    if (viewMode === "pins") {
+      layers.push(
+        new ScatterplotLayer<PinDatum>({
+          data: pins,
+          getFillColor: (d) => catColor(d.category),
+          getLineColor: [255, 255, 255, 220],
+          getPosition: (d) => [d.position[0], d.position[1], 0],
+          getRadius: 30,
+          id: "self-pins",
+          lineWidthMinPixels: 2,
+          onClick: ({ object }) => pinClickHandler(object),
+          onHover: pinHoverHandler,
+          pickable: true,
+          radiusMinPixels: 10,
+          radiusUnits: "meters",
+          stroked: true,
+        }),
+        new ScatterplotLayer<PinDatum>({
+          data: friendPins,
+          getFillColor: (d) => catColor(d.category),
+          getLineColor: [16, 185, 129, 255],
+          getPosition: (d) => [d.position[0], d.position[1], 0],
+          getRadius: 32,
+          id: "friend-pins",
+          lineWidthMinPixels: 3,
+          onClick: ({ object }) => pinClickHandler(object),
+          onHover: pinHoverHandler,
+          pickable: true,
+          radiusMinPixels: 12,
+          radiusUnits: "meters",
+          stroked: true,
+        }),
+      );
+    } else {
+      layers.push(
+        new ScatterplotLayer<PinDatum>({
+          data: allPins,
+          getFillColor: (d) => colorForUser(d.userId),
+          getLineColor: [255, 255, 255, 220],
+          getPosition: (d) => [d.position[0], d.position[1], 0],
+          getRadius: 30,
+          id: "people-pins",
+          lineWidthMinPixels: 2,
+          onClick: ({ object }) => pinClickHandler(object),
+          onHover: pinHoverHandler,
+          pickable: true,
+          radiusMinPixels: 10,
+          radiusUnits: "meters",
+          stroked: true,
+        }),
+      );
+    }
+  } else if (markerStyle === "icons") {
+    if (viewMode === "pins" && emojiAtlas) {
+      layers.push(
+        new IconLayer<PinDatum>({
+          alphaCutoff: 0.05,
+          billboard: true,
+          data: allPins,
+          getColor: [255, 255, 255, 255],
+          getIcon: (d) => d.category,
+          getPosition: (d) => [d.position[0], d.position[1], 0],
+          getSize: 60,
+          iconAtlas: emojiAtlas.url,
+          iconMapping: emojiAtlas.mapping,
+          id: "category-icons",
+          onClick: ({ object }) => pinClickHandler(object),
+          onHover: pinHoverHandler,
+          pickable: true,
+          sizeMinPixels: 18,
+          sizeUnits: "meters",
+        }),
+      );
+    } else if (viewMode === "people") {
+      // Each pin = circular avatar tile pre-baked via canvas: profile pic
+      // (if `user.image` present) clipped to a circle, with identity-colored
+      // ring border. Falls back to lettermark (first initial in the ring) so
+      // friends with no public image still read at a glance.
+      const avatarFor = (d: PinDatum) => {
+        const isSelf = d.userId === userId;
+        const initial = (isSelf ? userName : d.person).charAt(0) || "?";
+        const url = isSelf ? userImage : null;
+        const dataUrl = getAvatarIcon(
+          {
+            fallbackInitial: initial,
+            key: d.userId,
+            ring: colorForUser(d.userId),
+            url,
+          },
+          () => setAvatarVersion((v) => v + 1),
+        );
+        // 128×160 teardrop. Anchor at the tail tip (bottom center) so the
+        // point lands on the geographic coord rather than the head center.
+        return {
+          anchorX: 64,
+          anchorY: 160,
+          height: 160,
+          id: `${d.userId}-${avatarVersion}`,
+          url: dataUrl,
+          width: 128,
+        } as const;
+      };
+      layers.push(
+        new IconLayer<PinDatum>({
+          alphaCutoff: 0.05,
+          billboard: true,
+          data: allPins,
+          getColor: [255, 255, 255, 255],
+          getIcon: avatarFor,
+          getPosition: (d) => [d.position[0], d.position[1], 0],
+          getSize: 80,
+          id: "people-avatars",
+          onClick: ({ object }) => pinClickHandler(object),
+          onHover: pinHoverHandler,
+          pickable: true,
+          sizeMinPixels: 22,
+          sizeUnits: "meters",
+          updateTriggers: { getIcon: avatarVersion },
+        }),
+      );
+    }
   } else if (viewMode === "pins") {
+    // 3D + Categories — extruded hex columns. Height = |amount|, color = cat.
+    const heightForAmount = (amount: number) => 80 + Math.min(800, Math.abs(amount) * 4);
     layers.push(
-      new ScatterplotLayer<PinDatum>({
-        data: pins,
-        getFillColor: (d) =>
-          [...CATEGORY_META[d.category].color, 255] as [number, number, number, number],
-        getLineColor: [255, 255, 255, 220],
-        getPosition: (d) => [d.position[0], d.position[1], 0],
-        getRadius: 20,
-        id: "self-pins",
-        lineWidthMinPixels: 2,
-        onClick: ({ object }) => {
-          if (object) {
-            const p = object as PinDatum;
-            flyTo(p.position[0], p.position[1]);
-            setSelectedTxnId(p.id);
-          }
-        },
-        onHover: ({ object, x, y }) => {
-          setHover(object ? { pin: object as PinDatum, x, y } : null);
-        },
+      new ColumnLayer<PinDatum>({
+        data: allPins,
+        diskResolution: 24,
+        elevationScale: 1,
+        extruded: true,
+        getElevation: (d) => heightForAmount(d.amount),
+        getFillColor: (d) => catColor(d.category),
+        getLineColor: [255, 255, 255, 80],
+        getPosition: (d) => [d.position[0], d.position[1]],
+        id: "columns-pins",
+        onClick: ({ object }) => pinClickHandler(object),
+        onHover: pinHoverHandler,
         pickable: true,
-        radiusMaxPixels: 40,
-        radiusMinPixels: 10,
-        radiusUnits: "pixels",
-        stroked: true,
-      }),
-      new ScatterplotLayer<PinDatum>({
-        data: friendPins,
-        getFillColor: (d) =>
-          [...CATEGORY_META[d.category].color, 255] as [number, number, number, number],
-        getLineColor: [16, 185, 129, 255],
-        getPosition: (d) => [d.position[0], d.position[1], 0],
-        getRadius: 22,
-        id: "friend-pins",
-        lineWidthMinPixels: 3,
-        onClick: ({ object }) => {
-          if (object) {
-            const p = object as PinDatum;
-            flyTo(p.position[0], p.position[1]);
-          }
-        },
-        onHover: ({ object, x, y }) => {
-          setHover(object ? { pin: object as PinDatum, x, y } : null);
-        },
-        pickable: true,
-        radiusMaxPixels: 44,
-        radiusMinPixels: 12,
-        radiusUnits: "pixels",
+        radius: 30,
         stroked: true,
       }),
     );
   } else {
-    // people
-    const maxTotal = Math.max(1, ...peopleMarkers.map((m) => m.total));
+    // 3D + People — low-poly humanoid mesh per txn, tinted by user identity.
+    // OBJ served from deck.gl-data CDN (Khronos sample) — cached after first
+    // fetch. Color tint applied via `getColor` so each person reads at a
+    // glance without needing per-user textures.
     layers.push(
-      new ScatterplotLayer<(typeof peopleMarkers)[number]>({
-        data: peopleMarkers,
-        getFillColor: (d) =>
-          d.members[0]?.userId === userId ? [255, 215, 0, 230] : [16, 185, 129, 230],
-        getLineColor: [255, 255, 255, 255],
-        getPosition: (d) => [d.lon, d.lat, 0],
-        getRadius: (d) => 18 + 30 * Math.sqrt(d.total / maxTotal),
-        id: "people-bubbles",
-        lineWidthMinPixels: 2,
-        onClick: ({ object }) => {
-          if (object) {
-            const d = object as (typeof peopleMarkers)[number];
-            flyTo(d.lon, d.lat);
-          }
-        },
+      new SimpleMeshLayer<PinDatum>({
+        data: allPins,
+        getColor: (d) => colorForUser(d.userId),
+        // OBJ ships y-up but face-down. [90, 0, 0] stands it upright facing
+        // camera. Random Z spin gives the crowd visual variety.
+        getOrientation: (d) => [90, hashAngle(d.id), 0],
+        getPosition: (d) => [d.position[0], d.position[1], 0],
+        id: "people-figures",
+        loaders: [OBJLoader],
+        mesh: HUMANOID_MESH_URL,
+        onClick: ({ object }) => pinClickHandler(object),
+        onHover: pinHoverHandler,
         pickable: true,
-        radiusMaxPixels: 80,
-        radiusMinPixels: 18,
-        radiusUnits: "pixels",
-        stroked: true,
-      }),
-      new TextLayer<(typeof peopleMarkers)[number]>({
-        background: false,
-        characterSet: "auto",
-        data: peopleMarkers,
-        fontWeight: 700,
-        getColor: [255, 255, 255, 255],
-        getPosition: (d) => [d.lon, d.lat, 0],
-        getSize: 14,
-        getText: (d) =>
-          d.count > 1 ? `${d.count}× ${d.members[0]?.name ?? ""}` : (d.members[0]?.name ?? ""),
-        id: "people-labels",
-        sizeUnits: "pixels",
+        sizeScale: 6,
       }),
     );
   }
@@ -710,8 +822,23 @@ export function FriendsMap() {
       <InspectorPanel
         viewMode={viewMode}
         onViewMode={setViewMode}
+        markerStyle={markerStyle}
+        onMarkerStyle={setMarkerStyle}
         timeWindow={timeWindow}
         onTimeWindow={setTimeWindow}
+        friends={friendList}
+        hiddenFriendIds={hiddenFriendIds}
+        onToggleFriend={(id) => {
+          setHiddenFriendIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+              next.delete(id);
+            } else {
+              next.add(id);
+            }
+            return next;
+          });
+        }}
         activeCategories={activeCategories}
         onToggleCategory={(c) => {
           setActiveCategories((prev) => {
@@ -817,21 +944,21 @@ function MerchantPanel({
           <button
             type="button"
             onClick={() => setTab("top")}
-            className={`flex-1 rounded px-2 py-1.5 text-[11px] font-semibold transition ${tab === "top" ? activeTab : idleTab}`}
+            className={`flex-1 rounded px-2 py-1.5 text-xs font-semibold transition ${tab === "top" ? activeTab : idleTab}`}
           >
             Top
           </button>
           <button
             type="button"
             onClick={() => setTab("instore")}
-            className={`flex-1 rounded px-2 py-1.5 text-[11px] font-semibold transition ${tab === "instore" ? activeTab : idleTab}`}
+            className={`flex-1 rounded px-2 py-1.5 text-xs font-semibold transition ${tab === "instore" ? activeTab : idleTab}`}
           >
             In-store {sortedInStore.length > 0 && `(${sortedInStore.length})`}
           </button>
           <button
             type="button"
             onClick={() => setTab("unmapped")}
-            className={`flex-1 rounded px-2 py-1.5 text-[11px] font-semibold transition ${tab === "unmapped" ? activeTab : idleTab}`}
+            className={`flex-1 rounded px-2 py-1.5 text-xs font-semibold transition ${tab === "unmapped" ? activeTab : idleTab}`}
           >
             Unmapped {unmappedTxns.length > 0 && `(${unmappedTxns.length})`}
           </button>
@@ -845,7 +972,7 @@ function MerchantPanel({
                 value={inStoreQuery}
                 onChange={(e) => setInStoreQuery(e.target.value)}
                 placeholder="Search merchant, city…"
-                className={`w-full rounded-lg px-3 py-1.5 text-xs outline-none ${
+                className={`w-full rounded-lg px-3 py-1.5 text-sm outline-none ${
                   isLight
                     ? "bg-black/5 placeholder:text-black/40 text-black focus:bg-black/10"
                     : "bg-white/5 placeholder:text-white/40 text-white focus:bg-white/10"
@@ -869,7 +996,6 @@ function MerchantPanel({
                   : "";
                 const locParts = [p.city, p.region].filter(Boolean) as string[];
                 const loc = locParts.join(", ");
-                const meta = CATEGORY_META[p.category];
                 return (
                   <button
                     key={p.id}
@@ -892,22 +1018,21 @@ function MerchantPanel({
                       className="size-7 shrink-0"
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs font-medium leading-tight">{p.merchant}</div>
-                      <div className={`flex items-center gap-1.5 text-[10px] ${mutedClass}`}>
-                        <span>{meta.emoji}</span>
+                      <div className="truncate text-sm font-medium leading-tight">{p.merchant}</div>
+                      <div className={`flex items-center gap-1.5 text-[11px] ${mutedClass}`}>
                         <span>{dateStr}</span>
                         {loc && <span>·</span>}
                         {loc && <span className="truncate">{loc}</span>}
                       </div>
                     </div>
-                    <div className="text-xs font-semibold tabular-nums">
+                    <div className="text-sm font-semibold tabular-nums">
                       {isOutflow ? "-" : "+"}${Math.abs(p.amount).toFixed(0)}
                     </div>
                   </button>
                 );
               })}
               {sortedInStore.length === 0 && (
-                <div className={`px-4 py-6 text-center text-xs ${mutedClass}`}>
+                <div className={`px-4 py-6 text-center text-sm ${mutedClass}`}>
                   No in-store transactions
                 </div>
               )}
@@ -923,7 +1048,7 @@ function MerchantPanel({
                 value={topQuery}
                 onChange={(e) => setTopQuery(e.target.value)}
                 placeholder="Search merchant…"
-                className={`w-full rounded-lg px-3 py-1.5 text-xs outline-none ${
+                className={`w-full rounded-lg px-3 py-1.5 text-sm outline-none ${
                   isLight
                     ? "bg-black/5 placeholder:text-black/40 text-black focus:bg-black/10"
                     : "bg-white/5 placeholder:text-white/40 text-white focus:bg-white/10"
@@ -950,16 +1075,16 @@ function MerchantPanel({
                     className="size-7 shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-xs font-medium leading-tight">{m.merchant}</div>
-                    <div className={`text-[10px] ${mutedClass}`}>
+                    <div className="truncate text-sm font-medium leading-tight">{m.merchant}</div>
+                    <div className={`text-[11px] ${mutedClass}`}>
                       {m.count} {m.count === 1 ? "txn" : "txns"}
                     </div>
                   </div>
-                  <div className="text-xs font-semibold tabular-nums">${m.total.toFixed(0)}</div>
+                  <div className="text-sm font-semibold tabular-nums">${m.total.toFixed(0)}</div>
                 </div>
               ))}
               {merchants.length === 0 && (
-                <div className={`px-4 py-6 text-center text-xs ${mutedClass}`}>
+                <div className={`px-4 py-6 text-center text-sm ${mutedClass}`}>
                   No transactions yet
                 </div>
               )}
@@ -975,7 +1100,7 @@ function MerchantPanel({
                 value={unmappedQuery}
                 onChange={(e) => setUnmappedQuery(e.target.value)}
                 placeholder="Search merchant, city…"
-                className={`w-full rounded-lg px-3 py-1.5 text-xs outline-none ${
+                className={`w-full rounded-lg px-3 py-1.5 text-sm outline-none ${
                   isLight
                     ? "bg-black/5 placeholder:text-black/40 text-black focus:bg-black/10"
                     : "bg-white/5 placeholder:text-white/40 text-white focus:bg-white/10"
@@ -1016,21 +1141,21 @@ function MerchantPanel({
                       className="size-7 shrink-0"
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs font-medium leading-tight">{merchant}</div>
-                      <div className={`flex items-center gap-1.5 text-[10px] ${mutedClass}`}>
+                      <div className="truncate text-sm font-medium leading-tight">{merchant}</div>
+                      <div className={`flex items-center gap-1.5 text-[11px] ${mutedClass}`}>
                         <span>{dateStr}</span>
                         {loc && <span>·</span>}
                         {loc && <span className="truncate">{loc}</span>}
                       </div>
                     </div>
-                    <div className="text-xs font-semibold tabular-nums">
+                    <div className="text-sm font-semibold tabular-nums">
                       {isOutflow ? "-" : "+"}${Math.abs(amt).toFixed(0)}
                     </div>
                   </button>
                 );
               })}
               {sortedUnmapped.length === 0 && (
-                <div className={`px-4 py-6 text-center text-xs ${mutedClass}`}>
+                <div className={`px-4 py-6 text-center text-sm ${mutedClass}`}>
                   All in-store transactions have location data 🎉
                 </div>
               )}
@@ -1093,21 +1218,21 @@ function PinTooltip({ hover, glassStyle }: { hover: HoverState; glassStyle: Glas
             className="size-9 shrink-0"
           />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold leading-tight">{pin.merchant}</div>
-            <div className={`mt-0.5 truncate text-xs ${muted}`}>{pin.person}</div>
+            <div className="truncate text-base font-semibold leading-tight">{pin.merchant}</div>
+            <div className={`mt-0.5 truncate text-sm ${muted}`}>{pin.person}</div>
           </div>
         </div>
         <div className={`mt-3 flex items-baseline justify-between border-t pt-2.5 ${divider}`}>
-          <span className={`text-base font-semibold tabular-nums ${amountActive}`}>
+          <span className={`text-lg font-semibold tabular-nums ${amountActive}`}>
             {isOutflow ? "-" : "+"}
             {amount}
           </span>
-          {date && <span className={`text-[11px] ${muted}`}>{date}</span>}
+          {date && <span className={`text-xs ${muted}`}>{date}</span>}
         </div>
-        {location && <div className={`mt-2 truncate text-[11px] ${muted}`}>{location}</div>}
+        {location && <div className={`mt-2 truncate text-xs ${muted}`}>{location}</div>}
         {notes && (
           <div
-            className={`mt-2 max-h-24 overflow-hidden border-t pt-2 text-[11px] leading-relaxed italic ${divider}`}
+            className={`mt-2 max-h-24 overflow-hidden border-t pt-2 text-xs leading-relaxed italic ${divider}`}
           >
             {notes}
           </div>
@@ -1133,7 +1258,7 @@ function InspectorSection({
   void isLight;
   return (
     <div className={`border-b px-4 py-3 ${dividerClass}`}>
-      <div className={`mb-2 text-[10px] font-semibold uppercase tracking-wider ${mutedClass}`}>
+      <div className={`mb-2 text-[11px] font-semibold uppercase tracking-wider ${mutedClass}`}>
         {title}
       </div>
       {children}
@@ -1161,7 +1286,7 @@ function SegmentedRow<T extends string | number>({
           key={o.key}
           type="button"
           onClick={() => onChange(o.key)}
-          className={`flex-1 rounded px-2 py-1.5 text-xs font-semibold transition ${value === o.key ? activeBtn : idleBtn}`}
+          className={`flex-1 rounded px-2 py-1.5 text-sm font-semibold transition ${value === o.key ? activeBtn : idleBtn}`}
         >
           {o.label}
         </button>
@@ -1173,8 +1298,13 @@ function SegmentedRow<T extends string | number>({
 function InspectorPanel({
   viewMode,
   onViewMode,
+  markerStyle,
+  onMarkerStyle,
   timeWindow,
   onTimeWindow,
+  friends,
+  hiddenFriendIds,
+  onToggleFriend,
   activeCategories,
   onToggleCategory,
   styleKey,
@@ -1188,8 +1318,13 @@ function InspectorPanel({
 }: {
   viewMode: ViewMode;
   onViewMode: (m: ViewMode) => void;
+  markerStyle: MarkerStyle;
+  onMarkerStyle: (s: MarkerStyle) => void;
   timeWindow: TimeWindow;
   onTimeWindow: (w: TimeWindow) => void;
+  friends: { id: string; label: string; isSelf: boolean }[];
+  hiddenFriendIds: Set<string>;
+  onToggleFriend: (id: string) => void;
   activeCategories: Set<Category>;
   onToggleCategory: (c: Category) => void;
   styleKey: StyleKey;
@@ -1224,12 +1359,30 @@ function InspectorPanel({
       >
         <SegmentedRow<ViewMode>
           options={[
-            { key: "pins", label: "Pins" },
-            { key: "heat", label: "Heat" },
+            { key: "pins", label: "Categories" },
             { key: "people", label: "People" },
           ]}
           value={viewMode}
           onChange={onViewMode}
+          activeBtn={activeBtn}
+          idleBtn={idleBtn}
+        />
+      </InspectorSection>
+
+      <InspectorSection
+        title="Marker"
+        isLight={isLight}
+        dividerClass={dividerClass}
+        mutedClass={mutedClass}
+      >
+        <SegmentedRow<MarkerStyle>
+          options={[
+            { key: "dots", label: "Dots" },
+            { key: "icons", label: "Icons" },
+            { key: "3d", label: "3D" },
+          ]}
+          value={markerStyle}
+          onChange={onMarkerStyle}
           activeBtn={activeBtn}
           idleBtn={idleBtn}
         />
@@ -1261,7 +1414,7 @@ function InspectorPanel({
         dividerClass={dividerClass}
         mutedClass={mutedClass}
       >
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-col gap-1">
           {allCats.map((c) => {
             const on = activeCategories.has(c);
             const meta = CATEGORY_META[c];
@@ -1270,15 +1423,83 @@ function InspectorPanel({
                 key={c}
                 type="button"
                 onClick={() => onToggleCategory(c)}
-                className={`rounded px-2 py-1 text-[11px] font-medium transition ${on ? activeBtn : idleBtn} ${on ? "" : "opacity-40"}`}
+                className={`flex items-center justify-between rounded px-2 py-1 text-xs font-medium transition ${idleBtn} ${on ? "" : "opacity-40"}`}
                 title={meta.label}
               >
-                <span className="mr-1">{meta.emoji}</span>
-                {meta.label}
+                <span className="flex items-center gap-2">
+                  <span className="text-xs">{meta.emoji}</span>
+                  {meta.label}
+                </span>
+                <span className="w-3 text-center opacity-80">{on ? "✓" : ""}</span>
               </button>
             );
           })}
         </div>
+      </InspectorSection>
+
+      <InspectorSection
+        title="Friends"
+        isLight={isLight}
+        dividerClass={dividerClass}
+        mutedClass={mutedClass}
+      >
+        {friends.length === 0 ? (
+          <p className={`text-xs ${mutedClass}`}>No friends yet. Send an invite.</p>
+        ) : (
+          <div className="flex flex-col gap-1">
+            <div className="mb-1 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  for (const f of friends) {
+                    if (hiddenFriendIds.has(f.id)) {
+                      onToggleFriend(f.id);
+                    }
+                  }
+                }}
+                className={`rounded px-2 py-0.5 text-xs font-medium transition ${idleBtn}`}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  for (const f of friends) {
+                    if (!hiddenFriendIds.has(f.id)) {
+                      onToggleFriend(f.id);
+                    }
+                  }
+                }}
+                className={`rounded px-2 py-0.5 text-xs font-medium transition ${idleBtn}`}
+              >
+                None
+              </button>
+            </div>
+            {friends.map((f) => {
+              const on = !hiddenFriendIds.has(f.id);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => onToggleFriend(f.id)}
+                  className={`flex items-center justify-between rounded px-2 py-1 text-xs font-medium transition ${idleBtn} ${on ? "" : "opacity-40"}`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="size-2 rounded-full"
+                      style={{
+                        backgroundColor: f.isSelf ? "rgb(255, 215, 0)" : "rgb(251, 146, 60)",
+                      }}
+                    />
+                    {f.label}
+                    {f.isSelf ? <span className="opacity-60">(you)</span> : null}
+                  </span>
+                  <span className="w-3 text-center opacity-80">{on ? "✓" : ""}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </InspectorSection>
 
       <InspectorSection
@@ -1290,7 +1511,7 @@ function InspectorPanel({
         <select
           value={styleKey}
           onChange={(e) => onStyleKey(e.target.value as StyleKey)}
-          className={`w-full rounded px-2 py-1.5 text-xs font-medium ${idleBtn} ${isLight ? "bg-black/5" : "bg-white/5"} outline-none`}
+          className={`w-full rounded px-2 py-1.5 text-sm font-medium ${idleBtn} ${isLight ? "bg-black/5" : "bg-white/5"} outline-none`}
         >
           {(Object.keys(MAP_STYLES) as StyleKey[]).map((key) => (
             <option key={key} value={key} className="bg-black text-white">
@@ -1311,7 +1532,7 @@ function InspectorPanel({
             <button
               type="button"
               onClick={() => on3DChange(!show3D)}
-              className={`w-full rounded px-3 py-1.5 text-xs font-semibold transition ${show3D ? activeBtn : idleBtn}`}
+              className={`w-full rounded px-3 py-1.5 text-sm font-semibold transition ${show3D ? activeBtn : idleBtn}`}
             >
               3D Buildings {show3D ? "·  On" : "·  Off"}
             </button>
@@ -1319,7 +1540,7 @@ function InspectorPanel({
           <button
             type="button"
             onClick={() => onSubwayChange(!showSubway)}
-            className={`w-full rounded px-3 py-1.5 text-xs font-semibold transition ${showSubway ? activeBtn : idleBtn}`}
+            className={`w-full rounded px-3 py-1.5 text-sm font-semibold transition ${showSubway ? activeBtn : idleBtn}`}
           >
             🚇 NYC Subway {showSubway ? "·  On" : "·  Off"}
           </button>
@@ -1363,32 +1584,30 @@ function PeopleLeaderboard({
     <div className="absolute left-4 top-4 z-10 w-80 max-w-[calc(100vw-2rem)]">
       <div className={`rounded-2xl border ${textClass}`} style={style}>
         <div className={`border-b px-4 py-3 ${dividerClass}`}>
-          <div className="text-sm font-semibold">Crew leaderboard</div>
-          <div className={`text-[11px] ${mutedClass}`}>
+          <div className="text-base font-semibold">Crew leaderboard</div>
+          <div className={`text-xs ${mutedClass}`}>
             {people.length} people · ranked by total spend
           </div>
         </div>
         <div className={`border-b px-4 py-2 ${dividerClass}`}>
           {topOverall.map((p, i) => (
             <div key={p.userId} className="flex items-center gap-3 py-1.5">
-              <div className={`w-5 text-center text-[11px] tabular-nums ${mutedClass}`}>
-                #{i + 1}
-              </div>
-              <div className="min-w-0 flex-1 truncate text-xs font-medium">
+              <div className={`w-5 text-center text-xs tabular-nums ${mutedClass}`}>#{i + 1}</div>
+              <div className="min-w-0 flex-1 truncate text-sm font-medium">
                 {p.name}
                 {p.userId === selfId && (
-                  <span className={`ml-1 text-[10px] ${mutedClass}`}>(you)</span>
+                  <span className={`ml-1 text-[11px] ${mutedClass}`}>(you)</span>
                 )}
               </div>
-              <div className="text-xs font-semibold tabular-nums">${p.total.toFixed(0)}</div>
+              <div className="text-sm font-semibold tabular-nums">${p.total.toFixed(0)}</div>
             </div>
           ))}
           {topOverall.length === 0 && (
-            <div className={`py-3 text-center text-xs ${mutedClass}`}>No data in range</div>
+            <div className={`py-3 text-center text-sm ${mutedClass}`}>No data in range</div>
           )}
         </div>
         <div className="px-4 py-2">
-          <div className={`mb-1 text-[11px] font-semibold uppercase tracking-wide ${mutedClass}`}>
+          <div className={`mb-1 text-xs font-semibold uppercase tracking-wide ${mutedClass}`}>
             Category champions
           </div>
           {topByCat.map(({ cat, person, amount }) => {
@@ -1396,11 +1615,11 @@ function PeopleLeaderboard({
             return (
               <div key={cat} className="flex items-center gap-2 py-1">
                 <span className="w-5 text-center">{meta.emoji}</span>
-                <span className="w-20 text-xs">{meta.label}</span>
-                <span className="min-w-0 flex-1 truncate text-xs font-medium">
+                <span className="w-20 text-sm">{meta.label}</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">
                   {person ? person.name : <span className={mutedClass}>—</span>}
                 </span>
-                <span className="text-xs font-semibold tabular-nums">
+                <span className="text-sm font-semibold tabular-nums">
                   {amount > 0 ? `$${amount.toFixed(0)}` : ""}
                 </span>
               </div>
@@ -1484,7 +1703,7 @@ function DraggableTxnPanel({
         <button
           type="button"
           onClick={onClose}
-          className={`absolute right-3 top-3 z-10 size-7 rounded-full text-xs transition ${isLight ? "hover:bg-black/10" : "hover:bg-white/10"}`}
+          className={`absolute right-3 top-3 z-10 size-7 rounded-full text-sm transition ${isLight ? "hover:bg-black/10" : "hover:bg-white/10"}`}
         >
           ✕
         </button>
@@ -1500,15 +1719,15 @@ function DraggableTxnPanel({
               <TransactionDetailSummary transaction={transaction} hideLocationMap />
               {transaction.notes && (
                 <div className="flex flex-col gap-2">
-                  <h2 className="font-medium text-foreground text-sm">Notes</h2>
-                  <div className="whitespace-pre-wrap text-foreground text-sm leading-relaxed">
+                  <h2 className="font-medium text-foreground text-base">Notes</h2>
+                  <div className="whitespace-pre-wrap text-foreground text-base leading-relaxed">
                     {transaction.notes}
                   </div>
                 </div>
               )}
             </div>
           ) : (
-            <div className={`py-6 text-center text-xs ${mutedClass}`}>Loading transaction…</div>
+            <div className={`py-6 text-center text-sm ${mutedClass}`}>Loading transaction…</div>
           )}
         </div>
       </div>

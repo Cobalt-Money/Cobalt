@@ -6,35 +6,56 @@ import {
   DialogTrigger,
 } from "@cobalt-web/ui/components/dialog";
 import { useQuery, useZero } from "@rocicorp/zero/react";
+import { Mail01Icon, Settings02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { IconSvgElement } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 
 import { authClient } from "../lib/auth-client";
 
-type Section = "general" | "invites" | "friends" | "sharing";
+type Section = "general" | "invites" | "friends";
 
 interface SettingsDialogProps {
-  children: React.ReactNode;
+  /** Optional trigger element. Omit when controlled via `open`/`onOpenChange`. */
+  children?: React.ReactNode;
   /** Optional initial section the dialog opens on. */
   initialSection?: Section;
+  /** Controlled open state (use w/ `onOpenChange`). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-const NAV_ITEMS: { id: Section; label: string; icon: string }[] = [
-  { icon: "⚙", id: "general", label: "General" },
-  { icon: "✉", id: "invites", label: "Invites" },
-  { icon: "👥", id: "friends", label: "Friends" },
-  { icon: "🔒", id: "sharing", label: "Sharing" },
+const NAV_ITEMS: { id: Section; label: string; icon: IconSvgElement }[] = [
+  { icon: Settings02Icon, id: "general", label: "General" },
+  { icon: Mail01Icon, id: "invites", label: "Invites" },
+  { icon: UserGroupIcon, id: "friends", label: "Friends" },
 ];
 
-export function SettingsDialog({ children, initialSection = "general" }: SettingsDialogProps) {
-  const [open, setOpen] = useState(false);
+export function SettingsDialog({
+  children,
+  initialSection = "general",
+  open: openProp,
+  onOpenChange,
+}: SettingsDialogProps) {
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = onOpenChange ?? setOpenState;
   const [section, setSection] = useState<Section>(initialSection);
+
+  // Re-sync the active section when a controlled caller bumps `initialSection`
+  // between opens (e.g. "Settings" vs "Invites" dropdown items).
+  useEffect(() => {
+    if (open) {
+      setSection(initialSection);
+    }
+  }, [open, initialSection]);
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger render={children as React.ReactElement} />
+      {children ? <DialogTrigger render={children as React.ReactElement} /> : null}
       <DialogContent
-        className="h-[80vh] max-h-[720px] w-[90vw] max-w-3xl gap-0 overflow-hidden border border-white/15 bg-black/30 p-0 text-white ring-1 ring-white/10 shadow-xl shadow-black/30 backdrop-blur-[8px] backdrop-saturate-[0.7] sm:max-w-3xl"
-        overlayClassName="bg-black/30 supports-backdrop-filter:backdrop-blur-[2px]"
+        className="h-[80vh] max-h-[720px] w-[90vw] max-w-3xl gap-0 overflow-hidden border border-white/10 bg-zinc-700/40 p-0 text-white ring-1 ring-white/10 shadow-xl shadow-black/30 backdrop-blur-[8px] backdrop-saturate-[0.7] sm:max-w-3xl"
+        overlayClassName="bg-zinc-900/30 supports-backdrop-filter:backdrop-blur-[2px]"
       >
         <DialogTitle className="sr-only">Settings</DialogTitle>
         <div className="flex h-full min-h-0">
@@ -43,7 +64,6 @@ export function SettingsDialog({ children, initialSection = "general" }: Setting
             {section === "general" && <GeneralSection />}
             {section === "invites" && <InvitesSection />}
             {section === "friends" && <FriendsSection />}
-            {section === "sharing" && <SharingSection />}
           </main>
         </div>
       </DialogContent>
@@ -64,7 +84,7 @@ function Sidebar({ active, onSelect }: { active: Section; onSelect: (s: Section)
             onClick={() => onSelect(item.id)}
             type="button"
           >
-            <span className="text-xs opacity-70">{item.icon}</span>
+            <HugeiconsIcon className="size-4 opacity-70" icon={item.icon} strokeWidth={2} />
             <span>{item.label}</span>
           </button>
         ))}
@@ -324,29 +344,6 @@ function FriendsSection() {
           })}
         </div>
       )}
-    </div>
-  );
-}
-
-function SharingSection() {
-  return (
-    <div>
-      <SectionHeader title="Sharing & Privacy" />
-      <div className="space-y-6">
-        <Row label="Default sharing">
-          <span className="text-white/55 text-xs">
-            Manual — share each transaction individually
-          </span>
-        </Row>
-        <Row label="Auto-share categories">
-          <span className="text-white/55 text-xs">Coming soon — per-category toggles</span>
-        </Row>
-        <Row label="Privacy zones">
-          <span className="text-white/55 text-xs">
-            Coming soon — exclude locations (home, work)
-          </span>
-        </Row>
-      </div>
     </div>
   );
 }

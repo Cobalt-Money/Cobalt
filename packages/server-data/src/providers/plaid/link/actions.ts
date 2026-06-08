@@ -16,6 +16,9 @@ export async function createLinkToken(
       language: "en",
       optional_products: [Products.Investments, Products.Liabilities],
       products: [Products.Transactions],
+      // Plaid default = 90d, max = 730d. Only applies to newly-linked Items;
+      // existing Items keep their original window (require re-link to extend).
+      transactions: { days_requested: 730 },
       user: { client_user_id: userId },
       // Plaid stores the webhook URL per-Item at link-token creation. Deriving
       // it from the caller's request host means PR previews receive their own

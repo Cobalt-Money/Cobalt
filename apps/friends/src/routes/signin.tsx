@@ -8,7 +8,7 @@ export const Route = createFileRoute("/signin")({
 
 async function onGoogleSignIn() {
   await authClient.signIn.social({
-    callbackURL: "/",
+    callbackURL: typeof window === "undefined" ? "/" : `${window.location.origin}/`,
     provider: "google",
   });
 }
@@ -24,16 +24,17 @@ function SignInPage() {
     <div className="flex h-screen w-screen items-center justify-center">
       <div className="w-full max-w-sm space-y-6 p-6">
         <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold">Cobalt Friends</h1>
-          <p className="text-muted-foreground text-sm">See where your friends spend.</p>
+          <h1 className="text-3xl font-semibold">Pocketwatch</h1>
+          <p className="text-muted-foreground text-base">See where your friends spend.</p>
         </div>
         <button
           type="button"
           onClick={onGoogleSignIn}
-          className="bg-foreground text-background hover:bg-foreground/90 w-full rounded-md px-4 py-2 text-sm font-medium transition"
+          className="bg-foreground text-background hover:bg-foreground/90 w-full rounded-md px-4 py-2 text-base font-medium transition"
         >
           Continue with Google
         </button>
+        <p className="text-muted-foreground text-center text-sm">Powered by Cobalt</p>
       </div>
     </div>
   );
