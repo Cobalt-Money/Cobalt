@@ -472,6 +472,10 @@ export function FriendsMap() {
   const [txns] = useQuery(queries.transactions.list());
   const [friendships] = useQuery(queries.social.friendships());
   const [allPosts] = useQuery(queries.social.postsAll());
+  // Friend display names land via denormalized columns on social_friendship
+  // (cross-user user-table reads aren't permissioned, so an IN query against
+  // `user` killed the Zero sync handshake).
+  const friendNameById = new Map<string, { name: string; image: string | null }>();
 
   const friendIds = new Set(friendships.map((f) => (f.userAId === userId ? f.userBId : f.userAId)));
   // Stable list for the Friends toggle UI — self first (gold), then every
@@ -482,7 +486,7 @@ export function FriendsMap() {
     ...[...friendIds].map((id) => ({
       id,
       isSelf: false as const,
-      label: `user ${id.slice(0, 6)}`,
+      label: friendNameById.get(id)?.name ?? `user ${id.slice(0, 6)}`,
     })),
   ];
   const friendPosts = allPosts.filter(
@@ -540,7 +544,7 @@ export function FriendsMap() {
       logoUrl: null,
       merchant: p.merchantName,
       notes: p.note ?? null,
-      person: `user ${p.userId.slice(0, 6)}`,
+      person: friendNameById.get(p.userId)?.name ?? `user ${p.userId.slice(0, 6)}`,
       position: [p.lon, p.lat] as [number, number],
       region: null,
       userId: p.userId,
