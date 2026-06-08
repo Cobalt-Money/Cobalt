@@ -1,6 +1,7 @@
+import { Icon } from "@cobalt-web/ui/components/icon";
 import { Popover, PopoverContent, PopoverTrigger } from "@cobalt-web/ui/components/popover";
+import { HStack } from "@cobalt-web/ui/components/stack";
 import { Refresh01Icon, ShoppingBag01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 
 export type PaymentChannel = "in store" | "online" | "other";
@@ -12,23 +13,20 @@ interface EditablePaymentChannelProps {
   onSubmit: (value: PaymentChannel) => void;
 }
 
-const OPTIONS: { label: string; value: PaymentChannel }[] = [
+const OPTIONS = [
   { label: "In store", value: "in store" },
   { label: "Online", value: "online" },
   { label: "Other", value: "other" },
-];
+] as const satisfies readonly { label: string; value: PaymentChannel }[];
+
+const LABEL_MAP: Record<PaymentChannel, string> = {
+  "in store": "In store",
+  online: "Online",
+  other: "Other",
+};
 
 function formatLabel(value: PaymentChannel | null): string {
-  if (value === "in store") {
-    return "In store";
-  }
-  if (value === "online") {
-    return "Online";
-  }
-  if (value === "other") {
-    return "Other";
-  }
-  return "Unknown channel";
+  return value ? LABEL_MAP[value] : "Unknown channel";
 }
 
 export function EditablePaymentChannel({
@@ -40,7 +38,7 @@ export function EditablePaymentChannel({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex items-center gap-1 text-base">
+    <HStack className="text-base" gap={1}>
       <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger
           render={
@@ -50,11 +48,7 @@ export function EditablePaymentChannel({
               type="button"
             >
               <span className="flex size-5 shrink-0 items-center justify-center">
-                <HugeiconsIcon
-                  className="size-5 text-muted-foreground"
-                  icon={ShoppingBag01Icon}
-                  strokeWidth={2}
-                />
+                <Icon className="text-muted-foreground" icon={ShoppingBag01Icon} size="md" />
               </span>
               <span className="text-foreground">{formatLabel(paymentChannel)}</span>
               {isOverridden ? (
@@ -96,9 +90,9 @@ export function EditablePaymentChannel({
           onClick={onReset}
           type="button"
         >
-          <HugeiconsIcon className="size-3" icon={Refresh01Icon} strokeWidth={2} />
+          <Icon icon={Refresh01Icon} size="xs" />
         </button>
       ) : null}
-    </div>
+    </HStack>
   );
 }

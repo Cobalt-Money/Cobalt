@@ -137,6 +137,7 @@ function describeTagsEdit(
   );
 }
 
+// eslint-disable-next-line complexity
 function describeEditEvent(
   item: TransactionActivityItem,
   tagsById: ActivityTagMap | undefined,
@@ -175,6 +176,17 @@ function describeEditEvent(
     }
     case "location": {
       return item.newValue ? "Location updated" : "Location cleared";
+    }
+    case "paymentChannel": {
+      const labels: Record<string, string> = {
+        "in store": "In store",
+        online: "Online",
+        other: "Other",
+      };
+      const v = typeof item.newValue === "string" ? item.newValue : null;
+      return v && labels[v]
+        ? `Payment channel changed to ${labels[v]}`
+        : "Payment channel restored";
     }
     case "tags": {
       return describeTagsEdit(item, tagsById);
