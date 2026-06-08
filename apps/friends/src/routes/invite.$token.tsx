@@ -30,13 +30,26 @@ export const Route = createFileRoute("/invite/$token")({
     const { data } = res;
 
     if (!data || "requiresAuth" in data) {
-      void authClient.signIn.social({
-        callbackURL:
-          typeof window === "undefined"
-            ? `/invite/${params.token}`
-            : `${window.location.origin}/invite/${params.token}`,
-        provider: "google",
-      });
+      // signIn.social normally triggers a top-level browser redirect, so the
+      // promise never resolves in-flight. If it rejects before that (network,
+      // CORS, server 5xx), bounce to "/" with an error so the home route can
+      // toast it — better than leaving the user on a blank screen.
+      try {
+        await authClient.signIn.social({
+          callbackURL:
+            typeof window === "undefined"
+              ? `/invite/${params.token}`
+              : `${window.location.origin}/invite/${params.token}`,
+          provider: "google",
+        });
+      } catch (error) {
+        throw redirect({
+          search: {
+            inviteError: error instanceof Error ? error.message : "Sign-in failed",
+          },
+          to: "/",
+        });
+      }
       return null;
     }
 
