@@ -63,6 +63,17 @@ export type OnRevokeCallback = (params: {
   ctx: GenericEndpointContext;
 }) => Promise<void>;
 
+/**
+ * Hook fired when a recipient declines an invite. Recipient-side suppression
+ * only — the invite remains valid for other potential redeemers. Use to
+ * notify the inviter, emit analytics, etc.
+ */
+export type OnDeclineCallback = (params: {
+  invite: InviteRecord;
+  declinerUserId: string;
+  ctx: GenericEndpointContext;
+}) => Promise<void>;
+
 export interface InviteOptions {
   /**
    * Side effect to apply once an invite is successfully redeemed.
@@ -74,6 +85,11 @@ export interface InviteOptions {
    * Optional revoke hook for external cleanup.
    */
   onRevoke?: OnRevokeCallback;
+
+  /**
+   * Optional decline hook. Fired after the decline row is recorded.
+   */
+  onDecline?: OnDeclineCallback;
 
   /**
    * Optional delivery hook. Plugin does not send emails itself.
@@ -125,9 +141,10 @@ export interface InviteOptions {
 
 /** Options after defaults are applied. Internal. */
 export interface ResolvedInviteOptions extends Required<
-  Omit<InviteOptions, "onRevoke" | "sendInvite" | "allowedKinds" | "schema">
+  Omit<InviteOptions, "onDecline" | "onRevoke" | "sendInvite" | "allowedKinds" | "schema">
 > {
   allowedKinds: readonly string[] | undefined;
+  onDecline: OnDeclineCallback | undefined;
   onRevoke: OnRevokeCallback | undefined;
   schema: InferOptionSchema<typeof inviteSchema> | undefined;
   sendInvite: SendInviteHook | undefined;

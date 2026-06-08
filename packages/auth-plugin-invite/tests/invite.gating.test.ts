@@ -38,7 +38,7 @@ describe("invite recipient gating", () => {
     expect(mocks.onAccept).not.toHaveBeenCalled();
   });
 
-  it("dedupes: same user can't redeem the same invite twice", async () => {
+  it("idempotent: same user re-hitting activate succeeds without re-firing onAccept", async () => {
     const { client, signInWithTestUser, sessionSetter, mocks } = await createTestAuth({
       defaultMaxUsesOpen: 10,
     });
@@ -67,9 +67,10 @@ describe("invite recipient gating", () => {
       fetchOptions: { headers: bobHeaders },
       token,
     });
-    expect(second.error?.status).toBe(400);
-    expect(second.error?.message).toMatch(/already/i);
-    // onAccept was only called once even though redeem was attempted twice.
+    expect(second.error).toBeNull();
+    expect(second.data?.accepted).toBeTruthy();
+    // onAccept fires once even though activate was called twice — the second
+    // call short-circuits on the existing redemption row.
     expect(mocks.onAccept).toHaveBeenCalledOnce();
   });
 });

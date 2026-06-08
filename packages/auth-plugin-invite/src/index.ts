@@ -7,6 +7,7 @@ import { inviteHooks } from "./hooks";
 import {
   activateInviteRoute,
   createInviteRoute,
+  declineInviteRoute,
   listInvitesRoute,
   listPendingInvitesRoute,
   revokeInviteRoute,
@@ -15,7 +16,13 @@ import { schema } from "./schema";
 import type { InviteOptions, InviteRecord } from "./types";
 import { resolveOptions } from "./utils";
 
-export type { InviteOptions, InviteRecord, OnAcceptCallback } from "./types";
+export type {
+  InviteOptions,
+  InviteRecord,
+  OnAcceptCallback,
+  OnDeclineCallback,
+  OnRevokeCallback,
+} from "./types";
 export { INVITE_ERROR_CODES } from "./error-codes";
 
 /**
@@ -38,6 +45,7 @@ export const invite = <O extends InviteOptions>(opts: O) => {
     endpoints: {
       activateInvite: activateInviteRoute(options),
       createInvite: createInviteRoute(options),
+      declineInvite: declineInviteRoute(options),
       listInvites: listInvitesRoute(),
       listPendingInvites: listPendingInvitesRoute(),
       revokeInvite: revokeInviteRoute(options),

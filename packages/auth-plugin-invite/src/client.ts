@@ -11,6 +11,7 @@ export const inviteClient = () =>
     pathMethods: {
       "/invite/activate": "POST",
       "/invite/create": "POST",
+      "/invite/decline": "POST",
       "/invite/list": "GET",
       "/invite/pending": "GET",
       "/invite/revoke": "POST",
