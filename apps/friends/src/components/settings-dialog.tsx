@@ -157,7 +157,9 @@ function InvitesSection() {
   const [copied, setCopied] = useState(false);
 
   const [pending, setPending] = useState<PendingInvite[]>([]);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  // Track both which row is busy + which action (accept|decline) so the
+  // opposite button doesn't show the wrong loading label.
+  const [busy, setBusy] = useState<{ id: string; action: "accept" | "decline" } | null>(null);
 
   const reload = async () => {
     const res = await authClient.invite.pending();
@@ -199,19 +201,27 @@ function InvitesSection() {
   };
 
   const accept = async (token: string, id: string) => {
-    setBusyId(id);
-    await authClient.invite.activate({ token });
-    setBusyId(null);
-    void reload();
+    setBusy({ action: "accept", id });
+    try {
+      await authClient.invite.activate({ token });
+    } finally {
+      setBusy(null);
+      void reload();
+    }
   };
 
   const decline = async (id: string) => {
-    setBusyId(id);
+    setBusy({ action: "decline", id });
     setPending((prev) => prev.filter((p) => p.id !== id));
-    const res = await authClient.invite.decline({ inviteId: id });
-    setBusyId(null);
-    if (res.error) {
+    try {
+      const res = await authClient.invite.decline({ inviteId: id });
+      if (res.error) {
+        void reload();
+      }
+    } catch {
       void reload();
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -290,19 +300,19 @@ function InvitesSection() {
                 <div className="flex items-center gap-2">
                   <button
                     className="border-white/15 hover:bg-white/10 rounded border px-3 py-1 text-xs font-medium disabled:opacity-50"
-                    disabled={busyId === inv.id}
+                    disabled={busy?.id === inv.id}
                     onClick={() => decline(inv.id)}
                     type="button"
                   >
-                    Decline
+                    {busy?.id === inv.id && busy.action === "decline" ? "Declining…" : "Decline"}
                   </button>
                   <button
                     className="bg-white text-black rounded px-3 py-1 text-xs font-medium hover:opacity-90 disabled:opacity-50"
-                    disabled={busyId === inv.id}
+                    disabled={busy?.id === inv.id}
                     onClick={() => accept(inv.token, inv.id)}
                     type="button"
                   >
-                    {busyId === inv.id ? "Accepting…" : "Accept"}
+                    {busy?.id === inv.id && busy.action === "accept" ? "Accepting…" : "Accept"}
                   </button>
                 </div>
               </div>

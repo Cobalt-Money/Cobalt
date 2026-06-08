@@ -58,15 +58,15 @@ export const activateInviteRoute = (options: ResolvedInviteOptions) =>
       if (invite.revokedAt !== null) {
         throw APIError.from("BAD_REQUEST", INVITE_ERROR_CODES.INVITE_REVOKED);
       }
-      if (invite.usesCount >= invite.maxUses) {
-        throw APIError.from("BAD_REQUEST", INVITE_ERROR_CODES.INVITE_EXHAUSTED);
-      }
 
       const session = await getSessionFromCtx(ctx, { disableRefresh: true });
       const sessionUser = session?.user as { id: string; email?: string | null } | undefined;
 
       // Signed-out path — stash token, return.
       if (!sessionUser) {
+        if (invite.usesCount >= invite.maxUses) {
+          throw APIError.from("BAD_REQUEST", INVITE_ERROR_CODES.INVITE_EXHAUSTED);
+        }
         const cookie = ctx.context.createAuthCookie(INVITE_COOKIE_NAME, {
           maxAge: options.cookieMaxAgeSeconds,
         });
@@ -104,12 +104,18 @@ export const activateInviteRoute = (options: ResolvedInviteOptions) =>
       // Idempotent: the post-signup hook (hooks.ts) may have already auto-
       // redeemed in the same session via the stashed cookie. Treat a repeat
       // call as success so the SPA renders the success toast instead of an
-      // error. Redemption rows minted in the last 60s are still "first time"
-      // for UX purposes — they were the just-completed OAuth bounce.
+      // error. Run the lookup BEFORE the exhaustion gate so single-use invites
+      // still return success on a same-user re-tap (Coderabbit SRI-349 catch).
+      // Redemption rows minted in the last 60s are still "first time" for UX
+      // purposes — they were the just-completed OAuth bounce.
       const existing = await adapter.findRedemption(invite.id, sessionUser.id);
       if (existing) {
         const firstTime = isFreshRedemption(existing.redeemedAt, now);
         return ctx.json({ accepted: true, firstTime, invite, inviterName });
+      }
+
+      if (invite.usesCount >= invite.maxUses) {
+        throw APIError.from("BAD_REQUEST", INVITE_ERROR_CODES.INVITE_EXHAUSTED);
       }
 
       await adapter.createRedemption({
