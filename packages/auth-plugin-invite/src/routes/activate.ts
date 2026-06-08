@@ -81,9 +81,28 @@ export const activateInviteRoute = (options: ResolvedInviteOptions) =>
       if (invite.targetEmail && normalizeEmail(sessionUser.email) !== invite.targetEmail) {
         throw APIError.from("FORBIDDEN", INVITE_ERROR_CODES.WRONG_RECIPIENT);
       }
+
+      const inviter = await ctx.context.adapter.findOne<{
+        id: string;
+        name?: string | null;
+        email?: string | null;
+      }>({
+        model: "user",
+        where: [{ field: "id", value: invite.inviterUserId }],
+      });
+      const inviterName = inviter?.name ?? inviter?.email ?? null;
+
+      // Idempotent: the post-signup hook (hooks.ts) may have already auto-
+      // redeemed in the same session via the stashed cookie. Treat a repeat
+      // call as success so the SPA renders the success toast instead of an
+      // error. Redemption rows minted in the last 60s are still "first time"
+      // for UX purposes — they were the just-completed OAuth bounce.
       const existing = await adapter.findRedemption(invite.id, sessionUser.id);
       if (existing) {
-        throw APIError.from("BAD_REQUEST", INVITE_ERROR_CODES.ALREADY_REDEEMED);
+        const firstTime =
+          existing.redeemedAt != null &&
+          now.getTime() - new Date(existing.redeemedAt).getTime() < 60_000;
+        return ctx.json({ accepted: true, firstTime, invite, inviterName });
       }
 
       await adapter.createRedemption({
@@ -108,6 +127,6 @@ export const activateInviteRoute = (options: ResolvedInviteOptions) =>
         throw APIError.from("INTERNAL_SERVER_ERROR", INVITE_ERROR_CODES.ON_ACCEPT_FAILED);
       }
 
-      return ctx.json({ accepted: true, invite });
+      return ctx.json({ accepted: true, firstTime: true, invite, inviterName });
     },
   );

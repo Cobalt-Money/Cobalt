@@ -49,8 +49,11 @@ export function getInviteAdapter(ctx: GenericEndpointContext) {
       });
     },
 
-    findRedemption(inviteId: string, redeemerUserId: string): Promise<{ id: string } | null> {
-      return db.findOne<{ id: string }>({
+    findRedemption(
+      inviteId: string,
+      redeemerUserId: string,
+    ): Promise<{ id: string; redeemedAt: Date } | null> {
+      return db.findOne<{ id: string; redeemedAt: Date }>({
         model: "socialInviteRedemption",
         where: [
           { field: "inviteId", value: inviteId },

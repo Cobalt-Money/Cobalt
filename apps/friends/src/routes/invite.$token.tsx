@@ -1,83 +1,56 @@
-import { Navigate, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { authClient } from "../lib/auth-client";
 
 export const Route = createFileRoute("/invite/$token")({
-  component: RedeemInvitePage,
-  errorComponent: RedeemError,
+  /**
+   * Loader-only route. Calls /invite/activate, then redirects:
+   *   - signed-out + valid invite → Google OAuth (token sits in a signed
+   *     cookie; the post-signup hook auto-redeems on callback)
+   *   - signed-in + accepted     → "/" with ?welcomedBy=… so the home
+   *     route can fire a toast
+   *   - any error                → "/" with ?inviteError=… (toast the msg)
+   *
+   * Renders nothing — the redeem screen is transit, not a destination.
+   */
+  errorComponent: () => null,
   loader: async ({ params }) => {
-    const res = await authClient.invite.activate({ token: params.token });
-    if (res.error) {
-      throw new Error(res.error.message ?? "Could not redeem invite");
-    }
-    return { accepted: res.data?.accepted ?? false, token: params.token };
-  },
-  pendingComponent: RedeemingPending,
-});
-
-function RedeemInvitePage() {
-  const { accepted, token } = Route.useLoaderData();
-  const session = authClient.useSession();
-  const navigate = useNavigate();
-
-  // Redirect home shortly after accept so the user lands on the feed.
-  useEffect(() => {
-    if (!accepted) {
-      return;
-    }
-    const id = setTimeout(() => navigate({ to: "/" }), 1200);
-    return () => clearTimeout(id);
-  }, [accepted, navigate]);
-
-  // Signed-out path: plugin set the redemption cookie server-side; bounce
-  // through OAuth and TanStack Router re-runs the loader on return.
-  if (!accepted && !session.isPending && !session.data?.user) {
-    void authClient.signIn.social({
-      callbackURL:
-        typeof window === "undefined"
-          ? `/invite/${token}`
-          : `${window.location.origin}/invite/${token}`,
-      provider: "google",
+    const res = await authClient.invite.activate({
+      callbackURL: `/invite/${params.token}`,
+      token: params.token,
     });
-    return <Shell>Sign in to accept this invite…</Shell>;
-  }
 
-  if (session.data?.user && accepted) {
-    return <Navigate replace to="/" />;
-  }
+    if (res.error) {
+      throw redirect({
+        search: { inviteError: res.error.message ?? "Could not redeem invite" },
+        to: "/",
+      });
+    }
 
-  return <Shell tone="success">You're now friends. Redirecting…</Shell>;
-}
+    const data = res.data;
 
-function RedeemingPending() {
-  return <Shell>Redeeming invite…</Shell>;
-}
+    if (!data?.accepted) {
+      void authClient.signIn.social({
+        callbackURL:
+          typeof window === "undefined"
+            ? `/invite/${params.token}`
+            : `${window.location.origin}/invite/${params.token}`,
+        provider: "google",
+      });
+      return null;
+    }
 
-function RedeemError({ error }: { error: Error }) {
-  return <Shell tone="error">{error.message}</Shell>;
-}
-
-function Shell({
-  children,
-  tone = "muted",
-}: {
-  children: React.ReactNode;
-  tone?: "muted" | "success" | "error";
-}) {
-  const toneClass: Record<typeof tone, string> = {
-    error: "text-red-500 text-base",
-    muted: "text-muted-foreground text-base",
-    success: "text-emerald-500 text-base",
-  };
-  const className = toneClass[tone];
-  return (
+    throw redirect({
+      search: {
+        firstTime: data.firstTime ?? true,
+        welcomedBy: data.inviterName ?? "your friend",
+      },
+      to: "/",
+    });
+  },
+  pendingComponent: () => (
     <div className="flex h-screen w-screen items-center justify-center">
-      <div className="w-full max-w-sm space-y-3 p-6 text-center">
-        <h1 className="text-3xl font-semibold">Pocketwatch</h1>
-        <p className={className}>{children}</p>
-        <p className="text-muted-foreground text-sm">Powered by Cobalt</p>
-      </div>
+      <span className="text-muted-foreground text-sm">Redeeming invite…</span>
     </div>
-  );
-}
+  ),
+});
