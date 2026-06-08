@@ -9,7 +9,7 @@ import { useCommandMenu } from "@/components/shell/command-menu";
 import { useFinancialEvents } from "@/hooks/use-financial-events";
 import { useNewsRssSidebar } from "@/hooks/use-news-rss";
 
-import { useNewsLayout } from "./news-layout-context";
+import { useNewsLayout } from "./-news-layout-context";
 
 export const Route = createFileRoute("/_auth/news/")({
   component: NewsIndexPage,

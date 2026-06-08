@@ -1,3 +1,7 @@
+/**
+ * biome-ignore-all lint/a11y/useSemanticElements: grid-based table layout uses ARIA roles by design — virtualized DOM can't be a real <table>
+ * biome-ignore-all lint/a11y/useFocusableInteractive: row/cell roles are visual only, keyboard nav handled separately
+ */
 import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { Checkbox } from "@cobalt-web/ui/components/checkbox";
 import { cn } from "@cobalt-web/ui/lib/utils";
