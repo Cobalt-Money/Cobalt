@@ -13,6 +13,7 @@ export const transactionActivityEventSchema = z
       "merchantName",
       "name",
       "notes",
+      "paymentChannel",
       "tags",
     ]),
     id: z.string(),

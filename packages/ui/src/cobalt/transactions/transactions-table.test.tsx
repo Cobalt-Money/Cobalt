@@ -39,6 +39,7 @@ function createMockTransaction(overrides: Partial<TransactionResponse> = {}): Tr
     merchantName: null,
     name: "Coffee Shop Purchase",
     notes: null,
+    paymentChannel: null,
     pending: false,
     plaidAccountId: "plaid-acc-1",
     source: "plaid",

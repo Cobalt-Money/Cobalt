@@ -24,6 +24,8 @@ export const patchTransactionSchema = z
     merchantName: z.string().min(1).max(255).nullable().optional(),
     name: z.string().min(1).nullable().optional(),
     notes: notesMarkdownSchema.nullable().optional(),
+    /** Plaid emits `in store` | `online` | `other`. `null` resets to original. */
+    paymentChannel: z.enum(["in store", "online", "other"]).nullable().optional(),
     /** Full id-array replace of tags on the transaction. Pass `[]` to clear. */
     tags: z.array(z.uuid()).optional(),
     /**

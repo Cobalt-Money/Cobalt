@@ -577,6 +577,19 @@
             "description": "Additional details regarding the transaction. Supports Markdown.",
             "example": "**Reimbursable** — paid for team lunch, expense via Expensify"
           },
+          "paymentChannel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "in store",
+              "online",
+              "other",
+              null
+            ],
+            "description": "Where the transaction happened: `in store`, `online`, or `other`. Null when unknown."
+          },
           "pending": {
             "type": "boolean"
           },
@@ -597,6 +610,7 @@
           "merchant",
           "name",
           "notes",
+          "paymentChannel",
           "pending",
           "tagIds"
         ]
@@ -714,6 +728,19 @@
             "description": "Additional details regarding the transaction. Supports Markdown.",
             "example": "**Reimbursable** — paid for team lunch, expense via Expensify"
           },
+          "paymentChannel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "in store",
+              "online",
+              "other",
+              null
+            ],
+            "description": "Where the transaction happened: `in store`, `online`, or `other`. Null when unknown."
+          },
           "pending": {
             "type": "boolean"
           },
@@ -734,6 +761,7 @@
           "merchant",
           "name",
           "notes",
+          "paymentChannel",
           "pending",
           "tagIds"
         ]
@@ -2156,6 +2184,18 @@
                       "null"
                     ],
                     "maxLength": 100000
+                  },
+                  "paymentChannel": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "in store",
+                      "online",
+                      "other",
+                      null
+                    ]
                   },
                   "tags": {
                     "type": "array",

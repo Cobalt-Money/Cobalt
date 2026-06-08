@@ -132,7 +132,12 @@ function TransactionDetailRoute() {
     const merchant = transaction?.name ?? "transaction";
 
     /** Wrap a single forward+inverse pair into a rich undoable action. */
-    const undoableField = (field: string, forward: () => void, inverse: () => void, skip = false) => {
+    const undoableField = (
+      field: string,
+      forward: () => void,
+      inverse: () => void,
+      skip = false,
+    ) => {
       pushUndo({
         forward,
         inverse,
@@ -163,13 +168,18 @@ function TransactionDetailRoute() {
           sortedPrior.length === sortedNext.length &&
           sortedPrior.every((v, i) => v === sortedNext[i]);
         const apply = (next: string[]) =>
-          setTransactionTags.mutate({ tagIds: next, transactionId: id }, onErr("tags"));
+          setTransactionTags.mutate(
+            { tagIds: next, transactionId: id },
+            onErr("tags"),
+          );
         if (same) {
           apply(tagIds);
           return;
         }
         const addedIds = sortedNext.filter((tid) => !sortedPrior.includes(tid));
-        const removedIds = sortedPrior.filter((tid) => !sortedNext.includes(tid));
+        const removedIds = sortedPrior.filter(
+          (tid) => !sortedNext.includes(tid),
+        );
         const renderTagChip = (tagId: string) => {
           const tag = tagsById.get(tagId);
           if (!tag) return null;
@@ -221,15 +231,27 @@ function TransactionDetailRoute() {
         const prior = transaction?.category?.id ?? null;
         undoableField(
           "category",
-          () => run((m) => m.transaction.resetCategory({ editId: uid(), id }), fb("category")),
+          () =>
+            run(
+              (m) => m.transaction.resetCategory({ editId: uid(), id }),
+              fb("category"),
+            ),
           () => {
             if (prior) {
               run(
-                (m) => m.transaction.updateCategory({ categoryId: prior, editId: uid(), id }),
+                (m) =>
+                  m.transaction.updateCategory({
+                    categoryId: prior,
+                    editId: uid(),
+                    id,
+                  }),
                 fb("category"),
               );
             } else {
-              run((m) => m.transaction.resetCategory({ editId: uid(), id }), fb("category"));
+              run(
+                (m) => m.transaction.resetCategory({ editId: uid(), id }),
+                fb("category"),
+              );
             }
           },
           prior === null,
@@ -239,15 +261,23 @@ function TransactionDetailRoute() {
         const prior = transaction?.date ?? null;
         undoableField(
           "date",
-          () => run((m) => m.transaction.resetDate({ editId: uid(), id }), fb("date")),
+          () =>
+            run(
+              (m) => m.transaction.resetDate({ editId: uid(), id }),
+              fb("date"),
+            ),
           () => {
             if (prior) {
               run(
-                (m) => m.transaction.updateDate({ date: prior, editId: uid(), id }),
+                (m) =>
+                  m.transaction.updateDate({ date: prior, editId: uid(), id }),
                 fb("date"),
               );
             } else {
-              run((m) => m.transaction.resetDate({ editId: uid(), id }), fb("date"));
+              run(
+                (m) => m.transaction.resetDate({ editId: uid(), id }),
+                fb("date"),
+              );
             }
           },
         );
@@ -256,15 +286,27 @@ function TransactionDetailRoute() {
         const prior = transaction?.location ?? null;
         undoableField(
           "location",
-          () => run((m) => m.transaction.resetLocation({ editId: uid(), id }), fb("location")),
+          () =>
+            run(
+              (m) => m.transaction.resetLocation({ editId: uid(), id }),
+              fb("location"),
+            ),
           () => {
             if (prior) {
               run(
-                (m) => m.transaction.updateLocation({ editId: uid(), id, location: prior }),
+                (m) =>
+                  m.transaction.updateLocation({
+                    editId: uid(),
+                    id,
+                    location: prior,
+                  }),
                 fb("location"),
               );
             } else {
-              run((m) => m.transaction.resetLocation({ editId: uid(), id }), fb("location"));
+              run(
+                (m) => m.transaction.resetLocation({ editId: uid(), id }),
+                fb("location"),
+              );
             }
           },
         );
@@ -273,15 +315,27 @@ function TransactionDetailRoute() {
         const prior = transaction?.notes ?? null;
         undoableField(
           "notes",
-          () => run((m) => m.transaction.resetNotes({ editId: uid(), id }), fb("notes")),
+          () =>
+            run(
+              (m) => m.transaction.resetNotes({ editId: uid(), id }),
+              fb("notes"),
+            ),
           () => {
             if (prior !== null && prior !== undefined) {
               run(
-                (m) => m.transaction.updateNotes({ editId: uid(), id, notes: prior }),
+                (m) =>
+                  m.transaction.updateNotes({
+                    editId: uid(),
+                    id,
+                    notes: prior,
+                  }),
                 fb("notes"),
               );
             } else {
-              run((m) => m.transaction.resetNotes({ editId: uid(), id }), fb("notes"));
+              run(
+                (m) => m.transaction.resetNotes({ editId: uid(), id }),
+                fb("notes"),
+              );
             }
           },
           prior === null || prior === undefined,
@@ -296,17 +350,26 @@ function TransactionDetailRoute() {
         pushUndo({
           forward: () =>
             run(
-              (m) => m.transaction.updateCategory({ categoryId, editId: uid(), id }),
+              (m) =>
+                m.transaction.updateCategory({ categoryId, editId: uid(), id }),
               fb("category"),
             ),
           inverse: () => {
             if (prior) {
               run(
-                (m) => m.transaction.updateCategory({ categoryId: prior, editId: uid(), id }),
+                (m) =>
+                  m.transaction.updateCategory({
+                    categoryId: prior,
+                    editId: uid(),
+                    id,
+                  }),
                 fb("category"),
               );
             } else {
-              run((m) => m.transaction.resetCategory({ editId: uid(), id }), fb("category"));
+              run(
+                (m) => m.transaction.resetCategory({ editId: uid(), id }),
+                fb("category"),
+              );
             }
           },
           label: (
@@ -326,15 +389,23 @@ function TransactionDetailRoute() {
         const prior = transaction?.date ?? null;
         undoableField(
           "date",
-          () => run((m) => m.transaction.updateDate({ date, editId: uid(), id }), fb("date")),
+          () =>
+            run(
+              (m) => m.transaction.updateDate({ date, editId: uid(), id }),
+              fb("date"),
+            ),
           () => {
             if (prior) {
               run(
-                (m) => m.transaction.updateDate({ date: prior, editId: uid(), id }),
+                (m) =>
+                  m.transaction.updateDate({ date: prior, editId: uid(), id }),
                 fb("date"),
               );
             } else {
-              run((m) => m.transaction.resetDate({ editId: uid(), id }), fb("date"));
+              run(
+                (m) => m.transaction.resetDate({ editId: uid(), id }),
+                fb("date"),
+              );
             }
           },
           date === prior,
@@ -344,18 +415,28 @@ function TransactionDetailRoute() {
         const prior = transaction?.location ?? null;
         undoableField(
           "location",
-          () => run(
-            (m) => m.transaction.updateLocation({ editId: uid(), id, location }),
-            fb("location"),
-          ),
+          () =>
+            run(
+              (m) =>
+                m.transaction.updateLocation({ editId: uid(), id, location }),
+              fb("location"),
+            ),
           () => {
             if (prior) {
               run(
-                (m) => m.transaction.updateLocation({ editId: uid(), id, location: prior }),
+                (m) =>
+                  m.transaction.updateLocation({
+                    editId: uid(),
+                    id,
+                    location: prior,
+                  }),
                 fb("location"),
               );
             } else {
-              run((m) => m.transaction.resetLocation({ editId: uid(), id }), fb("location"));
+              run(
+                (m) => m.transaction.resetLocation({ editId: uid(), id }),
+                fb("location"),
+              );
             }
           },
           prior !== null && JSON.stringify(location) === JSON.stringify(prior),
@@ -376,26 +457,28 @@ function TransactionDetailRoute() {
         const priorWebsite = transaction?.website ?? null;
         undoableField(
           "merchant",
-          () => run(
-            (m) =>
-              m.transaction.updateMerchant({
-                editId: uid(),
-                id,
-                merchantName,
-                website,
-              }),
-            fb("merchant"),
-          ),
-          () => run(
-            (m) =>
-              m.transaction.updateMerchant({
-                editId: uid(),
-                id,
-                merchantName: priorMerchant,
-                website: priorWebsite,
-              }),
-            fb("merchant"),
-          ),
+          () =>
+            run(
+              (m) =>
+                m.transaction.updateMerchant({
+                  editId: uid(),
+                  id,
+                  merchantName,
+                  website,
+                }),
+              fb("merchant"),
+            ),
+          () =>
+            run(
+              (m) =>
+                m.transaction.updateMerchant({
+                  editId: uid(),
+                  id,
+                  merchantName: priorMerchant,
+                  website: priorWebsite,
+                }),
+              fb("merchant"),
+            ),
           merchantName === priorMerchant && website === priorWebsite,
         );
       },
@@ -403,10 +486,15 @@ function TransactionDetailRoute() {
         const prior = transaction?.name ?? "";
         undoableField(
           "name",
-          () => run((m) => m.transaction.updateName({ editId: uid(), id, name }), fb("name")),
           () =>
             run(
-              (m) => m.transaction.updateName({ editId: uid(), id, name: prior }),
+              (m) => m.transaction.updateName({ editId: uid(), id, name }),
+              fb("name"),
+            ),
+          () =>
+            run(
+              (m) =>
+                m.transaction.updateName({ editId: uid(), id, name: prior }),
               fb("name"),
             ),
           name === prior,
@@ -416,21 +504,95 @@ function TransactionDetailRoute() {
         const prior = transaction?.notes ?? null;
         undoableField(
           "notes",
-          () => run(
-            (m) => m.transaction.updateNotes({ editId: uid(), id, notes }),
-            fb("notes"),
-          ),
+          () =>
+            run(
+              (m) => m.transaction.updateNotes({ editId: uid(), id, notes }),
+              fb("notes"),
+            ),
           () => {
             if (prior !== null && prior !== undefined) {
               run(
-                (m) => m.transaction.updateNotes({ editId: uid(), id, notes: prior }),
+                (m) =>
+                  m.transaction.updateNotes({
+                    editId: uid(),
+                    id,
+                    notes: prior,
+                  }),
                 fb("notes"),
               );
             } else {
-              run((m) => m.transaction.resetNotes({ editId: uid(), id }), fb("notes"));
+              run(
+                (m) => m.transaction.resetNotes({ editId: uid(), id }),
+                fb("notes"),
+              );
             }
           },
           notes === prior,
+        );
+      },
+      onResetPaymentChannel: () => {
+        const prior = transaction?.paymentChannel ?? null;
+        undoableField(
+          "payment channel",
+          () =>
+            run(
+              (m) => m.transaction.resetPaymentChannel({ editId: uid(), id }),
+              fb("payment channel"),
+            ),
+          () => {
+            if (prior) {
+              run(
+                (m) =>
+                  m.transaction.updatePaymentChannel({
+                    editId: uid(),
+                    id,
+                    paymentChannel: prior,
+                  }),
+                fb("payment channel"),
+              );
+            } else {
+              run(
+                (m) => m.transaction.resetPaymentChannel({ editId: uid(), id }),
+                fb("payment channel"),
+              );
+            }
+          },
+          prior === null,
+        );
+      },
+      onUpdatePaymentChannel: (paymentChannel) => {
+        const prior = transaction?.paymentChannel ?? null;
+        undoableField(
+          "payment channel",
+          () =>
+            run(
+              (m) =>
+                m.transaction.updatePaymentChannel({
+                  editId: uid(),
+                  id,
+                  paymentChannel,
+                }),
+              fb("payment channel"),
+            ),
+          () => {
+            if (prior) {
+              run(
+                (m) =>
+                  m.transaction.updatePaymentChannel({
+                    editId: uid(),
+                    id,
+                    paymentChannel: prior,
+                  }),
+                fb("payment channel"),
+              );
+            } else {
+              run(
+                (m) => m.transaction.resetPaymentChannel({ editId: uid(), id }),
+                fb("payment channel"),
+              );
+            }
+          },
+          paymentChannel === prior,
         );
       },
       onDelete:

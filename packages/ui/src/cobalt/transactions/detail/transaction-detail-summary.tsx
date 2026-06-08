@@ -18,6 +18,8 @@ import { EditableDate } from "./editable-date";
 import { EditableLocation } from "./editable-location";
 import { EditableMerchantLogo } from "./editable-merchant-logo";
 import { EditableName } from "./editable-name";
+import { EditablePaymentChannel } from "./editable-payment-channel";
+import type { PaymentChannel } from "./editable-payment-channel";
 import {
   shouldShowLocationSection,
   TransactionDetailLocationCard,
@@ -52,6 +54,8 @@ export interface TransactionDetailEditHandlers {
   onResetDate: () => void;
   onResetNotes: () => void;
   onResetLocation: () => void;
+  onResetPaymentChannel: () => void;
+  onUpdatePaymentChannel: (value: PaymentChannel) => void;
   onUpdateCategory: (value: { categoryId: string }) => void;
   /** All non-deleted, non-hidden cats for the picker. Caller fetches via `queries.categories.list`. */
   categoryOptions: readonly CategoryPickerOption[];
@@ -201,6 +205,15 @@ export function TransactionDetailSummary({
             onReset={edit.onResetLocation}
             onSubmit={edit.onUpdateLocation}
             results={edit.locationSearch.results}
+          />
+        ) : null}
+
+        {edit ? (
+          <EditablePaymentChannel
+            isOverridden={transaction.lockedFields.includes("paymentChannel")}
+            onReset={edit.onResetPaymentChannel}
+            onSubmit={edit.onUpdatePaymentChannel}
+            paymentChannel={transaction.paymentChannel}
           />
         ) : null}
 

@@ -10,7 +10,14 @@ import { flatToLocation, LOCATION_FLAT_COLS, locationToFlat } from "../_shared/l
 import { setTransactionTags } from "../tags/mutations.js";
 import type { PatchTransaction } from "./schema.js";
 
-type EditableField = "category" | "date" | "location" | "merchantName" | "name" | "notes";
+type EditableField =
+  | "category"
+  | "date"
+  | "location"
+  | "merchantName"
+  | "name"
+  | "notes"
+  | "paymentChannel";
 
 type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -76,6 +83,32 @@ async function applyStringFieldEdit(
   });
 }
 
+async function applyPaymentChannelEdit(
+  ctx: FieldEditContext,
+  value: "in store" | "online" | "other" | null | undefined,
+  currentValue: string | null,
+): Promise<void> {
+  if (value === undefined) {
+    return;
+  }
+  if (value === null) {
+    const original = await restoreOriginalValue(ctx.tx, ctx.transactionId, "paymentChannel");
+    ctx.columnUpdates.paymentChannel = typeof original === "string" ? original : null;
+    ctx.removeFromLocked.push("paymentChannel");
+    return;
+  }
+  ctx.columnUpdates.paymentChannel = value;
+  ctx.addToLocked.push("paymentChannel");
+  ctx.editRows.push({
+    actor: "user",
+    field: "paymentChannel",
+    newValue: value,
+    oldValue: currentValue,
+    transactionId: ctx.transactionId,
+    userId: ctx.userId,
+  });
+}
+
 /**
  * Atomically applies a sparse patch to a transaction:
  * - Non-null field → update column(s), add to lockedFields, append transaction_edit row.
@@ -86,7 +119,8 @@ export async function patchTransaction(
   userId: string,
   patch: PatchTransaction,
 ): Promise<void> {
-  const { categoryId, date, location, merchantName, name, notes, tags, website } = patch;
+  const { categoryId, date, location, merchantName, name, notes, paymentChannel, tags, website } =
+    patch;
 
   await db.transaction(async (tx) => {
     const current = await tx.query.transaction.findFirst({
@@ -102,6 +136,7 @@ export async function patchTransaction(
         merchantName: true,
         name: true,
         notes: true,
+        paymentChannel: true,
         postalCode: true,
         region: true,
         storeNumber: true,
@@ -171,6 +206,8 @@ export async function patchTransaction(
     if (website !== undefined) {
       ctx.columnUpdates.website = normalizeWebsite(website);
     }
+
+    await applyPaymentChannelEdit(ctx, paymentChannel, current.paymentChannel);
 
     if (location !== undefined) {
       const currentLocation = flatToLocation(current);

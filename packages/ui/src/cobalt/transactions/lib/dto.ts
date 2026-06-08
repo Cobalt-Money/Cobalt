@@ -133,12 +133,24 @@ export function mapZeroTransactionListRow(row: ZeroTransactionListRow): Transact
     merchantName: tx.merchantName ?? null,
     name: tx.name,
     notes: tx.notes ?? null,
+    paymentChannel: normalizePaymentChannel(tx.paymentChannel ?? null),
     pending: tx.pending ?? false,
     plaidAccountId: account.externalId ?? null,
     source: tx.source,
     tagIds: transactionTags ? transactionTags.map((t) => t.tagId) : [],
     website: tx.website ?? null,
   });
+}
+
+function normalizePaymentChannel(value: string | null): "in store" | "online" | "other" | null {
+  if (!value) {
+    return null;
+  }
+  const normalized = value.toLowerCase().replaceAll("_", " ");
+  if (normalized === "in store" || normalized === "online" || normalized === "other") {
+    return normalized;
+  }
+  return null;
 }
 
 /** Zero `useQuery` row for `transactions.detail` — same as list + `edits`. */

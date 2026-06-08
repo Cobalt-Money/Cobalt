@@ -11,6 +11,22 @@ import { and, eq, inArray } from "drizzle-orm";
 import { ApiError } from "../_shared/errors.js";
 import type { TransactionResponse } from "./schema.js";
 
+/**
+ * Plaid emits `in store | online | other` but historical data may contain
+ * legacy variants (`in_store`, capitalized, etc). Normalize to the public
+ * enum or null so the DTO never trips Zod parse.
+ */
+function normalizePaymentChannel(value: string | null): TransactionResponse["paymentChannel"] {
+  if (!value) {
+    return null;
+  }
+  const normalized = value.toLowerCase().replaceAll("_", " ");
+  if (normalized === "in store" || normalized === "online" || normalized === "other") {
+    return normalized;
+  }
+  return null;
+}
+
 /** Shared join chain + flat picked columns. Callers add `.where` + `.orderBy` + `.limit`. */
 export function selectTransactionRows() {
   return db
@@ -45,6 +61,7 @@ export function selectTransactionRows() {
       merchantName: transaction.merchantName,
       name: transaction.name,
       notes: transaction.notes,
+      paymentChannel: transaction.paymentChannel,
       pending: transaction.pending,
       plaidAccountId: financialAccount.externalId,
       postalCode: transaction.postalCode,
@@ -116,6 +133,7 @@ export function toTransactionDto(
     merchantName: row.merchantName,
     name: row.name,
     notes: row.notes,
+    paymentChannel: normalizePaymentChannel(row.paymentChannel),
     pending: row.pending,
     plaidAccountId: row.plaidAccountId,
     source: row.source,
