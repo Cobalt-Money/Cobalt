@@ -5,6 +5,7 @@ import { stripe } from "@better-auth/stripe";
 import { invite } from "@cobalt-web/auth-plugin-invite";
 import { db } from "@cobalt-web/db";
 import * as authSchema from "@cobalt-web/db/schema/users/auth/auth";
+import * as inviteSchema from "@cobalt-web/db/schema/social/invite";
 import * as stripeSchema from "@cobalt-web/db/schema/users/subscriptions/stripe";
 import { createFriendship } from "@cobalt-web/db/social/friendship";
 import { env } from "@cobalt-web/env/server";
@@ -92,7 +93,7 @@ const secondaryStorage = redis
     }
   : undefined;
 
-const schema = { ...authSchema, ...stripeSchema };
+const schema = { ...authSchema, ...stripeSchema, ...inviteSchema };
 
 export const stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
   apiVersion: "2026-02-25.clover",
