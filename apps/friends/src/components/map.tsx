@@ -19,6 +19,7 @@ import { useMemo, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { authClient } from "../lib/auth-client";
+import { useFriendProfiles } from "../lib/use-friend-profiles";
 import { getAvatarIcon } from "./avatar-icon";
 import { buildEmojiAtlas } from "./emoji-atlas";
 
@@ -472,10 +473,22 @@ export function FriendsMap() {
   const [txns] = useQuery(queries.transactions.list());
   const [friendships] = useQuery(queries.social.friendships());
   const [allPosts] = useQuery(queries.social.postsAll());
-  // Friend display names land via denormalized columns on social_friendship
-  // (cross-user user-table reads aren't permissioned, so an IN query against
-  // `user` killed the Zero sync handshake).
+
+  // Resolve friend display names + avatars via the friendProfiles REST
+  // endpoint. Zero's `user` table isn't permissioned for cross-user reads
+  // so we can't pull names through ZQL; this hook caches results across
+  // the session and re-renders as they resolve.
+  const friendIdList = friendships
+    .map((f) => (f.userAId === userId ? f.userBId : f.userAId))
+    .filter(Boolean) as string[];
+  const friendProfiles = useFriendProfiles(friendIdList);
   const friendNameById = new Map<string, { name: string; image: string | null }>();
+  for (const [id, p] of friendProfiles) {
+    friendNameById.set(id, {
+      image: p.image ?? null,
+      name: p.displayUsername ?? p.name ?? `user ${id.slice(0, 6)}`,
+    });
+  }
 
   const friendIds = new Set(friendships.map((f) => (f.userAId === userId ? f.userBId : f.userAId)));
   // Stable list for the Friends toggle UI — self first (gold), then every

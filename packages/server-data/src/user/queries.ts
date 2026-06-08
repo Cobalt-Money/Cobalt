@@ -46,6 +46,27 @@ export async function getUserIdsWithConnectedAccounts(): Promise<string[]> {
 }
 
 /**
+ * Bulk profile lookup for friend rendering. Returns minimal public fields
+ * (name, image, displayUsername) for the given user ids. Caller is responsible
+ * for scoping the id list to people the requester has a friend edge with.
+ */
+export async function getFriendProfiles(ids: readonly string[]) {
+  if (ids.length === 0) {
+    return [];
+  }
+  const rows = await db.query.user.findMany({
+    columns: { displayUsername: true, id: true, image: true, name: true },
+    where: { id: { in: [...ids] } },
+  });
+  return rows.map((r) => ({
+    displayUsername: r.displayUsername ?? null,
+    id: r.id,
+    image: r.image ?? null,
+    name: r.name ?? null,
+  }));
+}
+
+/**
  * Returns the user's `lastSeenAt` timestamp (ISO string or null) and whether
  * the mobile app should show financial updates.
  * Threshold logic lives server-side so clients don't duplicate it.

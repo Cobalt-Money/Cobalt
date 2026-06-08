@@ -12,6 +12,7 @@ import type { IconSvgElement } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 
 import { authClient } from "../lib/auth-client";
+import { useFriendProfiles } from "../lib/use-friend-profiles";
 
 type Section = "general" | "invites" | "friends";
 
@@ -331,6 +332,10 @@ function FriendsSection() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const me = session.data?.user.id;
+  const otherIds = friendships
+    .map((f) => (f.userAId === me ? f.userBId : f.userAId))
+    .filter(Boolean) as string[];
+  const profiles = useFriendProfiles(otherIds);
 
   const remove = async (friendshipId: string) => {
     setBusyId(friendshipId);
@@ -356,7 +361,11 @@ function FriendsSection() {
                 key={f.id}
               >
                 <div>
-                  <div>user {otherId.slice(0, 8)}</div>
+                  <div>
+                    {profiles.get(otherId)?.displayUsername ??
+                      profiles.get(otherId)?.name ??
+                      `user ${otherId.slice(0, 8)}`}
+                  </div>
                   <div className="text-white/55">
                     Since {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : "—"}
                   </div>
