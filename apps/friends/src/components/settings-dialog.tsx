@@ -205,6 +205,16 @@ function InvitesSection() {
     void reload();
   };
 
+  const decline = async (id: string) => {
+    setBusyId(id);
+    setPending((prev) => prev.filter((p) => p.id !== id));
+    const res = await authClient.invite.decline({ inviteId: id });
+    setBusyId(null);
+    if (res.error) {
+      void reload();
+    }
+  };
+
   return (
     <div>
       <SectionHeader title="Invites" />
@@ -277,14 +287,24 @@ function InvitesSection() {
                     Expires {new Date(inv.expiresAt).toLocaleDateString()}
                   </div>
                 </div>
-                <button
-                  className="bg-white text-black rounded px-3 py-1 text-xs font-medium hover:opacity-90 disabled:opacity-50"
-                  disabled={busyId === inv.id}
-                  onClick={() => accept(inv.token, inv.id)}
-                  type="button"
-                >
-                  {busyId === inv.id ? "Accepting…" : "Accept"}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="border-white/15 hover:bg-white/10 rounded border px-3 py-1 text-xs font-medium disabled:opacity-50"
+                    disabled={busyId === inv.id}
+                    onClick={() => decline(inv.id)}
+                    type="button"
+                  >
+                    Decline
+                  </button>
+                  <button
+                    className="bg-white text-black rounded px-3 py-1 text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                    disabled={busyId === inv.id}
+                    onClick={() => accept(inv.token, inv.id)}
+                    type="button"
+                  >
+                    {busyId === inv.id ? "Accepting…" : "Accept"}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

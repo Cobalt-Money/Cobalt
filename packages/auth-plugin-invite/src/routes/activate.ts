@@ -13,6 +13,15 @@ const bodySchema = z.object({
   token: z.string().min(1),
 });
 
+const FRESH_REDEMPTION_WINDOW_MS = 60_000;
+
+function isFreshRedemption(redeemedAt: Date | null | undefined, now: Date): boolean {
+  if (!redeemedAt) {
+    return false;
+  }
+  return now.getTime() - new Date(redeemedAt).getTime() < FRESH_REDEMPTION_WINDOW_MS;
+}
+
 /**
  * Two modes:
  *   - Signed-in caller → validate token, write redemption row, call onAccept,
@@ -99,9 +108,7 @@ export const activateInviteRoute = (options: ResolvedInviteOptions) =>
       // for UX purposes — they were the just-completed OAuth bounce.
       const existing = await adapter.findRedemption(invite.id, sessionUser.id);
       if (existing) {
-        const firstTime =
-          existing.redeemedAt != null &&
-          now.getTime() - new Date(existing.redeemedAt).getTime() < 60_000;
+        const firstTime = isFreshRedemption(existing.redeemedAt, now);
         return ctx.json({ accepted: true, firstTime, invite, inviterName });
       }
 

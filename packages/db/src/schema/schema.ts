@@ -60,10 +60,11 @@ export { categoryMappingCache } from "./imports/category-mapping-cache";
 
 // SRI-349 — social layer (friends.cobaltpf.com). Mix of Zero-synced + server-only.
 //   - socialFriendship, socialPost, socialVisibilityRule, socialPrivacyZone → Zero
-//   - socialInvite, socialInviteRedemption, merchantGeocodeCache → server-only
+//   - socialInvite, socialInviteDecline, socialInviteRedemption, merchantGeocodeCache → server-only
 export {
   socialFriendship,
   socialInvite,
+  socialInviteDecline,
   socialInviteRedemption,
   socialPost,
   socialVisibilityRule,

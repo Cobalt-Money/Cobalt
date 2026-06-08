@@ -2,6 +2,7 @@ import { defineErrorCodes } from "@better-auth/core/utils/error-codes";
 
 export const INVITE_ERROR_CODES = defineErrorCodes({
   ALREADY_REDEEMED: "You have already redeemed this invite",
+  CANNOT_DECLINE_OWN_INVITE: "You cannot decline your own invite",
   CANNOT_REDEEM_OWN_INVITE: "You cannot redeem your own invite",
   INVITE_EXHAUSTED: "Invite has reached its maximum number of uses",
   INVITE_EXPIRED: "Invite has expired",

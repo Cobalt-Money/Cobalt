@@ -27,9 +27,9 @@ export const Route = createFileRoute("/invite/$token")({
       });
     }
 
-    const data = res.data;
+    const { data } = res;
 
-    if (!data?.accepted) {
+    if (!data || "requiresAuth" in data) {
       void authClient.signIn.social({
         callbackURL:
           typeof window === "undefined"

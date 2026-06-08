@@ -31,7 +31,9 @@ function MapPage() {
     }
     if (welcomedBy) {
       toast.success(
-        firstTime === false ? `Already friends with ${welcomedBy}` : `You're now friends with ${welcomedBy}`,
+        firstTime === false
+          ? `Already friends with ${welcomedBy}`
+          : `You're now friends with ${welcomedBy}`,
       );
     } else if (inviteError) {
       toast.error(inviteError);
