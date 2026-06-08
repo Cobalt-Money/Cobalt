@@ -20,6 +20,7 @@ export function toTransaction(tx: TransactionResponse) {
     merchant: tx.merchantName ?? null,
     name: tx.name,
     notes: typeof tx.notes === "string" ? tx.notes : null,
+    paymentChannel: tx.paymentChannel,
     pending: tx.pending,
     tagIds: tx.tagIds,
   };

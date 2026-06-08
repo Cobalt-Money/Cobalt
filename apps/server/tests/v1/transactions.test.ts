@@ -71,6 +71,7 @@ const validTxnRow = {
   merchantName: "Spotify",
   name: "SPOTIFY",
   notes: null,
+  paymentChannel: null,
   pending: false,
   plaidAccountId: null,
   source: "manual" as const,
@@ -117,6 +118,7 @@ describe("v1/transactions", () => {
         merchant: "Spotify",
         name: "SPOTIFY",
         notes: null,
+        paymentChannel: null,
         pending: false,
         tagIds: [],
       });

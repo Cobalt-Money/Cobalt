@@ -13,6 +13,7 @@ import {
   Folder01Icon,
   Location01Icon,
   PencilEdit01Icon,
+  ShoppingBag01Icon,
   Store01Icon,
   Tag01Icon,
 } from "@hugeicons/core-free-icons";
@@ -34,6 +35,8 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
   ContextMenuSeparator,
   ContextMenuSub,
   ContextMenuSubContent,
@@ -498,6 +501,7 @@ function TransactionRowContextMenu({
   onSetMerchant,
   onSetLocation,
   onSetName,
+  onSetPaymentChannel,
   onDeleteTransaction,
   children,
 }: {
@@ -516,6 +520,7 @@ function TransactionRowContextMenu({
   ) => void;
   onSetLocation?: (transactionId: string, location: TransactionLocation) => void;
   onSetName?: (transactionId: string, name: string) => void;
+  onSetPaymentChannel?: (transactionId: string, value: "in store" | "online" | "other") => void;
   onDeleteTransaction?: (transactionId: string) => void;
   children: ReactElement;
 }) {
@@ -527,10 +532,18 @@ function TransactionRowContextMenu({
   const hasMerchant = Boolean(onSetMerchant && merchantSearch);
   const hasLocation = Boolean(onSetLocation && locationSearch);
   const hasName = Boolean(onSetName);
+  const hasPaymentChannel = Boolean(onSetPaymentChannel);
   const hasDelete = Boolean(onDeleteTransaction) && transaction.source === "manual";
 
   const hasAnyAction =
-    hasCategory || hasTags || hasDate || hasMerchant || hasLocation || hasName || hasDelete;
+    hasCategory ||
+    hasTags ||
+    hasDate ||
+    hasMerchant ||
+    hasLocation ||
+    hasName ||
+    hasPaymentChannel ||
+    hasDelete;
   if (!hasAnyAction) {
     return children;
   }
@@ -544,7 +557,16 @@ function TransactionRowContextMenu({
         <TransactionContextMenuContent
           categoryOptions={categoryOptions}
           closeMenu={closeMenu}
-          flags={{ hasCategory, hasDate, hasDelete, hasLocation, hasMerchant, hasName, hasTags }}
+          flags={{
+            hasCategory,
+            hasDate,
+            hasDelete,
+            hasLocation,
+            hasMerchant,
+            hasName,
+            hasPaymentChannel,
+            hasTags,
+          }}
           locationSearch={locationSearch}
           merchantSearch={merchantSearch}
           onOpen={onOpen}
@@ -554,6 +576,7 @@ function TransactionRowContextMenu({
           onSetLocation={onSetLocation}
           onSetMerchant={onSetMerchant}
           onSetName={onSetName}
+          onSetPaymentChannel={onSetPaymentChannel}
           onSetTags={onSetTags}
           tagOptions={tagOptions}
           transaction={transaction}
@@ -577,9 +600,11 @@ interface ContextMenuFlags {
   hasMerchant: boolean;
   hasLocation: boolean;
   hasName: boolean;
+  hasPaymentChannel: boolean;
   hasDelete: boolean;
 }
 
+// eslint-disable-next-line complexity
 function TransactionContextMenuContent({
   transaction,
   categoryOptions,
@@ -596,6 +621,7 @@ function TransactionContextMenuContent({
   onSetMerchant,
   onSetLocation,
   onSetName,
+  onSetPaymentChannel,
 }: {
   transaction: TransactionResponse;
   categoryOptions?: readonly CategoryPickerOption[];
@@ -615,6 +641,7 @@ function TransactionContextMenuContent({
   ) => void;
   onSetLocation?: (transactionId: string, location: TransactionLocation) => void;
   onSetName?: (transactionId: string, name: string) => void;
+  onSetPaymentChannel?: (transactionId: string, value: "in store" | "online" | "other") => void;
 }) {
   const currentTagIds = transaction.tagIds ?? [];
   const currentCategoryId = transaction.category?.id ?? null;
@@ -624,7 +651,8 @@ function TransactionContextMenuContent({
     flags.hasDate ||
     flags.hasMerchant ||
     flags.hasLocation ||
-    flags.hasName;
+    flags.hasName ||
+    flags.hasPaymentChannel;
 
   return (
     <ContextMenuContent className="w-56">
@@ -672,6 +700,14 @@ function TransactionContextMenuContent({
           closeMenu={closeMenu}
           locationSearch={locationSearch}
           onSetLocation={onSetLocation}
+          transactionId={transaction.id}
+        />
+      ) : null}
+      {flags.hasPaymentChannel ? (
+        <PaymentChannelSubMenu
+          closeMenu={closeMenu}
+          currentValue={transaction.paymentChannel}
+          onSetPaymentChannel={onSetPaymentChannel}
           transactionId={transaction.id}
         />
       ) : null}
@@ -784,6 +820,48 @@ function DateSubMenu({
             closeMenu();
           }}
         />
+      </ContextMenuSubContent>
+    </ContextMenuSub>
+  );
+}
+
+function PaymentChannelSubMenu({
+  closeMenu,
+  currentValue,
+  onSetPaymentChannel,
+  transactionId,
+}: {
+  closeMenu: () => void;
+  currentValue: "in store" | "online" | "other" | null;
+  onSetPaymentChannel?: (transactionId: string, value: "in store" | "online" | "other") => void;
+  transactionId: string;
+}) {
+  return (
+    <ContextMenuSub>
+      <ContextMenuSubTrigger className="rounded-lg">
+        <HugeiconsIcon className="size-4 text-muted-foreground" icon={ShoppingBag01Icon} />
+        Set payment channel
+      </ContextMenuSubTrigger>
+      <ContextMenuSubContent className="w-40 p-1">
+        <ContextMenuRadioGroup
+          onValueChange={(v) => {
+            if (v === "in store" || v === "online" || v === "other") {
+              onSetPaymentChannel?.(transactionId, v);
+              closeMenu();
+            }
+          }}
+          value={currentValue ?? ""}
+        >
+          <ContextMenuRadioItem className="rounded-md" value="in store">
+            In store
+          </ContextMenuRadioItem>
+          <ContextMenuRadioItem className="rounded-md" value="online">
+            Online
+          </ContextMenuRadioItem>
+          <ContextMenuRadioItem className="rounded-md" value="other">
+            Other
+          </ContextMenuRadioItem>
+        </ContextMenuRadioGroup>
       </ContextMenuSubContent>
     </ContextMenuSub>
   );
@@ -930,6 +1008,7 @@ export function TransactionsTable({
   onSetLocation,
   onSetMerchant,
   onSetName,
+  onSetPaymentChannel,
   onSetTags,
   rowSelection: rowSelectionProp,
   onRowSelectionChange,
@@ -964,6 +1043,8 @@ export function TransactionsTable({
   ) => void;
   /** Right-click menu: rename a transaction. Omit to hide the item. */
   onSetName?: (transactionId: string, name: string) => void;
+  /** Right-click menu: set a transaction's payment channel. Omit to hide. */
+  onSetPaymentChannel?: (transactionId: string, value: "in store" | "online" | "other") => void;
   /** Right-click menu: replace a transaction's tag set. Omit to hide the item. */
   onSetTags?: (transactionId: string, tagIds: string[]) => void;
   rowSelection?: RowSelectionState;
@@ -1324,6 +1405,7 @@ export function TransactionsTable({
                     onSetLocation={onSetLocation}
                     onSetMerchant={onSetMerchant}
                     onSetName={onSetName}
+                    onSetPaymentChannel={onSetPaymentChannel}
                     onSetTags={onSetTags}
                     tagOptions={tagOptions}
                     transaction={row.original}

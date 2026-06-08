@@ -38,6 +38,7 @@ export const transactionResponseSchema = z
     merchantName: z.string().nullable(),
     name: z.string(),
     notes: notesMarkdownSchema.nullable(),
+    paymentChannel: z.enum(["in store", "online", "other"]).nullable(),
     pending: z.boolean(),
     plaidAccountId: z.string().nullable(),
     source: z.enum(["plaid", "manual"]),
