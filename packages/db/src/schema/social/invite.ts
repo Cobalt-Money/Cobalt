@@ -1,4 +1,4 @@
-import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { index, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 import { user } from "../users/auth/auth";
 
@@ -15,7 +15,7 @@ export const socialInvite = pgTable(
   {
     createdAt: timestamp("created_at").defaultNow().notNull(),
     expiresAt: timestamp("expires_at").notNull(),
-    id: uuid("id").defaultRandom().primaryKey(),
+    id: text("id").primaryKey(),
     inviterUserId: text("inviter_user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -82,8 +82,8 @@ export const socialInvite = pgTable(
 export const socialInviteRedemption = pgTable(
   "social_invite_redemption",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
-    inviteId: uuid("invite_id")
+    id: text("id").primaryKey(),
+    inviteId: text("invite_id")
       .notNull()
       .references(() => socialInvite.id, { onDelete: "cascade" }),
     redeemedAt: timestamp("redeemed_at").defaultNow().notNull(),
