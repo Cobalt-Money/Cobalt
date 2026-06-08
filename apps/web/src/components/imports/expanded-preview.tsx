@@ -255,6 +255,7 @@ export function ExpandedPreview({ jobId }: { jobId: string }) {
           e.preventDefault();
           startResize(key, e.clientX, columnWidths[key]);
         }}
+        // biome-ignore lint/a11y/useSemanticElements: interactive draggable resize handle, <hr> wouldn't accept event handlers cleanly
         role="separator"
         tabIndex={-1}
       />

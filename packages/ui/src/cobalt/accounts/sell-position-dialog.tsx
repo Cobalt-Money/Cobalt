@@ -179,6 +179,7 @@ export function SellPositionForm({
           onBackspaceWhenEmpty();
         }
       }}
+      // biome-ignore lint/a11y/useSemanticElements: <fieldset> would impose default border styling that breaks the layout
       role="group"
     >
       <div className="flex items-center gap-3">

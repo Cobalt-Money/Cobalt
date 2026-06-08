@@ -34,6 +34,7 @@ ON CONFLICT DO NOTHING;
 ```
 
 Verify drizzle now sees the new migration as pending:
+
 ```bash
 MIGRATION_URI="$PROD_URL" bunx drizzle-kit status --config packages/db/drizzle.config.ts
 ```
@@ -76,7 +77,6 @@ COMMIT;
 > Note: the match engine sets `pg_trgm.word_similarity_threshold = 0.4` via
 > `SET LOCAL` inside its own transaction (pgbouncer-safe). No DB-level GUC
 > change needed.
-
 
 ```bash
 MIGRATION_URI="$PROD_URL" bun run packages/db/scripts/migrate-debug.ts --prod

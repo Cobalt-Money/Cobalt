@@ -1,3 +1,7 @@
+/**
+ * biome-ignore-all lint/a11y/useSemanticElements: marketing preview uses CSS grid to mimic the production transactions table — semantic <table> would break the layout
+ * biome-ignore-all lint/a11y/useFocusableInteractive: decorative role attributes, not keyboard-navigated
+ */
 import {
   CategoryIcon,
   resolveCategoryIcon,
