@@ -104,6 +104,19 @@ const appleClientSecret = await getAppleClientSecret();
 /** Relative paths would resolve on the API host and 404. */
 const spaOrigin = env.CORS_ORIGIN.replace(/\/$/, "");
 
+/**
+ * Friends app lives on friends.<apex>. Strip an optional `web.` prefix from
+ * CORS_ORIGIN and prepend `friends.`. Localhost dev is left alone (single-host).
+ */
+function deriveFriendsOrigin(origin: string): string {
+  const url = new URL(origin);
+  if (url.hostname === "localhost" || url.hostname.endsWith(".localhost")) {
+    return origin;
+  }
+  url.hostname = `friends.${url.hostname.replace(/^web\./, "")}`;
+  return url.origin;
+}
+
 /** MCP OAuth token exchange sends `resource` = this URL; must be listed in `validAudiences` or exchange fails with "requested resource invalid". */
 const oauthIssuerOrigin = new URL(env.BETTER_AUTH_URL).origin;
 const mcpResourceAudience = `${oauthIssuerOrigin}/api/mcp`;
@@ -248,7 +261,7 @@ export const auth = betterAuth({
      */
     invite({
       allowedKinds: ["friendship"] as const,
-      inviteUrlBase: `${spaOrigin.replace("://web.", "://friends.")}/invite`,
+      inviteUrlBase: `${deriveFriendsOrigin(spaOrigin)}/invite`,
       onAccept: async ({ invite: inv, redeemerUserId }) => {
         switch (inv.kind) {
           case "friendship": {
