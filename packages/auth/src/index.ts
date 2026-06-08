@@ -261,7 +261,7 @@ export const auth = betterAuth({
      */
     invite({
       allowedKinds: ["friendship"] as const,
-      inviteUrlBase: deriveFriendsOrigin(spaOrigin) + "/invite",
+      inviteUrlBase: `${deriveFriendsOrigin(spaOrigin)}/invite`,
       onAccept: async ({ invite: inv, redeemerUserId }) => {
         switch (inv.kind) {
           case "friendship": {
