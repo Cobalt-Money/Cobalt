@@ -1,5 +1,6 @@
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { isTransactionShared } from "@cobalt-web/server-data/social";
 import {
   assertCategoryOwned,
   transactionIdSchema,
@@ -51,8 +52,11 @@ export const patchRouter = createApp().openapi(route, async (c) => {
       await assertCategoryOwned(body.categoryId, user.id);
     }
     await patchTransaction(transactionId, user.id, body);
-    const tx = await getTransactionDetail(user.id, transactionId);
-    return c.json(transactionResponseSchema.parse(toTransaction(tx)), 200);
+    const [tx, shared] = await Promise.all([
+      getTransactionDetail(user.id, transactionId),
+      isTransactionShared(user.id, transactionId),
+    ]);
+    return c.json(transactionResponseSchema.parse(toTransaction(tx, shared)), 200);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return c.json({ code: error.code, error: error.message }, 404);

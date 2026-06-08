@@ -3,6 +3,7 @@ import {
   AccountSetting01Icon,
   ArrowLeft02Icon,
   CreditCardIcon,
+  EarthIcon,
   EyeIcon,
   Key01Icon,
   UserCircle02Icon,
@@ -22,6 +23,7 @@ interface SettingsLink {
     | "/settings/account"
     | "/settings/appearance"
     | "/settings/billing"
+    | "/settings/sharing"
     | "/settings/api-keys";
   label: string;
   icon: IconSvgElement;
@@ -37,6 +39,7 @@ const NAV_GROUPS: SettingsGroup[] = [
     items: [
       { icon: UserCircle02Icon, label: "Profile", to: "/settings/profile" },
       { icon: AccountSetting01Icon, label: "Account", to: "/settings/account" },
+      { icon: EarthIcon, label: "Sharing", to: "/settings/sharing" },
       { icon: EyeIcon, label: "Appearance", to: "/settings/appearance" },
       { icon: CreditCardIcon, label: "Billing", to: "/settings/billing" },
     ],

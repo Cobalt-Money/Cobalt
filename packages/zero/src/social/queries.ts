@@ -9,14 +9,17 @@ import { zql } from "../schema.js";
  *
  * Friendship rows are the source of truth for the friend graph. Posts are
  * the denormalized share artifacts — friends app reads from `social_post`,
- * never from `transaction`.
- *
- * Feed composition (own posts + friends' posts) is done client-side in
- * friends app via two queries (`friendships` + `postsAll` filtered). Doing
- * it server-side requires user→friendship relation traversal that we
- * haven't wired into drizzle-zero relations yet.
+ * never from `transaction`. Posts now created automatically by server-side
+ * Plaid sync step (in-store + has lat/lon) — no client mutator.
  */
 export const socialQueries = {
+  /** Caller's blocked categories (denylist). */
+  categoryBlocklist: defineQuery(({ ctx }) =>
+    zql.socialCategoryBlocklist
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
+      .orderBy("createdAt", "desc"),
+  ),
+
   /**
    * Public profile lookup keyed on a list of user ids — minimal fields
    * (name, image, displayUsername) the friends app needs to render labels
@@ -60,6 +63,13 @@ export const socialQueries = {
       .orderBy("createdAt", "desc"),
   ),
 
+  /** Caller's blocked merchants (denylist). */
+  merchantBlocklist: defineQuery(({ ctx }) =>
+    zql.socialMerchantBlocklist
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
+      .orderBy("createdAt", "desc"),
+  ),
+
   /** Detail view of a post the caller owns. (Friends' posts read via postsAll.) */
   postDetail: defineQuery(z.object({ postId: z.string() }), ({ ctx, args }) =>
     zql.socialPost
@@ -73,8 +83,6 @@ export const socialQueries = {
    * (caller intersects against friendship list). Zero permissions on
    * `social_post` will eventually enforce this server-side; until then
    * trust the client to filter.
-   *
-   * V2: replace with server-side feed scoped via row permissions.
    */
   postsAll: defineQuery(({ ctx }) => {
     void ctx;
@@ -86,13 +94,8 @@ export const socialQueries = {
     zql.socialPost.where("userId", ctx?.userId ?? NO_MATCH_ID).orderBy("createdAt", "desc"),
   ),
 
-  /** Privacy zones for the caller. */
-  privacyZones: defineQuery(({ ctx }) =>
-    zql.socialPrivacyZone.where("userId", ctx?.userId ?? NO_MATCH_ID).orderBy("createdAt", "desc"),
-  ),
-
-  /** Visibility rules for the caller's categories. */
-  visibilityRules: defineQuery(({ ctx }) =>
-    zql.socialVisibilityRule.where("userId", ctx?.userId ?? NO_MATCH_ID),
+  /** Caller's auto-share settings row (single-row by user_id PK). */
+  shareSettings: defineQuery(({ ctx }) =>
+    zql.socialShareSettings.where("userId", ctx?.userId ?? NO_MATCH_ID).one(),
   ),
 };

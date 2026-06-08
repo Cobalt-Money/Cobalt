@@ -40,6 +40,7 @@ import { Route as AuthAiChatIndexRouteImport } from './routes/_auth/ai-chat/inde
 import { Route as AuthAccountsIndexRouteImport } from './routes/_auth/accounts/index'
 import { Route as AuthTransactionsCategoriesRouteImport } from './routes/_auth/transactions/categories'
 import { Route as AuthTransactionsTransactionIdRouteImport } from './routes/_auth/transactions/$transactionId'
+import { Route as AuthSettingsSharingRouteImport } from './routes/_auth/settings/sharing'
 import { Route as AuthSettingsProfileRouteImport } from './routes/_auth/settings/profile'
 import { Route as AuthSettingsBillingRouteImport } from './routes/_auth/settings/billing'
 import { Route as AuthSettingsAppearanceRouteImport } from './routes/_auth/settings/appearance'
@@ -205,6 +206,11 @@ const AuthTransactionsTransactionIdRoute =
     path: '/$transactionId',
     getParentRoute: () => AuthTransactionsRouteRoute,
   } as any)
+const AuthSettingsSharingRoute = AuthSettingsSharingRouteImport.update({
+  id: '/sharing',
+  path: '/sharing',
+  getParentRoute: () => AuthSettingsRouteRoute,
+} as any)
 const AuthSettingsProfileRoute = AuthSettingsProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -274,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/settings/appearance': typeof AuthSettingsAppearanceRoute
   '/settings/billing': typeof AuthSettingsBillingRoute
   '/settings/profile': typeof AuthSettingsProfileRoute
+  '/settings/sharing': typeof AuthSettingsSharingRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
   '/transactions/categories': typeof AuthTransactionsCategoriesRoute
   '/accounts/': typeof AuthAccountsIndexRoute
@@ -305,6 +312,7 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof AuthSettingsAppearanceRoute
   '/settings/billing': typeof AuthSettingsBillingRoute
   '/settings/profile': typeof AuthSettingsProfileRoute
+  '/settings/sharing': typeof AuthSettingsSharingRoute
   '/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
   '/transactions/categories': typeof AuthTransactionsCategoriesRoute
   '/accounts': typeof AuthAccountsIndexRoute
@@ -347,6 +355,7 @@ export interface FileRoutesById {
   '/_auth/settings/appearance': typeof AuthSettingsAppearanceRoute
   '/_auth/settings/billing': typeof AuthSettingsBillingRoute
   '/_auth/settings/profile': typeof AuthSettingsProfileRoute
+  '/_auth/settings/sharing': typeof AuthSettingsSharingRoute
   '/_auth/transactions/$transactionId': typeof AuthTransactionsTransactionIdRoute
   '/_auth/transactions/categories': typeof AuthTransactionsCategoriesRoute
   '/_auth/accounts/': typeof AuthAccountsIndexRoute
@@ -389,6 +398,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/billing'
     | '/settings/profile'
+    | '/settings/sharing'
     | '/transactions/$transactionId'
     | '/transactions/categories'
     | '/accounts/'
@@ -420,6 +430,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/billing'
     | '/settings/profile'
+    | '/settings/sharing'
     | '/transactions/$transactionId'
     | '/transactions/categories'
     | '/accounts'
@@ -461,6 +472,7 @@ export interface FileRouteTypes {
     | '/_auth/settings/appearance'
     | '/_auth/settings/billing'
     | '/_auth/settings/profile'
+    | '/_auth/settings/sharing'
     | '/_auth/transactions/$transactionId'
     | '/_auth/transactions/categories'
     | '/_auth/accounts/'
@@ -705,6 +717,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthTransactionsTransactionIdRouteImport
       parentRoute: typeof AuthTransactionsRouteRoute
     }
+    '/_auth/settings/sharing': {
+      id: '/_auth/settings/sharing'
+      path: '/sharing'
+      fullPath: '/settings/sharing'
+      preLoaderRoute: typeof AuthSettingsSharingRouteImport
+      parentRoute: typeof AuthSettingsRouteRoute
+    }
     '/_auth/settings/profile': {
       id: '/_auth/settings/profile'
       path: '/profile'
@@ -845,6 +864,7 @@ interface AuthSettingsRouteRouteChildren {
   AuthSettingsAppearanceRoute: typeof AuthSettingsAppearanceRoute
   AuthSettingsBillingRoute: typeof AuthSettingsBillingRoute
   AuthSettingsProfileRoute: typeof AuthSettingsProfileRoute
+  AuthSettingsSharingRoute: typeof AuthSettingsSharingRoute
   AuthSettingsIndexRoute: typeof AuthSettingsIndexRoute
 }
 
@@ -854,6 +874,7 @@ const AuthSettingsRouteRouteChildren: AuthSettingsRouteRouteChildren = {
   AuthSettingsAppearanceRoute: AuthSettingsAppearanceRoute,
   AuthSettingsBillingRoute: AuthSettingsBillingRoute,
   AuthSettingsProfileRoute: AuthSettingsProfileRoute,
+  AuthSettingsSharingRoute: AuthSettingsSharingRoute,
   AuthSettingsIndexRoute: AuthSettingsIndexRoute,
 }
 

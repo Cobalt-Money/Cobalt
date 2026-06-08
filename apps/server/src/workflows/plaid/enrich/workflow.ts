@@ -1,4 +1,4 @@
-import { enrichTransactionsStep } from "../sync/steps";
+import { autoShareInStoreTxnsStep, enrichTransactionsStep } from "../sync/steps";
 
 export interface EnrichTransactionsResult {
   success: boolean;
@@ -25,6 +25,7 @@ export async function enrichTransactionsWorkflow(
 
   try {
     const result = await enrichTransactionsStep(itemId);
+    await autoShareInStoreTxnsStep(itemId);
     return {
       enriched: result.enriched,
       itemId,

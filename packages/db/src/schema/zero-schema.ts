@@ -61,8 +61,9 @@ export { importStagedTransaction } from "./imports/import-staged-transaction";
 export { socialFriendship } from "./social/friendship";
 export { socialInvite, socialInviteRedemption } from "./social/invite";
 export { socialPost } from "./social/post";
-export { socialPrivacyZone } from "./social/privacy-zone";
-export { socialVisibilityRule } from "./social/visibility-rule";
+export { socialShareSettings } from "./social/share-settings";
+export { socialMerchantBlocklist } from "./social/merchant-blocklist";
+export { socialCategoryBlocklist } from "./social/category-blocklist";
 
 // v2 `defineRelations` for drizzle-zero@1.0-beta. Same source as DB runtime.
 export { relations } from "./relations";

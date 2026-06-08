@@ -24,7 +24,6 @@ import { useEffect, useMemo, useState } from "react";
 import { mapZeroTransactionDetailRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 
 import { CategoryFormDialog } from "@/components/categories/category-form-dialog";
-import { ShareToFriendsButton } from "@/components/social/share-to-friends-button";
 import { useCommandMenu } from "@/components/shell/command-menu";
 import { SidebarShellLayout } from "@/components/shell/layout/sidebar-shell-layout";
 import { useGeocodeSearch } from "@/hooks/use-geocode-search";
@@ -643,12 +642,14 @@ function TransactionDetailRoute() {
               tagsById={tagsById}
               transaction={transaction}
             />
-            <div className="mx-auto w-full max-w-2xl px-6 pb-6">
-              <ShareToFriendsButton
-                existingPostId={existingPost?.id ?? null}
-                transactionId={transactionId}
-              />
-            </div>
+            {existingPost ? (
+              <div className="mx-auto w-full max-w-2xl px-6 pb-6">
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  Shared with friends
+                </span>
+              </div>
+            ) : null}
           </>
         ) : (
           <div className="mx-auto flex min-h-48 w-full max-w-2xl items-center justify-center text-muted-foreground text-sm">

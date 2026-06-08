@@ -178,6 +178,10 @@ interface PinDatum {
   city: string | null;
   region: string | null;
   notes: string | null;
+  cardName: string | null;
+  institutionName: string | null;
+  amountHidden: boolean;
+  merchantHidden: boolean;
 }
 
 const CATEGORY_LABEL_OVERRIDES: Record<string, string> = {
@@ -523,12 +527,16 @@ export function FriendsMap() {
     return {
       address: t.address ?? null,
       amount: Number(t.amount ?? 0),
+      amountHidden: false,
+      cardName: null,
       category: pfcDetailedToSystemKey(t.pfcDetailed ?? null),
       city: t.city ?? null,
       date: t.date,
       id: t.id,
+      institutionName: null,
       logoUrl: t.logoUrl ?? null,
       merchant,
+      merchantHidden: false,
       notes: t.notes ?? null,
       paymentChannel: t.paymentChannel ?? null,
       person: userName,
@@ -539,28 +547,27 @@ export function FriendsMap() {
     };
   });
 
-  const friendPinsRaw: PinDatum[] = friendPosts
-    .filter(
-      (p): p is typeof p & { lat: number; lon: number } =>
-        typeof p.lat === "number" && typeof p.lon === "number",
-    )
-    .map((p) => ({
-      address: null,
-      amount: p.amountCents === null ? 0 : Number(p.amountCents) / 100,
-      category: "uncategorized",
-      city: null,
-      date: normalizePostDate(p.date),
-      id: p.id,
-      logoUrl: null,
-      merchant: p.merchantName,
-      notes: p.note ?? null,
-      paymentChannel: null,
-      person: friendNameById.get(p.userId)?.name ?? `user ${p.userId.slice(0, 6)}`,
-      position: [p.lon, p.lat] as [number, number],
-      region: null,
-      userId: p.userId,
-      website: null,
-    }));
+  const friendPinsRaw: PinDatum[] = friendPosts.map((p) => ({
+    address: null,
+    amount: p.amountCents === null ? 0 : Number(p.amountCents) / 100,
+    amountHidden: p.amountCents === null,
+    cardName: p.cardName ?? null,
+    category: "uncategorized",
+    city: null,
+    date: normalizePostDate(p.date),
+    id: p.id,
+    institutionName: p.institutionName ?? null,
+    logoUrl: null,
+    merchant: p.merchantName ?? "Hidden",
+    merchantHidden: p.merchantName === null,
+    notes: p.note ?? null,
+    paymentChannel: null,
+    person: friendNameById.get(p.userId)?.name ?? `user ${p.userId.slice(0, 6)}`,
+    position: [p.lon, p.lat] as [number, number],
+    region: null,
+    userId: p.userId,
+    website: null,
+  }));
 
   const passesFilter = (p: PinDatum) =>
     (activeCategories === null || activeCategories.has(p.category)) &&
