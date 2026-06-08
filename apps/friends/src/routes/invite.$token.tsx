@@ -66,16 +66,17 @@ function Shell({
   tone?: "muted" | "success" | "error";
 }) {
   const toneClass: Record<typeof tone, string> = {
-    error: "text-red-500 text-sm",
-    muted: "text-muted-foreground text-sm",
-    success: "text-emerald-500 text-sm",
+    error: "text-red-500 text-base",
+    muted: "text-muted-foreground text-base",
+    success: "text-emerald-500 text-base",
   };
   const className = toneClass[tone];
   return (
     <div className="flex h-screen w-screen items-center justify-center">
       <div className="w-full max-w-sm space-y-3 p-6 text-center">
-        <h1 className="text-2xl font-semibold">Cobalt Friends</h1>
+        <h1 className="text-3xl font-semibold">Pocketwatch</h1>
         <p className={className}>{children}</p>
+        <p className="text-muted-foreground text-sm">Powered by Cobalt</p>
       </div>
     </div>
   );

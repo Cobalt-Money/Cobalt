@@ -1,7 +1,7 @@
 import { Navigate, createFileRoute } from "@tanstack/react-router";
 
 import { FriendsMap } from "../components/map";
-import { SettingsDialog } from "../components/settings-dialog";
+import { TopBar } from "../components/top-bar";
 import { authClient } from "../lib/auth-client";
 
 export const Route = createFileRoute("/")({
@@ -22,16 +22,7 @@ function MapPage() {
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <FriendsMap />
-      <SettingsDialog initialSection="invites">
-        <button
-          type="button"
-          aria-label="Settings"
-          className="absolute bottom-4 left-4 z-10 flex items-center gap-2 rounded-md border border-white/15 bg-black/30 px-3 py-1.5 text-xs font-medium text-white shadow-2xl shadow-black/50 backdrop-blur-md backdrop-saturate-150 hover:bg-black/40"
-        >
-          <span>⚙</span>
-          <span>Settings</span>
-        </button>
-      </SettingsDialog>
+      <TopBar />
     </div>
   );
 }
