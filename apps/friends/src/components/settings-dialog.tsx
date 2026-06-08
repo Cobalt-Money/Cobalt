@@ -331,6 +331,16 @@ function FriendsSection() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const me = session.data?.user.id;
+  const otherIds = friendships
+    .map((f) => (f.userAId === me ? f.userBId : f.userAId))
+    .filter(Boolean) as string[];
+  const [friendProfiles] = useQuery(
+    queries.social.friendProfiles({ ids: otherIds.length > 0 ? otherIds : ["__none__"] }),
+  );
+  const nameById = new Map<string, string>();
+  for (const p of friendProfiles) {
+    nameById.set(p.id, p.displayUsername ?? p.name ?? `user ${p.id.slice(0, 8)}`);
+  }
 
   const remove = async (friendshipId: string) => {
     setBusyId(friendshipId);
@@ -356,7 +366,7 @@ function FriendsSection() {
                 key={f.id}
               >
                 <div>
-                  <div>user {otherId.slice(0, 8)}</div>
+                  <div>{nameById.get(otherId) ?? `user ${otherId.slice(0, 8)}`}</div>
                   <div className="text-white/55">
                     Since {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : "—"}
                   </div>
