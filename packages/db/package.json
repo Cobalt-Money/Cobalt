@@ -30,14 +30,14 @@
   "dependencies": {
     "@cobalt-web/env": "workspace:*",
     "dotenv": "catalog:",
-    "drizzle-orm": "1.0.0-beta.22",
+    "drizzle-orm": "1.0.0-rc.4-273829f",
     "pg": "^8.17.1",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
     "@types/pg": "^8.16.0",
-    "drizzle-kit": "1.0.0-beta.18-7eb39f0",
-    "typescript": "^5"
+    "drizzle-kit": "1.0.0-rc.4-273829f",
+    "typescript": "^6"
   }
 }

@@ -21,7 +21,7 @@
     "@vitejs/plugin-react": "^6.0.1",
     "jsdom": "^26.0.0",
     "react": "catalog:",
-    "typescript": "^5",
+    "typescript": "^6",
     "vitest": "^3.2.0"
   },
   "peerDependencies": {
