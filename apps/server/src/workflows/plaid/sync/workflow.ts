@@ -2,6 +2,7 @@ import type { RecurringTransactionsUpdateWebhook } from "plaid";
 import { createHook, sleep } from "workflow";
 import { start } from "workflow/api";
 
+import { enrichTransactionsWorkflow } from "../enrich/workflow";
 import { syncHoldings, syncInvestmentTransactions } from "../investments/orchestration";
 import { plaidInitialInvestmentSyncWorkflow } from "../investments/workflow";
 import { syncLiabilities } from "../liabilities/orchestration";
@@ -23,7 +24,6 @@ import {
   syncBalancesStep,
   syncRecurringStep,
   syncTransactionsStep,
-  enrichTransactionsStep,
 } from "./steps";
 import type { PlaidOnboardingPhase } from "./steps";
 
@@ -71,7 +71,7 @@ export async function plaidSyncWorkflow(webhook: SyncUpdatesWebhook): Promise<Pl
       syncTransactionsStep(item.plaidAccessToken, item.plaidItemId, item.transactionsCursor),
       syncBalancesStep(item.plaidAccessToken, item.plaidItemId),
     ]);
-    await enrichTransactionsStep(item.plaidItemId);
+    await startEnrichTransactionsChildStep(item.plaidItemId);
 
     // Snapshots are written by cron + at account creation only — recurring
     // webhooks update live balances and let the next cron tick capture state.
@@ -154,6 +154,12 @@ async function startUpdateModeChildSyncsStep(plaidItemId: string): Promise<void>
   ]);
 }
 
+/** Off-critical-path enrichment dispatch. Returns once the child is queued. */
+async function startEnrichTransactionsChildStep(plaidItemId: string): Promise<void> {
+  "use step";
+  await start(enrichTransactionsWorkflow, [plaidItemId]);
+}
+
 /**
  * Owns the whole add-account lifecycle — from the moment a link token is
  * minted through to the first complete sync. The workflow parks on a hook
@@ -227,7 +233,7 @@ export async function plaidAddAccountWorkflow(
         syncTransactionsStep(accessToken, plaidItemId, item.transactionsCursor),
         syncBalancesStep(accessToken, plaidItemId),
       ]);
-      await enrichTransactionsStep(plaidItemId);
+      await startEnrichTransactionsChildStep(plaidItemId);
       await emit("transactions", "done", {
         added: txResult.added,
         modified: txResult.modified,
@@ -262,7 +268,7 @@ export async function plaidAddAccountWorkflow(
         syncTransactionsStep(accessToken, plaidItemId, item.transactionsCursor),
         syncBalancesStep(accessToken, plaidItemId),
       ]);
-      await enrichTransactionsStep(plaidItemId);
+      await startEnrichTransactionsChildStep(plaidItemId);
       await emit("transactions", "done", {
         added: txResult.added,
         modified: txResult.modified,
@@ -380,7 +386,7 @@ async function runOnboardingSyncBranch(
     syncTransactionsStep(accessToken, itemId, null),
     syncBalancesStep(accessToken, itemId),
   ]);
-  await enrichTransactionsStep(itemId);
+  await startEnrichTransactionsChildStep(itemId);
   await emit("transactions", "done", {
     added: txResult.added,
     modified: txResult.modified,

@@ -58,6 +58,17 @@ vi.mock(import("../liabilities/orchestration"), () => ({
   syncLiabilities: vi.fn(),
 }));
 
+// `start()` dispatches child workflows; tests don't run a workflow runtime,
+// so stub it out to a resolved no-op so parent workflows see the dispatch
+// succeed instead of bubbling an "unknown caller" error.
+vi.mock(import("workflow/api"), async () => {
+  const actual = await vi.importActual<typeof import("workflow/api")>("workflow/api");
+  return {
+    ...actual,
+    start: vi.fn().mockResolvedValue(null),
+  };
+});
+
 // Iterable hook: each call to `next()` yields the next queued payload.
 // We control what the mocked hook yields per test.
 const mockHookPayloads = vi.hoisted<{

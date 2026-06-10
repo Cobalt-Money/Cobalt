@@ -15,6 +15,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { importJob } from "../../../imports/import-job";
+import { place } from "../../../places/place";
 import { user } from "../../../users/auth/auth";
 import { financialAccount } from "../../account";
 import { category } from "../categories/category";
@@ -111,6 +112,19 @@ export const transaction = pgTable(
      * NOT user-editable — `categoryId` is the user-facing category column.
      */
     pfcPrimary: text("pfc_primary"),
+    /**
+     * SRI-354 — FK to the `place` row chosen by enrichment. Null until matcher
+     * picks one. Sets the location/brand fields below; `place_id` is the single
+     * canonical pointer rather than carrying per-field FKs.
+     */
+    placeId: uuid("place_id").references(() => place.id, {
+      onDelete: "set null",
+    }),
+    /** Match confidence 0..1 written alongside `place_id` for downstream UI gating. */
+    placeMatchConfidence: numeric("place_match_confidence", {
+      precision: 5,
+      scale: 4,
+    }),
     /** Merchant postal/ZIP code. */
     postalCode: text("postal_code"),
     /** Merchant region/state. */
@@ -142,6 +156,9 @@ export const transaction = pgTable(
     index("transaction_date_pending_idx").on(t.date, t.pending),
     index("transaction_import_job_id_idx").on(t.importJobId),
     index("transaction_pfc_primary_idx").on(t.pfcPrimary),
+    index("transaction_place_id_idx")
+      .on(t.placeId)
+      .where(sql`(place_id IS NOT NULL)`),
     uniqueIndex("transaction_source_external_id_idx")
       .on(t.source, t.externalId)
       .where(sql`(external_id IS NOT NULL)`),

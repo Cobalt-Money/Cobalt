@@ -31,6 +31,11 @@ declare module "@tanstack/react-router" {
   }
 }
 
+// Dev-only react-grab overlay — mirrors apps/web/src/routes/__root.tsx.
+if (import.meta.env.DEV) {
+  void import("react-grab");
+}
+
 const rootEl = document.querySelector("#root");
 if (!rootEl) {
   throw new Error("#root not found");

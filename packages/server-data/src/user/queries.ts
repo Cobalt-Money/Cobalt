@@ -8,6 +8,14 @@ const UPDATE_THRESHOLD_HOURS = 24;
  * sessions backed by demo users — their rows get purged by the 24h cron
  * and external clients would silently break.
  */
+export async function getUserAvatarUrl(userId: string): Promise<string | null> {
+  const row = await db.query.user.findFirst({
+    columns: { image: true },
+    where: { id: { eq: userId } },
+  });
+  return row?.image ?? null;
+}
+
 export async function isAnonymousUser(userId: string): Promise<boolean> {
   const row = await db.query.user.findFirst({
     columns: { isAnonymous: true },

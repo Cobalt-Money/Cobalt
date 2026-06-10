@@ -1,45 +1,38 @@
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import type { MapboxOverlayProps } from "@deck.gl/mapbox";
-import { ColumnLayer, IconLayer, ScatterplotLayer } from "@deck.gl/layers";
-import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
-import { OBJLoader } from "@loaders.gl/obj";
-import { Tile3DLayer } from "@deck.gl/geo-layers";
-import { Tiles3DLoader } from "@loaders.gl/3d-tiles";
+import { IconLayer } from "@deck.gl/layers";
 import { queries } from "@cobalt-web/zero";
 import { MerchantLogo } from "@cobalt-web/ui/cobalt/logos/merchant-logo";
+import {
+  CATEGORY_SYSTEM_ICON_SRC,
+  pfcDetailedToSystemKey,
+} from "@cobalt-web/ui/cobalt/transactions/categories/index";
 import { TransactionDetailSummary } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-summary";
 import { mapZeroTransactionDetailRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 import { DndContext, PointerSensor, useDraggable, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
-import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { useQuery } from "@rocicorp/zero/react";
 import { Map as MapGL, Source, Layer, useControl } from "react-map-gl/maplibre";
 import type { MapRef } from "react-map-gl/maplibre";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { authClient } from "../lib/auth-client";
 import { getAvatarIcon } from "./avatar-icon";
-import { buildEmojiAtlas } from "./emoji-atlas";
+import { buildSvgAtlas } from "./svg-atlas";
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
+const SERVER_URL = import.meta.env.VITE_SERVER_URL as string | undefined;
+const avatarProxyUrl = (uid: string) =>
+  SERVER_URL ? `${SERVER_URL.replace(/\/$/, "")}/api/avatar/${uid}` : null;
 
-// Low-poly humanoid OBJ from deck.gl's official sample data set. Public CDN,
-// cached after first fetch. Used by SimpleMeshLayer for People + 3D so each
-// txn renders as a person-shaped figurine tinted by user identity.
-const HUMANOID_MESH_URL =
-  "https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/humanoid_quad.obj";
-
-// Stable per-pin Y-axis rotation so figures don't all face the same direction.
-// Just a deterministic hash → 0-360 degrees, no PRNG state.
-function hashAngle(id: string): number {
-  let h = 0;
-  for (const ch of id) {
-    h = Math.trunc(h * 31 + (ch.codePointAt(0) ?? 0));
-  }
-  return Math.abs(h) % 360;
+// Stack key = merchant name + ~1km coord bucket. Pure coord rounding misses
+// repeat visits because Plaid lat/lng can drift tens of meters between txns
+// at the same shop; pure merchant name would merge "Chipotle SF" with
+// "Chipotle NYC". The combo groups repeat visits at one location.
+function stackKeyForPin(p: { merchant: string; position: [number, number] }): string {
+  return `${p.merchant}|${p.position[0].toFixed(2)},${p.position[1].toFixed(2)}`;
 }
-const GOOGLE_3D_TILES_KEY = import.meta.env.VITE_GOOGLE_3D_TILES_KEY as string | undefined;
 
 const MAP_STYLES = {
   "carto-dark": {
@@ -161,10 +154,11 @@ const INITIAL_VIEW_STATE = {
   zoom: 12,
 };
 
-type Category = "food" | "coffee" | "shopping" | "travel" | "entertainment" | "groceries" | "other";
+// Filter bucket = Plaid PFC detailed → systemKey. Keeps panel 1:1 with icons.
+type Category = string;
 
 type ViewMode = "pins" | "people";
-type MarkerStyle = "dots" | "icons" | "3d";
+type MarkerStyle = "dots" | "landmark";
 
 type TimeWindow = 7 | 30 | 90 | 0;
 
@@ -176,6 +170,7 @@ interface PinDatum {
   person: string;
   userId: string;
   category: Category;
+  paymentChannel: string | null;
   date: string | number | null;
   logoUrl: string | null;
   website: string | null;
@@ -185,50 +180,45 @@ interface PinDatum {
   notes: string | null;
 }
 
-const CATEGORY_META: Record<
-  Category,
-  { label: string; emoji: string; color: [number, number, number] }
-> = {
-  coffee: { color: [180, 120, 60], emoji: "☕", label: "Coffee" },
-  entertainment: { color: [236, 72, 153], emoji: "🎬", label: "Fun" },
-  food: { color: [239, 68, 68], emoji: "🍔", label: "Food" },
-  groceries: { color: [34, 197, 94], emoji: "🛒", label: "Groceries" },
-  other: { color: [148, 163, 184], emoji: "•", label: "Other" },
-  shopping: { color: [168, 85, 247], emoji: "🛍️", label: "Shopping" },
-  travel: { color: [59, 130, 246], emoji: "✈️", label: "Travel" },
+const CATEGORY_LABEL_OVERRIDES: Record<string, string> = {
+  alcohol_bars: "Bars",
+  coffee_shop: "Coffee",
+  food_delivery: "Delivery",
+  gas_fuel: "Gas",
+  pharmacy: "Pharmacy",
+  public_transit: "Transit",
+  uncategorized: "Other",
 };
 
-const CATEGORY_KEYWORDS: [Category, RegExp][] = [
-  ["coffee", /\b(coffee|starbucks|dunkin|peet|blue bottle|cafe|espresso|caribou)\b/iu],
-  [
-    "groceries",
-    /\b(whole foods|trader joe|safeway|kroger|aldi|costco|wegmans|grocery|market|publix)\b/iu,
-  ],
-  [
-    "food",
-    /\b(restaurant|pizza|burger|sushi|taco|chipotle|mcdonald|wendy|kfc|subway|doordash|uber eats|grubhub|panera|chick.?fil|sweetgreen|domino|deli|kitchen|grill|bbq|ramen|thai|chinese|mexican)\b/iu,
-  ],
-  [
-    "travel",
-    /\b(uber|lyft|airline|airways|hotel|airbnb|delta|united|jetblue|marriott|hilton|amtrak|airport|flight|gas|shell|chevron|exxon|bp\b)\b/iu,
-  ],
-  [
-    "entertainment",
-    /\b(spotify|netflix|hulu|disney|cinema|theater|theatre|amc|regal|concert|ticketmaster|stubhub|bar|brewery|brewing|pub|club)\b/iu,
-  ],
-  [
-    "shopping",
-    /\b(amazon|target|walmart|best buy|nike|adidas|apple store|sephora|ulta|store|shop|mall|nordstrom|macy|h&m|zara|uniqlo|etsy)\b/iu,
-  ],
-];
-
-function inferCategory(merchant: string): Category {
-  for (const [cat, re] of CATEGORY_KEYWORDS) {
-    if (re.test(merchant)) {
-      return cat;
-    }
+function categoryLabel(key: string): string {
+  if (CATEGORY_LABEL_OVERRIDES[key]) {
+    return CATEGORY_LABEL_OVERRIDES[key];
   }
-  return "other";
+  return key
+    .split("_")
+    .map((w) => (w ? (w[0] ?? "").toUpperCase() + w.slice(1) : ""))
+    .join(" ");
+}
+
+function categoryIconSrc(key: string): string {
+  const map = CATEGORY_SYSTEM_ICON_SRC as Record<string, string | undefined>;
+  return map[key] ?? map.uncategorized ?? "";
+}
+
+// Drizzle returns `timestamp` columns as Date objects, but `Date` doesn't
+// survive the wire to friends (Zero serializes). Accept anything that
+// `new Date(x)` understands.
+function normalizePostDate(d: unknown): number | string | null {
+  if (d === null || d === undefined) {
+    return null;
+  }
+  if (typeof d === "number" || typeof d === "string") {
+    return d;
+  }
+  if (d instanceof Date) {
+    return d.getTime();
+  }
+  return null;
 }
 
 function withinWindow(date: string | number | null, days: TimeWindow): boolean {
@@ -377,7 +367,7 @@ interface PersonAgg {
   count: number;
   lat: number;
   lon: number;
-  byCat: Record<Category, number>;
+  byCat: Record<string, number>;
 }
 
 function aggregatePeople(allPins: PinDatum[]): PersonAgg[] {
@@ -390,14 +380,10 @@ function aggregatePeople(allPins: PinDatum[]): PersonAgg[] {
       existing.count += 1;
       existing.lat += p.position[1];
       existing.lon += p.position[0];
-      existing.byCat[p.category] += amt;
+      existing.byCat[p.category] = (existing.byCat[p.category] ?? 0) + amt;
     } else {
-      const byCat = Object.fromEntries(
-        (Object.keys(CATEGORY_META) as Category[]).map((c) => [c, 0]),
-      ) as Record<Category, number>;
-      byCat[p.category] = amt;
       personAgg.set(p.userId, {
-        byCat,
+        byCat: { [p.category]: amt },
         count: 1,
         lat: p.position[1],
         lon: p.position[0],
@@ -417,23 +403,23 @@ function aggregatePeople(allPins: PinDatum[]): PersonAgg[] {
 // eslint-disable-next-line complexity
 export function FriendsMap() {
   const [styleKey, setStyleKey] = useState<StyleKey>("carto-dark");
-  const [show3D, setShow3D] = useState(false);
   const [showSubway, setShowSubway] = useState(false);
   const [hover, setHover] = useState<HoverState | null>(null);
   const [selectedTxnId, setSelectedTxnId] = useState<string | null>(null);
+  const [stackKey, setStackKey] = useState<string | null>(null);
   const mapRef = useRef<MapRef | null>(null);
   const flyTo = (lon: number, lat: number) => {
     mapRef.current?.flyTo({ center: [lon, lat], duration: 1200, essential: true, zoom: 16 });
   };
   const [viewMode, setViewMode] = useState<ViewMode>("pins");
-  const [markerStyle, setMarkerStyle] = useState<MarkerStyle>("icons");
+  const [markerStyle, setMarkerStyle] = useState<MarkerStyle>("landmark");
   // Bumped whenever an async avatar canvas finishes loading so IconLayer's
   // `updateTriggers` knows to re-read getIcon and pick up the new data URL.
   const [avatarVersion, setAvatarVersion] = useState(0);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>(30);
-  const [activeCategories, setActiveCategories] = useState<Set<Category>>(
-    () => new Set(Object.keys(CATEGORY_META) as Category[]),
-  );
+  // null = no explicit filter (all pins pass). Once user toggles a bucket off
+  // we snapshot the currently-present systemKeys and switch to explicit mode.
+  const [activeCategories, setActiveCategories] = useState<Set<Category> | null>(null);
   // Friends hidden from the map. Default = all visible. Toggled via the
   // Friends section in InspectorPanel.
   const [hiddenFriendIds, setHiddenFriendIds] = useState<Set<string>>(() => new Set());
@@ -454,20 +440,31 @@ export function FriendsMap() {
   const session = authClient.useSession();
   const userId = session.data?.user.id;
   const userName = session.data?.user.name ?? session.data?.user.email?.split("@")[0] ?? "You";
-  const userImage = session.data?.user.image ?? null;
 
-  // Built once on mount (canvas rasterizes emoji glyphs via system font).
-  // null on SSR/unsupported envs — IconLayer skipped, dots remain.
-  const emojiAtlas = useMemo(
-    () =>
-      buildEmojiAtlas(
-        (Object.keys(CATEGORY_META) as Category[]).map((c) => ({
-          emoji: CATEGORY_META[c].emoji,
-          key: c,
-        })),
-      ),
-    [],
-  );
+  // Two atlases — flat disc tiles for the "dots" style, teardrop tiles
+  // (matching the people-avatar shape) for the "landmark" style. Both keyed
+  // on CategorySystemKey so the IconLayer mapping resolves either way.
+  const [svgAtlas, setSvgAtlas] = useState<Awaited<ReturnType<typeof buildSvgAtlas>>>(null);
+  const [svgAtlasTeardrop, setSvgAtlasTeardrop] =
+    useState<Awaited<ReturnType<typeof buildSvgAtlas>>>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      const items = Object.entries(CATEGORY_SYSTEM_ICON_SRC).map(([key, src]) => ({ key, src }));
+      const [circle, teardrop] = await Promise.all([
+        buildSvgAtlas(items, "circle"),
+        buildSvgAtlas(items, "teardrop"),
+      ]);
+      if (!cancelled) {
+        setSvgAtlas(circle);
+        setSvgAtlasTeardrop(teardrop);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [txns] = useQuery(queries.transactions.list());
   const [friendships] = useQuery(queries.social.friendships());
@@ -510,13 +507,14 @@ export function FriendsMap() {
     return {
       address: t.address ?? null,
       amount: Number(t.amount ?? 0),
-      category: inferCategory(merchant),
+      category: pfcDetailedToSystemKey(t.pfcDetailed ?? null),
       city: t.city ?? null,
       date: t.date,
       id: t.id,
       logoUrl: t.logoUrl ?? null,
       merchant,
       notes: t.notes ?? null,
+      paymentChannel: t.paymentChannel ?? null,
       person: userName,
       position: [t.lon, t.lat] as [number, number],
       region: t.region ?? null,
@@ -533,13 +531,14 @@ export function FriendsMap() {
     .map((p) => ({
       address: null,
       amount: p.amountCents === null ? 0 : Number(p.amountCents) / 100,
-      category: inferCategory(p.merchantName),
+      category: "uncategorized",
       city: null,
-      date: typeof p.date === "number" ? p.date : null,
+      date: normalizePostDate(p.date),
       id: p.id,
       logoUrl: null,
       merchant: p.merchantName,
       notes: p.note ?? null,
+      paymentChannel: null,
       person: `user ${p.userId.slice(0, 6)}`,
       position: [p.lon, p.lat] as [number, number],
       region: null,
@@ -548,12 +547,22 @@ export function FriendsMap() {
     }));
 
   const passesFilter = (p: PinDatum) =>
-    activeCategories.has(p.category) && withinWindow(p.date, timeWindow);
+    (activeCategories === null || activeCategories.has(p.category)) &&
+    withinWindow(p.date, timeWindow);
 
   const selfHidden = userId ? hiddenFriendIds.has(userId) : false;
   const pins = selfHidden ? [] : selfPinsRaw.filter(passesFilter);
   const friendPins = friendPinsRaw.filter(passesFilter);
   const allPins = [...pins, ...friendPins];
+
+  // Categories with ≥1 in-store pin inside the current time window — drives
+  // the filter UI so options track 7d/30d/90d/all.
+  const presentCategories = new Set<Category>();
+  for (const p of [...selfPinsRaw, ...friendPinsRaw]) {
+    if (p.paymentChannel === "in store" && withinWindow(p.date, timeWindow)) {
+      presentCategories.add(p.category);
+    }
+  }
 
   const merchantTotalsMap: Record<
     string,
@@ -586,29 +595,36 @@ export function FriendsMap() {
   const people = aggregatePeople(allPins);
 
   const layers: unknown[] = [];
-  if (show3D && GOOGLE_3D_TILES_KEY) {
-    layers.push(
-      new Tile3DLayer({
-        data: `https://tile.googleapis.com/v1/3dtiles/root.json?key=${GOOGLE_3D_TILES_KEY}`,
-        id: "google-3d-tiles",
-        loader: Tiles3DLoader,
-      }),
-    );
-  }
 
-  // Identity color (gold = you, orange = friend) used by People + 3D style.
+  // Identity color (gold = you, orange = friend) used by People style.
   const colorForUser = (uid: string): [number, number, number, number] =>
     uid === userId ? [255, 215, 0, 230] : [251, 146, 60, 230];
-  const catColor = (c: Category): [number, number, number, number] =>
-    [...CATEGORY_META[c].color, 230] as [number, number, number, number];
+  const openSelfTxn = (id: string | null) => {
+    if (!id) {
+      setSelectedTxnId(null);
+      setStackKey(null);
+      return;
+    }
+    const pin = allPins.find((p) => p.id === id);
+    setSelectedTxnId(id);
+    setStackKey(pin ? stackKeyForPin(pin) : null);
+  };
   const pinClickHandler = (object: unknown) => {
     if (!object) {
       return;
     }
     const p = object as PinDatum;
     flyTo(p.position[0], p.position[1]);
+    const key = stackKeyForPin(p);
+    const atCoord = allPins.filter((x) => stackKeyForPin(x) === key);
+    setStackKey(key);
     if (p.userId === userId) {
       setSelectedTxnId(p.id);
+    } else {
+      const selfAt = atCoord.find((x) => x.userId === userId);
+      if (selfAt) {
+        setSelectedTxnId(selfAt.id);
+      }
     }
   };
   const pinHoverHandler = (info: { object?: unknown; x: number; y: number }) => {
@@ -616,76 +632,92 @@ export function FriendsMap() {
   };
 
   if (markerStyle === "dots") {
-    if (viewMode === "pins") {
-      layers.push(
-        new ScatterplotLayer<PinDatum>({
-          data: pins,
-          getFillColor: (d) => catColor(d.category),
-          getLineColor: [255, 255, 255, 220],
-          getPosition: (d) => [d.position[0], d.position[1], 0],
-          getRadius: 30,
-          id: "self-pins",
-          lineWidthMinPixels: 2,
-          onClick: ({ object }) => pinClickHandler(object),
-          onHover: pinHoverHandler,
-          pickable: true,
-          radiusMinPixels: 10,
-          radiusUnits: "meters",
-          stroked: true,
-        }),
-        new ScatterplotLayer<PinDatum>({
-          data: friendPins,
-          getFillColor: (d) => catColor(d.category),
-          getLineColor: [16, 185, 129, 255],
-          getPosition: (d) => [d.position[0], d.position[1], 0],
-          getRadius: 32,
-          id: "friend-pins",
-          lineWidthMinPixels: 3,
-          onClick: ({ object }) => pinClickHandler(object),
-          onHover: pinHoverHandler,
-          pickable: true,
-          radiusMinPixels: 12,
-          radiusUnits: "meters",
-          stroked: true,
-        }),
-      );
-    } else {
-      layers.push(
-        new ScatterplotLayer<PinDatum>({
-          data: allPins,
-          getFillColor: (d) => colorForUser(d.userId),
-          getLineColor: [255, 255, 255, 220],
-          getPosition: (d) => [d.position[0], d.position[1], 0],
-          getRadius: 30,
-          id: "people-pins",
-          lineWidthMinPixels: 2,
-          onClick: ({ object }) => pinClickHandler(object),
-          onHover: pinHoverHandler,
-          pickable: true,
-          radiusMinPixels: 10,
-          radiusUnits: "meters",
-          stroked: true,
-        }),
-      );
-    }
-  } else if (markerStyle === "icons") {
-    if (viewMode === "pins" && emojiAtlas) {
+    if (viewMode === "pins" && svgAtlas) {
       layers.push(
         new IconLayer<PinDatum>({
           alphaCutoff: 0.05,
           billboard: true,
           data: allPins,
           getColor: [255, 255, 255, 255],
-          getIcon: (d) => d.category,
-          getPosition: (d) => [d.position[0], d.position[1], 0],
-          getSize: 60,
-          iconAtlas: emojiAtlas.url,
-          iconMapping: emojiAtlas.mapping,
-          id: "category-icons",
+          getIcon: (d) => (d.category in svgAtlas.mapping ? d.category : "uncategorized"),
+          getPosition: (d) => [d.position[0], d.position[1], 0.01],
+          getSize: 32,
+          iconAtlas: svgAtlas.url,
+          iconMapping: svgAtlas.mapping,
+          id: "self-pins",
           onClick: ({ object }) => pinClickHandler(object),
           onHover: pinHoverHandler,
           pickable: true,
-          sizeMinPixels: 18,
+          sizeMaxPixels: 520,
+          sizeMinPixels: 28,
+          sizeUnits: "meters",
+        }),
+      );
+    } else if (viewMode === "people") {
+      // People dots: render profile pic in circle with identity-colored ring.
+      const avatarFor = (d: PinDatum) => {
+        const isSelf = d.userId === userId;
+        const initial = (isSelf ? userName : d.person).charAt(0) || "?";
+        const url = avatarProxyUrl(d.userId);
+        const dataUrl = getAvatarIcon(
+          {
+            fallbackInitial: initial,
+            key: d.userId,
+            ring: colorForUser(d.userId),
+            shape: "circle",
+            url,
+          },
+          () => setAvatarVersion((v) => v + 1),
+        );
+        return {
+          anchorX: 80,
+          anchorY: 80,
+          height: 160,
+          id: `${d.userId}-circle-${avatarVersion}`,
+          url: dataUrl,
+          width: 160,
+        } as const;
+      };
+      layers.push(
+        new IconLayer<PinDatum>({
+          alphaCutoff: 0.05,
+          billboard: true,
+          data: allPins,
+          getColor: [255, 255, 255, 255],
+          getIcon: avatarFor,
+          getPosition: (d) => [d.position[0], d.position[1], 0],
+          getSize: 24,
+          id: "people-pins",
+          onClick: ({ object }) => pinClickHandler(object),
+          onHover: pinHoverHandler,
+          pickable: true,
+          sizeMaxPixels: 410,
+          sizeMinPixels: 22,
+          sizeUnits: "meters",
+          updateTriggers: { getIcon: avatarVersion },
+        }),
+      );
+    }
+  } else if (markerStyle === "landmark") {
+    const landmarkAtlas = svgAtlasTeardrop ?? svgAtlas;
+    if (viewMode === "pins" && landmarkAtlas) {
+      layers.push(
+        new IconLayer<PinDatum>({
+          alphaCutoff: 0.05,
+          billboard: true,
+          data: allPins,
+          getColor: [255, 255, 255, 255],
+          getIcon: (d) => (d.category in landmarkAtlas.mapping ? d.category : "uncategorized"),
+          getPosition: (d) => [d.position[0], d.position[1], 0],
+          getSize: 30,
+          iconAtlas: landmarkAtlas.url,
+          iconMapping: landmarkAtlas.mapping,
+          id: "category-landmarks",
+          onClick: ({ object }) => pinClickHandler(object),
+          onHover: pinHoverHandler,
+          pickable: true,
+          sizeMaxPixels: 400,
+          sizeMinPixels: 40,
           sizeUnits: "meters",
         }),
       );
@@ -697,7 +729,7 @@ export function FriendsMap() {
       const avatarFor = (d: PinDatum) => {
         const isSelf = d.userId === userId;
         const initial = (isSelf ? userName : d.person).charAt(0) || "?";
-        const url = isSelf ? userImage : null;
+        const url = avatarProxyUrl(d.userId);
         const dataUrl = getAvatarIcon(
           {
             fallbackInitial: initial,
@@ -726,60 +758,18 @@ export function FriendsMap() {
           getColor: [255, 255, 255, 255],
           getIcon: avatarFor,
           getPosition: (d) => [d.position[0], d.position[1], 0],
-          getSize: 80,
+          getSize: 30,
           id: "people-avatars",
           onClick: ({ object }) => pinClickHandler(object),
           onHover: pinHoverHandler,
           pickable: true,
-          sizeMinPixels: 22,
+          sizeMaxPixels: 400,
+          sizeMinPixels: 40,
           sizeUnits: "meters",
           updateTriggers: { getIcon: avatarVersion },
         }),
       );
     }
-  } else if (viewMode === "pins") {
-    // 3D + Categories — extruded hex columns. Height = |amount|, color = cat.
-    const heightForAmount = (amount: number) => 80 + Math.min(800, Math.abs(amount) * 4);
-    layers.push(
-      new ColumnLayer<PinDatum>({
-        data: allPins,
-        diskResolution: 24,
-        elevationScale: 1,
-        extruded: true,
-        getElevation: (d) => heightForAmount(d.amount),
-        getFillColor: (d) => catColor(d.category),
-        getLineColor: [255, 255, 255, 80],
-        getPosition: (d) => [d.position[0], d.position[1]],
-        id: "columns-pins",
-        onClick: ({ object }) => pinClickHandler(object),
-        onHover: pinHoverHandler,
-        pickable: true,
-        radius: 30,
-        stroked: true,
-      }),
-    );
-  } else {
-    // 3D + People — low-poly humanoid mesh per txn, tinted by user identity.
-    // OBJ served from deck.gl-data CDN (Khronos sample) — cached after first
-    // fetch. Color tint applied via `getColor` so each person reads at a
-    // glance without needing per-user textures.
-    layers.push(
-      new SimpleMeshLayer<PinDatum>({
-        data: allPins,
-        getColor: (d) => colorForUser(d.userId),
-        // OBJ ships y-up but face-down. [90, 0, 0] stands it upright facing
-        // camera. Random Z spin gives the crowd visual variety.
-        getOrientation: (d) => [90, hashAngle(d.id), 0],
-        getPosition: (d) => [d.position[0], d.position[1], 0],
-        id: "people-figures",
-        loaders: [OBJLoader],
-        mesh: HUMANOID_MESH_URL,
-        onClick: ({ object }) => pinClickHandler(object),
-        onHover: pinHoverHandler,
-        pickable: true,
-        sizeScale: 6,
-      }),
-    );
   }
 
   return (
@@ -807,18 +797,39 @@ export function FriendsMap() {
           inStorePins={allPins}
           flyTo={flyTo}
           selfId={userId}
-          onSelectTxn={setSelectedTxnId}
+          onSelectTxn={openSelfTxn}
           glassStyle={glassStyle}
         />
       )}
-      {viewMode === "pins" && hover && <PinTooltip hover={hover} glassStyle={glassStyle} />}
-      {selectedTxnId && (
-        <TxnDetailPanel
-          txnId={selectedTxnId}
-          onClose={() => setSelectedTxnId(null)}
-          glassStyle={glassStyle}
-        />
-      )}
+      {(() => {
+        const hoverSelf = hover && hover.pin.userId === userId ? hover.pin : null;
+        const displayTxnId = hoverSelf?.id ?? selectedTxnId ?? null;
+        if (!displayTxnId) {
+          return null;
+        }
+        const mode: "pinned" | "preview" = hoverSelf ? "preview" : "pinned";
+        const key = hoverSelf ? stackKeyForPin(hoverSelf) : stackKey;
+        const selfStack = key
+          ? allPins.filter((p) => stackKeyForPin(p) === key && p.userId === userId)
+          : [];
+        return (
+          <TxnDetailPanel
+            txnId={displayTxnId}
+            mode={mode}
+            onClose={() => {
+              setSelectedTxnId(null);
+              setStackKey(null);
+            }}
+            glassStyle={glassStyle}
+            stack={selfStack.length > 0 ? selfStack : null}
+            selfId={userId}
+            onNavigate={(p) => {
+              flyTo(p.position[0], p.position[1]);
+              setSelectedTxnId(p.id);
+            }}
+          />
+        );
+      })()}
       <InspectorPanel
         viewMode={viewMode}
         onViewMode={setViewMode}
@@ -840,25 +851,31 @@ export function FriendsMap() {
           });
         }}
         activeCategories={activeCategories}
+        presentCategories={presentCategories}
         onToggleCategory={(c) => {
+          // Multi-select: clicking toggles the category in/out of the active
+          // set. First toggle snapshots the currently-visible categories so
+          // un-checking removes only the clicked one; toggling back to all
+          // present returns to "no filter" (null).
           setActiveCategories((prev) => {
-            const next = new Set(prev);
+            const base = prev ?? new Set(presentCategories);
+            const next = new Set(base);
             if (next.has(c)) {
               next.delete(c);
             } else {
               next.add(c);
             }
-            if (next.size === 0) {
-              return prev;
+            if (
+              next.size === presentCategories.size &&
+              [...presentCategories].every((p) => next.has(p))
+            ) {
+              return null;
             }
             return next;
           });
         }}
         styleKey={styleKey}
         onStyleKey={setStyleKey}
-        show3D={show3D}
-        on3DChange={setShow3D}
-        has3DKey={Boolean(GOOGLE_3D_TILES_KEY)}
         showSubway={showSubway}
         onSubwayChange={setShowSubway}
         glassStyle={glassStyle}
@@ -1025,8 +1042,10 @@ function MerchantPanel({
                         {loc && <span className="truncate">{loc}</span>}
                       </div>
                     </div>
-                    <div className="text-sm font-semibold tabular-nums">
-                      {isOutflow ? "-" : "+"}${Math.abs(p.amount).toFixed(0)}
+                    <div
+                      className={`text-sm font-semibold tabular-nums ${isOutflow ? "text-destructive" : "text-success"}`}
+                    >
+                      ${Math.abs(p.amount).toFixed(0)}
                     </div>
                   </button>
                 );
@@ -1148,8 +1167,10 @@ function MerchantPanel({
                         {loc && <span className="truncate">{loc}</span>}
                       </div>
                     </div>
-                    <div className="text-sm font-semibold tabular-nums">
-                      {isOutflow ? "-" : "+"}${Math.abs(amt).toFixed(0)}
+                    <div
+                      className={`text-sm font-semibold tabular-nums ${isOutflow ? "text-destructive" : "text-success"}`}
+                    >
+                      ${Math.abs(amt).toFixed(0)}
                     </div>
                   </button>
                 );
@@ -1178,68 +1199,6 @@ interface UnmappedTxn {
   region: string | null;
   logoUrl: string | null;
   website: string | null;
-}
-
-function PinTooltip({ hover, glassStyle }: { hover: HoverState; glassStyle: GlassStyle }) {
-  const { pin, x, y } = hover;
-  const isOutflow = pin.amount < 0;
-  const amount = `$${Math.abs(pin.amount).toFixed(2)}`;
-  const { style, textClass, mutedClass, dividerClass } = glassStyle;
-  const muted = mutedClass;
-  const divider = dividerClass;
-  const amountActive = isOutflow ? textClass : "text-emerald-500";
-  const date = pin.date
-    ? new Date(pin.date).toLocaleDateString(undefined, {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : null;
-  const locationParts = [pin.address, pin.city, pin.region].filter(
-    (s): s is string => typeof s === "string" && s.length > 0,
-  );
-  const location = locationParts.length > 0 ? locationParts.join(", ") : null;
-  const notes = pin.notes?.trim() ? pin.notes.trim() : null;
-  return (
-    <div
-      className="pointer-events-none absolute z-20"
-      style={{
-        left: x + 12,
-        top: y + 12,
-      }}
-    >
-      <div className={`min-w-[220px] rounded-2xl border p-3 ${textClass}`} style={style}>
-        <div className="flex items-start gap-3">
-          <MerchantLogo
-            counterparties={null}
-            logoUrl={pin.logoUrl}
-            merchantName={pin.merchant}
-            website={pin.website}
-            className="size-9 shrink-0"
-          />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-base font-semibold leading-tight">{pin.merchant}</div>
-            <div className={`mt-0.5 truncate text-sm ${muted}`}>{pin.person}</div>
-          </div>
-        </div>
-        <div className={`mt-3 flex items-baseline justify-between border-t pt-2.5 ${divider}`}>
-          <span className={`text-lg font-semibold tabular-nums ${amountActive}`}>
-            {isOutflow ? "-" : "+"}
-            {amount}
-          </span>
-          {date && <span className={`text-xs ${muted}`}>{date}</span>}
-        </div>
-        {location && <div className={`mt-2 truncate text-xs ${muted}`}>{location}</div>}
-        {notes && (
-          <div
-            className={`mt-2 max-h-24 overflow-hidden border-t pt-2 text-xs leading-relaxed italic ${divider}`}
-          >
-            {notes}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
 
 function InspectorSection({
@@ -1306,12 +1265,10 @@ function InspectorPanel({
   hiddenFriendIds,
   onToggleFriend,
   activeCategories,
+  presentCategories,
   onToggleCategory,
   styleKey,
   onStyleKey,
-  show3D,
-  on3DChange,
-  has3DKey,
   showSubway,
   onSubwayChange,
   glassStyle,
@@ -1325,13 +1282,11 @@ function InspectorPanel({
   friends: { id: string; label: string; isSelf: boolean }[];
   hiddenFriendIds: Set<string>;
   onToggleFriend: (id: string) => void;
-  activeCategories: Set<Category>;
+  activeCategories: Set<Category> | null;
+  presentCategories: Set<Category>;
   onToggleCategory: (c: Category) => void;
   styleKey: StyleKey;
   onStyleKey: (k: StyleKey) => void;
-  show3D: boolean;
-  on3DChange: (v: boolean) => void;
-  has3DKey: boolean;
   showSubway: boolean;
   onSubwayChange: (v: boolean) => void;
   glassStyle: GlassStyle;
@@ -1340,7 +1295,9 @@ function InspectorPanel({
   const { style, textClass, dividerClass, mutedClass } = glassStyle;
   const activeBtn = isLight ? "bg-black text-white" : "bg-white text-black";
   const idleBtn = isLight ? "text-black hover:bg-black/10" : "text-white hover:bg-white/10";
-  const allCats = Object.keys(CATEGORY_META) as Category[];
+  const allCats = [...presentCategories].toSorted((a, b) =>
+    categoryLabel(a).localeCompare(categoryLabel(b)),
+  );
 
   return (
     <div
@@ -1378,8 +1335,7 @@ function InspectorPanel({
         <SegmentedRow<MarkerStyle>
           options={[
             { key: "dots", label: "Dots" },
-            { key: "icons", label: "Icons" },
-            { key: "3d", label: "3D" },
+            { key: "landmark", label: "Landmark" },
           ]}
           value={markerStyle}
           onChange={onMarkerStyle}
@@ -1416,19 +1372,24 @@ function InspectorPanel({
       >
         <div className="flex flex-col gap-1">
           {allCats.map((c) => {
-            const on = activeCategories.has(c);
-            const meta = CATEGORY_META[c];
+            const on = activeCategories === null || activeCategories.has(c);
+            const label = categoryLabel(c);
             return (
               <button
                 key={c}
                 type="button"
                 onClick={() => onToggleCategory(c)}
                 className={`flex items-center justify-between rounded px-2 py-1 text-xs font-medium transition ${idleBtn} ${on ? "" : "opacity-40"}`}
-                title={meta.label}
+                title={label}
               >
                 <span className="flex items-center gap-2">
-                  <span className="text-xs">{meta.emoji}</span>
-                  {meta.label}
+                  <img
+                    src={categoryIconSrc(c)}
+                    alt=""
+                    aria-hidden
+                    className="size-4 object-contain"
+                  />
+                  {label}
                 </span>
                 <span className="w-3 text-center opacity-80">{on ? "✓" : ""}</span>
               </button>
@@ -1528,15 +1489,6 @@ function InspectorPanel({
         mutedClass={mutedClass}
       >
         <div className="flex flex-col gap-1">
-          {has3DKey && (
-            <button
-              type="button"
-              onClick={() => on3DChange(!show3D)}
-              className={`w-full rounded px-3 py-1.5 text-sm font-semibold transition ${show3D ? activeBtn : idleBtn}`}
-            >
-              3D Buildings {show3D ? "·  On" : "·  Off"}
-            </button>
-          )}
           <button
             type="button"
             onClick={() => onSubwayChange(!showSubway)}
@@ -1557,12 +1509,24 @@ function PeopleLeaderboard({
   selfId,
 }: {
   people: PersonAgg[];
-  categories: Set<Category>;
+  categories: Set<Category> | null;
   glassStyle: GlassStyle;
   selfId: string | undefined;
 }) {
   const { style, textClass, mutedClass, dividerClass } = glassStyle;
-  const visibleCats = (Object.keys(CATEGORY_META) as Category[]).filter((c) => categories.has(c));
+  // Surface every systemKey present in any person's byCat — categories prop
+  // narrows to active filter when present.
+  const presentInPeople = new Set<Category>();
+  for (const p of people) {
+    for (const k of Object.keys(p.byCat)) {
+      if (categories === null || categories.has(k)) {
+        presentInPeople.add(k);
+      }
+    }
+  }
+  const visibleCats = [...presentInPeople].toSorted((a, b) =>
+    categoryLabel(a).localeCompare(categoryLabel(b)),
+  );
   const topOverall = people.toSorted((a, b) => b.total - a.total).slice(0, 10);
 
   const topByCat: { cat: Category; person: PersonAgg | null; amount: number }[] = visibleCats.map(
@@ -1570,7 +1534,7 @@ function PeopleLeaderboard({
       let best: PersonAgg | null = null;
       let bestAmt = 0;
       for (const p of people) {
-        const a = p.byCat[cat];
+        const a = p.byCat[cat] ?? 0;
         if (a > bestAmt) {
           best = p;
           bestAmt = a;
@@ -1585,9 +1549,6 @@ function PeopleLeaderboard({
       <div className={`rounded-2xl border ${textClass}`} style={style}>
         <div className={`border-b px-4 py-3 ${dividerClass}`}>
           <div className="text-base font-semibold">Crew leaderboard</div>
-          <div className={`text-xs ${mutedClass}`}>
-            {people.length} people · ranked by total spend
-          </div>
         </div>
         <div className={`border-b px-4 py-2 ${dividerClass}`}>
           {topOverall.map((p, i) => (
@@ -1610,21 +1571,23 @@ function PeopleLeaderboard({
           <div className={`mb-1 text-xs font-semibold uppercase tracking-wide ${mutedClass}`}>
             Category champions
           </div>
-          {topByCat.map(({ cat, person, amount }) => {
-            const meta = CATEGORY_META[cat];
-            return (
-              <div key={cat} className="flex items-center gap-2 py-1">
-                <span className="w-5 text-center">{meta.emoji}</span>
-                <span className="w-20 text-sm">{meta.label}</span>
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                  {person ? person.name : <span className={mutedClass}>—</span>}
-                </span>
-                <span className="text-sm font-semibold tabular-nums">
-                  {amount > 0 ? `$${amount.toFixed(0)}` : ""}
-                </span>
-              </div>
-            );
-          })}
+          {topByCat.map(({ cat, person, amount }) => (
+            <div key={cat} className="flex items-center gap-2 py-1">
+              <img
+                src={categoryIconSrc(cat)}
+                alt=""
+                aria-hidden
+                className="size-4 object-contain"
+              />
+              <span className="w-20 text-sm">{categoryLabel(cat)}</span>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                {person ? person.name : <span className={mutedClass}>—</span>}
+              </span>
+              <span className="text-sm font-semibold tabular-nums">
+                {amount > 0 ? `$${amount.toFixed(0)}` : ""}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -1633,12 +1596,20 @@ function PeopleLeaderboard({
 
 function TxnDetailPanel({
   txnId,
+  mode,
   onClose,
   glassStyle,
+  stack,
+  selfId,
+  onNavigate,
 }: {
   txnId: string;
+  mode: "pinned" | "preview";
   onClose: () => void;
   glassStyle: GlassStyle;
+  stack: PinDatum[] | null;
+  selfId: string | undefined;
+  onNavigate: (p: PinDatum) => void;
 }) {
   const { style, textClass, mutedClass } = glassStyle;
   const isLight = textClass === "text-black";
@@ -1652,15 +1623,20 @@ function TxnDetailPanel({
   };
 
   return (
-    <DndContext sensors={sensors} modifiers={[restrictToWindowEdges]} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <DraggableTxnPanel
         offset={offset}
+        mode={mode}
         onClose={onClose}
         textClass={textClass}
         style={style}
         isLight={isLight}
         mutedClass={mutedClass}
         transaction={transaction}
+        stack={stack}
+        selfId={selfId}
+        currentId={txnId}
+        onNavigate={onNavigate}
       />
     </DndContext>
   );
@@ -1668,67 +1644,132 @@ function TxnDetailPanel({
 
 function DraggableTxnPanel({
   offset,
+  mode,
   onClose,
   textClass,
   style,
   isLight,
   mutedClass,
   transaction,
+  stack,
+  selfId,
+  currentId,
+  onNavigate,
 }: {
   offset: { x: number; y: number };
+  mode: "pinned" | "preview";
   onClose: () => void;
   textClass: string;
   style: React.CSSProperties;
   isLight: boolean;
   mutedClass: string;
   transaction: NonNullable<ReturnType<typeof mapZeroTransactionDetailRow>>["transaction"] | null;
+  stack: PinDatum[] | null;
+  selfId: string | undefined;
+  currentId: string;
+  onNavigate: (p: PinDatum) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: "txn-detail-panel" });
   const dx = offset.x + (transform?.x ?? 0);
   const dy = offset.y + (transform?.y ?? 0);
 
+  const hasStack = !!(stack && stack.length > 0);
+  const scrollClass = `[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent ${
+    isLight
+      ? "[scrollbar-color:rgba(0,0,0,0.15)_transparent] [&::-webkit-scrollbar-thumb]:bg-black/15"
+      : "[scrollbar-color:rgba(255,255,255,0.2)_transparent] [&::-webkit-scrollbar-thumb]:bg-white/20"
+  } [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full`;
+  const fmtDate = (d: string | number | null) => {
+    if (!d) {
+      return "";
+    }
+    const dt = new Date(d);
+    return Number.isNaN(dt.getTime())
+      ? ""
+      : dt.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  };
+
+  const isPreview = mode === "preview";
   return (
     <div
-      ref={setNodeRef}
-      className="fixed bottom-4 right-[18rem] z-20 w-[26rem] max-w-[calc(100vw-2rem)]"
+      ref={isPreview ? undefined : setNodeRef}
+      className={`fixed bottom-4 right-[18rem] z-20 max-w-[calc(100vw-2rem)] ${hasStack ? "w-[38rem]" : "w-[26rem]"} ${isPreview ? "pointer-events-none" : ""}`}
       style={{ transform: `translate3d(${dx}px, ${dy}px, 0)` }}
     >
       <div className={`relative rounded-2xl border ${textClass}`} style={style}>
-        <div
-          {...listeners}
-          {...attributes}
-          className="absolute left-0 right-10 top-0 h-7 cursor-grab touch-none select-none rounded-t-2xl active:cursor-grabbing"
-          aria-hidden
-        />
-        <button
-          type="button"
-          onClick={onClose}
-          className={`absolute right-3 top-3 z-10 size-7 rounded-full text-sm transition ${isLight ? "hover:bg-black/10" : "hover:bg-white/10"}`}
-        >
-          ✕
-        </button>
-        <div
-          className={`max-h-[60vh] overflow-y-auto px-4 py-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent ${
-            isLight
-              ? "[scrollbar-color:rgba(0,0,0,0.15)_transparent] [&::-webkit-scrollbar-thumb]:bg-black/15"
-              : "[scrollbar-color:rgba(255,255,255,0.2)_transparent] [&::-webkit-scrollbar-thumb]:bg-white/20"
-          } [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full`}
-        >
-          {transaction ? (
-            <div className="flex flex-col gap-6">
-              <TransactionDetailSummary transaction={transaction} hideLocationMap />
-              {transaction.notes && (
-                <div className="flex flex-col gap-2">
-                  <h2 className="font-medium text-foreground text-base">Notes</h2>
-                  <div className="whitespace-pre-wrap text-foreground text-base leading-relaxed">
-                    {transaction.notes}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className={`py-6 text-center text-sm ${mutedClass}`}>Loading transaction…</div>
+        {!isPreview && (
+          <>
+            <div
+              {...listeners}
+              {...attributes}
+              className="absolute left-0 right-10 top-0 h-7 cursor-grab touch-none select-none rounded-t-2xl active:cursor-grabbing"
+              aria-hidden
+            />
+            <button
+              type="button"
+              onClick={onClose}
+              className={`absolute right-3 top-3 z-10 size-7 rounded-full text-sm transition ${isLight ? "hover:bg-black/10" : "hover:bg-white/10"}`}
+            >
+              ✕
+            </button>
+          </>
+        )}
+        <div className="flex h-[20rem]">
+          {hasStack && stack && (
+            <nav
+              className={`w-40 shrink-0 overflow-y-auto border-r py-3 pl-3 pr-2 ${scrollClass} ${isLight ? "border-black/10" : "border-white/10"}`}
+            >
+              <ul className="flex flex-col gap-1">
+                {stack.map((p) => {
+                  const active = p.id === currentId;
+                  let cls: string;
+                  if (active) {
+                    cls = isLight ? "bg-black/10" : "bg-white/15";
+                  } else {
+                    cls = isLight ? "hover:bg-black/5" : "hover:bg-white/10";
+                  }
+                  return (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => onNavigate(p)}
+                        className={`w-full rounded-lg px-2 py-1.5 text-left text-xs transition ${cls}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate font-medium">
+                            {fmtDate(p.date) || p.merchant}
+                          </span>
+                          <span className="shrink-0 tabular-nums">
+                            ${Math.abs(p.amount).toFixed(2)}
+                          </span>
+                        </div>
+                        {p.userId !== selfId && (
+                          <div className={`truncate ${mutedClass}`}>{p.person}</div>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
           )}
+          <div className={`flex-1 overflow-y-auto px-4 py-3 ${scrollClass}`} style={{ zoom: 0.85 }}>
+            {transaction ? (
+              <div className="flex flex-col gap-6">
+                <TransactionDetailSummary transaction={transaction} hideLocationMap />
+                {transaction.notes && (
+                  <div className="flex flex-col gap-2">
+                    <h2 className="font-medium text-foreground text-base">Notes</h2>
+                    <div className="whitespace-pre-wrap text-foreground text-base leading-relaxed">
+                      {transaction.notes}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className={`py-6 text-center text-sm ${mutedClass}`}>Loading transaction…</div>
+            )}
+          </div>
         </div>
       </div>
     </div>
