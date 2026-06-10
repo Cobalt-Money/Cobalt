@@ -252,6 +252,7 @@ jobs:
       - name: Apply schema to CI Postgres (drizzle-kit push)
         env:
           SKIP_ENV_VALIDATION: "1"
+          PGPASSWORD: postgres
         # Bootstrap `enrichment` schema before push, then run push which
         # creates the tables inside it. Migrations can't be used in CI —
         # the first migration is the introspection baseline wrapped in
