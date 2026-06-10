@@ -241,7 +241,7 @@ async function byStoreNumber(
           AND ${trgmFilter(norm, compact)}`,
       )
       .orderBy(
-        sql`sim DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
+        sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
       )
       .limit(1);
   })) as (Place & { sim: number | string })[];
@@ -293,7 +293,7 @@ async function byPostal(
           AND ${trgmFilter(norm, compact)}`,
       )
       .orderBy(
-        sql`sim DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
+        sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
       )
       .limit(1);
   })) as (Place & { sim: number | string })[];
@@ -330,7 +330,7 @@ async function byLocalityZips(
           AND ${trgmFilter(norm, compact)}`,
       )
       .orderBy(
-        sql`sim DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
+        sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
       )
       .limit(1);
   })) as (Place & { sim: number | string })[];
@@ -369,7 +369,7 @@ async function byAddress(
           AND ${trgmFilter(norm, compact)}`,
       )
       .orderBy(
-        sql`sim DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
+        sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
       )
       .limit(1);
   })) as (Place & { sim: number | string })[];
@@ -399,7 +399,7 @@ async function byCityRegion(
           AND ${trgmFilter(norm, compact)}`,
       )
       .orderBy(
-        sql`sim DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
+        sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
       )
       .limit(1);
   })) as (Place & { sim: number | string })[];
