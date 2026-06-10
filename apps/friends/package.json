@@ -48,11 +48,13 @@
     "vite": "^6.0.0"
   },
   "devDependencies": {
+    "@react-grab/mcp": "^0.1.29",
     "@tanstack/router-plugin": "^1.96.3",
     "@types/bun": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "^4.3.4",
+    "react-grab": "^0.1.29",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   }
