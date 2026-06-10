@@ -249,10 +249,15 @@ jobs:
           psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
           psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE EXTENSION IF NOT EXISTS cube;"
           psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE EXTENSION IF NOT EXISTS earthdistance;"
-      - name: Apply schema to CI Postgres (drizzle-kit push)
+      - name: Apply schema to CI Postgres (drizzle migrations)
         env:
           SKIP_ENV_VALIDATION: "1"
-        run: bun x drizzle-kit push --force --config packages/db/drizzle.config.ts
+        # Use the real migration runner — drizzle-kit push can't manage
+        # pgSchema()-backed tables (enrichment.place) cleanly when the
+        # schema lives outside `public`. Migrations include explicit
+        # `CREATE SCHEMA IF NOT EXISTS enrichment` ordered before any
+        # dependent DDL.
+        run: bun run packages/db/scripts/migrate-debug.ts --local
       - name: Run integration tests (server)
         run: bun --cwd apps/server run test:integration
 
