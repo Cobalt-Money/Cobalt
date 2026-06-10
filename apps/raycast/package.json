@@ -186,8 +186,7 @@
       "type": "textfield",
       "required": false,
       "title": "Brandfetch Client ID",
-      "description": "Used to render merchant logos via the Brandfetch CDN",
-      "default": "1idNVtuBlzoaNohNxPI"
+      "description": "Optional. Provide your own Brandfetch client ID to render merchant logos via the Brandfetch CDN. Leave blank to fall back to generic icons."
     },
     {
       "name": "logoDevToken",
