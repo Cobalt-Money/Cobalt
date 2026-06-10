@@ -13,7 +13,8 @@
  */
 import { spawnSync } from "node:child_process";
 import { createWriteStream, existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
@@ -25,10 +26,16 @@ const MONOREPO_ROOT = path.resolve(HERE, "../../../../..");
 dotenv.config({ path: path.join(MONOREPO_ROOT, "apps/server/.env") });
 
 const GEONAMES_URL = "https://download.geonames.org/export/zip/US.zip";
-const CACHE_DIR = "/tmp/geonames";
-const ZIP_PATH = `${CACHE_DIR}/US.zip`;
-const TSV_PATH = `${CACHE_DIR}/US.txt`;
-const CSV_PATH = `${CACHE_DIR}/US.csv`;
+// `mkdtemp` returns a per-run directory under the OS temp dir with a random
+// suffix (CodeQL js/insecure-temporary-file). The TSV is the only file we
+// re-use across runs to skip the download; keep it under a stable cache so
+// re-runs don't re-fetch ~3MB, but write the generated CSV into the
+// random-named directory so it can't be predicted/targeted.
+const CACHE_DIR = path.join(os.tmpdir(), "cobalt-geonames-cache");
+const ZIP_PATH = path.join(CACHE_DIR, "US.zip");
+const TSV_PATH = path.join(CACHE_DIR, "US.txt");
+const RUN_DIR = await mkdtemp(path.join(os.tmpdir(), "geonames-run-"));
+const CSV_PATH = path.join(RUN_DIR, "US.csv");
 
 async function download(): Promise<void> {
   if (existsSync(TSV_PATH)) {
