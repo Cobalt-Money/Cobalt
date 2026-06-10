@@ -335,13 +335,61 @@ export function brandfetchIconDomainUrls(
 ): string[] {
   const size = options?.size ?? 128;
   return [
-    brandfetchLogoAssetUrl(domain, clientId, {
-      asset: "icon",
-      h: size,
-      w: size,
-    }),
+    // 1) Square icon when one exists (chains: Chipotle, Trader Joe's).
+    brandfetchIcon404FallbackUrl(domain, clientId, { h: size, w: size }),
+    // 2) Wordmark/logo asset — most indie spots have only this. Rendered into
+    //    a round cell it'll get center-cropped but is far better than a
+    //    generic letter.
+    brandfetchLogo404FallbackUrl(domain, clientId, { h: size, w: size }),
+    // 3) Generated lettermark when Brandfetch has nothing.
     brandfetchIconLettermarkFallbackUrl(domain, clientId, { h: size, w: size }),
   ];
+}
+
+/**
+ * `type=logo` with `fallback=404` — wordmark when available, 404 otherwise so
+ * the `<img onError>` chain advances. Slotted between icon and lettermark in
+ * the icon chain because many indie spots have only a wordmark in Brandfetch.
+ */
+export function brandfetchLogo404FallbackUrl(
+  domain: string,
+  clientId: string,
+  options?: { h?: number; theme?: BrandfetchTheme; w?: number },
+): string {
+  const host = normalizeDomainInput(domain);
+  const w = options?.w ?? 128;
+  const h = options?.h ?? 128;
+  const themePart = options?.theme ? `theme/${options.theme}/` : "";
+  // Canonical Brandfetch URL order for asset-as-suffix: fallback first,
+  // dimensions second, asset last. Verified rendering for indie wordmarks
+  // (mughlaicuisineny.com, pranakhonnyc.com).
+  const path = `${BRANDFETCH_CDN_ORIGIN}/domain/${host}/fallback/404/${themePart}w/${w}/h/${h}/logo`;
+  const url = new URL(path);
+  url.searchParams.set("c", clientId);
+  return url.toString();
+}
+
+/**
+ * `type=icon` with `fallback=404`. CDN returns HTTP 404 when no icon exists
+ * instead of the default `B` placeholder graphic — required so the `<img onError>`
+ * fallback chain actually advances to the next URL (lettermark) for unknown brands.
+ */
+export function brandfetchIcon404FallbackUrl(
+  domain: string,
+  clientId: string,
+  options?: { h?: number; theme?: BrandfetchTheme; w?: number },
+): string {
+  const host = normalizeDomainInput(domain);
+  const w = options?.w ?? 128;
+  const h = options?.h ?? 128;
+  const themePart = options?.theme ? `theme/${options.theme}/` : "";
+  // Matches the canonical `type=icon` URL shape used by
+  // brandfetchIconLettermarkFallbackUrl — dimensions first, fallback + type
+  // afterward.
+  const path = `${BRANDFETCH_CDN_ORIGIN}/domain/${host}/w/${w}/h/${h}/${themePart}fallback/404/type/icon`;
+  const url = new URL(path);
+  url.searchParams.set("c", clientId);
+  return url.toString();
 }
 
 /**

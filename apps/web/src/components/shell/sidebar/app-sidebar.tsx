@@ -9,6 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@cobalt-web/ui/components/sidebar";
+import { env } from "@cobalt-web/env/web";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { ArrowRight01Icon, Delete02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -282,13 +283,13 @@ function ChatsGroup() {
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const session = useAppSession();
   const authedUser = session.data?.user as
-    | { name: string; email?: string; image?: string | null; isAnonymous?: boolean }
+    | { id: string; name: string; email?: string; image?: string | null; isAnonymous?: boolean }
     | undefined;
   const navUser =
     authedUser === undefined
       ? null
       : {
-          avatar: authedUser.image ?? "",
+          avatar: `${env.VITE_SERVER_URL.replace(/\/$/, "")}/api/avatar/${authedUser.id}`,
           email: authedUser.email ?? "",
           isAnonymous: Boolean(authedUser.isAnonymous),
           name: authedUser.name,

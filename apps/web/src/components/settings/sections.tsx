@@ -9,9 +9,18 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { env } from "@cobalt-web/env/web";
+
 import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
 import { subscriptionsApi } from "@/lib/clients/api-client";
 import { authClient } from "@/lib/clients/auth-client";
+
+function avatarProxyUrl(userId: string | undefined): string {
+  if (!userId) {
+    return "";
+  }
+  return `${env.VITE_SERVER_URL.replace(/\/$/, "")}/api/avatar/${userId}`;
+}
 
 // ─── Profile ─────────────────────────────────────────────────────────────────
 
@@ -45,7 +54,7 @@ export function ProfileSection({
 
       <div className="flex items-center gap-4">
         <Avatar className="size-14 rounded-2xl">
-          <AvatarImage alt={user?.name} src={user?.image ?? ""} />
+          <AvatarImage alt={user?.name} src={avatarProxyUrl(user?.id)} />
           <AvatarFallback className="rounded-2xl text-base">{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">

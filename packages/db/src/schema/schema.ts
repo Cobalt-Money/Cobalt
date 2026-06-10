@@ -72,11 +72,14 @@ export {
   merchantGeocodeCache,
 } from "./social";
 
-// SRI-352 — canonical merchant directory. Server-only: read by enrichment
-// pipeline (SRI-350) at txn write time; never synced to Zero clients.
-export { merchant } from "./merchants/merchant";
-export { merchantLocation } from "./merchants/merchant-location";
+// SRI-354 — canonical POI directory. Single denormalized table replacing
+// SRI-352 merchant + merchant_location. Server-only.
+export { place } from "./places/place";
 
-// SRI-353 — enrichment audit log. Server-only: written by enrichment pipeline,
+// SRI-354 — enrichment audit log. Server-only: written by enrichment pipeline,
 // used for bulk rollback + per-txn forensics; never exposed to clients.
-export { enrichmentEvent } from "./merchants/enrichment-event";
+export { enrichmentEvent } from "./places/enrichment-event";
+
+// SRI-354 — locality → ZIP lookup (GeoNames-backed). Server-only reference
+// table used by enrichment to recover missing `postal_code` from `(city, region)`.
+export { localityZip } from "./places/locality-zip";

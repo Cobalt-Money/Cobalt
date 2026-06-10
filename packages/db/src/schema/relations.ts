@@ -491,6 +491,7 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.user.id,
     }),
   },
+
   subscription: {
     user: r.one.user({
       from: r.subscription.referenceId,

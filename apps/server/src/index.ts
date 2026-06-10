@@ -15,6 +15,7 @@ import { v1 } from "./api/public/v1/index.js";
 import { alertsRouter } from "./api/internal/alerts/index.js";
 import { appstoreRouter } from "./api/internal/appstore.js";
 import { authRouter } from "./api/internal/auth.js";
+import { avatarRouter } from "./api/internal/avatar.js";
 import { brokerageRouter } from "./api/internal/brokerage/index.js";
 import { categoriesRouter } from "./api/internal/categories/index.js";
 import { chatRouter } from "./api/internal/chat/index.js";
@@ -100,6 +101,7 @@ base.route("/api/imports", importsRouter);
 base.route("/api/plaid", plaidRouter);
 base.route("/api/appstore", appstoreRouter);
 base.route("/api/demo", demoRouter);
+base.route("/api/avatar", avatarRouter);
 base.doc31("/openapi.json", {
   info: {
     description: "Cobalt financial platform API",

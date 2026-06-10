@@ -13,9 +13,24 @@ export interface EmojiAtlasResult {
 const TILE = 128;
 const PADDING = 8;
 
-export function buildEmojiAtlas(items: { key: string; emoji: string }[]): EmojiAtlasResult | null {
+const EMOJI_FONT = `"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",emoji`;
+const FONT_SPEC = `${TILE - PADDING * 2}px ${EMOJI_FONT}`;
+
+export async function buildEmojiAtlas(
+  items: { key: string; emoji: string }[],
+): Promise<EmojiAtlasResult | null> {
   if (typeof document === "undefined") {
     return null;
+  }
+  // Color-emoji fonts load lazily. Without this, first paint may rasterize
+  // tofu/black-dot fallbacks for glyphs whose font isn't resident yet.
+  if (document.fonts?.ready) {
+    try {
+      await document.fonts.load(FONT_SPEC, items.map((i) => i.emoji).join(""));
+      await document.fonts.ready;
+    } catch {
+      // fall through — best-effort
+    }
   }
   const cols = items.length;
   const canvas = document.createElement("canvas");
@@ -25,10 +40,7 @@ export function buildEmojiAtlas(items: { key: string; emoji: string }[]): EmojiA
   if (!ctx) {
     return null;
   }
-  // System emoji font stack — covers Apple Color Emoji on macOS, Segoe UI
-  // Emoji on Windows, Noto Color Emoji on Linux/Android. Browsers rasterize
-  // the color glyph at the requested size, no asset fetch needed.
-  ctx.font = `${TILE - PADDING * 2}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",emoji`;
+  ctx.font = FONT_SPEC;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
