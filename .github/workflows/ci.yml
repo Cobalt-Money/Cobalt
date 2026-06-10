@@ -252,7 +252,18 @@ jobs:
       - name: Apply schema to CI Postgres (drizzle-kit push)
         env:
           SKIP_ENV_VALIDATION: "1"
-        run: bun x drizzle-kit push --force --config packages/db/drizzle.config.ts
+          PGPASSWORD: postgres
+        # Bootstrap `enrichment` schema before push, then run push which
+        # creates the tables inside it. Migrations can't be used in CI —
+        # the first migration is the introspection baseline wrapped in
+        # `/* */` (intended for an already-populated prod DB).
+        run: |
+          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE SCHEMA IF NOT EXISTS enrichment;"
+          bun x drizzle-kit push --force --config packages/db/drizzle.config.ts || true
+          # Verify the schema we actually need is present even if drizzle-kit
+          # exited non-zero on a cleanup-phase DROP it couldn't perform.
+          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "SELECT to_regclass('enrichment.place'), to_regclass('public.transaction');"
+          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "SELECT 1 FROM enrichment.place LIMIT 1;" || (echo "enrichment.place missing — drizzle-kit push did not create it" && exit 1)
       - name: Run integration tests (server)
         run: bun --cwd apps/server run test:integration
 

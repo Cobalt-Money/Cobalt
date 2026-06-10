@@ -35,6 +35,7 @@
     "db:studio": "drizzle-kit studio --config packages/db/drizzle.config.ts",
     "db:generate": "drizzle-kit generate --config packages/db/drizzle.config.ts",
     "db:migrate": "bun run packages/db/scripts/migrate-debug.ts --prod",
+    "db:migrate:local": "bun run packages/db/scripts/migrate-debug.ts --local",
     "db:local:up": "docker compose -f docker-compose.local-db.yml up -d",
     "db:local:down": "docker compose -f docker-compose.local-db.yml down",
     "db:local:reset": "docker compose -f docker-compose.local-db.yml down -v && docker compose -f docker-compose.local-db.yml up -d",
@@ -52,6 +53,7 @@
     "dump": "bun run scripts/dump.ts",
     "db:check-slots": "bun run scripts/check-slots.ts",
     "db:drop-slots": "bun run scripts/check-slots.ts --drop",
+    "db:storage-diag": "bun run scripts/db-storage-diag.ts",
     "sync-env": "bash sync-env.sh",
     "sync-sandbox": "bash sync-sandbox.sh",
     "prepare": "husky"

@@ -126,6 +126,73 @@ export interface AvatarRequest {
   url: string | null;
   fallbackInitial: string;
   ring: [number, number, number, number];
+  shape?: "teardrop" | "circle";
+}
+
+// Tile matches teardrop height so deck.gl's height-based sizing renders
+// circles at the same world size as teardrop heads.
+const CIRCLE_TILE = 160;
+const CIRCLE_RING = 8;
+// Disc fills tile so icon dims match deck.gl sizing 1:1.
+const CIRCLE_CENTER = CIRCLE_TILE / 2;
+const CIRCLE_R = CIRCLE_CENTER;
+
+function drawCircleAvatar(
+  img: HTMLImageElement,
+  ring: [number, number, number, number],
+): string | null {
+  const canvas = document.createElement("canvas");
+  canvas.width = CIRCLE_TILE;
+  canvas.height = CIRCLE_TILE;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return null;
+  }
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(CIRCLE_CENTER, CIRCLE_CENTER, CIRCLE_R - CIRCLE_RING / 2, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  const inner = (CIRCLE_R - CIRCLE_RING) * 2;
+  const scale = Math.max(inner / img.width, inner / img.height);
+  const w = img.width * scale;
+  const h = img.height * scale;
+  ctx.drawImage(img, CIRCLE_CENTER - w / 2, CIRCLE_CENTER - h / 2, w, h);
+  ctx.restore();
+  ctx.beginPath();
+  ctx.arc(CIRCLE_CENTER, CIRCLE_CENTER, CIRCLE_R - CIRCLE_RING / 2, 0, Math.PI * 2);
+  ctx.lineWidth = CIRCLE_RING;
+  ctx.strokeStyle = rgbCss(ring);
+  ctx.stroke();
+  return canvas.toDataURL("image/png");
+}
+
+function drawCircleFallback(
+  initial: string,
+  ring: [number, number, number, number],
+): string | null {
+  const canvas = document.createElement("canvas");
+  canvas.width = CIRCLE_TILE;
+  canvas.height = CIRCLE_TILE;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return null;
+  }
+  ctx.beginPath();
+  ctx.arc(CIRCLE_CENTER, CIRCLE_CENTER, CIRCLE_R - CIRCLE_RING / 2, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
+  ctx.fillStyle = "rgba(30, 30, 36, 0.95)";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `bold ${CIRCLE_R}px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif`;
+  ctx.fillText(initial.toUpperCase().slice(0, 1), CIRCLE_CENTER, CIRCLE_CENTER + 2);
+  ctx.beginPath();
+  ctx.arc(CIRCLE_CENTER, CIRCLE_CENTER, CIRCLE_R - CIRCLE_RING / 2, 0, Math.PI * 2);
+  ctx.lineWidth = CIRCLE_RING;
+  ctx.strokeStyle = rgbCss(ring);
+  ctx.stroke();
+  return canvas.toDataURL("image/png");
 }
 
 /**
@@ -134,25 +201,28 @@ export interface AvatarRequest {
  * cached URL when available, lettermark fallback otherwise.
  */
 export function getAvatarIcon(req: AvatarRequest, onReady: () => void): string {
-  const cacheKey = `${req.key}|${req.url ?? "_fb"}|${req.ring.join(",")}`;
+  const shape = req.shape ?? "teardrop";
+  const cacheKey = `${shape}|${req.key}|${req.url ?? "_fb"}|${req.ring.join(",")}`;
   const cached = cache.get(cacheKey);
   if (cached) {
     return cached;
   }
-  // Render lettermark synchronously so the pin is never empty.
-  const fallback = drawFallback(req.fallbackInitial, req.ring) ?? "";
+  const fallbackDraw =
+    shape === "circle"
+      ? drawCircleFallback(req.fallbackInitial, req.ring)
+      : drawFallback(req.fallbackInitial, req.ring);
+  const fallback = fallbackDraw ?? "";
   cache.set(cacheKey, fallback);
-  // No remote image — lettermark stays.
   if (!req.url) {
     return fallback;
   }
-  // Kick off remote load if not already pending.
   if (!inflight.has(cacheKey)) {
     const { url } = req;
     const load = async (): Promise<string | null> => {
       try {
         const img = await loadImage(url);
-        const dataUrl = drawCircular(img, req.ring);
+        const dataUrl =
+          shape === "circle" ? drawCircleAvatar(img, req.ring) : drawCircular(img, req.ring);
         if (dataUrl) {
           cache.set(cacheKey, dataUrl);
           onReady();
