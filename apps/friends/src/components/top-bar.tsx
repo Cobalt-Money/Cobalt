@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@cobalt-web/ui/components/dropdown-menu";
 import { usePlaidLinkFlow } from "@cobalt-web/ui/cobalt/accounts/use-plaid-link-flow";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -61,6 +61,35 @@ export function TopBar() {
   }, [navigate]);
 
   const initial = (user?.name ?? user?.email ?? "?").trim().charAt(0).toUpperCase();
+  // Anon visitor on the landing demo network — no session. Swap profile +
+  // add-account controls for sign-in CTAs so the same TopBar serves both
+  // demo + authed flows.
+  const isAnon = !session.isPending && !user;
+
+  if (isAnon) {
+    return (
+      <div className="-translate-x-1/2 absolute top-4 left-1/2 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-zinc-700/40 px-2 py-1.5 text-white shadow-2xl shadow-black/50 backdrop-blur-md backdrop-saturate-150">
+        <div className="flex items-baseline gap-1.5 px-3">
+          <span className="text-sm font-medium tracking-wide">Pocketwatch</span>
+          <a
+            href="https://cobaltpf.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] text-white/50 hover:text-white/80 transition"
+          >
+            by Cobalt
+          </a>
+        </div>
+        <div className="h-5 w-px bg-white/15" />
+        <Link
+          to="/signin"
+          className="rounded-full bg-white px-3 py-1 text-sm font-medium text-black hover:bg-white/90"
+        >
+          Sign in
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <>

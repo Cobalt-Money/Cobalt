@@ -1,4 +1,4 @@
-import { Navigate, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -45,10 +45,9 @@ function MapPage() {
     return <FullscreenMessage text="Loading…" />;
   }
 
-  if (!session.data?.user) {
-    return <Navigate to="/signin" replace />;
-  }
-
+  // Anon visitors see the seeded demo network rather than a signin gate.
+  // Zero swaps `ctx.userId` for DEMO_USER_ID server-side; same map UI works.
+  // TopBar reads the same session and swaps profile menu → signin CTAs.
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <FriendsMap />
