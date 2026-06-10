@@ -96,3 +96,29 @@ export const socialInviteRedemption = pgTable(
     index("social_invite_redemption_redeemer_idx").on(table.redeemerUserId),
   ],
 );
+
+/**
+ * Per-recipient decline ledger. Lets a targeted recipient (or any user a
+ * pending invite was offered to) suppress an invite from their pending list
+ * without revoking it for other potential redeemers. Inviter still sees the
+ * row in `listSent`; recipient just stops seeing it in `listPending`.
+ *
+ * Unique on (invite_id, decliner_user_id) — a re-decline is a no-op.
+ */
+export const socialInviteDecline = pgTable(
+  "social_invite_decline",
+  {
+    declinedAt: timestamp("declined_at").defaultNow().notNull(),
+    declinedByUserId: text("declined_by_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    id: text("id").primaryKey(),
+    inviteId: text("invite_id")
+      .notNull()
+      .references(() => socialInvite.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    uniqueIndex("social_invite_decline_unique").on(table.inviteId, table.declinedByUserId),
+    index("social_invite_decline_decliner_idx").on(table.declinedByUserId),
+  ],
+);

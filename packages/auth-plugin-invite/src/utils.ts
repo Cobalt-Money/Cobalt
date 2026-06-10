@@ -18,6 +18,7 @@ export function resolveOptions(opts: InviteOptions): ResolvedInviteOptions {
     defaultMaxUsesOpen: opts.defaultMaxUsesOpen ?? DEFAULT_MAX_USES_OPEN,
     inviteUrlBase: opts.inviteUrlBase.replace(/\/$/, ""),
     onAccept: opts.onAccept,
+    onDecline: opts.onDecline,
     onRevoke: opts.onRevoke,
     schema: opts.schema,
     sendInvite: opts.sendInvite,

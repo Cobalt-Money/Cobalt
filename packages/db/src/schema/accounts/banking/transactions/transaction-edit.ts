@@ -21,6 +21,7 @@ export const TRANSACTION_EDIT_FIELDS = [
   "merchantName",
   "name",
   "notes",
+  "paymentChannel",
   "tags",
 ] as const;
 export type TransactionEditFieldName = (typeof TRANSACTION_EDIT_FIELDS)[number];
@@ -43,6 +44,7 @@ export const LOCK_KEY_GUARDED_COLUMNS = {
   merchantName: ["merchantName", "website"],
   name: ["name"],
   notes: ["notes"],
+  paymentChannel: ["paymentChannel"],
   tags: [],
 } as const satisfies Record<TransactionEditFieldName, readonly TransactionColumn[]>;
 

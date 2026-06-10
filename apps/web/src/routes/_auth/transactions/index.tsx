@@ -290,6 +290,49 @@ function TransactionsListPage() {
     },
     [fieldLabel, pushUndo, run, txnById],
   );
+  const handleSetPaymentChannel = useCallback(
+    (transactionId: string, value: "in store" | "online" | "other") => {
+      const tx = txnById.get(transactionId);
+      const prior = tx?.paymentChannel ?? null;
+      pushUndo({
+        forward: () =>
+          run(
+            (m) =>
+              m.transaction.updatePaymentChannel({
+                editId: crypto.randomUUID(),
+                id: transactionId,
+                paymentChannel: value,
+              }),
+            { silent: true },
+          ),
+        inverse: () => {
+          if (prior) {
+            run(
+              (m) =>
+                m.transaction.updatePaymentChannel({
+                  editId: crypto.randomUUID(),
+                  id: transactionId,
+                  paymentChannel: prior,
+                }),
+              { silent: true },
+            );
+          } else {
+            run(
+              (m) =>
+                m.transaction.resetPaymentChannel({
+                  editId: crypto.randomUUID(),
+                  id: transactionId,
+                }),
+              { silent: true },
+            );
+          }
+        },
+        label: fieldLabel("payment channel", tx),
+        skip: value === prior,
+      });
+    },
+    [fieldLabel, pushUndo, run, txnById],
+  );
   const handleSetName = useCallback(
     (transactionId: string, name: string) => {
       const tx = txnById.get(transactionId);
@@ -465,6 +508,7 @@ function TransactionsListPage() {
           onSetLocation={handleSetLocation}
           onSetMerchant={handleSetMerchant}
           onSetName={handleSetName}
+          onSetPaymentChannel={handleSetPaymentChannel}
           onSetTags={handleSetTags}
           rowSelection={rowSelection}
           tagOptions={tagOptions}

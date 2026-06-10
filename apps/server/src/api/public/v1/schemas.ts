@@ -121,6 +121,10 @@ export const transactionSchema = z
       description: "Additional details regarding the transaction. Supports Markdown.",
       example: "**Reimbursable** — paid for team lunch, expense via Expensify",
     }),
+    paymentChannel: z.enum(["in store", "online", "other"]).nullable().openapi({
+      description:
+        "Where the transaction happened: `in store`, `online`, or `other`. Null when unknown.",
+    }),
     pending: z.boolean(),
     tagIds: z.array(z.string()),
   })
@@ -278,7 +282,9 @@ export const recurringStreamSchema = z
     firstDate: z.string().nullable(),
     frequency: z
       .enum(["UNKNOWN", "WEEKLY", "BIWEEKLY", "SEMI_MONTHLY", "MONTHLY", "ANNUALLY"])
-      .openapi("RecurringStreamFrequency", { description: "Detected cadence." }),
+      .openapi("RecurringStreamFrequency", {
+        description: "Detected cadence.",
+      }),
     id: z.string(),
     isActive: z.boolean(),
     lastAmount: z.number(),
@@ -290,11 +296,12 @@ export const recurringStreamSchema = z
     status: z
       .enum(["UNKNOWN", "MATURE", "EARLY_DETECTION", "TOMBSTONED"])
       .nullable()
-      .openapi("RecurringStreamStatus", { description: "Detection state of the stream." }),
-    streamType: z
-      .enum(["inflow", "outflow"])
-      .nullable()
-      .openapi("RecurringStreamType", { description: "Direction of cash flow." }),
+      .openapi("RecurringStreamStatus", {
+        description: "Detection state of the stream.",
+      }),
+    streamType: z.enum(["inflow", "outflow"]).nullable().openapi("RecurringStreamType", {
+      description: "Direction of cash flow.",
+    }),
   })
   .openapi("RecurringStream");
 

@@ -40,8 +40,8 @@ const {
 const { getUserOverrides } =
   await import("@cobalt-web/server-data/providers/plaid/transactions/queries");
 const { and, eq, isNotNull, ne, sql } = await import("drizzle-orm");
-const pLimitModule = await import("p-limit");
-const pLimit = pLimitModule.default;
+const pLimitMod = await import("p-limit");
+const pLimit = pLimitMod.default;
 
 const filters = [
   isNotNull(plaidConnection.plaidAccessToken),
@@ -135,7 +135,8 @@ async function backfillOne(item: (typeof items)[number]) {
       removed += removedIds.length;
     }
 
-    ({ hasMore, nextCursor: cursor } = page);
+    cursor = page.nextCursor;
+    ({ hasMore } = page);
     await setTransactionsCursor(item.itemId, cursor);
   }
 

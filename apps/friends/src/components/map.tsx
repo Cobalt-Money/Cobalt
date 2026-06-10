@@ -470,6 +470,22 @@ export function FriendsMap() {
   const [friendships] = useQuery(queries.social.friendships());
   const [allPosts] = useQuery(queries.social.postsAll());
 
+  // Resolve friend display names. friendIds derived below — recompute the
+  // id list here too so the Zero query memoizes on a stable shape.
+  const friendIdList = friendships
+    .map((f) => (f.userAId === userId ? f.userBId : f.userAId))
+    .filter(Boolean) as string[];
+  const [friendProfiles] = useQuery(
+    queries.social.friendProfiles({ ids: friendIdList.length > 0 ? friendIdList : ["__none__"] }),
+  );
+  const friendNameById = new Map<string, { name: string; image: string | null }>();
+  for (const p of friendProfiles) {
+    friendNameById.set(p.id, {
+      image: p.image ?? null,
+      name: p.displayUsername ?? p.name ?? p.email?.split("@")[0] ?? `user ${p.id.slice(0, 6)}`,
+    });
+  }
+
   const friendIds = new Set(friendships.map((f) => (f.userAId === userId ? f.userBId : f.userAId)));
   // Stable list for the Friends toggle UI — self first (gold), then every
   // accepted friendship (orange), even ones with zero shared posts so users
@@ -479,7 +495,7 @@ export function FriendsMap() {
     ...[...friendIds].map((id) => ({
       id,
       isSelf: false as const,
-      label: `user ${id.slice(0, 6)}`,
+      label: friendNameById.get(id)?.name ?? `user ${id.slice(0, 6)}`,
     })),
   ];
   const friendPosts = allPosts.filter(
@@ -539,7 +555,7 @@ export function FriendsMap() {
       merchant: p.merchantName,
       notes: p.note ?? null,
       paymentChannel: null,
-      person: `user ${p.userId.slice(0, 6)}`,
+      person: friendNameById.get(p.userId)?.name ?? `user ${p.userId.slice(0, 6)}`,
       position: [p.lon, p.lat] as [number, number],
       region: null,
       userId: p.userId,

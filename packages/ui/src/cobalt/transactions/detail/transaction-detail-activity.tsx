@@ -10,6 +10,7 @@ import {
   Note01Icon,
   PencilEdit01Icon,
   Shield01Icon,
+  ShoppingBag01Icon,
   Tag01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -53,6 +54,7 @@ const TYPE_ORDER_NEWER_FIRST: ActivityEventType[] = [
   "edit_category",
   "edit_date",
   "edit_location",
+  "edit_paymentChannel",
   "edit_notes",
   "edit_amount",
   "posted",
@@ -135,6 +137,7 @@ function describeTagsEdit(
   );
 }
 
+// eslint-disable-next-line complexity
 function describeEditEvent(
   item: TransactionActivityItem,
   tagsById: ActivityTagMap | undefined,
@@ -173,6 +176,17 @@ function describeEditEvent(
     }
     case "location": {
       return item.newValue ? "Location updated" : "Location cleared";
+    }
+    case "paymentChannel": {
+      const labels: Record<string, string> = {
+        "in store": "In store",
+        online: "Online",
+        other: "Other",
+      };
+      const v = typeof item.newValue === "string" ? item.newValue : null;
+      return v && labels[v]
+        ? `Payment channel changed to ${labels[v]}`
+        : "Payment channel restored";
     }
     case "tags": {
       return describeTagsEdit(item, tagsById);
@@ -240,6 +254,7 @@ const eventMarkerTone: Record<ActivityEventType, string> = {
   edit_merchantName: "text-muted-foreground",
   edit_name: "text-muted-foreground",
   edit_notes: "text-muted-foreground",
+  edit_paymentChannel: "text-muted-foreground",
   edit_tags: "text-muted-foreground",
   pending: "text-muted-foreground",
   posted: "text-muted-foreground",
@@ -292,6 +307,7 @@ function EventMarker({
     edit_location: Location01Icon as IconSvgElement,
     edit_name: PencilEdit01Icon as IconSvgElement,
     edit_notes: Note01Icon as IconSvgElement,
+    edit_paymentChannel: ShoppingBag01Icon as IconSvgElement,
     edit_tags: Tag01Icon as IconSvgElement,
   };
 

@@ -35,6 +35,21 @@ export const schema = {
       usesCount: { defaultValue: 0, required: true, type: "number" },
     },
   },
+  socialInviteDecline: {
+    fields: {
+      declinedAt: { required: true, type: "date" },
+      declinedByUserId: {
+        references: { field: "id", model: "user", onDelete: "cascade" },
+        required: true,
+        type: "string",
+      },
+      inviteId: {
+        references: { field: "id", model: "socialInvite", onDelete: "cascade" },
+        required: true,
+        type: "string",
+      },
+    },
+  },
   socialInviteRedemption: {
     fields: {
       inviteId: {

@@ -135,6 +135,7 @@ function makeTx(
     logoUrl: null,
     merchantName: null,
     notes: null,
+    paymentChannel: null,
     pending: false,
     plaidAccountId: "plaid-acc-1",
     source: "plaid",

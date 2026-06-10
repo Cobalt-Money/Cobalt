@@ -46,6 +46,10 @@ const updateNotesSchema = transactionIdSchema.extend({
   notes: transactionNotesMarkdownSchema,
 });
 
+const updatePaymentChannelSchema = transactionIdSchema.extend({
+  paymentChannel: z.enum(["in store", "online", "other"]),
+});
+
 const bulkSetCategorySchema = z.object({
   categoryId: z.uuid(),
   /** Audit row id per affected transaction, in `transactionIds` order. */
@@ -83,7 +87,15 @@ function removeLocked(current: unknown, field: string): string[] {
   return ((current as string[] | null | undefined) ?? []).filter((f) => f !== field);
 }
 
-type EditField = "amount" | "category" | "date" | "location" | "merchantName" | "name" | "notes";
+type EditField =
+  | "amount"
+  | "category"
+  | "date"
+  | "location"
+  | "merchantName"
+  | "name"
+  | "notes"
+  | "paymentChannel";
 
 async function appendEdit(
   tx: Transaction<Schema>,
@@ -389,6 +401,35 @@ export const transactionMutators = {
     ]);
   }),
 
+  resetPaymentChannel: defineMutator(transactionIdSchema, async ({ args, ctx, tx }) => {
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
+    const earliestEdit = await tx.run(
+      zql.transactionEdit
+        .where("transactionId", args.id)
+        .where("field", "paymentChannel")
+        .orderBy("createdAt", "asc")
+        .one(),
+    );
+    const original = typeof earliestEdit?.oldValue === "string" ? earliestEdit.oldValue : null;
+    await Promise.all([
+      tx.mutate.transaction.update({
+        id: args.id,
+        lockedFields: removeLocked(row.lockedFields, "paymentChannel"),
+        paymentChannel: original,
+      }),
+      appendEdit(tx, {
+        editId: args.editId,
+        field: "paymentChannel",
+        newValue: null,
+        oldValue: row.paymentChannel ?? null,
+        transactionId: args.id,
+        userId,
+      }),
+    ]);
+  }),
+
   updateCategory: defineMutator(updateCategorySchema, async ({ args, ctx, tx }) => {
     const { row, userId } = await requireOwned(ctx, () =>
       tx.run(zql.transaction.where("id", args.id).one()),
@@ -515,6 +556,27 @@ export const transactionMutators = {
         field: "notes",
         newValue: args.notes,
         oldValue: row.notes ?? null,
+        transactionId: args.id,
+        userId,
+      }),
+    ]);
+  }),
+
+  updatePaymentChannel: defineMutator(updatePaymentChannelSchema, async ({ args, ctx, tx }) => {
+    const { row, userId } = await requireOwned(ctx, () =>
+      tx.run(zql.transaction.where("id", args.id).one()),
+    );
+    await Promise.all([
+      tx.mutate.transaction.update({
+        id: args.id,
+        lockedFields: addLocked(row.lockedFields, "paymentChannel"),
+        paymentChannel: args.paymentChannel,
+      }),
+      appendEdit(tx, {
+        editId: args.editId,
+        field: "paymentChannel",
+        newValue: args.paymentChannel,
+        oldValue: row.paymentChannel ?? null,
         transactionId: args.id,
         userId,
       }),

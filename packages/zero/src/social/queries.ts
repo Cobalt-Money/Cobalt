@@ -18,6 +18,16 @@ import { zql } from "../schema.js";
  */
 export const socialQueries = {
   /**
+   * Public profile lookup keyed on a list of user ids — minimal fields
+   * (name, image, displayUsername) the friends app needs to render labels
+   * next to friend rows. Consumer scopes the id list to its own friend
+   * graph before calling, so this trusts the caller.
+   */
+  friendProfiles: defineQuery(z.object({ ids: z.array(z.string()).min(1) }), ({ args }) =>
+    zql.user.where("id", "IN", args.ids),
+  ),
+
+  /**
    * Friendships involving the caller. Edge list — each row has user_a_id +
    * user_b_id (sorted). Caller derives "who's my friend" by picking the
    * other id.

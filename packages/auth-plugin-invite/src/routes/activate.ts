@@ -13,6 +13,15 @@ const bodySchema = z.object({
   token: z.string().min(1),
 });
 
+const FRESH_REDEMPTION_WINDOW_MS = 60_000;
+
+function isFreshRedemption(redeemedAt: Date | null | undefined, now: Date): boolean {
+  if (!redeemedAt) {
+    return false;
+  }
+  return now.getTime() - new Date(redeemedAt).getTime() < FRESH_REDEMPTION_WINDOW_MS;
+}
+
 /**
  * Two modes:
  *   - Signed-in caller → validate token, write redemption row, call onAccept,
@@ -49,15 +58,15 @@ export const activateInviteRoute = (options: ResolvedInviteOptions) =>
       if (invite.revokedAt !== null) {
         throw APIError.from("BAD_REQUEST", INVITE_ERROR_CODES.INVITE_REVOKED);
       }
-      if (invite.usesCount >= invite.maxUses) {
-        throw APIError.from("BAD_REQUEST", INVITE_ERROR_CODES.INVITE_EXHAUSTED);
-      }
 
       const session = await getSessionFromCtx(ctx, { disableRefresh: true });
       const sessionUser = session?.user as { id: string; email?: string | null } | undefined;
 
       // Signed-out path — stash token, return.
       if (!sessionUser) {
+        if (invite.usesCount >= invite.maxUses) {
+          throw APIError.from("BAD_REQUEST", INVITE_ERROR_CODES.INVITE_EXHAUSTED);
+        }
         const cookie = ctx.context.createAuthCookie(INVITE_COOKIE_NAME, {
           maxAge: options.cookieMaxAgeSeconds,
         });
@@ -81,9 +90,32 @@ export const activateInviteRoute = (options: ResolvedInviteOptions) =>
       if (invite.targetEmail && normalizeEmail(sessionUser.email) !== invite.targetEmail) {
         throw APIError.from("FORBIDDEN", INVITE_ERROR_CODES.WRONG_RECIPIENT);
       }
+
+      const inviter = await ctx.context.adapter.findOne<{
+        id: string;
+        name?: string | null;
+        email?: string | null;
+      }>({
+        model: "user",
+        where: [{ field: "id", value: invite.inviterUserId }],
+      });
+      const inviterName = inviter?.name ?? inviter?.email ?? null;
+
+      // Idempotent: the post-signup hook (hooks.ts) may have already auto-
+      // redeemed in the same session via the stashed cookie. Treat a repeat
+      // call as success so the SPA renders the success toast instead of an
+      // error. Run the lookup BEFORE the exhaustion gate so single-use invites
+      // still return success on a same-user re-tap (Coderabbit SRI-349 catch).
+      // Redemption rows minted in the last 60s are still "first time" for UX
+      // purposes — they were the just-completed OAuth bounce.
       const existing = await adapter.findRedemption(invite.id, sessionUser.id);
       if (existing) {
-        throw APIError.from("BAD_REQUEST", INVITE_ERROR_CODES.ALREADY_REDEEMED);
+        const firstTime = isFreshRedemption(existing.redeemedAt, now);
+        return ctx.json({ accepted: true, firstTime, invite, inviterName });
+      }
+
+      if (invite.usesCount >= invite.maxUses) {
+        throw APIError.from("BAD_REQUEST", INVITE_ERROR_CODES.INVITE_EXHAUSTED);
       }
 
       await adapter.createRedemption({
@@ -108,6 +140,6 @@ export const activateInviteRoute = (options: ResolvedInviteOptions) =>
         throw APIError.from("INTERNAL_SERVER_ERROR", INVITE_ERROR_CODES.ON_ACCEPT_FAILED);
       }
 
-      return ctx.json({ accepted: true, invite });
+      return ctx.json({ accepted: true, firstTime: true, invite, inviterName });
     },
   );
