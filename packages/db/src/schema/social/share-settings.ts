@@ -1,6 +1,18 @@
-import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, integer, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "../users/auth/auth";
+
+/**
+ * Location-redaction mode for shared posts:
+ *   - exact:  share lat/lon as-is
+ *   - city:   coarsen to ~city granularity (no exact pin)
+ *   - hidden: omit lat/lon entirely
+ */
+export const socialSharePrecision = pgEnum("social_share_location_precision", [
+  "exact",
+  "city",
+  "hidden",
+]);
 
 /**
  * Per-user share preferences. One row per user.
@@ -11,6 +23,7 @@ import { user } from "../users/auth/auth";
  * Hardcoded write gate: in-store + lat/lon present. Range + blocklists layer on top.
  */
 export const socialShareSettings = pgTable("social_share_settings", {
+  locationPrecision: socialSharePrecision("location_precision").default("exact").notNull(),
   shareAmount: boolean("share_amount").default(true).notNull(),
   shareCard: boolean("share_card").default(true).notNull(),
   shareDate: boolean("share_date").default(true).notNull(),

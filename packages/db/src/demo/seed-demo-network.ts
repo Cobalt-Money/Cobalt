@@ -875,147 +875,151 @@ function sortedPair(a: string, b: string): [string, string] {
 export async function seedDemoNetwork(): Promise<void> {
   const ids = [...DEMO_NETWORK_IDS];
 
-  // Order matters only for `user`: cascade FKs on transaction, account,
-  // friendship, post wipe everything else when we delete the users. Doing it
-  // explicit anyway so partial seeds (e.g. user row missing) still clean.
-  await db.delete(socialPost).where(inArray(socialPost.userId, ids));
-  await db.delete(socialFriendship).where(inArray(socialFriendship.userAId, ids));
-  await db.delete(socialFriendship).where(inArray(socialFriendship.userBId, ids));
-  await db.delete(transaction).where(inArray(transaction.userId, ids));
-  await db.delete(financialAccount).where(inArray(financialAccount.userId, ids));
-  await db.delete(user).where(inArray(user.id, ids));
+  // Wrap delete + insert in a single transaction so a mid-seed failure
+  // can't leave partial demo state (e.g. users wiped but posts unrestored).
+  await db.transaction(async (tx) => {
+    // Order matters only for `user`: cascade FKs on transaction, account,
+    // friendship, post wipe everything else when we delete the users. Doing it
+    // explicit anyway so partial seeds (e.g. user row missing) still clean.
+    await tx.delete(socialPost).where(inArray(socialPost.userId, ids));
+    await tx.delete(socialFriendship).where(inArray(socialFriendship.userAId, ids));
+    await tx.delete(socialFriendship).where(inArray(socialFriendship.userBId, ids));
+    await tx.delete(transaction).where(inArray(transaction.userId, ids));
+    await tx.delete(financialAccount).where(inArray(financialAccount.userId, ids));
+    await tx.delete(user).where(inArray(user.id, ids));
 
-  // 1. Users
-  await db.insert(user).values(
-    DEMO_USERS.map((u) => ({
-      displayUsername: u.displayUsername,
-      email: u.email,
-      emailVerified: true,
-      id: u.id,
-      image: u.image,
-      isAnonymous: false,
-      name: u.name,
-      username: u.username,
-    })),
-  );
+    // 1. Users
+    await tx.insert(user).values(
+      DEMO_USERS.map((u) => ({
+        displayUsername: u.displayUsername,
+        email: u.email,
+        emailVerified: true,
+        id: u.id,
+        image: u.image,
+        isAnonymous: false,
+        name: u.name,
+        username: u.username,
+      })),
+    );
 
-  // 2. Seed system categories per user (mirrors `seedUserCategories` from the
-  // auth package — duplicated here to avoid pulling @cobalt-web/auth into @cobalt-web/db).
-  for (const u of DEMO_USERS) {
-    await seedSystemCategoriesForUser(u.id);
-  }
-
-  // Build categoryId lookup keyed by (userId, systemKey).
-  const categoryRows = await db
-    .select({ id: category.id, systemKey: category.systemKey, userId: category.userId })
-    .from(category)
-    .where(inArray(category.userId, ids));
-  const categoryIdByUserKey = new Map<string, string>();
-  for (const row of categoryRows) {
-    if (row.systemKey) {
-      categoryIdByUserKey.set(`${row.userId}:${row.systemKey}`, row.id);
+    // 2. Seed system categories per user (mirrors `seedUserCategories` from the
+    // auth package — duplicated here to avoid pulling @cobalt-web/auth into @cobalt-web/db).
+    for (const u of DEMO_USERS) {
+      await seedSystemCategoriesForUser(tx, u.id);
     }
-  }
 
-  // 3. One manual credit card per user — labeled with real card name + mask.
-  const accountByUser = new Map<
-    string,
-    { id: string; name: string; institutionName: string; mask: string }
-  >();
-  for (const u of DEMO_USERS) {
-    const [acct] = await db
-      .insert(financialAccount)
-      .values({
+    // Build categoryId lookup keyed by (userId, systemKey).
+    const categoryRows = await tx
+      .select({ id: category.id, systemKey: category.systemKey, userId: category.userId })
+      .from(category)
+      .where(inArray(category.userId, ids));
+    const categoryIdByUserKey = new Map<string, string>();
+    for (const row of categoryRows) {
+      if (row.systemKey) {
+        categoryIdByUserKey.set(`${row.userId}:${row.systemKey}`, row.id);
+      }
+    }
+
+    // 3. One manual credit card per user — labeled with real card name + mask.
+    const accountByUser = new Map<
+      string,
+      { id: string; name: string; institutionName: string; mask: string }
+    >();
+    for (const u of DEMO_USERS) {
+      const [acct] = await tx
+        .insert(financialAccount)
+        .values({
+          institutionName: u.institutionName,
+          mask: u.cardMask,
+          name: u.cardName,
+          source: "manual",
+          type: "credit",
+          userId: u.id,
+        })
+        .returning({ id: financialAccount.id });
+      if (!acct) {
+        throw new Error(`seed-demo-network: failed to insert account for ${u.id}`);
+      }
+      accountByUser.set(u.id, {
+        id: acct.id,
         institutionName: u.institutionName,
         mask: u.cardMask,
         name: u.cardName,
-        source: "manual",
-        type: "credit",
-        userId: u.id,
-      })
-      .returning({ id: financialAccount.id });
-    if (!acct) {
-      throw new Error(`seed-demo-network: failed to insert account for ${u.id}`);
+      });
     }
-    accountByUser.set(u.id, {
-      id: acct.id,
-      institutionName: u.institutionName,
-      mask: u.cardMask,
-      name: u.cardName,
-    });
-  }
 
-  // 4. Transactions — one per post (post.transactionId required + unique on
-  // (userId, transactionId)). Categories resolved via system_key lookup.
-  const now = Date.now();
-  const txnIdByPostIdx: string[] = [];
-  for (const post of DEMO_POSTS) {
-    const acct = accountByUser.get(post.userId);
-    if (!acct) {
-      throw new Error(`seed-demo-network: missing account for ${post.userId}`);
-    }
-    const categoryId = categoryIdByUserKey.get(`${post.userId}:${post.categorySystemKey}`);
-    const pfc = PFC_BY_KEY[post.categorySystemKey];
-    const isoDate = new Date(now - post.daysAgo * MS_PER_DAY).toISOString().slice(0, 10);
-    const [txn] = await db
-      .insert(transaction)
-      .values({
-        accountId: acct.id,
-        amount: (post.amountCents / 100).toFixed(4),
-        categoryId,
-        date: isoDate,
-        excluded: false,
-        lat: post.lat,
-        logoUrl: `https://www.google.com/s2/favicons?domain=${post.logoDomain}&sz=128`,
-        lon: post.lon,
-        merchantName: post.merchantName,
-        name: post.merchantName,
-        paymentChannel: "in store",
-        pending: false,
-        pfcDetailed: pfc?.detailed,
-        pfcPrimary: pfc?.primary,
-        source: "plaid",
-        userId: post.userId,
-        website: post.website,
-      })
-      .returning({ id: transaction.id });
-    if (!txn) {
-      throw new Error(`seed-demo-network: failed to insert txn for ${post.merchantName}`);
-    }
-    txnIdByPostIdx.push(txn.id);
-  }
-
-  // 5. Posts — denormalize card + institution from account onto the post so
-  // the friends UI can render card chip without joining back to financial_account.
-  await db.insert(socialPost).values(
-    DEMO_POSTS.map((post, idx) => {
+    // 4. Transactions — one per post (post.transactionId required + unique on
+    // (userId, transactionId)). Categories resolved via system_key lookup.
+    const now = Date.now();
+    const txnIdByPostIdx: string[] = [];
+    for (const post of DEMO_POSTS) {
       const acct = accountByUser.get(post.userId);
-      return {
-        amountCents: post.amountCents,
-        cardName: acct?.name ?? null,
-        categorySystemKey: post.categorySystemKey,
-        date: new Date(now - post.daysAgo * MS_PER_DAY),
-        institutionName: acct?.institutionName ?? null,
-        lat: post.lat,
-        logoUrl: `https://www.google.com/s2/favicons?domain=${post.logoDomain}&sz=128`,
-        lon: post.lon,
-        merchantName: post.merchantName,
-        note: post.note ?? null,
-        transactionId: txnIdByPostIdx[idx] as string,
-        userId: post.userId,
-        website: post.website,
-      };
-    }),
-  );
+      if (!acct) {
+        throw new Error(`seed-demo-network: missing account for ${post.userId}`);
+      }
+      const categoryId = categoryIdByUserKey.get(`${post.userId}:${post.categorySystemKey}`);
+      const pfc = PFC_BY_KEY[post.categorySystemKey];
+      const isoDate = new Date(now - post.daysAgo * MS_PER_DAY).toISOString().slice(0, 10);
+      const [txn] = await tx
+        .insert(transaction)
+        .values({
+          accountId: acct.id,
+          amount: (post.amountCents / 100).toFixed(4),
+          categoryId,
+          date: isoDate,
+          excluded: false,
+          lat: post.lat,
+          logoUrl: `https://www.google.com/s2/favicons?domain=${post.logoDomain}&sz=128`,
+          lon: post.lon,
+          merchantName: post.merchantName,
+          name: post.merchantName,
+          paymentChannel: "in store",
+          pending: false,
+          pfcDetailed: pfc?.detailed,
+          pfcPrimary: pfc?.primary,
+          source: "plaid",
+          userId: post.userId,
+          website: post.website,
+        })
+        .returning({ id: transaction.id });
+      if (!txn) {
+        throw new Error(`seed-demo-network: failed to insert txn for ${post.merchantName}`);
+      }
+      txnIdByPostIdx.push(txn.id);
+    }
 
-  // 5. Friendships — root <-> every friend. Check constraint requires
-  // userAId < userBId, so sort the pair.
-  await db.insert(socialFriendship).values(
-    DEMO_FRIEND_IDS.map((friendId) => {
-      const [a, b] = sortedPair(DEMO_ROOT_ID, friendId);
-      return { userAId: a, userBId: b };
-    }),
-  );
+    // 5. Posts — denormalize card + institution from account onto the post so
+    // the friends UI can render card chip without joining back to financial_account.
+    await tx.insert(socialPost).values(
+      DEMO_POSTS.map((post, idx) => {
+        const acct = accountByUser.get(post.userId);
+        return {
+          amountCents: post.amountCents,
+          cardName: acct?.name ?? null,
+          categorySystemKey: post.categorySystemKey,
+          date: new Date(now - post.daysAgo * MS_PER_DAY),
+          institutionName: acct?.institutionName ?? null,
+          lat: post.lat,
+          logoUrl: `https://www.google.com/s2/favicons?domain=${post.logoDomain}&sz=128`,
+          lon: post.lon,
+          merchantName: post.merchantName,
+          note: post.note ?? null,
+          transactionId: txnIdByPostIdx[idx] as string,
+          userId: post.userId,
+          website: post.website,
+        };
+      }),
+    );
+
+    // 5. Friendships — root <-> every friend. Check constraint requires
+    // userAId < userBId, so sort the pair.
+    await tx.insert(socialFriendship).values(
+      DEMO_FRIEND_IDS.map((friendId) => {
+        const [a, b] = sortedPair(DEMO_ROOT_ID, friendId);
+        return { userAId: a, userBId: b };
+      }),
+    );
+  });
 }
 
 /**
@@ -1023,8 +1027,11 @@ export async function seedDemoNetwork(): Promise<void> {
  * `seedUserCategories` in @cobalt-web/auth creates on user sign-up. Duplicated
  * here so the demo seed doesn't drag the auth package into @cobalt-web/db.
  */
-async function seedSystemCategoriesForUser(userId: string): Promise<void> {
-  await db.execute(sql`
+async function seedSystemCategoriesForUser(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  userId: string,
+): Promise<void> {
+  await tx.execute(sql`
 WITH seed_groups (system_key, name, "order") AS (
   VALUES
     ('food_and_drink',           'Food & Drink',             10),

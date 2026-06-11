@@ -67,10 +67,13 @@ const SLIDES: Slide[] = [
 
 interface OnboardingModalProps {
   open: boolean;
-  onClose: () => void;
+  /** Called when the user actually finishes onboarding (submit or skip-through). */
+  onComplete: () => void;
+  /** Called on backdrop / Escape dismiss — does NOT mark onboarding complete. */
+  onDismiss: () => void;
 }
 
-export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
+export function OnboardingModal({ open, onComplete, onDismiss }: OnboardingModalProps) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<ShareAnswers>(DEFAULT_ANSWERS);
   const [busy, setBusy] = useState(false);
@@ -111,8 +114,12 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const finish = async () => {
     setBusy(true);
     try {
-      await userApi.sharingSettings.$post({ json: answers });
-      onClose();
+      const res = await userApi.sharingSettings.$post({ json: answers });
+      if (!res.ok) {
+        toast.error("Could not save preferences");
+        return;
+      }
+      onComplete();
     } catch {
       toast.error("Could not save preferences");
     } finally {
@@ -133,7 +140,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(v) => !v && onDismiss()}>
       <DialogContent
         className="max-w-md gap-0 border border-white/10 bg-zinc-700/40 p-6 text-white ring-1 ring-white/10 shadow-xl shadow-black/30 backdrop-blur-[8px] backdrop-saturate-[0.7]"
         overlayClassName="bg-zinc-900/40 supports-backdrop-filter:backdrop-blur-[2px]"

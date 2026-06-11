@@ -215,7 +215,7 @@ export function TransactionDetailSummary({
 
         {edit ? (
           <EditablePaymentChannel
-            isOverridden={false}
+            isOverridden={transaction.lockedFields.includes("paymentChannel")}
             onReset={edit.onResetPaymentChannel}
             onSubmit={edit.onUpdatePaymentChannel}
             paymentChannel={transaction.paymentChannel}

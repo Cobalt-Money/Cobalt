@@ -102,14 +102,20 @@ export const socialQueries = {
    *
    * V2: replace with server-side feed scoped via row permissions.
    */
-  postsAll: defineQuery(({ ctx }) => {
-    if (!ctx?.userId) {
-      return zql.socialPost
-        .where("userId", "IN", DEMO_NETWORK_IDS as readonly string[] as string[])
-        .orderBy("date", "desc");
-    }
-    return zql.socialPost.orderBy("date", "desc");
-  }),
+  postsAll: defineQuery(
+    z.object({ friendIds: z.array(z.string()).default([]) }).default({ friendIds: [] }),
+    ({ args, ctx }) => {
+      if (!ctx?.userId) {
+        return zql.socialPost
+          .where("userId", "IN", DEMO_NETWORK_IDS as readonly string[] as string[])
+          .orderBy("date", "desc");
+      }
+      // Authed: scope to viewer's own posts + posts by users in their friend graph.
+      // Caller pre-resolves friendIds from `queries.social.friendships()`.
+      const allowed = [...new Set([ctx.userId, ...args.friendIds])];
+      return zql.socialPost.where("userId", "IN", allowed).orderBy("date", "desc");
+    },
+  ),
 
   /** Posts the caller has shared. */
   postsMine: defineQuery(({ ctx }) =>

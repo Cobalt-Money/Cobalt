@@ -1374,7 +1374,7 @@ export function TransactionsTable({
                           </span>
                         </div>
                       </div>
-                      <div className="p-3" role="presentation" />
+                      <div className="p-3" />
                       <div className="flex items-center p-3">
                         <div className={cn(cellRow, "whitespace-nowrap")}>
                           <span className="truncate font-medium text-foreground text-sm">
@@ -1382,9 +1382,9 @@ export function TransactionsTable({
                           </span>
                         </div>
                       </div>
-                      <div className="p-3" role="presentation" />
-                      <div className="p-3" role="presentation" />
-                      <div className="p-3" role="presentation" />
+                      <div className="p-3" />
+                      <div className="p-3" />
+                      <div className="p-3" />
                     </div>
                   );
                 }

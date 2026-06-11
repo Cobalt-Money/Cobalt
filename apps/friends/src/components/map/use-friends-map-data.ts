@@ -235,11 +235,11 @@ export function useFriendsMapData(timeWindow: TimeWindow): FriendsMapData {
 
   const [txns] = useQuery(queries.transactions.list());
   const [friendships] = useQuery(queries.social.friendships());
-  const [allPosts] = useQuery(queries.social.postsAll());
 
   const friendIdList = friendships
     .map((f) => (f.userAId === userId ? f.userBId : f.userAId))
     .filter(Boolean) as string[];
+  const [allPosts] = useQuery(queries.social.postsAll({ friendIds: friendIdList }));
   // Include viewer's own id so leaderboard self row has an avatar (anon).
   const profileIds = [...new Set([userId, ...friendIdList].filter(Boolean))] as string[];
   const [friendProfiles] = useQuery(

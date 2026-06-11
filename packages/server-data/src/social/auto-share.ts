@@ -5,7 +5,7 @@ import { socialCategoryBlocklist } from "@cobalt-web/db/schema/social/category-b
 import { socialMerchantBlocklist } from "@cobalt-web/db/schema/social/merchant-blocklist";
 import { socialPost } from "@cobalt-web/db/schema/social/post";
 import { socialShareSettings } from "@cobalt-web/db/schema/social/share-settings";
-import { and, eq, gte, inArray, isNotNull, lte, notInArray, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNotNull, lte, sql } from "drizzle-orm";
 
 export interface ShareSettings {
   shareAmount: boolean;
@@ -48,7 +48,8 @@ export async function upsertShareSettings(
   userId: string,
   patch: Partial<ShareSettings>,
 ): Promise<ShareSettings> {
-  const merged = { ...DEFAULTS, ...patch };
+  const existing = await getShareSettings(userId);
+  const merged = { ...existing, ...patch };
   if (
     merged.shareMinAmountCents !== null &&
     merged.shareMaxAmountCents !== null &&
@@ -66,12 +67,16 @@ export async function upsertShareSettings(
   return merged;
 }
 
+function normalizeMerchantName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
 async function getBlockedMerchants(userId: string): Promise<string[]> {
   const rows = await db
     .select({ merchantName: socialMerchantBlocklist.merchantName })
     .from(socialMerchantBlocklist)
     .where(eq(socialMerchantBlocklist.userId, userId));
-  return rows.map((r) => r.merchantName);
+  return rows.map((r) => normalizeMerchantName(r.merchantName));
 }
 
 async function getBlockedCategories(userId: string): Promise<string[]> {
@@ -133,7 +138,7 @@ export async function autoShareInStoreTxnsForUser(userId: string): Promise<{
         minDollars === null ? sql`TRUE` : gte(sql`ABS(${transactionTable.amount})`, minDollars),
         maxDollars === null ? sql`TRUE` : lte(sql`ABS(${transactionTable.amount})`, maxDollars),
         blockedMerchants.length > 0
-          ? notInArray(transactionTable.merchantName, blockedMerchants)
+          ? sql`LOWER(TRIM(COALESCE(${transactionTable.merchantName}, ${transactionTable.name}))) NOT IN ${blockedMerchants}`
           : sql`TRUE`,
         blockedCategories.length > 0
           ? sql`(${transactionTable.pfcPrimary} IS NULL OR ${transactionTable.pfcPrimary} NOT IN ${blockedCategories})`
@@ -196,11 +201,15 @@ export async function deleteSharedPostsForBlockedMerchant(
   userId: string,
   merchantName: string,
 ): Promise<number> {
+  const normalized = normalizeMerchantName(merchantName);
   const txnIds = await db
     .select({ id: transactionTable.id })
     .from(transactionTable)
     .where(
-      and(eq(transactionTable.userId, userId), eq(transactionTable.merchantName, merchantName)),
+      and(
+        eq(transactionTable.userId, userId),
+        sql`LOWER(TRIM(COALESCE(${transactionTable.merchantName}, ${transactionTable.name}))) = ${normalized}`,
+      ),
     );
   if (txnIds.length === 0) {
     return 0;
@@ -247,8 +256,12 @@ export async function deleteSharedPostsForBlockedCategory(
 }
 
 export async function addMerchantToBlocklist(userId: string, merchantName: string): Promise<void> {
-  await db.insert(socialMerchantBlocklist).values({ merchantName, userId }).onConflictDoNothing();
-  await deleteSharedPostsForBlockedMerchant(userId, merchantName);
+  const normalized = normalizeMerchantName(merchantName);
+  await db
+    .insert(socialMerchantBlocklist)
+    .values({ merchantName: normalized, userId })
+    .onConflictDoNothing();
+  await deleteSharedPostsForBlockedMerchant(userId, normalized);
 }
 
 export async function removeMerchantFromBlocklist(
@@ -260,7 +273,7 @@ export async function removeMerchantFromBlocklist(
     .where(
       and(
         eq(socialMerchantBlocklist.userId, userId),
-        eq(socialMerchantBlocklist.merchantName, merchantName),
+        eq(socialMerchantBlocklist.merchantName, normalizeMerchantName(merchantName)),
       ),
     );
 }

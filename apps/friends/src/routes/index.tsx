@@ -57,16 +57,23 @@ function MapPage() {
       {session.data?.user ? (
         <OnboardingGate
           force={onboarding === "1"}
-          user={session.data.user as { isAnonymous?: boolean }}
+          user={session.data.user as { id: string; isAnonymous?: boolean }}
         />
       ) : null}
     </div>
   );
 }
 
-const ONBOARDED_KEY = "friends.onboarded";
+const onboardedKey = (userId: string) => `friends.onboarded.${userId}`;
 
-function OnboardingGate({ force, user }: { force: boolean; user: { isAnonymous?: boolean } }) {
+function OnboardingGate({
+  force,
+  user,
+}: {
+  force: boolean;
+  user: { id: string; isAnonymous?: boolean };
+}) {
+  const storageKey = onboardedKey(user.id);
   const [open, setOpen] = useState(() => {
     if (force) {
       return true;
@@ -77,7 +84,7 @@ function OnboardingGate({ force, user }: { force: boolean; user: { isAnonymous?:
     if (typeof window === "undefined") {
       return false;
     }
-    return window.localStorage.getItem(ONBOARDED_KEY) !== "1";
+    return window.localStorage.getItem(storageKey) !== "1";
   });
 
   if (!open) {
@@ -86,12 +93,13 @@ function OnboardingGate({ force, user }: { force: boolean; user: { isAnonymous?:
   return (
     <OnboardingModal
       open={open}
-      onClose={() => {
+      onComplete={() => {
         if (typeof window !== "undefined") {
-          window.localStorage.setItem(ONBOARDED_KEY, "1");
+          window.localStorage.setItem(storageKey, "1");
         }
         setOpen(false);
       }}
+      onDismiss={() => setOpen(false)}
     />
   );
 }

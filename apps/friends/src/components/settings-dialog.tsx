@@ -16,7 +16,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "../lib/auth-client";
@@ -539,7 +539,7 @@ function AccountsSection() {
 
 function SharingSection() {
   const [row] = useQuery(queries.social.shareSettings());
-  const settings: ShareSettings = row
+  const serverSettings: ShareSettings = row
     ? {
         shareAmount: row.shareAmount ?? DEFAULT_SHARE.shareAmount,
         shareCard: row.shareCard ?? DEFAULT_SHARE.shareCard,
@@ -550,21 +550,44 @@ function SharingSection() {
         shareNote: row.shareNote ?? DEFAULT_SHARE.shareNote,
       }
     : DEFAULT_SHARE;
+  // Optimistic overlay — null fields fall through to server state.
+  const [optimistic, setOptimistic] = useState<Partial<ShareSettings>>({});
+  const settings: ShareSettings = { ...serverSettings, ...optimistic };
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   const save = async (patch: Partial<ShareSettings>) => {
+    const prevOptimistic = optimistic;
+    setOptimistic((o) => ({ ...o, ...patch }));
     setSaving(true);
     setError(null);
     try {
       const res = await userApi.sharingSettings.$post({ json: patch });
+      if (!mountedRef.current) {
+        return;
+      }
       if (!res.ok) {
+        setOptimistic(prevOptimistic);
         setError("Could not save");
       }
     } catch {
+      if (!mountedRef.current) {
+        return;
+      }
+      setOptimistic(prevOptimistic);
       setError("Could not save");
     } finally {
-      setSaving(false);
+      if (mountedRef.current) {
+        setSaving(false);
+      }
     }
   };
 
@@ -578,6 +601,7 @@ function SharingSection() {
       <div>
         <Row label="Show amount">
           <Toggle
+            ariaLabel="Show amount"
             checked={settings.shareAmount}
             disabled={saving}
             onChange={(v) => save({ shareAmount: v })}
@@ -585,6 +609,7 @@ function SharingSection() {
         </Row>
         <Row label="Show card + bank">
           <Toggle
+            ariaLabel="Show card and bank"
             checked={settings.shareCard}
             disabled={saving}
             onChange={(v) => save({ shareCard: v })}
@@ -592,6 +617,7 @@ function SharingSection() {
         </Row>
         <Row label="Show merchant">
           <Toggle
+            ariaLabel="Show merchant"
             checked={settings.shareMerchant}
             disabled={saving}
             onChange={(v) => save({ shareMerchant: v })}
@@ -599,6 +625,7 @@ function SharingSection() {
         </Row>
         <Row label="Show date">
           <Toggle
+            ariaLabel="Show date"
             checked={settings.shareDate}
             disabled={saving}
             onChange={(v) => save({ shareDate: v })}
@@ -606,6 +633,7 @@ function SharingSection() {
         </Row>
         <Row label="Show note">
           <Toggle
+            ariaLabel="Show note"
             checked={settings.shareNote}
             disabled={saving}
             onChange={(v) => save({ shareNote: v })}
@@ -613,6 +641,7 @@ function SharingSection() {
         </Row>
         <Row label="Min amount ($)">
           <CentsInput
+            ariaLabel="Minimum amount in dollars"
             cents={settings.shareMinAmountCents}
             disabled={saving}
             onCommit={(v) => save({ shareMinAmountCents: v })}
@@ -620,6 +649,7 @@ function SharingSection() {
         </Row>
         <Row label="Max amount ($)">
           <CentsInput
+            ariaLabel="Maximum amount in dollars"
             cents={settings.shareMaxAmountCents}
             disabled={saving}
             onCommit={(v) => save({ shareMaxAmountCents: v })}
@@ -763,10 +793,12 @@ function BlocklistSection({
 }
 
 function CentsInput({
+  ariaLabel,
   cents,
   disabled,
   onCommit,
 }: {
+  ariaLabel: string;
   cents: number | null;
   disabled?: boolean;
   onCommit: (cents: number | null) => void;
@@ -793,6 +825,7 @@ function CentsInput({
   };
   return (
     <input
+      aria-label={ariaLabel}
       className="w-24 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-right text-xs text-white outline-none focus:border-white/30 disabled:opacity-50"
       disabled={disabled}
       inputMode="decimal"
@@ -811,22 +844,26 @@ function CentsInput({
 }
 
 function Toggle({
+  ariaLabel,
   checked,
   disabled,
   onChange,
 }: {
+  ariaLabel: string;
   checked: boolean;
   disabled?: boolean;
   onChange: (v: boolean) => void;
 }) {
   return (
     <button
-      aria-pressed={checked}
+      aria-checked={checked}
+      aria-label={ariaLabel}
       className={`relative inline-flex h-5 w-9 items-center rounded-full transition disabled:opacity-50 ${
         checked ? "bg-emerald-500/70" : "bg-white/15"
       }`}
       disabled={disabled}
       onClick={() => onChange(!checked)}
+      role="switch"
       type="button"
     >
       <span

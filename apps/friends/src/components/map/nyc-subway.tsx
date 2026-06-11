@@ -1,5 +1,6 @@
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import type { MapboxOverlayProps } from "@deck.gl/mapbox";
+import { useEffect } from "react";
 import { Source, Layer, useControl } from "react-map-gl/maplibre";
 import { NYC_SUBWAY_URL, SUBWAY_LINE_COLOR_EXPR } from "./constants";
 
@@ -22,6 +23,8 @@ export function NycSubwayLines() {
 
 export function DeckGLOverlay(props: MapboxOverlayProps) {
   const overlay = useControl(() => new MapboxOverlay(props));
-  overlay.setProps(props);
+  useEffect(() => {
+    overlay.setProps(props);
+  }, [overlay, props]);
   return null;
 }

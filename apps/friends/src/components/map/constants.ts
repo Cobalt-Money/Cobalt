@@ -97,7 +97,7 @@ export const MAP_STYLES = {
   }),
 } as const;
 
-export const LIGHT_STYLES = new Set<StyleKey>([
+const LIGHT_STYLE_CANDIDATES = [
   "carto-light",
   "carto-light-nolabels",
   "carto-voyager",
@@ -112,7 +112,13 @@ export const LIGHT_STYLES = new Set<StyleKey>([
   "maptiler-outdoor",
   "maptiler-backdrop",
   "maptiler-toner",
-] as StyleKey[]);
+] as const;
+
+// Filter against actual MAP_STYLES keys — maptiler-* entries are absent
+// when VITE_MAPTILER_KEY is unset.
+export const LIGHT_STYLES: ReadonlySet<StyleKey> = new Set(
+  LIGHT_STYLE_CANDIDATES.filter((k) => k in MAP_STYLES) as StyleKey[],
+);
 
 export const INITIAL_VIEW_STATE = {
   bearing: 20,

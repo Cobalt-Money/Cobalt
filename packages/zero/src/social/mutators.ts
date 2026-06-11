@@ -56,11 +56,20 @@ export const socialMutators = {
       if (existing) {
         return;
       }
-      await tx.mutate.socialInviteDecline.insert({
-        declinedByUserId: ctx.userId,
-        id: args.declineId,
-        inviteId: args.inviteId,
-      });
+      try {
+        await tx.mutate.socialInviteDecline.insert({
+          declinedByUserId: ctx.userId,
+          id: args.declineId,
+          inviteId: args.inviteId,
+        });
+      } catch (error) {
+        // Concurrent decline raced past the existence check; unique index on
+        // (invite_id, declined_by_user_id) makes this safe to swallow.
+        const msg = error instanceof Error ? error.message : String(error);
+        if (!/unique|duplicate|conflict/i.test(msg)) {
+          throw error;
+        }
+      }
     }),
   },
 };

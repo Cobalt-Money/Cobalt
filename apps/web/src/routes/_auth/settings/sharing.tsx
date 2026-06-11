@@ -2,6 +2,7 @@ import { queries } from "@cobalt-web/zero";
 import { useQuery as useZeroQuery } from "@rocicorp/zero/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 
 import { userApi } from "@/lib/clients/api-client";
 
@@ -9,15 +10,17 @@ export const Route = createFileRoute("/_auth/settings/sharing")({
   component: SharingSettings,
 });
 
-interface ShareSettings {
-  shareAmount: boolean;
-  shareCard: boolean;
-  shareDate: boolean;
-  shareMaxAmountCents: number | null;
-  shareMerchant: boolean;
-  shareMinAmountCents: number | null;
-  shareNote: boolean;
-}
+const shareSettingsSchema = z.object({
+  shareAmount: z.boolean(),
+  shareCard: z.boolean(),
+  shareDate: z.boolean(),
+  shareMaxAmountCents: z.number().nullable(),
+  shareMerchant: z.boolean(),
+  shareMinAmountCents: z.number().nullable(),
+  shareNote: z.boolean(),
+});
+
+type ShareSettings = z.infer<typeof shareSettingsSchema>;
 
 const DEFAULTS: ShareSettings = {
   shareAmount: true,
@@ -40,8 +43,12 @@ function SharingSettings() {
       try {
         const res = await userApi.sharingSettings.$get();
         if (res.ok) {
-          const data = (await res.json()) as ShareSettings;
-          setSettings(data);
+          const parsed = shareSettingsSchema.safeParse(await res.json());
+          if (parsed.success) {
+            setSettings(parsed.data);
+          } else {
+            setError("Could not load settings");
+          }
         }
       } finally {
         setLoading(false);
