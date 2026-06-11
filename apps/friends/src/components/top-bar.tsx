@@ -114,36 +114,37 @@ export function TopBar() {
 
   return (
     <>
-      <div className="absolute top-4 inset-x-4 z-20 flex items-center justify-between gap-3 pointer-events-none">
+      <div className="absolute top-3 inset-x-3 sm:top-4 sm:inset-x-4 z-20 flex flex-wrap items-center justify-between gap-2 sm:gap-3 pointer-events-none">
         {/* Brand pill */}
-        <div className="pointer-events-auto flex items-baseline gap-1.5 rounded-full border border-white/10 bg-zinc-700/55 px-4 py-1.5 text-white shadow-2xl shadow-black/50 backdrop-blur-2xl backdrop-saturate-150">
+        <div className="pointer-events-auto flex items-baseline gap-1.5 rounded-full border border-white/10 bg-zinc-700/55 px-3 sm:px-4 py-1.5 text-white shadow-2xl shadow-black/50 backdrop-blur-2xl backdrop-saturate-150">
           <span className="text-sm font-medium tracking-wide">Pocketwatch</span>
           <a
             href="https://cobaltpf.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] text-white/50 hover:text-white/80 transition"
+            className="hidden sm:inline text-[11px] text-white/50 hover:text-white/80 transition"
           >
             by Cobalt
           </a>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Add account pill */}
           <div className="pointer-events-auto rounded-full border border-white/10 bg-zinc-700/55 p-1 text-white shadow-2xl shadow-black/50 backdrop-blur-2xl backdrop-saturate-150">
             <button
               type="button"
               onClick={openPlaid}
               disabled={opening}
-              className="flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium text-white/90 hover:bg-white/10 disabled:opacity-60"
+              className="flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 py-1 text-sm font-medium text-white/90 hover:bg-white/10 disabled:opacity-60"
             >
               <span>+</span>
-              <span>{opening ? "Opening…" : "Add account"}</span>
+              <span className="hidden sm:inline">{opening ? "Opening…" : "Add account"}</span>
+              <span className="sm:hidden">{opening ? "…" : "Add"}</span>
             </button>
           </div>
 
           {/* Nav pill: invites / friends / settings */}
-          <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/10 bg-zinc-700/55 p-1 text-white shadow-2xl shadow-black/50 backdrop-blur-2xl backdrop-saturate-150">
+          <div className="pointer-events-auto hidden sm:flex items-center gap-1 rounded-full border border-white/10 bg-zinc-700/55 p-1 text-white shadow-2xl shadow-black/50 backdrop-blur-2xl backdrop-saturate-150">
             <button
               type="button"
               onClick={() => openSettings("invites")}
@@ -185,6 +186,15 @@ export function TopBar() {
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem className="sm:hidden" onClick={() => openSettings("invites")}>
+                Invites
+              </DropdownMenuItem>
+              <DropdownMenuItem className="sm:hidden" onClick={() => openSettings("friends")}>
+                Friends
+              </DropdownMenuItem>
+              <DropdownMenuItem className="sm:hidden" onClick={() => openSettings("general")}>
+                Settings
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   void onSignOut();

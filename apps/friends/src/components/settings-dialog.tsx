@@ -86,13 +86,13 @@ export function SettingsDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       {children ? <DialogTrigger render={children as React.ReactElement} /> : null}
       <DialogContent
-        className="h-[80vh] max-h-[720px] w-[90vw] max-w-3xl gap-0 overflow-hidden border border-white/10 bg-zinc-700/40 p-0 text-white ring-1 ring-white/10 shadow-xl shadow-black/30 backdrop-blur-[8px] backdrop-saturate-[0.7] sm:max-w-3xl"
+        className="h-[90vh] max-h-[720px] w-[95vw] max-w-3xl gap-0 overflow-hidden border border-white/10 bg-zinc-700/40 p-0 text-white ring-1 ring-white/10 shadow-xl shadow-black/30 backdrop-blur-[8px] backdrop-saturate-[0.7] sm:h-[80vh] sm:w-[90vw] sm:max-w-3xl"
         overlayClassName="bg-zinc-900/30 supports-backdrop-filter:backdrop-blur-[2px]"
       >
         <DialogTitle className="sr-only">Settings</DialogTitle>
         <div className="flex h-full min-h-0">
           <Sidebar active={section} onSelect={setSection} />
-          <main className="flex-1 overflow-y-auto p-6">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 min-w-0">
             {section === "general" && <GeneralSection />}
             {section === "accounts" && <AccountsSection />}
             {section === "invites" && <InvitesSection />}
@@ -107,11 +107,13 @@ export function SettingsDialog({
 
 function Sidebar({ active, onSelect }: { active: Section; onSelect: (s: Section) => void }) {
   return (
-    <nav className="bg-white/5 border-white/10 w-52 shrink-0 border-r p-3">
+    <nav className="bg-white/5 border-white/10 w-14 sm:w-52 shrink-0 border-r p-2 sm:p-3">
       <div className="space-y-0.5">
         {NAV_ITEMS.map((item) => (
           <button
-            className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition ${
+            aria-label={item.label}
+            title={item.label}
+            className={`flex w-full items-center justify-center sm:justify-start gap-2 rounded-md px-2 sm:px-3 py-2 text-sm transition ${
               active === item.id ? "bg-white/10 text-white" : "hover:bg-white/5 text-white/80"
             }`}
             key={item.id}
@@ -119,7 +121,7 @@ function Sidebar({ active, onSelect }: { active: Section; onSelect: (s: Section)
             type="button"
           >
             <HugeiconsIcon className="size-4 opacity-70" icon={item.icon} strokeWidth={2} />
-            <span>{item.label}</span>
+            <span className="hidden sm:inline">{item.label}</span>
           </button>
         ))}
       </div>

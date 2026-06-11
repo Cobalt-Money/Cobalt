@@ -142,7 +142,7 @@ export function OnboardingModal({ open, onComplete, onDismiss }: OnboardingModal
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onDismiss()}>
       <DialogContent
-        className="max-w-md gap-0 border border-white/10 bg-zinc-700/40 p-6 text-white ring-1 ring-white/10 shadow-xl shadow-black/30 backdrop-blur-[8px] backdrop-saturate-[0.7]"
+        className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto gap-0 border border-white/10 bg-zinc-700/40 p-5 sm:p-6 text-white ring-1 ring-white/10 shadow-xl shadow-black/30 backdrop-blur-[8px] backdrop-saturate-[0.7]"
         overlayClassName="bg-zinc-900/40 supports-backdrop-filter:backdrop-blur-[2px]"
       >
         <DialogTitle className="sr-only">{slide.title}</DialogTitle>
