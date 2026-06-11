@@ -291,8 +291,17 @@ async function byGeo(
         AND earth_distance(ll_to_earth(${place.lat}, ${place.lon}), ll_to_earth(${lat}, ${lon})) < ${GEO_RADIUS_M}
         AND ${trgmFilter(norm, compact)}`,
     )
+    // Prefer the best name match; use proximity only as a tiebreaker between
+    // equally-named candidates. Previous order (distance first, sim as
+    // tiebreaker) wrongly returned the geographically-closer same-category
+    // *neighbor* whenever a strip-mall co-tenant sat between the swipe and
+    // the actual store — e.g. a Qdoba at 22m beat a perfect-name Chipotle
+    // at 23m for a Chipotle txn. The pipeline either rejected at the
+    // confidence floor (silent miss) or, when the neighbor's name sim was
+    // borderline, wrote the *wrong* place_id, polluting Places-panel
+    // aggregates, friend feed pins, and merchant leaderboards.
     .orderBy(
-      sql`ll_to_earth(${place.lat}, ${place.lon}) <-> ll_to_earth(${lat}, ${lon}) ASC, sim DESC`,
+      sql`sim DESC, ll_to_earth(${place.lat}, ${place.lon}) <-> ll_to_earth(${lat}, ${lon}) ASC`,
     )
     .limit(1)) as (Place & { sim: number | string })[];
   return rankAndPick(rows, "geo");
