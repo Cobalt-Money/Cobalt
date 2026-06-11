@@ -183,14 +183,27 @@ export async function persistTransactions(transactions: Transaction[]): Promise<
     return;
   }
 
-  await db
-    .insert(transactionTable)
-    .values(filtered)
-    .onConflictDoUpdate({
-      set: PLAID_UPSERT_SET,
-      target: [transactionTable.source, transactionTable.externalId],
-      targetWhere: externalIdNotNullWhere,
-    });
+  // Chunk the bulk upsert. Drizzle serializes every column of every row as a
+  // separate SQL parameter; a single Plaid sync page can be ~1000 txns ×
+  // ~31 cols = ~31k params per statement. Postgres allows up to 65535
+  // parameters, but a query that large is slow enough that PlanetScale's
+  // pooler regularly drops the connection mid-write, producing
+  // `Failed query: insert into "transaction" (...)` errors that propagate
+  // out of the sync workflow step and exhaust framework retries
+  // ("Max retries reached"). 100 rows per chunk keeps each statement under
+  // ~3000 params and well within sub-second execution.
+  const UPSERT_CHUNK_SIZE = 100;
+  for (let i = 0; i < filtered.length; i += UPSERT_CHUNK_SIZE) {
+    const chunk = filtered.slice(i, i + UPSERT_CHUNK_SIZE);
+    await db
+      .insert(transactionTable)
+      .values(chunk)
+      .onConflictDoUpdate({
+        set: PLAID_UPSERT_SET,
+        target: [transactionTable.source, transactionTable.externalId],
+        targetWhere: externalIdNotNullWhere,
+      });
+  }
 }
 
 async function dropTxnsCoveredByCsv<R extends { accountId: string; date: string }>(
