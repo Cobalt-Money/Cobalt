@@ -29,7 +29,10 @@ export async function syncTransactionsPage(
     options: { include_personal_finance_category: true },
   });
   if (audit) {
-    await recordPlaidSyncPayload({
+    // Fire-and-forget — audit is best-effort and `recordPlaidSyncPayload`
+    // already swallows its own errors internally, so no unhandled rejection
+    // risk. Avoiding `await` keeps the audit insert off the sync hot path.
+    void recordPlaidSyncPayload({
       itemId: audit.itemId,
       request: { count, cursor },
       response: response.data,

@@ -303,7 +303,12 @@ export async function syncTransactionsStep(
     // Audit context: persist raw Plaid response per page so we can diff across
     // syncs + across item lifecycles. Resolved once outside the loop; failure
     // to resolve disables audit but never blocks sync.
-    const owner = await lookupPlaidConnection(itemId).catch(() => null);
+    let owner: Awaited<ReturnType<typeof lookupPlaidConnection>> | null = null;
+    try {
+      owner = await lookupPlaidConnection(itemId);
+    } catch {
+      owner = null;
+    }
     const audit = owner ? { itemId, userId: owner.userId } : null;
 
     while (hasMore) {
