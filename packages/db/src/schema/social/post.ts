@@ -13,30 +13,32 @@ import { transaction } from "../accounts/banking/transactions/transaction";
 import { user } from "../users/auth/auth";
 
 /**
- * Shared transaction projection — the ONLY surface the friends app reads from
- * for txn-derived map content. Denormalized at share time so the `transactions`
- * table never needs to be exposed to non-owners. Hard security boundary:
- * if it isn't in `social_post`, it can't leak to friends.
+ * Shared transaction projection — the ONLY surface the friends app reads
+ * for txn-derived content. Denormalized at share time so the raw transaction
+ * row is never exposed.
  *
- * Amount is stored in cents (avoid float drift). Friends app divides by 100
- * for display.
+ * Display fields are nullable: a null column means user toggled that field
+ * off in share settings at the time the row was written. lat/lon are
+ * required (the in-store gate guarantees them) and not user-controllable.
+ * Amount in cents (avoid float drift).
  *
- * One post per (user, transaction) — sharing a txn twice is idempotent.
- * Unshare = hard-delete the post row.
+ * One row per (user, transaction). createdAt is server-only — must be
+ * stripped from Zero projection to avoid leaking timing.
  */
 export const socialPost = pgTable(
   "social_post",
   {
-    /** Optional vibe bucket: '$' | '$$' | '$$$'. */
-    amountBucket: text("amount_bucket"),
-    /** Rounded cents. Nullable when sharing is bucket-only. */
     amountCents: bigint("amount_cents", { mode: "number" }),
+    cardName: text("card_name"),
+    categorySystemKey: text("category_system_key"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    date: timestamp("date").notNull(),
+    date: timestamp("date"),
     id: uuid("id").defaultRandom().primaryKey(),
-    lat: doublePrecision("lat"),
-    lon: doublePrecision("lon"),
-    merchantName: text("merchant_name").notNull(),
+    institutionName: text("institution_name"),
+    lat: doublePrecision("lat").notNull(),
+    logoUrl: text("logo_url"),
+    lon: doublePrecision("lon").notNull(),
+    merchantName: text("merchant_name"),
     note: text("note"),
     transactionId: uuid("transaction_id")
       .notNull()
@@ -44,6 +46,7 @@ export const socialPost = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    website: text("website"),
   },
   (table) => [
     uniqueIndex("social_post_user_txn_uq").on(table.userId, table.transactionId),

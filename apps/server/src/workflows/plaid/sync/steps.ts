@@ -34,6 +34,7 @@ import {
 import { getUserOverrides } from "@cobalt-web/server-data/providers/plaid/transactions/queries";
 import type { UserOverrides } from "@cobalt-web/server-data/providers/plaid/transactions/queries";
 import { enrichTransactionsForPlaidItem } from "@cobalt-web/server-data/places/enrich";
+import { autoShareInStoreTxnsForPlaidItem } from "@cobalt-web/server-data/social/auto-share";
 import type { AccountBase } from "plaid";
 import { FatalError, RetryableError, getWritable } from "workflow";
 
@@ -351,6 +352,19 @@ export async function syncTransactionsStep(
 export async function enrichTransactionsStep(itemId: string) {
   "use step";
   return await enrichTransactionsForPlaidItem(itemId);
+}
+
+/**
+ * Project this user's freshly-synced in-store transactions into `social_post`
+ * applying the user's `social_share_settings` (amount/merchant/location/note
+ * redaction). Hardcoded gate: payment_channel='in store' AND lat/lon present.
+ *
+ * Idempotent — ON CONFLICT DO NOTHING on (user_id, transaction_id). Runs
+ * after `enrichTransactionsStep` so location fields are populated.
+ */
+export async function autoShareInStoreTxnsStep(itemId: string) {
+  "use step";
+  return await autoShareInStoreTxnsForPlaidItem(itemId);
 }
 
 export async function syncBalancesStep(accessToken: string, _itemId: string) {

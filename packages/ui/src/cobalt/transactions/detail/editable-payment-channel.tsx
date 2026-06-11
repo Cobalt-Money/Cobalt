@@ -44,7 +44,7 @@ export function EditablePaymentChannel({
           render={
             <button
               aria-label="Edit payment channel"
-              className="-mx-2 flex items-center gap-2.5 rounded-lg px-2 py-1 text-left transition-colors hover:bg-muted focus:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[popup-open]:bg-muted"
+              className="-mx-2 flex items-center gap-2.5 rounded-lg px-2 py-1 text-left transition-colors hover:bg-foreground/5 focus:outline-none focus-visible:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring data-[popup-open]:bg-foreground/5"
               type="button"
             >
               <span className="flex size-5 shrink-0 items-center justify-center">
@@ -64,7 +64,7 @@ export function EditablePaymentChannel({
             const selected = opt.value === paymentChannel;
             return (
               <button
-                className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-muted ${
+                className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-foreground/5 ${
                   selected ? "font-medium text-foreground" : "text-foreground/85"
                 }`}
                 key={opt.value}

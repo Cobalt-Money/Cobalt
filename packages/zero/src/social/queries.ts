@@ -3,47 +3,66 @@ import { z } from "zod";
 
 import { NO_MATCH_ID } from "../transactions/lib.js";
 import { zql } from "../schema.js";
+import { DEMO_NETWORK_IDS, DEMO_USER_ID } from "./constants.js";
 
 /**
  * Social-graph named queries (`queries.social.*`). Composed in root `queries.ts`.
  *
  * Friendship rows are the source of truth for the friend graph. Posts are
  * the denormalized share artifacts — friends app reads from `social_post`,
- * never from `transaction`.
- *
- * Feed composition (own posts + friends' posts) is done client-side in
- * friends app via two queries (`friendships` + `postsAll` filtered). Doing
- * it server-side requires user→friendship relation traversal that we
- * haven't wired into drizzle-zero relations yet.
+ * never from `transaction`. Posts now created automatically by server-side
+ * Plaid sync step (in-store + has lat/lon) — no client mutator.
  */
 export const socialQueries = {
+  /** Caller's blocked categories (denylist). */
+  categoryBlocklist: defineQuery(({ ctx }) =>
+    zql.socialCategoryBlocklist
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
+      .orderBy("createdAt", "desc"),
+  ),
+
   /**
    * Public profile lookup keyed on a list of user ids — minimal fields
    * (name, image, displayUsername) the friends app needs to render labels
    * next to friend rows. Consumer scopes the id list to its own friend
    * graph before calling, so this trusts the caller.
    */
-  friendProfiles: defineQuery(z.object({ ids: z.array(z.string()).min(1) }), ({ args }) =>
-    zql.user.where("id", "IN", args.ids),
-  ),
+  friendProfiles: defineQuery(z.object({ ids: z.array(z.string()).min(1) }), ({ args, ctx }) => {
+    // Authed callers: trust the id list (consumer pre-scopes to their friend
+    // graph). Anon callers: intersect against the demo network so a malicious
+    // client can't enumerate real user profiles via this query.
+    const ids = ctx?.userId
+      ? args.ids
+      : args.ids.filter((id) => (DEMO_NETWORK_IDS as readonly string[]).includes(id));
+    if (ids.length === 0) {
+      return zql.user.where("id", NO_MATCH_ID);
+    }
+    return zql.user.where("id", "IN", ids);
+  }),
 
   /**
    * Friendships involving the caller. Edge list — each row has user_a_id +
    * user_b_id (sorted). Caller derives "who's my friend" by picking the
    * other id.
    */
-  friendships: defineQuery(({ ctx }) =>
-    zql.socialFriendship
-      .where(({ or, cmp }) =>
-        or(cmp("userAId", ctx?.userId ?? NO_MATCH_ID), cmp("userBId", ctx?.userId ?? NO_MATCH_ID)),
-      )
-      .orderBy("createdAt", "desc"),
+  friendships: defineQuery(({ ctx }) => {
+    // Anon callers read the demo user's friend graph so the landing-page
+    // map renders without auth. See packages/zero/src/social/constants.ts.
+    const callerId = ctx?.userId ?? DEMO_USER_ID;
+    return zql.socialFriendship
+      .where(({ or, cmp }) => or(cmp("userAId", callerId), cmp("userBId", callerId)))
+      .orderBy("createdAt", "desc");
+  }),
+
+  /** Decline rows the caller has written — used to filter pending list. */
+  invitesDeclined: defineQuery(({ ctx }) =>
+    zql.socialInviteDecline.where("declinedByUserId", ctx?.userId ?? NO_MATCH_ID),
   ),
 
   /**
    * Invites targeting the caller — by user_id OR by email match.
-   * Filters to active (not redeemed, not revoked, not expired). Friends app
-   * uses this as the realtime inbox.
+   * Filters to active (not redeemed, not revoked). Caller filters declined
+   * invites client-side via `invitesDeclined`.
    */
   invitesPending: defineQuery(({ ctx }) =>
     zql.socialInvite
@@ -60,39 +79,51 @@ export const socialQueries = {
       .orderBy("createdAt", "desc"),
   ),
 
+  /** Caller's blocked merchants (denylist). */
+  merchantBlocklist: defineQuery(({ ctx }) =>
+    zql.socialMerchantBlocklist
+      .where("userId", ctx?.userId ?? NO_MATCH_ID)
+      .orderBy("createdAt", "desc"),
+  ),
+
   /** Detail view of a post the caller owns. (Friends' posts read via postsAll.) */
   postDetail: defineQuery(z.object({ postId: z.string() }), ({ ctx, args }) =>
     zql.socialPost
       .where("id", args.postId)
-      .where("userId", ctx?.userId ?? NO_MATCH_ID)
+      .where("userId", ctx?.userId ?? DEMO_USER_ID)
       .one(),
   ),
 
   /**
-   * All posts the caller can read. Currently delegates filtering to client
-   * (caller intersects against friendship list). Zero permissions on
-   * `social_post` will eventually enforce this server-side; until then
-   * trust the client to filter.
+   * All posts the caller can read. Authed: returns everything; client
+   * intersects against friendship list. Anon: restricted server-side to
+   * the seeded demo network so we never leak real users' posts to the
+   * landing page.
    *
    * V2: replace with server-side feed scoped via row permissions.
    */
-  postsAll: defineQuery(({ ctx }) => {
-    void ctx;
-    return zql.socialPost.orderBy("date", "desc");
-  }),
+  postsAll: defineQuery(
+    z.object({ friendIds: z.array(z.string()).default([]) }).default({ friendIds: [] }),
+    ({ args, ctx }) => {
+      if (!ctx?.userId) {
+        return zql.socialPost
+          .where("userId", "IN", DEMO_NETWORK_IDS as readonly string[] as string[])
+          .orderBy("date", "desc");
+      }
+      // Authed: scope to viewer's own posts + posts by users in their friend graph.
+      // Caller pre-resolves friendIds from `queries.social.friendships()`.
+      const allowed = [...new Set([ctx.userId, ...args.friendIds])];
+      return zql.socialPost.where("userId", "IN", allowed).orderBy("date", "desc");
+    },
+  ),
 
   /** Posts the caller has shared. */
   postsMine: defineQuery(({ ctx }) =>
-    zql.socialPost.where("userId", ctx?.userId ?? NO_MATCH_ID).orderBy("createdAt", "desc"),
+    zql.socialPost.where("userId", ctx?.userId ?? DEMO_USER_ID).orderBy("createdAt", "desc"),
   ),
 
-  /** Privacy zones for the caller. */
-  privacyZones: defineQuery(({ ctx }) =>
-    zql.socialPrivacyZone.where("userId", ctx?.userId ?? NO_MATCH_ID).orderBy("createdAt", "desc"),
-  ),
-
-  /** Visibility rules for the caller's categories. */
-  visibilityRules: defineQuery(({ ctx }) =>
-    zql.socialVisibilityRule.where("userId", ctx?.userId ?? NO_MATCH_ID),
+  /** Caller's auto-share settings row (single-row by user_id PK). */
+  shareSettings: defineQuery(({ ctx }) =>
+    zql.socialShareSettings.where("userId", ctx?.userId ?? NO_MATCH_ID).one(),
   ),
 };

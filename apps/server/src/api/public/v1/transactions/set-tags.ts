@@ -1,5 +1,6 @@
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { isTransactionShared } from "@cobalt-web/server-data/social";
 import { transactionIdSchema } from "@cobalt-web/server-data/transactions/_shared";
 import { getTransactionDetail } from "@cobalt-web/server-data/transactions/detail";
 import { setTransactionTags } from "@cobalt-web/server-data/transactions/tags/mutations";
@@ -52,8 +53,11 @@ export const setTagsRouter = createApp().openapi(route, async (c) => {
   // after to surface the 404 (and to return the new state).
   await setTransactionTags(user.id, transactionId, tagIds);
   try {
-    const tx = await getTransactionDetail(user.id, transactionId);
-    return c.json(transactionResponseSchema.parse(toTransaction(tx)), 200);
+    const [tx, shared] = await Promise.all([
+      getTransactionDetail(user.id, transactionId),
+      isTransactionShared(user.id, transactionId),
+    ]);
+    return c.json(transactionResponseSchema.parse(toTransaction(tx, shared)), 200);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return c.json({ code: "transaction_not_found", error: "Transaction not found" }, 404);

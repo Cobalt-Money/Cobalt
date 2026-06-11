@@ -279,16 +279,14 @@ function TypePicker({
   onBackspaceWhenEmpty?: () => void;
 }) {
   return (
-    <div
-      className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+    <fieldset
+      className="m-0 grid min-w-0 grid-cols-1 gap-2 border-0 p-0 sm:grid-cols-2"
       onKeyDown={(e) => {
         if (e.key === "Backspace" && onBackspaceWhenEmpty) {
           e.preventDefault();
           onBackspaceWhenEmpty();
         }
       }}
-      // biome-ignore lint/a11y/useSemanticElements: <fieldset> would impose default border styling that breaks the picker grid
-      role="group"
     >
       {TYPE_META.map((m) => (
         <button
@@ -308,7 +306,7 @@ function TypePicker({
           </div>
         </button>
       ))}
-    </div>
+    </fieldset>
   );
 }
 

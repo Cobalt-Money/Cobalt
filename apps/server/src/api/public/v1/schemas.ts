@@ -126,6 +126,10 @@ export const transactionSchema = z
         "Where the transaction happened: `in store`, `online`, or `other`. Null when unknown.",
     }),
     pending: z.boolean(),
+    sharedWithFriends: z.boolean().openapi({
+      description:
+        "True when this transaction has been auto-shared into the user's friends feed (in-store + has coordinates).",
+    }),
     tagIds: z.array(z.string()),
   })
   .openapi("Transaction");

@@ -25,7 +25,8 @@
     "db:studio": "drizzle-kit studio",
     "db:migrate": "bun run ./scripts/migrate-debug.ts --prod",
     "db:migrate:local": "bun run ./scripts/migrate-debug.ts --local",
-    "check:unification-parity": "bun run ./scripts/check-unification-parity.ts"
+    "check:unification-parity": "bun run ./scripts/check-unification-parity.ts",
+    "seed:demo-network": "bun run ./scripts/seed-demo-network.ts"
   },
   "dependencies": {
     "@cobalt-web/env": "workspace:*",

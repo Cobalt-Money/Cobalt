@@ -172,15 +172,13 @@ export function SellPositionForm({
   };
 
   return (
-    <div
-      className="flex flex-col gap-3"
+    <fieldset
+      className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0"
       onKeyDown={(e) => {
         if (e.key === "Backspace" && sharesText === "" && onBackspaceWhenEmpty) {
           onBackspaceWhenEmpty();
         }
       }}
-      // biome-ignore lint/a11y/useSemanticElements: <fieldset> would impose default border styling that breaks the layout
-      role="group"
     >
       <div className="flex items-center gap-3">
         {selected ? <TickerLogo className="shrink-0" size={28} symbol={selected.ticker} /> : null}
@@ -369,6 +367,6 @@ export function SellPositionForm({
           {submitting ? "Selling…" : submitLabel}
         </Button>
       </div>
-    </div>
+    </fieldset>
   );
 }

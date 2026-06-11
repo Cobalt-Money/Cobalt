@@ -1,4 +1,4 @@
-import { enrichTransactionsStep } from "../sync/steps";
+import { autoShareInStoreTxnsStep, enrichTransactionsStep } from "../sync/steps";
 
 export interface EnrichTransactionsResult {
   success: boolean;
@@ -25,6 +25,16 @@ export async function enrichTransactionsWorkflow(
 
   try {
     const result = await enrichTransactionsStep(itemId);
+    // Isolated: auto-share is best-effort. A failure here must not roll back
+    // a successful enrichment.
+    try {
+      await autoShareInStoreTxnsStep(itemId);
+    } catch (shareError) {
+      console.error(`[enrichTransactionsWorkflow] autoShareInStoreTxnsStep failed`, {
+        error: shareError instanceof Error ? shareError.message : shareError,
+        itemId,
+      });
+    }
     return {
       enriched: result.enriched,
       itemId,

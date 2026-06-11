@@ -146,26 +146,25 @@ export function BabyTransactions({ items, onOpen, tagsById }: BabyTransactionsPr
         <Fragment key={section.monthKey}>
           <div
             className="sticky top-0 z-10 grid rounded-lg bg-sidebar font-medium text-foreground"
-            role="row"
             style={{
               gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
               height: ROW_HEIGHT,
             }}
           >
-            <div className="flex items-center p-3" role="cell">
+            <div className="flex items-center p-3">
               <span className="inline-flex w-5 justify-center font-normal tabular-nums text-muted-foreground text-sm">
                 {section.rows.length}
               </span>
             </div>
-            <div className="flex items-center p-3" role="cell">
+            <div className="flex items-center p-3">
               <span className="truncate whitespace-nowrap font-medium text-foreground text-sm">
                 {section.label}
               </span>
             </div>
-            <div className="p-3" role="presentation" />
-            <div className="p-3" role="presentation" />
-            <div className="p-3" role="presentation" />
-            <div className="p-3" role="presentation" />
+            <div className="p-3" />
+            <div className="p-3" />
+            <div className="p-3" />
+            <div className="p-3" />
           </div>
 
           {section.rows.map((tx) => {

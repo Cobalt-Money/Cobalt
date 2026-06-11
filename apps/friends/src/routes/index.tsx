@@ -1,15 +1,17 @@
-import { Navigate, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 
 import { FriendsMap } from "../components/map";
+import { OnboardingModal } from "../components/onboarding-modal";
 import { TopBar } from "../components/top-bar";
 import { authClient } from "../lib/auth-client";
 
 const searchSchema = z.object({
   firstTime: z.boolean().optional(),
   inviteError: z.string().optional(),
+  onboarding: z.string().optional(),
   welcomedBy: z.string().optional(),
 });
 
@@ -20,7 +22,7 @@ export const Route = createFileRoute("/")({
 
 function MapPage() {
   const session = authClient.useSession();
-  const { welcomedBy, firstTime, inviteError } = Route.useSearch();
+  const { welcomedBy, firstTime, inviteError, onboarding } = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
 
   // One-shot flash on mount: fire toast then strip the query params so a
@@ -45,15 +47,60 @@ function MapPage() {
     return <FullscreenMessage text="Loading…" />;
   }
 
-  if (!session.data?.user) {
-    return <Navigate to="/signin" replace />;
-  }
-
+  // Anon visitors see the seeded demo network rather than a signin gate.
+  // Zero swaps `ctx.userId` for DEMO_USER_ID server-side; same map UI works.
+  // TopBar reads the same session and swaps profile menu → signin CTAs.
   return (
     <div className="relative h-screen w-screen overflow-hidden">
       <FriendsMap />
       <TopBar />
+      {session.data?.user ? (
+        <OnboardingGate
+          force={onboarding === "1"}
+          user={session.data.user as { id: string; isAnonymous?: boolean }}
+        />
+      ) : null}
     </div>
+  );
+}
+
+const onboardedKey = (userId: string) => `friends.onboarded.${userId}`;
+
+function OnboardingGate({
+  force,
+  user,
+}: {
+  force: boolean;
+  user: { id: string; isAnonymous?: boolean };
+}) {
+  const storageKey = onboardedKey(user.id);
+  const [open, setOpen] = useState(() => {
+    if (force) {
+      return true;
+    }
+    if (user.isAnonymous) {
+      return false;
+    }
+    if (typeof window === "undefined") {
+      return false;
+    }
+    return window.localStorage.getItem(storageKey) !== "1";
+  });
+
+  if (!open) {
+    return null;
+  }
+  return (
+    <OnboardingModal
+      open={open}
+      onComplete={() => {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(storageKey, "1");
+        }
+        setOpen(false);
+      }}
+      onDismiss={() => setOpen(false)}
+    />
   );
 }
 

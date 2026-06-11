@@ -1,5 +1,6 @@
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { getSharedTransactionIds, isTransactionShared } from "@cobalt-web/server-data/social";
 import { assertCategoryOwned } from "@cobalt-web/server-data/transactions/_shared";
 import { locationJsonSchema } from "@cobalt-web/server-data/transactions/_shared/schema";
 import { createManualTransactions } from "@cobalt-web/server-data/transactions/create";
@@ -158,12 +159,15 @@ export const listRouter = createApp()
       ...(categoryGroup ? { categoryGroup } : {}),
       startDate: q.startDate,
     });
+    const filtered = result.transactions.filter((t) => !accountIds || accountIds.has(t.accountId));
+    const sharedIds = await getSharedTransactionIds(
+      user.id,
+      filtered.map((t) => t.id),
+    );
     return c.json(
       transactionsResponseSchema.parse({
         hasMore: result.hasMore,
-        items: result.transactions
-          .filter((t) => !accountIds || accountIds.has(t.accountId))
-          .map(toTransaction),
+        items: filtered.map((t) => toTransaction(t, sharedIds.has(t.id))),
         nextCursor: result.nextCursor,
       }),
       200,
@@ -197,8 +201,11 @@ export const listRouter = createApp()
       if (body.tagIds && body.tagIds.length > 0) {
         await setTransactionTags(user.id, newId, body.tagIds);
       }
-      const tx = await getTransactionDetail(user.id, newId);
-      return c.json(transactionResponseSchema.parse(toTransaction(tx)), 201);
+      const [tx, shared] = await Promise.all([
+        getTransactionDetail(user.id, newId),
+        isTransactionShared(user.id, newId),
+      ]);
+      return c.json(transactionResponseSchema.parse(toTransaction(tx, shared)), 201);
     } catch (error) {
       if (error instanceof ApiError && error.status === 400) {
         return c.json({ code: error.code, error: error.message }, 400);

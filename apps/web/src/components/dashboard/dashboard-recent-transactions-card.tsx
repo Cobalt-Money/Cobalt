@@ -53,7 +53,6 @@ export function DashboardRecentTransactionsCard() {
                     <MerchantLogo
                       className="size-10 shrink-0"
                       counterparties={null}
-                      deferUntilVisible={false}
                       logoUrl={tx.logoUrl ?? null}
                       merchantName={displayName}
                       website={tx.website ?? null}

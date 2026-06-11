@@ -1,5 +1,6 @@
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
 import { errorResponseWithCodeSchema } from "@cobalt-web/server-data/_shared/schemas";
+import { isTransactionShared } from "@cobalt-web/server-data/social";
 import { transactionIdSchema } from "@cobalt-web/server-data/transactions/_shared";
 import { getTransactionDetail } from "@cobalt-web/server-data/transactions/detail";
 import { createRoute } from "@hono/zod-openapi";
@@ -31,8 +32,11 @@ export const detailRouter = createApp().openapi(route, async (c) => {
   const { user } = c.var;
   const { transactionId } = c.req.valid("param");
   try {
-    const tx = await getTransactionDetail(user.id, transactionId);
-    return c.json(transactionResponseSchema.parse(toTransaction(tx)), 200);
+    const [tx, shared] = await Promise.all([
+      getTransactionDetail(user.id, transactionId),
+      isTransactionShared(user.id, transactionId),
+    ]);
+    return c.json(transactionResponseSchema.parse(toTransaction(tx, shared)), 200);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return c.json({ code: "transaction_not_found", error: "Transaction not found" }, 404);

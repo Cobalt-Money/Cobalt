@@ -49,7 +49,8 @@ export interface LocationSearchState {
 }
 
 export interface TransactionDetailEditHandlers {
-  locationSearch: LocationSearchState;
+  /** Brandfetch/geocode typeahead state. Omit to render read-only location row. */
+  locationSearch?: LocationSearchState;
   onResetCategory: () => void;
   onResetDate: () => void;
   onResetNotes: () => void;
@@ -64,8 +65,8 @@ export interface TransactionDetailEditHandlers {
   onUpdateDate: (dateIso: string) => void;
   onUpdateLocation: (location: LocationJson) => void;
   onUpdateMerchant: (args: { merchantName: string | null; website: string | null }) => void;
-  /** Brandfetch typeahead for merchant editing. */
-  merchantSearch: MerchantSearchState;
+  /** Brandfetch typeahead for merchant editing. Omit to render read-only merchant logo + name. */
+  merchantSearch?: MerchantSearchState;
   onUpdateName: (name: string) => void;
   onUpdateNotes: (markdown: string) => void;
   /** Only set for manual transactions; absence hides the delete affordance. */
@@ -86,11 +87,15 @@ export function TransactionDetailSummary({
   transaction,
   hideLocation = false,
   hideLocationMap = false,
+  person,
+  personAvatarUrl,
 }: {
   edit?: TransactionDetailEditHandlers;
   transaction: TransactionResponse;
   hideLocation?: boolean;
   hideLocationMap?: boolean;
+  person?: string | null;
+  personAvatarUrl?: string | null;
 }) {
   const isDebit = transaction.amount < 0;
   const amountColor = isDebit ? "text-destructive" : "text-success";
@@ -102,7 +107,7 @@ export function TransactionDetailSummary({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start gap-4">
-        {edit ? (
+        {edit && edit.merchantSearch ? (
           <EditableMerchantLogo
             merchantSearch={edit.merchantSearch}
             onSubmit={edit.onUpdateMerchant}
@@ -112,7 +117,6 @@ export function TransactionDetailSummary({
           <MerchantLogo
             className="size-12 shrink-0"
             counterparties={transaction.counterparties}
-            deferUntilVisible={false}
             logoUrl={transaction.logoUrl}
             merchantName={transaction.merchantName}
             website={transaction.website}
@@ -136,6 +140,7 @@ export function TransactionDetailSummary({
       </p>
 
       <div className="flex flex-col gap-3">
+        {person && <PersonRow name={person} avatarUrl={personAvatarUrl ?? null} />}
         <div className="flex items-center gap-2.5 text-base">
           <img
             alt=""
@@ -196,7 +201,7 @@ export function TransactionDetailSummary({
           <ReadOnlyCategoryRow category={category} />
         )}
 
-        {edit ? (
+        {edit && edit.locationSearch ? (
           <EditableLocation
             isOverridden={false}
             loading={edit.locationSearch.loading}
@@ -264,6 +269,23 @@ function TagsRow({
         options={[...availableTags]}
         selectedIds={[...selectedIds]}
       />
+    </div>
+  );
+}
+
+function PersonRow({ name, avatarUrl }: { name: string; avatarUrl: string | null }) {
+  return (
+    <div className="flex items-center gap-2.5 text-base">
+      <span className="flex size-5 shrink-0 items-center justify-center">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="size-5 rounded-full object-cover" />
+        ) : (
+          <span className="flex size-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
+            {name.slice(0, 1).toUpperCase()}
+          </span>
+        )}
+      </span>
+      <span className="text-foreground">{name}</span>
     </div>
   );
 }

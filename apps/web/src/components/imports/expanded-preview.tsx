@@ -247,16 +247,14 @@ export function ExpandedPreview({ jobId }: { jobId: string }) {
       key={key}
     >
       {label}
-      <div
+      <hr
         aria-label={`Resize ${label} column`}
         aria-orientation="vertical"
-        className="-right-px absolute top-0 z-20 h-full w-1.5 cursor-col-resize select-none hover:bg-foreground/20"
+        className="-right-px absolute top-0 z-20 h-full w-1.5 cursor-col-resize select-none border-0 hover:bg-foreground/20"
         onMouseDown={(e) => {
           e.preventDefault();
           startResize(key, e.clientX, columnWidths[key]);
         }}
-        // biome-ignore lint/a11y/useSemanticElements: interactive draggable resize handle, <hr> wouldn't accept event handlers cleanly
-        role="separator"
         tabIndex={-1}
       />
     </th>

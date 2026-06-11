@@ -116,30 +116,19 @@ export function MerchantLogo(
   props: Pick<TransactionResponse, "counterparties" | "logoUrl" | "merchantName" | "website"> & {
     /** Wrapper size (default `size-5` for table rows). */
     className?: string;
-    deferUntilVisible?: boolean;
   },
 ) {
-  const { className, counterparties, deferUntilVisible, logoUrl, merchantName, website } = props;
+  const { className, counterparties, logoUrl, merchantName, website } = props;
   const candidates = useMemo(
     () => buildMerchantLogoCandidates({ counterparties, logoUrl, website }),
     [counterparties, logoUrl, website],
   );
-  const alt = merchantName?.trim() ? `${merchantName} logo` : "";
-  const fallbackText = (() => {
-    const t = merchantName?.trim();
-    if (!t) {
-      return "?";
-    }
-    return t.slice(0, 1).toUpperCase();
-  })();
-
   return (
     <LogoImageWithFallback
-      alt={alt}
+      alt={merchantName ? `${merchantName} logo` : ""}
       candidates={candidates}
       className={className}
-      deferUntilVisible={deferUntilVisible}
-      fallbackText={fallbackText}
+      fallbackText={merchantName ?? "?"}
       imgClassName="object-cover"
     />
   );

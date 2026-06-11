@@ -17,7 +17,9 @@ export function ZeroProvider({ children }: { children: ReactNode }) {
     [authenticatedUserId],
   );
 
-  return (
+  // Logged-out clients: omit `userID` entirely (Zero ≥ 1.6 requires this for
+  // anonymous sync). Authed clients: pass the real user id.
+  return authenticatedUserId ? (
     <BaseZeroProvider
       cacheURL={cacheURL}
       context={context}
@@ -25,6 +27,10 @@ export function ZeroProvider({ children }: { children: ReactNode }) {
       schema={schema}
       userID={authenticatedUserId}
     >
+      {children}
+    </BaseZeroProvider>
+  ) : (
+    <BaseZeroProvider cacheURL={cacheURL} context={undefined} mutators={mutators} schema={schema}>
       {children}
     </BaseZeroProvider>
   );

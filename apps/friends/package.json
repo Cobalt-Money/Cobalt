@@ -15,6 +15,7 @@
   "dependencies": {
     "@cobalt-web/auth": "workspace:*",
     "@cobalt-web/auth-plugin-invite": "workspace:*",
+    "@cobalt-web/clients": "workspace:*",
     "@cobalt-web/env": "workspace:*",
     "@cobalt-web/ui": "workspace:*",
     "@cobalt-web/zero": "workspace:*",
@@ -35,6 +36,7 @@
     "@tailwindcss/vite": "^4.2.4",
     "@tanstack/react-query": "^5.62.7",
     "@tanstack/react-router": "^1.96.3",
+    "@tanstack/react-start": "^1.168.25",
     "better-auth": "catalog:",
     "deck.gl": "^9.1.0",
     "hono": "^4.12.8",
@@ -45,17 +47,16 @@
     "react-plaid-link": "^4.1.1",
     "sonner": "catalog:",
     "tailwindcss": "catalog:",
-    "vite": "^6.0.0"
+    "vite": "^7.0.0"
   },
   "devDependencies": {
     "@react-grab/mcp": "^0.1.29",
-    "@tanstack/router-plugin": "^1.96.3",
     "@types/bun": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^5.2.0",
     "react-grab": "^0.1.29",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^3.2.6"
   }
 }

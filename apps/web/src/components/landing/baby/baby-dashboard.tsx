@@ -453,7 +453,6 @@ export function BabyDashboard() {
                           <MerchantLogo
                             className="size-10 shrink-0"
                             counterparties={null}
-                            deferUntilVisible={false}
                             logoUrl={tx.logoUrl}
                             merchantName={tx.name}
                             website={tx.website}

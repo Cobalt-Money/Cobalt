@@ -408,15 +408,13 @@ export function AddPositionForm({
   };
 
   return (
-    <div
-      className="flex flex-col gap-3"
+    <fieldset
+      className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0"
       onKeyDown={(e) => {
         if (e.key === "Backspace" && !position.ticker.trim() && onBackspaceWhenEmpty) {
           onBackspaceWhenEmpty();
         }
       }}
-      // biome-ignore lint/a11y/useSemanticElements: <fieldset> would impose default border styling that breaks the layout
-      role="group"
     >
       <PositionRow onChange={setPosition} position={position} tickerSearch={tickerSearch} />
 
@@ -468,6 +466,6 @@ export function AddPositionForm({
           {submitting ? "Saving…" : submitLabel}
         </Button>
       </div>
-    </div>
+    </fieldset>
   );
 }

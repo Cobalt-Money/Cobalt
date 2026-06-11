@@ -17,6 +17,7 @@
     "./cobalt/brokerage/*": "./src/cobalt/brokerage/*",
     "./cobalt/imports/*": "./src/cobalt/imports/*",
     "./cobalt/subscription/*": "./src/cobalt/subscription/*",
+    "./cobalt/hooks/*": "./src/cobalt/hooks/*.ts",
     "./cobalt/*": "./src/cobalt/*.tsx",
     "./assets/*": "./src/assets/*",
     "./hooks/*": "./src/hooks/*.ts",
@@ -47,6 +48,7 @@
     "@number-flow/react": "^0.6.0",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@rive-app/react-webgl2": "^4.27.3",
+    "@rocicorp/zero": "catalog:",
     "@streamdown/cjk": "^1.0.3",
     "@streamdown/code": "^1.1.1",
     "@streamdown/math": "^1.0.2",
@@ -104,6 +106,6 @@
     "@types/react-dom": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.0"
+    "vitest": "^3.2.6"
   }
 }
