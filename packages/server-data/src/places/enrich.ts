@@ -120,10 +120,14 @@ export async function enrichTransactionsForUser(
     eq(transactionTable.source, "plaid"),
     eq(transactionTable.paymentChannel, "in store"),
     inArray(transactionTable.pfcPrimary, [...ENRICHABLE_PFC]),
-    // Skip already-enriched rows so the workflow loop only redoes what didn't
-    // land last time. Every chunked step call drains the next `limit` of
-    // these — once the count hits 0, the workflow exits.
-    sql`${transactionTable.placeId} IS NULL`,
+    // Skip rows we've already tried this lifetime. `place_id IS NOT NULL`
+    // means we landed a match. `place_match_confidence IS NOT NULL` means
+    // we *attempted* the matcher (it either matched, returned a low-confidence
+    // result, returned null, or threw — see the sentinel writes below). Both
+    // states exclude the candidate from this query so successive batch calls
+    // walk forward through the queue instead of pulling the same un-matched
+    // rows on every invocation.
+    sql`${transactionTable.placeId} IS NULL AND ${transactionTable.placeMatchConfidence} IS NULL`,
     or(
       isNotNull(transactionTable.lat),
       isNotNull(transactionTable.address),
@@ -156,11 +160,44 @@ export async function enrichTransactionsForUser(
     .limit(limit)) as CandidateRow[];
 
   let enriched = 0;
+  let failed = 0;
   for (const t of candidates) {
-    const wrote = await enrichOneCandidate(t, runId);
-    if (wrote) {
-      enriched += 1;
+    try {
+      const wrote = await enrichOneCandidate(t, runId);
+      if (wrote) {
+        enriched += 1;
+      }
+    } catch (error) {
+      // Isolate per-candidate failures. Without this, one bad row throws,
+      // the step throws, the workflow framework retries the step 3×, the
+      // same poisonous candidate is still first in the `place_id IS NULL`
+      // ordering, retries exhaust ("Max retries reached"), and the entire
+      // workflow run dies with 99% of the work unattempted.
+      // Log loud so we can surface the actual cause in Vercel logs.
+      failed += 1;
+      console.error("[enrichTransactionsForUser] candidate failed", {
+        candidateId: t.id,
+        error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+        runId,
+        stack: error instanceof Error ? error.stack?.slice(0, 1500) : undefined,
+      });
+      // Best-effort mark as tried so future batches don't re-pick it. If even
+      // *this* write fails (e.g. connection dead), swallow — the candidate
+      // will still get LIMIT-picked next batch but we won't take down the
+      // step. Worst case is wasted matcher work, not workflow abort.
+      try {
+        await markCandidateTried(t.id);
+      } catch (markError) {
+        console.warn("[enrichTransactionsForUser] markCandidateTried failed", {
+          candidateId: t.id,
+          error: markError instanceof Error ? markError.message : markError,
+          runId,
+        });
+      }
     }
+  }
+  if (failed > 0) {
+    console.warn(`[enrichTransactionsForUser] run ${runId} skipped ${failed} candidates`);
   }
 
   // Snapshot how many *still* need work so the workflow knows whether to keep
@@ -175,9 +212,28 @@ export async function enrichTransactionsForUser(
   return { enriched, remaining, runId, scanned: candidates.length };
 }
 
+/**
+ * Sentinel written to `place_match_confidence` when we *attempted* a candidate
+ * but didn't land a match (matcher returned null, below the confidence floor,
+ * or buildWrites had nothing to write). `0` distinguishes "tried + missed"
+ * from "never tried" (NULL). The candidates query filters out non-null values
+ * so successive batches don't re-pull the same misses on every step call —
+ * which would otherwise loop forever against any candidate whose merchant
+ * just isn't in the place directory.
+ */
+const TRIED_NO_MATCH_SENTINEL = "0";
+
+async function markCandidateTried(transactionId: string): Promise<void> {
+  await db
+    .update(transactionTable)
+    .set({ placeMatchConfidence: TRIED_NO_MATCH_SENTINEL, updatedAt: new Date() })
+    .where(eq(transactionTable.id, transactionId));
+}
+
 async function enrichOneCandidate(t: CandidateRow, runId: string): Promise<boolean> {
   const sourceName = t.merchantName ?? t.name;
   if (!sourceName) {
+    await markCandidateTried(t.id);
     return false;
   }
 
@@ -192,11 +248,13 @@ async function enrichOneCandidate(t: CandidateRow, runId: string): Promise<boole
     storeNumber: t.storeNumber,
   });
   if (!res || res.confidence < CONFIDENCE_FLOOR) {
+    await markCandidateTried(t.id);
     return false;
   }
 
   const writes = buildWrites(t, res);
   if (Object.keys(writes.set).length === 0) {
+    await markCandidateTried(t.id);
     return false;
   }
 
