@@ -1,7 +1,6 @@
 import { Crepe } from "@milkdown/crepe";
 import { editorViewCtx } from "@milkdown/kit/core";
 import { replaceAll } from "@milkdown/kit/utils";
-import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
 import { useCallback, useEffect, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
@@ -15,9 +14,12 @@ export interface TransactionNotesProps {
   onUpdate: (markdown: string) => void;
 }
 
-function TransactionNotesEditor({ notes, onReset, onUpdate }: TransactionNotesProps) {
+export function TransactionNotes({ notes, onReset, onUpdate }: TransactionNotesProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const crepeRef = useRef<Crepe | null>(null);
+  const lifecycleRef = useRef<Promise<void>>(Promise.resolve());
   const lastCommittedRef = useRef<string>(notes ?? "");
+  const initialNotesRef = useRef<string>(notes ?? "");
 
   const commit = useCallback(
     (md: string) => {
@@ -44,42 +46,100 @@ function TransactionNotesEditor({ notes, onReset, onUpdate }: TransactionNotesPr
   const debouncedCommitRef = useRef(debouncedCommit);
   debouncedCommitRef.current = debouncedCommit;
 
-  useEditor((root) => {
-    const crepe = new Crepe({
-      defaultValue: notes ?? "",
-      featureConfigs: {
-        [Crepe.Feature.Placeholder]: { mode: "block", text: "Add a note…" },
-      },
-      features: {
-        [Crepe.Feature.BlockEdit]: false,
-        [Crepe.Feature.CodeMirror]: false,
-        [Crepe.Feature.ImageBlock]: false,
-        [Crepe.Feature.Latex]: false,
-        [Crepe.Feature.LinkTooltip]: false,
-        [Crepe.Feature.Toolbar]: false,
-      },
-      root,
-    });
-    createSlashBundle().apply(crepe.editor);
-    crepe.on((listener) => {
-      listener.markdownUpdated((_ctx, markdown) => {
-        debouncedCommitRef.current(markdown);
+  useEffect(() => {
+    const div = containerRef.current;
+    if (!div) {
+      return;
+    }
+    const state: { crepe: Crepe | null; disposed: boolean } = { crepe: null, disposed: false };
+
+    async function safeDestroy(crepe: Crepe) {
+      try {
+        await crepe.destroy();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function mount() {
+      if (state.disposed) {
+        return;
+      }
+      const crepe = new Crepe({
+        defaultValue: initialNotesRef.current,
+        featureConfigs: {
+          [Crepe.Feature.Placeholder]: { mode: "block", text: "Add a note…" },
+        },
+        features: {
+          [Crepe.Feature.BlockEdit]: false,
+          [Crepe.Feature.CodeMirror]: false,
+          [Crepe.Feature.ImageBlock]: false,
+          [Crepe.Feature.Latex]: false,
+          [Crepe.Feature.LinkTooltip]: false,
+          [Crepe.Feature.Toolbar]: false,
+        },
+        root: div,
       });
-      listener.blur(() => {
-        debouncedCommitRef.current.cancel();
-        commitRef.current(crepe.getMarkdown());
+      createSlashBundle().apply(crepe.editor);
+      crepe.on((listener) => {
+        listener.markdownUpdated((_ctx, markdown) => {
+          debouncedCommitRef.current(markdown);
+        });
+        listener.blur(() => {
+          debouncedCommitRef.current.cancel();
+          commitRef.current(crepe.getMarkdown());
+        });
       });
-    });
-    crepeRef.current = crepe;
-    return crepe;
+      try {
+        await crepe.create();
+      } catch (error) {
+        console.error(error);
+        return;
+      }
+      if (state.disposed) {
+        await safeDestroy(crepe);
+        return;
+      }
+      state.crepe = crepe;
+      crepeRef.current = crepe;
+    }
+
+    async function unmount() {
+      const { crepe } = state;
+      if (!crepe) {
+        return;
+      }
+      if (crepeRef.current === crepe) {
+        crepeRef.current = null;
+      }
+      state.crepe = null;
+      await safeDestroy(crepe);
+    }
+
+    const previous = lifecycleRef.current;
+    lifecycleRef.current = (async () => {
+      await previous;
+      await mount();
+    })();
+
+    return () => {
+      state.disposed = true;
+      const prior = lifecycleRef.current;
+      lifecycleRef.current = (async () => {
+        await prior;
+        await unmount();
+      })();
+    };
   }, []);
 
   useEffect(() => {
     const crepe = crepeRef.current;
+    const incoming = notes ?? "";
     if (!crepe) {
+      initialNotesRef.current = incoming;
+      lastCommittedRef.current = incoming;
       return;
     }
-    const incoming = notes ?? "";
     if (incoming === lastCommittedRef.current) {
       return;
     }
@@ -117,16 +177,8 @@ function TransactionNotesEditor({ notes, onReset, onUpdate }: TransactionNotesPr
 
   return (
     <div className="w-full min-w-0" onKeyDown={handleKeyDown} role="presentation">
-      <Milkdown />
+      <div data-milkdown-root ref={containerRef} />
     </div>
-  );
-}
-
-export function TransactionNotes(props: TransactionNotesProps) {
-  return (
-    <MilkdownProvider>
-      <TransactionNotesEditor {...props} />
-    </MilkdownProvider>
   );
 }
 
