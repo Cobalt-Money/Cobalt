@@ -1,0 +1,23 @@
+{
+  "name": "@cobalt-web/emails",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    "./*": {
+      "default": "./src/*.tsx"
+    }
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.8",
+    "react": "catalog:"
+  },
+  "devDependencies": {
+    "@cobalt-web/config": "workspace:*",
+    "@types/react": "catalog:",
+    "typescript": "^5.9.3"
+  }
+}

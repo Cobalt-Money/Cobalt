@@ -18,6 +18,7 @@
     "@better-auth/stripe": "1.7.0-beta.3",
     "@cobalt-web/auth-plugin-invite": "workspace:*",
     "@cobalt-web/db": "workspace:*",
+    "@cobalt-web/emails": "workspace:*",
     "@cobalt-web/env": "workspace:*",
     "@upstash/redis": "^1.38.0",
     "better-auth": "1.7.0-beta.3",
