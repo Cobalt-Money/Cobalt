@@ -70,7 +70,7 @@ export function TopBar() {
 
   const onSignOut = useCallback(async () => {
     await authClient.signOut();
-    void navigate({ to: "/signin" });
+    void navigate({ to: "/" });
   }, [navigate]);
 
   const initial = (user?.name ?? user?.email ?? "?").trim().charAt(0).toUpperCase();
