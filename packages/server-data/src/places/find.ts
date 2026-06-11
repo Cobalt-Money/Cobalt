@@ -199,12 +199,22 @@ function simExpr(norm: string, compact: string) {
 }
 
 /**
- * Trgm pre-filter for the WHERE clause. The `%>` (word-similarity) operator
- * is what `pg_trgm.word_similarity_threshold` gates — keeps the planner on
- * the GIN index instead of a seq scan.
+ * Trgm pre-filter for the WHERE clause. Uses the function form of
+ * word_similarity with the threshold inline instead of the GUC-gated `%>`
+ * operator. Same trgm semantics — `a %> b` is `word_similarity(b, a) >= GUC`
+ * per PG docs — but we don't need `SET LOCAL pg_trgm.word_similarity_threshold`
+ * so each matcher call is one plain SELECT instead of a BEGIN/SET/SELECT/COMMIT
+ * round-trip. That kept the per-call db.transaction wrap from burning the
+ * connection on long enrichment passes (10× fewer round-trips per candidate).
+ *
+ * GIN index `gin_trgm_ops` still applies — Postgres planner rewrites
+ * `word_similarity(const, col) >= 0.4` against the same operator class.
  */
 function trgmFilter(norm: string, compact: string) {
-  return sql`(${place.brandNameNormalized} %> ${norm} OR ${place.brandNameCompact} %> ${compact})`;
+  return sql`(
+    word_similarity(${norm}, ${place.brandNameNormalized}) >= ${TRGM_THRESHOLD}
+    OR word_similarity(${compact}, ${place.brandNameCompact}) >= ${TRGM_THRESHOLD}
+  )`;
 }
 
 function rankAndPick(
@@ -229,22 +239,19 @@ async function byStoreNumber(
   storeNumber: string,
   region: string,
 ): Promise<MatchResult | null> {
-  const rows = (await db.transaction(async (tx) => {
-    await tx.execute(sql.raw(`SET LOCAL pg_trgm.word_similarity_threshold = ${TRGM_THRESHOLD}`));
-    return tx
-      .select({ ...getColumns(place), sim: simExpr(norm, compact) })
-      .from(place)
-      .where(
-        sql`${place.storeNumber} = ${storeNumber}
-          AND ${place.region} = ${region}
-          AND ${place.deletedAt} IS NULL
-          AND ${trgmFilter(norm, compact)}`,
-      )
-      .orderBy(
-        sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
-      )
-      .limit(1);
-  })) as (Place & { sim: number | string })[];
+  const rows = (await db
+    .select({ ...getColumns(place), sim: simExpr(norm, compact) })
+    .from(place)
+    .where(
+      sql`${place.storeNumber} = ${storeNumber}
+        AND ${place.region} = ${region}
+        AND ${place.deletedAt} IS NULL
+        AND ${trgmFilter(norm, compact)}`,
+    )
+    .orderBy(
+      sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
+    )
+    .limit(1)) as (Place & { sim: number | string })[];
   return rankAndPick(rows, "store_number");
 }
 
@@ -254,23 +261,20 @@ async function byGeo(
   lat: number,
   lon: number,
 ): Promise<MatchResult | null> {
-  const rows = (await db.transaction(async (tx) => {
-    await tx.execute(sql.raw(`SET LOCAL pg_trgm.word_similarity_threshold = ${TRGM_THRESHOLD}`));
-    return tx
-      .select({ ...getColumns(place), sim: simExpr(norm, compact) })
-      .from(place)
-      .where(
-        sql`${place.lat} IS NOT NULL
-          AND ${place.lon} IS NOT NULL
-          AND ${place.deletedAt} IS NULL
-          AND earth_distance(ll_to_earth(${place.lat}, ${place.lon}), ll_to_earth(${lat}, ${lon})) < ${GEO_RADIUS_M}
-          AND ${trgmFilter(norm, compact)}`,
-      )
-      .orderBy(
-        sql`earth_distance(ll_to_earth(${place.lat}, ${place.lon}), ll_to_earth(${lat}, ${lon})) ASC, sim DESC`,
-      )
-      .limit(1);
-  })) as (Place & { sim: number | string })[];
+  const rows = (await db
+    .select({ ...getColumns(place), sim: simExpr(norm, compact) })
+    .from(place)
+    .where(
+      sql`${place.lat} IS NOT NULL
+        AND ${place.lon} IS NOT NULL
+        AND ${place.deletedAt} IS NULL
+        AND earth_distance(ll_to_earth(${place.lat}, ${place.lon}), ll_to_earth(${lat}, ${lon})) < ${GEO_RADIUS_M}
+        AND ${trgmFilter(norm, compact)}`,
+    )
+    .orderBy(
+      sql`earth_distance(ll_to_earth(${place.lat}, ${place.lon}), ll_to_earth(${lat}, ${lon})) ASC, sim DESC`,
+    )
+    .limit(1)) as (Place & { sim: number | string })[];
   return rankAndPick(rows, "geo");
 }
 
@@ -281,22 +285,19 @@ async function byPostal(
   region: string,
 ): Promise<MatchResult | null> {
   const zip5 = postalCode.slice(0, 5);
-  const rows = (await db.transaction(async (tx) => {
-    await tx.execute(sql.raw(`SET LOCAL pg_trgm.word_similarity_threshold = ${TRGM_THRESHOLD}`));
-    return tx
-      .select({ ...getColumns(place), sim: simExpr(norm, compact) })
-      .from(place)
-      .where(
-        sql`${place.postalCode} = ${zip5}
-          AND ${place.region} = ${region}
-          AND ${place.deletedAt} IS NULL
-          AND ${trgmFilter(norm, compact)}`,
-      )
-      .orderBy(
-        sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
-      )
-      .limit(1);
-  })) as (Place & { sim: number | string })[];
+  const rows = (await db
+    .select({ ...getColumns(place), sim: simExpr(norm, compact) })
+    .from(place)
+    .where(
+      sql`${place.postalCode} = ${zip5}
+        AND ${place.region} = ${region}
+        AND ${place.deletedAt} IS NULL
+        AND ${trgmFilter(norm, compact)}`,
+    )
+    .orderBy(
+      sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
+    )
+    .limit(1)) as (Place & { sim: number | string })[];
   return rankAndPick(rows, "postal");
 }
 
@@ -314,26 +315,23 @@ async function byLocalityZips(
   if (zip5s.length === 0) {
     return null;
   }
-  const rows = (await db.transaction(async (tx) => {
-    await tx.execute(sql.raw(`SET LOCAL pg_trgm.word_similarity_threshold = ${TRGM_THRESHOLD}`));
-    const zipList = sql.join(
-      zip5s.map((z) => sql`${z}`),
-      sql`, `,
-    );
-    return tx
-      .select({ ...getColumns(place), sim: simExpr(norm, compact) })
-      .from(place)
-      .where(
-        sql`${place.postalCode} IN (${zipList})
-          AND ${place.region} = ${region}
-          AND ${place.deletedAt} IS NULL
-          AND ${trgmFilter(norm, compact)}`,
-      )
-      .orderBy(
-        sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
-      )
-      .limit(1);
-  })) as (Place & { sim: number | string })[];
+  const zipList = sql.join(
+    zip5s.map((z) => sql`${z}`),
+    sql`, `,
+  );
+  const rows = (await db
+    .select({ ...getColumns(place), sim: simExpr(norm, compact) })
+    .from(place)
+    .where(
+      sql`${place.postalCode} IN (${zipList})
+        AND ${place.region} = ${region}
+        AND ${place.deletedAt} IS NULL
+        AND ${trgmFilter(norm, compact)}`,
+    )
+    .orderBy(
+      sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
+    )
+    .limit(1)) as (Place & { sim: number | string })[];
   return rankAndPick(rows, "locality_zip");
 }
 
@@ -356,23 +354,20 @@ async function byAddress(
   const cityCandidates = expandCityCandidates(city, region, postalCode);
   const cityClause = cityCandidates.length > 0 ? sql`AND ${cityInExpr(cityCandidates)}` : sql``;
 
-  const rows = (await db.transaction(async (tx) => {
-    await tx.execute(sql.raw(`SET LOCAL pg_trgm.word_similarity_threshold = ${TRGM_THRESHOLD}`));
-    return tx
-      .select({ ...getColumns(place), sim: simExpr(norm, compact) })
-      .from(place)
-      .where(
-        sql`${place.region} = ${region}
-          AND ${place.deletedAt} IS NULL
-          AND ${addressMatchExpr(normAddr)}
-          ${cityClause}
-          AND ${trgmFilter(norm, compact)}`,
-      )
-      .orderBy(
-        sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
-      )
-      .limit(1);
-  })) as (Place & { sim: number | string })[];
+  const rows = (await db
+    .select({ ...getColumns(place), sim: simExpr(norm, compact) })
+    .from(place)
+    .where(
+      sql`${place.region} = ${region}
+        AND ${place.deletedAt} IS NULL
+        AND ${addressMatchExpr(normAddr)}
+        ${cityClause}
+        AND ${trgmFilter(norm, compact)}`,
+    )
+    .orderBy(
+      sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
+    )
+    .limit(1)) as (Place & { sim: number | string })[];
   return rankAndPick(rows, "address");
 }
 
@@ -387,22 +382,19 @@ async function byCityRegion(
   if (cityCandidates.length === 0) {
     return null;
   }
-  const rows = (await db.transaction(async (tx) => {
-    await tx.execute(sql.raw(`SET LOCAL pg_trgm.word_similarity_threshold = ${TRGM_THRESHOLD}`));
-    return tx
-      .select({ ...getColumns(place), sim: simExpr(norm, compact) })
-      .from(place)
-      .where(
-        sql`${place.region} = ${region}
-          AND ${cityInExpr(cityCandidates)}
-          AND ${place.deletedAt} IS NULL
-          AND ${trgmFilter(norm, compact)}`,
-      )
-      .orderBy(
-        sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
-      )
-      .limit(1);
-  })) as (Place & { sim: number | string })[];
+  const rows = (await db
+    .select({ ...getColumns(place), sim: simExpr(norm, compact) })
+    .from(place)
+    .where(
+      sql`${place.region} = ${region}
+        AND ${cityInExpr(cityCandidates)}
+        AND ${place.deletedAt} IS NULL
+        AND ${trgmFilter(norm, compact)}`,
+    )
+    .orderBy(
+      sql`sim DESC, (${place.lat} IS NOT NULL AND ${place.lon} IS NOT NULL) DESC, (${place.brandDomain} IS NOT NULL) DESC, ${place.sourceUpdatedAt} DESC NULLS LAST`,
+    )
+    .limit(1)) as (Place & { sim: number | string })[];
   return rankAndPick(rows, "city_region");
 }
 
