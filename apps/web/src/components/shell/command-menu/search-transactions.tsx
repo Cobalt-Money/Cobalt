@@ -160,7 +160,6 @@ export function TransactionSearchResults({
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <MerchantLogo
                   className="size-8 shrink-0"
-                  counterparties={t.counterparties}
                   logoUrl={t.logoUrl}
                   merchantName={t.merchantName}
                   website={t.website}

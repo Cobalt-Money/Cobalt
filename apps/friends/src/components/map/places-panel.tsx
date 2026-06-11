@@ -119,7 +119,6 @@ export function PlacesPanel({
                     className={`flex w-full items-center gap-3 px-4 py-1.5 text-left transition ${hoverClass}`}
                   >
                     <MerchantLogo
-                      counterparties={null}
                       logoUrl={m.logoUrl}
                       merchantName={m.merchant}
                       website={m.website}

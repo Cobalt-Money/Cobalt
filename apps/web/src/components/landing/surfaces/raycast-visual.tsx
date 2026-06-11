@@ -284,7 +284,6 @@ function TransactionsDetail({ onBack }: { onBack: () => void }) {
           >
             <MerchantLogo
               className="size-7"
-              counterparties={null}
               logoUrl={null}
               merchantName={t.merchant}
               website={t.website || null}

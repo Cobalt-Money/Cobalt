@@ -116,7 +116,6 @@ export function TransactionDetailSummary({
         ) : (
           <MerchantLogo
             className="size-12 shrink-0"
-            counterparties={transaction.counterparties}
             logoUrl={transaction.logoUrl}
             merchantName={transaction.merchantName}
             website={transaction.website}

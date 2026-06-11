@@ -452,7 +452,6 @@ export function BabyDashboard() {
                         <div className="flex min-w-0 flex-1 items-center gap-3">
                           <MerchantLogo
                             className="size-10 shrink-0"
-                            counterparties={null}
                             logoUrl={tx.logoUrl}
                             merchantName={tx.name}
                             website={tx.website}

@@ -208,7 +208,6 @@ function MerchantList({
           key={merchant.merchant}
           leftIcon={
             <MerchantLogo
-              counterparties={null}
               logoUrl={merchant.logoUrl}
               merchantName={merchant.merchant}
               website={merchant.website}

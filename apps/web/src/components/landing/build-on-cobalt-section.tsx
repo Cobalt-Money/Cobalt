@@ -77,7 +77,6 @@ export function BuildOnCobaltSection() {
                       >
                         <MerchantLogo
                           className="size-6"
-                          counterparties={null}
                           logoUrl={null}
                           merchantName={t.merchant}
                           website={t.website}
