@@ -40,6 +40,32 @@ const COLUMN_TO_LOCK_KEY: Partial<Record<keyof typeof transactionTable.$inferSel
  * `LOCK_KEY_GUARDED_COLUMNS`, so adding a new lock automatically extends
  * gating without further edits here.
  */
+/**
+ * Columns the place-matcher (`packages/server-data/src/places/enrich.ts`)
+ * fills when a Plaid txn lacks the value. Plaid's enrichment for these
+ * fields is uneven across syncs — same merchant, same item, different
+ * pulls can return `merchant_name`/`lat`/`lon`/`address` set on one and
+ * null on the next.
+ *
+ * Without COALESCE protection the upsert would set
+ *   transaction.lat = excluded.lat = NULL
+ * on the next sync of a matched txn, wiping the geo the matcher wrote
+ * (and breaking map pins, which are positioned off `transaction.lat`).
+ * COALESCE keeps Plaid as the authoritative source when they have a
+ * value, but their null no longer overwrites our enrichment-derived
+ * value. See the El Guacamole regression triaged 2026-06-11.
+ */
+const MATCHER_FILLABLE_COLUMNS = new Set<keyof typeof transactionTable.$inferSelect>([
+  "address",
+  "city",
+  "lat",
+  "lon",
+  "merchantName",
+  "postalCode",
+  "region",
+  "storeNumber",
+]);
+
 function buildPlaidUpsertSet(): Record<string, SQL> {
   // Plaid-overwritable cols. Excludes: user-controlled (notes, excluded), lock-guarded, audit cols.
   const plaidWritableColumns: (keyof typeof transactionTable.$inferSelect)[] = [
@@ -77,11 +103,16 @@ function buildPlaidUpsertSet(): Record<string, SQL> {
   for (const col of plaidWritableColumns) {
     const snake = transactionTable[col].name;
     const lockKey = COLUMN_TO_LOCK_KEY[col];
+    // For matcher-fillable columns: keep current value when Plaid sends null
+    // so a subsequent Plaid sync doesn't wipe enrichment-derived data.
+    const writeExpr = MATCHER_FILLABLE_COLUMNS.has(col)
+      ? `COALESCE(excluded."${snake}", "transaction"."${snake}")`
+      : `excluded."${snake}"`;
     set[col] = lockKey
       ? sql.raw(
-          `CASE WHEN "transaction"."locked_fields" ? '${lockKey}' THEN "transaction"."${snake}" ELSE excluded."${snake}" END`,
+          `CASE WHEN "transaction"."locked_fields" ? '${lockKey}' THEN "transaction"."${snake}" ELSE ${writeExpr} END`,
         )
-      : sql.raw(`excluded."${snake}"`);
+      : sql.raw(writeExpr);
   }
   set.updatedAt = sql`now()`;
   return set;
