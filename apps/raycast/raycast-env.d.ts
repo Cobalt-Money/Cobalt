@@ -10,6 +10,8 @@
 type ExtensionPreferences = {
   /** API URL - Cobalt API base URL */
   "apiUrl": string,
+  /** API Key - Optional. Paste a Cobalt API key (prefix ck_live_) from Settings → API keys to skip OAuth sign-in. */
+  "apiKey"?: string,
   /** Brandfetch Client ID - Optional. Provide your own Brandfetch client ID to render merchant logos via the Brandfetch CDN. Leave blank to fall back to generic icons. */
   "brandfetchClientId"?: string,
   /** Logo.dev Publishable Token - Used for recurring/subscription brand logos via logo.dev (matches web) */
