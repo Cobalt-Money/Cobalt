@@ -117,6 +117,10 @@ export async function enrichTransactionsForUser(
         eq(transactionTable.source, "plaid"),
         eq(transactionTable.paymentChannel, "in store"),
         inArray(transactionTable.pfcPrimary, [...ENRICHABLE_PFC]),
+        // Skip already-enriched rows so workflow-level retries are fast no-ops
+        // over prior progress instead of redoing the (expensive) matcher path
+        // for every previously-matched candidate.
+        sql`${transactionTable.placeId} IS NULL`,
         or(
           isNotNull(transactionTable.lat),
           isNotNull(transactionTable.address),
@@ -128,53 +132,64 @@ export async function enrichTransactionsForUser(
 
   let enriched = 0;
   for (const t of candidates) {
-    const sourceName = t.merchantName ?? t.name;
-    if (!sourceName) {
-      continue;
+    // Don't swallow per-candidate failures. The workflow step that calls into
+    // this function is retried by the framework (see `enrichTransactionsStep`
+    // in apps/server/src/workflows/plaid/sync/steps.ts), and the candidates
+    // query above filters out already-enriched rows on each retry so each
+    // attempt only redoes the candidates that didn't land last time.
+    const wrote = await enrichOneCandidate(t, runId);
+    if (wrote) {
+      enriched += 1;
     }
-
-    const res = await findPlaceForTransaction({
-      address: t.address,
-      city: t.city,
-      lat: t.lat,
-      lon: t.lon,
-      name: sourceName,
-      postalCode: t.postalCode,
-      region: t.region,
-      storeNumber: t.storeNumber,
-    });
-    if (!res || res.confidence < CONFIDENCE_FLOOR) {
-      continue;
-    }
-
-    const writes = buildWrites(t, res);
-    if (Object.keys(writes.set).length === 0) {
-      continue;
-    }
-
-    await db.transaction(async (tx) => {
-      await tx
-        .update(transactionTable)
-        .set({ ...writes.set, updatedAt: new Date() })
-        .where(eq(transactionTable.id, t.id));
-      await logEnrichmentEvent(
-        {
-          fieldsWritten: writes.diff,
-          matchConfidence: res.confidence,
-          matchReason: res.reason,
-          placeId: res.place.id,
-          runId,
-          sim: res.sim,
-          transactionId: t.id,
-        },
-        tx,
-      );
-    });
-
-    enriched += 1;
   }
 
   return { enriched, runId, scanned: candidates.length };
+}
+
+async function enrichOneCandidate(t: CandidateRow, runId: string): Promise<boolean> {
+  const sourceName = t.merchantName ?? t.name;
+  if (!sourceName) {
+    return false;
+  }
+
+  const res = await findPlaceForTransaction({
+    address: t.address,
+    city: t.city,
+    lat: t.lat,
+    lon: t.lon,
+    name: sourceName,
+    postalCode: t.postalCode,
+    region: t.region,
+    storeNumber: t.storeNumber,
+  });
+  if (!res || res.confidence < CONFIDENCE_FLOOR) {
+    return false;
+  }
+
+  const writes = buildWrites(t, res);
+  if (Object.keys(writes.set).length === 0) {
+    return false;
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(transactionTable)
+      .set({ ...writes.set, updatedAt: new Date() })
+      .where(eq(transactionTable.id, t.id));
+    await logEnrichmentEvent(
+      {
+        fieldsWritten: writes.diff,
+        matchConfidence: res.confidence,
+        matchReason: res.reason,
+        placeId: res.place.id,
+        runId,
+        sim: res.sim,
+        transactionId: t.id,
+      },
+      tx,
+    );
+  });
+  return true;
 }
 
 /**
