@@ -255,6 +255,25 @@ async function byStoreNumber(
   return rankAndPick(rows, "store_number");
 }
 
+/**
+ * Indexed-radius variant of byGeo. Pattern straight from
+ * https://www.postgresql.org/docs/18/earthdistance.html:
+ *
+ * - `earth_box(center, radius) @> ll_to_earth(lat, lon)` is the index-eligible
+ *   predicate against the `place_earth_idx` GIST index (see migration
+ *   20260611183332_geo_place_gist_idx).
+ * - `earth_distance(...) < radius` stays as a precision recheck because the
+ *   earth_box bounding box is slightly larger than the great-circle radius.
+ * - `ll_to_earth(lat, lon) <-> ll_to_earth(center)` uses the cube `<->`
+ *   nearest-neighbor operator so ORDER BY is satisfied directly from the
+ *   GIST index instead of computing earth_distance per row.
+ *
+ * Previously this query was a seq scan over ~1.5M `enrichment.place` rows
+ * computing earth_distance per row, running at p50 33.6s / p99 61.2s and
+ * consuming ~69% of all PlanetScale DB time. PlanetScale's pooler kills
+ * long-running connections, so this single query cascaded into Zero,
+ * sync, and enrichment crashes throughout the day.
+ */
 async function byGeo(
   norm: string,
   compact: string,
@@ -268,11 +287,12 @@ async function byGeo(
       sql`${place.lat} IS NOT NULL
         AND ${place.lon} IS NOT NULL
         AND ${place.deletedAt} IS NULL
+        AND earth_box(ll_to_earth(${lat}, ${lon}), ${GEO_RADIUS_M}) @> ll_to_earth(${place.lat}, ${place.lon})
         AND earth_distance(ll_to_earth(${place.lat}, ${place.lon}), ll_to_earth(${lat}, ${lon})) < ${GEO_RADIUS_M}
         AND ${trgmFilter(norm, compact)}`,
     )
     .orderBy(
-      sql`earth_distance(ll_to_earth(${place.lat}, ${place.lon}), ll_to_earth(${lat}, ${lon})) ASC, sim DESC`,
+      sql`ll_to_earth(${place.lat}, ${place.lon}) <-> ll_to_earth(${lat}, ${lon}) ASC, sim DESC`,
     )
     .limit(1)) as (Place & { sim: number | string })[];
   return rankAndPick(rows, "geo");
