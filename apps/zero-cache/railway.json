@@ -5,6 +5,6 @@
   },
   "deploy": {
     "overlapSeconds": 0,
-    "startCommand": "sh -c 'rm -fv /data/zero.db /data/zero.db-wal /data/zero.db-shm 2>/dev/null; df -h /data; exec zero-cache'"
+    "startCommand": "sh -c 'rm -fv /data/zero.db /data/zero.db-wal /data/zero.db-shm /data/cobalt.db /data/cobalt.db-wal /data/cobalt.db-shm 2>/dev/null; df -h /data; exec zero-cache'"
   }
 }

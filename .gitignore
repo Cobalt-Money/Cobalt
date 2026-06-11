@@ -1,6 +1,10 @@
 # Local scripts
 sync-env.sh
 
+# Personal dev log — dated notes, caveats, one-shot ops history
+.devlog.md
+.devlog-scripts/
+
 # Dependencies
 node_modules
 .pnp

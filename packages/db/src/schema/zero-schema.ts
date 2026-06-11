@@ -52,8 +52,12 @@ export { importStagedTransaction } from "./imports/import-staged-transaction";
 // the server. Token entry into Zero state is safe because permissions
 // scope rows by inviter / target.
 //
-// merchantGeocodeCache stays server-only — cross-user cache, no per-user
-// rows to scope.
+// merchantGeocodeCache, place, enrichmentEvent stay server-only.
+// transaction.placeId is a plain FK column kept on transaction rows; client
+// reads the denormalized brand/location columns the enrichment pipeline
+// writes onto transaction directly, never joins back to `place`. Excluding
+// these from drizzle-zero exports keeps them out of the publication and out
+// of the Railway zero-cache SQLite replica (SRI-244 follow-up).
 export { socialFriendship } from "./social/friendship";
 export { socialInvite, socialInviteRedemption } from "./social/invite";
 export { socialPost } from "./social/post";

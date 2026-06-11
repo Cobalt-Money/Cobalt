@@ -19,3 +19,4 @@ export {
   resolveGroupIcon,
 } from "./category-system-icons";
 export type { CategoryGroupKey, CategorySystemKey } from "./category-system-icons";
+export { pfcDetailedToSystemKey } from "@cobalt-web/server-data/categories/map";

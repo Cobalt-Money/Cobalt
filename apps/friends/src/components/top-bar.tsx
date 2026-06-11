@@ -67,7 +67,14 @@ export function TopBar() {
       <div className="-translate-x-1/2 absolute top-4 left-1/2 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-zinc-700/40 px-2 py-1.5 text-white shadow-2xl shadow-black/50 backdrop-blur-md backdrop-saturate-150">
         <div className="flex items-baseline gap-1.5 px-3">
           <span className="text-sm font-medium tracking-wide">Pocketwatch</span>
-          <span className="text-[11px] text-white/50">by Cobalt</span>
+          <a
+            href="https://cobaltpf.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] text-white/50 hover:text-white/80 transition"
+          >
+            by Cobalt
+          </a>
         </div>
         <div className="h-5 w-px bg-white/15" />
         <button
