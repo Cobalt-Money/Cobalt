@@ -7,8 +7,6 @@ import { socialPost } from "@cobalt-web/db/schema/social/post";
 import { socialShareSettings } from "@cobalt-web/db/schema/social/share-settings";
 import { and, eq, gte, inArray, isNotNull, lte, notInArray, sql } from "drizzle-orm";
 
-import { pfcDetailedToSystemKey } from "../categories/map.js";
-
 export interface ShareSettings {
   shareAmount: boolean;
   shareCard: boolean;
@@ -117,14 +115,11 @@ export async function autoShareInStoreTxnsForUser(userId: string): Promise<{
       date: transactionTable.date,
       id: transactionTable.id,
       lat: transactionTable.lat,
-      logoUrl: transactionTable.logoUrl,
       lon: transactionTable.lon,
       merchantName: transactionTable.merchantName,
       name: transactionTable.name,
       notes: transactionTable.notes,
-      pfcDetailed: transactionTable.pfcDetailed,
       pfcPrimary: transactionTable.pfcPrimary,
-      website: transactionTable.website,
     })
     .from(transactionTable)
     .innerJoin(financialAccount, eq(financialAccount.id, transactionTable.accountId))
@@ -158,17 +153,14 @@ export async function autoShareInStoreTxnsForUser(userId: string): Promise<{
   const rows = candidates.map((t) => ({
     amountCents: settings.shareAmount ? Math.round(Math.abs(Number(t.amount)) * 100) : null,
     cardName: settings.shareCard ? (t.accountCustomName ?? t.accountName) : null,
-    categorySystemKey: pfcDetailedToSystemKey(t.pfcDetailed),
     date: settings.shareDate ? new Date(t.date) : null,
     institutionName: settings.shareCard ? t.accountInstitutionName : null,
     lat: t.lat as number,
-    logoUrl: settings.shareMerchant ? (t.logoUrl ?? null) : null,
     lon: t.lon as number,
     merchantName: settings.shareMerchant ? (t.merchantName ?? t.name) : null,
     note: settings.shareNote ? (t.notes ?? null) : null,
     transactionId: t.id,
     userId,
-    website: settings.shareMerchant ? (t.website ?? null) : null,
   }));
 
   const result = await db

@@ -7,12 +7,6 @@ import { userApi } from "@/lib/clients/api-client";
 
 export const Route = createFileRoute("/_auth/settings/sharing")({
   component: SharingSettings,
-  loader: ({ context }) => {
-    context.zero?.preload(queries.social.shareSettings(), { ttl: "5m" });
-    context.zero?.preload(queries.social.merchantBlocklist(), { ttl: "5m" });
-    context.zero?.preload(queries.social.categoryBlocklist(), { ttl: "5m" });
-  },
-  staticData: { title: "Sharing" },
 });
 
 interface ShareSettings {
@@ -36,35 +30,47 @@ const DEFAULTS: ShareSettings = {
 };
 
 function SharingSettings() {
-  const [row] = useZeroQuery(queries.social.shareSettings());
-  const settings: ShareSettings = row
-    ? {
-        shareAmount: row.shareAmount ?? DEFAULTS.shareAmount,
-        shareCard: row.shareCard ?? DEFAULTS.shareCard,
-        shareDate: row.shareDate ?? DEFAULTS.shareDate,
-        shareMaxAmountCents: row.shareMaxAmountCents,
-        shareMerchant: row.shareMerchant ?? DEFAULTS.shareMerchant,
-        shareMinAmountCents: row.shareMinAmountCents,
-        shareNote: row.shareNote ?? DEFAULTS.shareNote,
-      }
-    : DEFAULTS;
+  const [settings, setSettings] = useState<ShareSettings>(DEFAULTS);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await userApi.sharingSettings.$get();
+        if (res.ok) {
+          const data = (await res.json()) as ShareSettings;
+          setSettings(data);
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const save = async (patch: Partial<ShareSettings>) => {
     setSaving(true);
     setError(null);
+    setSettings({ ...settings, ...patch });
     try {
       const res = await userApi.sharingSettings.$post({ json: patch });
       if (!res.ok) {
         setError("Could not save");
+        return;
       }
+      const data = (await res.json()) as ShareSettings;
+      setSettings(data);
     } catch {
       setError("Could not save");
     } finally {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return <p className="text-muted-foreground text-sm">Loading…</p>;
+  }
 
   return (
     <div className="flex flex-col gap-8">

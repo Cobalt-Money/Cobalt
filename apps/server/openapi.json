@@ -593,6 +593,10 @@
           "pending": {
             "type": "boolean"
           },
+          "sharedWithFriends": {
+            "type": "boolean",
+            "description": "True when this transaction has been auto-shared into the user's friends feed (in-store + has coordinates)."
+          },
           "tagIds": {
             "type": "array",
             "items": {
@@ -612,6 +616,7 @@
           "notes",
           "paymentChannel",
           "pending",
+          "sharedWithFriends",
           "tagIds"
         ]
       },
@@ -744,6 +749,10 @@
           "pending": {
             "type": "boolean"
           },
+          "sharedWithFriends": {
+            "type": "boolean",
+            "description": "True when this transaction has been auto-shared into the user's friends feed (in-store + has coordinates)."
+          },
           "tagIds": {
             "type": "array",
             "items": {
@@ -763,6 +772,7 @@
           "notes",
           "paymentChannel",
           "pending",
+          "sharedWithFriends",
           "tagIds"
         ]
       },
