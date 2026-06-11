@@ -1,11 +1,20 @@
 import { plaidClient } from "@cobalt-web/clients/plaid";
 import type { RemovedTransaction, Transaction, TransactionStream } from "plaid";
 
-/** Fetch one page of transactions from Plaid's `/transactions/sync` endpoint. */
+import { recordPlaidSyncPayload } from "./audit.js";
+
+/**
+ * Fetch one page of transactions from Plaid's `/transactions/sync` endpoint.
+ *
+ * When `audit` is provided, the raw response is persisted (best-effort) to
+ * `enrichment.plaid_sync_payload` for cross-sync diffing. Pass null to skip
+ * (useful in tests and for one-off backfill scripts).
+ */
 export async function syncTransactionsPage(
   accessToken: string,
   cursor: string | undefined,
   count: number,
+  audit: { itemId: string; userId: string } | null = null,
 ): Promise<{
   added: Transaction[];
   modified: Transaction[];
@@ -19,6 +28,14 @@ export async function syncTransactionsPage(
     cursor,
     options: { include_personal_finance_category: true },
   });
+  if (audit) {
+    await recordPlaidSyncPayload({
+      itemId: audit.itemId,
+      request: { count, cursor },
+      response: response.data,
+      userId: audit.userId,
+    });
+  }
   return {
     added: response.data.added,
     hasMore: response.data.has_more,

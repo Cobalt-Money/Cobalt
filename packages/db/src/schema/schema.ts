@@ -84,3 +84,8 @@ export { enrichmentEvent } from "./places/enrichment-event";
 // SRI-354 — locality → ZIP lookup (GeoNames-backed). Server-only reference
 // table used by enrichment to recover missing `postal_code` from `(city, region)`.
 export { localityZip } from "./places/locality-zip";
+
+// Raw Plaid `transactions/sync` response audit. Server-only: lets us diff
+// what Plaid sent across syncs to debug whether merchant/enrichment drift
+// originates upstream (Plaid) or in our transformer.
+export { plaidSyncPayload } from "./places/plaid-sync-payload";

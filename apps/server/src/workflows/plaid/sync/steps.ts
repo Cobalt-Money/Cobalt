@@ -300,8 +300,14 @@ export async function syncTransactionsStep(
 
     const pendingOverrides = new Map<string, UserOverrides>();
 
+    // Audit context: persist raw Plaid response per page so we can diff across
+    // syncs + across item lifecycles. Resolved once outside the loop; failure
+    // to resolve disables audit but never blocks sync.
+    const owner = await lookupPlaidConnection(itemId).catch(() => null);
+    const audit = owner ? { itemId, userId: owner.userId } : null;
+
     while (hasMore) {
-      const page = await syncTransactionsPage(accessToken, currentCursor, 500);
+      const page = await syncTransactionsPage(accessToken, currentCursor, 500, audit);
       const { added, modified, removed, nextCursor, hasMore: more } = page;
 
       await persistTransactions([...added, ...modified]);

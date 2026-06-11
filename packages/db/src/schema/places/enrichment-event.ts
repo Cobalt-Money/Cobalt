@@ -1,6 +1,5 @@
 import { index, jsonb, numeric, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
-import { transaction } from "../accounts/banking/transactions/transaction";
 import { enrichmentSchema } from "./_schema";
 import { place } from "./place";
 
@@ -35,9 +34,11 @@ export const enrichmentEvent = enrichmentSchema.table(
     runId: uuid("run_id").notNull(),
     /** Trigram brand-name similarity at match time (0..1). Stored separately from confidence for tuning. */
     sim: numeric("sim", { precision: 5, scale: 4 }),
-    transactionId: uuid("transaction_id")
-      .notNull()
-      .references(() => transaction.id, { onDelete: "cascade" }),
+    // Plain uuid, no FK + no cascade. Audit log outlives the live transaction
+    // row — when a Plaid item is disconnected, transactions are deleted but
+    // we keep the matcher's decision history so non-determinism across item
+    // lifecycles (same merchant, different runs) stays debuggable.
+    transactionId: uuid("transaction_id").notNull(),
   },
   (t) => [
     index("enrichment_event_transaction_id_idx").on(t.transactionId),
