@@ -29,6 +29,7 @@ console.log(`[backfill-social-posts] mode=${APPLY ? "apply" : "dry-run"} users=$
 
 let totalInserted = 0;
 let totalScanned = 0;
+let failedUsers = 0;
 
 for (const userId of userIds) {
   if (!APPLY) {
@@ -42,8 +43,11 @@ for (const userId of userIds) {
     console.log(`  ${userId}: scanned=${scanned} inserted=${inserted}`);
   } catch (error) {
     console.error(`  ${userId}: FAILED`, error);
+    failedUsers += 1;
   }
 }
 
-console.log(`[backfill-social-posts] done. scanned=${totalScanned} inserted=${totalInserted}`);
-process.exit(0);
+console.log(
+  `[backfill-social-posts] done. scanned=${totalScanned} inserted=${totalInserted} failed=${failedUsers}`,
+);
+process.exit(failedUsers > 0 ? 1 : 0);
