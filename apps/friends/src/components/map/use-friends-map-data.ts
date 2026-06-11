@@ -260,7 +260,9 @@ export function useFriendsMapData(timeWindow: TimeWindow): FriendsMapData {
 
   const friendPosts = allPosts.filter((p) => p.userId !== userId && friendIds.has(p.userId));
   const geoTxns = txns.filter(isGeoTxn);
-  const unmappedInStore = txns.filter(isUnmappedInStore) as unknown as SelfPinSource[];
+  const unmappedInStore = (txns.filter(isUnmappedInStore) as unknown as SelfPinSource[]).filter(
+    (t) => withinWindow(t.date, timeWindow),
+  );
 
   const selfPinsRaw = geoTxns.map((t) =>
     mapSelfTxnToPin(t as unknown as SelfPinSource, userId, userName, selfImage),
