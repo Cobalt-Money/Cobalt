@@ -52,7 +52,6 @@ export function DashboardRecentTransactionsCard() {
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     <MerchantLogo
                       className="size-10 shrink-0"
-                      counterparties={null}
                       logoUrl={tx.logoUrl ?? null}
                       merchantName={displayName}
                       website={tx.website ?? null}

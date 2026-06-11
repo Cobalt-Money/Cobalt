@@ -173,7 +173,6 @@ export function MerchantPanel({
               >
                 <div className="relative shrink-0">
                   <MerchantLogo
-                    counterparties={null}
                     logoUrl={r.logoUrl}
                     merchantName={r.merchant}
                     website={r.website}

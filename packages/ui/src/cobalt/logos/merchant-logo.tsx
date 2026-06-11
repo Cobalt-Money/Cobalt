@@ -1,6 +1,5 @@
 import { brandfetchIconDomainUrls } from "@cobalt-web/clients/brandfetch";
 import { env } from "@cobalt-web/env/web";
-import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { useMemo } from "react";
 
 import { LogoImageWithFallback } from "./logo-image-fallback";
@@ -36,92 +35,50 @@ function hostnameFromWebsite(url: string | null | undefined): string | null {
   }
 }
 
-/** Prefer merchant counterparty, else first counterparty with a website. */
-function websiteFromCounterparties(
-  counterparties: TransactionResponse["counterparties"],
-): string | null {
-  if (!counterparties?.length) {
-    return null;
-  }
-  const merchant = counterparties.find((c) => c.type === "merchant" && c.website?.trim());
-  if (merchant?.website) {
-    return merchant.website;
-  }
-  const withSite = counterparties.find((c) => c.website?.trim());
-  return withSite?.website ?? null;
-}
-
-/** Plaid counterparty logos (merchant first, then others, deduped). */
-function plaidLogoUrlsFromCounterparties(
-  counterparties: TransactionResponse["counterparties"],
-): string[] {
-  if (!counterparties?.length) {
-    return [];
-  }
-  const out: string[] = [];
-  const preferred = counterparties.find(
-    (c) => c.type === "merchant" && c.logo_url && isHttpUrl(c.logo_url),
-  );
-  if (preferred?.logo_url) {
-    out.push(preferred.logo_url);
-  }
-  for (const c of counterparties) {
-    if (c.logo_url && isHttpUrl(c.logo_url)) {
-      pushUnique(out, c.logo_url);
-    }
-  }
-  return out;
-}
-
 /**
  * Merchant logo sources (first loadable wins):
- * 1. Brandfetch **icon** only (`type=icon`, then lettermark) from `transaction.website` — fits round cells
- * 2. Same from counterparty `website` when hostname differs from step 1
- * 3. Plaid `logo_url` on the transaction, then counterparty `logo_url`s
+ * 1. Brandfetch icon CDN keyed off `website` host
+ * 2. Plaid `logoUrl` on the transaction
+ *
+ * Plaid `counterparties[]` is intentionally NOT consulted — payment_terminal /
+ * payment_processor counterparties (Toast, Square, Stripe…) carry website +
+ * logo_url for the POS plumbing, not the actual merchant. Pulling them in
+ * resulted in every Toast-powered restaurant rendering the Toast logo. The
+ * merchant counterparty rarely has its own website when `transaction.website`
+ * is null, so dropping the entire branch costs little and keeps the component
+ * uniform across panels, table rows, and the detail card.
  */
-function buildMerchantLogoCandidates(
-  row: Pick<TransactionResponse, "counterparties" | "logoUrl" | "website">,
-): string[] {
+export interface MerchantLogoInput {
+  logoUrl: string | null;
+  website: string | null;
+  merchantName: string | null;
+}
+
+function buildMerchantLogoCandidates(row: Omit<MerchantLogoInput, "merchantName">): string[] {
   const out: string[] = [];
   const clientId = env.VITE_BRANDFETCH_CLIENT_ID;
-  const primaryHost = hostnameFromWebsite(row.website);
-  const cpWebsite = websiteFromCounterparties(row.counterparties);
-  const cpHost = hostnameFromWebsite(cpWebsite);
-
-  const appendBrandfetchForHost = (host: string | null) => {
-    if (!(clientId && host)) {
-      return;
-    }
+  const host = hostnameFromWebsite(row.website);
+  if (clientId && host) {
     for (const u of brandfetchIconDomainUrls(host, clientId)) {
       pushUnique(out, u);
     }
-  };
-
-  appendBrandfetchForHost(primaryHost);
-  if (cpHost && cpHost !== primaryHost) {
-    appendBrandfetchForHost(cpHost);
   }
-
   if (row.logoUrl && isHttpUrl(row.logoUrl)) {
     pushUnique(out, row.logoUrl);
   }
-  for (const u of plaidLogoUrlsFromCounterparties(row.counterparties)) {
-    pushUnique(out, u);
-  }
-
   return out;
 }
 
 export function MerchantLogo(
-  props: Pick<TransactionResponse, "counterparties" | "logoUrl" | "merchantName" | "website"> & {
+  props: MerchantLogoInput & {
     /** Wrapper size (default `size-5` for table rows). */
     className?: string;
   },
 ) {
-  const { className, counterparties, logoUrl, merchantName, website } = props;
+  const { className, logoUrl, merchantName, website } = props;
   const candidates = useMemo(
-    () => buildMerchantLogoCandidates({ counterparties, logoUrl, website }),
-    [counterparties, logoUrl, website],
+    () => buildMerchantLogoCandidates({ logoUrl, website }),
+    [logoUrl, website],
   );
   return (
     <LogoImageWithFallback

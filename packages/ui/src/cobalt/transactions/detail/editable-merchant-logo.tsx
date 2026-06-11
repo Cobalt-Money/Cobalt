@@ -58,7 +58,6 @@ function renderMerchantResults({
           >
             <MerchantLogo
               className="size-5 shrink-0 rounded-sm"
-              counterparties={null}
               logoUrl={null}
               merchantName={r.name}
               website={r.domain}
@@ -182,7 +181,7 @@ export function MerchantPickerList({
 }
 
 interface EditableMerchantLogoProps {
-  transaction: Pick<TransactionResponse, "counterparties" | "logoUrl" | "merchantName" | "website">;
+  transaction: Pick<TransactionResponse, "logoUrl" | "merchantName" | "website">;
   merchantSearch: MerchantSearchState;
   onSubmit: (args: { merchantName: string | null; website: string | null }) => void;
 }
@@ -213,7 +212,6 @@ export function EditableMerchantLogo({
           >
             <MerchantLogo
               className="size-12 shrink-0"
-              counterparties={transaction.counterparties}
               logoUrl={transaction.logoUrl}
               merchantName={transaction.merchantName}
               website={transaction.website}

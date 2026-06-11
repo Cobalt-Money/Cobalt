@@ -236,17 +236,12 @@ const columns: ColumnDef<TransactionResponse>[] = [
     cell: ({ row }) => {
       const fullName = getTransactionDisplayName(row.original);
       const displayName = truncateName(fullName);
-      const { counterparties, logoUrl, merchantName, website } = row.original;
+      const { logoUrl, merchantName, website } = row.original;
 
       return (
         <div className="min-w-0 truncate" title={fullName}>
           <div className={cn(cellRow, "gap-2")}>
-            <MerchantLogo
-              counterparties={counterparties}
-              logoUrl={logoUrl}
-              merchantName={merchantName}
-              website={website}
-            />
+            <MerchantLogo logoUrl={logoUrl} merchantName={merchantName} website={website} />
             <span>{displayName || "—"}</span>
           </div>
         </div>
