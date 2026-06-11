@@ -49,7 +49,8 @@ export interface LocationSearchState {
 }
 
 export interface TransactionDetailEditHandlers {
-  locationSearch: LocationSearchState;
+  /** Brandfetch/geocode typeahead state. Omit to render read-only location row. */
+  locationSearch?: LocationSearchState;
   onResetCategory: () => void;
   onResetDate: () => void;
   onResetNotes: () => void;
@@ -64,8 +65,8 @@ export interface TransactionDetailEditHandlers {
   onUpdateDate: (dateIso: string) => void;
   onUpdateLocation: (location: LocationJson) => void;
   onUpdateMerchant: (args: { merchantName: string | null; website: string | null }) => void;
-  /** Brandfetch typeahead for merchant editing. */
-  merchantSearch: MerchantSearchState;
+  /** Brandfetch typeahead for merchant editing. Omit to render read-only merchant logo + name. */
+  merchantSearch?: MerchantSearchState;
   onUpdateName: (name: string) => void;
   onUpdateNotes: (markdown: string) => void;
   /** Only set for manual transactions; absence hides the delete affordance. */
@@ -106,7 +107,7 @@ export function TransactionDetailSummary({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start gap-4">
-        {edit ? (
+        {edit && edit.merchantSearch ? (
           <EditableMerchantLogo
             merchantSearch={edit.merchantSearch}
             onSubmit={edit.onUpdateMerchant}
@@ -200,7 +201,7 @@ export function TransactionDetailSummary({
           <ReadOnlyCategoryRow category={category} />
         )}
 
-        {edit ? (
+        {edit && edit.locationSearch ? (
           <EditableLocation
             isOverridden={false}
             loading={edit.locationSearch.loading}

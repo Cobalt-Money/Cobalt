@@ -177,8 +177,9 @@ interface PendingInvite {
   id: string;
   token: string;
   inviterUserId: string;
-  expiresAt: string | Date;
-  kind: string;
+  /** Epoch ms — Zero replicates Postgres `timestamp` as a number. */
+  expiresAt: number;
+  kind: string | null;
 }
 
 function InvitesSection() {
@@ -187,7 +188,7 @@ function InvitesSection() {
   const [state, setState] = useState<CreateState>({ kind: "idle" });
   const [copied, setCopied] = useState(false);
 
-  const z = useZero<typeof mutators>();
+  const z = useZero();
   // Track both which row is busy + which action (accept|decline) so the
   // opposite button doesn't show the wrong loading label.
   const [busy, setBusy] = useState<{

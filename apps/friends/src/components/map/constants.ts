@@ -1,3 +1,4 @@
+import type { ExpressionSpecification } from "maplibre-gl";
 import type { StyleKey } from "./types";
 
 export const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY as string | undefined;
@@ -137,8 +138,8 @@ export const NYC_SUBWAY_URL =
   "https://data.ny.gov/api/geospatial/s692-irgq?method=export&format=GeoJSON";
 
 // Official MTA route colors. https://web.mta.info/developers/resources/line_colors.htm
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const SUBWAY_LINE_COLOR_EXPR: any = [
+// MapLibre expression — heterogeneous array. Typed as `ExpressionSpecification`.
+export const SUBWAY_LINE_COLOR_EXPR: ExpressionSpecification = [
   "match",
   ["get", "service"],
   "1",

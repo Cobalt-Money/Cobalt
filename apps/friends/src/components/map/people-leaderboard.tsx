@@ -58,22 +58,7 @@ function PersonRow({
   return (
     <div className="flex items-center gap-3 py-1.5">
       <div className={`w-5 text-center text-xs tabular-nums ${mutedClass}`}>#{rank}</div>
-      {person.imageUrl ? (
-        <img
-          src={person.imageUrl}
-          alt=""
-          aria-hidden
-          className="size-6 shrink-0 rounded-full object-cover"
-        />
-      ) : (
-        <div
-          className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-medium ${
-            mutedClass.includes("text-black") ? "bg-black/10" : "bg-white/15"
-          }`}
-        >
-          {person.name.slice(0, 1).toUpperCase()}
-        </div>
-      )}
+      <PersonAvatar person={person} mutedClass={mutedClass} size="size-6" />
       <div className="min-w-0 flex-1 truncate text-sm font-medium">
         {person.name}
         {person.userId === selfId && (
@@ -111,7 +96,179 @@ function merchantMetas(pins: PinDatum[]): MerchantMeta[] {
   return [...map.values()].toSorted((a, b) => b.total - a.total);
 }
 
-// eslint-disable-next-line complexity
+function NoData({ mutedClass }: { mutedClass: string }) {
+  return <div className={`py-3 text-center text-sm ${mutedClass}`}>No data</div>;
+}
+
+function TotalList({
+  rows,
+  selfId,
+  mutedClass,
+}: {
+  rows: { person: PersonAgg; amount: number }[];
+  selfId: string | undefined;
+  mutedClass: string;
+}) {
+  if (rows.length === 0) {
+    return <NoData mutedClass={mutedClass} />;
+  }
+  return (
+    <>
+      {rows.map((r, i) => (
+        <PersonRow
+          key={r.person.userId}
+          rank={i + 1}
+          person={r.person}
+          amount={r.amount}
+          selfId={selfId}
+          mutedClass={mutedClass}
+        />
+      ))}
+    </>
+  );
+}
+
+function ChampionRow({
+  leftIcon,
+  label,
+  person,
+  amount,
+  mutedClass,
+}: {
+  leftIcon: React.ReactNode;
+  label: string;
+  person: PersonAgg | null;
+  amount: number;
+  mutedClass: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 py-1.5">
+      {leftIcon}
+      <span className="w-24 shrink-0 truncate pr-2 text-sm">{label}</span>
+      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+        {person ? <PersonAvatar person={person} mutedClass={mutedClass} size="size-6" /> : null}
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+          {person ? person.name : <span className={mutedClass}>—</span>}
+        </span>
+      </div>
+      <span className="text-sm font-semibold tabular-nums">
+        {amount > 0 ? `$${amount.toFixed(0)}` : ""}
+      </span>
+    </div>
+  );
+}
+
+function CategoryList({
+  rows,
+  mutedClass,
+}: {
+  rows: { cat: Category; person: PersonAgg | null; amount: number }[];
+  mutedClass: string;
+}) {
+  if (rows.length === 0) {
+    return <NoData mutedClass={mutedClass} />;
+  }
+  return (
+    <>
+      {rows.map(({ cat, person, amount }) => (
+        <ChampionRow
+          key={cat}
+          leftIcon={
+            <img
+              src={categoryIconSrc(cat)}
+              alt=""
+              aria-hidden
+              className="size-6 shrink-0 object-contain"
+            />
+          }
+          label={categoryLabel(cat)}
+          person={person}
+          amount={amount}
+          mutedClass={mutedClass}
+        />
+      ))}
+    </>
+  );
+}
+
+function MerchantList({
+  rows,
+  mutedClass,
+}: {
+  rows: { merchant: MerchantMeta; person: PersonAgg | null; amount: number }[];
+  mutedClass: string;
+}) {
+  if (rows.length === 0) {
+    return <NoData mutedClass={mutedClass} />;
+  }
+  return (
+    <>
+      {rows.map(({ merchant, person, amount }) => (
+        <ChampionRow
+          key={merchant.merchant}
+          leftIcon={
+            <MerchantLogo
+              counterparties={null}
+              logoUrl={merchant.logoUrl}
+              merchantName={merchant.merchant}
+              website={merchant.website}
+              className="size-6 shrink-0"
+            />
+          }
+          label={merchant.merchant}
+          person={person}
+          amount={amount}
+          mutedClass={mutedClass}
+        />
+      ))}
+    </>
+  );
+}
+
+function bestByCat(
+  people: PersonAgg[],
+  cat: Category,
+): { person: PersonAgg | null; amount: number } {
+  let best: PersonAgg | null = null;
+  let bestAmt = 0;
+  for (const p of people) {
+    const a = p.byCat[cat] ?? 0;
+    if (a > bestAmt) {
+      best = p;
+      bestAmt = a;
+    }
+  }
+  return { amount: bestAmt, person: best };
+}
+
+function bestByMerchant(
+  people: PersonAgg[],
+  merchant: string,
+): { person: PersonAgg | null; amount: number } {
+  let best: PersonAgg | null = null;
+  let bestAmt = 0;
+  for (const p of people) {
+    const a = p.byMerchant[merchant] ?? 0;
+    if (a > bestAmt) {
+      best = p;
+      bestAmt = a;
+    }
+  }
+  return { amount: bestAmt, person: best };
+}
+
+function presentCategoryOptions(people: PersonAgg[], categories: Set<Category> | null): Category[] {
+  const present = new Set<Category>();
+  for (const p of people) {
+    for (const k of Object.keys(p.byCat)) {
+      if (categories === null || categories.has(k)) {
+        present.add(k);
+      }
+    }
+  }
+  return [...present].toSorted((a, b) => categoryLabel(a).localeCompare(categoryLabel(b)));
+}
+
 export function PeopleLeaderboard({
   people,
   pins,
@@ -138,48 +295,20 @@ export function PeopleLeaderboard({
     ? "[scrollbar-color:rgba(0,0,0,0.15)_transparent] [&::-webkit-scrollbar-thumb]:bg-black/15"
     : "[scrollbar-color:rgba(255,255,255,0.2)_transparent] [&::-webkit-scrollbar-thumb]:bg-white/20";
 
-  const presentCats = new Set<Category>();
-  for (const p of people) {
-    for (const k of Object.keys(p.byCat)) {
-      if (categories === null || categories.has(k)) {
-        presentCats.add(k);
-      }
-    }
-  }
-  const catOptions = [...presentCats].toSorted((a, b) =>
-    categoryLabel(a).localeCompare(categoryLabel(b)),
-  );
-
   const totalRanked = people
     .map((p) => ({ amount: p.total, person: p }))
     .toSorted((a, b) => b.amount - a.amount)
     .slice(0, 10);
-  const categoryRanked = catOptions.map((cat) => {
-    let best: PersonAgg | null = null;
-    let bestAmt = 0;
-    for (const p of people) {
-      const a = p.byCat[cat] ?? 0;
-      if (a > bestAmt) {
-        best = p;
-        bestAmt = a;
-      }
-    }
-    return { amount: bestAmt, cat, person: best };
-  });
+  const categoryRanked = presentCategoryOptions(people, categories).map((cat) => ({
+    cat,
+    ...bestByCat(people, cat),
+  }));
   const merchantRanked =
     mode === "merchant"
-      ? merchantMetas(pins).map((m) => {
-          let best: PersonAgg | null = null;
-          let bestAmt = 0;
-          for (const p of people) {
-            const a = p.byMerchant[m.merchant] ?? 0;
-            if (a > bestAmt) {
-              best = p;
-              bestAmt = a;
-            }
-          }
-          return { amount: bestAmt, merchant: m, person: best };
-        })
+      ? merchantMetas(pins).map((m) => ({
+          merchant: m,
+          ...bestByMerchant(people, m.merchant),
+        }))
       : [];
 
   return (
@@ -202,81 +331,10 @@ export function PeopleLeaderboard({
           className={`max-h-[60vh] overflow-y-auto px-4 pb-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full ${scrollClass}`}
         >
           {mode === "total" && (
-            <>
-              {totalRanked.map((r, i) => (
-                <PersonRow
-                  key={r.person.userId}
-                  rank={i + 1}
-                  person={r.person}
-                  amount={r.amount}
-                  selfId={selfId}
-                  mutedClass={mutedClass}
-                />
-              ))}
-              {totalRanked.length === 0 && (
-                <div className={`py-3 text-center text-sm ${mutedClass}`}>No data</div>
-              )}
-            </>
+            <TotalList rows={totalRanked} selfId={selfId} mutedClass={mutedClass} />
           )}
-          {mode === "category" && (
-            <>
-              {categoryRanked.map(({ cat, person, amount }) => (
-                <div key={cat} className="flex items-center gap-3 py-1.5">
-                  <img
-                    src={categoryIconSrc(cat)}
-                    alt=""
-                    aria-hidden
-                    className="size-6 shrink-0 object-contain"
-                  />
-                  <span className="w-24 shrink-0 truncate pr-2 text-sm">{categoryLabel(cat)}</span>
-                  <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                    {person ? (
-                      <PersonAvatar person={person} mutedClass={mutedClass} size="size-6" />
-                    ) : null}
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {person ? person.name : <span className={mutedClass}>—</span>}
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold tabular-nums">
-                    {amount > 0 ? `$${amount.toFixed(0)}` : ""}
-                  </span>
-                </div>
-              ))}
-              {categoryRanked.length === 0 && (
-                <div className={`py-3 text-center text-sm ${mutedClass}`}>No data</div>
-              )}
-            </>
-          )}
-          {mode === "merchant" && (
-            <>
-              {merchantRanked.map(({ merchant, person, amount }) => (
-                <div key={merchant.merchant} className="flex items-center gap-3 py-1.5">
-                  <MerchantLogo
-                    counterparties={null}
-                    logoUrl={merchant.logoUrl}
-                    merchantName={merchant.merchant}
-                    website={merchant.website}
-                    className="size-6 shrink-0"
-                  />
-                  <span className="w-24 shrink-0 truncate pr-2 text-sm">{merchant.merchant}</span>
-                  <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                    {person ? (
-                      <PersonAvatar person={person} mutedClass={mutedClass} size="size-6" />
-                    ) : null}
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {person ? person.name : <span className={mutedClass}>—</span>}
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold tabular-nums">
-                    {amount > 0 ? `$${amount.toFixed(0)}` : ""}
-                  </span>
-                </div>
-              ))}
-              {merchantRanked.length === 0 && (
-                <div className={`py-3 text-center text-sm ${mutedClass}`}>No data</div>
-              )}
-            </>
-          )}
+          {mode === "category" && <CategoryList rows={categoryRanked} mutedClass={mutedClass} />}
+          {mode === "merchant" && <MerchantList rows={merchantRanked} mutedClass={mutedClass} />}
         </div>
       </div>
     </div>

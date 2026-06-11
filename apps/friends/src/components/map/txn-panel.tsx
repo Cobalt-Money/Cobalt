@@ -93,8 +93,6 @@ export function TxnDetailPanel({
   );
 }
 
-const noop = (): void => undefined;
-
 function DraggableTxnPanel({
   offset,
   mode,
@@ -161,11 +159,11 @@ function DraggableTxnPanel({
         className={`relative rounded-2xl border ${textClass}`}
         style={
           isLight
-            ? {
+            ? ({
                 ...style,
                 "--foreground": "oklch(0.145 0 0)",
                 "--muted-foreground": "oklch(0.4 0 0)",
-              }
+              } as React.CSSProperties)
             : style
         }
       >
@@ -288,9 +286,8 @@ function useTxnEditHandlers(
     return {
       availableTags: [],
       categoryOptions,
-      // No edit surface inside the map panel — search hooks are inert stubs.
-      locationSearch: { loading: false, onQueryChange: noop, results: [] },
-      merchantSearch: { loading: false, onQueryChange: noop, results: [] },
+      // Merchant/location typeahead intentionally omitted — the map panel
+      // renders read-only merchant logo + location chip when these are absent.
       onDelete:
         transaction?.source === "manual"
           ? () => {

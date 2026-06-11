@@ -54,9 +54,9 @@
     "@types/bun": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^5.2.0",
     "react-grab": "^0.1.29",
     "typescript": "^5.7.2",
-    "vitest": "^3.2.0"
+    "vitest": "^3.2.6"
   }
 }

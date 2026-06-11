@@ -1305,7 +1305,7 @@ export function TransactionsTable({
 
   return (
     <div className="relative w-full flex-1 overflow-x-auto no-scrollbar">
-      <div className="w-full min-w-full text-sm">
+      <table className="block w-full min-w-full text-sm">
         <div
           className="relative block w-full"
           ref={listRef}
@@ -1500,7 +1500,7 @@ export function TransactionsTable({
             </div>
           </div>
         ) : null}
-      </div>
+      </table>
     </div>
   );
 }

@@ -30,7 +30,7 @@ export function ZeroProvider({ children }: { children: ReactNode }) {
       {children}
     </BaseZeroProvider>
   ) : (
-    <BaseZeroProvider cacheURL={cacheURL} mutators={mutators} schema={schema}>
+    <BaseZeroProvider cacheURL={cacheURL} context={undefined} mutators={mutators} schema={schema}>
       {children}
     </BaseZeroProvider>
   );
