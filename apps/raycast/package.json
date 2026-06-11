@@ -182,6 +182,13 @@
       "default": "https://api.cobaltpf.com"
     },
     {
+      "name": "apiKey",
+      "type": "password",
+      "required": false,
+      "title": "API Key",
+      "description": "Optional. Paste a Cobalt API key (prefix ck_live_) from Settings → API keys to skip OAuth sign-in."
+    },
+    {
       "name": "brandfetchClientId",
       "type": "textfield",
       "required": false,
