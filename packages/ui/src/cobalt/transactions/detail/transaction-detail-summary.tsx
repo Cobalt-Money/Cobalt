@@ -86,11 +86,15 @@ export function TransactionDetailSummary({
   transaction,
   hideLocation = false,
   hideLocationMap = false,
+  person,
+  personAvatarUrl,
 }: {
   edit?: TransactionDetailEditHandlers;
   transaction: TransactionResponse;
   hideLocation?: boolean;
   hideLocationMap?: boolean;
+  person?: string | null;
+  personAvatarUrl?: string | null;
 }) {
   const isDebit = transaction.amount < 0;
   const amountColor = isDebit ? "text-destructive" : "text-success";
@@ -112,7 +116,6 @@ export function TransactionDetailSummary({
           <MerchantLogo
             className="size-12 shrink-0"
             counterparties={transaction.counterparties}
-            deferUntilVisible={false}
             logoUrl={transaction.logoUrl}
             merchantName={transaction.merchantName}
             website={transaction.website}
@@ -136,6 +139,7 @@ export function TransactionDetailSummary({
       </p>
 
       <div className="flex flex-col gap-3">
+        {person && <PersonRow name={person} avatarUrl={personAvatarUrl ?? null} />}
         <div className="flex items-center gap-2.5 text-base">
           <img
             alt=""
@@ -210,7 +214,7 @@ export function TransactionDetailSummary({
 
         {edit ? (
           <EditablePaymentChannel
-            isOverridden={transaction.lockedFields.includes("paymentChannel")}
+            isOverridden={false}
             onReset={edit.onResetPaymentChannel}
             onSubmit={edit.onUpdatePaymentChannel}
             paymentChannel={transaction.paymentChannel}
@@ -264,6 +268,23 @@ function TagsRow({
         options={[...availableTags]}
         selectedIds={[...selectedIds]}
       />
+    </div>
+  );
+}
+
+function PersonRow({ name, avatarUrl }: { name: string; avatarUrl: string | null }) {
+  return (
+    <div className="flex items-center gap-2.5 text-base">
+      <span className="flex size-5 shrink-0 items-center justify-center">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="size-5 rounded-full object-cover" />
+        ) : (
+          <span className="flex size-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
+            {name.slice(0, 1).toUpperCase()}
+          </span>
+        )}
+      </span>
+      <span className="text-foreground">{name}</span>
     </div>
   );
 }

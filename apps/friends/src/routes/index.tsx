@@ -1,15 +1,17 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 
 import { FriendsMap } from "../components/map";
+import { OnboardingModal } from "../components/onboarding-modal";
 import { TopBar } from "../components/top-bar";
 import { authClient } from "../lib/auth-client";
 
 const searchSchema = z.object({
   firstTime: z.boolean().optional(),
   inviteError: z.string().optional(),
+  onboarding: z.string().optional(),
   welcomedBy: z.string().optional(),
 });
 
@@ -20,7 +22,7 @@ export const Route = createFileRoute("/")({
 
 function MapPage() {
   const session = authClient.useSession();
-  const { welcomedBy, firstTime, inviteError } = Route.useSearch();
+  const { welcomedBy, firstTime, inviteError, onboarding } = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
 
   // One-shot flash on mount: fire toast then strip the query params so a
@@ -52,7 +54,45 @@ function MapPage() {
     <div className="relative h-screen w-screen overflow-hidden">
       <FriendsMap />
       <TopBar />
+      {session.data?.user ? (
+        <OnboardingGate
+          force={onboarding === "1"}
+          user={session.data.user as { isAnonymous?: boolean }}
+        />
+      ) : null}
     </div>
+  );
+}
+
+const ONBOARDED_KEY = "friends.onboarded";
+
+function OnboardingGate({ force, user }: { force: boolean; user: { isAnonymous?: boolean } }) {
+  const [open, setOpen] = useState(() => {
+    if (force) {
+      return true;
+    }
+    if (user.isAnonymous) {
+      return false;
+    }
+    if (typeof window === "undefined") {
+      return false;
+    }
+    return window.localStorage.getItem(ONBOARDED_KEY) !== "1";
+  });
+
+  if (!open) {
+    return null;
+  }
+  return (
+    <OnboardingModal
+      open={open}
+      onClose={() => {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(ONBOARDED_KEY, "1");
+        }
+        setOpen(false);
+      }}
+    />
   );
 }
 

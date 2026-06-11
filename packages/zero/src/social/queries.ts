@@ -54,10 +54,15 @@ export const socialQueries = {
       .orderBy("createdAt", "desc");
   }),
 
+  /** Decline rows the caller has written — used to filter pending list. */
+  invitesDeclined: defineQuery(({ ctx }) =>
+    zql.socialInviteDecline.where("declinedByUserId", ctx?.userId ?? NO_MATCH_ID),
+  ),
+
   /**
    * Invites targeting the caller — by user_id OR by email match.
-   * Filters to active (not redeemed, not revoked, not expired). Friends app
-   * uses this as the realtime inbox.
+   * Filters to active (not redeemed, not revoked). Caller filters declined
+   * invites client-side via `invitesDeclined`.
    */
   invitesPending: defineQuery(({ ctx }) =>
     zql.socialInvite

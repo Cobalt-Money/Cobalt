@@ -60,7 +60,7 @@ export function EditableCategory({
         trigger={
           <button
             aria-label="Edit category"
-            className="-mx-2 flex min-w-0 items-center gap-2.5 rounded-lg px-2 py-1 text-left transition-colors hover:bg-muted focus:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[popup-open]:bg-muted"
+            className="-mx-2 flex min-w-0 items-center gap-2.5 rounded-lg px-2 py-1 text-left transition-colors hover:bg-foreground/5 focus:outline-none focus-visible:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring data-[popup-open]:bg-foreground/5"
             type="button"
           >
             {category ? (

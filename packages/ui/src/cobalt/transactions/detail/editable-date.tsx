@@ -36,7 +36,7 @@ export function EditableDate({ dateIso, isOverridden, onReset, onSubmit }: Edita
           render={
             <button
               aria-label="Edit date"
-              className="-mx-2 flex items-center gap-2.5 rounded-lg px-2 py-1 text-left transition-colors hover:bg-muted focus:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring data-[popup-open]:bg-muted"
+              className="-mx-2 flex items-center gap-2.5 rounded-lg px-2 py-1 text-left transition-colors hover:bg-foreground/5 focus:outline-none focus-visible:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring data-[popup-open]:bg-foreground/5"
               type="button"
             >
               <span className="flex size-5 shrink-0 items-center justify-center">
@@ -74,7 +74,7 @@ export function EditableDate({ dateIso, isOverridden, onReset, onSubmit }: Edita
       </Popover>
       {isOverridden ? (
         <button
-          className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-muted-foreground text-xs hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-muted-foreground text-xs hover:bg-foreground/5 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={onReset}
           type="button"
         >

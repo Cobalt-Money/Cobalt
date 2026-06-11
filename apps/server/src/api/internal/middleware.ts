@@ -5,6 +5,23 @@ import { createMiddleware } from "hono/factory";
 
 const toZeroContext = (userId: string) => ({ userId });
 
+/**
+ * Optional session. Anonymous callers pass through with no `zeroContext` —
+ * social queries fall back to the seeded demo network. Use on read-only Zero
+ * endpoints (`/query`) so the landing page can render without auth.
+ */
+export const optionalAuth = createMiddleware<AppEnv>(async (c, next) => {
+  const session = await auth.api.getSession({
+    headers: c.req.raw.headers,
+  });
+  if (session) {
+    c.set("user", session.user);
+    c.set("session", session.session);
+    c.set("zeroContext", toZeroContext(session.user.id));
+  }
+  await next();
+});
+
 /** Session only (Better Auth). Use on routes that do not require a paid plan. */
 export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
   const session = await auth.api.getSession({

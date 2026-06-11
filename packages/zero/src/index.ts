@@ -4,6 +4,7 @@ export { schema, zql } from "./schema";
 export type { Schema } from "./schema";
 export { queries } from "./queries";
 export { mutators } from "./mutators";
+export { DEMO_USER_ID, DEMO_NETWORK_IDS } from "./social/constants";
 export type { Context } from "./auth";
 export type { Row } from "@rocicorp/zero";
 export type {

@@ -9,12 +9,6 @@ import { authClient } from "./auth-client";
 
 const cacheURL = env.VITE_ZERO_CACHE_URL ?? "http://localhost:4848";
 
-// Sentinel passed to Zero when there's no session. Zero needs a userID to
-// open a connection — "anon" lets the landing-page demo network load without
-// auth. Backend `ctx.userId` stays unset (no JWT), so social queries
-// substitute the demo user. Mirror of zbugs' anon pattern.
-const ANON_USER_ID = "anon";
-
 export function ZeroProvider({ children }: { children: ReactNode }) {
   const session = authClient.useSession();
   const authenticatedUserId = session.data?.user.id;
@@ -23,14 +17,20 @@ export function ZeroProvider({ children }: { children: ReactNode }) {
     [authenticatedUserId],
   );
 
-  return (
+  // Logged-out clients: omit `userID` entirely (Zero ≥ 1.6 requires this for
+  // anonymous sync). Authed clients: pass the real user id.
+  return authenticatedUserId ? (
     <BaseZeroProvider
       cacheURL={cacheURL}
       context={context}
       mutators={mutators}
       schema={schema}
-      userID={authenticatedUserId ?? ANON_USER_ID}
+      userID={authenticatedUserId}
     >
+      {children}
+    </BaseZeroProvider>
+  ) : (
+    <BaseZeroProvider cacheURL={cacheURL} mutators={mutators} schema={schema}>
       {children}
     </BaseZeroProvider>
   );

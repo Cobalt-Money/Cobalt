@@ -1,6 +1,6 @@
 import type { MapboxOverlayProps } from "@deck.gl/mapbox";
 import { IconLayer } from "@deck.gl/layers";
-import { queries } from "@cobalt-web/zero";
+import { DEMO_USER_ID, queries } from "@cobalt-web/zero";
 import {
   CATEGORY_SYSTEM_ICON_SRC,
   pfcDetailedToSystemKey,
@@ -13,22 +13,16 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import { authClient } from "../lib/auth-client";
 import { getAvatarIcon } from "./avatar-icon";
+import { getMerchantIcon } from "./merchant-icon";
 import { buildSvgAtlas } from "./svg-atlas";
 import { INITIAL_VIEW_STATE, LIGHT_STYLES, MAP_STYLES, SERVER_URL } from "./map/constants";
 import { InspectorPanel } from "./map/inspector";
 import { MerchantPanel } from "./map/merchant-panel";
 import { DeckGLOverlay, NycSubwayLines } from "./map/nyc-subway";
 import { PeopleLeaderboard } from "./map/people-leaderboard";
+import { PlacesPanel } from "./map/places-panel";
 import { TxnDetailPanel } from "./map/txn-panel";
-import type {
-  Category,
-  HoverState,
-  MarkerStyle,
-  PinDatum,
-  StyleKey,
-  TimeWindow,
-  ViewMode,
-} from "./map/types";
+import type { Category, HoverState, PinDatum, StyleKey, TimeWindow, ViewMode } from "./map/types";
 import {
   aggregatePeople,
   computeGlassStyle,
@@ -48,19 +42,19 @@ export function FriendsMap() {
   const [selectedTxnId, setSelectedTxnId] = useState<string | null>(null);
   const [stackKey, setStackKey] = useState<string | null>(null);
   const mapRef = useRef<MapRef | null>(null);
-  const flyTo = (lon: number, lat: number) => {
+  const flyTo = (lon: number, lat: number, zoom = 16) => {
     mapRef.current?.flyTo({
       center: [lon, lat],
       duration: 1200,
       essential: true,
-      zoom: 16,
+      zoom,
     });
   };
   const [viewMode, setViewMode] = useState<ViewMode>("pins");
-  const [markerStyle, setMarkerStyle] = useState<MarkerStyle>("landmark");
   // Bumped whenever an async avatar canvas finishes loading so IconLayer's
   // `updateTriggers` knows to re-read getIcon and pick up the new data URL.
   const [avatarVersion, setAvatarVersion] = useState(0);
+  const [merchantIconVersion, setMerchantIconVersion] = useState(0);
   const [timeWindow, setTimeWindow] = useState<TimeWindow>(30);
   // null = no explicit filter (all pins pass). Once user toggles a bucket off
   // we snapshot the currently-present systemKeys and switch to explicit mode.
@@ -83,7 +77,9 @@ export function FriendsMap() {
   );
 
   const session = authClient.useSession();
-  const userId = session.data?.user.id;
+  const authedUserId = session.data?.user.id;
+  // Anon visitors see the seeded demo network as if logged in as the root demo user.
+  const userId = authedUserId ?? DEMO_USER_ID;
   const userName = session.data?.user.name ?? session.data?.user.email?.split("@")[0] ?? "You";
 
   // Two atlases — flat disc tiles for the "dots" style, teardrop tiles
@@ -120,9 +116,12 @@ export function FriendsMap() {
   const friendIdList = friendships
     .map((f) => (f.userAId === userId ? f.userBId : f.userAId))
     .filter(Boolean) as string[];
+  // Include the viewer's own id so the leaderboard self row gets an avatar
+  // (esp. for anon, where session.data.user.image is unavailable).
+  const profileIds = [...new Set([userId, ...friendIdList].filter(Boolean))] as string[];
   const [friendProfiles] = useQuery(
     queries.social.friendProfiles({
-      ids: friendIdList.length > 0 ? friendIdList : ["__none__"],
+      ids: profileIds.length > 0 ? profileIds : ["__none__"],
     }),
   );
   const friendNameById = new Map<string, { name: string; image: string | null }>();
@@ -133,13 +132,53 @@ export function FriendsMap() {
     });
   }
 
+  // Self = gold. Each friend = a distinct hue, derived deterministically from
+  // their user id so the color sticks across reloads + matches map + inspector.
+  const FRIEND_PALETTE: [number, number, number][] = [
+    [251, 146, 60], // orange
+    [236, 72, 153], // pink
+    [34, 197, 94], // green
+    [59, 130, 246], // blue
+    [168, 85, 247], // purple
+    [20, 184, 166], // teal
+    [239, 68, 68], // red
+    [234, 179, 8], // amber
+  ];
+  const UINT32_MOD = 4_294_967_296;
+  const hashUid = (uid: string): number => {
+    // 32-bit DJB-style hash. Modulo 2^32 each step keeps precision within
+    // Number.MAX_SAFE_INTEGER so long ids don't collapse to one bucket.
+    let h = 0;
+    for (let i = 0; i < uid.length; i += 1) {
+      h = (h * 31 + (uid.codePointAt(i) ?? 0)) % UINT32_MOD;
+    }
+    return h;
+  };
+  const colorForUser = (uid: string): [number, number, number, number] => {
+    if (uid === userId) {
+      return [255, 215, 0, 230];
+    }
+    const c = FRIEND_PALETTE[hashUid(uid) % FRIEND_PALETTE.length] as [number, number, number];
+    return [c[0], c[1], c[2], 230];
+  };
+  const cssColorForUser = (uid: string): string => {
+    const [r, g, b] = colorForUser(uid);
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
   const friendIds = new Set(friendships.map((f) => (f.userAId === userId ? f.userBId : f.userAId)));
   // Stable list for the Friends toggle UI — self first (gold), then every
   // accepted friendship (orange), even ones with zero shared posts so users
   // can pre-mute a new friend.
   const friendList = [
-    { id: userId ?? "self", isSelf: true as const, label: userName },
+    {
+      color: cssColorForUser(userId ?? "self"),
+      id: userId ?? "self",
+      isSelf: true as const,
+      label: userName,
+    },
     ...[...friendIds].map((id) => ({
+      color: cssColorForUser(id),
       id,
       isSelf: false as const,
       label: friendNameById.get(id)?.name ?? `user ${id.slice(0, 6)}`,
@@ -183,6 +222,7 @@ export function FriendsMap() {
       notes: t.notes ?? null,
       paymentChannel: t.paymentChannel ?? null,
       person: userName,
+      personImageUrl: session.data?.user.image ?? friendNameById.get(userId)?.image ?? null,
       position: [t.lon, t.lat] as [number, number],
       region: t.region ?? null,
       userId: userId ?? "self",
@@ -195,21 +235,24 @@ export function FriendsMap() {
     amount: p.amountCents === null ? 0 : Number(p.amountCents) / 100,
     amountHidden: p.amountCents === null,
     cardName: p.cardName ?? null,
-    category: "uncategorized",
+    category: (p.categorySystemKey ?? "uncategorized") as Category,
     city: null,
     date: normalizePostDate(p.date),
-    id: p.id,
+    // Use the underlying transaction id so the detail panel (which queries
+    // `transactions.detail` by id) can resolve the row.
+    id: p.transactionId,
     institutionName: p.institutionName ?? null,
-    logoUrl: null,
+    logoUrl: p.logoUrl ?? null,
     merchant: p.merchantName ?? "Hidden",
     merchantHidden: p.merchantName === null,
     notes: p.note ?? null,
     paymentChannel: null,
     person: friendNameById.get(p.userId)?.name ?? `user ${p.userId.slice(0, 6)}`,
+    personImageUrl: friendNameById.get(p.userId)?.image ?? null,
     position: [p.lon, p.lat] as [number, number],
     region: null,
     userId: p.userId,
-    website: null,
+    website: p.website ?? null,
   }));
 
   const passesFilter = (p: PinDatum) =>
@@ -221,6 +264,17 @@ export function FriendsMap() {
   const friendPins = friendPinsRaw.filter(passesFilter);
   const allPins = [...pins, ...friendPins];
 
+  // Quick-jump targets — the inspector "Cities" button row flies the camera
+  // to one of these without touching the pin/data filter.
+  const flyToCity = (city: "nyc" | "sf") => {
+    // ~12 = city-wide view (all 5 boroughs / full peninsula).
+    if (city === "nyc") {
+      flyTo(-73.9776, 40.7259, 12);
+    } else {
+      flyTo(-122.4194, 37.7749, 12.5);
+    }
+  };
+
   // Categories with ≥1 in-store pin inside the current time window — drives
   // the filter UI so options track 7d/30d/90d/all.
   const presentCategories = new Set<Category>();
@@ -230,41 +284,10 @@ export function FriendsMap() {
     }
   }
 
-  const merchantTotalsMap: Record<
-    string,
-    {
-      merchant: string;
-      total: number;
-      count: number;
-      logoUrl: string | null;
-      website: string | null;
-    }
-  > = {};
-  for (const p of allPins) {
-    const amt = Math.abs(p.amount);
-    const existing = merchantTotalsMap[p.merchant];
-    if (existing) {
-      existing.total += amt;
-      existing.count += 1;
-    } else {
-      merchantTotalsMap[p.merchant] = {
-        count: 1,
-        logoUrl: p.logoUrl,
-        merchant: p.merchant,
-        total: amt,
-        website: p.website,
-      };
-    }
-  }
-  const merchantTotals = Object.values(merchantTotalsMap).toSorted((a, b) => b.total - a.total);
-
   const people = aggregatePeople(allPins);
 
   const layers: unknown[] = [];
 
-  // Identity color (gold = you, orange = friend) used by People style.
-  const colorForUser = (uid: string): [number, number, number, number] =>
-    uid === userId ? [255, 215, 0, 230] : [251, 146, 60, 230];
   const openSelfTxn = (id: string | null) => {
     if (!id) {
       setSelectedTxnId(null);
@@ -286,87 +309,61 @@ export function FriendsMap() {
     setStackKey(key);
     if (p.userId === userId) {
       setSelectedTxnId(p.id);
-    } else {
-      const selfAt = atCoord.find((x) => x.userId === userId);
-      if (selfAt) {
-        setSelectedTxnId(selfAt.id);
-      }
+      return;
     }
+    // Friend pin: prefer a self pin at the same coord (so the panel still
+    // shows the viewer's own row when stacked); otherwise open the friend's.
+    const selfAt = atCoord.find((x) => x.userId === userId);
+    setSelectedTxnId(selfAt?.id ?? p.id);
   };
   const pinHoverHandler = (info: { object?: unknown; x: number; y: number }) => {
     setHover(info.object ? { pin: info.object as PinDatum, x: info.x, y: info.y } : null);
   };
 
-  if (markerStyle === "dots") {
-    if (viewMode === "pins" && svgAtlas) {
-      layers.push(
-        new IconLayer<PinDatum>({
-          alphaCutoff: 0.05,
-          billboard: true,
-          data: allPins,
-          getColor: [255, 255, 255, 255],
-          getIcon: (d) => (d.category in svgAtlas.mapping ? d.category : "uncategorized"),
-          getPosition: (d) => [d.position[0], d.position[1], 0.01],
-          getSize: 32,
-          iconAtlas: svgAtlas.url,
-          iconMapping: svgAtlas.mapping,
-          id: "self-pins",
-          onClick: ({ object }) => pinClickHandler(object),
-          onHover: pinHoverHandler,
-          pickable: true,
-          sizeMaxPixels: 520,
-          sizeMinPixels: 28,
-          sizeUnits: "meters",
-        }),
-      );
-    } else if (viewMode === "people") {
-      // People dots: render profile pic in circle with identity-colored ring.
-      const avatarFor = (d: PinDatum) => {
-        const isSelf = d.userId === userId;
-        const initial = (isSelf ? userName : d.person).charAt(0) || "?";
-        const url = avatarProxyUrl(d.userId);
-        const dataUrl = getAvatarIcon(
-          {
-            fallbackInitial: initial,
-            key: d.userId,
-            ring: colorForUser(d.userId),
-            shape: "circle",
-            url,
-          },
-          () => setAvatarVersion((v) => v + 1),
-        );
-        return {
-          anchorX: 80,
-          anchorY: 80,
-          height: 160,
-          id: `${d.userId}-circle-${avatarVersion}`,
-          url: dataUrl,
-          width: 160,
-        } as const;
-      };
-      layers.push(
-        new IconLayer<PinDatum>({
-          alphaCutoff: 0.05,
-          billboard: true,
-          data: allPins,
-          getColor: [255, 255, 255, 255],
-          getIcon: avatarFor,
-          getPosition: (d) => [d.position[0], d.position[1], 0],
-          getSize: 24,
-          id: "people-pins",
-          onClick: ({ object }) => pinClickHandler(object),
-          onHover: pinHoverHandler,
-          pickable: true,
-          sizeMaxPixels: 410,
-          sizeMinPixels: 22,
-          sizeUnits: "meters",
-          updateTriggers: { getIcon: avatarVersion },
-        }),
-      );
-    }
-  } else if (markerStyle === "landmark") {
+  const merchantTeardropIconFor = (d: PinDatum) => {
+    const dataUrl = getMerchantIcon(
+      {
+        key: `${d.merchant}|${d.website ?? ""}|${d.logoUrl ?? ""}`,
+        logoUrl: d.logoUrl,
+        merchant: d.merchant,
+        shape: "teardrop",
+        website: d.website,
+      },
+      () => setMerchantIconVersion((v) => v + 1),
+    );
+    return {
+      anchorX: 64,
+      anchorY: 160,
+      height: 160,
+      id: `${d.merchant}-td-${merchantIconVersion}`,
+      url: dataUrl,
+      width: 128,
+    } as const;
+  };
+
+  {
     const landmarkAtlas = svgAtlasTeardrop ?? svgAtlas;
-    if (viewMode === "pins" && landmarkAtlas) {
+    if (viewMode === "places") {
+      layers.push(
+        new IconLayer<PinDatum>({
+          alphaCutoff: 0.05,
+          billboard: true,
+          data: allPins,
+          getColor: [255, 255, 255, 255],
+          getIcon: merchantTeardropIconFor,
+          getPosition: (d) => [d.position[0], d.position[1], 0],
+          getSize: 48,
+          id: "merchant-landmarks",
+          onClick: ({ object }) => pinClickHandler(object),
+          onHover: pinHoverHandler,
+          pickable: true,
+          sizeMaxPixels: 560,
+          sizeMinPixels: 60,
+          sizeUnits: "meters",
+          updateTriggers: { getIcon: merchantIconVersion },
+        }),
+      );
+    } else if (viewMode === "pins" && landmarkAtlas) {
       layers.push(
         new IconLayer<PinDatum>({
           alphaCutoff: 0.05,
@@ -424,13 +421,13 @@ export function FriendsMap() {
           getColor: [255, 255, 255, 255],
           getIcon: avatarFor,
           getPosition: (d) => [d.position[0], d.position[1], 0],
-          getSize: 30,
+          getSize: 48,
           id: "people-avatars",
           onClick: ({ object }) => pinClickHandler(object),
           onHover: pinHoverHandler,
           pickable: true,
-          sizeMaxPixels: 400,
-          sizeMinPixels: 40,
+          sizeMaxPixels: 560,
+          sizeMinPixels: 60,
           sizeUnits: "meters",
           updateTriggers: { getIcon: avatarVersion },
         }),
@@ -449,35 +446,68 @@ export function FriendsMap() {
         {showSubway && <NycSubwayLines />}
         <DeckGLOverlay layers={layers as MapboxOverlayProps["layers"]} />
       </MapGL>
-      {viewMode === "people" ? (
+      {viewMode === "people" && (
         <PeopleLeaderboard
           people={people}
+          pins={allPins}
           categories={activeCategories}
           glassStyle={glassStyle}
           selfId={userId}
+          viewMode={viewMode}
+          onViewMode={setViewMode}
         />
-      ) : (
+      )}
+      {viewMode === "places" && (
+        <PlacesPanel
+          pins={allPins}
+          glassStyle={glassStyle}
+          viewMode={viewMode}
+          onViewMode={setViewMode}
+          flyTo={flyTo}
+        />
+      )}
+      {viewMode === "pins" && (
         <MerchantPanel
-          merchants={merchantTotals}
           unmappedTxns={unmappedInStore}
           inStorePins={allPins}
           flyTo={flyTo}
           selfId={userId}
+          selfName={userName}
+          selfImageUrl={session.data?.user.image ?? friendNameById.get(userId)?.image ?? null}
           onSelectTxn={openSelfTxn}
           glassStyle={glassStyle}
+          viewMode={viewMode}
+          onViewMode={setViewMode}
         />
       )}
+      {/* eslint-disable-next-line complexity */}
       {(() => {
-        const hoverSelf = hover && hover.pin.userId === userId ? hover.pin : null;
-        const displayTxnId = hoverSelf?.id ?? selectedTxnId ?? null;
+        const hoverPin = hover?.pin ?? null;
+        const displayTxnId = hoverPin?.id ?? selectedTxnId ?? null;
         if (!displayTxnId) {
           return null;
         }
-        const mode: "pinned" | "preview" = hoverSelf ? "preview" : "pinned";
-        const key = hoverSelf ? stackKeyForPin(hoverSelf) : stackKey;
-        const selfStack = key
-          ? allPins.filter((p) => stackKeyForPin(p) === key && p.userId === userId)
-          : [];
+        const mode: "pinned" | "preview" = hoverPin ? "preview" : "pinned";
+        const key = hoverPin ? stackKeyForPin(hoverPin) : stackKey;
+        // Rail scoped to pins owned by the same user as the displayed pin.
+        // Only renders when that user actually has >1 txn at this coord.
+        const ownerId = (hoverPin ?? allPins.find((p) => p.id === displayTxnId))?.userId;
+        const coordStack =
+          key && ownerId
+            ? allPins.filter((p) => stackKeyForPin(p) === key && p.userId === ownerId)
+            : [];
+        const displayPin = hoverPin ?? allPins.find((p) => p.id === displayTxnId) ?? null;
+        const isSelfPin = displayPin?.userId === userId;
+        let personName: string | null = null;
+        let personAvatarUrl: string | null = null;
+        if (displayPin) {
+          if (isSelfPin) {
+            personName = userName;
+          } else {
+            personName = displayPin.person ?? null;
+            personAvatarUrl = friendNameById.get(displayPin.userId)?.image ?? null;
+          }
+        }
         return (
           <TxnDetailPanel
             txnId={displayTxnId}
@@ -487,22 +517,22 @@ export function FriendsMap() {
               setStackKey(null);
             }}
             glassStyle={glassStyle}
-            stack={selfStack.length > 0 ? selfStack : null}
+            stack={coordStack.length > 1 ? coordStack : null}
             selfId={userId}
             onNavigate={(p) => {
               flyTo(p.position[0], p.position[1]);
               setSelectedTxnId(p.id);
             }}
+            person={personName}
+            personAvatarUrl={personAvatarUrl}
+            editable={!!authedUserId && isSelfPin}
           />
         );
       })()}
       <InspectorPanel
-        viewMode={viewMode}
-        onViewMode={setViewMode}
-        markerStyle={markerStyle}
-        onMarkerStyle={setMarkerStyle}
         timeWindow={timeWindow}
         onTimeWindow={setTimeWindow}
+        onFlyToCity={flyToCity}
         friends={friendList}
         hiddenFriendIds={hiddenFriendIds}
         onToggleFriend={(id) => {

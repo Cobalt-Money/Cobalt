@@ -1305,7 +1305,7 @@ export function TransactionsTable({
 
   return (
     <div className="relative w-full flex-1 overflow-x-auto no-scrollbar">
-      <div className="w-full min-w-full text-sm" role="table">
+      <div className="w-full min-w-full text-sm">
         <div
           className="relative block w-full"
           ref={listRef}
@@ -1337,7 +1337,6 @@ export function TransactionsTable({
                       className="group/month grid rounded-lg bg-sidebar font-medium text-foreground"
                       data-index={vi.index}
                       key={vi.key}
-                      role="row"
                       style={{
                         ...stickyStyle,
                         gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
@@ -1368,7 +1367,7 @@ export function TransactionsTable({
                           }}
                         />
                       </div>
-                      <div className="flex items-center p-3" role="cell">
+                      <div className="flex items-center p-3">
                         <div className={cn(cellRow, "whitespace-nowrap")}>
                           <span className="font-normal tabular-nums text-muted-foreground text-sm">
                             {item.count}
@@ -1376,7 +1375,7 @@ export function TransactionsTable({
                         </div>
                       </div>
                       <div className="p-3" role="presentation" />
-                      <div className="flex items-center p-3" role="cell">
+                      <div className="flex items-center p-3">
                         <div className={cn(cellRow, "whitespace-nowrap")}>
                           <span className="truncate font-medium text-foreground text-sm">
                             {item.label}
@@ -1410,7 +1409,7 @@ export function TransactionsTable({
                     tagOptions={tagOptions}
                     transaction={row.original}
                   >
-                    <div
+                    <tr
                       aria-label={`View details for ${getTransactionDisplayName(row.original)}`}
                       className="group grid cursor-pointer font-normal"
                       data-index={vi.index}
@@ -1421,7 +1420,6 @@ export function TransactionsTable({
                       onMouseDown={(e) => {
                         onRowMouseDown(row, e);
                       }}
-                      role="row"
                       style={{
                         ...stickyStyle,
                         gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
@@ -1440,24 +1438,22 @@ export function TransactionsTable({
                               "group-hover:rounded-r-lg group-data-[state=selected]:rounded-r-lg",
                           )}
                           key={cell.id}
-                          role="cell"
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </div>
                       ))}
-                    </div>
+                    </tr>
                   </TransactionRowContextMenu>
                 );
               })
             : null}
         </div>
         {!hasRows && !isComplete ? (
-          <div className="flex flex-col gap-1 p-3" role="row">
+          <div className="flex flex-col gap-1 p-3">
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 className="grid items-center"
                 key={i}
-                role="cell"
                 style={{
                   gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
                   height: ROW_HEIGHT,
@@ -1490,8 +1486,8 @@ export function TransactionsTable({
           </div>
         ) : null}
         {!hasRows && isComplete ? (
-          <div className="p-6" role="row">
-            <div role="cell">
+          <div className="p-6">
+            <div>
               {hasActiveFilters ? (
                 <NoFilterResultsEmpty onClearFilters={onClearFilters} />
               ) : (

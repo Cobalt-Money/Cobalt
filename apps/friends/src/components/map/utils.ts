@@ -86,10 +86,13 @@ export function aggregatePeople(allPins: PinDatum[]): PersonAgg[] {
       existing.lat += p.position[1];
       existing.lon += p.position[0];
       existing.byCat[p.category] = (existing.byCat[p.category] ?? 0) + amt;
+      existing.byMerchant[p.merchant] = (existing.byMerchant[p.merchant] ?? 0) + amt;
     } else {
       personAgg.set(p.userId, {
         byCat: { [p.category]: amt },
+        byMerchant: { [p.merchant]: amt },
         count: 1,
+        imageUrl: p.personImageUrl,
         lat: p.position[1],
         lon: p.position[0],
         name: p.person,

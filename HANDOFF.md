@@ -27,6 +27,7 @@ Chosen approach: **shared demo network** seeded into real tables, served to anon
 ## What changed
 
 ### Added
+
 - `packages/zero/src/social/constants.ts` — `DEMO_USER_ID`, `DEMO_NETWORK_IDS`
 - `packages/db/src/demo/seed-demo-network.ts` — idempotent seed for 6 users (John Doe + Ava/Ben/Cleo/Dax/Eli), 6 manual accounts, 12 transactions, 12 social_posts (SF + NYC coords), 5 friendships
 - `packages/db/scripts/seed-demo-network.ts` — CLI wrapper
@@ -34,6 +35,7 @@ Chosen approach: **shared demo network** seeded into real tables, served to anon
 - `apps/friends/src/client.tsx` — `hydrateRoot(document, <StartClient />)` + DEV `react-grab` import
 
 ### Modified
+
 - `packages/zero/src/social/queries.ts`
   - `friendships`, `postDetail`, `postsMine`, `privacyZones`, `visibilityRules` substitute `DEMO_USER_ID` for anon
   - `postsAll` server-side filters to `userId IN DEMO_NETWORK_IDS` when anon
@@ -48,6 +50,7 @@ Chosen approach: **shared demo network** seeded into real tables, served to anon
 - `packages/db/package.json` — added `seed:demo-network` script
 
 ### Deleted
+
 - `apps/friends/index.html` — root route owns the document now
 - `apps/friends/src/main.tsx` — replaced by `client.tsx`
 
@@ -84,6 +87,7 @@ bun --filter=friends dev
 ```
 
 Verify the prerendered HTML:
+
 ```bash
 bun --filter=friends run build
 cat apps/friends/dist/client/_shell.html

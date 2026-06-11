@@ -30,11 +30,13 @@ export const socialPost = pgTable(
   {
     amountCents: bigint("amount_cents", { mode: "number" }),
     cardName: text("card_name"),
+    categorySystemKey: text("category_system_key"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     date: timestamp("date"),
     id: uuid("id").defaultRandom().primaryKey(),
     institutionName: text("institution_name"),
     lat: doublePrecision("lat").notNull(),
+    logoUrl: text("logo_url"),
     lon: doublePrecision("lon").notNull(),
     merchantName: text("merchant_name"),
     note: text("note"),
@@ -44,6 +46,7 @@ export const socialPost = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    website: text("website"),
   },
   (table) => [
     uniqueIndex("social_post_user_txn_uq").on(table.userId, table.transactionId),

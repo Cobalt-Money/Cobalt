@@ -16,7 +16,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "../lib/auth-client";
@@ -72,14 +72,15 @@ export function SettingsDialog({
   const open = openProp ?? openState;
   const setOpen = onOpenChange ?? setOpenState;
   const [section, setSection] = useState<Section>(initialSection);
-
-  // Re-sync the active section when a controlled caller bumps `initialSection`
-  // between opens (e.g. "Settings" vs "Invites" dropdown items).
-  useEffect(() => {
+  // React docs pattern: adjust state during render in response to prop change.
+  // Re-sync `section` when a controlled caller bumps `initialSection` while open.
+  const [prevSync, setPrevSync] = useState({ initialSection, open });
+  if (prevSync.open !== open || prevSync.initialSection !== initialSection) {
+    setPrevSync({ initialSection, open });
     if (open) {
       setSection(initialSection);
     }
-  }, [open, initialSection]);
+  }
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
@@ -186,7 +187,7 @@ function InvitesSection() {
   const [state, setState] = useState<CreateState>({ kind: "idle" });
   const [copied, setCopied] = useState(false);
 
-  const [pending, setPending] = useState<PendingInvite[]>([]);
+  const z = useZero<typeof mutators>();
   // Track both which row is busy + which action (accept|decline) so the
   // opposite button doesn't show the wrong loading label.
   const [busy, setBusy] = useState<{
@@ -194,16 +195,18 @@ function InvitesSection() {
     action: "accept" | "decline";
   } | null>(null);
 
-  const reload = async () => {
-    const res = await authClient.invite.pending();
-    if (!res.error && res.data) {
-      setPending((res.data.invites ?? []) as PendingInvite[]);
-    }
-  };
-
-  useEffect(() => {
-    void reload();
-  }, []);
+  const [pendingAll] = useQuery(queries.social.invitesPending());
+  const [declined] = useQuery(queries.social.invitesDeclined());
+  const declinedIds = new Set(declined.map((d) => d.inviteId));
+  const pending: PendingInvite[] = pendingAll
+    .filter((p) => !declinedIds.has(p.id))
+    .map((p) => ({
+      expiresAt: p.expiresAt,
+      id: p.id,
+      inviterUserId: p.inviterUserId,
+      kind: p.kind,
+      token: p.token,
+    }));
 
   const onCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,20 +242,18 @@ function InvitesSection() {
       await authClient.invite.activate({ token });
     } finally {
       setBusy(null);
-      void reload();
     }
   };
 
   const decline = async (id: string) => {
     setBusy({ action: "decline", id });
-    setPending((prev) => prev.filter((p) => p.id !== id));
     try {
-      const res = await authClient.invite.decline({ inviteId: id });
-      if (res.error) {
-        void reload();
-      }
-    } catch {
-      void reload();
+      await z.mutate(
+        mutators.social.invites.decline({
+          declineId: crypto.randomUUID(),
+          inviteId: id,
+        }),
+      );
     } finally {
       setBusy(null);
     }
@@ -770,9 +771,12 @@ function CentsInput({
   onCommit: (cents: number | null) => void;
 }) {
   const [draft, setDraft] = useState<string>(cents === null ? "" : (cents / 100).toFixed(2));
-  useEffect(() => {
+  // React docs pattern: reset derived state during render when prop changes.
+  const [prevCents, setPrevCents] = useState(cents);
+  if (prevCents !== cents) {
+    setPrevCents(cents);
     setDraft(cents === null ? "" : (cents / 100).toFixed(2));
-  }, [cents]);
+  }
   const commit = () => {
     const trimmed = draft.trim();
     if (trimmed === "") {

@@ -59,7 +59,7 @@ export { importStagedTransaction } from "./imports/import-staged-transaction";
 // these from drizzle-zero exports keeps them out of the publication and out
 // of the Railway zero-cache SQLite replica (SRI-244 follow-up).
 export { socialFriendship } from "./social/friendship";
-export { socialInvite, socialInviteRedemption } from "./social/invite";
+export { socialInvite, socialInviteDecline, socialInviteRedemption } from "./social/invite";
 export { socialPost } from "./social/post";
 export { socialShareSettings } from "./social/share-settings";
 export { socialMerchantBlocklist } from "./social/merchant-blocklist";

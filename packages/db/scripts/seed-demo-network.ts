@@ -5,7 +5,15 @@
  *
  * Idempotent. See `src/demo/seed-demo-network.ts` for what gets written.
  */
-import { seedDemoNetwork } from "../src/demo/seed-demo-network";
+import path from "node:path";
+
+import dotenv from "dotenv";
+
+const __dirname = import.meta.dirname;
+const monorepoRoot = path.resolve(__dirname, "../../..");
+dotenv.config({ path: path.resolve(monorepoRoot, "apps/server/.env") });
+
+const { seedDemoNetwork } = await import("../src/demo/seed-demo-network");
 
 async function main(): Promise<void> {
   // eslint-disable-next-line no-console

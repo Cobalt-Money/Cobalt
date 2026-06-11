@@ -36,6 +36,7 @@
       "dependencies": {
         "@cobalt-web/auth": "workspace:*",
         "@cobalt-web/auth-plugin-invite": "workspace:*",
+        "@cobalt-web/clients": "workspace:*",
         "@cobalt-web/env": "workspace:*",
         "@cobalt-web/ui": "workspace:*",
         "@cobalt-web/zero": "workspace:*",
@@ -451,6 +452,7 @@
         "@number-flow/react": "^0.6.0",
         "@radix-ui/react-use-controllable-state": "^1.2.2",
         "@rive-app/react-webgl2": "^4.27.3",
+        "@rocicorp/zero": "catalog:",
         "@streamdown/cjk": "^1.0.3",
         "@streamdown/code": "^1.1.1",
         "@streamdown/math": "^1.0.2",

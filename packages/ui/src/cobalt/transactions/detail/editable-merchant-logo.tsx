@@ -51,7 +51,7 @@ function renderMerchantResults({
       <div className="flex flex-col">
         {DEFAULT_MERCHANTS.map((r) => (
           <button
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-foreground/5"
             key={r.brandId}
             onClick={() => onPick(r)}
             type="button"
@@ -59,7 +59,6 @@ function renderMerchantResults({
             <MerchantLogo
               className="size-5 shrink-0 rounded-sm"
               counterparties={null}
-              deferUntilVisible={false}
               logoUrl={null}
               merchantName={r.name}
               website={r.domain}
@@ -74,7 +73,7 @@ function renderMerchantResults({
           <>
             <div className="my-1 border-foreground/10 border-t" />
             <button
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-foreground/5"
               onClick={onClear}
               type="button"
             >
@@ -88,7 +87,7 @@ function renderMerchantResults({
   if (merchantSearch.results.length === 0) {
     return (
       <button
-        className="flex w-full items-start gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+        className="flex w-full items-start gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-foreground/5"
         onClick={onUseTyped}
         type="button"
       >
@@ -98,7 +97,7 @@ function renderMerchantResults({
   }
   return merchantSearch.results.slice(0, 8).map((r) => (
     <button
-      className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+      className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-foreground/5"
       key={r.brandId}
       onClick={() => onPick(r)}
       type="button"
@@ -215,7 +214,6 @@ export function EditableMerchantLogo({
             <MerchantLogo
               className="size-12 shrink-0"
               counterparties={transaction.counterparties}
-              deferUntilVisible={false}
               logoUrl={transaction.logoUrl}
               merchantName={transaction.merchantName}
               website={transaction.website}

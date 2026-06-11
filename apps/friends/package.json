@@ -15,6 +15,7 @@
   "dependencies": {
     "@cobalt-web/auth": "workspace:*",
     "@cobalt-web/auth-plugin-invite": "workspace:*",
+    "@cobalt-web/clients": "workspace:*",
     "@cobalt-web/env": "workspace:*",
     "@cobalt-web/ui": "workspace:*",
     "@cobalt-web/zero": "workspace:*",

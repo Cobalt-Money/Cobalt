@@ -63,7 +63,7 @@ export function LocationPickerList({
     }
     return locationSearch.results.map((r) => (
       <button
-        className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-input/40"
+        className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-foreground/5"
         key={r.displayName}
         onClick={() => {
           onSubmit(r.location);
@@ -188,7 +188,7 @@ export function EditableLocation({
             ) : null}
             {results.map((r) => (
               <button
-                className="block w-full rounded-md px-2 py-2 text-left text-sm hover:bg-muted focus:bg-muted focus:outline-none"
+                className="block w-full rounded-md px-2 py-2 text-left text-sm hover:bg-foreground/5 focus:bg-foreground/5 focus:outline-none"
                 key={r.displayName}
                 onClick={() => pick(r)}
                 type="button"
@@ -201,7 +201,7 @@ export function EditableLocation({
       </div>
       {isOverridden ? (
         <button
-          className="flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-muted-foreground text-xs hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-muted-foreground text-xs hover:bg-foreground/5 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={() => {
             onReset();
             onQueryChange("");

@@ -1,11 +1,35 @@
 import { queries } from "@cobalt-web/zero";
+import { useMutator } from "@cobalt-web/ui/cobalt/hooks/use-mutator";
+import { deriveCategorySection } from "@cobalt-web/ui/cobalt/transactions/detail/editable-category";
+import type { TransactionDetailEditHandlers } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-summary";
 import { TransactionDetailSummary } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-summary";
+import { TransactionNotes } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-notes";
 import { mapZeroTransactionDetailRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 import { DndContext, PointerSensor, useDraggable, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { useQuery } from "@rocicorp/zero/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { GlassStyle, PinDatum } from "./types";
+
+function renderNotesBlock(notes: string | null, edit: TransactionDetailEditHandlers | undefined) {
+  if (edit) {
+    return (
+      <div className="flex flex-col gap-2">
+        <h2 className="font-medium text-foreground text-base">Notes</h2>
+        <TransactionNotes notes={notes} onReset={edit.onResetNotes} onUpdate={edit.onUpdateNotes} />
+      </div>
+    );
+  }
+  if (!notes) {
+    return null;
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <h2 className="font-medium text-foreground text-base">Notes</h2>
+      <div className="whitespace-pre-wrap text-foreground text-base leading-relaxed">{notes}</div>
+    </div>
+  );
+}
 
 export function TxnDetailPanel({
   txnId,
@@ -15,6 +39,9 @@ export function TxnDetailPanel({
   stack,
   selfId,
   onNavigate,
+  person,
+  personAvatarUrl,
+  editable,
 }: {
   txnId: string;
   mode: "pinned" | "preview";
@@ -23,12 +50,17 @@ export function TxnDetailPanel({
   stack: PinDatum[] | null;
   selfId: string | undefined;
   onNavigate: (p: PinDatum) => void;
+  person: string | null;
+  personAvatarUrl: string | null;
+  /** True when the viewer owns this txn (authed + own row). Enables inline edits. */
+  editable: boolean;
 }) {
   const { style, textClass, mutedClass } = glassStyle;
   const isLight = textClass === "text-black";
   const [row] = useQuery(queries.transactions.detail({ transactionId: txnId }));
   const mapped = row ? mapZeroTransactionDetailRow(row) : null;
   const transaction = mapped?.transaction ?? null;
+  const edit = useTxnEditHandlers(txnId, transaction, editable);
   const [offset, setOffset] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
@@ -53,10 +85,15 @@ export function TxnDetailPanel({
         selfId={selfId}
         currentId={txnId}
         onNavigate={onNavigate}
+        person={person}
+        personAvatarUrl={personAvatarUrl}
+        edit={edit}
       />
     </DndContext>
   );
 }
+
+const noop = (): void => undefined;
 
 function DraggableTxnPanel({
   offset,
@@ -71,6 +108,9 @@ function DraggableTxnPanel({
   selfId,
   currentId,
   onNavigate,
+  person,
+  personAvatarUrl,
+  edit,
 }: {
   offset: { x: number; y: number };
   mode: "pinned" | "preview";
@@ -84,6 +124,9 @@ function DraggableTxnPanel({
   selfId: string | undefined;
   currentId: string;
   onNavigate: (p: PinDatum) => void;
+  person: string | null;
+  personAvatarUrl: string | null;
+  edit: TransactionDetailEditHandlers | undefined;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: "txn-detail-panel",
@@ -114,7 +157,18 @@ function DraggableTxnPanel({
       className={`fixed bottom-4 right-[18rem] z-20 max-w-[calc(100vw-2rem)] ${hasStack ? "w-[38rem]" : "w-[26rem]"} ${isPreview ? "pointer-events-none" : ""}`}
       style={{ transform: `translate3d(${dx}px, ${dy}px, 0)` }}
     >
-      <div className={`relative rounded-2xl border ${textClass}`} style={style}>
+      <div
+        className={`relative rounded-2xl border ${textClass}`}
+        style={
+          isLight
+            ? {
+                ...style,
+                "--foreground": "oklch(0.145 0 0)",
+                "--muted-foreground": "oklch(0.4 0 0)",
+              }
+            : style
+        }
+      >
         {!isPreview && (
           <>
             <div
@@ -174,15 +228,14 @@ function DraggableTxnPanel({
           <div className={`flex-1 overflow-y-auto px-4 py-3 ${scrollClass}`} style={{ zoom: 0.85 }}>
             {transaction ? (
               <div className="flex flex-col gap-6">
-                <TransactionDetailSummary transaction={transaction} hideLocationMap />
-                {transaction.notes && (
-                  <div className="flex flex-col gap-2">
-                    <h2 className="font-medium text-foreground text-base">Notes</h2>
-                    <div className="whitespace-pre-wrap text-foreground text-base leading-relaxed">
-                      {transaction.notes}
-                    </div>
-                  </div>
-                )}
+                <TransactionDetailSummary
+                  transaction={transaction}
+                  hideLocationMap
+                  person={person}
+                  personAvatarUrl={personAvatarUrl}
+                  edit={edit}
+                />
+                {renderNotesBlock(transaction.notes, edit)}
               </div>
             ) : (
               <div className={`py-6 text-center text-sm ${mutedClass}`}>Loading transaction…</div>
@@ -192,4 +245,110 @@ function DraggableTxnPanel({
       </div>
     </div>
   );
+}
+
+/**
+ * Inline edit handlers for the friends txn detail panel. Mirrors the web
+ * route's handler bundle, but minus the undo/toast wrappers + tag picker +
+ * geocoding (the panel-sized surface here only exposes the basics). Anon
+ * callers always get `undefined` since the underlying mutators reject them.
+ */
+function useTxnEditHandlers(
+  txnId: string,
+  transaction: NonNullable<ReturnType<typeof mapZeroTransactionDetailRow>>["transaction"] | null,
+  editable: boolean,
+): TransactionDetailEditHandlers | undefined {
+  const mutate = useMutator();
+  const [categoryRows] = useQuery(queries.categories.list());
+  const categoryOptions = useMemo(
+    () =>
+      categoryRows.map((cat) => {
+        const groupSystemKey = cat.group?.systemKey ?? null;
+        return {
+          groupName: cat.group?.name ?? "",
+          groupSystemKey,
+          iconKey: cat.iconKey,
+          id: cat.id,
+          name: cat.name,
+          sectionKey: deriveCategorySection(groupSystemKey),
+        };
+      }),
+    [categoryRows],
+  );
+
+  return useMemo<TransactionDetailEditHandlers | undefined>(() => {
+    if (!editable) {
+      return;
+    }
+    const uid = () => crypto.randomUUID();
+    const run = (build: Parameters<typeof mutate>[0], label: string): void => {
+      mutate(build, `Couldn't save ${label}. Please try again.`);
+    };
+
+    return {
+      availableTags: [],
+      categoryOptions,
+      // No edit surface inside the map panel — search hooks are inert stubs.
+      locationSearch: { loading: false, onQueryChange: noop, results: [] },
+      merchantSearch: { loading: false, onQueryChange: noop, results: [] },
+      onDelete:
+        transaction?.source === "manual"
+          ? () => {
+              run((m) => m.transaction.deleteTransaction({ id: txnId }), "deletion");
+            }
+          : undefined,
+      onResetCategory: () => {
+        run((m) => m.transaction.resetCategory({ editId: uid(), id: txnId }), "category");
+      },
+      onResetDate: () => {
+        run((m) => m.transaction.resetDate({ editId: uid(), id: txnId }), "date");
+      },
+      onResetLocation: () => {
+        run((m) => m.transaction.resetLocation({ editId: uid(), id: txnId }), "location");
+      },
+      onResetNotes: () => {
+        run((m) => m.transaction.resetNotes({ editId: uid(), id: txnId }), "notes");
+      },
+      onResetPaymentChannel: () => {
+        run(
+          (m) => m.transaction.resetPaymentChannel({ editId: uid(), id: txnId }),
+          "payment channel",
+        );
+      },
+      onUpdateCategory: ({ categoryId }) => {
+        run(
+          (m) => m.transaction.updateCategory({ categoryId, editId: uid(), id: txnId }),
+          "category",
+        );
+      },
+      onUpdateDate: (date) => {
+        run((m) => m.transaction.updateDate({ date, editId: uid(), id: txnId }), "date");
+      },
+      onUpdateLocation: (location) => {
+        run(
+          (m) => m.transaction.updateLocation({ editId: uid(), id: txnId, location }),
+          "location",
+        );
+      },
+      onUpdateMerchant: ({ merchantName, website }) => {
+        run(
+          (m) => m.transaction.updateMerchant({ editId: uid(), id: txnId, merchantName, website }),
+          "merchant",
+        );
+      },
+      onUpdateName: (name) => {
+        run((m) => m.transaction.updateName({ editId: uid(), id: txnId, name }), "name");
+      },
+      onUpdateNotes: (notes) => {
+        run((m) => m.transaction.updateNotes({ editId: uid(), id: txnId, notes }), "notes");
+      },
+      onUpdatePaymentChannel: (paymentChannel) => {
+        run(
+          (m) => m.transaction.updatePaymentChannel({ editId: uid(), id: txnId, paymentChannel }),
+          "payment channel",
+        );
+      },
+      tagIds: null,
+    };
+  }, [editable, categoryOptions, transaction?.source, txnId, mutate]);
 }

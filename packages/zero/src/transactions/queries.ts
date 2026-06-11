@@ -3,12 +3,15 @@ import { z } from "zod";
 
 import type { Context } from "../auth.js";
 import { zql } from "../schema.js";
+import { DEMO_NETWORK_IDS, DEMO_USER_ID } from "../social/constants.js";
 import {
   NO_MATCH_ID,
   recurringForUser,
   spendingTransactionsForUser,
   transactionsForUser,
 } from "./lib.js";
+
+const DEMO_IDS = DEMO_NETWORK_IDS as readonly string[] as string[];
 
 const listArgsSchema = z
   .object({
@@ -37,21 +40,27 @@ export const transactionsQueries = {
    * Detail view should preload this instead of `list` + `activity` separately —
    * one sync subscription, one FK-chained fetch.
    */
-  detail: defineQuery(z.object({ transactionId: z.string() }), ({ ctx, args }) =>
-    zql.transaction
+  detail: defineQuery(z.object({ transactionId: z.string() }), ({ ctx, args }) => {
+    // Anon callers can read transactions owned by the seeded demo network
+    // (powers landing-page txn detail panel). Authed callers see their own.
+    const baseQuery = zql.transaction
       .where("id", args.transactionId)
-      .where("userId", ctx?.userId ?? NO_MATCH_ID)
       .related("account", (q2) =>
         q2.related("plaidConnection", (conn) => conn.related("institution")),
       )
       .related("category", (c) => c.related("group"))
       .related("transactionTags")
-      .related("edits", (e) => e.orderBy("createdAt", "asc"))
-      .one(),
-  ),
+      .related("edits", (e) => e.orderBy("createdAt", "asc"));
+    if (ctx?.userId) {
+      return baseQuery.where("userId", ctx.userId).one();
+    }
+    return baseQuery.where("userId", "IN", DEMO_IDS).one();
+  }),
 
   list: defineQuery(listArgsSchema, ({ ctx, args }) =>
-    transactionsForUser(ctx?.userId ?? NO_MATCH_ID, args ?? {}),
+    // Anon callers see the demo root user's txns so the landing-page map renders
+    // their "own" pins; authed callers see their own.
+    transactionsForUser(ctx?.userId ?? DEMO_USER_ID, args ?? {}),
   ),
 
   recurring: defineQuery(({ ctx }: { ctx: Context }) =>
