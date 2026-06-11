@@ -1,99 +1,91 @@
+/**
+ * Friend invite email. Markup adapted from the Resend "Protocol" demo
+ * (https://github.com/resend/react-email/tree/canary/apps/demo/emails/03-Protocol),
+ * trimmed to a single CTA + footer for the invite use case.
+ */
 import {
   Body,
-  Button,
   Container,
   Head,
-  Heading,
   Html,
+  Link,
   Preview,
+  render,
   Section,
+  Tailwind,
   Text,
-} from "@react-email/components";
-import { render } from "@react-email/render";
+} from "react-email";
 
-import { colors, font, radii } from "./tokens";
+import { EmailFonts } from "./email-fonts";
+import { emailTailwindConfig } from "./theme";
 
 export interface InviteEmailProps {
   inviterName: string;
   inviteUrl: string;
 }
 
-export function InviteEmail({ inviterName, inviteUrl }: InviteEmailProps) {
+export const InviteEmail = ({ inviterName, inviteUrl }: InviteEmailProps) => {
   const who = inviterName || "A friend";
   return (
-    <Html>
-      <Head />
-      <Preview>{`${who} invited you to Cobalt Friends`}</Preview>
-      <Body
-        style={{
-          background: colors.background,
-          color: colors.textPrimary,
-          fontFamily: font,
-          margin: 0,
-          padding: "32px 16px",
-        }}
-      >
-        <Container
-          style={{
-            background: colors.surface,
-            borderRadius: radii.card,
-            maxWidth: "480px",
-            padding: "32px",
-          }}
-        >
-          <Heading
-            as="h1"
-            style={{
-              color: colors.textPrimary,
-              fontSize: "20px",
-              lineHeight: 1.3,
-              margin: "0 0 12px",
-            }}
-          >
-            {`${who} invited you to Cobalt Friends`}
-          </Heading>
-          <Text
-            style={{
-              color: colors.textMuted,
-              fontSize: "14px",
-              lineHeight: 1.5,
-              margin: "0 0 24px",
-            }}
-          >
-            Tap the button below to accept the invite and connect on the map.
-          </Text>
-          <Section>
-            <Button
-              href={inviteUrl}
-              style={{
-                background: colors.buttonBg,
-                borderRadius: radii.button,
-                color: colors.buttonText,
-                fontSize: "14px",
-                fontWeight: 600,
-                padding: "12px 20px",
-                textDecoration: "none",
-              }}
-            >
-              Accept invite
-            </Button>
-          </Section>
-          <Text
-            style={{
-              color: colors.textFaint,
-              fontSize: "12px",
-              lineHeight: 1.5,
-              margin: "24px 0 0",
-              wordBreak: "break-all",
-            }}
-          >
-            {`Or open: ${inviteUrl}`}
-          </Text>
-        </Container>
-      </Body>
-    </Html>
+    <Tailwind config={emailTailwindConfig}>
+      <Html>
+        <Head>
+          <EmailFonts />
+        </Head>
+        <Body className="bg-bg-2 font-14 m-0 p-0 font-sans">
+          <Preview>{`${who} invited you to Cobalt Friends`}</Preview>
+          <Container className="bg-bg mx-auto max-w-[640px]">
+            <Section className="mobile:px-4 px-6 py-6">
+              <Text className="font-20 font-condensed text-fg m-0 uppercase">Cobalt</Text>
+            </Section>
+
+            <Section className="mobile:px-4 mobile:pt-10 mobile:pb-8 px-6 pt-16 pb-12">
+              <Section align="left" className="mobile:!max-w-full max-w-[490px]">
+                <Text className="mobile:!max-w-full font-56 font-condensed mobile:font-40 text-fg m-0 max-w-[490px] uppercase">
+                  {`${who} invited you to Cobalt Friends`}
+                </Text>
+                <Text className="mobile:!max-w-full font-14 text-fg-2 m-0 mt-10 max-w-[490px] font-sans">
+                  Accept the invite to connect on the map, share spend highlights, and split things
+                  effortlessly.
+                </Text>
+              </Section>
+            </Section>
+
+            <Section className="mobile:px-4 mobile:pb-10 px-6 pb-14">
+              <Link
+                className="bg-fg font-15 inline-block rounded-md px-6 py-3 font-sans no-underline"
+                href={inviteUrl}
+                style={{ color: "#131313" }}
+              >
+                Accept invite
+              </Link>
+              <Text
+                className="font-11 text-fg-3 m-0 mt-6 max-w-[490px] font-sans"
+                style={{ wordBreak: "break-all" }}
+              >
+                {`Or open this link: ${inviteUrl}`}
+              </Text>
+            </Section>
+
+            <Section className="mobile:px-4 mobile:py-12 border-stroke border-t px-6 py-16">
+              <Text className="font-13 text-fg-2 m-0 max-w-[420px] font-sans">
+                Cobalt is the personal finance OS for the people you trust. If you weren&apos;t
+                expecting this invite, you can safely ignore this email.
+              </Text>
+            </Section>
+          </Container>
+        </Body>
+      </Html>
+    </Tailwind>
   );
-}
+};
+
+InviteEmail.PreviewProps = {
+  inviteUrl: "https://friends.cobaltpf.com/invite/preview-token",
+  inviterName: "Sriket",
+} satisfies InviteEmailProps;
+
+export default InviteEmail;
 
 export async function renderInviteEmail(
   props: InviteEmailProps,

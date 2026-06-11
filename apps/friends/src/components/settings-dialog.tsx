@@ -215,10 +215,11 @@ function InvitesSection() {
     e.preventDefault();
     setState({ kind: "creating" });
     setCopied(false);
+    const trimmedEmail = targetEmail.trim();
     const res = await authClient.invite.create({
       kind: "friendship",
       maxUses,
-      targetEmail: targetEmail.trim() || undefined,
+      targetEmail: trimmedEmail || undefined,
     });
     if (res.error) {
       setState({
@@ -228,6 +229,18 @@ function InvitesSection() {
       return;
     }
     setState({ kind: "ready", url: res.data?.url ?? "" });
+    // Server fires sendInvite asynchronously when targetEmail is present;
+    // failures are logged server-side but don't surface here (by design — the
+    // URL stays usable even if delivery flakes). Toast wording reflects that.
+    if (trimmedEmail) {
+      toast.success(`Invite sent to ${trimmedEmail}`, {
+        description: "You can also share the link directly.",
+      });
+    } else {
+      toast.success("Invite link ready", {
+        description: "Copy the link below and share it.",
+      });
+    }
   };
 
   const onCopy = async () => {
