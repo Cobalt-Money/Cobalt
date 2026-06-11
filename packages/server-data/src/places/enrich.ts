@@ -127,54 +127,76 @@ export async function enrichTransactionsForUser(
     )) as CandidateRow[];
 
   let enriched = 0;
+  let failed = 0;
   for (const t of candidates) {
-    const sourceName = t.merchantName ?? t.name;
-    if (!sourceName) {
-      continue;
+    try {
+      const wrote = await enrichOneCandidate(t, runId);
+      if (wrote) {
+        enriched += 1;
+      }
+    } catch (error) {
+      // Don't abort the whole batch on a transient per-candidate failure
+      // (connection drop mid-loop on long enrichment runs). Log and continue
+      // so partial results still land instead of zero-ing out a run.
+      failed += 1;
+      console.error("[enrichTransactionsForUser] candidate failed", {
+        error: error instanceof Error ? error.message : error,
+        runId,
+        transactionId: t.id,
+      });
     }
-
-    const res = await findPlaceForTransaction({
-      address: t.address,
-      city: t.city,
-      lat: t.lat,
-      lon: t.lon,
-      name: sourceName,
-      postalCode: t.postalCode,
-      region: t.region,
-      storeNumber: t.storeNumber,
-    });
-    if (!res || res.confidence < CONFIDENCE_FLOOR) {
-      continue;
-    }
-
-    const writes = buildWrites(t, res);
-    if (Object.keys(writes.set).length === 0) {
-      continue;
-    }
-
-    await db.transaction(async (tx) => {
-      await tx
-        .update(transactionTable)
-        .set({ ...writes.set, updatedAt: new Date() })
-        .where(eq(transactionTable.id, t.id));
-      await logEnrichmentEvent(
-        {
-          fieldsWritten: writes.diff,
-          matchConfidence: res.confidence,
-          matchReason: res.reason,
-          placeId: res.place.id,
-          runId,
-          sim: res.sim,
-          transactionId: t.id,
-        },
-        tx,
-      );
-    });
-
-    enriched += 1;
   }
 
+  if (failed > 0) {
+    console.warn(`[enrichTransactionsForUser] ${failed} candidates failed (run ${runId})`);
+  }
   return { enriched, runId, scanned: candidates.length };
+}
+
+async function enrichOneCandidate(t: CandidateRow, runId: string): Promise<boolean> {
+  const sourceName = t.merchantName ?? t.name;
+  if (!sourceName) {
+    return false;
+  }
+
+  const res = await findPlaceForTransaction({
+    address: t.address,
+    city: t.city,
+    lat: t.lat,
+    lon: t.lon,
+    name: sourceName,
+    postalCode: t.postalCode,
+    region: t.region,
+    storeNumber: t.storeNumber,
+  });
+  if (!res || res.confidence < CONFIDENCE_FLOOR) {
+    return false;
+  }
+
+  const writes = buildWrites(t, res);
+  if (Object.keys(writes.set).length === 0) {
+    return false;
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(transactionTable)
+      .set({ ...writes.set, updatedAt: new Date() })
+      .where(eq(transactionTable.id, t.id));
+    await logEnrichmentEvent(
+      {
+        fieldsWritten: writes.diff,
+        matchConfidence: res.confidence,
+        matchReason: res.reason,
+        placeId: res.place.id,
+        runId,
+        sim: res.sim,
+        transactionId: t.id,
+      },
+      tx,
+    );
+  });
+  return true;
 }
 
 /**
