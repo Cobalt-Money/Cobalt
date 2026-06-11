@@ -74,22 +74,63 @@ type CandidateRow = Pick<
 
 export async function enrichTransactionsForPlaidItem(
   itemId: string,
-): Promise<{ enriched: number; scanned: number; runId: string }> {
+  limit = DEFAULT_BATCH_LIMIT,
+): Promise<EnrichBatchResult> {
   const item = await db.query.plaidConnection.findFirst({
     columns: { userId: true },
     where: { plaidItemId: itemId },
   });
   if (!item) {
-    return { enriched: 0, runId: randomUUID(), scanned: 0 };
+    return { enriched: 0, remaining: 0, runId: randomUUID(), scanned: 0 };
   }
-  return enrichTransactionsForUser(item.userId);
+  return enrichTransactionsForUser(item.userId, limit);
 }
+
+/**
+ * Bounded enrichment batch — process up to `limit` un-enriched candidates,
+ * return how many remain. Callers (the workflow loop in
+ * `enrichTransactionsWorkflow`) drive the step until `remaining === 0`.
+ *
+ * Why bounded: each call has to finish well inside Vercel's 800s function
+ * ceiling. Pre-chunking this used to run the entire 200+ candidate set in
+ * one step invocation and hit the timeout (~13min wall, killed by Vercel,
+ * step retried, partial progress only). With a small `limit` each step
+ * finishes in seconds and the workflow naturally drains the queue across
+ * many short, durable step invocations.
+ */
+export interface EnrichBatchResult {
+  enriched: number;
+  scanned: number;
+  /** Eligible candidates still un-enriched after this batch. Drives the workflow loop. */
+  remaining: number;
+  runId: string;
+}
+
+export const DEFAULT_BATCH_LIMIT = 25;
 
 // eslint-disable-next-line complexity
 export async function enrichTransactionsForUser(
   userId: string,
-): Promise<{ enriched: number; scanned: number; runId: string }> {
+  limit = DEFAULT_BATCH_LIMIT,
+): Promise<EnrichBatchResult> {
   const runId = randomUUID();
+
+  const candidatesWhere = and(
+    eq(transactionTable.userId, userId),
+    eq(transactionTable.source, "plaid"),
+    eq(transactionTable.paymentChannel, "in store"),
+    inArray(transactionTable.pfcPrimary, [...ENRICHABLE_PFC]),
+    // Skip already-enriched rows so the workflow loop only redoes what didn't
+    // land last time. Every chunked step call drains the next `limit` of
+    // these — once the count hits 0, the workflow exits.
+    sql`${transactionTable.placeId} IS NULL`,
+    or(
+      isNotNull(transactionTable.lat),
+      isNotNull(transactionTable.address),
+      isNotNull(transactionTable.storeNumber),
+      and(isNotNull(transactionTable.city), isNotNull(transactionTable.region)),
+    ) ?? sql`true`,
+  );
 
   const candidates: CandidateRow[] = (await db
     .select({
@@ -111,39 +152,27 @@ export async function enrichTransactionsForUser(
       website: transactionTable.website,
     })
     .from(transactionTable)
-    .where(
-      and(
-        eq(transactionTable.userId, userId),
-        eq(transactionTable.source, "plaid"),
-        eq(transactionTable.paymentChannel, "in store"),
-        inArray(transactionTable.pfcPrimary, [...ENRICHABLE_PFC]),
-        // Skip already-enriched rows so workflow-level retries are fast no-ops
-        // over prior progress instead of redoing the (expensive) matcher path
-        // for every previously-matched candidate.
-        sql`${transactionTable.placeId} IS NULL`,
-        or(
-          isNotNull(transactionTable.lat),
-          isNotNull(transactionTable.address),
-          isNotNull(transactionTable.storeNumber),
-          and(isNotNull(transactionTable.city), isNotNull(transactionTable.region)),
-        ) ?? sql`true`,
-      ),
-    )) as CandidateRow[];
+    .where(candidatesWhere)
+    .limit(limit)) as CandidateRow[];
 
   let enriched = 0;
   for (const t of candidates) {
-    // Don't swallow per-candidate failures. The workflow step that calls into
-    // this function is retried by the framework (see `enrichTransactionsStep`
-    // in apps/server/src/workflows/plaid/sync/steps.ts), and the candidates
-    // query above filters out already-enriched rows on each retry so each
-    // attempt only redoes the candidates that didn't land last time.
     const wrote = await enrichOneCandidate(t, runId);
     if (wrote) {
       enriched += 1;
     }
   }
 
-  return { enriched, runId, scanned: candidates.length };
+  // Snapshot how many *still* need work so the workflow knows whether to keep
+  // looping. Computed post-batch in the same connection so it reflects the
+  // writes we just landed.
+  const [remainingRow] = await db
+    .select({ count: sql<number>`COUNT(*)::int` })
+    .from(transactionTable)
+    .where(candidatesWhere);
+  const remaining = remainingRow?.count ?? 0;
+
+  return { enriched, remaining, runId, scanned: candidates.length };
 }
 
 async function enrichOneCandidate(t: CandidateRow, runId: string): Promise<boolean> {

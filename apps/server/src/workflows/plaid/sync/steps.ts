@@ -358,11 +358,17 @@ export async function syncTransactionsStep(
  * Per-field write policy: only fill gaps where Plaid sent NULL; respects
  * `transaction.lockedFields`; only writes when match confidence ≥ 0.65.
  *
+ * **Chunked**: `limit` bounds how many candidates this single step invocation
+ * processes. The workflow (`enrichTransactionsWorkflow`) calls this in a
+ * loop until the returned `remaining` count hits 0 — every step finishes
+ * well inside Vercel's 800s function ceiling instead of the prior single-shot
+ * model that timed out on large initial syncs.
+ *
  * Idempotent — re-runs are safe (already-filled fields are skipped).
  */
-export async function enrichTransactionsStep(itemId: string) {
+export async function enrichTransactionsStep(itemId: string, limit: number) {
   "use step";
-  return await enrichTransactionsForPlaidItem(itemId);
+  return await enrichTransactionsForPlaidItem(itemId, limit);
 }
 
 /**
