@@ -26,7 +26,8 @@ import { defineConfig } from "vitest/config";
 import { workflow } from "workflow/vite";
 
 export default defineConfig({
-  plugins: [workflow()],
+  // workflow/vite is built against vite 6 types; cast to vite 7 PluginOption.
+  plugins: [workflow() as never],
   test: {
     env: {
       // Point the spawned Nitro at docker-hosted Postgres (port 5433 per

@@ -22,6 +22,7 @@ export type {
   OnAcceptCallback,
   OnDeclineCallback,
   OnRevokeCallback,
+  SendInviteHook,
 } from "./types";
 export { INVITE_ERROR_CODES } from "./error-codes";
 

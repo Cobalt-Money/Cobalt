@@ -18,6 +18,7 @@ import { Stripe } from "stripe";
 
 import { getAppleClientSecret } from "./apple-secret.js";
 import { seedUserCategories } from "./seed-user-categories.js";
+import { sendInviteEmail } from "./send-invite-email.js";
 import { TRUSTED_CLIENT_IDS } from "./trusted-clients.js";
 
 /**
@@ -279,8 +280,7 @@ export const auth = betterAuth({
           }
         }
       },
-      // sendInvite wired when Resend lands (SRI-3xx). Until then, inviter
-      // copies the URL from the create response and shares manually.
+      sendInvite: sendInviteEmail,
     }),
     /**
      * Client ID Metadata Documents (CIMD) — MCP 2025-11-25 spec default.

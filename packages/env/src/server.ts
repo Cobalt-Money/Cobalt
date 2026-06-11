@@ -60,6 +60,10 @@ export const env = createEnv({
     PLAID_CLIENT_SECRET: z.string().min(1),
     PLAID_ENV: z.string().min(1).default("sandbox"),
     PLAID_WEBHOOK_URL: z.url().optional(),
+    /** Resend API key. Optional — invite emails are skipped (URL still returned to inviter) when absent. */
+    RESEND_API_KEY: z.string().min(1).optional(),
+    /** From address for invite emails. Must be on a Resend-verified domain. */
+    RESEND_INVITE_FROM: z.string().min(1).default("Cobalt Friends <invites@cobaltpf.com>"),
     /** Authorization token sent in the `Authorization` header to the sandbox CF Worker. Must match the Worker's `AUTH_TOKEN` secret. */
     SANDBOX_WORKER_AUTH_TOKEN: z.string().min(32).optional(),
     /** URL of the deployed sandbox Cloudflare Worker (e.g. https://cobalt-sandbox.workers.dev). When unset, sandbox runs are disabled. */
