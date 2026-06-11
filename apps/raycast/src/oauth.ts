@@ -1,4 +1,4 @@
-import { OAuth } from "@raycast/api";
+import { getPreferenceValues, OAuth } from "@raycast/api";
 
 const CLIENT_ID = "jxihLeaSnvTNEHoALsPewQeLTUOVChxJ";
 const SCOPE = "openid profile email offline_access";
@@ -49,7 +49,10 @@ async function exchangeCode(
   return JSON.parse(text) as TokenResponse;
 }
 
-async function refreshToken(base: string, refresh: string): Promise<TokenResponse> {
+async function refreshToken(
+  base: string,
+  refresh: string,
+): Promise<TokenResponse> {
   const body = new URLSearchParams({
     client_id: CLIENT_ID,
     grant_type: "refresh_token",
@@ -81,6 +84,10 @@ function tokenSetFromResponse(t: TokenResponse) {
 let inflight: Promise<string> | null = null;
 
 export async function authorize(base: string): Promise<string> {
+  const apiKey = getPreferenceValues<Preferences>().apiKey?.trim();
+  if (apiKey) {
+    return apiKey;
+  }
   if (inflight) {
     return await inflight;
   }
@@ -97,12 +104,21 @@ export async function authorize(base: string): Promise<string> {
 async function doAuthorize(base: string): Promise<string> {
   const existing = await client.getTokens();
   if (existing?.accessToken) {
-    if (existing.refreshToken && existing.isExpired()) {
-      const refreshed = await refreshToken(base, existing.refreshToken);
-      await client.setTokens(tokenSetFromResponse(refreshed));
-      return refreshed.access_token;
+    if (existing.isExpired()) {
+      if (existing.refreshToken) {
+        try {
+          const refreshed = await refreshToken(base, existing.refreshToken);
+          await client.setTokens(tokenSetFromResponse(refreshed));
+          return refreshed.access_token;
+        } catch {
+          await client.removeTokens();
+        }
+      } else {
+        await client.removeTokens();
+      }
+    } else {
+      return existing.accessToken;
     }
-    return existing.accessToken;
   }
 
   const authRequest = await client.authorizationRequest({

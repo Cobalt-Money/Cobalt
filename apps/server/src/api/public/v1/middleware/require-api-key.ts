@@ -1,7 +1,16 @@
 import type { AppEnv } from "@cobalt-web/server-data/types";
 import { createMiddleware } from "hono/factory";
 
+import { verifyOAuthAccessTokenForMcp } from "../../../../mcp/verify-oidc-access-token.js";
 import { verifyApiKey } from "../api-keys-service.js";
+
+function looksLikeApiKey(token: string): boolean {
+  return token.startsWith("ck_");
+}
+
+function mcpAudienceFromRequest(reqUrl: string): string {
+  return new URL("/api/mcp", reqUrl).href;
+}
 
 /** Mirrors the apiKey plugin's `timeWindow` config (24h) in packages/auth. */
 const RATE_LIMIT_WINDOW_MS = 1000 * 60 * 60 * 24;
@@ -38,6 +47,18 @@ export const requireApiKey = createMiddleware<AppEnv>(async (c, next) => {
 
   if (!key) {
     return c.json({ code: "missing_api_key", error: "Missing bearer token" }, 401);
+  }
+
+  if (!looksLikeApiKey(key)) {
+    const audience = mcpAudienceFromRequest(c.req.url);
+    const payload = await verifyOAuthAccessTokenForMcp(key, audience);
+    if (payload?.sub) {
+      c.set("user", { id: payload.sub } as never);
+      c.set("zeroContext", { userId: payload.sub });
+      await next();
+      return;
+    }
+    return c.json({ code: "invalid_api_key", error: "Invalid API key" }, 401);
   }
 
   const result = await verifyApiKey({ key });
