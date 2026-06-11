@@ -40,6 +40,32 @@ const COLUMN_TO_LOCK_KEY: Partial<Record<keyof typeof transactionTable.$inferSel
  * `LOCK_KEY_GUARDED_COLUMNS`, so adding a new lock automatically extends
  * gating without further edits here.
  */
+/**
+ * Columns the place-matcher (`packages/server-data/src/places/enrich.ts`)
+ * fills when a Plaid txn lacks the value. Plaid's enrichment for these
+ * fields is uneven across syncs — same merchant, same item, different
+ * pulls can return `merchant_name`/`lat`/`lon`/`address` set on one and
+ * null on the next.
+ *
+ * Without COALESCE protection the upsert would set
+ *   transaction.lat = excluded.lat = NULL
+ * on the next sync of a matched txn, wiping the geo the matcher wrote
+ * (and breaking map pins, which are positioned off `transaction.lat`).
+ * COALESCE keeps Plaid as the authoritative source when they have a
+ * value, but their null no longer overwrites our enrichment-derived
+ * value. See the El Guacamole regression triaged 2026-06-11.
+ */
+const MATCHER_FILLABLE_COLUMNS = new Set<keyof typeof transactionTable.$inferSelect>([
+  "address",
+  "city",
+  "lat",
+  "lon",
+  "merchantName",
+  "postalCode",
+  "region",
+  "storeNumber",
+]);
+
 function buildPlaidUpsertSet(): Record<string, SQL> {
   // Plaid-overwritable cols. Excludes: user-controlled (notes, excluded), lock-guarded, audit cols.
   const plaidWritableColumns: (keyof typeof transactionTable.$inferSelect)[] = [
@@ -77,11 +103,16 @@ function buildPlaidUpsertSet(): Record<string, SQL> {
   for (const col of plaidWritableColumns) {
     const snake = transactionTable[col].name;
     const lockKey = COLUMN_TO_LOCK_KEY[col];
+    // For matcher-fillable columns: keep current value when Plaid sends null
+    // so a subsequent Plaid sync doesn't wipe enrichment-derived data.
+    const writeExpr = MATCHER_FILLABLE_COLUMNS.has(col)
+      ? `COALESCE(excluded."${snake}", "transaction"."${snake}")`
+      : `excluded."${snake}"`;
     set[col] = lockKey
       ? sql.raw(
-          `CASE WHEN "transaction"."locked_fields" ? '${lockKey}' THEN "transaction"."${snake}" ELSE excluded."${snake}" END`,
+          `CASE WHEN "transaction"."locked_fields" ? '${lockKey}' THEN "transaction"."${snake}" ELSE ${writeExpr} END`,
         )
-      : sql.raw(`excluded."${snake}"`);
+      : sql.raw(writeExpr);
   }
   set.updatedAt = sql`now()`;
   return set;
@@ -183,14 +214,27 @@ export async function persistTransactions(transactions: Transaction[]): Promise<
     return;
   }
 
-  await db
-    .insert(transactionTable)
-    .values(filtered)
-    .onConflictDoUpdate({
-      set: PLAID_UPSERT_SET,
-      target: [transactionTable.source, transactionTable.externalId],
-      targetWhere: externalIdNotNullWhere,
-    });
+  // Chunk the bulk upsert. Drizzle serializes every column of every row as a
+  // separate SQL parameter; a single Plaid sync page can be ~1000 txns ×
+  // ~31 cols = ~31k params per statement. Postgres allows up to 65535
+  // parameters, but a query that large is slow enough that PlanetScale's
+  // pooler regularly drops the connection mid-write, producing
+  // `Failed query: insert into "transaction" (...)` errors that propagate
+  // out of the sync workflow step and exhaust framework retries
+  // ("Max retries reached"). 100 rows per chunk keeps each statement under
+  // ~3000 params and well within sub-second execution.
+  const UPSERT_CHUNK_SIZE = 100;
+  for (let i = 0; i < filtered.length; i += UPSERT_CHUNK_SIZE) {
+    const chunk = filtered.slice(i, i + UPSERT_CHUNK_SIZE);
+    await db
+      .insert(transactionTable)
+      .values(chunk)
+      .onConflictDoUpdate({
+        set: PLAID_UPSERT_SET,
+        target: [transactionTable.source, transactionTable.externalId],
+        targetWhere: externalIdNotNullWhere,
+      });
+  }
 }
 
 async function dropTxnsCoveredByCsv<R extends { accountId: string; date: string }>(
