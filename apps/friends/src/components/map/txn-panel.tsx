@@ -9,6 +9,7 @@ import { DndContext, PointerSensor, useDraggable, useSensor, useSensors } from "
 import type { DragEndEvent } from "@dnd-kit/core";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo, useState } from "react";
+import { useMerchantSearch } from "../../hooks/use-merchant-search";
 import type { GlassStyle, PinDatum } from "./types";
 
 function renderNotesBlock(notes: string | null, edit: TransactionDetailEditHandlers | undefined) {
@@ -223,16 +224,18 @@ function DraggableTxnPanel({
               </ul>
             </nav>
           )}
-          <div className={`flex-1 overflow-y-auto px-4 py-3 ${scrollClass}`} style={{ zoom: 0.85 }}>
+          <div className={`flex-1 overflow-y-auto px-4 py-3 ${scrollClass}`}>
             {transaction ? (
               <div className="flex flex-col gap-6">
-                <TransactionDetailSummary
-                  transaction={transaction}
-                  hideLocationMap
-                  person={person}
-                  personAvatarUrl={personAvatarUrl}
-                  edit={edit}
-                />
+                <div style={{ zoom: 0.85 }}>
+                  <TransactionDetailSummary
+                    transaction={transaction}
+                    hideLocationMap
+                    person={person}
+                    personAvatarUrl={personAvatarUrl}
+                    edit={edit}
+                  />
+                </div>
                 {renderNotesBlock(transaction.notes, edit)}
               </div>
             ) : (
@@ -257,6 +260,9 @@ function useTxnEditHandlers(
   editable: boolean,
 ): TransactionDetailEditHandlers | undefined {
   const mutate = useMutator();
+  const [merchantQuery, setMerchantQuery] = useState("");
+  const { data: merchantResults = [], isFetching: merchantLoading } =
+    useMerchantSearch(merchantQuery);
   const [categoryRows] = useQuery(queries.categories.list());
   const categoryOptions = useMemo(
     () =>
@@ -286,8 +292,16 @@ function useTxnEditHandlers(
     return {
       availableTags: [],
       categoryOptions,
-      // Merchant/location typeahead intentionally omitted — the map panel
-      // renders read-only merchant logo + location chip when these are absent.
+      merchantSearch: {
+        loading: merchantLoading,
+        onQueryChange: setMerchantQuery,
+        results: merchantResults.map((r) => ({
+          brandId: r.brandId,
+          domain: r.domain,
+          icon: r.icon,
+          name: r.name,
+        })),
+      },
       onDelete:
         transaction?.source === "manual"
           ? () => {
@@ -347,5 +361,13 @@ function useTxnEditHandlers(
       },
       tagIds: null,
     };
-  }, [editable, categoryOptions, transaction?.source, txnId, mutate]);
+  }, [
+    editable,
+    categoryOptions,
+    transaction?.source,
+    txnId,
+    mutate,
+    merchantLoading,
+    merchantResults,
+  ]);
 }
