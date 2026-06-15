@@ -12,18 +12,18 @@
   },
   "scripts": {},
   "dependencies": {
-    "@better-auth/api-key": "1.7.0-beta.3",
-    "@better-auth/cimd": "1.7.0-beta.3",
-    "@better-auth/oauth-provider": "1.7.0-beta.3",
-    "@better-auth/stripe": "1.7.0-beta.3",
+    "@better-auth/api-key": "1.7.0-beta.4",
+    "@better-auth/cimd": "1.7.0-beta.4",
+    "@better-auth/oauth-provider": "1.7.0-beta.4",
+    "@better-auth/stripe": "1.7.0-beta.4",
     "@cobalt-web/auth-plugin-invite": "workspace:*",
     "@cobalt-web/db": "workspace:*",
     "@cobalt-web/emails": "workspace:*",
     "@cobalt-web/env": "workspace:*",
     "@upstash/redis": "^1.38.0",
-    "better-auth": "1.7.0-beta.3",
+    "better-auth": "1.7.0-beta.4",
     "dotenv": "catalog:",
-    "drizzle-orm": "1.0.0-beta.22",
+    "drizzle-orm": "1.0.0-rc.4-273829f",
     "jose": "^6.1.0",
     "resend": "^6.12.4",
     "stripe": "^20.2.0",
@@ -31,6 +31,6 @@
   },
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
-    "typescript": "^5"
+    "typescript": "^6"
   }
 }
