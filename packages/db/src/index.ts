@@ -29,8 +29,6 @@ import * as categoryMappingCacheSchema from "./schema/imports/category-mapping-c
 import * as chatSchema from "./schema/ai/chat";
 import * as messageVotesSchema from "./schema/ai/message-votes";
 import * as financialGoalsSchema from "./schema/goals/financial-goals";
-import * as financialEventsSchema from "./schema/news/financial-events";
-import * as rssSchema from "./schema/news/rss";
 import * as plaidConnectionSchema from "./schema/providers/plaid/connection";
 import * as institutionSchema from "./schema/providers/plaid/institution";
 import * as snaptradeAuthorizationSchema from "./schema/providers/snaptrade/authorization";
@@ -76,10 +74,8 @@ export const db = drizzle({
     ...snaptradeAuthorizationSchema,
     ...snaptradeUserSchema,
     ...feedbackSchema,
-    ...financialEventsSchema,
     ...financialGoalsSchema,
     ...kalshiSchema,
-    ...rssSchema,
     ...userAlertsSchema,
     ...mobileSubscriptionsSchema,
     ...stripeSubscriptionsSchema,

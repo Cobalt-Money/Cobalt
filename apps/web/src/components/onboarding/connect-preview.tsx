@@ -6,7 +6,6 @@ import {
   Calendar02Icon,
   CreditCardIcon,
   Home04Icon,
-  NewsIcon,
   Search02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -21,7 +20,6 @@ const NAV: { icon: IconSvg; label: string; active?: boolean }[] = [
   { icon: Search02Icon, label: "Research" },
   { icon: ArrowReloadHorizontalIcon, label: "Transactions" },
   { icon: Calendar02Icon, label: "Subscriptions" },
-  { icon: NewsIcon, label: "News" },
 ];
 
 const BRANDFETCH_CLIENT_ID = process.env.VITE_BRANDFETCH_CLIENT_ID || "";

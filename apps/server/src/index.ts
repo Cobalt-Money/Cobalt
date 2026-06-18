@@ -22,7 +22,6 @@ import { chatRouter } from "./api/internal/chat/index.js";
 import { demoRouter } from "./api/internal/demo/index.js";
 import { importsRouter } from "./api/internal/imports/index.js";
 import { institutionsRouter } from "./api/internal/institutions/index.js";
-import { newsRouter } from "./api/internal/news/index.js";
 import { plaidRouter } from "./api/internal/plaid/index.js";
 import { researchRouter } from "./api/internal/research/index.js";
 import { snaptradeRouter } from "./api/internal/snaptrade/index.js";
@@ -31,10 +30,8 @@ import { tagsRouter } from "./api/internal/tags/index.js";
 import { transactionsRouter } from "./api/internal/transactions/index.js";
 import { userRouter } from "./api/internal/user/index.js";
 import { zeroRouter } from "./api/internal/zero.js";
-import { cronFinancialEventsRouter } from "./cron/financial-events.js";
 import { cronRefreshFundamentalsRouter } from "./cron/refresh-fundamentals.js";
 import { cronResetDemoRouter } from "./cron/reset-demo.js";
-import { cronRssRouter } from "./cron/rss.js";
 import { cronSnapshotsRouter } from "./cron/snapshots.js";
 import { getPublicOriginFromRequest, handleMcpHttpRequest } from "./mcp/handle-mcp-request.js";
 import { buildMcpProtectedResourceMetadata } from "./mcp/oauth-discovery.js";
@@ -91,7 +88,6 @@ base.route("/api/tags", tagsRouter);
 base.route("/api/categories", categoriesRouter);
 base.route("/api/brokerage", brokerageRouter);
 base.route("/api/chat", chatRouter);
-base.route("/api/news", newsRouter);
 base.route("/api/research", researchRouter);
 base.route("/api/snaptrade", snaptradeRouter);
 base.route("/api/subscriptions", subscriptionsRouter);
@@ -184,8 +180,6 @@ const app = new Hono()
   .get("/.well-known/openid-configuration", (c) => oauthOpenIdConfigMetadata(c.req.raw)) // OpenID Connect Discovery — same metadata as above for OIDC-aware clients.
   .all("/api/mcp", (c) => handleMcpHttpRequest(c.req.raw)) // Streamable HTTP MCP; Bearer from OAuth above.
   .route("/api/cron", cronRefreshFundamentalsRouter) // Cron (no user auth — CRON_SECRET).
-  .route("/api/cron", cronFinancialEventsRouter)
-  .route("/api/cron", cronRssRouter)
   .route("/api/cron", cronSnapshotsRouter)
   .route("/api/cron", cronResetDemoRouter)
   .route("/api/queues/snapshot-user", snapshotUserQueueRouter) // Queue consumer (Vercel OIDC — private route).
@@ -226,7 +220,6 @@ export type ChatRouter = typeof chatRouter;
 export type DemoRouter = typeof demoRouter;
 export type ImportsRouter = typeof importsRouter;
 export type InstitutionsRouter = typeof institutionsRouter;
-export type NewsRouter = typeof newsRouter;
 export type PlaidRouter = typeof plaidRouter;
 export type ResearchRouter = typeof researchRouter;
 export type SnaptradeRouter = typeof snaptradeRouter;

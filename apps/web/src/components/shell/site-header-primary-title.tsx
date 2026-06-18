@@ -11,7 +11,6 @@ import { useMemo } from "react";
 import type { ReactNode } from "react";
 
 import { Link } from "@/components/links";
-import { useFinancialEventDetail } from "@/hooks/use-financial-event-detail";
 import { useTransactions } from "@/hooks/use-transactions";
 
 import { useAmbientInset } from "./ambient-inset-context";
@@ -95,34 +94,6 @@ function AiChatThreadTitle({ chatId }: { chatId: string }) {
   );
 }
 
-function NewsEventBreadcrumb({ eventId }: { eventId: string }) {
-  const { event } = useFinancialEventDetail(eventId);
-  const label = typeof event?.eventName === "string" ? event.eventName.trim() : null;
-
-  return (
-    <nav
-      aria-label="Breadcrumb"
-      className="flex min-w-0 flex-1 items-center gap-1.5 text-xl font-semibold leading-tight tracking-tight sm:text-2xl"
-    >
-      <Link
-        className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
-        to="/news"
-      >
-        News
-      </Link>
-      <HugeiconsIcon
-        aria-hidden
-        className="size-5 shrink-0 text-muted-foreground sm:size-6"
-        icon={ArrowRight01Icon}
-        strokeWidth={2}
-      />
-      <span className="min-w-0 truncate text-foreground">
-        {label ?? <span className="text-muted-foreground">Loading…</span>}
-      </span>
-    </nav>
-  );
-}
-
 function TransactionsCategoriesBreadcrumb() {
   return (
     <nav
@@ -158,7 +129,6 @@ export function SiteHeaderPrimaryTitle() {
   const isCategoriesPage = normalized === "/transactions/categories";
   const researchSymbol = /^\/research\/([^/]+)$/.exec(normalized)?.[1];
   const aiChatId = /^\/ai-chat\/([^/]+)$/.exec(normalized)?.[1];
-  const newsEventId = /^\/news\/([^/]+)$/.exec(normalized)?.[1];
 
   if (transactionId) {
     return <TransactionDetailBreadcrumb transactionId={transactionId} />;
@@ -170,10 +140,6 @@ export function SiteHeaderPrimaryTitle() {
 
   if (aiChatId) {
     return <AiChatThreadTitle chatId={aiChatId} />;
-  }
-
-  if (newsEventId) {
-    return <NewsEventBreadcrumb eventId={newsEventId} />;
   }
 
   if (isCategoriesPage) {

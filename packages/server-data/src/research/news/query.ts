@@ -1,7 +1,7 @@
 import { stockNewsRequest } from "@cobalt-web/clients/stock-news";
 import type { StockNewsArticle } from "@cobalt-web/clients/stock-news";
 
-import { withStockNewsUpstream } from "../../news/upstream-errors.js";
+import { withStockNewsUpstream } from "../stock-news-upstream.js";
 
 interface StockNewsTickerArticlesResponse {
   data: StockNewsArticle[];

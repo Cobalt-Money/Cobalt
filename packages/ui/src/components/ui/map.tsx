@@ -12,6 +12,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import MapLibreGL from "maplibre-gl";
 import type { PopupOptions, MarkerOptions } from "maplibre-gl";
+import type { Feature, FeatureCollection, GeoJsonProperties, Point } from "geojson";
 import {
   createContext,
   forwardRef,
@@ -1220,10 +1221,10 @@ function MapRoute({
 }
 
 interface MapClusterLayerProps<
-  P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonProperties,
+  P extends GeoJsonProperties = GeoJsonProperties,
 > {
   /** GeoJSON FeatureCollection data or URL to fetch GeoJSON from */
-  data: string | GeoJSON.FeatureCollection<GeoJSON.Point, P>;
+  data: string | FeatureCollection<Point, P>;
   /** Maximum zoom level to cluster points on (default: 14) */
   clusterMaxZoom?: number;
   /** Radius of each cluster when clustering points in pixels (default: 50) */
@@ -1236,7 +1237,7 @@ interface MapClusterLayerProps<
   pointColor?: string;
   /** Callback when an unclustered point is clicked */
   onPointClick?: (
-    feature: GeoJSON.Feature<GeoJSON.Point, P>,
+    feature: Feature<Point, P>,
     coordinates: [number, number]
   ) => void;
   /** Callback when a cluster is clicked. If not provided, zooms into the cluster */
@@ -1248,7 +1249,7 @@ interface MapClusterLayerProps<
 }
 
 function MapClusterLayer<
-  P extends GeoJSON.GeoJsonProperties = GeoJSON.GeoJsonProperties,
+  P extends GeoJsonProperties = GeoJsonProperties,
 >({
   data,
   clusterMaxZoom = 14,
@@ -1456,7 +1457,7 @@ function MapClusterLayer<
 
       const clusterId = feature.properties?.cluster_id as number;
       const pointCount = feature.properties?.point_count as number;
-      const coordinates = (feature.geometry as GeoJSON.Point).coordinates as [
+      const coordinates = (feature.geometry as Point).coordinates as [
         number,
         number,
       ];
@@ -1490,7 +1491,7 @@ function MapClusterLayer<
       }
 
       const coordinates = [
-        ...(feature.geometry as GeoJSON.Point).coordinates,
+        ...(feature.geometry as Point).coordinates,
       ] as [number, number];
 
       // Handle world copies
@@ -1499,7 +1500,7 @@ function MapClusterLayer<
       }
 
       onPointClick(
-        feature as unknown as GeoJSON.Feature<GeoJSON.Point, P>,
+        feature as unknown as Feature<Point, P>,
         coordinates
       );
     };

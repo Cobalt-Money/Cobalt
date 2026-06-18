@@ -27,8 +27,6 @@ import { snapshot } from "./accounts/snapshot";
 import { chats, messages, parts } from "./ai/chat";
 import { messageVotes } from "./ai/message-votes";
 import { financialGoals } from "./goals/financial-goals";
-import { financialEvents, eventArticles } from "./news/financial-events";
-import { rssArticles, rssFeeds } from "./news/rss";
 import { plaidConnection } from "./providers/plaid/connection";
 import { institution } from "./providers/plaid/institution";
 import { snaptradeAuthorization } from "./providers/snaptrade/authorization";
@@ -53,10 +51,8 @@ const schema = {
   creditLiability,
   csvColumnRoleCache,
   csvMappingCache,
-  eventArticles,
   feedback,
   financialAccount,
-  financialEvents,
   financialGoals,
   fundamentals,
   holding,
@@ -73,8 +69,6 @@ const schema = {
   parts,
   plaidConnection,
   recurring,
-  rssArticles,
-  rssFeeds,
   security,
   session,
   snapshot,
@@ -157,13 +151,6 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
-  eventArticles: {
-    financialEvent: r.one.financialEvents({
-      from: r.eventArticles.financialEventId,
-      to: r.financialEvents.id,
-    }),
-  },
-
   feedback: {
     user: r.one.user({
       from: r.feedback.userId,
@@ -229,13 +216,6 @@ export const relations = defineRelations(schema, (r) => ({
     user: r.one.user({
       from: r.financialAccount.userId,
       to: r.user.id,
-    }),
-  },
-
-  financialEvents: {
-    articles: r.many.eventArticles({
-      from: r.financialEvents.id,
-      to: r.eventArticles.financialEventId,
     }),
   },
 
@@ -423,10 +403,6 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.user.id,
     }),
   },
-
-  rssArticles: {},
-
-  rssFeeds: {},
 
   security: {
     holdings: r.many.holding({

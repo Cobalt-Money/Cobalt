@@ -1,7 +1,5 @@
 import { db } from "@cobalt-web/db";
 
-import type { MappedFinancialEvent } from "../../news/events/schemas.js";
-import { getEventsForTickers, getHoldingsTickers } from "../../news/for-you/queries.js";
 import { toISOString } from "../_shared/lib.js";
 import type { EnhancedBrokerageAccount } from "../_shared/schema.js";
 import { getActivities } from "../activities/query.js";
@@ -25,7 +23,6 @@ export interface BrokerageOverview {
   activitiesByAccount: Record<string, ActivityItem[]>;
   balances: BalanceItem[];
   balancesByAccount: Record<string, BalanceItem[]>;
-  holdingsNews: MappedFinancialEvent[];
   portfolioSnapshots: PortfolioSnapshotItem[];
   positions: PositionItem[];
   positionsByAccount: Record<string, PositionItem[]>;
@@ -44,7 +41,7 @@ const groupBy = <T>(items: T[], key: (item: T) => string): Record<string, T[]> =
 /**
  * Brokerage data (SnapTrade + Plaid investment accounts, unified) in one
  * payload. One DB call covers accounts + balances + userBrokerages; positions,
- * activities, snapshots, and holdings-news fan out in parallel.
+ * activities, and snapshots fan out in parallel.
  */
 export async function getBrokerageOverview(
   userId: string,
@@ -52,28 +49,16 @@ export async function getBrokerageOverview(
 ): Promise<BrokerageOverview> {
   const { startDate, endDate, positionsLimit = 50, activitiesLimit = 25 } = options;
 
-  const [accountRows, tickers, portfolioSnapshots, positionsResult, activitiesResult] =
-    await Promise.all([
-      fetchAccountsWithBalances(userId),
-      getHoldingsTickers(userId),
-      getPortfolioSnapshots(userId, { endDate, startDate }),
-      getPositions(userId, { limit: positionsLimit }),
-      getActivities(userId, { limit: activitiesLimit }),
-    ]);
+  const [accountRows, portfolioSnapshots, positionsResult, activitiesResult] = await Promise.all([
+    fetchAccountsWithBalances(userId),
+    getPortfolioSnapshots(userId, { endDate, startDate }),
+    getPositions(userId, { limit: positionsLimit }),
+    getActivities(userId, { limit: activitiesLimit }),
+  ]);
 
   const accounts = accountRows.map((r) => toEnhancedAccount(r, userId));
   const balances = accountRows.flatMap((r) => toBalanceItems(r, userId));
   const userBrokerages = deriveUserBrokerages(accountRows);
-
-  let holdingsNews: MappedFinancialEvent[] = [];
-  try {
-    if (tickers.length > 0) {
-      const result = await getEventsForTickers(userId, tickers, 8);
-      holdingsNews = result.events;
-    }
-  } catch {
-    // Non-fatal — payload still useful without news
-  }
 
   return {
     accounts,
@@ -81,7 +66,6 @@ export async function getBrokerageOverview(
     activitiesByAccount: activitiesResult.activitiesByAccount,
     balances,
     balancesByAccount: groupBy(balances, (b) => b.accountId),
-    holdingsNews,
     portfolioSnapshots,
     positions: positionsResult.positions,
     positionsByAccount: positionsResult.positionsByAccount,

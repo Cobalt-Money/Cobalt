@@ -1,6 +1,4 @@
 import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
-import type { FinancialEventCard } from "@cobalt-web/ui/cobalt/news/financial-events-feed";
-import type { NewsMagazineSidebarItem } from "@cobalt-web/ui/cobalt/news/news-magazine";
 import { TransactionDetailActivity } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-activity";
 import { TransactionDetailSummary } from "@cobalt-web/ui/cobalt/transactions/detail/transaction-detail-summary";
 import type { TagColor } from "@cobalt-web/ui/cobalt/transactions/tags/palette";
@@ -22,7 +20,6 @@ import {
   CreditCardIcon,
   EyeIcon,
   Home04Icon,
-  NewsIcon,
   PlusSignIcon,
   SearchDollarIcon,
   SearchIcon,
@@ -34,8 +31,6 @@ import { useEffect, useState } from "react";
 import { BabyAccounts } from "@/components/landing/baby/baby-accounts";
 import { BabyBrokerage } from "@/components/landing/baby/baby-brokerage";
 import { BabyDashboard } from "@/components/landing/baby/baby-dashboard";
-import { BabyNews } from "@/components/landing/baby/baby-news";
-import { BabyNewsArticle } from "@/components/landing/baby/baby-news-article";
 import { BabyPromptInput } from "@/components/landing/baby/baby-prompt-input";
 import type { BabyScreenerRow } from "@/components/landing/baby/baby-research";
 import { BabyResearch } from "@/components/landing/baby/baby-research";
@@ -55,7 +50,6 @@ type NavId =
   | "research"
   | "transactions"
   | "subscriptions"
-  | "news"
   | "ai-chat";
 
 type ChatThreadId =
@@ -343,179 +337,6 @@ const TRANSACTIONS: TransactionResponse[] = [
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// Mock data — News
-// ---------------------------------------------------------------------------
-
-const MOCK_NEWS_EVENTS: FinancialEventCard[] = [
-  {
-    articles: [
-      {
-        id: "art-1",
-        imageUrl: "/landing/news/openai.png",
-        newsUrl: "https://www.bloomberg.com",
-        sourceName: "Bloomberg",
-        title: "OpenAI valued at $300B in largest private fundraise ever",
-      },
-    ],
-    createdAt: Date.now() - 1000 * 60 * 30,
-    date: Date.now() - 1000 * 60 * 25,
-    eventId: "evt-1",
-    eventName: "OpenAI raises $40B at $300B valuation in record round",
-    eventText:
-      "OpenAI closed a $40 billion funding round led by SoftBank, valuing the ChatGPT maker at $300 billion — the largest private tech fundraise in history.",
-    id: "evt-1",
-    newsItems: 8,
-    sentiment: "positive",
-    summary:
-      "OpenAI's record $40B raise at a $300B valuation cements its position as the most valuable private company in the world, fueling a new wave of AI infrastructure investment.",
-    tickers: ["MSFT", "NVDA"],
-    topics: ["general", "ai", "tech"],
-  },
-  {
-    articles: [
-      {
-        id: "art-2",
-        imageUrl: "/landing/news/apple.png",
-        newsUrl: "https://www.wsj.com",
-        sourceName: "WSJ",
-        title: "Apple Q2 earnings: Services hit all-time high",
-      },
-    ],
-    createdAt: Date.now() - 1000 * 60 * 60 * 2,
-    date: Date.now() - 1000 * 60 * 60 * 2,
-    eventId: "evt-2",
-    eventName: "Apple reports record Q2 services revenue of $26.6B",
-    eventText:
-      "Apple's services segment — App Store, iCloud, Apple Pay — posted its highest quarterly revenue on record, offsetting softer iPhone sales.",
-    id: "evt-2",
-    newsItems: 12,
-    sentiment: "positive",
-    summary:
-      "Apple beat Wall Street estimates with $26.6B in services revenue, driving a 7% YoY revenue increase despite iPhone headwinds.",
-    tickers: ["AAPL"],
-    topics: ["general", "earnings", "tech"],
-  },
-  {
-    articles: [
-      {
-        id: "art-3",
-        imageUrl: "/landing/news/nvidia.png",
-        newsUrl: "https://www.reuters.com",
-        sourceName: "Reuters",
-        title: "NVIDIA crosses $3 trillion market cap",
-      },
-    ],
-    createdAt: Date.now() - 1000 * 60 * 60 * 5,
-    date: Date.now() - 1000 * 60 * 60 * 5,
-    eventId: "evt-3",
-    eventName: "NVIDIA surpasses $3T market cap on AI chip demand",
-    eventText:
-      "NVIDIA's market capitalization crossed $3 trillion for the first time as data center revenue surged 427% year-over-year on insatiable AI infrastructure demand.",
-    id: "evt-3",
-    newsItems: 15,
-    sentiment: "positive",
-    summary:
-      "NVIDIA joined Apple and Microsoft in the $3T club as its H100 and Blackwell chips continue to dominate AI workloads globally.",
-    tickers: ["NVDA"],
-    topics: ["general", "tech", "ai"],
-  },
-  {
-    articles: [
-      {
-        id: "art-4",
-        imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80",
-        newsUrl: "https://www.ft.com",
-        sourceName: "FT",
-        title: "March jobs report: 275K nonfarm payrolls added",
-      },
-    ],
-    createdAt: Date.now() - 1000 * 60 * 60 * 8,
-    date: Date.now() - 1000 * 60 * 60 * 8,
-    eventId: "evt-4",
-    eventName: "Jobs report beats expectations with 275K new positions",
-    eventText:
-      "The U.S. economy added 275,000 jobs in March, well above the 200,000 consensus estimate. Unemployment held at 3.8%.",
-    id: "evt-4",
-    newsItems: 6,
-    sentiment: "neutral",
-    summary:
-      "A stronger-than-expected labor market report pushed Treasury yields higher as markets recalibrated Fed rate-cut expectations.",
-    tickers: [],
-    topics: ["general", "government"],
-  },
-  {
-    articles: [
-      {
-        id: "art-5",
-        imageUrl: "/landing/news/a16.png",
-        newsUrl: "https://www.forbes.com",
-        sourceName: "Forbes",
-        title:
-          "Andreessen Horowitz launches $800M AI fund focusing on infrastructure and applications",
-      },
-    ],
-    createdAt: Date.now() - 1000 * 60 * 60 * 12,
-    date: Date.now() - 1000 * 60 * 60 * 12,
-    eventId: "evt-5",
-    eventName: "a16z unveils $800M dedicated fund for AI-powered startups and infrastructure",
-    eventText:
-      "Andreessen Horowitz announced its latest artificial intelligence-focused fund, committing $800 million to invest in next-generation AI companies addressing both infrastructure and application layers.",
-    id: "evt-5",
-    newsItems: 10,
-    sentiment: "positive",
-    summary:
-      "a16z's new $800M AI fund signals continued investor confidence in the sector, targeting opportunities in both AI infrastructure and enterprise software applications.",
-    tickers: [],
-    topics: ["general", "ai", "tech"],
-  },
-];
-
-const MOCK_RSS_ITEMS: NewsMagazineSidebarItem[] = [
-  {
-    id: "rss-1",
-    link: "https://www.bloomberg.com",
-    publishedAt: Date.now() - 1000 * 60 * 40,
-    title: "Markets wrap: S&P 500 closes at record high amid Fed patience signals",
-  },
-  {
-    id: "rss-2",
-    link: "https://www.wsj.com",
-    publishedAt: Date.now() - 1000 * 60 * 90,
-    title: "Treasury yields edge higher after stronger-than-expected jobs data",
-  },
-  {
-    id: "rss-3",
-    link: "https://www.coindesk.com",
-    publishedAt: Date.now() - 1000 * 60 * 120,
-    title: "Bitcoin tops $70K as ETF inflows accelerate and institutional demand grows",
-  },
-  {
-    id: "rss-4",
-    link: "https://www.reuters.com",
-    publishedAt: Date.now() - 1000 * 60 * 180,
-    title: "Oil falls on demand outlook concerns amid economic slowdown fears",
-  },
-  {
-    id: "rss-5",
-    link: "https://www.ft.com",
-    publishedAt: Date.now() - 1000 * 60 * 240,
-    title: "European stocks surge on tech rally and easing rate cut timeline expectations",
-  },
-  {
-    id: "rss-6",
-    link: "https://www.cnbc.com",
-    publishedAt: Date.now() - 1000 * 60 * 300,
-    title: "Magnificent Seven stocks power Nasdaq to fresh all-time highs this quarter",
-  },
-  {
-    id: "rss-7",
-    link: "https://www.ft.com",
-    publishedAt: Date.now() - 1000 * 60 * 360,
-    title: "Central banks signal pause in interest rate hikes as inflation moderates globally",
-  },
-];
-
-// ---------------------------------------------------------------------------
 // Mock data — AI Chat
 // ---------------------------------------------------------------------------
 
@@ -715,11 +536,6 @@ const NAV_ITEMS: { id: NavId; icon: React.ReactNode; label: string }[] = [
     icon: <HugeiconsIcon icon={Calendar02Icon} strokeWidth={2} />,
     id: "subscriptions",
     label: "Subscriptions",
-  },
-  {
-    icon: <HugeiconsIcon icon={NewsIcon} strokeWidth={2} />,
-    id: "news",
-    label: "News",
   },
 ];
 
@@ -1189,43 +1005,6 @@ function SubscriptionsView() {
   );
 }
 
-function NewsView() {
-  const [selectedEvent, setSelectedEvent] = useState<FinancialEventCard | null>(null);
-  const [selectedRssItem, setSelectedRssItem] = useState<NewsMagazineSidebarItem | null>(null);
-
-  if (selectedEvent || selectedRssItem) {
-    return (
-      <BackableScreen
-        onBack={() => {
-          setSelectedEvent(null);
-          setSelectedRssItem(null);
-        }}
-        label="News"
-      >
-        <div className="mx-auto w-full max-w-2xl pt-6 pb-8">
-          <BabyNewsArticle event={selectedEvent} rssItem={selectedRssItem} />
-        </div>
-      </BackableScreen>
-    );
-  }
-
-  return (
-    <BabyNews
-      eventsForYou={MOCK_NEWS_EVENTS.slice(0, 2)}
-      eventsGeneral={MOCK_NEWS_EVENTS}
-      onOpenEvent={(e) => {
-        setSelectedRssItem(null);
-        setSelectedEvent(e);
-      }}
-      onOpenRssItem={(item) => {
-        setSelectedEvent(null);
-        setSelectedRssItem(item);
-      }}
-      rssItems={MOCK_RSS_ITEMS}
-    />
-  );
-}
-
 function AiChatView({ thread }: { thread: ChatThreadId }) {
   const threadData = CHAT_THREADS[thread];
   const [guestMessages, setGuestMessages] = useState<
@@ -1324,9 +1103,6 @@ function ActiveView({ active, chatThread }: { active: NavId; chatThread: ChatThr
     }
     case "subscriptions": {
       return <SubscriptionsView />;
-    }
-    case "news": {
-      return <NewsView />;
     }
     case "ai-chat": {
       return <AiChatView thread={chatThread} />;

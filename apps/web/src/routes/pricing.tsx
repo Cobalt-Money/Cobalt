@@ -34,7 +34,7 @@ const freeFeatures = [
   "Budgets, categories, rules, AI chat",
   "AI on Claude Haiku 4.5",
   "Use Cobalt API to build your own finance apps",
-  "Curated news, research, and market insights",
+  "Research tools and market insights",
 ];
 
 const proFeatures = [

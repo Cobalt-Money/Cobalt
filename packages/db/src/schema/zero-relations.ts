@@ -22,7 +22,6 @@ import { snapshot } from "./accounts/snapshot";
 import { chats, messages, parts } from "./ai/chat";
 import { messageVotes } from "./ai/message-votes";
 import { financialGoals } from "./goals/financial-goals";
-import { financialEvents, eventArticles } from "./news/financial-events";
 import { plaidConnection } from "./providers/plaid/connection";
 import { institution } from "./providers/plaid/institution";
 import { snaptradeAuthorization } from "./providers/snaptrade/authorization";
@@ -347,17 +346,6 @@ export const snaptradeUserRelations = relations(snaptradeUser, ({ one }) => ({
 
 export const institutionRelations = relations(institution, ({ many }) => ({
   plaidConnections: many(plaidConnection),
-}));
-
-export const financialEventsRelations = relations(financialEvents, ({ many }) => ({
-  articles: many(eventArticles),
-}));
-
-export const eventArticlesRelations = relations(eventArticles, ({ one }) => ({
-  financialEvent: one(financialEvents, {
-    fields: [eventArticles.financialEventId],
-    references: [financialEvents.id],
-  }),
 }));
 
 export const userAlertsRelations = relations(userAlerts, ({ one }) => ({

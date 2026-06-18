@@ -2,7 +2,6 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { activitiesRouter } from "./activities.js";
 import { balancesRouter } from "./balances.js";
-import { holdingsNewsRouter } from "./holdings-news.js";
 import { manualHoldingsRouter } from "./manual-holdings.js";
 import { overviewRouter } from "./overview.js";
 import { portfolioSnapshotsRouter } from "./portfolio-snapshots.js";
@@ -13,7 +12,6 @@ import { userTickersRouter } from "./user-tickers.js";
 // requireAuth applied per-route via createRoute middleware (see chain contract in apps/server/src/index.ts)
 export const brokerageRouter = new OpenAPIHono()
   .route("/", overviewRouter)
-  .route("/", holdingsNewsRouter)
   .route("/", balancesRouter)
   .route("/", positionsRouter)
   .route("/", activitiesRouter)

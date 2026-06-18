@@ -12,7 +12,7 @@ import { requireAuth } from "../middleware.js";
 
 const route = createRoute({
   description:
-    "Brokerage overview (SnapTrade + Plaid investment, unified): accounts, balances, positions, activities, snapshots, holdings-linked news.",
+    "Brokerage overview (SnapTrade + Plaid investment, unified): accounts, balances, positions, activities, and snapshots.",
   method: "get",
   middleware: [requireAuth] as const,
   path: "/",

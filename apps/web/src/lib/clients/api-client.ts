@@ -10,7 +10,6 @@ import type {
   DemoRouter,
   ImportsRouter,
   InstitutionsRouter,
-  NewsRouter,
   PlaidRouter,
   ResearchRouter,
   SnaptradeRouter,
@@ -48,7 +47,6 @@ export const demoApi = hc<DemoRouter>(`${url}/api/demo`, init);
 export const importsApi = hc<ImportsRouter>(`${url}/api/imports`, init);
 export const importsBaseUrl = `${url}/api/imports`;
 export const institutionsApi = hc<InstitutionsRouter>(`${url}/api/institutions`, init);
-export const newsApi = hc<NewsRouter>(`${url}/api/news`, init);
 export const plaidApi = hc<PlaidRouter>(`${url}/api/plaid`, init);
 export const researchApi = hc<ResearchRouter>(`${url}/api/research`, init);
 export const snaptradeApi = hc<SnaptradeRouter>(`${url}/api/snaptrade`, init);

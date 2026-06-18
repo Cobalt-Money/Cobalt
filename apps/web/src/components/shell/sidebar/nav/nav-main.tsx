@@ -11,7 +11,6 @@ import {
   Calendar02Icon,
   CreditCardIcon,
   Home04Icon,
-  NewsIcon,
   Search02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -53,11 +52,6 @@ const NAV_MAIN_ITEMS = [
     icon: <HugeiconsIcon icon={Calendar02Icon} strokeWidth={1.5} />,
     title: "Subscriptions",
     url: "/subscriptions" as const,
-  },
-  {
-    icon: <HugeiconsIcon icon={NewsIcon} strokeWidth={1.5} />,
-    title: "News",
-    url: "/news" as const,
   },
 ];
 

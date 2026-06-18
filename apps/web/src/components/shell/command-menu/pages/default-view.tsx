@@ -36,7 +36,6 @@ type NavPath =
   | "/ai-chat"
   | "/brokerage"
   | "/home"
-  | "/news"
   | "/research"
   | "/subscriptions"
   | "/transactions";
@@ -83,12 +82,6 @@ const COMMAND_NAV_ROUTES: readonly {
     keywords: ["chat", "ai", "assistant"],
     label: "AI Chat",
     path: "/ai-chat",
-  },
-  {
-    icon: File02Icon,
-    keywords: ["articles", "updates"],
-    label: "News",
-    path: "/news",
   },
 ];
 

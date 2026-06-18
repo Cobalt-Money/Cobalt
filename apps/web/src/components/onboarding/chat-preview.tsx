@@ -5,7 +5,6 @@ import {
   Calendar02Icon,
   CreditCardIcon,
   Home04Icon,
-  NewsIcon,
   PlusSignIcon,
   Search02Icon,
 } from "@hugeicons/core-free-icons";
@@ -23,7 +22,6 @@ const NAV: { icon: IconSvg; label: string }[] = [
   { icon: Search02Icon, label: "Research" },
   { icon: ArrowReloadHorizontalIcon, label: "Transactions" },
   { icon: Calendar02Icon, label: "Subscriptions" },
-  { icon: NewsIcon, label: "News" },
 ];
 
 const USER_TEXT = "Am I on track to purchase a condo in the Lower East Side?";

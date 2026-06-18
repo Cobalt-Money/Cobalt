@@ -23,8 +23,6 @@ export { feedback } from "./users/feedback";
 export { financialGoals } from "./goals/financial-goals";
 export { kalshiUsers } from "./accounts/prediction-markets/kalshi";
 export { userAlerts } from "./users/alerts";
-export { eventArticles, financialEvents } from "./news/financial-events";
-export { rssArticles, rssFeeds } from "./news/rss";
 export { plaidConnection } from "./providers/plaid/connection";
 export { institution } from "./providers/plaid/institution";
 export { snaptradeAuthorization } from "./providers/snaptrade/authorization";
