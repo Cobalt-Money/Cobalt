@@ -11,10 +11,10 @@ function normalizeDate(val: string | number | Date | null | undefined): string {
     return "";
   }
   if (typeof val === "number") {
-    return new Date(val).toISOString().split("T")[0] ?? "";
+    return new Date(val).toISOString().split("T")[0];
   }
   if (val instanceof Date) {
-    return val.toISOString().split("T")[0] ?? "";
+    return val.toISOString().split("T")[0];
   }
   return String(val).split("T")[0] ?? String(val);
 }
