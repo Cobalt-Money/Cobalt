@@ -86,14 +86,6 @@ export const socialQueries = {
       .orderBy("createdAt", "desc"),
   ),
 
-  /** Detail view of a post the caller owns. (Friends' posts read via postsAll.) */
-  postDetail: defineQuery(z.object({ postId: z.string() }), ({ ctx, args }) =>
-    zql.socialPost
-      .where("id", args.postId)
-      .where("userId", ctx?.userId ?? DEMO_USER_ID)
-      .one(),
-  ),
-
   /**
    * Shared-transaction detail keyed by source txn id. Friends app uses this
    * for the txn detail panel — raw `transaction` rows are never exposed to
@@ -114,6 +106,14 @@ export const socialQueries = {
         .where("userId", "IN", allowed)
         .one();
     },
+  ),
+
+  /** Detail view of a post the caller owns. (Friends' posts read via postsAll.) */
+  postDetail: defineQuery(z.object({ postId: z.string() }), ({ ctx, args }) =>
+    zql.socialPost
+      .where("id", args.postId)
+      .where("userId", ctx?.userId ?? DEMO_USER_ID)
+      .one(),
   ),
 
   /**

@@ -10,7 +10,7 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo, useState } from "react";
 import { useMerchantSearch } from "../../hooks/use-merchant-search";
-import { mapSharedPostToTransaction } from "./map-shared-txn";
+import { mapSharedPostToTransaction } from "@cobalt-web/ui/cobalt/transactions/lib/map-shared-post";
 import type { GlassStyle, PinDatum } from "./types";
 
 function renderNotesBlock(notes: string | null, edit: TransactionDetailEditHandlers | undefined) {
@@ -67,11 +67,8 @@ export function TxnDetailPanel({
     queries.social.postByTransactionId({ friendIds, transactionId: txnId }),
   );
   const mapped = ownRow ? mapZeroTransactionDetailRow(ownRow) : null;
-  const transaction = editable
-    ? (mapped?.transaction ?? null)
-    : sharedPost
-      ? mapSharedPostToTransaction(sharedPost)
-      : null;
+  const sharedTransaction = sharedPost ? mapSharedPostToTransaction(sharedPost) : null;
+  const transaction = editable ? (mapped?.transaction ?? null) : sharedTransaction;
   const edit = useTxnEditHandlers(txnId, transaction, editable);
   const [offset, setOffset] = useState<{ x: number; y: number }>({
     x: 0,

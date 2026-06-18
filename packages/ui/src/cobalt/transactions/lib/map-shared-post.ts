@@ -2,9 +2,7 @@ import { transactionResponseSchema } from "@cobalt-web/server-data/transactions/
 import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import type { queries, Row } from "@cobalt-web/zero";
 
-import { categoryLabel } from "./utils";
-
-type SharedPostRow = Row<typeof queries.social.postByTransactionId>;
+type SharedPostRow = NonNullable<Row<typeof queries.social.postByTransactionId>>;
 
 const PLACEHOLDER_UUID = "00000000-0000-4000-8000-000000000000";
 
@@ -19,6 +17,13 @@ function normalizeDate(val: string | number | Date | null | undefined): string {
     return val.toISOString().split("T")[0] ?? "";
   }
   return String(val).split("T")[0] ?? String(val);
+}
+
+function categoryLabel(key: string): string {
+  return key
+    .split("_")
+    .map((w) => (w ? (w[0] ?? "").toUpperCase() + w.slice(1) : ""))
+    .join(" ");
 }
 
 /** Project a redacted `social_post` row into the txn detail DTO shape. */
