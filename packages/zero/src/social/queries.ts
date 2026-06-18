@@ -95,6 +95,28 @@ export const socialQueries = {
   ),
 
   /**
+   * Shared-transaction detail keyed by source txn id. Friends app uses this
+   * for the txn detail panel — raw `transaction` rows are never exposed to
+   * viewers outside the owner. Scoped to the caller + their friend graph
+   * (or the demo network for anon).
+   */
+  postByTransactionId: defineQuery(
+    z.object({
+      friendIds: z.array(z.string()).default([]),
+      transactionId: z.string(),
+    }),
+    ({ args, ctx }) => {
+      const allowed = ctx?.userId
+        ? ([...new Set([ctx.userId, ...args.friendIds])] as string[])
+        : (DEMO_NETWORK_IDS as readonly string[] as string[]);
+      return zql.socialPost
+        .where("transactionId", args.transactionId)
+        .where("userId", "IN", allowed)
+        .one();
+    },
+  ),
+
+  /**
    * All posts the caller can read. Authed: returns everything; client
    * intersects against friendship list. Anon: restricted server-side to
    * the seeded demo network so we never leak real users' posts to the
