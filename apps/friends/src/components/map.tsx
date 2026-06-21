@@ -118,6 +118,7 @@ interface RenderTxnDetailArgs {
   userId: string | undefined;
   userName: string;
   authedUserId: string | undefined;
+  friendIds: string[];
   friendNameById: Map<string, { name: string; image: string | null }>;
   glassStyle: ReturnType<typeof computeGlassStyle>;
   flyTo: (lon: number, lat: number, zoom?: number) => void;
@@ -133,6 +134,7 @@ function renderTxnDetail({
   userId,
   userName,
   authedUserId,
+  friendIds,
   friendNameById,
   glassStyle,
   flyTo,
@@ -172,6 +174,7 @@ function renderTxnDetail({
       person={personName}
       personAvatarUrl={personAvatarUrl}
       editable={!!authedUserId && isSelfPin}
+      friendIds={friendIds}
     />
   );
 }
@@ -303,6 +306,7 @@ export function FriendsMap() {
 
   const {
     authedUserId,
+    friendIds,
     friendList,
     friendNameById,
     friendPinsRaw,
@@ -492,6 +496,7 @@ export function FriendsMap() {
         allPins,
         authedUserId,
         flyTo,
+        friendIds: [...friendIds],
         friendNameById,
         glassStyle,
         hover,

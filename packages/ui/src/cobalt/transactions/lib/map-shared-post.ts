@@ -1,0 +1,84 @@
+import { transactionResponseSchema } from "@cobalt-web/server-data/transactions/schemas";
+import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
+import type { queries, Row } from "@cobalt-web/zero";
+
+type SharedPostRow = NonNullable<Row<typeof queries.social.postByTransactionId>>;
+
+const PLACEHOLDER_UUID = "00000000-0000-4000-8000-000000000000";
+
+function normalizeDate(val: string | number | Date | null | undefined): string {
+  // ISO date portion only — slice avoids noUncheckedIndexedAccess on split()[0].
+  if (val === null || val === undefined) {
+    return "";
+  }
+  if (typeof val === "number") {
+    return new Date(val).toISOString().slice(0, 10);
+  }
+  if (val instanceof Date) {
+    return val.toISOString().slice(0, 10);
+  }
+  const asString = String(val);
+  return asString.includes("T") ? asString.slice(0, 10) : asString;
+}
+
+function categoryLabel(key: string): string {
+  return key
+    .split("_")
+    .map((w) => (w ? (w[0] ?? "").toUpperCase() + w.slice(1) : ""))
+    .join(" ");
+}
+
+/** Project a redacted `social_post` row into the txn detail DTO shape. */
+export function mapSharedPostToTransaction(row: SharedPostRow): TransactionResponse {
+  const categoryKey = row.categorySystemKey ?? "uncategorized";
+  const merchant = row.merchantName ?? "Shared transaction";
+  const amount =
+    row.amountCents === null || row.amountCents === undefined
+      ? 0
+      : -Math.abs(Number(row.amountCents)) / 100;
+
+  return transactionResponseSchema.parse({
+    accountId: PLACEHOLDER_UUID,
+    accountLogoDomain: null,
+    accountName: row.cardName ?? row.institutionName ?? "Card",
+    accountSubtype: null,
+    accountType: "credit",
+    amount,
+    authorizedDate: null,
+    category: {
+      groupName: "",
+      groupSystemKey: null,
+      iconKey: categoryKey,
+      id: PLACEHOLDER_UUID,
+      name: categoryLabel(categoryKey),
+      systemKey: categoryKey,
+    },
+    counterparties: null,
+    date: normalizeDate(row.date),
+    id: row.transactionId,
+    institutionLogo: null,
+    institutionName: row.institutionName ?? null,
+    institutionUrl: null,
+    location: {
+      address: null,
+      city: null,
+      country: null,
+      lat: row.lat,
+      lon: row.lon,
+      postal_code: null,
+      region: null,
+      store_number: null,
+    },
+    lockedFields: [],
+    logoUrl: row.logoUrl ?? null,
+    merchantName: row.merchantName,
+    name: merchant,
+    notes: row.note ?? null,
+    paymentChannel: "in store",
+    pending: false,
+    plaidAccountId: null,
+    source: "plaid",
+    tagIds: [],
+    website: row.website ?? null,
+  });
+}

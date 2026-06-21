@@ -10,6 +10,7 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { useQuery } from "@rocicorp/zero/react";
 import { useMemo, useState } from "react";
 import { useMerchantSearch } from "../../hooks/use-merchant-search";
+import { mapSharedPostToTransaction } from "@cobalt-web/ui/cobalt/transactions/lib/map-shared-post";
 import type { GlassStyle, PinDatum } from "./types";
 
 function renderNotesBlock(notes: string | null, edit: TransactionDetailEditHandlers | undefined) {
@@ -43,6 +44,7 @@ export function TxnDetailPanel({
   person,
   personAvatarUrl,
   editable,
+  friendIds,
 }: {
   txnId: string;
   mode: "pinned" | "preview";
@@ -55,12 +57,18 @@ export function TxnDetailPanel({
   personAvatarUrl: string | null;
   /** True when the viewer owns this txn (authed + own row). Enables inline edits. */
   editable: boolean;
+  /** Friend graph ids — required to load shared txn detail for non-owned pins. */
+  friendIds: string[];
 }) {
   const { style, textClass, mutedClass } = glassStyle;
   const isLight = textClass === "text-black";
-  const [row] = useQuery(queries.transactions.detail({ transactionId: txnId }));
-  const mapped = row ? mapZeroTransactionDetailRow(row) : null;
-  const transaction = mapped?.transaction ?? null;
+  const [ownRow] = useQuery(queries.transactions.detail({ transactionId: txnId }));
+  const [sharedPost] = useQuery(
+    queries.social.postByTransactionId({ friendIds, transactionId: txnId }),
+  );
+  const mapped = ownRow ? mapZeroTransactionDetailRow(ownRow) : null;
+  const sharedTransaction = sharedPost ? mapSharedPostToTransaction(sharedPost) : null;
+  const transaction = editable ? (mapped?.transaction ?? null) : sharedTransaction;
   const edit = useTxnEditHandlers(txnId, transaction, editable);
   const [offset, setOffset] = useState<{ x: number; y: number }>({
     x: 0,
