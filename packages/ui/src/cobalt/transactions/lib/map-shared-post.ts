@@ -7,6 +7,7 @@ type SharedPostRow = NonNullable<Row<typeof queries.social.postByTransactionId>>
 const PLACEHOLDER_UUID = "00000000-0000-4000-8000-000000000000";
 
 function normalizeDate(val: string | number | Date | null | undefined): string {
+  // ISO date portion only — slice avoids noUncheckedIndexedAccess on split()[0].
   if (val === null || val === undefined) {
     return "";
   }
