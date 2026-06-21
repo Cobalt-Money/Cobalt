@@ -11,12 +11,13 @@ function normalizeDate(val: string | number | Date | null | undefined): string {
     return "";
   }
   if (typeof val === "number") {
-    return new Date(val).toISOString().split("T")[0];
+    return new Date(val).toISOString().slice(0, 10);
   }
   if (val instanceof Date) {
-    return val.toISOString().split("T")[0];
+    return val.toISOString().slice(0, 10);
   }
-  return String(val).split("T")[0] ?? String(val);
+  const asString = String(val);
+  return asString.includes("T") ? asString.slice(0, 10) : asString;
 }
 
 function categoryLabel(key: string): string {
