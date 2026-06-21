@@ -6,8 +6,10 @@ export {
   deleteSharedPostsForBlockedCategory,
   deleteSharedPostsForBlockedMerchant,
   getShareSettings,
+  refreshSocialPostProjectionsForUser,
   removeCategoryFromBlocklist,
   removeMerchantFromBlocklist,
+  resolveSocialPostCategoryKey,
   upsertShareSettings,
 } from "./auto-share.js";
 export type { ShareSettings } from "./auto-share.js";

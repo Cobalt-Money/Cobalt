@@ -22,15 +22,21 @@ function normalizeDate(val: string | number | Date | null | undefined): string {
 }
 
 function categoryLabel(key: string): string {
-  return key
+  const leaf = key.includes(".") ? (key.split(".").at(-1) ?? key) : key;
+  return leaf
     .split("_")
     .map((w) => (w ? (w[0] ?? "").toUpperCase() + w.slice(1) : ""))
     .join(" ");
 }
 
+function categoryIconKey(key: string): string {
+  return key.includes(".") ? (key.split(".").at(-1) ?? key) : key;
+}
+
 /** Project a redacted `social_post` row into the txn detail DTO shape. */
 export function mapSharedPostToTransaction(row: SharedPostRow): TransactionResponse {
   const categoryKey = row.categorySystemKey ?? "uncategorized";
+  const iconKey = categoryIconKey(categoryKey);
   const merchant = row.merchantName ?? "Shared transaction";
   const amount =
     row.amountCents === null || row.amountCents === undefined
@@ -48,7 +54,7 @@ export function mapSharedPostToTransaction(row: SharedPostRow): TransactionRespo
     category: {
       groupName: "",
       groupSystemKey: null,
-      iconKey: categoryKey,
+      iconKey,
       id: PLACEHOLDER_UUID,
       name: categoryLabel(categoryKey),
       systemKey: categoryKey,

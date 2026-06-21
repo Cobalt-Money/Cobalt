@@ -1,11 +1,14 @@
 import { db } from "@cobalt-web/db";
 import { financialAccount } from "@cobalt-web/db/schema/accounts/account";
+import { category as categoryTable } from "@cobalt-web/db/schema/accounts/banking/categories/category";
 import { transaction as transactionTable } from "@cobalt-web/db/schema/accounts/banking/transactions/transaction";
 import { socialCategoryBlocklist } from "@cobalt-web/db/schema/social/category-blocklist";
 import { socialMerchantBlocklist } from "@cobalt-web/db/schema/social/merchant-blocklist";
 import { socialPost } from "@cobalt-web/db/schema/social/post";
 import { socialShareSettings } from "@cobalt-web/db/schema/social/share-settings";
 import { and, eq, gte, inArray, isNotNull, lte, sql } from "drizzle-orm";
+
+import { pfcDetailedToSystemKey } from "../categories/map.js";
 
 export interface ShareSettings {
   shareAmount: boolean;
@@ -87,6 +90,49 @@ async function getBlockedCategories(userId: string): Promise<string[]> {
   return rows.map((r) => r.category);
 }
 
+/** Prefer the user's resolved category row; fall back to Plaid PFC mapping. */
+export function resolveSocialPostCategoryKey(
+  categorySystemKey: string | null | undefined,
+  pfcDetailed: string | null | undefined,
+): string {
+  if (categorySystemKey) {
+    return categorySystemKey;
+  }
+  return pfcDetailedToSystemKey(pfcDetailed);
+}
+
+/** Merchant logo/domain follow the same redaction gate as merchant name. */
+function merchantBrandingFields(
+  settings: ShareSettings,
+  logoUrl: string | null | undefined,
+  website: string | null | undefined,
+): { logoUrl: string | null; website: string | null } {
+  if (!settings.shareMerchant) {
+    return { logoUrl: null, website: null };
+  }
+  return { logoUrl: logoUrl ?? null, website: website ?? null };
+}
+
+function projectionFieldsFromTxn(
+  settings: ShareSettings,
+  row: {
+    categorySystemKey: string | null;
+    logoUrl: string | null;
+    pfcDetailed: string | null;
+    website: string | null;
+  },
+): {
+  categorySystemKey: string;
+  logoUrl: string | null;
+  website: string | null;
+} {
+  const branding = merchantBrandingFields(settings, row.logoUrl, row.website);
+  return {
+    categorySystemKey: resolveSocialPostCategoryKey(row.categorySystemKey, row.pfcDetailed),
+    ...branding,
+  };
+}
+
 /**
  * Hard auto-share gate:
  *   - Plaid in-store + lat/lon present
@@ -98,6 +144,7 @@ async function getBlockedCategories(userId: string): Promise<string[]> {
  */
 export async function autoShareInStoreTxnsForUser(userId: string): Promise<{
   inserted: number;
+  patched: number;
   scanned: number;
 }> {
   const [settings, blockedMerchants, blockedCategories] = await Promise.all([
@@ -117,17 +164,22 @@ export async function autoShareInStoreTxnsForUser(userId: string): Promise<{
       accountInstitutionName: financialAccount.institutionName,
       accountName: financialAccount.name,
       amount: transactionTable.amount,
+      categorySystemKey: categoryTable.systemKey,
       date: transactionTable.date,
       id: transactionTable.id,
       lat: transactionTable.lat,
+      logoUrl: transactionTable.logoUrl,
       lon: transactionTable.lon,
       merchantName: transactionTable.merchantName,
       name: transactionTable.name,
       notes: transactionTable.notes,
+      pfcDetailed: transactionTable.pfcDetailed,
       pfcPrimary: transactionTable.pfcPrimary,
+      website: transactionTable.website,
     })
     .from(transactionTable)
     .innerJoin(financialAccount, eq(financialAccount.id, transactionTable.accountId))
+    .leftJoin(categoryTable, eq(transactionTable.categoryId, categoryTable.id))
     .where(
       and(
         eq(transactionTable.userId, userId),
@@ -152,21 +204,28 @@ export async function autoShareInStoreTxnsForUser(userId: string): Promise<{
     );
 
   if (candidates.length === 0) {
-    return { inserted: 0, scanned: 0 };
+    const { patched } = await refreshSocialPostProjectionsForUser(userId);
+    return { inserted: 0, patched, scanned: 0 };
   }
 
-  const rows = candidates.map((t) => ({
-    amountCents: settings.shareAmount ? Math.round(Math.abs(Number(t.amount)) * 100) : null,
-    cardName: settings.shareCard ? (t.accountCustomName ?? t.accountName) : null,
-    date: settings.shareDate ? new Date(t.date) : null,
-    institutionName: settings.shareCard ? t.accountInstitutionName : null,
-    lat: t.lat as number,
-    lon: t.lon as number,
-    merchantName: settings.shareMerchant ? (t.merchantName ?? t.name) : null,
-    note: settings.shareNote ? (t.notes ?? null) : null,
-    transactionId: t.id,
-    userId,
-  }));
+  const rows = candidates.map((t) => {
+    const projection = projectionFieldsFromTxn(settings, t);
+    return {
+      amountCents: settings.shareAmount ? Math.round(Math.abs(Number(t.amount)) * 100) : null,
+      cardName: settings.shareCard ? (t.accountCustomName ?? t.accountName) : null,
+      categorySystemKey: projection.categorySystemKey,
+      date: settings.shareDate ? new Date(t.date) : null,
+      institutionName: settings.shareCard ? t.accountInstitutionName : null,
+      lat: t.lat as number,
+      logoUrl: projection.logoUrl,
+      lon: t.lon as number,
+      merchantName: settings.shareMerchant ? (t.merchantName ?? t.name) : null,
+      note: settings.shareNote ? (t.notes ?? null) : null,
+      transactionId: t.id,
+      userId,
+      website: projection.website,
+    };
+  });
 
   const result = await db
     .insert(socialPost)
@@ -176,7 +235,57 @@ export async function autoShareInStoreTxnsForUser(userId: string): Promise<{
     })
     .returning({ id: socialPost.id });
 
-  return { inserted: result.length, scanned: candidates.length };
+  const { patched } = await refreshSocialPostProjectionsForUser(userId);
+
+  return { inserted: result.length, patched, scanned: candidates.length };
+}
+
+/**
+ * Re-copy denormalized display fields from source transactions onto existing
+ * posts. Runs after each auto-share pass so enrichment-added logos and user
+ * recategorizations propagate to already-shared rows.
+ */
+export async function refreshSocialPostProjectionsForUser(
+  userId: string,
+): Promise<{ patched: number }> {
+  const settings = await getShareSettings(userId);
+  const rows = await db
+    .select({
+      categorySystemKey: categoryTable.systemKey,
+      logoUrl: transactionTable.logoUrl,
+      pfcDetailed: transactionTable.pfcDetailed,
+      postId: socialPost.id,
+      website: transactionTable.website,
+    })
+    .from(socialPost)
+    .innerJoin(
+      transactionTable,
+      and(eq(socialPost.transactionId, transactionTable.id), eq(transactionTable.userId, userId)),
+    )
+    .leftJoin(categoryTable, eq(transactionTable.categoryId, categoryTable.id))
+    .where(eq(socialPost.userId, userId));
+
+  if (rows.length === 0) {
+    return { patched: 0 };
+  }
+
+  let patched = 0;
+  await db.transaction(async (tx) => {
+    for (const row of rows) {
+      const projection = projectionFieldsFromTxn(settings, row);
+      await tx
+        .update(socialPost)
+        .set({
+          categorySystemKey: projection.categorySystemKey,
+          logoUrl: projection.logoUrl,
+          website: projection.website,
+        })
+        .where(eq(socialPost.id, row.postId));
+      patched += 1;
+    }
+  });
+
+  return { patched };
 }
 
 /** Plaid-sync convenience: resolve item -> user, run for that user. */
