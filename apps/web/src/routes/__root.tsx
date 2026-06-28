@@ -11,7 +11,9 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
+import type { ReactNode } from "react";
 
+import { NotFoundPage } from "../components/feedback/not-found-page";
 import { UpgradePromptHost } from "../components/upgrade/upgrade-prompt-host";
 import { AppSessionProvider } from "../lib/providers/app-session";
 import { DemoProvider } from "../lib/providers/demo-provider";
@@ -24,16 +26,16 @@ import {
   SITE_NAME,
   SITE_URL,
   TWITTER_HANDLE,
+  buildSeoMeta,
 } from "@/lib/seo";
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-  component: RootDocument,
-
-  head: () => ({
-    links: [
+  component: RootOutlet,
+  head: ({ match }) => {
+    const links = [
       { href: "https://fonts.googleapis.com", rel: "preconnect" },
       {
-        crossOrigin: "anonymous",
+        crossOrigin: "anonymous" as const,
         href: "https://fonts.gstatic.com",
         rel: "preconnect",
       },
@@ -56,35 +58,58 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         rel: "apple-touch-icon",
         sizes: "180x180",
       },
-    ],
-    meta: [
+    ];
+
+    const staticMeta = [
       { charSet: "utf-8" },
       { content: "width=device-width, initial-scale=1", name: "viewport" },
       { content: "#000000", name: "theme-color" },
-      { title: DEFAULT_TITLE },
-      { content: DEFAULT_DESCRIPTION, name: "description" },
+    ];
 
-      { content: DEFAULT_TITLE, property: "og:title" },
-      { content: DEFAULT_DESCRIPTION, property: "og:description" },
-      { content: "website", property: "og:type" },
-      { content: SITE_URL, property: "og:url" },
-      { content: DEFAULT_OG_IMAGE, property: "og:image" },
-      { content: SITE_NAME, property: "og:site_name" },
+    if (match.globalNotFound) {
+      const seo = buildSeoMeta({
+        description: "That URL doesn't match anything in Cobalt.",
+        path: match.pathname,
+        title: "Page not found",
+      });
 
-      { content: "summary_large_image", name: "twitter:card" },
-      { content: TWITTER_HANDLE, name: "twitter:site" },
-      { content: DEFAULT_TITLE, name: "twitter:title" },
-      { content: DEFAULT_DESCRIPTION, name: "twitter:description" },
-      { content: DEFAULT_OG_IMAGE, name: "twitter:image" },
-    ],
-  }),
+      return {
+        links: [...links, ...seo.links],
+        meta: [...staticMeta, ...seo.meta],
+      };
+    }
+
+    return {
+      links,
+      meta: [
+        ...staticMeta,
+        { title: DEFAULT_TITLE },
+        { content: DEFAULT_DESCRIPTION, name: "description" },
+
+        { content: DEFAULT_TITLE, property: "og:title" },
+        { content: DEFAULT_DESCRIPTION, property: "og:description" },
+        { content: "website", property: "og:type" },
+        { content: SITE_URL, property: "og:url" },
+        { content: DEFAULT_OG_IMAGE, property: "og:image" },
+        { content: SITE_NAME, property: "og:site_name" },
+
+        { content: "summary_large_image", name: "twitter:card" },
+        { content: TWITTER_HANDLE, name: "twitter:site" },
+        { content: DEFAULT_TITLE, name: "twitter:title" },
+        { content: DEFAULT_DESCRIPTION, name: "twitter:description" },
+        { content: DEFAULT_OG_IMAGE, name: "twitter:image" },
+      ],
+    };
+  },
+  notFoundComponent: NotFoundPage,
+  shellComponent: RootShell,
 });
 
 const FORCED_LIGHT_PATHS = new Set<string>(["/"]);
 const FORCED_DARK_PATHS = new Set<string>(["/login", "/pricing", "/terms", "/privacy"]);
 const FORCED_DARK_PREFIXES = ["/blog"];
 
-function RootDocument() {
+function RootShell({ children }: { children: ReactNode }) {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   let forcedTheme: "light" | "dark" | undefined;
@@ -129,7 +154,7 @@ function RootDocument() {
               <DemoProvider>
                 <TooltipProvider>
                   <HotkeysProvider>
-                    <Outlet />
+                    {children}
                     <UpgradePromptHost />
                   </HotkeysProvider>
                 </TooltipProvider>
@@ -138,7 +163,6 @@ function RootDocument() {
           </QueryClientProvider>
           <Toaster richColors />
         </ThemeProvider>
-        {/* {import.meta.env.DEV ? <Agentation /> : null} */}
         {import.meta.env.DEV ? (
           <script crossOrigin="anonymous" src="https://tweakcn.com/live-preview.min.js" />
         ) : null}
@@ -146,4 +170,12 @@ function RootDocument() {
       </body>
     </html>
   );
+}
+
+function RootOutlet() {
+  const globalNotFound = useRouterState({
+    select: (s) => s.matches[0]?.globalNotFound ?? false,
+  });
+
+  return globalNotFound ? <NotFoundPage /> : <Outlet />;
 }
