@@ -63,7 +63,6 @@ export const Route = createFileRoute("/_auth")({
 
 function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDemo: boolean }) {
   const billingBannerActive = useBillingBannerActive();
-  console.log("[shell] render", performance.now(), { chromeless });
   // Setting `data-demo-banner` on this wrapper (vs `document.body` via an
   // effect) keeps the demo-mode flag in React tree — CSS in globals.css
   // targets `[data-demo-banner="1"] [data-slot="sidebar"]` etc. No effect,

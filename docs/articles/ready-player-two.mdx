@@ -1,0 +1,336 @@
+---
+title: Ready Player Two
+date: 2026-06-25
+tags:
+  - release
+description: Bringing game-style state synchronization to the web
+authors:
+  - aa
+---
+
+Hello, and happy morning!
+
+If you're building something collaborative — a design tool, a spreadsheet, a project tracker — you eventually hit the same wall. Two people edit the same thing at once. The UI has to feel instant. The server is somewhere else. Something has to decide what "the truth" is.
+
+That decision is not a detail. It is the product. The sync strategy you pick shapes your developer experience, your authorization model, what kinds of bugs you get, and what apps you can even build.
+
+This post is about two ways the industry solves that problem — [CRDTs](#crdts) and [server reconciliation](#server-reconciliation) — where they differ, and why we bet on the second one.
+
+# The constraint
+
+Collaborative editing invariably involves conflicts.
+
+Information can only travel so fast. If you want instantaneously responsive UI, you can't wait for the server on every keystroke. Changes have to happen locally, on the client. If the app is multiplayer, two users can be editing the same thing at the same time.
+
+Those conflicting edits have to be merged somehow — so everyone ends up seeing the same thing, and the merge feels natural rather than random.
+
+Every multiplayer system picks a strategy for this. Like the engine of a car, that choice determines almost everything downstream.
+
+# Two families of solutions
+
+Roughly speaking, modern local-first and multiplayer web apps converge on two approaches:
+
+**CRDTs** embed the merge logic in the data structure itself. Each replica applies edits independently; the math guarantees everyone converges once all edits have been exchanged. [Yjs](http://yjs.dev/) and [Automerge](https://automerge.org/) are popular open-source examples.
+
+**Server reconciliation** treats the server as the authority. Clients predict the outcome optimistically, but only send *intent* (a command and its arguments) upstream. The server linearizes intents, recomputes the result, and clients rebase their local state to match. This is how most networked games have worked for decades — [client-side prediction](https://en.wikipedia.org/wiki/Client-side_prediction) with server authority.
+
+Neither approach is "wrong." They optimize for different things. To choose well, you need to understand both.
+
+# CRDTs
+
+[CRDTs](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type) (Conflict-Free Replicated Data Types) are data structures designed so that replicas always converge to the same value, no matter what order updates arrive in.
+
+You don't ask a central server "what should the count be?" You apply operations locally, sync the operations to peers, and the CRDT's merge function produces the same result everywhere.
+
+That is powerful for text, lists, and maps — the workloads CRDT libraries were built for. It also enables peer-to-peer sync in principle: as long as replicas eventually exchange operations, they converge without a single choke point.
+
+## Consider the counter
+
+The limits show up quickly when you step outside a CRDT's sweet spot.
+
+Imagine you're using Yjs and you need a counter. The obvious approach stores the count in a map:
+
+```js
+const map = new Y.Map();
+
+function increment() {
+  const prev = map.get('count') ?? 0;
+  const next = prev + 1;
+  map.set('count', next);
+}
+```
+
+⚠️ Don't copy this! Loses increments under concurrency.
+
+It works in testing. In production, increments go missing. The Yjs docs point you to a different pattern:
+
+```js
+// array of numbers which produce a sum
+const yarray = ydoc.getArray('count');
+
+yarray.observe((event) => {
+  console.log('new sum: ' + yarray.toArray().reduce((a, b) => a + b));
+});
+
+yarray.push([1]); // => "new sum: 1"
+```
+
+✅ Correct code for implementing a counter from the Yjs docs.
+
+Surprising, awkward, inefficient — but correct *for Yjs*.
+
+Yjs is a sequence CRDT. Sequences excel at lists, text, and map-like structures. A counter is none of those. Yjs Map merges with last-write-wins per key, so concurrent increments from two collaborators can silently drop one.
+
+LWW is the wrong merge algorithm for a counter, and with Yjs there is no easy way to plug in the right one.
+
+## What CRDTs are good at — and where they stop
+
+CRDTs shine when your data model matches the library's merge semantics: collaborative documents, ordered lists, rich text.
+
+They struggle when you need **custom merge logic** — arithmetic, cross-field invariants, permission checks, "only the owner may do X" — because the merge function is not yours to write per feature. It is baked into the CRDT type.
+
+Authorization is especially awkward. A CRDT has no natural place to reject an operation. By the time a change exists locally, it is already part of the replicated structure. Saying "guests may comment but not edit" means fighting the model, not using it.
+
+This is not a knock on CRDTs. They are the right tool for many problems. But they are a **specific** tool, and general application state often is not the problem they were designed for.
+
+# Server reconciliation
+
+Server reconciliation flips the model.
+
+Clients still edit optimistically — the UI cannot wait on the network. But they do not broadcast the *result* of an edit. They broadcast **intent**: a function name and arguments, like `increment({ delta: 1 })`.
+
+The server receives intents from every client, picks an order (usually by arrival time), and **re-runs the same function** against authoritative state. That produces the next truth. Clients learn the outcome, roll back optimistic guesses that were wrong, and re-apply any still-pending intents on top.
+
+The merge logic is just code. Not a specialized data structure — a function you wrote.
+
+## The same counter
+
+```ts
+async function increment(state, { delta }: { delta: number }) {
+  const prev = (await state.get('count')) ?? 0;
+  await state.put('count', prev + delta);
+}
+```
+
+Clear and obvious. Under concurrency, it also works — as long as the server linearizes execution.
+
+Client 1 runs `increment({ delta: 1 })` locally and sees `count: 1`. Client 2 concurrently runs `increment({ delta: 2 })` and sees `count: 2` (or `3`, depending on what was cached). The server receives both intents, runs them in order against its database, and gets `count: 3`. Every client eventually converges there.
+
+The server does not need to understand counters specially. It does not implement `+`. It just runs your function twice in a row.
+
+## How the loop works
+
+At a high level:
+
+1. **Predict locally** — run the function on the client against local state. Update the UI immediately.
+2. **Send intent** — queue a record of `{ name, args }`, not the resulting rows.
+3. **Linearize on the server** — apply queued intents in order inside a real transaction.
+4. **Publish truth** — replicate committed state to clients.
+5. **Rebase** — drop confirmed optimistic effects; re-run any still-pending intents on top of the new truth.
+
+In fast-moving apps, step 1 keeps happening while steps 2–5 are in flight. Client 1 might increment again before the first increment is confirmed. That is fine: pending intents get rebased when authoritative state moves.
+
+This is a fair amount of infrastructure — optimistic local stores, mutation queues, rebase logic, crash recovery, a sync layer that keeps up with writes. But the **application model** stays simple: plain functions over plain state.
+
+# Where they diverge
+
+The counter is the smallest example of a wider pattern.
+
+<table>
+  <thead>
+    <tr>
+      <th>Topic</th>
+      <th>CRDTs</th>
+      <th>Server reconciliation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Unit of sync</td>
+      <td>Operations on typed structures</td>
+      <td>Named functions + arguments</td>
+    </tr>
+    <tr>
+      <td>Merge logic</td>
+      <td>Built into the CRDT</td>
+      <td>Your application code</td>
+    </tr>
+    <tr>
+      <td>Authority</td>
+      <td>Distributed; peers converge</td>
+      <td>Server decides order and outcome</td>
+    </tr>
+    <tr>
+      <td>Custom arithmetic and invariants</td>
+      <td>Awkward; often the wrong tool</td>
+      <td>Natural; it is just code</td>
+    </tr>
+    <tr>
+      <td>Authorization</td>
+      <td>Hard to reject after the fact</td>
+      <td>Check on the server before commit</td>
+    </tr>
+    <tr>
+      <td>Offline or P2P without a server</td>
+      <td>Strong fit</td>
+      <td>Weaker; server is the tiebreaker</td>
+    </tr>
+    <tr>
+      <td>Mental model</td>
+      <td>Pick the right CRDT type</td>
+      <td>Write the function you would write anyway</td>
+    </tr>
+  </tbody>
+</table>
+
+Neither column wins on every row. If you need mesh sync with no central server, CRDTs deserve a serious look. If you need arbitrary business logic, permissions, and a normal database as source of truth, server reconciliation tends to fit better.
+
+The game industry leaned on the second column for a reason. Not because games are special — because **general state** is easier to express as code than as merge algebra.
+
+# Transactional conflict resolution
+
+We call our version of server reconciliation **Transactional Conflict Resolution**.
+
+The name is deliberate. Conflicts are resolved by running your code inside **transactions** — on the client optimistically, on the server authoritatively — not by a CRDT merge function you did not write.
+
+Concretely, that means **mutators**: async functions that read and write state through a transactional `tx` handle. A copy of each mutator runs on the client and on the server. Clients call them optimistically; the server runs them for real against Postgres.
+
+A **mutation** is the wire format: mutator name + validated arguments. Not the rows that changed.
+
+```ts
+// Pseudocode — the shape of every mutator
+async function increment(tx, { id, delta }) {
+  const row = await tx.run(/* read current value */);
+  const prev = row?.value ?? 0;
+  await tx.mutate.counter.upsert({ id, value: prev + delta });
+}
+
+// Client: runs immediately against local cache
+increment(localTx, { id: 'global', delta: 1 });
+
+// Server: runs when the intent arrives, in global order
+increment(serverTx, { id: 'global', delta: 1 });
+increment(serverTx, { id: 'global', delta: 2 });
+// authoritative value: 3
+```
+
+Reads and writes inside one mutator see a consistent snapshot. If the mutator throws, the whole mutation rolls back. That is what makes multi-step updates safe without sync-aware boilerplate.
+
+When the server confirms a mutation, the client drops that optimistic overlay and rebases anything still pending by re-running mutator code against the new truth — often within a single frame for local edits, continuously as collaborators keep typing.
+
+# What arbitrary functions buy you
+
+Once linearization of functions is in place, a lot of application logic "just works" without a special sync layer.
+
+**Arithmetic:**
+
+```ts
+async function setHighScore(tx, { id, candidate }) {
+  const row = await tx.run(/* ... */);
+  const prev = row?.highScore ?? 0;
+  await tx.mutate.stats.upsert({
+    id,
+    highScore: Math.max(prev, candidate),
+  });
+}
+```
+
+**Lists:**
+
+```ts
+async function append(tx, { listId, item }) {
+  const row = await tx.run(/* ... */);
+  const prev = row?.items ?? [];
+  await tx.mutate.list.update({ id: listId, items: [...prev, item] });
+}
+
+async function remove(tx, { listId, item }) {
+  const row = await tx.run(/* ... */);
+  const prev = row?.items ?? [];
+  const idx = prev.indexOf(item);
+  if (idx === -1) return;
+  await tx.mutate.list.update({
+    id: listId,
+    items: prev.toSpliced(idx, 1),
+  });
+}
+```
+
+Pass a stable item id, not a numeric index — indices shift under concurrency.
+
+**Cross-field invariants:**
+
+```ts
+async function addChild(tx, { parentID, childID }) {
+  const parent = await tx.run(/* parentID */);
+  const child = await tx.run(/* childID */);
+  if (!parent || !child) return;
+
+  await tx.mutate.node.update({
+    id: parentID,
+    childIDs: [...parent.childIDs, childID],
+  });
+  await tx.mutate.node.update({
+    id: childID,
+    parentID,
+  });
+}
+```
+
+Parent and child pointers stay consistent because both writes live in one transaction.
+
+None of this requires teaching the sync engine about trees, lists, or high scores. It requires teaching it one thing: **run the function again, in order**.
+
+# Server authority
+
+Server reconciliation's other payoff is control.
+
+Clients never send "I think the count is 7." They send `increment({ delta: 1 })`. The server recomputes the answer. Everyone sees the server's answer.
+
+So the server can run different code than the client — stricter checks, external validation, side effects the browser should not perform. It can reject work:
+
+```ts
+async function updateShape(tx, ctx, { id, data }) {
+  if (tx.location === 'server' && ctx.role === 'guest') {
+    throw new Error('Access denied');
+  }
+  await tx.mutate.shape.update({ id, ...data });
+}
+```
+
+Or inspect the row:
+
+```ts
+async function updateShape(tx, ctx, { id, data }) {
+  const shape = await tx.run(/* id */);
+  if (!shape) return;
+
+  if (tx.location === 'server' && shape.ownerID !== ctx.userID) {
+    throw new Error('Access denied');
+  }
+
+  await tx.mutate.shape.update({ id, ...data });
+}
+```
+
+Trusted identity lives in **`ctx`**, attached by your server when it authenticates the push request — never in client-supplied args.
+
+With CRDTs, rejecting unauthorized edits means preventing them from entering the structure in the first place, which is a different (and harder) problem than throwing inside a server transaction.
+
+Schema validation, migrations, and "Postgres is the source of truth" also fall out naturally when authoritative state lives in a normal database.
+
+# Zero
+
+[Zero](https://zero.rocicorp.dev/) is how we ship transactional conflict resolution for the web: mutators and queries, optimistic client execution, a push endpoint on your server, logical replication through `zero-cache`, and live query subscriptions.
+
+You bring Postgres and your backend. Zero handles the rebase loop.
+
+The [mutators](https://zero.rocicorp.dev/docs/mutators) and [auth](https://zero.rocicorp.dev/docs/auth) docs walk through the API. [hello-zero](https://github.com/rocicorp/hello-zero) is a minimal starting point; [zbugs](https://github.com/rocicorp/mono/tree/main/apps/zbugs) in the monorepo is a fuller reference app.
+
+# Closing
+
+The sync strategy is the heart of any multiplayer system. CRDTs and server reconciliation both solve the latency problem; they diverge on who owns merge logic and where authority lives.
+
+We find that game-style reconciliation — linearize arbitrary functions, server as tiebreaker — fits how we already think about application code. Transactional conflict resolution is our name for doing that with real transactions, on both sides of the wire.
+
+If you're building something collaborative and that framing clicks, we'd love to hear what you're making. Find us on [Discord](https://discord.rocicorp.dev/) or [@rocicorp](https://twitter.com/rocicorp).

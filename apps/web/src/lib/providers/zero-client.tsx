@@ -13,11 +13,13 @@ import { useAppSession } from "./app-session";
 const cacheURL = env.VITE_ZERO_CACHE_URL ?? "http://localhost:4848";
 
 /**
- * Thin wrapper matching ztunes `ZeroInit`.
+ * Authenticated app shell Zero client.
  *
- * No blocking shell — Zero renders children immediately and hydrates data
- * as the connection establishes. Better Auth session churn during startup
- * no longer causes visible re-flashes or stuck spinners.
+ * The `init` callback mirrors the instance into TanStack Router context so route
+ * loaders can call `context.zero?.preload()` — see
+ * `.agents/skills/rocicorp-zero/reading/running-preloading.md`. Components
+ * subscribe with `useQuery` and gate "not found" UI on `result.type === 'complete'`
+ * per zero.rocicorp.dev/docs/queries#missing-data.
  */
 export function ZeroProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -38,7 +40,6 @@ export function ZeroProvider({ children }: { children: ReactNode }) {
           zero: z,
         },
       });
-      router.invalidate();
     },
     [router],
   );

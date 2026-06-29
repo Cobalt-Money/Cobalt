@@ -1,9 +1,10 @@
 import type { Zero } from "@rocicorp/zero";
 import { QueryClient } from "@tanstack/react-query";
-import { createRouter as createTanStackRouter } from "@tanstack/react-router";
+import { ErrorComponent, createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
 
 import "@cobalt-web/ui/globals.css";
+import { NotFoundPage } from "./components/feedback/not-found-page";
 import { routeTree } from "./routeTree.gen";
 
 /**
@@ -48,9 +49,13 @@ export const getRouter = () => {
         queryClient,
         zero: undefined as unknown as Zero,
       },
-      defaultNotFoundComponent: () => <div>Not Found</div>,
+      defaultErrorComponent: ({ error }) => (
+        <ErrorComponent error={error ?? new Error("Unknown error")} />
+      ),
+      defaultNotFoundComponent: NotFoundPage,
       defaultPreload: "intent",
       defaultPreloadStaleTime: 10_000,
+      notFoundMode: "root",
       routeTree,
       scrollRestoration: true,
     }),
