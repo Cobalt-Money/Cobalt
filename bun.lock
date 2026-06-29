@@ -546,6 +546,9 @@
   "trustedDependencies": [
     "@rocicorp/zero-sqlite3",
   ],
+  "patchedDependencies": {
+    "@better-auth/cimd@1.7.0-beta.3": "patches/@better-auth%2Fcimd@1.7.0-beta.3.patch",
+  },
   "overrides": {
     "vite": "^7.0.0",
   },
