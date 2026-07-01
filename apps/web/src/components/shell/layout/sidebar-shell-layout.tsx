@@ -1,4 +1,5 @@
 import { SidebarInset } from "@cobalt-web/ui/components/sidebar";
+import { MAIN_SCROLL_RESTORATION_ID } from "@cobalt-web/ui/lib/scroll-restoration";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import type { ReactNode } from "react";
 
@@ -35,6 +36,7 @@ export function SidebarShellLayout({
         <SiteHeader />
         {toolbar}
         <div
+          data-scroll-restoration-id={MAIN_SCROLL_RESTORATION_ID}
           className={cn(
             "relative flex min-h-0 flex-1 flex-col overflow-auto no-scrollbar",
             SHELL_CONTENT_HORIZONTAL_PADDING_CLASS,
