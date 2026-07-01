@@ -65,7 +65,7 @@ function DialogContent({
         data-slot="dialog-content"
         data-position={position}
         className={cn(
-          "fixed left-1/2 z-50 flex w-full max-w-[calc(100%-2rem)] -translate-x-1/2 flex-col gap-6 overflow-hidden rounded-4xl bg-popover p-6 text-sm text-popover-foreground shadow-2xl duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:pointer-events-none",
+          "fixed left-1/2 z-50 flex w-full max-w-[calc(100%-2rem)] -translate-x-1/2 flex-col gap-6 overflow-hidden rounded-4xl bg-popover p-6 text-sm text-popover-foreground shadow-2xl duration-100 outline-hidden sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:pointer-events-none",
           dialogPositionClass[position],
           className
         )}
