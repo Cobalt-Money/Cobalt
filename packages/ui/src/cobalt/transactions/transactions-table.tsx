@@ -1280,6 +1280,31 @@ export function TransactionsTable({
     scrollMargin,
   });
 
+  const virtualizerRef = useRef(virtualizer);
+  virtualizerRef.current = virtualizer;
+
+  // Router restores scrollTop on the shell container in onRendered, but the
+  // virtualizer binds to that element asynchronously and does not read its
+  // scrollTop on attach — only scroll events. Reconcile once the scroll
+  // parent, row data, and saved offset are all available.
+  useLayoutEffect(() => {
+    if (!scrollParent || flatItems.length === 0) {
+      return;
+    }
+
+    const targetOffset = scrollEntry?.scrollY ?? scrollParent.scrollTop;
+    if (targetOffset <= 0) {
+      return;
+    }
+
+    const currentOffset = virtualizerRef.current.scrollOffset ?? scrollParent.scrollTop;
+    if (Math.abs(currentOffset - targetOffset) < 1.5) {
+      return;
+    }
+
+    virtualizerRef.current.scrollToOffset(targetOffset, { align: "start" });
+  }, [scrollParent, scrollEntry?.scrollY, flatItems.length, scrollMargin]);
+
   const virtualItems = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
   const hasRows = flatItems.length > 0;
