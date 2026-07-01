@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@cobalt-web/env": "workspace:*",
+    "@faker-js/faker": "^10.5.0",
     "dotenv": "catalog:",
     "drizzle-orm": "1.0.0-beta.22",
     "pg": "^8.17.1",
