@@ -3,6 +3,8 @@ import { QueryClient } from "@tanstack/react-query";
 import { ErrorComponent, createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
 
+import { MAIN_SCROLL_RESTORATION_SELECTOR } from "@cobalt-web/ui/lib/scroll-restoration";
+
 import "@cobalt-web/ui/globals.css";
 import { NotFoundPage } from "./components/feedback/not-found-page";
 import { routeTree } from "./routeTree.gen";
@@ -58,6 +60,7 @@ export const getRouter = () => {
       notFoundMode: "root",
       routeTree,
       scrollRestoration: true,
+      scrollToTopSelectors: [MAIN_SCROLL_RESTORATION_SELECTOR],
     }),
     queryClient,
   );

@@ -5,14 +5,16 @@ import { render, screen, within } from "@testing-library/react";
 
 import { TransactionsTable } from "./transactions-table";
 
-const { mockNavigate } = vi.hoisted(() => ({
+const { mockNavigate, mockUseElementScrollRestoration } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
+  mockUseElementScrollRestoration: vi.fn(),
 }));
 
 vi.mock(import("@tanstack/react-router"), async (importOriginal) => {
   const mod = await importOriginal<typeof TanStackRouter>();
   return {
     ...mod,
+    useElementScrollRestoration: mockUseElementScrollRestoration,
     useNavigate: () => mockNavigate,
   };
 });

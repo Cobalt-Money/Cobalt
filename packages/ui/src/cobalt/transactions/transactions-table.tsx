@@ -4,6 +4,7 @@
  */
 import type { TransactionResponse } from "@cobalt-web/server-data/transactions/schemas";
 import { Checkbox } from "@cobalt-web/ui/components/checkbox";
+import { MAIN_SCROLL_RESTORATION_ID } from "@cobalt-web/ui/lib/scroll-restoration";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import {
   ArrowRight01Icon,
@@ -18,7 +19,7 @@ import {
   Tag01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useElementScrollRestoration, useNavigate, useRouter } from "@tanstack/react-router";
 import {
   flexRender,
   getCoreRowModel,
@@ -1213,6 +1214,10 @@ export function TransactionsTable({
 
   const activeStickyIndexRef = useRef(0);
 
+  const scrollEntry = useElementScrollRestoration({
+    id: MAIN_SCROLL_RESTORATION_ID,
+  });
+
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
@@ -1265,6 +1270,7 @@ export function TransactionsTable({
       return it.kind === "divider" ? `divider-${it.monthKey}` : it.row.id;
     },
     getScrollElement: () => scrollParent,
+    initialOffset: scrollEntry?.scrollY ?? 0,
     // Ensures a sane render window before the scroll parent has been measured
     // (SSR, initial mount, jsdom tests), so the first rows appear immediately.
     initialRect: { height: 1200, width: 1000 },
@@ -1273,6 +1279,31 @@ export function TransactionsTable({
     rangeExtractor,
     scrollMargin,
   });
+
+  const virtualizerRef = useRef(virtualizer);
+  virtualizerRef.current = virtualizer;
+
+  // Router restores scrollTop on the shell container in onRendered, but the
+  // virtualizer binds to that element asynchronously and does not read its
+  // scrollTop on attach — only scroll events. Reconcile once the scroll
+  // parent, row data, and saved offset are all available.
+  useLayoutEffect(() => {
+    if (!scrollParent || flatItems.length === 0) {
+      return;
+    }
+
+    const targetOffset = scrollEntry?.scrollY ?? scrollParent.scrollTop;
+    if (targetOffset <= 0) {
+      return;
+    }
+
+    const currentOffset = virtualizerRef.current.scrollOffset ?? scrollParent.scrollTop;
+    if (Math.abs(currentOffset - targetOffset) < 1.5) {
+      return;
+    }
+
+    virtualizerRef.current.scrollToOffset(targetOffset, { align: "start" });
+  }, [scrollParent, scrollEntry?.scrollY, flatItems.length, scrollMargin]);
 
   const virtualItems = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
