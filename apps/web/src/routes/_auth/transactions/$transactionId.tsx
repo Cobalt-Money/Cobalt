@@ -25,7 +25,6 @@ import { useMemo, useState } from "react";
 import { z } from "zod";
 
 import { mapZeroTransactionDetailRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
-import type { ZeroTransactionDetailRow } from "@cobalt-web/ui/cobalt/transactions/lib/dto";
 
 import { CategoryFormDialog } from "@/components/categories/category-form-dialog";
 import { useCommandMenu } from "@/components/shell/command-menu";
@@ -73,41 +72,20 @@ export const Route = createFileRoute("/_auth/transactions/$transactionId")({
 
 function TransactionDetailRoute() {
   const { transactionId } = transactionDetailRouteApi.useParams();
+  const navigate = useNavigate();
+  const run = useMutator();
   const [detailRow, detailResult] = useQuery(
     queries.transactions.detail({ transactionId }),
   );
-
-  // Zero returns local data first, then server-complete results. Only treat a
-  // missing row as 404 once the server has answered — see zero.rocicorp.dev
-  // docs/queries#missing-data and .agents/skills/rocicorp-zero/reading/partial-results.md
-  if (detailResult.type !== "complete") {
-    return null;
-  }
-
-  if (!detailRow || !mapZeroTransactionDetailRow(detailRow)) {
-    throw notFound({ routeId: rootRouteId });
-  }
-
-  return (
-    <TransactionDetailLoaded detailRow={detailRow} transactionId={transactionId} />
-  );
-}
-
-function TransactionDetailLoaded({
-  detailRow,
-  transactionId,
-}: {
-  detailRow: ZeroTransactionDetailRow;
-  transactionId: string;
-}) {
-  const navigate = useNavigate();
-  const run = useMutator();
   const [myPosts] = useQuery(queries.social.postsMine());
   const existingPost = myPosts.find((p) => p.transactionId === transactionId);
 
-  const mapped = useMemo(() => mapZeroTransactionDetailRow(detailRow)!, [detailRow]);
-  const transaction = mapped.transaction;
-  const editEvents = mapped.events;
+  const mapped = useMemo(
+    () => (detailRow ? mapZeroTransactionDetailRow(detailRow) : null),
+    [detailRow],
+  );
+  const transaction = mapped?.transaction;
+  const editEvents = mapped?.events ?? [];
 
   const [locationQuery, setLocationQuery] = useState("");
   const { data: locationResults = [], isFetching: locationLoading } =
@@ -660,23 +638,38 @@ function TransactionDetailLoaded({
     tagsById,
   ]);
 
+  // Zero returns local data first, then server-complete results. Only treat a
+  // missing row as 404 once the server has answered — see zero.rocicorp.dev
+  // docs/queries#missing-data and .agents/skills/rocicorp-zero/reading/partial-results.md
+  if (detailResult.type === "complete" && !transaction) {
+    throw notFound({ routeId: rootRouteId });
+  }
+
   return (
     <SidebarShellLayout flushBottom>
       <div className="flex min-h-0 h-full min-w-0 flex-1 flex-col">
-        <TransactionDetailView
-          edit={edit}
-          editEvents={editEvents}
-          tagsById={tagsById}
-          transaction={transaction}
-        />
-        {existingPost ? (
-          <div className="mx-auto w-full max-w-2xl px-6 pb-6">
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              <span className="size-1.5 rounded-full bg-emerald-500" />
-              Shared with friends
-            </span>
+        {transaction ? (
+          <>
+            <TransactionDetailView
+              edit={edit}
+              editEvents={editEvents}
+              tagsById={tagsById}
+              transaction={transaction}
+            />
+            {existingPost ? (
+              <div className="mx-auto w-full max-w-2xl px-6 pb-6">
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  Shared with friends
+                </span>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <div className="mx-auto flex min-h-48 w-full max-w-2xl items-center justify-center text-muted-foreground text-sm">
+            Loading…
           </div>
-        ) : null}
+        )}
       </div>
       <CategoryFormDialog
         groups={categoryGroups}
