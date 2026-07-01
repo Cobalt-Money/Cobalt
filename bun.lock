@@ -378,6 +378,7 @@
       "name": "@cobalt-web/db",
       "dependencies": {
         "@cobalt-web/env": "workspace:*",
+        "@faker-js/faker": "^10.5.0",
         "dotenv": "catalog:",
         "drizzle-orm": "1.0.0-beta.22",
         "pg": "^8.17.1",
@@ -990,6 +991,8 @@
     "@esri/calcite-components": ["@esri/calcite-components@3.3.3", "", { "dependencies": { "@arcgis/lumina": ">=4.34.0-next.158 <4.35.0", "@arcgis/toolkit": ">=4.34.0-next.158 <4.35.0", "@esri/calcite-ui-icons": "4.3.0", "@floating-ui/dom": "^1.6.12", "@floating-ui/utils": "^0.2.8", "@types/sortablejs": "^1.15.8", "color": "^5.0.0", "composed-offset-position": "^0.0.6", "es-toolkit": "^1.39.8", "focus-trap": "^7.6.5", "interactjs": "^1.10.27", "lit": "^3.3.0", "sortablejs": "^1.15.6", "timezone-groups": "^0.10.4", "type-fest": "^4.30.1" } }, "sha512-tw+EfJ3pb+Odj71W6E9GUkm8rMbNxfW1KeiI8GgsKDzhr39hMKwY+zYYFFYuO0FONxWGvAB+B8yqB0NvH7WeHw=="],
 
     "@esri/calcite-ui-icons": ["@esri/calcite-ui-icons@4.3.0", "", { "bin": { "spriter": "bin/spriter.js" } }, "sha512-iOOuRurpjFxFVw6+aXW2JpSkRBrdOpBcbdibfPOmSPqMd1aoHBtYmYXetKoH9vfrXoBiPyO2PkDnczhsu/N9IA=="],
+
+    "@faker-js/faker": ["@faker-js/faker@10.5.0", "", {}, "sha512-bsxD8WLS5lIj7aaoCx1YJkktqYj5vlBUE6HWzu2Q51ksrGJ0H737ECCKlFU7Yf8Br45z9t99frBp/J7kzbMPAg=="],
 
     "@fastify/accept-negotiator": ["@fastify/accept-negotiator@2.0.1", "", {}, "sha512-/c/TW2bO/v9JeEgoD/g1G5GxGeCF1Hafdf79WPmUlgYiBXummY0oX3VVq4yFkKKVBKDNlaDUYoab7g38RpPqCQ=="],
 

@@ -7,74 +7,31 @@ import { snapshot } from "../schema/accounts/snapshot";
 import { category } from "../schema/accounts/banking/categories/category";
 import { tag } from "../schema/accounts/banking/tags/tag";
 import { transactionTag } from "../schema/accounts/banking/tags/transaction-tag";
-import { recurring } from "../schema/accounts/banking/transactions/recurring";
 import { transaction } from "../schema/accounts/banking/transactions/transaction";
 import { holding } from "../schema/accounts/investments/holding";
 import { investmentActivity } from "../schema/accounts/investments/investment-activity";
 import { security } from "../schema/accounts/investments/security";
 import { chats, messages, parts } from "../schema/ai/chat";
 
+import { DEMO_INSERT_BATCH_SIZE } from "./config";
+import { DEMO_ACCOUNTS, DEMO_HOLDINGS, DEMO_INVESTMENT_ACTIVITY, DEMO_TAGS } from "./fixtures";
 import {
-  DEMO_ACCOUNTS,
-  DEMO_CHATS,
-  DEMO_HOLDINGS,
-  DEMO_INVESTMENT_ACTIVITY,
-  DEMO_MERCHANT_WEBSITES,
-  DEMO_RECURRING,
-  DEMO_SNAPSHOT_TRAJECTORIES,
-  DEMO_TAGS,
-  DEMO_TXNS,
-} from "./fixtures";
+  demoTxnDate,
+  generateDemoChats,
+  iterateDemoSnapshots,
+  iterateDemoTransactions,
+  websiteForGeneratedMerchant,
+} from "./generators";
 
-import type { DemoAccountSeed, DemoRecurringSeed, DemoTxnSeed } from "./fixtures";
-
-/**
- * Sorted-by-length helper for `websiteForMerchant`. Longer keys first so
- * "blue bottle coffee" matches before "blue bottle". Module-scoped so the
- * sort runs once, not per-transaction.
- */
-const MERCHANT_PREFIXES = Object.keys(DEMO_MERCHANT_WEBSITES).toSorted(
-  (a, b) => b.length - a.length,
-);
-
-function websiteForMerchant(merchantName: string | undefined): string | undefined {
-  if (!merchantName) {
-    return undefined;
-  }
-  const key = merchantName.toLowerCase();
-  const direct = DEMO_MERCHANT_WEBSITES[key];
-  if (direct) {
-    return `https://${direct}`;
-  }
-  // Prefix-only match. `includes` was too loose (e.g. "uber" matched
-  // "Hubert's"); `startsWith` keeps "Blue Bottle Coffee" → "blue bottle"
-  // without surprises.
-  for (const k of MERCHANT_PREFIXES) {
-    if (key.startsWith(k)) {
-      return `https://${DEMO_MERCHANT_WEBSITES[k]}`;
-    }
-  }
-  return undefined;
-}
+import type { DemoTxnSeed } from "./fixtures";
 
 const MS_PER_DAY = 86_400_000;
-const SNAPSHOT_DAYS_BACK = 180;
-const SNAPSHOT_STEP_DAYS = 7;
-
-const INTERVAL_DAYS: Record<DemoRecurringSeed["frequency"], number> = {
-  ANNUALLY: 365,
-  BIWEEKLY: 14,
-  MONTHLY: 30,
-  SEMI_MONTHLY: 15,
-  UNKNOWN: 30,
-  WEEKLY: 7,
-};
 
 type Database = typeof db;
-interface InsertedTxn {
-  id: string;
+
+interface TxnBatchEntry {
   fixture: DemoTxnSeed;
-  date: string;
+  row: typeof transaction.$inferInsert;
 }
 
 /**
@@ -103,9 +60,6 @@ async function loadUserCategories(database: Database, userId: string) {
 }
 
 async function seedAccountsAndBalances(database: Database, userId: string) {
-  // Bulk insert accounts with `.returning()`, then bulk insert balances in a
-  // single round-trip each. Drizzle preserves input order in returning, so we
-  // can zip back to fixture keys without a second SELECT.
   const accountRows = await database
     .insert(financialAccount)
     .values(
@@ -164,6 +118,67 @@ async function seedTags(database: Database, userId: string) {
   return tagIdByKey;
 }
 
+function buildTxnRow(
+  tx: DemoTxnSeed,
+  userId: string,
+  now: Date,
+  accountIdByKey: Map<string, string>,
+  catBySystemKey: Map<string, string>,
+  uncategorizedId: string,
+): typeof transaction.$inferInsert {
+  const accountId = accountIdByKey.get(tx.accountKey);
+  if (!accountId) {
+    throw new Error(`demo seed: txn references unknown accountKey ${tx.accountKey}`);
+  }
+  const website = websiteForGeneratedMerchant(tx.merchantName);
+  return {
+    accountId,
+    address: tx.address,
+    amount: tx.amount,
+    categoryId: catBySystemKey.get(tx.categoryKey) ?? uncategorizedId,
+    city: tx.city,
+    country: tx.country,
+    currency: "USD",
+    date: demoTxnDate(now, tx.daysAgo),
+    lat: tx.lat,
+    logoUrl: website,
+    lon: tx.lon,
+    merchantName: tx.merchantName,
+    name: tx.name,
+    notes: tx.notes,
+    pending: tx.pending ?? false,
+    postalCode: tx.postalCode,
+    region: tx.region,
+    source: "manual" as const,
+    userId,
+    website,
+  };
+}
+
+async function flushTransactionBatch(
+  database: Database,
+  batch: TxnBatchEntry[],
+  tagIdByKey: Map<string, string>,
+): Promise<void> {
+  const inserted = await database
+    .insert(transaction)
+    .values(batch.map((entry) => entry.row))
+    .returning({ id: transaction.id });
+  const tagLinks = inserted.flatMap((row, idx) => {
+    const fixture = batch[idx]?.fixture;
+    if (!fixture) {
+      return [];
+    }
+    return (fixture.tagKeys ?? []).flatMap((key) => {
+      const tagId = tagIdByKey.get(key);
+      return tagId ? [{ tagId, transactionId: row.id }] : [];
+    });
+  });
+  if (tagLinks.length > 0) {
+    await database.insert(transactionTag).values(tagLinks);
+  }
+}
+
 async function seedTransactionsAndTags(
   database: Database,
   userId: string,
@@ -172,63 +187,23 @@ async function seedTransactionsAndTags(
   catBySystemKey: Map<string, string>,
   uncategorizedId: string,
   tagIdByKey: Map<string, string>,
-): Promise<InsertedTxn[]> {
-  const txnRowsWithFixtures = DEMO_TXNS.map((tx) => {
-    const accountId = accountIdByKey.get(tx.accountKey);
-    if (!accountId) {
-      throw new Error(`demo seed: txn references unknown accountKey ${tx.accountKey}`);
-    }
-    const date = new Date(now.getTime() - tx.daysAgo * MS_PER_DAY);
-    const website = websiteForMerchant(tx.merchantName);
-    return {
+): Promise<void> {
+  const batch: TxnBatchEntry[] = [];
+
+  for (const tx of iterateDemoTransactions()) {
+    batch.push({
       fixture: tx,
-      row: {
-        accountId,
-        address: tx.address,
-        amount: tx.amount,
-        categoryId: catBySystemKey.get(tx.categoryKey) ?? uncategorizedId,
-        city: tx.city,
-        country: tx.country,
-        currency: "USD",
-        date: date.toISOString().slice(0, 10),
-        lat: tx.lat,
-        logoUrl: website ? `${website}` : undefined,
-        lon: tx.lon,
-        merchantName: tx.merchantName,
-        name: tx.name,
-        notes: tx.notes,
-        pending: tx.pending ?? false,
-        postalCode: tx.postalCode,
-        region: tx.region,
-        source: "manual" as const,
-        userId,
-        website,
-      },
-    };
-  });
-  if (txnRowsWithFixtures.length === 0) {
-    return [];
+      row: buildTxnRow(tx, userId, now, accountIdByKey, catBySystemKey, uncategorizedId),
+    });
+    if (batch.length >= DEMO_INSERT_BATCH_SIZE) {
+      await flushTransactionBatch(database, batch, tagIdByKey);
+      batch.length = 0;
+    }
   }
-  const inserted = await database
-    .insert(transaction)
-    .values(txnRowsWithFixtures.map((p) => p.row))
-    .returning({ id: transaction.id });
-  // Pair returned ids with their fixture inputs; Drizzle preserves input order.
-  const insertedTxns: InsertedTxn[] = txnRowsWithFixtures.flatMap((pair, idx) => {
-    const txnId = inserted[idx]?.id;
-    return txnId ? [{ date: pair.row.date, fixture: pair.fixture, id: txnId }] : [];
-  });
-  // Derive transaction_tag rows by flat-mapping each inserted txn's tagKeys.
-  const tagLinks = insertedTxns.flatMap(({ id, fixture }) =>
-    (fixture.tagKeys ?? []).flatMap((key) => {
-      const tagId = tagIdByKey.get(key);
-      return tagId ? [{ tagId, transactionId: id }] : [];
-    }),
-  );
-  if (tagLinks.length > 0) {
-    await database.insert(transactionTag).values(tagLinks);
+
+  if (batch.length > 0) {
+    await flushTransactionBatch(database, batch, tagIdByKey);
   }
-  return insertedTxns;
 }
 
 /**
@@ -325,81 +300,7 @@ async function seedHoldings(
 }
 
 /**
- * Match inserted txns by (accountKey, merchantName) to derive each recurring
- * stream's transactionIds + averageAmount + first/last/next dates.
- */
-async function seedRecurringStreams(
-  database: Database,
-  userId: string,
-  insertedTxns: InsertedTxn[],
-  accountIdByKey: Map<string, string>,
-  catBySystemKey: Map<string, string>,
-  uncategorizedId: string,
-) {
-  // Single O(N) pass to bucket inserted txns by (accountKey, merchant). Each
-  // bucket is also pre-sorted by date so we can read first/last in O(1) below.
-  // Replaces a per-stream `.filter(...).toSorted(...)` scan that was O(streams × txns).
-  const byKey = new Map<string, InsertedTxn[]>();
-  for (const t of insertedTxns) {
-    const merchant = t.fixture.merchantName?.toLowerCase();
-    if (!merchant) {
-      continue;
-    }
-    const key = `${t.fixture.accountKey}|${merchant}`;
-    const bucket = byKey.get(key);
-    if (bucket) {
-      bucket.push(t);
-    } else {
-      byKey.set(key, [t]);
-    }
-  }
-  for (const bucket of byKey.values()) {
-    bucket.sort((a, b) => (a.date < b.date ? -1 : 1));
-  }
-
-  const rows: (typeof recurring.$inferInsert)[] = [];
-  for (const stream of DEMO_RECURRING) {
-    const accountId = accountIdByKey.get(stream.accountKey);
-    if (!accountId) {
-      continue;
-    }
-    const matches = byKey.get(`${stream.accountKey}|${stream.merchantName.toLowerCase()}`) ?? [];
-    const [first] = matches;
-    const last = matches.at(-1);
-    if (!(first && last)) {
-      continue;
-    }
-    const amounts = matches.map((m) => Math.abs(Number(m.fixture.amount)));
-    const avg = amounts.reduce((sum, n) => sum + n, 0) / amounts.length;
-    const next = new Date(`${last.date}T00:00:00Z`);
-    next.setUTCDate(next.getUTCDate() + INTERVAL_DAYS[stream.frequency]);
-    rows.push({
-      accountId,
-      averageAmount: avg.toFixed(4),
-      categoryId: catBySystemKey.get(stream.categoryKey) ?? uncategorizedId,
-      description: stream.description,
-      firstDate: first.date,
-      frequency: stream.frequency,
-      isActive: true,
-      lastAmount: Math.abs(Number(last.fixture.amount)).toFixed(4),
-      lastDate: last.date,
-      merchantName: stream.merchantName,
-      predictedNextDate: next.toISOString().slice(0, 10),
-      source: "manual",
-      status: "MATURE",
-      streamType: stream.streamType,
-      transactionIds: matches.map((m) => m.id),
-      userId,
-    });
-  }
-  if (rows.length > 0) {
-    await database.insert(recurring).values(rows);
-  }
-}
-
-/**
- * Weekly snapshots over the trailing 180d. Linear interp + deterministic
- * sinusoidal wiggle — no randomness, every demo user sees an identical chart.
+ * Weekly snapshots over {@link DEMO_SNAPSHOT_HISTORY_DAYS}, inserted in batches.
  */
 async function seedSnapshots(
   database: Database,
@@ -407,36 +308,32 @@ async function seedSnapshots(
   now: Date,
   accountIdByKey: Map<string, string>,
 ) {
-  const accountByKey = new Map<string, DemoAccountSeed>(DEMO_ACCOUNTS.map((a) => [a.key, a]));
-  const rows: (typeof snapshot.$inferInsert)[] = [];
-  for (const traj of DEMO_SNAPSHOT_TRAJECTORIES) {
-    const accountId = accountIdByKey.get(traj.accountKey);
-    const account = accountByKey.get(traj.accountKey);
-    if (!(accountId && account)) {
+  const batch: (typeof snapshot.$inferInsert)[] = [];
+
+  for (const snap of iterateDemoSnapshots()) {
+    const accountId = accountIdByKey.get(snap.accountKey);
+    if (!accountId) {
       continue;
     }
-    const endBalance = Number(account.balance);
-    const span = endBalance - traj.startBalance;
-    const wiggleAmp = Math.abs(span || endBalance) * traj.volatility;
-    for (let daysAgo = SNAPSHOT_DAYS_BACK; daysAgo >= 0; daysAgo -= SNAPSHOT_STEP_DAYS) {
-      const t = 1 - daysAgo / SNAPSHOT_DAYS_BACK;
-      const base = traj.startBalance + span * t;
-      const wiggle = Math.sin(t * Math.PI * 3) * wiggleAmp;
-      const value = Math.max(0, base + wiggle);
-      const snapshotDate = new Date(now.getTime() - daysAgo * MS_PER_DAY);
-      rows.push({
-        accountId,
-        creditLimit: account.creditLimit,
-        currency: "USD",
-        current: value.toFixed(2),
-        snapshotDate: snapshotDate.toISOString().slice(0, 10),
-        source: "manual",
-        userId,
-      });
+
+    batch.push({
+      accountId,
+      creditLimit: snap.creditLimit,
+      currency: "USD",
+      current: snap.current,
+      snapshotDate: demoTxnDate(now, snap.daysAgo),
+      source: "manual",
+      userId,
+    });
+
+    if (batch.length >= DEMO_INSERT_BATCH_SIZE) {
+      await database.insert(snapshot).values(batch);
+      batch.length = 0;
     }
   }
-  if (rows.length > 0) {
-    await database.insert(snapshot).values(rows);
+
+  if (batch.length > 0) {
+    await database.insert(snapshot).values(batch);
   }
 }
 
@@ -449,7 +346,6 @@ async function seedInvestmentActivities(
   if (DEMO_INVESTMENT_ACTIVITY.length === 0) {
     return;
   }
-  // Map ticker → security.id for activities that reference a specific holding.
   const tickers = [...new Set(DEMO_INVESTMENT_ACTIVITY.map((a) => a.ticker).filter(Boolean))];
   const securityIdByTicker = new Map<string, string>();
   if (tickers.length > 0) {
@@ -491,28 +387,51 @@ async function seedInvestmentActivities(
   }
 }
 
+async function flushChatMessageBatch(
+  database: Database,
+  messageRows: (typeof messages.$inferInsert)[],
+  partRows: (typeof parts.$inferInsert)[],
+): Promise<void> {
+  if (messageRows.length > 0) {
+    await database.insert(messages).values(messageRows);
+  }
+  if (partRows.length > 0) {
+    await database.insert(parts).values(partRows);
+  }
+}
+
 async function seedChatThreads(database: Database, userId: string, now: Date) {
-  // Build all chat / message / part rows in memory, then bulk-insert each
-  // table once. The chat table is the FK target for messages, and messages
-  // are the FK target for parts, so we order: chats → messages → parts.
-  const chatRows: (typeof chats.$inferInsert)[] = [];
-  const messageRows: (typeof messages.$inferInsert)[] = [];
-  const partRows: (typeof parts.$inferInsert)[] = [];
-  for (const chatFixture of DEMO_CHATS) {
+  const chatFixtures = generateDemoChats();
+  const chatRows: (typeof chats.$inferInsert)[] = chatFixtures.map((chatFixture) => {
     const chatId = crypto.randomUUID();
     const chatCreatedAt = new Date(now.getTime() - chatFixture.daysAgo * MS_PER_DAY);
-    chatRows.push({
+    return {
       chatId,
       createdAt: chatCreatedAt,
       title: chatFixture.title,
       updatedAt: chatCreatedAt,
       userId,
-    });
+    };
+  });
+
+  if (chatRows.length > 0) {
+    await database.insert(chats).values(chatRows);
+  }
+
+  let messageBatch: (typeof messages.$inferInsert)[] = [];
+  let partBatch: (typeof parts.$inferInsert)[] = [];
+
+  for (const [chatIdx, chatFixture] of chatFixtures.entries()) {
+    const chatId = chatRows[chatIdx]?.chatId;
+    if (!chatId) {
+      continue;
+    }
+
     for (const msg of chatFixture.messages) {
       const messageId = crypto.randomUUID();
       const createdAt = new Date(now.getTime() - msg.minutesAgo * 60_000);
-      messageRows.push({ chatId, createdAt, messageId, role: msg.role });
-      partRows.push({
+      messageBatch.push({ chatId, createdAt, messageId, role: msg.role });
+      partBatch.push({
         createdAt,
         messageId,
         order: 0,
@@ -520,16 +439,17 @@ async function seedChatThreads(database: Database, userId: string, now: Date) {
         text_text: msg.text,
         type: "text",
       });
+
+      if (messageBatch.length >= DEMO_INSERT_BATCH_SIZE) {
+        await flushChatMessageBatch(database, messageBatch, partBatch);
+        messageBatch = [];
+        partBatch = [];
+      }
     }
   }
-  if (chatRows.length > 0) {
-    await database.insert(chats).values(chatRows);
-  }
-  if (messageRows.length > 0) {
-    await database.insert(messages).values(messageRows);
-  }
-  if (partRows.length > 0) {
-    await database.insert(parts).values(partRows);
+
+  if (messageBatch.length > 0) {
+    await flushChatMessageBatch(database, messageBatch, partBatch);
   }
 }
 
@@ -545,18 +465,12 @@ export async function seedDemoUser(userId: string): Promise<void> {
   const now = new Date();
   const { byKey: catBySystemKey, uncategorizedId } = await loadUserCategories(database, userId);
 
-  // Stage 1: independent prerequisites. Accounts and tags share no FKs with
-  // each other (categories already exist), so they race.
   const [accountIdByKey, tagIdByKey] = await Promise.all([
     seedAccountsAndBalances(database, userId),
     seedTags(database, userId),
   ]);
 
-  // Stage 2: transactions need accounts + categories + tags. Holdings,
-  // snapshots, activities, and chats only need accounts (or nothing) — they
-  // can race against transactions. Recurring streams need txn ids, so they
-  // run after.
-  const [insertedTxns] = await Promise.all([
+  await Promise.all([
     seedTransactionsAndTags(
       database,
       userId,
@@ -571,14 +485,4 @@ export async function seedDemoUser(userId: string): Promise<void> {
     seedInvestmentActivities(database, userId, now, accountIdByKey),
     seedChatThreads(database, userId, now),
   ]);
-
-  // Stage 3: recurring streams aggregate over the just-inserted txns.
-  await seedRecurringStreams(
-    database,
-    userId,
-    insertedTxns,
-    accountIdByKey,
-    catBySystemKey,
-    uncategorizedId,
-  );
 }
