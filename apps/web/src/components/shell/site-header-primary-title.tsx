@@ -6,9 +6,9 @@ import { queries } from "@cobalt-web/zero";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useQuery } from "@rocicorp/zero/react";
-import { useRouterState } from "@tanstack/react-router";
+import { useRouter, useRouterState } from "@tanstack/react-router";
 import { useMemo } from "react";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 import { Link } from "@/components/links";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -17,12 +17,22 @@ import { useAmbientInset } from "./ambient-inset-context";
 import { useShellRouteTitle } from "./header/use-shell-route-title";
 
 function TransactionDetailBreadcrumb({ transactionId }: { transactionId: string }) {
+  const router = useRouter();
   const { items } = useTransactions();
   const transaction = useMemo(
     () => items.find((t) => t.id === transactionId),
     [items, transactionId],
   );
   const label = transaction ? getTransactionDisplayName(transaction) : null;
+
+  const onTransactionsClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    if (router.history.length > 1) {
+      router.history.back();
+      return;
+    }
+    void router.navigate({ to: "/transactions" });
+  };
 
   return (
     <nav
@@ -32,6 +42,7 @@ function TransactionDetailBreadcrumb({ transactionId }: { transactionId: string 
       <Link
         className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
         to="/transactions"
+        onClick={onTransactionsClick}
       >
         Transactions
       </Link>
