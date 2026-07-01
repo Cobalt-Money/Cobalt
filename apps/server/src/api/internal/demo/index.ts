@@ -143,24 +143,24 @@ export const demoRouter = new OpenAPIHono<AppEnv>()
     const signedOrigin = await getSignedCookie(c, env.BETTER_AUTH_SECRET, DEMO_ORIGIN_COOKIE);
     const originUserId = signedOrigin || null;
 
-    // Delete the user row first — cascades sessions + all owned data — so
-    // even if a stale Better Auth cookie cache returns the user briefly, the
-    // next getSession DB lookup misses.
-    await deleteUser(currentUser.id);
-
-    // Forward Better Auth's own clear-cookie headers from signOut rather than
-    // hand-rolling the cookie name list. Defensive: if signOut throws (likely
-    // because the session row was already cascade-deleted), the user row
-    // delete above is the real guarantee.
+    // signOut FIRST while the session row is still live so Better Auth emits
+    // real clear-cookie Set-Cookie headers. If we deleted the user first, the
+    // cascade would kill the session row and signOut would 401 — leaving the
+    // stale session cookie in the browser (server-side auth still resolves
+    // to null so UX looks logged-out, but the cookie lingers).
+    let clearCookies: string[] = [];
     try {
-      const clearCookies = await signOutAndCollectCookies(c.req.raw);
-      for (const cookie of clearCookies) {
-        c.header("Set-Cookie", cookie, { append: true });
-      }
+      clearCookies = await signOutAndCollectCookies(c.req.raw);
     } catch (error) {
       console.warn("[demo] exit signOut failed", error);
     }
 
+    // Now wipe the user row + all seeded fixtures via cascade.
+    await deleteUser(currentUser.id);
+
+    for (const cookie of clearCookies) {
+      c.header("Set-Cookie", cookie, { append: true });
+    }
     deleteCookie(c, DEMO_ORIGIN_COOKIE, { path: "/" });
 
     return c.json({ ok: true, originUserId });
