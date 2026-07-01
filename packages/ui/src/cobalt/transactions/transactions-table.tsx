@@ -1330,7 +1330,7 @@ export function TransactionsTable({
   }, [virtualItems, flatItems.length]);
 
   return (
-    <div className="relative w-full flex-1 overflow-x-auto no-scrollbar">
+    <div className="relative w-full flex-1 overflow-x-clip no-scrollbar">
       <table className="block w-full min-w-full text-sm">
         <div
           className="relative block w-full"
