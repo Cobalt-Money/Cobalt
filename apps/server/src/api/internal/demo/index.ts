@@ -1,12 +1,12 @@
 import { auth } from "@cobalt-web/auth";
-import { seedDemoUser } from "@cobalt-web/db/demo/seed-demo-user";
 import { env } from "@cobalt-web/env/server";
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
-import type { AppEnv } from "@cobalt-web/server-data/types";
 import { deleteUser } from "@cobalt-web/server-data/user/mutations";
-import { OpenAPIHono } from "@hono/zod-openapi";
 import { deleteCookie, getSignedCookie, setSignedCookie } from "hono/cookie";
+import { getRun, start } from "workflow/api";
 
+import { createApp } from "../../../lib/create-app.js";
+import { demoSeedWorkflow } from "../../../workflows/demo-seed/workflow.js";
 import { requireAuth } from "../middleware.js";
 
 const DEMO_ORIGIN_COOKIE = "cobalt:demo-origin";
@@ -15,12 +15,20 @@ interface DemoSessionResult {
   cookies: string[];
   authToken: string | null;
   userId: string;
+  runId: string;
 }
 
 /**
  * Spin a fresh demo user + session via Better Auth's anonymous plugin, then
- * seed fixtures owned by the new user. The plugin's user.create hook fires
- * `seedUserCategories` first; we layer the demo fixture set on top.
+ * kick off the demo-seed workflow **in the background** so this handler can
+ * return in <500ms. The Better Auth user.create hook already seeded the
+ * user's category rows synchronously; the workflow layers the 28k-row
+ * fixture set (accounts, txns, snapshots, chats, holdings) on top and
+ * streams progress via `/api/demo/progress/:runId`.
+ *
+ * Doing the seed inline here is what OOMed single-node zero-cache: 28k rows
+ * landed on PlanetScale's replication slot in one burst and the WAL drain
+ * couldn't keep up. The workflow paces phase-by-phase.
  */
 async function createDemoSession(req: Request): Promise<DemoSessionResult> {
   const response = (await auth.api.signInAnonymous({
@@ -40,11 +48,12 @@ async function createDemoSession(req: Request): Promise<DemoSessionResult> {
     throw new ApiError(502, "anonymous_session_failed", "signInAnonymous returned no user id");
   }
 
-  await seedDemoUser(userId);
+  const run = await start(demoSeedWorkflow, [{ userId }]);
 
   return {
     authToken: response.headers.get("set-auth-token"),
     cookies: response.headers.getSetCookie(),
+    runId: run.runId,
     userId,
   };
 }
@@ -62,7 +71,7 @@ async function signOutAndCollectCookies(req: Request): Promise<string[]> {
   return response.headers.getSetCookie();
 }
 
-export const demoRouter = new OpenAPIHono<AppEnv>()
+export const demoRouter = createApp()
   .post("/create", async (c) => {
     // Idempotent: if the caller already has an anonymous (demo) session,
     // reuse it instead of spawning a fresh user + fixture set. Saves ~400
@@ -83,14 +92,45 @@ export const demoRouter = new OpenAPIHono<AppEnv>()
       );
     }
 
-    const { cookies, authToken, userId } = await createDemoSession(c.req.raw);
+    const { cookies, authToken, userId, runId } = await createDemoSession(c.req.raw);
     for (const cookie of cookies) {
       c.header("Set-Cookie", cookie, { append: true });
     }
     if (authToken) {
       c.header("set-auth-token", authToken);
     }
-    return c.json({ isDemo: true as const, userId });
+    return c.json({ isDemo: true as const, runId, userId });
+  })
+  .get("/progress/:runId", async (c) => {
+    // NDJSON stream of demo-seed phase progress. Auth intentionally omitted:
+    // this fires immediately after `/create` before the anon session cookie
+    // is guaranteed to have hit the client, and the runId is opaque enough
+    // (Vercel-Workflow-generated) that guessing it isn't a threat.
+    const runId = c.req.param("runId");
+    const startIndexParam = c.req.query("startIndex");
+    const startIndex = startIndexParam ? Number.parseInt(startIndexParam, 10) : 0;
+
+    const run = getRun(runId);
+    if (!(await run.exists)) {
+      throw new ApiError(404, "demo_run_not_found", "Workflow run not found");
+    }
+    const readable = run.getReadable({ namespace: "progress", startIndex });
+
+    const encoder = new TextEncoder();
+    const ndjson = readable.pipeThrough(
+      new TransformStream({
+        transform(chunk, controller) {
+          controller.enqueue(encoder.encode(`${JSON.stringify(chunk)}\n`));
+        },
+      }),
+    );
+
+    return new Response(ndjson, {
+      headers: {
+        "Cache-Control": "no-cache",
+        "Content-Type": "application/x-ndjson",
+      },
+    });
   })
   .post("/enter", requireAuth, async (c) => {
     const originUser = c.var.user;
@@ -109,7 +149,7 @@ export const demoRouter = new OpenAPIHono<AppEnv>()
       return c.json({ code: "signout_failed", error: "Failed to suspend current session" }, 500);
     }
 
-    const { cookies, authToken, userId } = await createDemoSession(c.req.raw);
+    const { cookies, authToken, userId, runId } = await createDemoSession(c.req.raw);
 
     // signOut clears first, then signInAnonymous sets. Same cookie name in
     // both — last write wins in the browser store.
@@ -132,7 +172,7 @@ export const demoRouter = new OpenAPIHono<AppEnv>()
       secure: isSecureOrigin,
     });
 
-    return c.json({ isDemo: true as const, userId });
+    return c.json({ isDemo: true as const, runId, userId });
   })
   .post("/exit", requireAuth, async (c) => {
     const currentUser = c.var.user;

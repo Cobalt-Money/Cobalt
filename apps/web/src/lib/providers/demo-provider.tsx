@@ -31,6 +31,17 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         if (!response.ok) {
           throw new Error(`demo mutation failed: ${response.status}`);
         }
+        // Persist the workflow runId across the hard reload so the reloaded
+        // shell can subscribe to `/api/demo/progress/:runId` and render seed
+        // progress without re-issuing the POST.
+        try {
+          const body = (await response.clone().json()) as { runId?: string };
+          if (body.runId && typeof window !== "undefined") {
+            window.sessionStorage.setItem("cobalt:demo-seed-run", body.runId);
+          }
+        } catch {
+          // Non-JSON response (e.g., `/exit`) — no runId to persist.
+        }
         await session.refetch?.();
       } finally {
         setPending(false);

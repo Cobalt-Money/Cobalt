@@ -1,5 +1,5 @@
 /** Demo seed volume + determinism knobs. Tune here, not in generators. */
-export const DEMO_TXN_COUNT = 10_000;
+export const DEMO_TXN_COUNT = 5000;
 export const DEMO_CHAT_THREAD_COUNT = 100;
 export const DEMO_MESSAGES_PER_CHAT = 50;
 export const DEMO_INSERT_BATCH_SIZE = 2500;
