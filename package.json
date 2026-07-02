@@ -73,7 +73,7 @@
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
     "@types/bun": "catalog:",
-    "drizzle-kit": "1.0.0-beta.22",
+    "drizzle-kit": "1.0.0-rc.4",
     "husky": "^9.1.7",
     "oxfmt": "latest",
     "oxlint": "latest",
@@ -85,7 +85,7 @@
     "vitest": "^3.2.6"
   },
   "resolutions": {
-    "drizzle-orm": "1.0.0-beta.22",
+    "drizzle-orm": "1.0.0-rc.4",
     "es-toolkit": "1.45.1",
     "zod": "4.3.6"
   },
