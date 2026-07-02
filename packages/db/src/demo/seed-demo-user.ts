@@ -1,4 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
+import { setImmediate as yieldToEventLoop, setTimeout as sleep } from "node:timers/promises";
 
 import { db } from "../index";
 import { financialAccount } from "../schema/accounts/account";
@@ -27,11 +28,43 @@ import type { DemoTxnSeed } from "./fixtures";
 
 const MS_PER_DAY = 86_400_000;
 
+// Every this-many inserted rows within a phase, sleep so PlanetScale's WAL can
+// drain into zero-cache without a giant single-tick burst that OOMs the
+// single-node replicator. Value picked to keep total added latency well under
+// a second while providing meaningful backpressure.
+const REPLICATION_SLEEP_EVERY_ROWS = 10_000;
+const REPLICATION_SLEEP_MS = 50;
+
 type Database = typeof db;
 
 interface TxnBatchEntry {
   fixture: DemoTxnSeed;
   row: typeof transaction.$inferInsert;
+}
+
+/**
+ * Called after each batch insert so PlanetScale logical replication can drain
+ * before the next batch. `setImmediate` yields the event loop; a short real
+ * sleep every {@link REPLICATION_SLEEP_EVERY_ROWS} rows gives zero-cache room
+ * to process WAL events it just received.
+ */
+async function paceReplication(rowsSinceLastSleep: number): Promise<number> {
+  await yieldToEventLoop();
+  if (rowsSinceLastSleep >= REPLICATION_SLEEP_EVERY_ROWS) {
+    await sleep(REPLICATION_SLEEP_MS);
+    return 0;
+  }
+  return rowsSinceLastSleep;
+}
+
+/** True if the user already has any transaction row — used for idempotency. */
+export async function hasAnyDemoTransactions(userId: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: transaction.id })
+    .from(transaction)
+    .where(eq(transaction.userId, userId))
+    .limit(1);
+  return rows.length > 0;
 }
 
 /**
@@ -59,7 +92,61 @@ async function loadUserCategories(database: Database, userId: string) {
   return { byKey, uncategorizedId };
 }
 
-async function seedAccountsAndBalances(database: Database, userId: string) {
+async function loadAccountIdByKey(
+  database: Database,
+  userId: string,
+): Promise<Map<string, string>> {
+  const rows = await database
+    .select({
+      id: financialAccount.id,
+      institutionName: financialAccount.institutionName,
+      mask: financialAccount.mask,
+      name: financialAccount.name,
+    })
+    .from(financialAccount)
+    .where(eq(financialAccount.userId, userId));
+  const map = new Map<string, string>();
+  for (const acct of DEMO_ACCOUNTS) {
+    const match = rows.find(
+      (r) =>
+        r.name === acct.name && r.mask === acct.mask && r.institutionName === acct.institutionName,
+    );
+    if (match) {
+      map.set(acct.key, match.id);
+    }
+  }
+  return map;
+}
+
+async function loadTagIdByKey(database: Database, userId: string): Promise<Map<string, string>> {
+  const rows = await database
+    .select({ id: tag.id, name: tag.name })
+    .from(tag)
+    .where(eq(tag.userId, userId));
+  const byName = new Map(rows.map((r) => [r.name.toLowerCase(), r.id]));
+  const byKey = new Map<string, string>();
+  for (const t of DEMO_TAGS) {
+    const id = byName.get(t.name.toLowerCase());
+    if (id) {
+      byKey.set(t.key, id);
+    }
+  }
+  return byKey;
+}
+
+// ── Phase: accounts + balances ──────────────────────────────────────
+
+export async function seedDemoAccountsAndBalances(userId: string): Promise<void> {
+  const database = db;
+  const existing = await database
+    .select({ id: financialAccount.id })
+    .from(financialAccount)
+    .where(eq(financialAccount.userId, userId))
+    .limit(1);
+  if (existing.length > 0) {
+    return;
+  }
+
   const accountRows = await database
     .insert(financialAccount)
     .values(
@@ -76,47 +163,45 @@ async function seedAccountsAndBalances(database: Database, userId: string) {
     )
     .returning({ id: financialAccount.id });
 
-  const accountIdByKey = new Map<string, string>();
   const now = new Date();
-  const balanceRows = DEMO_ACCOUNTS.flatMap((acct, idx) => {
+  const balanceRows = DEMO_ACCOUNTS.map((acct, idx) => {
     const id = accountRows[idx]?.id;
     if (!id) {
       throw new Error(`demo seed: insert account ${acct.key} failed`);
     }
-    accountIdByKey.set(acct.key, id);
-    return [
-      {
-        accountId: id,
-        creditLimit: acct.creditLimit,
-        currency: "USD",
-        current: acct.balance,
-        lastSyncAt: now,
-        userId,
-      },
-    ];
+    return {
+      accountId: id,
+      creditLimit: acct.creditLimit,
+      currency: "USD",
+      current: acct.balance,
+      lastSyncAt: now,
+      userId,
+    };
   });
   await database.insert(balance).values(balanceRows);
-  return accountIdByKey;
 }
 
-async function seedTags(database: Database, userId: string) {
-  const tagIdByKey = new Map<string, string>();
+// ── Phase: tags ─────────────────────────────────────────────────────
+
+export async function seedDemoTags(userId: string): Promise<void> {
   if (DEMO_TAGS.length === 0) {
-    return tagIdByKey;
+    return;
   }
-  const tagRows = await database
+  const database = db;
+  const existing = await database
+    .select({ id: tag.id })
+    .from(tag)
+    .where(eq(tag.userId, userId))
+    .limit(1);
+  if (existing.length > 0) {
+    return;
+  }
+  await database
     .insert(tag)
-    .values(DEMO_TAGS.map((t) => ({ color: t.color, name: t.name, userId })))
-    .returning({ id: tag.id, name: tag.name });
-  const tagIdByName = new Map(tagRows.map((row) => [row.name.toLowerCase(), row.id]));
-  for (const t of DEMO_TAGS) {
-    const id = tagIdByName.get(t.name.toLowerCase());
-    if (id) {
-      tagIdByKey.set(t.key, id);
-    }
-  }
-  return tagIdByKey;
+    .values(DEMO_TAGS.map((t) => ({ color: t.color, name: t.name, userId })));
 }
+
+// ── Phase: transactions + transaction_tag links ─────────────────────
 
 function buildTxnRow(
   tx: DemoTxnSeed,
@@ -179,15 +264,15 @@ async function flushTransactionBatch(
   }
 }
 
-async function seedTransactionsAndTags(
-  database: Database,
-  userId: string,
-  now: Date,
-  accountIdByKey: Map<string, string>,
-  catBySystemKey: Map<string, string>,
-  uncategorizedId: string,
-  tagIdByKey: Map<string, string>,
-): Promise<void> {
+export async function seedDemoTransactions(userId: string): Promise<{ inserted: number }> {
+  const database = db;
+  const now = new Date();
+  const { byKey: catBySystemKey, uncategorizedId } = await loadUserCategories(database, userId);
+  const accountIdByKey = await loadAccountIdByKey(database, userId);
+  const tagIdByKey = await loadTagIdByKey(database, userId);
+
+  let rowsSinceSleep = 0;
+  let total = 0;
   const batch: TxnBatchEntry[] = [];
 
   for (const tx of iterateDemoTransactions()) {
@@ -197,20 +282,26 @@ async function seedTransactionsAndTags(
     });
     if (batch.length >= DEMO_INSERT_BATCH_SIZE) {
       await flushTransactionBatch(database, batch, tagIdByKey);
+      total += batch.length;
+      rowsSinceSleep += batch.length;
+      rowsSinceSleep = await paceReplication(rowsSinceSleep);
       batch.length = 0;
     }
   }
 
   if (batch.length > 0) {
     await flushTransactionBatch(database, batch, tagIdByKey);
+    total += batch.length;
   }
+  return { inserted: total };
 }
+
+// ── Phase: holdings ─────────────────────────────────────────────────
 
 /**
  * Resolve every fixture ticker's `security.id` in at most two batched
  * round-trips: one SELECT for tickers already shared in the global security
- * table, one INSERT for the rest. Returns ticker → id map. Replaces the
- * per-holding SELECT-then-maybe-INSERT loop.
+ * table, one INSERT for the rest. Returns ticker → id map.
  */
 async function resolveSecurityIdsByTicker(
   database: Database,
@@ -265,13 +356,20 @@ async function resolveSecurityIdsByTicker(
   return idByTicker;
 }
 
-async function seedHoldings(
-  database: Database,
-  userId: string,
-  now: Date,
-  accountIdByKey: Map<string, string>,
-) {
+export async function seedDemoHoldings(userId: string): Promise<void> {
+  const database = db;
+  const existing = await database
+    .select({ id: holding.id })
+    .from(holding)
+    .where(eq(holding.userId, userId))
+    .limit(1);
+  if (existing.length > 0) {
+    return;
+  }
+
+  const now = new Date();
   const asOf = now.toISOString().slice(0, 10);
+  const accountIdByKey = await loadAccountIdByKey(database, userId);
   const securityIdByTicker = await resolveSecurityIdsByTicker(database, asOf);
   const rows = DEMO_HOLDINGS.flatMap((h) => {
     const accountId = accountIdByKey.get(h.accountKey);
@@ -299,15 +397,23 @@ async function seedHoldings(
   }
 }
 
-/**
- * Weekly snapshots over {@link DEMO_SNAPSHOT_HISTORY_DAYS}, inserted in batches.
- */
-async function seedSnapshots(
-  database: Database,
-  userId: string,
-  now: Date,
-  accountIdByKey: Map<string, string>,
-) {
+// ── Phase: snapshots ────────────────────────────────────────────────
+
+export async function seedDemoSnapshots(userId: string): Promise<{ inserted: number }> {
+  const database = db;
+  const existing = await database
+    .select({ id: snapshot.id })
+    .from(snapshot)
+    .where(eq(snapshot.userId, userId))
+    .limit(1);
+  if (existing.length > 0) {
+    return { inserted: 0 };
+  }
+
+  const now = new Date();
+  const accountIdByKey = await loadAccountIdByKey(database, userId);
+  let rowsSinceSleep = 0;
+  let total = 0;
   const batch: (typeof snapshot.$inferInsert)[] = [];
 
   for (const snap of iterateDemoSnapshots()) {
@@ -315,7 +421,6 @@ async function seedSnapshots(
     if (!accountId) {
       continue;
     }
-
     batch.push({
       accountId,
       creditLimit: snap.creditLimit,
@@ -328,37 +433,57 @@ async function seedSnapshots(
 
     if (batch.length >= DEMO_INSERT_BATCH_SIZE) {
       await database.insert(snapshot).values(batch);
+      total += batch.length;
+      rowsSinceSleep += batch.length;
+      rowsSinceSleep = await paceReplication(rowsSinceSleep);
       batch.length = 0;
     }
   }
 
   if (batch.length > 0) {
     await database.insert(snapshot).values(batch);
+    total += batch.length;
   }
+  return { inserted: total };
 }
 
-async function seedInvestmentActivities(
-  database: Database,
-  userId: string,
-  now: Date,
-  accountIdByKey: Map<string, string>,
-) {
+// ── Phase: investment activities ────────────────────────────────────
+
+export async function seedDemoInvestmentActivities(userId: string): Promise<void> {
   if (DEMO_INVESTMENT_ACTIVITY.length === 0) {
     return;
   }
-  const tickers = [...new Set(DEMO_INVESTMENT_ACTIVITY.map((a) => a.ticker).filter(Boolean))];
+  const database = db;
+  const existing = await database
+    .select({ id: investmentActivity.id })
+    .from(investmentActivity)
+    .where(eq(investmentActivity.userId, userId))
+    .limit(1);
+  if (existing.length > 0) {
+    return;
+  }
+
+  const now = new Date();
+  const accountIdByKey = await loadAccountIdByKey(database, userId);
+
+  const tickers = [
+    ...new Set(DEMO_INVESTMENT_ACTIVITY.map((a) => a.ticker).filter(Boolean)),
+  ] as string[];
   const securityIdByTicker = new Map<string, string>();
   if (tickers.length > 0) {
+    // Filter by ticker inArray (matches resolveSecurityIdsByTicker). Previously
+    // this loaded the entire `security` table — brutal on PlanetScale + WAL.
     const rows = await database
       .select({ id: security.id, ticker: security.tickerSymbol })
       .from(security)
-      .where(eq(security.type, "equity"));
+      .where(and(eq(security.type, "equity"), inArray(security.tickerSymbol, tickers)));
     for (const row of rows) {
       if (row.ticker) {
         securityIdByTicker.set(row.ticker, row.id);
       }
     }
   }
+
   const activityRows: (typeof investmentActivity.$inferInsert)[] = [];
   for (const a of DEMO_INVESTMENT_ACTIVITY) {
     const accountId = accountIdByKey.get(a.accountKey);
@@ -387,6 +512,8 @@ async function seedInvestmentActivities(
   }
 }
 
+// ── Phase: chat threads + messages + parts ──────────────────────────
+
 async function flushChatMessageBatch(
   database: Database,
   messageRows: (typeof messages.$inferInsert)[],
@@ -400,7 +527,18 @@ async function flushChatMessageBatch(
   }
 }
 
-async function seedChatThreads(database: Database, userId: string, now: Date) {
+export async function seedDemoChatThreads(userId: string): Promise<{ inserted: number }> {
+  const database = db;
+  const existing = await database
+    .select({ chatId: chats.chatId })
+    .from(chats)
+    .where(eq(chats.userId, userId))
+    .limit(1);
+  if (existing.length > 0) {
+    return { inserted: 0 };
+  }
+
+  const now = new Date();
   const chatFixtures = generateDemoChats();
   const chatRows: (typeof chats.$inferInsert)[] = chatFixtures.map((chatFixture) => {
     const chatId = crypto.randomUUID();
@@ -418,6 +556,8 @@ async function seedChatThreads(database: Database, userId: string, now: Date) {
     await database.insert(chats).values(chatRows);
   }
 
+  let rowsSinceSleep = 0;
+  let total = 0;
   let messageBatch: (typeof messages.$inferInsert)[] = [];
   let partBatch: (typeof parts.$inferInsert)[] = [];
 
@@ -442,6 +582,9 @@ async function seedChatThreads(database: Database, userId: string, now: Date) {
 
       if (messageBatch.length >= DEMO_INSERT_BATCH_SIZE) {
         await flushChatMessageBatch(database, messageBatch, partBatch);
+        total += messageBatch.length;
+        rowsSinceSleep += messageBatch.length;
+        rowsSinceSleep = await paceReplication(rowsSinceSleep);
         messageBatch = [];
         partBatch = [];
       }
@@ -450,39 +593,28 @@ async function seedChatThreads(database: Database, userId: string, now: Date) {
 
   if (messageBatch.length > 0) {
     await flushChatMessageBatch(database, messageBatch, partBatch);
+    total += messageBatch.length;
   }
+  return { inserted: total };
 }
 
 /**
- * Seed all demo rows for a freshly-created demo user.
- * Assumes seedUserCategories already ran (via Better Auth user.create hook).
- *
- * Dates are shifted relative to "now" at call time so the demo always looks
- * fresh regardless of when the user enters demo mode.
+ * Seed all demo rows for a freshly-created demo user. Runs each phase
+ * **serially** so PlanetScale's logical replication doesn't see a single
+ * multi-phase burst that OOMs single-node zero-cache. In the workflow path
+ * (apps/server/src/workflows/demo-seed), each phase is invoked as a separate
+ * step so progress can be streamed and retried independently. This wrapper is
+ * kept for dev seed scripts + tests.
  */
 export async function seedDemoUser(userId: string): Promise<void> {
-  const database = db;
-  const now = new Date();
-  const { byKey: catBySystemKey, uncategorizedId } = await loadUserCategories(database, userId);
-
-  const [accountIdByKey, tagIdByKey] = await Promise.all([
-    seedAccountsAndBalances(database, userId),
-    seedTags(database, userId),
-  ]);
-
-  await Promise.all([
-    seedTransactionsAndTags(
-      database,
-      userId,
-      now,
-      accountIdByKey,
-      catBySystemKey,
-      uncategorizedId,
-      tagIdByKey,
-    ),
-    seedHoldings(database, userId, now, accountIdByKey),
-    seedSnapshots(database, userId, now, accountIdByKey),
-    seedInvestmentActivities(database, userId, now, accountIdByKey),
-    seedChatThreads(database, userId, now),
-  ]);
+  if (await hasAnyDemoTransactions(userId)) {
+    return;
+  }
+  await seedDemoAccountsAndBalances(userId);
+  await seedDemoTags(userId);
+  await seedDemoTransactions(userId);
+  await seedDemoHoldings(userId);
+  await seedDemoSnapshots(userId);
+  await seedDemoInvestmentActivities(userId);
+  await seedDemoChatThreads(userId);
 }
