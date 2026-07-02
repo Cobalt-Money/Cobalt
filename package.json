@@ -19,7 +19,7 @@
       "tailwindcss": "^4.2.4",
       "@types/react": "^19.2.10",
       "@types/react-dom": "^19.2.3",
-      "@rocicorp/zero": "1.6.1"
+      "@rocicorp/zero": "1.7.0"
     }
   },
   "type": "module",
