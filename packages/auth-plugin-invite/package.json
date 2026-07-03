@@ -17,7 +17,7 @@
     "@better-auth/core": "1.7.0-beta.3",
     "@cobalt-web/db": "workspace:*",
     "better-auth": "1.7.0-beta.3",
-    "drizzle-orm": "1.0.0-rc.4",
+    "drizzle-orm": "1.0.0-beta.22",
     "zod": "catalog:"
   },
   "devDependencies": {
