@@ -22,8 +22,11 @@ export default defineConfig({
     url,
   },
   dialect: "postgresql",
+  // No pgRole() declared in schema. drizzle-kit rc.4 with roles:true tries to
+  // DROP every role it sees in the DB (including pg system roles like
+  // pg_checkpoint), which aborts push before enrichment.place is created.
   entities: {
-    roles: true,
+    roles: false,
   },
   out: path.resolve(__dirname, "src/migrations"),
   // All tables drizzle-kit should manage. This is a superset of the tables
