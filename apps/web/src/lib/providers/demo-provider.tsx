@@ -77,9 +77,17 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }, [runMutation]);
 
   const exit = useCallback(async () => {
-    await runMutation(() => demoApi.exit.$post());
+    // Fire-and-forget on the client too: we don't need to await the delete,
+    // just need the server to have cleared the auth cookie (done synchronously
+    // in the handler before waitUntil). Hard reload to "/" re-bootstraps auth.
+    setPending(true);
+    try {
+      await demoApi.exit.$post();
+    } finally {
+      setPending(false);
+    }
     window.location.assign("/");
-  }, [runMutation]);
+  }, []);
 
   const value = useMemo<DemoContextValue>(
     () => ({ createAnonymous, enter, exit, isDemo, pending }),
