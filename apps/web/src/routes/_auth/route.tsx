@@ -7,6 +7,8 @@ import { OnboardingProgressProvider } from "@/components/accounts/onboarding-con
 import { OnboardingProgress } from "@/components/accounts/onboarding-progress";
 import { BillingBanner, useBillingBannerActive } from "@/components/billing/billing-banner";
 import { DemoBanner } from "@/components/demo/demo-banner";
+import { DemoSeedLoader } from "@/components/demo/demo-seed-loader";
+import { useDemoSeedProgress } from "@/components/demo/use-demo-seed-progress";
 import { ImportWizardHost } from "@/components/imports/import-wizard";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
@@ -121,6 +123,7 @@ function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDe
 function AuthLayout() {
   const session = useAppSession();
   const location = useLocation();
+  const seedProgress = useDemoSeedProgress();
   const isOnboardingRoute = location.pathname === "/onboarding";
 
   if (session.isPending || !session.data) {
@@ -128,6 +131,15 @@ function AuthLayout() {
   }
 
   const user = session.data.user as { isAnonymous?: boolean };
+  const isDemo = Boolean(user.isAnonymous);
 
-  return <AuthShellWithOutlet chromeless={isOnboardingRoute} isDemo={Boolean(user.isAnonymous)} />;
+  // Freshly-created demo users see a full-screen loader while the demo-seed
+  // workflow populates PlanetScale. Without this the shell renders empty,
+  // Zero live queries trickle rows in, and users watch tabs light up one-by-
+  // one over ~15s. Loader unmounts on `done` / `skipped` / `error`.
+  if (isDemo && seedProgress.isRunning) {
+    return <DemoSeedLoader phase={seedProgress.phase} />;
+  }
+
+  return <AuthShellWithOutlet chromeless={isOnboardingRoute} isDemo={isDemo} />;
 }
