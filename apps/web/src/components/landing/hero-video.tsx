@@ -16,7 +16,7 @@ export function HeroVideo() {
     <div className="absolute inset-0">
       <video
         autoPlay
-        className="size-full object-cover object-[60%_50%] sm:object-fill sm:object-center"
+        className="size-full object-cover object-[60%_50%] sm:object-center"
         loop
         muted
         playsInline
