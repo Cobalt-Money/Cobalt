@@ -4,6 +4,9 @@ import { parseNdjson } from "../accounts/parse-ndjson";
 
 const STORAGE_KEY = "cobalt:demo-seed-run";
 const POLL_INTERVAL_MS = 2000;
+// Extra wait after workflow `done` to let Zero replicate the inserted rows
+// before the loader unmounts and the app shell renders.
+const POST_DONE_DELAY_MS = 5000;
 
 export type DemoSeedPhase =
   | "checking"
@@ -82,9 +85,14 @@ export function useDemoSeedProgress(): DemoSeedProgress {
           }
         }
         if (terminal) {
-          setIsRunning(false);
-          window.sessionStorage.removeItem(STORAGE_KEY);
-          setRunId(null);
+          // Delay dismissal so Zero has time to replicate the inserted rows
+          // before the app shell renders. Without this the dashboard loads
+          // empty and rows trickle in while the user watches.
+          setTimeout(() => {
+            setIsRunning(false);
+            window.sessionStorage.removeItem(STORAGE_KEY);
+            setRunId(null);
+          }, POST_DONE_DELAY_MS);
           return;
         }
       } catch {
