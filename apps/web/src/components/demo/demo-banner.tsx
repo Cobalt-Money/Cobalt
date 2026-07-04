@@ -27,6 +27,11 @@ const PHASE_LABEL: Record<DemoSeedPhase, string> = {
  * The parent `<div data-demo-banner="1">` in `_auth/route.tsx` flags the
  * shell; CSS in globals.css uses that attribute to shift the sidebar +
  * sidebar-inset down by the banner's height.
+ *
+ * Seed-in-progress state is handled upstream by `DemoSeedLoader` — the app
+ * shell (and therefore this banner) doesn't mount until the workflow's
+ * terminal event fires, so the copy here is always the steady-state
+ * "sample data" message.
  */
 export function DemoBanner() {
   const { exit, isDemo, pending } = useDemo();

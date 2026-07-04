@@ -7,6 +7,8 @@ import { OnboardingProgressProvider } from "@/components/accounts/onboarding-con
 import { OnboardingProgress } from "@/components/accounts/onboarding-progress";
 import { BillingBanner, useBillingBannerActive } from "@/components/billing/billing-banner";
 import { DemoBanner } from "@/components/demo/demo-banner";
+import { DemoSeedLoader } from "@/components/demo/demo-seed-loader";
+import { useDemoSeedProgress } from "@/components/demo/use-demo-seed-progress";
 import { ImportWizardHost } from "@/components/imports/import-wizard";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
@@ -121,13 +123,23 @@ function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDe
 function AuthLayout() {
   const session = useAppSession();
   const location = useLocation();
+  const seedProgress = useDemoSeedProgress();
   const isOnboardingRoute = location.pathname === "/onboarding";
+
+  // Show loader before session resolves — the useEffect inside
+  // useDemoSeedProgress starts consuming the NDJSON stream immediately and
+  // can reach a terminal event before isPending flips to false, causing the
+  // loader to never render if we check isRunning after the session guard.
+  if (seedProgress.isRunning) {
+    return <DemoSeedLoader phase={seedProgress.phase} />;
+  }
 
   if (session.isPending || !session.data) {
     return null;
   }
 
   const user = session.data.user as { isAnonymous?: boolean };
+  const isDemo = Boolean(user.isAnonymous);
 
-  return <AuthShellWithOutlet chromeless={isOnboardingRoute} isDemo={Boolean(user.isAnonymous)} />;
+  return <AuthShellWithOutlet chromeless={isOnboardingRoute} isDemo={isDemo} />;
 }
