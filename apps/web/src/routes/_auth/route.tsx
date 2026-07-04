@@ -126,20 +126,20 @@ function AuthLayout() {
   const seedProgress = useDemoSeedProgress();
   const isOnboardingRoute = location.pathname === "/onboarding";
 
+  // Show loader before session resolves — the useEffect inside
+  // useDemoSeedProgress starts consuming the NDJSON stream immediately and
+  // can reach a terminal event before isPending flips to false, causing the
+  // loader to never render if we check isRunning after the session guard.
+  if (seedProgress.isRunning) {
+    return <DemoSeedLoader phase={seedProgress.phase} />;
+  }
+
   if (session.isPending || !session.data) {
     return null;
   }
 
   const user = session.data.user as { isAnonymous?: boolean };
   const isDemo = Boolean(user.isAnonymous);
-
-  // Freshly-created demo users see a full-screen loader while the demo-seed
-  // workflow populates PlanetScale. Without this the shell renders empty,
-  // Zero live queries trickle rows in, and users watch tabs light up one-by-
-  // one over ~15s. Loader unmounts on `done` / `skipped` / `error`.
-  if (isDemo && seedProgress.isRunning) {
-    return <DemoSeedLoader phase={seedProgress.phase} />;
-  }
 
   return <AuthShellWithOutlet chromeless={isOnboardingRoute} isDemo={isDemo} />;
 }
