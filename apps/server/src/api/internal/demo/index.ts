@@ -1,8 +1,7 @@
 import { auth } from "@cobalt-web/auth";
 import { env } from "@cobalt-web/env/server";
-import { deleteUser } from "@cobalt-web/server-data/user/mutations";
 import { ApiError } from "@cobalt-web/server-data/_shared/api-error";
-import { waitUntil } from "@vercel/functions";
+import { deleteUser } from "@cobalt-web/server-data/user/mutations";
 import { deleteCookie, getSignedCookie, setSignedCookie } from "hono/cookie";
 import { getRun, start } from "workflow/api";
 
@@ -196,11 +195,8 @@ export const demoRouter = createApp()
       console.warn("[demo] exit signOut failed", error);
     }
 
-    // Fire-and-forget: waitUntil keeps the Vercel Function alive after the
-    // HTTP response is sent so the ~22k-row cascade DELETE finishes without
-    // blocking the exit redirect. `deleteStaleAnonymousUsers` cron is the
-    // safety net if this ever crashes mid-delete.
-    waitUntil(deleteUser(currentUser.id));
+    // Now wipe the user row + all seeded fixtures via cascade.
+    await deleteUser(currentUser.id);
 
     for (const cookie of clearCookies) {
       c.header("Set-Cookie", cookie, { append: true });
