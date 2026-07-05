@@ -30,6 +30,8 @@ export interface DemoSeedProgress {
   runId: string | null;
   phase: DemoSeedPhase | null;
   isRunning: boolean;
+  /** True after terminal event received — workflow done but Zero may still be replicating. */
+  workflowDone: boolean;
   lastEvent: DemoSeedEvent | null;
 }
 
@@ -47,6 +49,7 @@ export function useDemoSeedProgress(): DemoSeedProgress {
   );
   const [lastEvent, setLastEvent] = useState<DemoSeedEvent | null>(null);
   const [isRunning, setIsRunning] = useState<boolean>(() => runId !== null);
+  const [workflowDone, setWorkflowDone] = useState(false);
   const nextIndexRef = useRef(0);
 
   useEffect(() => {
@@ -82,6 +85,7 @@ export function useDemoSeedProgress(): DemoSeedProgress {
           }
         }
         if (terminal) {
+          setWorkflowDone(true);
           setIsRunning(false);
           window.sessionStorage.removeItem(STORAGE_KEY);
           setRunId(null);
@@ -102,5 +106,5 @@ export function useDemoSeedProgress(): DemoSeedProgress {
     };
   }, [runId]);
 
-  return { isRunning, lastEvent, phase: lastEvent?.phase ?? null, runId };
+  return { isRunning, lastEvent, phase: lastEvent?.phase ?? null, runId, workflowDone };
 }
