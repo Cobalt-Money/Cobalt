@@ -1,6 +1,9 @@
+import type { ReactNode } from "react";
+
 import { PrivacyProvider } from "@cobalt-web/ui/components/privacy";
 import { SidebarProvider } from "@cobalt-web/ui/components/sidebar";
 import { queries } from "@cobalt-web/zero";
+import { useQuery } from "@rocicorp/zero/react";
 import { createFileRoute, Outlet, redirect, useLocation } from "@tanstack/react-router";
 
 import { OnboardingProgressProvider } from "@/components/accounts/onboarding-context";
@@ -9,6 +12,7 @@ import { BillingBanner, useBillingBannerActive } from "@/components/billing/bill
 import { DemoBanner } from "@/components/demo/demo-banner";
 import { DemoSeedLoader } from "@/components/demo/demo-seed-loader";
 import { useDemoSeedProgress } from "@/components/demo/use-demo-seed-progress";
+import type { DemoSeedPhase } from "@/components/demo/use-demo-seed-progress";
 import { ImportWizardHost } from "@/components/imports/import-wizard";
 import { AmbientInsetProvider } from "@/components/shell/ambient-inset-context";
 import { CommandMenuProvider } from "@/components/shell/command-menu";
@@ -63,7 +67,37 @@ export const Route = createFileRoute("/_auth")({
   },
 });
 
-function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDemo: boolean }) {
+/**
+ * Rendered inside ZeroProvider after the workflow completes. Watches the
+ * bankAccounts query result — Zero sets it to "complete" once the local
+ * replica has received all replicated rows. Until then the seed loader stays
+ * up so the user never sees an empty dashboard.
+ */
+function DemoZeroReadyGate({
+  children,
+  phase,
+}: {
+  children: ReactNode;
+  phase: DemoSeedPhase | null;
+}) {
+  const [, result] = useQuery(queries.accounts.bankAccounts());
+  if (result.type !== "complete") {
+    return <DemoSeedLoader phase={phase} />;
+  }
+  return <>{children}</>;
+}
+
+function AuthShellWithOutlet({
+  chromeless,
+  isDemo,
+  seedPhase,
+  waitForZero,
+}: {
+  chromeless: boolean;
+  isDemo: boolean;
+  seedPhase: DemoSeedPhase | null;
+  waitForZero: boolean;
+}) {
   const billingBannerActive = useBillingBannerActive();
   // Setting `data-demo-banner` on this wrapper (vs `document.body` via an
   // effect) keeps the demo-mode flag in React tree — CSS in globals.css
@@ -76,47 +110,75 @@ function AuthShellWithOutlet({ chromeless, isDemo }: { chromeless: boolean; isDe
   // progress overlay so the onboarding flow renders edge-to-edge.
   return (
     <ZeroProvider>
-      <TransactionUndoProvider>
-        <OnboardingProgressProvider>
-          <PrivacyProvider>
-            <ImportWizardHost>
-              <div
-                className="flex h-svh min-h-0 flex-col overflow-hidden"
-                data-billing-banner={!isDemo && billingBannerActive ? "1" : undefined}
-                data-demo-banner={isDemo ? "1" : undefined}
-              >
-                {chromeless ? (
-                  // Onboarding mounts CommandMenuProvider so the Connect step
-                  // can call `openAddAccount()` and launch the real Plaid flow
-                  // without leaving the route. Sidebar + demo banner stay hidden.
-                  <CommandMenuProvider>
+      {waitForZero ? (
+        <DemoZeroReadyGate phase={seedPhase}>
+          <AuthShellContent
+            billingBannerActive={billingBannerActive}
+            chromeless={chromeless}
+            isDemo={isDemo}
+          />
+        </DemoZeroReadyGate>
+      ) : (
+        <AuthShellContent
+          billingBannerActive={billingBannerActive}
+          chromeless={chromeless}
+          isDemo={isDemo}
+        />
+      )}
+    </ZeroProvider>
+  );
+}
+
+function AuthShellContent({
+  chromeless,
+  isDemo,
+  billingBannerActive,
+}: {
+  chromeless: boolean;
+  isDemo: boolean;
+  billingBannerActive: boolean;
+}) {
+  return (
+    <TransactionUndoProvider>
+      <OnboardingProgressProvider>
+        <PrivacyProvider>
+          <ImportWizardHost>
+            <div
+              className="flex h-svh min-h-0 flex-col overflow-hidden"
+              data-billing-banner={!isDemo && billingBannerActive ? "1" : undefined}
+              data-demo-banner={isDemo ? "1" : undefined}
+            >
+              {chromeless ? (
+                // Onboarding mounts CommandMenuProvider so the Connect step
+                // can call `openAddAccount()` and launch the real Plaid flow
+                // without leaving the route. Sidebar + demo banner stay hidden.
+                <CommandMenuProvider>
+                  <AmbientInsetProvider>
+                    <Outlet />
+                  </AmbientInsetProvider>
+                </CommandMenuProvider>
+              ) : (
+                // Settings reuses this same shell. The settings layout sets
+                // `body[data-route="settings"]` on mount so CSS in
+                // globals.css hides the sidebar — atomically with settings'
+                // first paint, so the sidebar doesn't close *before* the
+                // route swaps.
+                <CommandMenuProvider>
+                  {isDemo ? <DemoBanner /> : <BillingBanner />}
+                  <SidebarProvider className="min-h-0 flex-1">
+                    <AppSidebar />
                     <AmbientInsetProvider>
                       <Outlet />
                     </AmbientInsetProvider>
-                  </CommandMenuProvider>
-                ) : (
-                  // Settings reuses this same shell. The settings layout sets
-                  // `body[data-route="settings"]` on mount so CSS in
-                  // globals.css hides the sidebar — atomically with settings'
-                  // first paint, so the sidebar doesn't close *before* the
-                  // route swaps.
-                  <CommandMenuProvider>
-                    {isDemo ? <DemoBanner /> : <BillingBanner />}
-                    <SidebarProvider className="min-h-0 flex-1">
-                      <AppSidebar />
-                      <AmbientInsetProvider>
-                        <Outlet />
-                      </AmbientInsetProvider>
-                    </SidebarProvider>
-                  </CommandMenuProvider>
-                )}
-              </div>
-            </ImportWizardHost>
-          </PrivacyProvider>
-          <OnboardingProgress />
-        </OnboardingProgressProvider>
-      </TransactionUndoProvider>
-    </ZeroProvider>
+                  </SidebarProvider>
+                </CommandMenuProvider>
+              )}
+            </div>
+          </ImportWizardHost>
+        </PrivacyProvider>
+        <OnboardingProgress />
+      </OnboardingProgressProvider>
+    </TransactionUndoProvider>
   );
 }
 
@@ -141,5 +203,12 @@ function AuthLayout() {
   const user = session.data.user as { isAnonymous?: boolean };
   const isDemo = Boolean(user.isAnonymous);
 
-  return <AuthShellWithOutlet chromeless={isOnboardingRoute} isDemo={isDemo} />;
+  return (
+    <AuthShellWithOutlet
+      chromeless={isOnboardingRoute}
+      isDemo={isDemo}
+      seedPhase={seedProgress.phase}
+      waitForZero={isDemo && seedProgress.workflowDone}
+    />
+  );
 }

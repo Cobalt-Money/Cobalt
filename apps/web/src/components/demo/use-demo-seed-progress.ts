@@ -4,9 +4,6 @@ import { parseNdjson } from "../accounts/parse-ndjson";
 
 const STORAGE_KEY = "cobalt:demo-seed-run";
 const POLL_INTERVAL_MS = 2000;
-// Extra wait after workflow `done` to let Zero replicate the inserted rows
-// before the loader unmounts and the app shell renders.
-const POST_DONE_DELAY_MS = 5000;
 
 export type DemoSeedPhase =
   | "checking"
@@ -33,6 +30,8 @@ export interface DemoSeedProgress {
   runId: string | null;
   phase: DemoSeedPhase | null;
   isRunning: boolean;
+  /** True after terminal event received — workflow done but Zero may still be replicating. */
+  workflowDone: boolean;
   lastEvent: DemoSeedEvent | null;
 }
 
@@ -50,6 +49,7 @@ export function useDemoSeedProgress(): DemoSeedProgress {
   );
   const [lastEvent, setLastEvent] = useState<DemoSeedEvent | null>(null);
   const [isRunning, setIsRunning] = useState<boolean>(() => runId !== null);
+  const [workflowDone, setWorkflowDone] = useState(false);
   const nextIndexRef = useRef(0);
 
   useEffect(() => {
@@ -85,14 +85,10 @@ export function useDemoSeedProgress(): DemoSeedProgress {
           }
         }
         if (terminal) {
-          // Delay dismissal so Zero has time to replicate the inserted rows
-          // before the app shell renders. Without this the dashboard loads
-          // empty and rows trickle in while the user watches.
-          setTimeout(() => {
-            setIsRunning(false);
-            window.sessionStorage.removeItem(STORAGE_KEY);
-            setRunId(null);
-          }, POST_DONE_DELAY_MS);
+          setWorkflowDone(true);
+          setIsRunning(false);
+          window.sessionStorage.removeItem(STORAGE_KEY);
+          setRunId(null);
           return;
         }
       } catch {
@@ -110,5 +106,5 @@ export function useDemoSeedProgress(): DemoSeedProgress {
     };
   }, [runId]);
 
-  return { isRunning, lastEvent, phase: lastEvent?.phase ?? null, runId };
+  return { isRunning, lastEvent, phase: lastEvent?.phase ?? null, runId, workflowDone };
 }
