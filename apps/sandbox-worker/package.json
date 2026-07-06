@@ -10,12 +10,12 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@tanstack/ai-code-mode": "^0.1.9",
+    "@tanstack/ai-code-mode": "^0.3.2",
     "@tanstack/ai-isolate-cloudflare": "^0.2.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250101.0",
-    "typescript": "^5",
+    "typescript": "^6",
     "wrangler": "^4.0.0"
   }
 }
