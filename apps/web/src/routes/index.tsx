@@ -160,15 +160,6 @@ function PreviewSection() {
           <MobileAppPreview />
         </motion.div>
         <motion.div {...reveal} className="group relative hidden w-full sm:block">
-          <div className="-translate-x-1/2 pointer-events-none absolute top-1/2 left-1/2 z-20 -translate-y-1/2 opacity-100 transition-opacity duration-200 group-hover:opacity-0">
-            <span className="inline-flex items-center gap-2 rounded-full border border-zinc-700/40 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 shadow-lg ring-1 ring-zinc-700/20 backdrop-blur-xl backdrop-saturate-150">
-              <span className="relative flex size-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
-              </span>
-              Click to interact
-            </span>
-          </div>
           <CursorProvider className="w-full sm:h-[80vh]">
             <Cursor className="pointer-events-none hidden lg:block">
               <svg
