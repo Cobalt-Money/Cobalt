@@ -3,14 +3,18 @@ import {
   AppleStocksIcon,
   ArrowReloadHorizontalIcon,
   BellDotIcon,
+  AppStoreIcon,
+  CommandIcon,
   CreditCardIcon,
   Download02Icon,
   Edit02Icon,
   EyeIcon,
   File02Icon,
   Folder01Icon,
+  GithubIcon,
   Home04Icon,
   Key01Icon,
+  LinkSquare02Icon,
   Logout01Icon,
   Moon02Icon,
   Search02Icon,
@@ -318,6 +322,97 @@ export function DefaultViewPage({ open, onClose, nav }: Props) {
     },
   ];
 
+  const developerActions: CommandAction[] = [
+    {
+      handleSelect: () => {
+        onClose();
+        window.open("https://docs.cobaltpf.com", "_blank", "noopener,noreferrer");
+      },
+      icon: File02Icon,
+      keywords: ["docs", "documentation", "guide", "reference", "help", "developer", "sdk", "api"],
+      label: "Docs",
+    },
+    {
+      handleSelect: () => {
+        onClose();
+        window.open("https://docs.cobaltpf.com/docs/mcp", "_blank", "noopener,noreferrer");
+      },
+      icon: LinkSquare02Icon,
+      keywords: [
+        "mcp",
+        "model context protocol",
+        "claude",
+        "chatgpt",
+        "openai",
+        "gpt",
+        "cursor",
+        "codex",
+        "gemini",
+        "ai",
+        "agent",
+        "docs",
+        "connect",
+        "integration",
+      ],
+      label: "MCP Server",
+    },
+    {
+      handleSelect: () => nav.settings("api-keys"),
+      icon: Key01Icon,
+      keywords: ["api", "api key", "api keys", "developer", "sdk", "token", "bearer", "ck_live"],
+      label: "API keys",
+    },
+    {
+      handleSelect: () => {
+        onClose();
+        window.open(
+          "https://www.raycast.com/sriket_komali/cobalt-finance",
+          "_blank",
+          "noopener,noreferrer",
+        );
+      },
+      icon: CommandIcon,
+      keywords: [
+        "raycast",
+        "extension",
+        "launcher",
+        "spotlight",
+        "mac",
+        "macos",
+        "quick",
+        "shortcut",
+      ],
+      label: "Raycast Extension",
+    },
+    {
+      handleSelect: () => {
+        onClose();
+        window.open("https://apps.apple.com/app/id6757945133", "_blank", "noopener,noreferrer");
+      },
+      icon: AppStoreIcon,
+      keywords: ["mobile", "app", "ios", "iphone", "ipad", "app store", "download", "apple"],
+      label: "Mobile App",
+    },
+    {
+      handleSelect: () => {
+        onClose();
+        window.open("https://github.com/Cobalt-Money/Cobalt", "_blank", "noopener,noreferrer");
+      },
+      icon: GithubIcon,
+      keywords: [
+        "github",
+        "source",
+        "code",
+        "repo",
+        "repository",
+        "open source",
+        "oss",
+        "contribute",
+      ],
+      label: "GitHub Repository",
+    },
+  ];
+
   const settingActions: CommandAction[] = [
     {
       handleSelect: () => nav.settings("profile"),
@@ -332,10 +427,22 @@ export function DefaultViewPage({ open, onClose, nav }: Props) {
       label: "Billing",
     },
     {
-      handleSelect: () => nav.settings("api-keys"),
-      icon: Key01Icon,
-      keywords: ["api", "api key", "api keys", "developer", "sdk", "token", "bearer", "ck_live"],
-      label: "API keys",
+      handleSelect: () => {
+        onClose();
+        void navigate({ to: "/privacy" });
+      },
+      icon: File02Icon,
+      keywords: ["privacy", "policy", "data", "gdpr", "legal"],
+      label: "Privacy Policy",
+    },
+    {
+      handleSelect: () => {
+        onClose();
+        void navigate({ to: "/terms" });
+      },
+      icon: File02Icon,
+      keywords: ["terms", "tos", "service", "conditions", "legal", "agreement"],
+      label: "Terms of Service",
     },
     {
       handleSelect: () => {
@@ -369,6 +476,8 @@ export function DefaultViewPage({ open, onClose, nav }: Props) {
           </CommandItem>
         ))}
       </CommandGroup>
+
+      <CommandGroup heading="Developer">{developerActions.map(renderCommandItem)}</CommandGroup>
 
       <CommandGroup heading="Accounts">{accountActions.map(renderCommandItem)}</CommandGroup>
 
