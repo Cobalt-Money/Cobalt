@@ -1,5 +1,10 @@
 # Cobalt Changelog
 
+## [Merchant Logos] - {PR_MERGE_DATE}
+
+- Merchant, institution, and recurring-stream logos now work out of the box — no manual Brandfetch or logo.dev token required
+- Remove `brandfetchClientId` and `logoDevToken` preferences
+
 ## [API Sync] - {PR_MERGE_DATE}
 
 - Realign to current `/v1` public API schemas via generated `api-types.ts` (`bun run gen:api`)
