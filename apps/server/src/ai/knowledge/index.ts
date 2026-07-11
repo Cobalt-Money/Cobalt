@@ -156,8 +156,10 @@ export async function loadKnowledgeFiles(): Promise<Record<string, string>> {
     "",
   ];
   for (const folder of [...folders].toSorted()) {
-    readmeLines.push(`### ${folder}/`);
-    readmeLines.push(`See \`${folder}/README.md\` for glossary and file descriptions.`);
+    readmeLines.push(
+      `### ${folder}/`,
+      `See \`${folder}/README.md\` for glossary and file descriptions.`,
+    );
     readmeLines.push("");
     for (const entry of byFolder[folder] ?? []) {
       readmeLines.push(`- \`${entry.filename}\`: ${entry.description}`);

@@ -327,7 +327,7 @@ function NetWorthDetail({ onBack }: { onBack: () => void }) {
             { label: "Credit Cards", val: "−$2,070" },
           ].map((r) => (
             <div
-              className={`flex items-center justify-between rounded-md px-3 py-2 text-[13px] bg-black/[0.03] dark:bg-white/[0.03]`}
+              className="flex items-center justify-between rounded-md px-3 py-2 text-[13px] bg-black/[0.03] dark:bg-white/[0.03]"
               key={r.label}
             >
               <span className={TXT_MUTED}>{r.label}</span>

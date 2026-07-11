@@ -38,8 +38,10 @@ function buildCandidates(website: string | null, logoUrl: string | null): string
   const clientId = env.VITE_BRANDFETCH_CLIENT_ID;
   const host = hostFromWebsite(website);
   if (clientId && host) {
-    out.push(brandfetchIcon404FallbackUrl(host, clientId, { h: 128, w: 128 }));
-    out.push(brandfetchLogo404FallbackUrl(host, clientId, { h: 128, w: 128 }));
+    out.push(
+      brandfetchIcon404FallbackUrl(host, clientId, { h: 128, w: 128 }),
+      brandfetchLogo404FallbackUrl(host, clientId, { h: 128, w: 128 }),
+    );
     out.push(brandfetchIconLettermarkFallbackUrl(host, clientId, { h: 128, w: 128 }));
   }
   if (logoUrl?.startsWith("http")) {

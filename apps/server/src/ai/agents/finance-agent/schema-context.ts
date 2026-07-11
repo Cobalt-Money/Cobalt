@@ -65,10 +65,8 @@ export async function loadSchemaFiles(): Promise<Record<string, string>> {
     "",
   ];
   for (const { file, tables } of tableIndex) {
-    readmeLines.push(`### ${file}`);
-    readmeLines.push("");
-    readmeLines.push(`Tables: ${tables.join(", ")}`);
-    readmeLines.push("");
+    readmeLines.push(`### ${file}`, "");
+    readmeLines.push(`Tables: ${tables.join(", ")}`, "");
   }
   out["README.md"] = readmeLines.join("\n");
 
