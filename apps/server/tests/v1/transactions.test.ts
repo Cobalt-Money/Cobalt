@@ -45,8 +45,9 @@ vi.mock(import("@cobalt-web/server-data/social"), () => ({
 const { transactionsRouter } = await import("../../src/api/public/v1/transactions/index.js");
 
 // Shape of `TransactionResponse` from server-data — superset of what public
-// emits. `toTransaction` MUST strip the extras (source, location, lockedFields,
-// logoUrl, plaidAccountId, accountName, institution*, counterparties).
+// emits. `toTransaction` MUST strip the extras (source, lockedFields,
+// plaidAccountId, accountName, institution*, counterparties). `logoUrl` and
+// `website` are intentionally exposed so SDK consumers can render logos.
 const validTxnRow = {
   accountId: "acc_1",
   accountLogoDomain: null,
@@ -119,6 +120,7 @@ describe("v1/transactions", () => {
         date: "2026-05-22",
         id: "10000000-0000-4000-a000-000000000001",
         location: null,
+        logoUrl: null,
         merchant: "Spotify",
         name: "SPOTIFY",
         notes: null,
@@ -126,6 +128,7 @@ describe("v1/transactions", () => {
         pending: false,
         sharedWithFriends: false,
         tagIds: [],
+        website: null,
       });
       // Sanity: explicit leak checks for the fields most likely to slip out.
       for (const banned of [

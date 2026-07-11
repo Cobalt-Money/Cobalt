@@ -115,6 +115,11 @@ export const transactionSchema = z
       description:
         "Merchant location when reported by the institution. Null when no location fields are available.",
     }),
+    logoUrl: z.string().nullable().openapi({
+      description:
+        "Institution-provided merchant logo URL when available. Null when unreported. Prefer this over rendering `website` through a third-party favicon service.",
+      example: "https://plaid-merchant-logos.plaid.com/uber_1060.png",
+    }),
     merchant: z.string().nullable(),
     name: z.string().openapi({ description: "Raw description from the institution." }),
     notes: z.string().nullable().openapi({
@@ -131,6 +136,11 @@ export const transactionSchema = z
         "True when this transaction has been auto-shared into the user's friends feed (in-store + has coordinates).",
     }),
     tagIds: z.array(z.string()),
+    website: z.string().nullable().openapi({
+      description:
+        "Merchant website when reported by the institution. Bare domain, no scheme. Use to resolve a brand logo when `logoUrl` is null.",
+      example: "uber.com",
+    }),
   })
   .openapi("Transaction");
 
