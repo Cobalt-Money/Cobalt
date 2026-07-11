@@ -100,9 +100,10 @@ function TransactionDetail({ tx }: { tx: Transaction }) {
   const amountStr = currency.format(Math.abs(tx.amount));
   const signedAmount = `${isCredit ? "+" : "-"}${amountStr}`;
   const merchantIcon = pickMerchantIcon({
-    counterparties: null,
-    logoUrl: null,
-    website: null,
+    description: tx.name,
+    logoUrl: tx.logoUrl,
+    merchantName: tx.merchant,
+    website: tx.website,
   });
   const title = displayName(tx) || "—";
 
@@ -259,9 +260,10 @@ export default function Command() {
         ];
 
         const merchantIcon = pickMerchantIcon({
-          counterparties: null,
-          logoUrl: null,
-          website: null,
+          description: tx.name,
+          logoUrl: tx.logoUrl,
+          merchantName: tx.merchant,
+          website: tx.website,
         });
 
         return (

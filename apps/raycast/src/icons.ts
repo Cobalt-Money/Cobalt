@@ -234,49 +234,40 @@ export function pickRecurringIcon(input: RecurringIconInput): string | Icon {
 }
 
 interface MerchantIconInput {
+  /** Cobalt `Transaction.logoUrl` — Plaid-provided merchant logo when available. */
   logoUrl: string | null;
+  /** Cobalt `Transaction.website` — merchant website (bare domain). */
   website: string | null;
-  counterparties?:
-    | {
-        type?: string | null;
-        website?: string | null;
-        logo_url?: string | null;
-      }[]
-    | null;
+  /** Cobalt `Transaction.merchant` — cleaned merchant name. */
+  merchantName: string | null;
+  /** Cobalt `Transaction.name` — raw institution description. */
+  description: string | null;
 }
 
 /**
  * Pick the best single icon source for a transaction row. Raycast only
  * accepts one source per `List.Item.icon`, so order matters:
- *   1. Brandfetch icon by `website` (or counterparty website)
- *   2. Plaid `logoUrl` from Cobalt
- *   3. Counterparty `logo_url`
- *   4. `Icon.Coins` (no merchant data — distinct from the category column)
+ *   1. Plaid `logoUrl` from Cobalt (direct hit — no third-party lookup)
+ *   2. Brandfetch by `website`
+ *   3. logo.dev name lookup with `logoLookupName(merchantName ?? description)`
+ *   4. `Icon.Coins`
  */
 export function pickMerchantIcon(input: MerchantIconInput): string | Icon {
-  const { counterparties, logoUrl, website } = input;
-
-  const host =
-    hostFromUrl(website) ??
-    hostFromUrl(
-      counterparties?.find((c) => c.type === "merchant" && c.website)
-        ?.website ??
-        counterparties?.find((c) => c.website)?.website ??
-        null,
-    );
-  if (host) {
-    return brandfetchIconUrl(host, BRANDFETCH_CLIENT_ID);
-  }
+  const { description, logoUrl, merchantName, website } = input;
 
   if (logoUrl && isHttpUrl(logoUrl)) {
     return logoUrl;
   }
 
-  const cpLogo = counterparties?.find(
-    (c) => c.logo_url && isHttpUrl(c.logo_url),
-  )?.logo_url;
-  if (cpLogo) {
-    return cpLogo;
+  const host = hostFromUrl(website);
+  if (host) {
+    return brandfetchIconUrl(host, BRANDFETCH_CLIENT_ID);
+  }
+
+  const raw = merchantName?.trim() || description?.trim() || "";
+  const name = raw ? logoLookupName(raw) : "";
+  if (name) {
+    return logoDevUrlByBrandName(name, LOGO_DEV_TOKEN);
   }
 
   return Icon.Coins;
