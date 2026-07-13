@@ -21,7 +21,7 @@
     "@cobalt-web/emails": "workspace:*",
     "@cobalt-web/env": "workspace:*",
     "@upstash/redis": "^1.38.0",
-    "better-auth": "1.7.0-beta.3",
+    "better-auth": "1.7.0-beta.4",
     "dotenv": "catalog:",
     "drizzle-orm": "1.0.0-beta.22",
     "jose": "^6.1.0",
