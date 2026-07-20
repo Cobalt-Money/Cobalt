@@ -28,7 +28,7 @@
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
     "@cobalt-web/db": "workspace:*",
-    "drizzle-zero": "1.0.0-beta.0",
+    "drizzle-zero": "1.0.0-beta.1",
     "typescript": "^7.0.2"
   }
 }
