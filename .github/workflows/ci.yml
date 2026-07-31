@@ -74,6 +74,31 @@ jobs:
     needs: [lint-typecheck]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Spec generation does not read the database, but constructing Better Auth
+    # does: @better-auth/oauth-provider seeds its `oauthResource` rows from the
+    # `resources` option during plugin `init`, and module load builds the auth
+    # instance. So this job needs a Postgres with the schema applied.
+    #
+    # An empty database is NOT enough. The seed means to tolerate a missing
+    # table — it matches /relation.*does not exist/i and defers to the first
+    # resource lookup — but drizzle wraps the driver error in a
+    # DrizzleQueryError whose message is "Failed query: select ...", with the
+    # Postgres text only on `.cause`. The pattern never matches, so a missing
+    # table rethrows exactly like a connection refusal.
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cobalt
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -81,6 +106,23 @@ jobs:
           # fetched separately for PRs.
           fetch-depth: 2
       - uses: ./.github/actions/setup
+      - name: Apply schema to CI Postgres (drizzle-kit push)
+        env:
+          SKIP_ENV_VALIDATION: "1"
+          PGPASSWORD: postgres
+          LOCAL_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5433/cobalt
+        # Same approach as the integration-test job: migrations can't be used in
+        # CI because the first one is the introspection baseline wrapped in
+        # `/* */`, and push exits non-zero on cleanup-phase DROPs it can't
+        # perform, so verify the table this job actually needs instead of
+        # trusting the exit code.
+        run: |
+          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE EXTENSION IF NOT EXISTS cube;"
+          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE EXTENSION IF NOT EXISTS earthdistance;"
+          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "CREATE SCHEMA IF NOT EXISTS enrichment;"
+          bun x drizzle-kit push --force --config packages/db/drizzle.config.ts || true
+          psql -h 127.0.0.1 -p 5433 -U postgres -d cobalt -c "SELECT 1 FROM oauth_resource LIMIT 1;" || (echo "oauth_resource missing — drizzle-kit push did not create it" && exit 1)
       - name: Stash base ref openapi.json (for oasdiff)
         run: |
           base_ref="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
