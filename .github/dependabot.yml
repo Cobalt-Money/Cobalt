@@ -78,3 +78,19 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: "deps(raycast)"
+    # Majors are deliberately allowed here, unlike the bun workspace entry —
+    # that is how eslint 9 -> 10 got proposed and cleared five advisories.
+    # TypeScript is the one exception: `@raycast/eslint-config` peers
+    # `typescript ">=4.8.4 <6.1.0"`, so a major bump produces
+    #
+    #     npm error code ERESOLVE
+    #     Found: typescript@7.0.2
+    #     peer typescript@">=4.8.4 <6.1.0" from @raycast/eslint-config@2.2.0
+    #
+    # which is the unresolvable tree that left this directory without a single
+    # Dependabot PR for weeks (#466). #467 proposed exactly that bump, undoing
+    # the pin #466 established. Lift this once @raycast/eslint-config widens
+    # its peer range to cover the TypeScript major the monorepo is on.
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
