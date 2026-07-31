@@ -12,7 +12,7 @@
     "build": "ray build --skip-types -e dist -o dist",
     "dev": "ray develop",
     "fix-lint": "ray lint --fix",
-    "gen:api": "openapi-typescript ../server/openapi.json -o src/api-types.ts",
+    "gen:api": "npx --yes openapi-typescript@^7.4.4 ../server/openapi.json -o src/api-types.ts",
     "lint": "ray lint"
   },
   "dependencies": {
@@ -20,13 +20,12 @@
     "@raycast/utils": "^2.2.5"
   },
   "devDependencies": {
-    "@raycast/eslint-config": "^2.1.1",
+    "@raycast/eslint-config": "^2.2.0",
     "@types/node": "22.19.17",
     "@types/react": "19.0.10",
-    "eslint": "^9.36.0",
-    "openapi-typescript": "^7.4.4",
+    "eslint": "^10.8.0",
     "prettier": "^3.3.3",
-    "typescript": "^7.0.2"
+    "typescript": "^5.9.3"
   },
   "icon": "extension-icon.png",
   "ai": {
