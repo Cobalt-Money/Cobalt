@@ -29,7 +29,17 @@ updates:
     cooldown:
       default-days: 7
     open-pull-requests-limit: 3
-    rebase-strategy: disabled
+    # rebase-strategy left at the default (auto). It was previously disabled,
+    # which let branches rot: a PR opened against an older main eventually
+    # conflicts, and GitHub cannot compute a merge commit for a conflicted PR,
+    # so `pull_request` workflows stop running entirely. #401 and #384 sat in
+    # that state since early June — not failing, simply never evaluated.
+    #
+    # Disabling it was defensible while every Dependabot PR was dead on arrival
+    # at `bun install --frozen-lockfile`; rebasing would only have churned PRs
+    # that could not pass anyway. The dependabot-lockfile workflow now
+    # reconciles bun.lock daily, so a rebase that drops the bot's lockfile
+    # commit is repaired on the next run.
     groups:
       all:
         patterns: ["*"]
@@ -50,7 +60,9 @@ updates:
     cooldown:
       default-days: 7
     open-pull-requests-limit: 3
-    rebase-strategy: disabled
+    # Also left at the default, for the same reason. Dependabot maintains this
+    # package-lock.json itself, so a rebase here needs no help from the
+    # lockfile workflow.
     groups:
       raycast:
         patterns: ["*"]
