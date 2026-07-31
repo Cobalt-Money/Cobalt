@@ -1,5 +1,12 @@
 import { env } from "@cobalt-web/env/server";
-import { verifyAccessToken } from "better-auth/oauth2";
+// better-auth >=1.7.0-beta.4 split `verifyAccessToken` into three entry points.
+// `verifyBearerToken` is the direct successor for a raw token string: same
+// `{ jwksUrl, verifyOptions }` options, bearer-only semantics. The old function
+// took no request context (method/URL/DPoP proof), so it could not have applied
+// RFC 9449 sender-constraint checks either — no behaviour change here. Adopting
+// `verifyAccessTokenRequest` to additionally support DPoP-bound tokens is a
+// deliberate follow-up, not part of this bump.
+import { verifyBearerToken } from "better-auth/oauth2";
 
 function betterAuthBaseUrl(): string {
   const u = new URL(env.BETTER_AUTH_URL);
@@ -76,7 +83,7 @@ export async function verifyOAuthAccessTokenForMcp(
   for (const issuer of issuers) {
     for (const audience of audiences) {
       try {
-        const payload = await verifyAccessToken(accessToken, {
+        const payload = await verifyBearerToken(accessToken, {
           jwksUrl,
           verifyOptions: {
             audience,

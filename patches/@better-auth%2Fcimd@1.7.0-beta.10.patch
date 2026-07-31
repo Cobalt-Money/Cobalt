@@ -1,11 +1,8 @@
-diff --git a/node_modules/@better-auth/cimd/.bun-tag-fd76e6ac15b00bf2 b/.bun-tag-fd76e6ac15b00bf2
-new file mode 100644
-index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/dist/index.mjs b/dist/index.mjs
-index 73436bdcf7b3ebdb19ccd3f791f1f2438d5c74c0..d8a735c7e8739547e4c3f8ed85b1b713fa453d5b 100644
+index f080b6fff0c6ed86b70f616d0f8d5fecab08f274..d189aa64a785980b1e1358de942fa393f21024f2 100644
 --- a/dist/index.mjs
 +++ b/dist/index.mjs
-@@ -161,14 +161,26 @@ function validateCimdMetadata(fetchUrl, raw, originBoundFields) {
+@@ -121,14 +121,26 @@ function validateCimdMetadata(fetchUrl, raw, originBoundFields) {
  		valid: false,
  		error: "redirect_uris must be a non-empty array of absolute HTTP(S) URIs"
  	};
@@ -40,7 +37,7 @@ index 73436bdcf7b3ebdb19ccd3f791f1f2438d5c74c0..d8a735c7e8739547e4c3f8ed85b1b713
  	for (const field of ["client_uri", "logo_uri"]) {
  		if (doc[field] !== void 0 && typeof doc[field] !== "string") return {
  			valid: false,
-@@ -332,6 +344,12 @@ const ALLOWED_METADATA_FIELDS = new Set([
+@@ -292,6 +304,12 @@ const ALLOWED_METADATA_FIELDS = new Set([
  function toOAuthClientBody(metadata) {
  	const filtered = {};
  	for (const key of ALLOWED_METADATA_FIELDS) if (key in metadata) filtered[key] = metadata[key];
