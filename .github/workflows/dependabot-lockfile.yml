@@ -90,8 +90,12 @@ jobs:
             branch=$(gh pr view "$pr" --json headRefName --jq .headRefName)
             echo "::group::PR #$pr ($branch)"
 
-            git checkout -q "$branch"
-            git reset -q --hard "origin/$branch"
+            # actions/checkout configures a narrow remote.origin.fetch refspec,
+            # so origin/<branch> does not exist locally and `git checkout
+            # <branch>` cannot create a tracking branch from it. Fetch the ref
+            # explicitly and check out the fetched commit by hand.
+            git fetch -q origin "+refs/heads/$branch:refs/remotes/origin/$branch"
+            git checkout -q -B "$branch" "refs/remotes/origin/$branch"
 
             # No --frozen-lockfile: reconciling the lock to package.json is the
             # whole job. --ignore-scripts because this runs with a write token
@@ -99,7 +103,7 @@ jobs:
             if ! bun install --ignore-scripts; then
               echo "::warning::bun install failed on #$pr — needs a human"
               failed=$((failed + 1))
-              git checkout -q -
+              git checkout -q --force .
               echo "::endgroup::"
               continue
             fi
@@ -110,11 +114,13 @@ jobs:
               git add bun.lock
               git commit -q -m "chore(deps): regenerate bun.lock" \
                 -m "Dependabot cannot update bun.lock, so the frozen-lockfile install in CI failed before any real check could run."
-              git push -q origin "$branch"
+              git push -q origin "HEAD:refs/heads/$branch"
               echo "Pushed regenerated bun.lock to #$pr"
             fi
 
-            git checkout -q -
+            # Drop any non-lockfile churn (postinstall artefacts, .env writes)
+            # so the next iteration's checkout starts from a clean tree.
+            git checkout -q --force .
             echo "::endgroup::"
           done
 
