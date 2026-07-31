@@ -29,8 +29,8 @@ jobs:
       server: ${{ steps.filter.outputs.server }}
       code: ${{ steps.filter.outputs.code }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
         id: filter
         with:
           filters: |
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - name: Lint (ultracite)
         # ultracite spawns the oxlint Rust binary, which shells out to Node to
@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Need base sha to oasdiff against; depth 2 covers push, base sha is
           # fetched separately for PRs.
@@ -132,7 +132,7 @@ jobs:
         run: bun run scripts/generate-docs.ts
       - name: Diff OpenAPI for breaking changes
         if: hashFiles('/tmp/base-openapi.json') != ''
-        uses: oasdiff/oasdiff-action/breaking@143743fa1c823e5242c56ca81e656837faefe5a0 # v0.0.49
+        uses: oasdiff/oasdiff-action/breaking@024f6c399f9a21ada1addb0f9a36ce1bfac995f1 # v0.1.6
         with:
           base: /tmp/base-openapi.json
           revision: apps/server/openapi.json
@@ -161,7 +161,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Check out PR head directly so git-auto-commit doesn't switch
           # branches with a dirty tree (artifact extraction).
@@ -181,7 +181,7 @@ jobs:
         # No `[skip ci]` marker — it suppresses workflows post-squash. Recursion
         # already prevented because GITHUB_TOKEN-authored commits don't trigger
         # new workflow runs.
-        uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
+        uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
         with:
           file_pattern: "apps/server/openapi.json apps/fumadocs/content/docs/api-reference"
           commit_message: "chore: sync openapi.json + docs"
@@ -192,7 +192,7 @@ jobs:
     env:
       SKIP_ENV_VALIDATION: "1"
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - run: bun x turbo test
 
@@ -240,7 +240,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - name: Enable Postgres extensions
         env:
@@ -282,7 +282,7 @@ jobs:
       (needs.test-integration.result == 'success' || needs.test-integration.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
       - name: Skip if openapi.json did not change
