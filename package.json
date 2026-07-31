@@ -4,7 +4,12 @@
   "license": "AGPL-3.0-only",
   "workspaces": {
     "packages": [
-      "apps/*",
+      "apps/friends",
+      "apps/fumadocs",
+      "apps/sandbox-worker",
+      "apps/server",
+      "apps/web",
+      "apps/zero-cache",
       "packages/*"
     ],
     "catalog": {

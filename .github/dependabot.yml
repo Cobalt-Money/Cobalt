@@ -10,10 +10,19 @@ updates:
     commit-message:
       prefix: "ci"
 
+  # Bun workspace. `apps/raycast` is deliberately absent: it is an npm project
+  # with its own package-lock.json (the Raycast Store requires npm), so it gets
+  # its own entry below. Listing it here made Dependabot try to npm-resolve a
+  # directory bun owns, which failed silently and left its advisories unpatched.
   - package-ecosystem: npm
     directories:
       - "/"
-      - "/apps/*"
+      - "/apps/friends"
+      - "/apps/fumadocs"
+      - "/apps/sandbox-worker"
+      - "/apps/server"
+      - "/apps/web"
+      - "/apps/zero-cache"
       - "/packages/*"
     schedule:
       interval: weekly
@@ -30,3 +39,20 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@rocicorp/zero"
+
+  # Raycast extension: standalone npm project, outside the bun workspace.
+  # Separate entry so its PR budget is not consumed by the monorepo group, and
+  # so Dependabot resolves it with npm against its own package-lock.json.
+  - package-ecosystem: npm
+    directory: "/apps/raycast"
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
+    rebase-strategy: disabled
+    groups:
+      raycast:
+        patterns: ["*"]
+    commit-message:
+      prefix: "deps(raycast)"
