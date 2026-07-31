@@ -21,8 +21,11 @@ export {
   jwks,
   oauthAccessToken,
   oauthClient,
+  oauthClientAssertion,
+  oauthClientResource,
   oauthConsent,
   oauthRefreshToken,
+  oauthResource,
 } from "./users/auth/auth";
 
 // Server-only research tables — populated by background jobs, read by the
