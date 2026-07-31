@@ -35,11 +35,21 @@ updates:
     # so `pull_request` workflows stop running entirely. #401 and #384 sat in
     # that state since early June — not failing, simply never evaluated.
     #
-    # Disabling it was defensible while every Dependabot PR was dead on arrival
-    # at `bun install --frozen-lockfile`; rebasing would only have churned PRs
-    # that could not pass anyway. The dependabot-lockfile workflow now
-    # reconciles bun.lock daily, so a rebase that drops the bot's lockfile
-    # commit is repaired on the next run.
+    # IMPORTANT, and not obvious: once the dependabot-lockfile workflow pushes a
+    # regenerated bun.lock to a PR, Dependabot considers that PR edited by a
+    # third party and refuses to touch it again:
+    #
+    #     Looks like this PR has been edited by someone other than Dependabot.
+    #     That means Dependabot can't rebase it - sorry!
+    #
+    # So auto-rebase only ever applies to PRs the workflow has not reached yet.
+    # A lockfile-fixed PR cannot be rebased; if it goes stale, comment
+    # `@dependabot recreate` (which overwrites edits) rather than
+    # `@dependabot rebase` (which refuses). Grouped updates are unaffected —
+    # Dependabot recreates those wholesale instead of rebasing them.
+    #
+    # Practical consequence: a lockfile-fixed PR is perishable. Merge it while
+    # it is current, or recreate it. Do not expect Dependabot to maintain it.
     groups:
       all:
         patterns: ["*"]
