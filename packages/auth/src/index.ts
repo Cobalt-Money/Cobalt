@@ -347,9 +347,21 @@ export const auth = betterAuth({
       // metadata can't impersonate Cobalt or known brands (SRI-340).
       cachedTrustedClients: new Set(TRUSTED_CLIENT_IDS),
       consentPage: `${spaOrigin}/oauth/consent`,
+      // Defaults to true in 1.7.0-beta.6+, which requires every client to be
+      // linked to every resource it requests via `oauth_client_resource`.
+      // Nothing populates that table for us: MCP clients arrive through
+      // dynamic registration and DCR only writes links for resources the
+      // client names in its registration body, which none of them do. Left on,
+      // every token request would fail `invalid_target`. Off restores the
+      // pre-beta.6 rule — any registered client may request any known resource.
+      enforcePerClientResources: false,
       loginPage: `${spaOrigin}/login`,
-      // Required for MCP: clients send `resource` = MCP HTTPS URL at token exchange; must be allowed.
-      validAudiences: [mcpResourceAudience, oauthIssuerOrigin],
+      // Required for MCP: clients send `resource` = MCP HTTPS URL at token
+      // exchange; must be allowed. Replaces `validAudiences`, which
+      // 1.7.0-beta.6 deleted — same two values, but the plugin now seeds them
+      // as `oauth_resource` rows on first lookup instead of holding them in a
+      // config Set. Seeding is idempotent and coalesced per process.
+      resources: [mcpResourceAudience, oauthIssuerOrigin],
     }),
     stripe({
       createCustomerOnSignUp: false,

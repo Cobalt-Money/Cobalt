@@ -113,11 +113,21 @@ export const verification = pgTable(
 export const oauthClient = pgTable(
   "oauth_client",
   {
+    backchannelLogoutSessionRequired: boolean("backchannel_logout_session_required"),
+    backchannelLogoutUri: text("backchannel_logout_uri"),
     clientId: varchar("client_id", { length: 255 }).notNull().unique(),
     clientSecret: text("client_secret"),
     contacts: text("contacts").array(),
     createdAt: timestamp("created_at", { precision: 6, withTimezone: true }),
     disabled: boolean("disabled"),
+    /**
+     * Per-client opt-in to RFC 9449 DPoP sender-constrained tokens. Left at the
+     * plugin default of false: `verifyOAuthAccessTokenForMcp` calls
+     * `verifyBearerToken`, which rejects any token carrying a `cnf.jkt`. A
+     * client flipping this on would authenticate fine and then fail every MCP
+     * request until that verifier moves to `verifyAccessTokenRequest`.
+     */
+    dpopBoundAccessTokens: boolean("dpop_bound_access_tokens").default(false),
     enableEndSession: boolean("enable_end_session"),
     grantTypes: text("grant_types").array(),
     icon: text("icon"),
@@ -163,9 +173,12 @@ export const oauthRefreshToken = pgTable(
   "oauth_refresh_token",
   {
     authTime: timestamp("auth_time", { precision: 6, withTimezone: true }),
+    authorizationCodeId: text("authorization_code_id"),
     clientId: text("client_id")
       .notNull()
       .references(() => oauthClient.clientId, { onDelete: "cascade" }),
+    /** RFC 9449 `cnf` claim (`{ jkt }`) when the token is DPoP-bound. */
+    confirmation: jsonb("confirmation"),
     createdAt: timestamp("created_at", {
       precision: 6,
       withTimezone: true,
@@ -176,7 +189,24 @@ export const oauthRefreshToken = pgTable(
     }).notNull(),
     id: text("id").primaryKey(),
     referenceId: text("reference_id"),
+    /** OIDC `claims` request parameter, replayed into the issued id_token. */
+    requestedUserInfoClaims: text("requested_user_info_claims").array(),
+    /** RFC 8707 resource indicators this token was issued for. */
+    resources: text("resources").array(),
     revoked: timestamp("revoked", { precision: 6, withTimezone: true }),
+    /**
+     * Refresh-token rotation (beta.10): `rotated_at` marks a token as spent,
+     * and a replay within the grace window returns the cached
+     * `rotation_replay_response` instead of revoking the family — this is what
+     * keeps a client that retries a dropped token response from being logged
+     * out.
+     */
+    rotatedAt: timestamp("rotated_at", { precision: 6, withTimezone: true }),
+    rotationReplayExpiresAt: timestamp("rotation_replay_expires_at", {
+      precision: 6,
+      withTimezone: true,
+    }),
+    rotationReplayResponse: text("rotation_replay_response"),
     scopes: text("scopes").array().notNull(),
     sessionId: text("session_id").references(() => session.id, {
       onDelete: "set null",
@@ -187,6 +217,7 @@ export const oauthRefreshToken = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
   },
   (table) => [
+    index("oauth_refresh_token_authorization_code_id_idx").on(table.authorizationCodeId),
     index("oauth_refresh_token_client_id_idx").on(table.clientId),
     index("oauth_refresh_token_user_id_idx").on(table.userId),
     index("oauth_refresh_token_reference_id_idx").on(table.referenceId),
@@ -197,9 +228,12 @@ export const oauthRefreshToken = pgTable(
 export const oauthAccessToken = pgTable(
   "oauth_access_token",
   {
+    authorizationCodeId: text("authorization_code_id"),
     clientId: text("client_id")
       .notNull()
       .references(() => oauthClient.clientId, { onDelete: "cascade" }),
+    /** RFC 9449 `cnf` claim (`{ jkt }`) when the token is DPoP-bound. */
+    confirmation: jsonb("confirmation"),
     createdAt: timestamp("created_at", {
       precision: 6,
       withTimezone: true,
@@ -213,6 +247,11 @@ export const oauthAccessToken = pgTable(
     refreshId: text("refresh_id").references(() => oauthRefreshToken.id, {
       onDelete: "cascade",
     }),
+    /** OIDC `claims` request parameter, replayed into the issued id_token. */
+    requestedUserInfoClaims: text("requested_user_info_claims").array(),
+    /** RFC 8707 resource indicators this token was issued for. */
+    resources: text("resources").array(),
+    revoked: timestamp("revoked", { precision: 6, withTimezone: true }),
     scopes: text("scopes").array().notNull(),
     sessionId: text("session_id").references(() => session.id, {
       onDelete: "set null",
@@ -243,6 +282,10 @@ export const oauthConsent = pgTable(
     }).notNull(),
     id: text("id").primaryKey(),
     referenceId: text("reference_id"),
+    /** OIDC `claims` the user consented to release. */
+    requestedUserInfoClaims: text("requested_user_info_claims").array(),
+    /** RFC 8707 resource indicators covered by this consent. */
+    resources: text("resources").array(),
     scopes: text("scopes").array().notNull(),
     updatedAt: timestamp("updated_at", {
       precision: 6,
@@ -258,13 +301,94 @@ export const oauthConsent = pgTable(
   ],
 );
 
+/**
+ * Protected resources (RFC 8707 resource indicators) the OAuth provider will
+ * mint tokens for — i.e. the allowed `aud` values. Added by
+ * `@better-auth/oauth-provider` 1.7.0-beta.6, which deleted the static
+ * `validAudiences` option in favour of this table so each resource can carry
+ * its own policy (TTLs, signing key, scope allowlist, DPoP requirement).
+ *
+ * Rows are seeded by the plugin from `resources: [...]` in `@cobalt-web/auth`;
+ * do not hand-insert. `identifier` is the natural key the plugin looks up by
+ * and the FK target for `oauth_client_resource`, hence `.unique()`.
+ */
+export const oauthResource = pgTable("oauth_resource", {
+  accessTokenTtl: integer("access_token_ttl"),
+  allowedScopes: text("allowed_scopes").array(),
+  createdAt: timestamp("created_at", { precision: 6, withTimezone: true }),
+  customClaims: jsonb("custom_claims"),
+  disabled: boolean("disabled").default(false),
+  dpopBoundAccessTokensRequired: boolean("dpop_bound_access_tokens_required").default(false),
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull().unique(),
+  metadata: jsonb("metadata"),
+  name: text("name").notNull(),
+  policyVersion: integer("policy_version").default(1),
+  refreshTokenTtl: integer("refresh_token_ttl"),
+  signingAlgorithm: text("signing_algorithm"),
+  signingKeyId: text("signing_key_id"),
+  updatedAt: timestamp("updated_at", { precision: 6, withTimezone: true }),
+});
+
+/**
+ * Join table restricting which clients may request which resources, consulted
+ * only when `enforcePerClientResources` is on. We keep it off: MCP clients
+ * arrive through dynamic registration and never declare `resources` at
+ * registration time, so nothing would ever populate this and every token
+ * request would fail `invalid_target`. The table still has to exist — the
+ * plugin declares the model, and the Drizzle adapter throws on any model
+ * missing from the schema object regardless of whether a row is ever read.
+ */
+export const oauthClientResource = pgTable(
+  "oauth_client_resource",
+  {
+    clientId: text("client_id")
+      .notNull()
+      .references(() => oauthClient.clientId, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { precision: 6, withTimezone: true }),
+    id: text("id").primaryKey(),
+    metadata: jsonb("metadata"),
+    resourceId: text("resource_id")
+      .notNull()
+      .references(() => oauthResource.identifier, { onDelete: "cascade" }),
+  },
+  (table) => [
+    index("oauth_client_resource_client_id_idx").on(table.clientId),
+    index("oauth_client_resource_resource_id_idx").on(table.resourceId),
+  ],
+);
+
+/**
+ * Replay guard for `private_key_jwt` client assertions: one row per assertion
+ * `jti`, inserted before the assertion is accepted so a reused `jti` collides
+ * on the primary key. Added in 1.7.0-beta.5 and missed by that bump — no MCP
+ * client authenticates this way today, but `private_key_jwt` is advertised in
+ * our `token_endpoint_auth_methods_supported`, so a client taking us up on it
+ * would hit the same missing-model 500 the resource tables just caused.
+ */
+export const oauthClientAssertion = pgTable("oauth_client_assertion", {
+  expiresAt: timestamp("expires_at", {
+    precision: 6,
+    withTimezone: true,
+  }).notNull(),
+  id: text("id").primaryKey(),
+});
+
 export const jwks = pgTable(
   "jwks",
   {
+    /**
+     * Key algorithm + curve, recorded on the row from beta.10 onward instead of
+     * being inferred from the stored JWK. The single live key is EdDSA/Ed25519
+     * (`kid` tWWBt1F0TAnBN4qrDPNoWflYwavkD4UU); both stay NULL on it and get
+     * populated on the next key generated.
+     */
+    alg: text("alg"),
     createdAt: timestamp("created_at", {
       precision: 6,
       withTimezone: true,
     }).notNull(),
+    crv: text("crv"),
     expiresAt: timestamp("expires_at", { precision: 6, withTimezone: true }),
     id: text("id").primaryKey(),
     privateKey: text("private_key").notNull(),
@@ -290,6 +414,12 @@ export type OauthAccessToken = typeof oauthAccessToken.$inferSelect;
 export type OauthAccessTokenInsert = typeof oauthAccessToken.$inferInsert;
 export type OauthConsent = typeof oauthConsent.$inferSelect;
 export type OauthConsentInsert = typeof oauthConsent.$inferInsert;
+export type OauthResource = typeof oauthResource.$inferSelect;
+export type OauthResourceInsert = typeof oauthResource.$inferInsert;
+export type OauthClientResource = typeof oauthClientResource.$inferSelect;
+export type OauthClientResourceInsert = typeof oauthClientResource.$inferInsert;
+export type OauthClientAssertion = typeof oauthClientAssertion.$inferSelect;
+export type OauthClientAssertionInsert = typeof oauthClientAssertion.$inferInsert;
 export type Jwks = typeof jwks.$inferSelect;
 export type JwksInsert = typeof jwks.$inferInsert;
 
