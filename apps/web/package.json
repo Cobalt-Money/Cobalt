@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "check-types": "tsc --noEmit",
-    "build": "bun run generate:sitemap && NODE_OPTIONS='--max-old-space-size=8192' vite build",
+    "build": "bun run generate:sitemap && vite build",
     "generate:sitemap": "bun run scripts/generate-sitemap.ts",
     "start": "vite preview",
     "serve": "vite preview",
@@ -80,7 +80,7 @@
     "@types/mdx": "^2.0.13",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@vitejs/plugin-react": "5.2.0",
+    "@vitejs/plugin-react": "6.0.5",
     "class-variance-authority": "^0.7.1",
     "date-fns": "^4.1.0",
     "drizzle-kit": "1.0.0-beta.22",
@@ -88,7 +88,7 @@
     "react-grab": "^0.1.29",
     "react-hook-form": "^7.72.1",
     "typescript": "^7.0.2",
-    "vite": "7.3.5",
+    "vite": "8.2.0",
     "vitest": "^3.2.6"
   }
 }
