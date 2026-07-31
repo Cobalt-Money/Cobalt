@@ -14,9 +14,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@better-auth/core": "1.7.0-beta.3",
+    "@better-auth/core": "catalog:",
     "@cobalt-web/db": "workspace:*",
-    "better-auth": "1.7.0-beta.3",
+    "better-auth": "catalog:",
     "drizzle-orm": "1.0.0-beta.22",
     "zod": "catalog:"
   },

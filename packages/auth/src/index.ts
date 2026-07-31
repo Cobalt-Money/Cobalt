@@ -83,6 +83,40 @@ const secondaryStorage = redis
           return null;
         }
       },
+      // Required by better-auth >=1.7.0-beta.4. Single-roundtrip GETDEL so a
+      // one-time value (verification tokens) can't be redeemed twice by two
+      // concurrent requests. Same re-stringify + swallow-to-null contract as
+      // `get`: a failure reads as "absent", which fails closed for one-shot
+      // tokens rather than handing back a value we may not have deleted.
+      getAndDelete: async (key: string) => {
+        try {
+          const v = await redis.getdel(key);
+          if (v === null || v === undefined) {
+            return null;
+          }
+          return typeof v === "string" ? v : JSON.stringify(v);
+        } catch (error) {
+          console.warn("[auth] secondary-storage getAndDelete failed", { error, key });
+          return null;
+        }
+      },
+      // Required by better-auth >=1.7.0-beta.4 for distributed rate limiting.
+      // INCR is atomic, so concurrent Vercel instances can't race past the
+      // limit. TTL is applied only when the counter is created (post-incr
+      // value of 1) — re-arming it on every hit would let a steady stream of
+      // requests hold the window open forever.
+      increment: async (key: string, ttl: number) => {
+        try {
+          const count = await redis.incr(key);
+          if (count === 1) {
+            await redis.expire(key, ttl);
+          }
+          return count;
+        } catch (error) {
+          console.error("[auth] secondary-storage increment failed", { error, key });
+          throw new Error(STORAGE_UNAVAILABLE, { cause: error });
+        }
+      },
       set: async (key: string, value: string, ttl?: number) => {
         try {
           await (ttl ? redis.set(key, value, { ex: ttl }) : redis.set(key, value));

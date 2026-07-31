@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.84",
-    "@better-auth/oauth-provider": "1.7.0-beta.3",
+    "@better-auth/oauth-provider": "catalog:",
     "@cobalt-web/auth": "workspace:*",
     "@cobalt-web/bindings": "workspace:*",
     "@cobalt-web/clients": "workspace:*",
