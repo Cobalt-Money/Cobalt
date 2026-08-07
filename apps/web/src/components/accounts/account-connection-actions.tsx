@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,7 +91,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
         institutionUrl: account.institutionUrl,
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not refresh connection");
+      toast.error(toErrorMessage(error, "Could not refresh connection"));
     }
   }, [
     account.institution,
@@ -155,7 +157,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
       setPlaidToken(data.link_token);
     } catch (error) {
       setOpening(false);
-      toast.error(error instanceof Error ? error.message : "Reconnect failed");
+      toast.error(toErrorMessage(error, "Reconnect failed"));
     } finally {
       setBusy(null);
     }
@@ -180,7 +182,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
       }
       window.open(data.redirectURI, "_blank", "noopener,noreferrer");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Reconnect failed");
+      toast.error(toErrorMessage(error, "Reconnect failed"));
     } finally {
       setBusy(null);
     }
@@ -197,7 +199,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
       cobaltToast.accountDisconnected(account);
       setDisconnectOpen(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Disconnect failed");
+      toast.error(toErrorMessage(error, "Disconnect failed"));
     } finally {
       setBusy(null);
     }

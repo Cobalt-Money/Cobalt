@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import { Dialog, DialogContent } from "@cobalt-web/ui/components/dialog";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -68,7 +70,7 @@ export function UpgradePromptHost() {
         throw new Error(error.message ?? "Failed to start checkout");
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to start checkout");
+      toast.error(toErrorMessage(error, "Failed to start checkout"));
       setSubmitting(null);
     }
   };

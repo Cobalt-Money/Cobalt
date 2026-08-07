@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import type { ImportStatusResponse } from "@cobalt-web/server-data/imports/_shared/schemas";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { Button } from "@cobalt-web/ui/components/button";
@@ -20,7 +22,7 @@ export function ProgressStep({ job, jobId }: { job: ImportStatusResponse; jobId:
       }
       return await res.json();
     },
-    onError: (e) => cobaltToast.error(e instanceof Error ? e.message : "Cancel failed"),
+    onError: (e) => cobaltToast.error(toErrorMessage(e, "Cancel failed")),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["import-job", jobId] });
     },

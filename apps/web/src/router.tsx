@@ -1,11 +1,12 @@
 import type { Zero } from "@rocicorp/zero";
 import { QueryClient } from "@tanstack/react-query";
-import { ErrorComponent, createRouter as createTanStackRouter } from "@tanstack/react-router";
+import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
 
 import { MAIN_SCROLL_RESTORATION_SELECTOR } from "@cobalt-web/ui/lib/scroll-restoration";
 
 import "@cobalt-web/ui/globals.css";
+import { ErrorPage } from "./components/feedback/error-page";
 import { NotFoundPage } from "./components/feedback/not-found-page";
 import { routeTree } from "./routeTree.gen";
 
@@ -51,9 +52,7 @@ export const getRouter = () => {
         queryClient,
         zero: undefined as unknown as Zero,
       },
-      defaultErrorComponent: ({ error }) => (
-        <ErrorComponent error={error ?? new Error("Unknown error")} />
-      ),
+      defaultErrorComponent: ({ error, reset }) => <ErrorPage error={error} reset={reset} />,
       defaultNotFoundComponent: NotFoundPage,
       defaultPreload: "intent",
       defaultPreloadStaleTime: 10_000,

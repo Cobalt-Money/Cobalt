@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -75,9 +77,7 @@ export function DeleteAccountDialog(_props: { userEmail?: string }) {
       }
       await router.navigate({ to: "/" });
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete account. Please try again.",
-      );
+      toast.error(toErrorMessage(error, "Failed to delete account. Please try again."));
       setIsDeleting(false);
     }
   };

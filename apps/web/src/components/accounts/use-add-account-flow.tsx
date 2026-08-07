@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import type { AddAccountInstitution } from "@cobalt-web/ui/cobalt/accounts/add-account-dialog/types";
 import { KeepAccountsCheckedDialog } from "@cobalt-web/ui/cobalt/accounts/keep-accounts-checked-dialog";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -113,7 +115,7 @@ export function useAccountLauncher(onDismiss: () => void) {
         startOnboarding(session.runId);
         onDismiss();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to finish connecting");
+        toast.error(toErrorMessage(error, "Failed to finish connecting"));
       }
     },
     [onDismiss, resolveLink, startOnboarding],
@@ -212,7 +214,7 @@ export function useAccountLauncher(onDismiss: () => void) {
         setLinkToken(session.linkToken);
       } catch (error) {
         setOpening(false);
-        toast.error(error instanceof Error ? error.message : "Failed to start Plaid Link");
+        toast.error(toErrorMessage(error, "Failed to start Plaid Link"));
       }
     },
     [linkToken],
@@ -242,7 +244,7 @@ export function useAccountLauncher(onDismiss: () => void) {
         window.open(redirectURI, "_blank", "noopener,noreferrer");
       } catch (error) {
         toast.dismiss(loadingId);
-        toast.error(error instanceof Error ? error.message : "Failed to open connection portal");
+        toast.error(toErrorMessage(error, "Failed to open connection portal"));
       }
     },
     [onDismiss],

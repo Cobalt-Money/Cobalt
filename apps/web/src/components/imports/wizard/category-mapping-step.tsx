@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import type {
   CategorySuggestionsResponse,
   ConfirmCategoryMapping,
@@ -141,7 +143,7 @@ function CategoryMappingStepInner({
       }
       return await res.json();
     },
-    onError: (e) => cobaltToast.error(e instanceof Error ? e.message : "Failed"),
+    onError: (e) => cobaltToast.error(toErrorMessage(e, "Failed")),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["import-job", jobId] });
     },

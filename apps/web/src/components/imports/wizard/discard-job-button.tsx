@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import { Delete02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -31,7 +33,7 @@ export function DiscardJobButton({ jobId }: { jobId: string }) {
       }
       return await res.json();
     },
-    onError: (e) => cobaltToast.error(e instanceof Error ? e.message : "Discard failed"),
+    onError: (e) => cobaltToast.error(toErrorMessage(e, "Discard failed")),
     onSuccess: async () => {
       cobaltToast.bulkSuccess("Import discarded");
       await qc.invalidateQueries({ queryKey: ["resumable-imports"] });
