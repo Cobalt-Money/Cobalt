@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import { Button } from "@cobalt-web/ui/components/button";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { cn } from "@cobalt-web/ui/lib/utils";
@@ -48,7 +50,7 @@ export function UploadStep({ onUploaded }: { onUploaded: (jobId: string) => void
       const data = (await res.json()) as { id: string };
       onUploaded(data.id);
     } catch (error) {
-      cobaltToast.error(error instanceof Error ? error.message : "Upload failed");
+      cobaltToast.error(toErrorMessage(error, "Upload failed"));
     } finally {
       setBusy(false);
     }

@@ -1,4 +1,5 @@
 import { TickerLogo } from "@cobalt-web/ui/cobalt/brokerage/ticker-logo";
+import { ErrorState } from "@cobalt-web/ui/cobalt/error/error-state";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { StarIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -278,7 +279,7 @@ function buildColumns({ pinnedSymbols, togglePin }: BuildColumnsArgs): ColumnDef
 }
 
 export function StockScreener() {
-  const { data, error, isPending } = useQuery(screenerUniverseQuery);
+  const { data, error, isPending, isFetching, refetch } = useQuery(screenerUniverseQuery);
 
   const rows = data?.results ?? EMPTY_SCREENER_ROWS;
 
@@ -374,9 +375,15 @@ export function StockScreener() {
   return (
     <div className="flex w-full min-w-0 flex-col gap-4">
       {error ? (
-        <p className="text-destructive text-sm" role="alert">
-          {error.message}
-        </p>
+        <ErrorState
+          description="The market data service returned an error. This is usually temporary — try again in a moment."
+          detail={error.message}
+          onRetry={() => {
+            void refetch();
+          }}
+          retrying={isFetching}
+          title="Couldn’t load market data"
+        />
       ) : null}
 
       {rows.length > 0 ? (

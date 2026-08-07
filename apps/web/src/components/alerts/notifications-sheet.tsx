@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import { Badge } from "@cobalt-web/ui/components/badge";
 import { Button } from "@cobalt-web/ui/components/button";
 import {
@@ -86,7 +88,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
       startOnboarding(session.runId);
       toast.success("Bank connection updated");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not refresh connection");
+      toast.error(toErrorMessage(error, "Could not refresh connection"));
     }
   }, [resolveLink, startOnboarding]);
 
@@ -160,7 +162,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
       }
     } catch (error) {
       setOpening(false);
-      toast.error(error instanceof Error ? error.message : "Reconnect failed");
+      toast.error(toErrorMessage(error, "Reconnect failed"));
     } finally {
       setBusyId(null);
     }

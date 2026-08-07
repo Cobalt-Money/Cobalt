@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import { env } from "@cobalt-web/env/web";
 import { Card } from "@cobalt-web/ui/components/card";
 import { useEffect, useState } from "react";
@@ -115,7 +117,7 @@ function useProgressStream(runId: string | null, onStale: () => void) {
         if ((error as { name?: string }).name === "AbortError") {
           return;
         }
-        setStreamError(error instanceof Error ? error.message : "stream error");
+        setStreamError(toErrorMessage(error, "stream error"));
       }
     }
 

@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
 import type { PlaidLinkOnExitMetadata, PlaidLinkOnSuccessMetadata } from "react-plaid-link";
@@ -66,7 +68,7 @@ export function usePlaidLinkFlow(deps: UsePlaidLinkFlowDeps): UsePlaidLinkFlowRe
         await resolveLink({ hookToken, publicToken });
         onSuccess?.();
       } catch (error) {
-        reportError(error instanceof Error ? error.message : "Failed to finish connecting");
+        reportError(toErrorMessage(error, "Failed to finish connecting"));
       }
     },
     [resolveLink, onSuccess, reportError],
@@ -125,7 +127,7 @@ export function usePlaidLinkFlow(deps: UsePlaidLinkFlowDeps): UsePlaidLinkFlowRe
         setLinkToken(link_token);
       } catch (error) {
         setOpening(false);
-        reportError(error instanceof Error ? error.message : "Failed to start Plaid Link");
+        reportError(toErrorMessage(error, "Failed to start Plaid Link"));
       }
     })();
   }, [linkToken, opening, createLinkToken, reportError]);

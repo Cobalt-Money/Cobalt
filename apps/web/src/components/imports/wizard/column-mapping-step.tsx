@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import type {
   ColumnMappingResponse,
   ConfirmColumnMapping,
@@ -410,7 +412,7 @@ function ColumnMappingStepInner({ data, jobId }: { data: ColumnMappingResponse; 
       }
       return await res.json();
     },
-    onError: (e) => cobaltToast.error(e instanceof Error ? e.message : "Failed"),
+    onError: (e) => cobaltToast.error(toErrorMessage(e, "Failed")),
     onSuccess: async (result) => {
       // Early surface: a mapping that produces no usable rows (e.g. an essential
       // column is entirely empty) should stop here, not walk the user through the

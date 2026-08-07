@@ -1,3 +1,5 @@
+import { toErrorMessage } from "@cobalt-web/ui/lib/errors";
+
 import type { ImportStatusResponse } from "@cobalt-web/server-data/imports/_shared/schemas";
 import { cobaltToast } from "@cobalt-web/ui/cobalt/toasts";
 import { Button } from "@cobalt-web/ui/components/button";
@@ -58,7 +60,7 @@ export function CommitPreviewStep({ job, jobId }: { job: ImportStatusResponse; j
       }
       return { ok: true as const };
     },
-    onError: (e) => cobaltToast.error(e instanceof Error ? e.message : "Commit failed"),
+    onError: (e) => cobaltToast.error(toErrorMessage(e, "Commit failed")),
     onSuccess: (result) => {
       if (!result.ok) {
         setGate(result.gate);
