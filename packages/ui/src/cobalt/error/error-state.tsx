@@ -8,8 +8,8 @@ import {
   EmptyTitle,
 } from "@cobalt-web/ui/components/empty";
 import { cn } from "@cobalt-web/ui/lib/utils";
+import { Icon } from "@cobalt-web/ui/components/icon";
 import { Alert02Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 
 export interface ErrorStateProps {
@@ -40,7 +40,7 @@ export function ErrorState({
     <Empty className={cn("min-h-[280px] rounded-3xl", className)} role="alert">
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <HugeiconsIcon icon={Alert02Icon} strokeWidth={1.5} />
+          <Icon icon={Alert02Icon} size="lg" strokeWidth={1.5} />
         </EmptyMedia>
         <EmptyTitle>{title}</EmptyTitle>
         <EmptyDescription>{description}</EmptyDescription>

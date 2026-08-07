@@ -11,7 +11,7 @@ import { Link } from "@/components/links";
  */
 export function ErrorPage({ error, reset }: { error: unknown; reset?: () => void }) {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-6 py-20 text-center text-foreground">
+    <main className="flex min-h-svh flex-col items-center justify-center bg-background px-6 py-20 text-center text-foreground">
       <p className="font-mono text-muted-foreground text-sm">Error</p>
       <h1 className="mt-3 font-semibold text-3xl tracking-tight sm:text-4xl">
         Something went wrong
@@ -20,9 +20,11 @@ export function ErrorPage({ error, reset }: { error: unknown; reset?: () => void
         Cobalt hit an unexpected error rendering this page. Reloading usually fixes it — if it keeps
         happening, let us know.
       </p>
-      <p className="mt-4 max-w-lg break-all font-mono text-muted-foreground/70 text-xs">
-        {toErrorMessage(error)}
-      </p>
+      {import.meta.env.DEV ? (
+        <p className="mt-4 max-w-lg break-all font-mono text-muted-foreground/70 text-xs">
+          {toErrorMessage(error)}
+        </p>
+      ) : null}
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Button
           onClick={() => {
@@ -38,6 +40,6 @@ export function ErrorPage({ error, reset }: { error: unknown; reset?: () => void
           Back to home
         </Link>
       </div>
-    </div>
+    </main>
   );
 }
