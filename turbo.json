@@ -12,7 +12,7 @@
         "VITE_LOGO_DEV_PUBLISHABLE_KEY"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", ".next/**"]
+      "outputs": ["dist/**", ".next/**", ".output/**", ".vercel/output/**"]
     },
     "lint": {
       "dependsOn": ["^lint"]
