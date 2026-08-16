@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cobalt-sri-359-sandbox-validation",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-16",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "SANDBOX_TRANSPORT": "rpc",
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+  "containers": [
+    {
+      "class_name": "Sandbox",
+      "image": "./Dockerfile",
+      "instance_type": "lite",
+      "max_instances": 1,
+    },
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "class_name": "Sandbox",
+        "name": "Sandbox",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "new_sqlite_classes": ["Sandbox"],
+      "tag": "v1",
+    },
+  ],
+}
