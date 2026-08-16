@@ -1,0 +1,31 @@
+{
+  "name": "@cobalt-web/workspace",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./bridge": "./src/bridge/index.ts",
+    "./metadata": "./src/contracts/metadata.ts",
+    "./paths": "./src/paths/index.ts",
+    "./runtime": "./src/contracts/runtime.ts",
+    "./schemas": "./src/domain/schemas.ts",
+    "./storage": "./src/contracts/storage.ts",
+    "./testing": "./src/testing/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@cobalt-web/config": "workspace:*",
+    "@effect/vitest": "catalog:",
+    "@types/bun": "catalog:",
+    "typescript": "^7.0.2",
+    "vitest": "4.1.10"
+  }
+}

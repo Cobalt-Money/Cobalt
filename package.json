@@ -9,6 +9,7 @@
       "apps/sandbox-worker",
       "apps/server",
       "apps/web",
+      "apps/workspace-worker",
       "apps/zero-cache",
       "packages/*"
     ],
@@ -29,7 +30,9 @@
       "tailwindcss": "^4.2.4",
       "@types/react": "^19.2.10",
       "@types/react-dom": "^19.2.3",
-      "@rocicorp/zero": "1.7.0"
+      "@rocicorp/zero": "1.7.0",
+      "effect": "4.0.0-rc.109",
+      "@effect/vitest": "4.0.0-rc.109"
     }
   },
   "type": "module",
