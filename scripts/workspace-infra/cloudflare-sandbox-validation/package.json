@@ -1,0 +1,23 @@
+{
+  "name": "@cobalt-web/cloudflare-sandbox-validation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "deploy": "wrangler deploy",
+    "deploy:smoke": "bash scripts/deploy-and-smoke.sh",
+    "smoke": "bun run scripts/smoke.ts",
+    "test": "bun test",
+    "teardown": "bash scripts/teardown.sh",
+    "typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@cloudflare/sandbox": "0.12.7"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.5",
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.123.0"
+  }
+}
