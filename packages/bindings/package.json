@@ -13,7 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@tanstack/ai-code-mode": "^0.1.9",
+    "@tanstack/ai-code-mode": "^0.3.11",
     "financial": "^0.2.4",
     "zod": "catalog:"
   },
