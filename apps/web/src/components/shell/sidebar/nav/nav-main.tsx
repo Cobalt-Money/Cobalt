@@ -20,7 +20,7 @@ import type { ReactNode } from "react";
 import { Link } from "@/components/links";
 
 const navItemClassName =
-  "rounded-md px-2 py-1.5 text-[15px] font-[350] text-foreground/60 data-active:text-foreground data-active:font-[350] [&_svg]:size-[18px] [&_svg]:shrink-0";
+  "rounded-md px-2 py-1.5 text-[15px] font-[350] text-sidebar-foreground data-active:text-foreground data-active:font-[350] [&_svg]:size-[18px] [&_svg]:shrink-0";
 
 const NAV_MAIN_ITEMS = [
   {
