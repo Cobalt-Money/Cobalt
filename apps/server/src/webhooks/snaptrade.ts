@@ -55,14 +55,14 @@ function verifySignature(rawBody: string, signature: string): boolean {
   return timingSafeEqual(a, b);
 }
 
-const MAX_EVENT_AGE_SEC = 300;
 const FUTURE_SKEW_SEC = 60;
 
 /**
- * Reject events whose `eventTimestamp` is older than 5 minutes (replay) or
- * more than 60s in the future (clock skew). Per SnapTrade webhook docs.
+ * Require a valid timestamp and reject events too far in the future. Signed
+ * older events are accepted because SnapTrade's delivery retries begin after
+ * 30 minutes; lifecycle workflows refetch provider state and are idempotent.
  */
-function isFreshEvent(eventTimestamp: unknown): boolean {
+function hasValidEventTimestamp(eventTimestamp: unknown): boolean {
   if (typeof eventTimestamp !== "string") {
     return false;
   }
@@ -71,7 +71,7 @@ function isFreshEvent(eventTimestamp: unknown): boolean {
     return false;
   }
   const ageSec = (Date.now() - parsed) / 1000;
-  return ageSec <= MAX_EVENT_AGE_SEC && ageSec >= -FUTURE_SKEW_SEC;
+  return ageSec >= -FUTURE_SKEW_SEC;
 }
 
 interface SnaptradeEventPayload {
@@ -225,8 +225,8 @@ export const snaptradeWebhookRouter = new Hono().post("/", async (c) => {
     }
 
     // Replay protection: drop events whose eventTimestamp is stale or far-future.
-    if (!isFreshEvent((body as { eventTimestamp?: unknown }).eventTimestamp)) {
-      console.error("[snaptrade] Stale or missing eventTimestamp", {
+    if (!hasValidEventTimestamp((body as { eventTimestamp?: unknown }).eventTimestamp)) {
+      console.error("[snaptrade] Invalid or future eventTimestamp", {
         eventTimestamp: (body as { eventTimestamp?: unknown }).eventTimestamp,
         eventType,
       });

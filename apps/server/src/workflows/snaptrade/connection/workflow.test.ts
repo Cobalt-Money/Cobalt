@@ -5,6 +5,7 @@ import { insertAlertStep, resolveAlertsStep } from "../../shared/alert-steps";
 import {
   deleteSnaptradeAuthorizationStep,
   fetchAccountsStep,
+  fetchBrokerageAuthorizationStep,
   getSnapTradeUserCredentialsStep,
   getSnaptradeAuthorizationDbIdStep,
   syncAccountBalancesStep,
@@ -30,6 +31,7 @@ import {
 vi.mock(import("./steps"), () => ({
   deleteSnaptradeAuthorizationStep: vi.fn(),
   fetchAccountsStep: vi.fn(),
+  fetchBrokerageAuthorizationStep: vi.fn(),
   getSnapTradeUserCredentialsStep: vi.fn(),
   getSnaptradeAuthorizationDbIdStep: vi.fn(),
   seedTodaySnaptradeSnapshotsStep: vi.fn(),
@@ -97,6 +99,8 @@ describe("snaptradeConnectionUpdatedWorkflow / FixedWorkflow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getSnapTradeUserCredentialsStep).mockResolvedValue(credentials);
+    vi.mocked(fetchBrokerageAuthorizationStep).mockResolvedValue({ disabled: false } as never);
+    vi.mocked(getSnaptradeAuthorizationDbIdStep).mockResolvedValue("auth-db-x");
     vi.mocked(fetchAccountsStep).mockResolvedValue([] as never);
   });
 
@@ -115,22 +119,45 @@ describe("snaptradeConnectionUpdatedWorkflow / FixedWorkflow", () => {
         source: ALERT_SOURCES.SNAPTRADE,
         sourceId: "auth-x",
       });
-      expect(upsertAccountsStep).toHaveBeenCalledWith([], "auth-x", "app-user-1");
+      expect(fetchBrokerageAuthorizationStep).toHaveBeenCalledWith("auth-x", credentials);
+      expect(upsertAccountsStep).toHaveBeenCalledWith([], "auth-db-x", "app-user-1");
       expect(out).toStrictEqual({ eventType, success: true, userId: "user-x" });
     },
   );
+
+  it("keeps the connection disabled when a delayed fixed event arrives", async () => {
+    vi.mocked(fetchBrokerageAuthorizationStep).mockResolvedValueOnce({ disabled: true } as never);
+
+    await snaptradeConnectionFixedWorkflow({
+      brokerageAuthorizationId: "auth-x",
+      userId: "user-x",
+    });
+
+    expect(updateAuthorizationStatusStep).toHaveBeenCalledWith("auth-x", true);
+    expect(insertAlertStep).toHaveBeenCalledWith({
+      source: ALERT_SOURCES.SNAPTRADE,
+      sourceId: "auth-x",
+      type: ALERT_TYPES.CONNECTION_BROKEN,
+      userId: "user-x",
+    });
+    expect(resolveAlertsStep).not.toHaveBeenCalled();
+    expect(fetchAccountsStep).not.toHaveBeenCalled();
+  });
 });
 
 describe("snaptradeConnectionBrokenWorkflow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getSnapTradeUserCredentialsStep).mockResolvedValue(credentials);
+    vi.mocked(fetchBrokerageAuthorizationStep).mockResolvedValue({ disabled: true } as never);
   });
 
-  it("disables auth + opens connection-broken alert", async () => {
+  it("refetches provider state before disabling auth and opening an alert", async () => {
     const out = await snaptradeConnectionBrokenWorkflow({
       brokerageAuthorizationId: "auth-b",
       userId: "user-b",
     });
+    expect(fetchBrokerageAuthorizationStep).toHaveBeenCalledWith("auth-b", credentials);
     expect(updateAuthorizationStatusStep).toHaveBeenCalledWith("auth-b", true);
     expect(insertAlertStep).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -141,6 +168,20 @@ describe("snaptradeConnectionBrokenWorkflow", () => {
       }),
     );
     expect(out.success).toBeTruthy();
+  });
+
+  it("throws when provider state cannot be fetched so Workflow retries", async () => {
+    vi.mocked(fetchBrokerageAuthorizationStep).mockRejectedValueOnce(new Error("snap api"));
+
+    await expect(
+      snaptradeConnectionBrokenWorkflow({
+        brokerageAuthorizationId: "auth-b",
+        userId: "user-b",
+      }),
+    ).rejects.toThrow("snap api");
+
+    expect(updateAuthorizationStatusStep).not.toHaveBeenCalled();
+    expect(insertAlertStep).not.toHaveBeenCalled();
   });
 });
 

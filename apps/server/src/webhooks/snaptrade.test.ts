@@ -282,16 +282,17 @@ describe("snaptrade webhook router — replay protection", () => {
     expect(mockStart).not.toHaveBeenCalled();
   });
 
-  it("returns 401 when eventTimestamp is older than 5 minutes", async () => {
-    const stale = new Date(Date.now() - 6 * 60 * 1000).toISOString();
+  it("accepts a signed event delayed by SnapTrade's retry backoff", async () => {
+    const delayed = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const body = {
-      eventTimestamp: stale,
+      brokerageAuthorizationId: "auth-1",
+      eventTimestamp: delayed,
       eventType: "CONNECTION_ADDED",
       userId: "user-1",
     };
     const res = await postWebhook(body, sign(body));
-    expect(res.status).toBe(401);
-    expect(mockStart).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(mockStart).toHaveBeenCalledOnce();
   });
 
   it("returns 401 when eventTimestamp is far in the future", async () => {

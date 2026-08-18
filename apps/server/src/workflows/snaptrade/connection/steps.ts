@@ -10,6 +10,8 @@ import { getAccountActivities } from "@cobalt-web/server-data/providers/snaptrad
 import { upsertAccountActivities } from "@cobalt-web/server-data/providers/snaptrade/activities/mutations";
 import { getLastActivitySyncDate } from "@cobalt-web/server-data/providers/snaptrade/activities/queries";
 import { getSnapTradeUserCredentials } from "@cobalt-web/server-data/providers/snaptrade/auth/queries";
+import { getBrokerageAuthorization } from "@cobalt-web/server-data/providers/snaptrade/authorizations/actions";
+import type { BrokerageAuthorizationState } from "@cobalt-web/server-data/providers/snaptrade/authorizations/actions";
 import {
   deleteSnaptradeAuthorization,
   getSnaptradeAuthorizationDbId,
@@ -107,6 +109,27 @@ export async function fetchAccountsStep(userCredentials: UserCredentials): Promi
     const err = error as SnapTradeApiError;
     if (err.response?.status === 429) {
       throw new RetryableError("SnapTrade rate limited", { retryAfter: "1m" });
+    }
+    throw error;
+  }
+}
+
+export async function fetchBrokerageAuthorizationStep(
+  brokerageAuthorizationId: string,
+  userCredentials: UserCredentials,
+): Promise<BrokerageAuthorizationState> {
+  "use step";
+
+  try {
+    return await getBrokerageAuthorization(brokerageAuthorizationId, userCredentials);
+  } catch (error: unknown) {
+    const err = error as SnapTradeApiError;
+    const status = err.response?.status;
+    if (status === 429) {
+      throw new RetryableError("SnapTrade rate limited", { retryAfter: "1m" });
+    }
+    if (status && status >= 500) {
+      throw new RetryableError("SnapTrade authorization lookup failed");
     }
     throw error;
   }
