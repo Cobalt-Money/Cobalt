@@ -5,6 +5,7 @@ import { insertAlertStep, resolveAlertsStep } from "../../shared/alert-steps";
 import {
   deleteSnaptradeAuthorizationStep,
   fetchAccountsStep,
+  fetchBrokerageAuthorizationStep,
   getSnapTradeUserCredentialsStep,
   seedTodaySnaptradeSnapshotsStep,
   syncAccountBalancesStep,
@@ -62,58 +63,21 @@ export async function snaptradeConnectionAddedWorkflow(
   }
 }
 
-async function snaptradeConnectionRepairedWorkflow(
+async function syncSnaptradeConnectionState(
   params: ConnectionUpdatedParams,
-  eventType: "CONNECTION_UPDATED" | "CONNECTION_FIXED",
+  eventType: "CONNECTION_UPDATED" | "CONNECTION_FIXED" | "CONNECTION_BROKEN",
 ): Promise<SnapTradeWorkflowResult> {
   const { userId, brokerageAuthorizationId } = params;
 
-  try {
-    const userCredentials = await getSnapTradeUserCredentialsStep(userId);
+  const userCredentials = await getSnapTradeUserCredentialsStep(userId);
+  const authorization = await fetchBrokerageAuthorizationStep(
+    brokerageAuthorizationId,
+    userCredentials,
+  );
 
-    await updateAuthorizationStatusStep(brokerageAuthorizationId, false);
+  await updateAuthorizationStatusStep(brokerageAuthorizationId, authorization.disabled);
 
-    await resolveAlertsStep({
-      source: ALERT_SOURCES.SNAPTRADE,
-      sourceId: brokerageAuthorizationId,
-    });
-
-    const accounts = await fetchAccountsStep(userCredentials);
-
-    await upsertAccountsStep(accounts, brokerageAuthorizationId, userCredentials.appUserId);
-
-    return { eventType, success: true, userId };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
-    return { error: errorMessage, eventType, success: false, userId };
-  }
-}
-
-export async function snaptradeConnectionUpdatedWorkflow(
-  params: ConnectionUpdatedParams,
-): Promise<SnapTradeWorkflowResult> {
-  "use workflow";
-  return await snaptradeConnectionRepairedWorkflow(params, "CONNECTION_UPDATED");
-}
-
-export async function snaptradeConnectionFixedWorkflow(
-  params: ConnectionUpdatedParams,
-): Promise<SnapTradeWorkflowResult> {
-  "use workflow";
-  return await snaptradeConnectionRepairedWorkflow(params, "CONNECTION_FIXED");
-}
-
-export async function snaptradeConnectionBrokenWorkflow(
-  params: ConnectionBrokenParams,
-): Promise<SnapTradeWorkflowResult> {
-  "use workflow";
-
-  const { userId, brokerageAuthorizationId } = params;
-
-  try {
-    await updateAuthorizationStatusStep(brokerageAuthorizationId, true);
-
+  if (authorization.disabled) {
     await insertAlertStep({
       source: ALERT_SOURCES.SNAPTRADE,
       sourceId: brokerageAuthorizationId,
@@ -121,17 +85,42 @@ export async function snaptradeConnectionBrokenWorkflow(
       userId,
     });
 
-    return { eventType: "CONNECTION_BROKEN", success: true, userId };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
-    return {
-      error: errorMessage,
-      eventType: "CONNECTION_BROKEN",
-      success: false,
-      userId,
-    };
+    return { eventType, success: true, userId };
   }
+
+  await resolveAlertsStep({
+    source: ALERT_SOURCES.SNAPTRADE,
+    sourceId: brokerageAuthorizationId,
+  });
+
+  const authDbId = await getSnaptradeAuthorizationDbIdStep(brokerageAuthorizationId);
+  const accounts = await fetchAccountsStep(userCredentials);
+
+  await upsertAccountsStep(accounts, authDbId, userCredentials.appUserId);
+
+  return { eventType, success: true, userId };
+}
+
+export async function snaptradeConnectionUpdatedWorkflow(
+  params: ConnectionUpdatedParams,
+): Promise<SnapTradeWorkflowResult> {
+  "use workflow";
+  return await syncSnaptradeConnectionState(params, "CONNECTION_UPDATED");
+}
+
+export async function snaptradeConnectionFixedWorkflow(
+  params: ConnectionUpdatedParams,
+): Promise<SnapTradeWorkflowResult> {
+  "use workflow";
+  return await syncSnaptradeConnectionState(params, "CONNECTION_FIXED");
+}
+
+export async function snaptradeConnectionBrokenWorkflow(
+  params: ConnectionBrokenParams,
+): Promise<SnapTradeWorkflowResult> {
+  "use workflow";
+
+  return await syncSnaptradeConnectionState(params, "CONNECTION_BROKEN");
 }
 
 export async function snaptradeHoldingsUpdatedWorkflow(
