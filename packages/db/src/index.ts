@@ -28,6 +28,7 @@ import * as accountMappingCacheSchema from "./schema/imports/account-mapping-cac
 import * as categoryMappingCacheSchema from "./schema/imports/category-mapping-cache";
 import * as chatSchema from "./schema/ai/chat";
 import * as messageVotesSchema from "./schema/ai/message-votes";
+import * as workspaceSchema from "./schema/ai/workspace";
 import * as financialGoalsSchema from "./schema/goals/financial-goals";
 import * as plaidConnectionSchema from "./schema/providers/plaid/connection";
 import * as institutionSchema from "./schema/providers/plaid/institution";
@@ -52,6 +53,7 @@ export const db = drizzle({
     ...authSchema,
     ...chatSchema,
     ...messageVotesSchema,
+    ...workspaceSchema,
     ...financialAccountSchema,
     ...balanceSchema,
     ...snapshotSchema,

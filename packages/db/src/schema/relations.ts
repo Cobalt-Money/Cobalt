@@ -26,6 +26,7 @@ import { kalshiUsers } from "./accounts/prediction-markets/kalshi";
 import { snapshot } from "./accounts/snapshot";
 import { chats, messages, parts } from "./ai/chat";
 import { messageVotes } from "./ai/message-votes";
+import { agentWorkspaces, workspaceFiles } from "./ai/workspace";
 import { financialGoals } from "./goals/financial-goals";
 import { plaidConnection } from "./providers/plaid/connection";
 import { institution } from "./providers/plaid/institution";
@@ -43,6 +44,7 @@ import { subscription } from "./users/subscriptions/stripe";
 const schema = {
   account,
   accountMappingCache,
+  agentWorkspaces,
   balance,
   category,
   categoryGroup,
@@ -83,12 +85,24 @@ const schema = {
   transactionTag,
   user,
   userAlerts,
+  workspaceFiles,
 } as const;
 
 export const relations = defineRelations(schema, (r) => ({
   account: {
     user: r.one.user({
       from: r.account.userId,
+      to: r.user.id,
+    }),
+  },
+
+  agentWorkspaces: {
+    files: r.many.workspaceFiles({
+      from: [r.agentWorkspaces.userId, r.agentWorkspaces.workspaceId],
+      to: [r.workspaceFiles.userId, r.workspaceFiles.workspaceId],
+    }),
+    user: r.one.user({
+      from: r.agentWorkspaces.userId,
       to: r.user.id,
     }),
   },
@@ -552,6 +566,10 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.user.id,
       to: r.account.userId,
     }),
+    agentWorkspaces: r.many.agentWorkspaces({
+      from: r.user.id,
+      to: r.agentWorkspaces.userId,
+    }),
     balances: r.many.balance({
       from: r.user.id,
       to: r.balance.userId,
@@ -646,6 +664,14 @@ export const relations = defineRelations(schema, (r) => ({
     user: r.one.user({
       from: r.userAlerts.userId,
       to: r.user.id,
+    }),
+  },
+
+  workspaceFiles: {
+    workspace: r.one.agentWorkspaces({
+      from: [r.workspaceFiles.userId, r.workspaceFiles.workspaceId],
+      optional: false,
+      to: [r.agentWorkspaces.userId, r.agentWorkspaces.workspaceId],
     }),
   },
 }));

@@ -2,6 +2,7 @@
 export { account, session, user, verification } from "./users/auth/auth";
 export { chats, messages, parts } from "./ai/chat";
 export { messageVotes } from "./ai/message-votes";
+export { agentWorkspaces, workspaceFiles } from "./ai/workspace";
 export { financialAccount } from "./accounts/account";
 export { balance } from "./accounts/balance";
 export { snapshot } from "./accounts/snapshot";
