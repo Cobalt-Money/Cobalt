@@ -5,6 +5,7 @@ import { insertAlertStep, resolveAlertsStep } from "../../shared/alert-steps";
 import {
   deleteSnaptradeAuthorizationStep,
   fetchAccountsStep,
+  fetchBrokerageAuthorizationsStep,
   fetchBrokerageAuthorizationStep,
   getSnapTradeUserCredentialsStep,
   seedTodaySnaptradeSnapshotsStep,
@@ -24,10 +25,44 @@ import type {
   ConnectionAddedParams,
   ConnectionBrokenParams,
   ConnectionDeletedParams,
+  ConnectionReconciliationParams,
   ConnectionUpdatedParams,
   HoldingsUpdatedParams,
   SnapTradeWorkflowResult,
 } from "./steps";
+
+export async function snaptradeConnectionReconciliationWorkflow(
+  params: ConnectionReconciliationParams,
+): Promise<SnapTradeWorkflowResult> {
+  "use workflow";
+
+  const { brokerageAuthorizationIds, userId } = params;
+  const userCredentials = await getSnapTradeUserCredentialsStep(userId);
+  const authorizations = await fetchBrokerageAuthorizationsStep(userCredentials);
+
+  for (const authorization of authorizations) {
+    const authorizationId = authorization.id;
+    if (!authorizationId || !brokerageAuthorizationIds.includes(authorizationId)) {
+      continue;
+    }
+
+    await updateAuthorizationStatusStep(authorizationId, authorization.disabled);
+
+    await (authorization.disabled
+      ? insertAlertStep({
+          source: ALERT_SOURCES.SNAPTRADE,
+          sourceId: authorizationId,
+          type: ALERT_TYPES.CONNECTION_BROKEN,
+          userId: userCredentials.appUserId,
+        })
+      : resolveAlertsStep({
+          source: ALERT_SOURCES.SNAPTRADE,
+          sourceId: authorizationId,
+        }));
+  }
+
+  return { eventType: "CONNECTION_RECONCILIATION", success: true, userId };
+}
 
 export async function snaptradeConnectionAddedWorkflow(
   params: ConnectionAddedParams,
