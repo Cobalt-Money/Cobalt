@@ -5,6 +5,7 @@ import { insertAlertStep, resolveAlertsStep } from "../../shared/alert-steps";
 import {
   deleteSnaptradeAuthorizationStep,
   fetchAccountsStep,
+  fetchBrokerageAuthorizationsStep,
   fetchBrokerageAuthorizationStep,
   getSnapTradeUserCredentialsStep,
   getSnaptradeAuthorizationDbIdStep,
@@ -24,6 +25,7 @@ import {
   snaptradeConnectionBrokenWorkflow,
   snaptradeConnectionDeletedWorkflow,
   snaptradeConnectionFixedWorkflow,
+  snaptradeConnectionReconciliationWorkflow,
   snaptradeConnectionUpdatedWorkflow,
   snaptradeHoldingsUpdatedWorkflow,
 } from "./workflow";
@@ -32,6 +34,7 @@ vi.mock(import("./steps"), () => ({
   deleteSnaptradeAuthorizationStep: vi.fn(),
   fetchAccountsStep: vi.fn(),
   fetchBrokerageAuthorizationStep: vi.fn(),
+  fetchBrokerageAuthorizationsStep: vi.fn(),
   getSnapTradeUserCredentialsStep: vi.fn(),
   getSnaptradeAuthorizationDbIdStep: vi.fn(),
   seedTodaySnaptradeSnapshotsStep: vi.fn(),
@@ -53,6 +56,43 @@ vi.mock(import("../../shared/alert-steps"), () => ({
 }));
 
 const credentials = { appUserId: "app-user-1", userSecret: "secret" } as never;
+
+describe("snaptradeConnectionReconciliationWorkflow", () => {
+  it("reconciles known authorizations from one provider list call", async () => {
+    vi.clearAllMocks();
+    vi.mocked(getSnapTradeUserCredentialsStep).mockResolvedValue(credentials);
+    vi.mocked(fetchBrokerageAuthorizationsStep).mockResolvedValue([
+      { disabled: true, id: "auth-broken" },
+      { disabled: false, id: "auth-healthy" },
+      { disabled: true, id: "auth-not-local" },
+    ] as never);
+
+    const out = await snaptradeConnectionReconciliationWorkflow({
+      brokerageAuthorizationIds: ["auth-broken", "auth-healthy"],
+      userId: "provider-user-1",
+    });
+
+    expect(fetchBrokerageAuthorizationsStep).toHaveBeenCalledExactlyOnceWith(credentials);
+    expect(updateAuthorizationStatusStep).toHaveBeenCalledTimes(2);
+    expect(updateAuthorizationStatusStep).toHaveBeenCalledWith("auth-broken", true);
+    expect(updateAuthorizationStatusStep).toHaveBeenCalledWith("auth-healthy", false);
+    expect(insertAlertStep).toHaveBeenCalledWith({
+      source: ALERT_SOURCES.SNAPTRADE,
+      sourceId: "auth-broken",
+      type: ALERT_TYPES.CONNECTION_BROKEN,
+      userId: "app-user-1",
+    });
+    expect(resolveAlertsStep).toHaveBeenCalledWith({
+      source: ALERT_SOURCES.SNAPTRADE,
+      sourceId: "auth-healthy",
+    });
+    expect(out).toStrictEqual({
+      eventType: "CONNECTION_RECONCILIATION",
+      success: true,
+      userId: "provider-user-1",
+    });
+  });
+});
 
 describe("snaptradeConnectionAddedWorkflow", () => {
   beforeEach(() => {
