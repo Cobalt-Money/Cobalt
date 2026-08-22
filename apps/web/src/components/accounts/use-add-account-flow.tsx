@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { institutionsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
 import { isDemoBlockedResponse } from "@/lib/clients/api-fetch";
 import { handleTierGateResponse } from "@/lib/upgrade-prompt";
+import { useSnaptradePortal } from "@/lib/providers/snaptrade-portal-provider";
 
 import { useOnboarding } from "./onboarding-context";
 import { PlaidOpeningCard } from "./plaid-opening-card";
@@ -98,6 +99,7 @@ export function useAccountLauncher(onDismiss: () => void) {
   const pendingPlaidRef = useRef(false);
   const [opening, setOpening] = useState(false);
   const { resolveLink, startOnboarding } = useOnboarding();
+  const { openSnaptradePortal } = useSnaptradePortal();
 
   const onPlaidSuccess = useCallback(
     async (publicToken: string, _metadata: PlaidLinkOnSuccessMetadata) => {
@@ -241,13 +243,13 @@ export function useAccountLauncher(onDismiss: () => void) {
         const { redirectURI } = await res.json();
         toast.dismiss(loadingId);
         onDismiss();
-        window.open(redirectURI, "_blank", "noopener,noreferrer");
+        openSnaptradePortal(redirectURI);
       } catch (error) {
         toast.dismiss(loadingId);
         toast.error(toErrorMessage(error, "Failed to open connection portal"));
       }
     },
-    [onDismiss],
+    [onDismiss, openSnaptradePortal],
   );
 
   const handleChoose = useCallback(
