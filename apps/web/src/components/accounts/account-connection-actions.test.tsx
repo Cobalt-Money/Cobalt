@@ -9,6 +9,17 @@ const { generateConnectionPortal } = vi.hoisted(() => ({
 }));
 
 vi.mock(
+  import("@cobalt-web/ui/cobalt/toasts"),
+  () =>
+    ({
+      cobaltToast: {
+        accountDisconnected: vi.fn(),
+        accountsUpdated: vi.fn(),
+      },
+    }) as unknown as typeof import("@cobalt-web/ui/cobalt/toasts"),
+);
+
+vi.mock(
   import("@/lib/clients/api-client"),
   () =>
     ({
