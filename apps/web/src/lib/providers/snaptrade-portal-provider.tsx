@@ -7,29 +7,21 @@ const SnapTradePortal = lazy(async () => {
   return { default: SnapTradeReact };
 });
 
-interface PortalOptions {
-  onSuccess?: (authorizationId: string) => void;
-}
-
 interface SnaptradePortalContextValue {
-  openSnaptradePortal: (loginLink: string, options?: PortalOptions) => void;
-}
-
-interface PortalSession extends PortalOptions {
-  loginLink: string;
+  openSnaptradePortal: (loginLink: string) => void;
 }
 
 const SnaptradePortalContext = createContext<SnaptradePortalContextValue | null>(null);
 
 export function SnaptradePortalProvider({ children }: { children: ReactNode }) {
-  const [portalSession, setPortalSession] = useState<PortalSession | null>(null);
+  const [loginLink, setLoginLink] = useState<string | null>(null);
 
   const closePortal = useCallback(() => {
-    setPortalSession(null);
+    setLoginLink(null);
   }, []);
 
-  const openSnaptradePortal = useCallback((loginLink: string, options?: PortalOptions) => {
-    setPortalSession({ loginLink, onSuccess: options?.onSuccess });
+  const openSnaptradePortal = useCallback((nextLoginLink: string) => {
+    setLoginLink(nextLoginLink);
   }, []);
 
   const value = useMemo(() => ({ openSnaptradePortal }), [openSnaptradePortal]);
@@ -37,21 +29,20 @@ export function SnaptradePortalProvider({ children }: { children: ReactNode }) {
   return (
     <SnaptradePortalContext.Provider value={value}>
       {children}
-      {portalSession ? (
+      {loginLink ? (
         <Suspense fallback={null}>
           <SnapTradePortal
             close={closePortal}
             contentLabel="Connect brokerage account"
             isOpen
-            loginLink={portalSession.loginLink}
+            loginLink={loginLink}
             onError={(error) => {
               closePortal();
               toast.error(error.detail || "Could not connect brokerage account");
             }}
             onExit={closePortal}
-            onSuccess={(authorizationId) => {
+            onSuccess={() => {
               closePortal();
-              portalSession.onSuccess?.(authorizationId);
               toast.success("Brokerage connection updated");
             }}
             style={{ overlay: { zIndex: 1000 } }}

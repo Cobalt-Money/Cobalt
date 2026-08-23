@@ -67,10 +67,6 @@ function getAlertCtaLabel(type: string): string {
 export function NotificationsSheet({ open, onOpenChange, previewAlerts }: NotificationsSheetProps) {
   const live = useUserAlerts();
   const alerts = previewAlerts ?? live.alerts;
-  const [locallyResolvedAlertIds, setLocallyResolvedAlertIds] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
-  const visibleAlerts = alerts.filter((alert) => !locallyResolvedAlertIds.has(alert.id));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [plaidToken, setPlaidToken] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
@@ -164,11 +160,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
           const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
           throw new Error(errMsg ?? "Could not open reconnect");
         }
-        openSnaptradePortal(data.redirectURI, {
-          onSuccess: () => {
-            setLocallyResolvedAlertIds((current) => new Set(current).add(alert.id));
-          },
-        });
+        openSnaptradePortal(data.redirectURI);
       }
     } catch (error) {
       setOpening(false);
@@ -186,14 +178,12 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
           <SheetHeader className="border-b">
             <div className="flex items-center gap-2">
               <SheetTitle>Notifications</SheetTitle>
-              {visibleAlerts.length > 0 ? (
-                <Badge variant="destructive">{visibleAlerts.length}</Badge>
-              ) : null}
+              {alerts.length > 0 ? <Badge variant="destructive">{alerts.length}</Badge> : null}
             </div>
             <SheetDescription>Connections that need your attention.</SheetDescription>
           </SheetHeader>
 
-          {visibleAlerts.length === 0 ? (
+          {alerts.length === 0 ? (
             <Empty className="flex-1">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -206,7 +196,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
           ) : (
             <ScrollArea className="flex-1">
               <ul className="flex flex-col gap-3 p-4">
-                {visibleAlerts.map((alert) => {
+                {alerts.map((alert) => {
                   const meta = getAlertMetadata(alert);
                   const isBusy = busyId === alert.id;
                   return (

@@ -33,13 +33,10 @@ vi.mock(
     }) as unknown as typeof import("snaptrade-react"),
 );
 
-function PortalLauncher({ onSuccess }: { onSuccess?: (authorizationId?: string) => void }) {
+function PortalLauncher() {
   const { openSnaptradePortal } = useSnaptradePortal();
   return (
-    <button
-      onClick={() => openSnaptradePortal("https://app.snaptrade.com/portal", { onSuccess })}
-      type="button"
-    >
+    <button onClick={() => openSnaptradePortal("https://app.snaptrade.com/portal")} type="button">
       Open
     </button>
   );
@@ -47,10 +44,9 @@ function PortalLauncher({ onSuccess }: { onSuccess?: (authorizationId?: string) 
 
 describe("SnaptradePortalProvider", () => {
   it("closes the portal and confirms a successful connection", async () => {
-    const onSuccess = vi.fn();
     render(
       <SnaptradePortalProvider>
-        <PortalLauncher onSuccess={onSuccess} />
+        <PortalLauncher />
       </SnaptradePortalProvider>,
     );
 
@@ -58,7 +54,6 @@ describe("SnaptradePortalProvider", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Complete" }));
 
     expect(screen.queryByLabelText("SnapTrade portal")).toBeNull();
-    expect(onSuccess).toHaveBeenCalledWith("authorization-1");
     expect(toastSuccess).toHaveBeenCalledWith("Brokerage connection updated");
   });
 
