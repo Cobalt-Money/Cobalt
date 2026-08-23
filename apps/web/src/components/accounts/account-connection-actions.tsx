@@ -19,6 +19,7 @@ import { usePlaidLink } from "react-plaid-link";
 import { toast } from "sonner";
 
 import { accountsApi, plaidApi, snaptradeApi } from "@/lib/clients/api-client";
+import { useSnaptradePortal } from "@/lib/providers/snaptrade-portal-provider";
 
 import { PlaidOpeningCard } from "./plaid-opening-card";
 import type { ReauthSession } from "./reauth-session";
@@ -65,6 +66,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
   // Cleared on success or exit so a stale session can't resolve a later flow.
   const sessionRef = useRef<ReauthSession | null>(null);
   const onboardingHost = useOptionalOnboardingHost();
+  const { openSnaptradePortal } = useSnaptradePortal();
 
   const onPlaidSuccess = useCallback(async () => {
     setPlaidToken(null);
@@ -180,7 +182,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
         const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
         throw new Error(errMsg ?? "Could not open reconnect");
       }
-      window.open(data.redirectURI, "_blank", "noopener,noreferrer");
+      openSnaptradePortal(data.redirectURI);
     } catch (error) {
       toast.error(toErrorMessage(error, "Reconnect failed"));
     } finally {

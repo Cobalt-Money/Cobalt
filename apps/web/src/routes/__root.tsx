@@ -17,6 +17,7 @@ import { NotFoundPage } from "../components/feedback/not-found-page";
 import { UpgradePromptHost } from "../components/upgrade/upgrade-prompt-host";
 import { AppSessionProvider } from "../lib/providers/app-session";
 import { DemoProvider } from "../lib/providers/demo-provider";
+import { SnaptradePortalProvider } from "../lib/providers/snaptrade-portal-provider";
 import type { RouterContext } from "../router";
 import appCss from "@cobalt-web/ui/globals.css?url";
 import {
@@ -152,12 +153,14 @@ function RootShell({ children }: { children: ReactNode }) {
           <QueryClientProvider client={queryClient}>
             <AppSessionProvider>
               <DemoProvider>
-                <TooltipProvider>
-                  <HotkeysProvider>
-                    {children}
-                    <UpgradePromptHost />
-                  </HotkeysProvider>
-                </TooltipProvider>
+                <SnaptradePortalProvider>
+                  <TooltipProvider>
+                    <HotkeysProvider>
+                      {children}
+                      <UpgradePromptHost />
+                    </HotkeysProvider>
+                  </TooltipProvider>
+                </SnaptradePortalProvider>
               </DemoProvider>
             </AppSessionProvider>
           </QueryClientProvider>

@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import type { UserAlertRow } from "@/hooks/use-user-alerts";
 import { useUserAlerts } from "@/hooks/use-user-alerts";
 import { plaidApi, snaptradeApi } from "@/lib/clients/api-client";
+import { useSnaptradePortal } from "@/lib/providers/snaptrade-portal-provider";
 
 import { useOnboarding } from "../accounts/onboarding-context";
 import { PlaidOpeningCard } from "../accounts/plaid-opening-card";
@@ -71,6 +72,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
   const [opening, setOpening] = useState(false);
   const sessionRef = useRef<ReauthSession | null>(null);
   const { resolveLink, startOnboarding } = useOnboarding();
+  const { openSnaptradePortal } = useSnaptradePortal();
 
   const handlePlaidSuccess = useCallback(async () => {
     setPlaidToken(null);
@@ -158,7 +160,7 @@ export function NotificationsSheet({ open, onOpenChange, previewAlerts }: Notifi
           const errMsg = "error" in data && typeof data.error === "string" ? data.error : undefined;
           throw new Error(errMsg ?? "Could not open reconnect");
         }
-        window.open(data.redirectURI, "_blank", "noopener,noreferrer");
+        openSnaptradePortal(data.redirectURI);
       }
     } catch (error) {
       setOpening(false);
