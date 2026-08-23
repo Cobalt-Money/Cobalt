@@ -5,11 +5,20 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "dev": "wrangler dev",
+    "test": "bun test",
+    "typegen": "wrangler types",
+    "verify:bundle": "wrangler deploy --dry-run"
+  },
+  "dependencies": {
+    "@cloudflare/sandbox": "0.12.7"
   },
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
     "@types/bun": "catalog:",
-    "typescript": "^7.0.2"
+    "@types/node": "^24.10.1",
+    "typescript": "^7.0.2",
+    "wrangler": "4.123.0"
   }
 }

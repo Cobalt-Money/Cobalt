@@ -1,0 +1,2 @@
+BRIDGE_AUTH_SECRET=replace-with-a-long-random-local-secret
+LOCAL_R2_MOUNTS=true

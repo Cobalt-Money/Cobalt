@@ -1,0 +1,47 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cobalt-workspace-preview",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-16",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "LOCAL_R2_MOUNTS": "false",
+    "SANDBOX_TRANSPORT": "rpc",
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+  "containers": [
+    {
+      "class_name": "Sandbox",
+      "image": "./Dockerfile",
+      "instance_type": "basic",
+      "max_instances": 25,
+    },
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "class_name": "Sandbox",
+        "name": "Sandbox",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "new_sqlite_classes": ["Sandbox"],
+      "tag": "v1",
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "WORKSPACE_UPLOADS",
+      "bucket_name": "cobalt-workspaces",
+    },
+    {
+      "binding": "WORKSPACE_OUTPUTS",
+      "bucket_name": "cobalt-workspaces",
+    },
+  ],
+}
