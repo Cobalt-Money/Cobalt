@@ -47,14 +47,14 @@ vi.mock(import("react-plaid-link"), async (importOriginal) => {
   };
 });
 
-vi.mock(import("snaptrade-react"), async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    SnapTradeReact: (({ contentLabel, isOpen }) =>
-      isOpen ? <iframe title={contentLabel} /> : null) as typeof actual.SnapTradeReact,
-  };
-});
+vi.mock(
+  import("snaptrade-react"),
+  () =>
+    ({
+      SnapTradeReact: ({ contentLabel, isOpen }: { contentLabel?: string; isOpen: boolean }) =>
+        isOpen ? <iframe title={contentLabel} /> : null,
+    }) as unknown as typeof import("snaptrade-react"),
+);
 
 describe("AccountConnectionActions", () => {
   it("keeps a SnapTrade reconnect inside the app instead of opening an unmanaged tab", async () => {

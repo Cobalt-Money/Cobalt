@@ -7,25 +7,31 @@ import { SnaptradePortalProvider, useSnaptradePortal } from "./snaptrade-portal-
 const toastError = vi.spyOn(toast, "error").mockReturnValue("error-toast");
 const toastSuccess = vi.spyOn(toast, "success").mockReturnValue("success-toast");
 
-vi.mock(import("snaptrade-react"), async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    SnapTradeReact: (({ onError, onSuccess }) => (
-      <div aria-label="SnapTrade portal">
-        <button onClick={() => onSuccess?.("authorization-1")} type="button">
-          Complete
-        </button>
-        <button
-          onClick={() => onError?.({ detail: "Fidelity is unavailable", statusCode: "500" })}
-          type="button"
-        >
-          Fail
-        </button>
-      </div>
-    )) as typeof actual.SnapTradeReact,
-  };
-});
+vi.mock(
+  import("snaptrade-react"),
+  () =>
+    ({
+      SnapTradeReact: ({
+        onError,
+        onSuccess,
+      }: {
+        onError?: (error: { detail: string; statusCode: string }) => void;
+        onSuccess?: (authorizationId: string) => void;
+      }) => (
+        <div aria-label="SnapTrade portal">
+          <button onClick={() => onSuccess?.("authorization-1")} type="button">
+            Complete
+          </button>
+          <button
+            onClick={() => onError?.({ detail: "Fidelity is unavailable", statusCode: "500" })}
+            type="button"
+          >
+            Fail
+          </button>
+        </div>
+      ),
+    }) as unknown as typeof import("snaptrade-react"),
+);
 
 function PortalLauncher({ onSuccess }: { onSuccess?: (authorizationId?: string) => void }) {
   const { openSnaptradePortal } = useSnaptradePortal();
