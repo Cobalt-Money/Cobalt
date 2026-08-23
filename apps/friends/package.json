@@ -47,7 +47,7 @@
     "react-plaid-link": "^4.1.1",
     "sonner": "catalog:",
     "tailwindcss": "catalog:",
-    "vite": "^7.0.0"
+    "vite": "^8.2.1"
   },
   "devDependencies": {
     "@react-grab/mcp": "^0.1.29",
@@ -55,7 +55,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "^5.2.0",
-    "react-grab": "^0.1.29",
+    "react-grab": "^0.2.0",
     "typescript": "^7.0.2",
     "vitest": "^3.2.6"
   }
