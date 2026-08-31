@@ -18,11 +18,11 @@
   "devDependencies": {
     "@cobalt-web/config": "workspace:*",
     "@types/react": "catalog:",
-    "@vitejs/plugin-react": "^5.2.0",
+    "@vitejs/plugin-react": "^6.1.0",
     "jsdom": "^26.0.0",
     "react": "catalog:",
     "typescript": "^7.0.2",
-    "vitest": "^3.2.6"
+    "vitest": "^4.1.11"
   },
   "peerDependencies": {
     "react": "catalog:"
