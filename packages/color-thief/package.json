@@ -22,7 +22,7 @@
     "jsdom": "^26.0.0",
     "react": "catalog:",
     "typescript": "^7.0.2",
-    "vitest": "^3.2.6"
+    "vitest": "^4.1.11"
   },
   "peerDependencies": {
     "react": "catalog:"
