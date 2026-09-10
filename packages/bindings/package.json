@@ -21,6 +21,6 @@
     "@cobalt-web/config": "workspace:*",
     "@types/bun": "catalog:",
     "typescript": "^7.0.2",
-    "vitest": "^3.2.6"
+    "vitest": "^5.0.0"
   }
 }
