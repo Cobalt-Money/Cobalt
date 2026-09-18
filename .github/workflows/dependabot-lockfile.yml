@@ -121,7 +121,7 @@ jobs:
                 echo "::warning::bun install failed on #$pr (attempt $attempt)"
                 break
               fi
-              if bun install --frozen-lockfile >/dev/null 2>&1; then
+              if bun install --frozen-lockfile --ignore-scripts >/dev/null 2>&1; then
                 echo "lockfile converged after $attempt install pass(es)"
                 converged=true
                 break
@@ -140,7 +140,10 @@ jobs:
               echo "bun.lock already in sync on #$pr"
             else
               git add bun.lock
-              git commit -q -m "chore(deps): regenerate bun.lock" \
+              # This job only repairs the lockfile. Leave app checks/builds to
+              # PR CI: local hooks require app env vars unavailable here.
+              # Disable hooks for this commit only and satisfy the DCO check.
+              git -c core.hooksPath=/dev/null commit -q -s -m "chore(deps): regenerate bun.lock" \
                 -m "Dependabot cannot update bun.lock, so the frozen-lockfile install in CI failed before any real check could run."
               if git push -q origin "HEAD:refs/heads/$branch"; then
                 echo "Pushed regenerated bun.lock to #$pr"
