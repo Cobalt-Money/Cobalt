@@ -40,7 +40,7 @@
     "better-auth": "catalog:",
     "deck.gl": "^9.1.0",
     "hono": "^4.12.8",
-    "maplibre-gl": "^4.7.1",
+    "maplibre-gl": "^6.10.0",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-map-gl": "^7.1.7",
