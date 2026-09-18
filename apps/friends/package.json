@@ -57,6 +57,6 @@
     "@vitejs/plugin-react": "^5.2.0",
     "react-grab": "^0.1.29",
     "typescript": "^7.0.2",
-    "vitest": "^3.2.6"
+    "vitest": "catalog:"
   }
 }
