@@ -2,7 +2,7 @@ import { Kbd, KbdGroup } from "@cobalt-web/ui/components/kbd";
 import { cn } from "@cobalt-web/ui/lib/utils";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface SelectionActionBarProps {
   count: number;
@@ -31,11 +31,11 @@ export function SelectionActionBar({
   const [shown, setShown] = useState(false);
   // Capture last non-zero count so exit animation shows the prior label
   // instead of flashing "0 selected" while the bar slides away.
-  const lastCount = useRef(count);
-  if (count > 0) {
-    lastCount.current = count;
+  const [lastCount, setLastCount] = useState(count);
+  if (count > 0 && count !== lastCount) {
+    setLastCount(count);
   }
-  const displayCount = count > 0 ? count : lastCount.current;
+  const displayCount = count > 0 ? count : lastCount;
 
   useEffect(() => {
     if (visible) {

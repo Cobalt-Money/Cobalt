@@ -5,7 +5,7 @@ import { Icon } from "@cobalt-web/ui/components/icon";
 import { PrivateAmount } from "@cobalt-web/ui/components/privacy";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { format } from "date-fns";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 export interface ActivityRow {
   id: string;
@@ -85,10 +85,10 @@ export function RecentActivityCard({
 
   const activityTotalPages = Math.max(1, Math.ceil(scopedActivities.length / ACTIVITY_PAGE_SIZE));
 
-  useEffect(() => {
-    const maxIdx = activityTotalPages - 1;
-    setActivityPageIndex((i) => (i > maxIdx ? maxIdx : i));
-  }, [activityTotalPages]);
+  // Adjust before committing so a shrinking result set never paints an empty page.
+  if (activityPageIndex >= activityTotalPages) {
+    setActivityPageIndex(activityTotalPages - 1);
+  }
 
   const activityPageSlice = useMemo(() => {
     const start = activityPageIndex * ACTIVITY_PAGE_SIZE;
@@ -108,9 +108,7 @@ export function RecentActivityCard({
     >
       <CardContent className="flex min-h-0 flex-1 flex-col gap-2 px-5 py-4">
         <div className="shrink-0">
-          <p className="text-muted-foreground text-[11px] font-medium tracking uppercase">
-            Recent activity
-          </p>
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Recent activity</p>
         </div>
         <ul className="flex-1">
           {scopedActivities.length === 0 ? (

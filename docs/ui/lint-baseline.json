@@ -1,0 +1,319 @@
+{
+  "date": "2026-09-18",
+  "baseCommit": "e8bf0f322c7875320876e6d71f059d18c476b03c",
+  "scope": "Working tree after lint tooling fixes; not a count of confirmed bugs.",
+  "general": {
+    "diagnostics": 993,
+    "locations": 987,
+    "files": 377,
+    "rules": [
+      {
+        "rule": "react(function-component-definition)",
+        "diagnostics": 515,
+        "locations": 515,
+        "files": 272
+      },
+      {
+        "rule": "eslint(no-await-in-loop)",
+        "diagnostics": 113,
+        "locations": 113,
+        "files": 47
+      },
+      {
+        "rule": "react(no-unescaped-entities)",
+        "diagnostics": 61,
+        "locations": 61,
+        "files": 15
+      },
+      {
+        "rule": "eslint(prefer-named-capture-group)",
+        "diagnostics": 54,
+        "locations": 54,
+        "files": 21
+      },
+      {
+        "rule": "react(todo)",
+        "diagnostics": 43,
+        "locations": 43,
+        "files": 18
+      },
+      {
+        "rule": "react(jsx-handler-names)",
+        "diagnostics": 33,
+        "locations": 33,
+        "files": 5
+      },
+      {
+        "rule": "react(set-state-in-effect)",
+        "diagnostics": 32,
+        "locations": 32,
+        "files": 28
+      },
+      {
+        "rule": "unicorn(prefer-number-coercion)",
+        "diagnostics": 21,
+        "locations": 21,
+        "files": 15
+      },
+      {
+        "rule": "react(refs)",
+        "diagnostics": 20,
+        "locations": 20,
+        "files": 7
+      },
+      {
+        "rule": "node(callback-return)",
+        "diagnostics": 19,
+        "locations": 19,
+        "files": 14
+      },
+      {
+        "rule": "unicorn(import-style)",
+        "diagnostics": 14,
+        "locations": 14,
+        "files": 14
+      },
+      {
+        "rule": "react(exhaustive-effect-dependencies)",
+        "diagnostics": 9,
+        "locations": 9,
+        "files": 9
+      },
+      {
+        "rule": "unicorn(prefer-export-from)",
+        "diagnostics": 9,
+        "locations": 6,
+        "files": 6
+      },
+      {
+        "rule": "eslint(no-void)",
+        "diagnostics": 8,
+        "locations": 8,
+        "files": 4
+      },
+      {
+        "rule": "react(display-name)",
+        "diagnostics": 7,
+        "locations": 7,
+        "files": 5
+      },
+      {
+        "rule": "react(memo-dependencies)",
+        "diagnostics": 5,
+        "locations": 5,
+        "files": 2
+      },
+      {
+        "rule": "react(hook-use-state)",
+        "diagnostics": 4,
+        "locations": 4,
+        "files": 4
+      },
+      {
+        "rule": "typescript(method-signature-style)",
+        "diagnostics": 4,
+        "locations": 4,
+        "files": 2
+      },
+      {
+        "rule": "react(rule-suppression)",
+        "diagnostics": 3,
+        "locations": 3,
+        "files": 3
+      },
+      {
+        "rule": "react(no-deriving-state-in-effects)",
+        "diagnostics": 3,
+        "locations": 3,
+        "files": 3
+      },
+      {
+        "rule": "unicorn(prefer-single-call)",
+        "diagnostics": 3,
+        "locations": 3,
+        "files": 3
+      },
+      {
+        "rule": "jsdoc(require-yields-description)",
+        "diagnostics": 2,
+        "locations": 2,
+        "files": 1
+      },
+      {
+        "rule": "eslint(no-redeclare)",
+        "diagnostics": 2,
+        "locations": 2,
+        "files": 1
+      },
+      {
+        "rule": "react(incompatible-library)",
+        "diagnostics": 2,
+        "locations": 2,
+        "files": 2
+      },
+      {
+        "rule": "react(jsx-no-useless-fragment)",
+        "diagnostics": 2,
+        "locations": 2,
+        "files": 2
+      },
+      {
+        "rule": "react(jsx-no-constructed-context-values)",
+        "diagnostics": 1,
+        "locations": 1,
+        "files": 1
+      },
+      {
+        "rule": "react(iframe-missing-sandbox)",
+        "diagnostics": 1,
+        "locations": 1,
+        "files": 1
+      },
+      {
+        "rule": "oxc(branches-sharing-code)",
+        "diagnostics": 1,
+        "locations": 1,
+        "files": 1
+      },
+      {
+        "rule": "react(purity)",
+        "diagnostics": 1,
+        "locations": 1,
+        "files": 1
+      },
+      {
+        "rule": "eslint(max-classes-per-file)",
+        "diagnostics": 1,
+        "locations": 1,
+        "files": 1
+      }
+    ],
+    "topFiles": [
+      {
+        "file": "apps/web/src/routes/terms.tsx",
+        "diagnostics": 26
+      },
+      {
+        "file": "packages/ui/src/cobalt/transactions/categories/manage-categories-form.tsx",
+        "diagnostics": 23
+      },
+      {
+        "file": "apps/friends/src/components/settings-dialog.tsx",
+        "diagnostics": 20
+      },
+      {
+        "file": "packages/ui/src/cobalt/transactions/detail/transaction-detail-summary.tsx",
+        "diagnostics": 19
+      },
+      {
+        "file": "apps/web/src/components/shell/command-menu/command-menu.tsx",
+        "diagnostics": 16
+      },
+      {
+        "file": "packages/server-data/src/imports/upload/parse-rows.ts",
+        "diagnostics": 16
+      },
+      {
+        "file": "packages/ui/src/cobalt/transactions/transactions-table.tsx",
+        "diagnostics": 16
+      },
+      {
+        "file": "apps/web/src/routes/privacy.tsx",
+        "diagnostics": 15
+      },
+      {
+        "file": "apps/web/src/components/landing/app-preview.tsx",
+        "diagnostics": 14
+      },
+      {
+        "file": "apps/web/src/components/landing/surfaces/raycast-visual.tsx",
+        "diagnostics": 11
+      }
+    ]
+  },
+  "design": {
+    "diagnostics": 1727,
+    "locations": 1020,
+    "files": 149,
+    "rules": [
+      {
+        "rule": "shadcn(no-restyle)",
+        "diagnostics": 775,
+        "locations": 322,
+        "files": 95
+      },
+      {
+        "rule": "shadcn(no-arbitrary-values)",
+        "diagnostics": 540,
+        "locations": 400,
+        "files": 52
+      },
+      {
+        "rule": "shadcn(no-raw-colors)",
+        "diagnostics": 201,
+        "locations": 139,
+        "files": 37
+      },
+      {
+        "rule": "shadcn(no-inline-styles)",
+        "diagnostics": 194,
+        "locations": 186,
+        "files": 40
+      },
+      {
+        "rule": "shadcn(require-static-classes)",
+        "diagnostics": 10,
+        "locations": 10,
+        "files": 9
+      },
+      {
+        "rule": "shadcn(no-unknown-classes)",
+        "diagnostics": 7,
+        "locations": 3,
+        "files": 3
+      }
+    ],
+    "topFiles": [
+      {
+        "file": "apps/web/src/components/landing/surfaces/cursor-visual.tsx",
+        "diagnostics": 89
+      },
+      {
+        "file": "apps/web/src/components/landing/surfaces/notion-visual.tsx",
+        "diagnostics": 79
+      },
+      {
+        "file": "apps/web/src/components/landing/surfaces/mcp-visual.tsx",
+        "diagnostics": 65
+      },
+      {
+        "file": "apps/web/src/components/landing/surfaces/raycast-visual.tsx",
+        "diagnostics": 64
+      },
+      {
+        "file": "apps/web/src/components/landing/baby/baby-research.tsx",
+        "diagnostics": 59
+      },
+      {
+        "file": "apps/web/src/components/landing/surfaces/n8n-visual.tsx",
+        "diagnostics": 59
+      },
+      {
+        "file": "apps/web/src/components/landing/baby/baby-dashboard.tsx",
+        "diagnostics": 57
+      },
+      {
+        "file": "apps/web/src/components/landing/mobile-section.tsx",
+        "diagnostics": 52
+      },
+      {
+        "file": "apps/web/src/components/ai-chat/tool-renderers/documents/document-registry.tsx",
+        "diagnostics": 40
+      },
+      {
+        "file": "packages/ui/src/cobalt/transactions/transactions-table.tsx",
+        "diagnostics": 38
+      }
+    ]
+  }
+}

@@ -249,7 +249,7 @@ export function AccountConnectionActions({ account }: AccountConnectionActionsPr
           <AlertDialogFooter>
             <AlertDialogCancel size="sm">Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="destructive"
               onClick={async (e) => {
                 e.preventDefault();
                 await performDisconnect();

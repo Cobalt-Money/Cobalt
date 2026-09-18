@@ -51,17 +51,14 @@ const NAV_GROUPS: SettingsGroup[] = [
 ];
 
 function SettingsLayout() {
-  console.log("[settings] render", performance.now());
   // Flag `body[data-route="settings"]` atomically with this layout's first
   // commit. CSS in globals.css hides the app sidebar — by tying the flag
   // to mount (not URL change), the sidebar stays visible until settings
   // actually paints, so there's no momentary "sidebar collapses then
   // settings appears" flash.
   useLayoutEffect(() => {
-    console.log("[settings] effect", performance.now());
     document.body.dataset.route = "settings";
     return () => {
-      console.log("[settings] cleanup", performance.now());
       delete document.body.dataset.route;
     };
   }, []);
