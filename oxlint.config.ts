@@ -1,11 +1,18 @@
 import { defineConfig } from "oxlint";
 import core from "ultracite/oxlint/core";
 import react from "ultracite/oxlint/react";
+import shadcn from "ultracite/oxlint/shadcn";
 import tanstack from "ultracite/oxlint/tanstack";
 import vitest from "ultracite/oxlint/vitest";
 
 export default defineConfig({
   extends: [core, react, tanstack, vitest],
+  jsPlugins: shadcn.jsPlugins,
+  settings: {
+    shadcn: {
+      ui: "@cobalt-web/ui/components",
+    },
+  },
   ignorePatterns: [
     ".agents/**",
     "apps/fumadocs/**",
@@ -21,6 +28,24 @@ export default defineConfig({
     "docs/**",
   ],
   overrides: [
+    {
+      // Oxlint 1.83 newly reports these existing patterns. Keep other files strict.
+      files: ["apps/server/src/ai/agents/finance-agent/finance-agent.test.ts"],
+      rules: { "no-redeclare": "warn" },
+    },
+    {
+      files: ["packages/workspace/src/domain/errors.ts"],
+      rules: { "max-classes-per-file": "warn" },
+    },
+    {
+      files: [
+        "apps/web/src/lib/transaction-undo.tsx",
+        "apps/web/src/routes/_auth/onboarding.tsx",
+        "apps/web/src/routes/_auth/transactions/index.tsx",
+        "apps/friends/src/components/onboarding-modal.tsx",
+      ],
+      rules: { "no-void": ["warn", { allowAsStatement: true }] },
+    },
     {
       // One-off data-import / ETL scripts. Style rules that hurt readability
       // in throwaway scripts (counters, callback main(), template concat) are
@@ -109,7 +134,36 @@ export default defineConfig({
       },
     },
   ],
+  // Rules introduced since Ultracite 7.8 report existing debt without blocking
+  // the upgrade. Promote these to errors as each rule's findings are resolved.
   rules: {
+    "no-await-in-loop": "warn",
+    "prefer-named-capture-group": "warn",
+    "jsdoc/require-yields-description": "warn",
+    "node/callback-return": "warn",
+    "oxc/branches-sharing-code": "warn",
+    "react/display-name": "warn",
+    "react/exhaustive-effect-dependencies": "warn",
+    "react/function-component-definition": ["warn", { namedComponents: "arrow-function" }],
+    "react/hook-use-state": "warn",
+    "react/iframe-missing-sandbox": "warn",
+    "react/incompatible-library": "warn",
+    "react/jsx-handler-names": "warn",
+    "react/jsx-no-constructed-context-values": "warn",
+    "react/jsx-no-useless-fragment": "warn",
+    "react/memo-dependencies": "warn",
+    "react/no-deriving-state-in-effects": "warn",
+    "react/no-unescaped-entities": "warn",
+    "react/purity": "warn",
+    "react/refs": "warn",
+    "react/rule-suppression": "warn",
+    "react/set-state-in-effect": "warn",
+    "react/todo": "warn",
+    "typescript/method-signature-style": "warn",
+    "unicorn/import-style": "warn",
+    "unicorn/prefer-export-from": "warn",
+    "unicorn/prefer-number-coercion": "warn",
+    "unicorn/prefer-single-call": "warn",
     "@typescript-eslint/no-empty-object-type": "off",
     "func-style": "off",
     "jsdoc/require-throws-type": "off",

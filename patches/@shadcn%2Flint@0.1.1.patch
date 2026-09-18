@@ -1,0 +1,16 @@
+diff --git a/dist/tailwind-worker.js b/dist/tailwind-worker.js
+index 904b93487babd94c7351728b1d4efdfbfa5adefd..eb1912725fb32c3afd7333d392b052f5c7578583 100644
+--- a/dist/tailwind-worker.js
++++ b/dist/tailwind-worker.js
+@@ -75,6 +75,11 @@ function resolveStylesheet(base, id) {
+ 	if (subpath) {
+ 		const target = exports && typeof exports === "object" ? styleTarget(exports[`./${subpath}`]) : null;
+ 		if (target) return existingFile(path.join(pkgDir, target));
++		// Resolve wildcard package exports before falling back to physical paths.
++		try {
++			const resolved = resolveFrom(base, id);
++			if (path.extname(resolved) === ".css" && existingFile(resolved)) return resolved;
++		} catch {}
+ 		return stylesheetAt(path.dirname(path.join(pkgDir, subpath)), path.basename(subpath));
+ 	}
+ 	const root = typeof exports === "string" ? exports : exports && typeof exports === "object" ? styleTarget(exports["."] ?? exports) : null;

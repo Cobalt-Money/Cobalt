@@ -69,7 +69,7 @@ export function CategoryFormDialog({ open, onOpenChange, groups, initial }: Prop
         window.cancelAnimationFrame(secondId);
       }
     };
-  }, [open, initial, groups]);
+  }, [open, initial?.name, initial?.iconKey, initial?.groupId, initial?.excludeFromInsights]);
 
   const trimmed = name.trim();
   const canSubmit =

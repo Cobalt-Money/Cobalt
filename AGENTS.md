@@ -44,11 +44,16 @@ After finishing a feature or making changes, always run:
 bun check
 ```
 
-This runs Ultracite (lint/format) and then `turbo check-types` (TypeScript) across the repo. To auto-fix issues:
+This runs lint integration tests, Ultracite (lint/format), and then `turbo check-types` (TypeScript) across the repo. To auto-fix issues:
 
 ```sh
 bun fix
 ```
+
+For UI changes, use `bunx oxlint --config oxlint.design.config.ts <files>` to
+review shadcn design-system findings. `bun run lint:design` audits all currently
+included UI files. This is an opt-in audit with existing debt, not a CI gate.
+See [UI linting](docs/ui/linting.md) for rules, exclusions, and adoption details.
 
 ## Key Commands
 
