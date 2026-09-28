@@ -16,15 +16,15 @@
     "lint": "ray lint"
   },
   "dependencies": {
-    "@raycast/api": "^1.104.17",
-    "@raycast/utils": "^2.2.5"
+    "@raycast/api": "^2.4.1",
+    "@raycast/utils": "^2.3.1"
   },
   "devDependencies": {
     "@raycast/eslint-config": "^2.2.0",
-    "@types/node": "22.19.17",
-    "@types/react": "19.0.10",
-    "eslint": "^10.8.0",
-    "prettier": "^3.3.3",
+    "@types/node": "26.6.2",
+    "@types/react": "19.3.0",
+    "eslint": "^10.11.0",
+    "prettier": "^3.9.8",
     "typescript": "^5.9.3"
   },
   "icon": "extension-icon.png",
