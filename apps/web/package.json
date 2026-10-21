@@ -89,7 +89,7 @@
     "react-grab": "^0.1.29",
     "react-hook-form": "^7.72.1",
     "typescript": "^7.0.2",
-    "vite": "8.2.0",
+    "vite": "8.2.4",
     "vitest": "catalog:"
   }
 }
